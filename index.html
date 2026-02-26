@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tech Warrior: Prototype</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <style> body { margin: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; } </style>
+</head>
+<body>
+<script>
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    physics: { default: 'arcade', arcade: { debug: false } },
+    scene: { create: create, update: update }
+};
+
+const game = new Phaser.Game(config);
+let player, cursors, bullets, enemies;
+
+function create() {
+    // 1. Create Player Mech (A Container)
+    player = this.add.container(400, 300);
+    let body = this.add.rectangle(0, 0, 40, 40, 0x333333).setStrokeStyle(2, 0x00ff00);
+    let cannon = this.add.rectangle(20, 0, 30, 8, 0xaaaaaa);
+    player.add([body, cannon]);
+    
+    this.physics.add.existing(player);
+    player.body.setCollideWorldBounds(true).setDrag(0.95).setDamping(true);
+
+    // 2. Bullets
+    bullets = this.physics.add.group({ defaultKey: 'bullet', maxSize: 10 });
+    
+    // 3. Simple AI Bots (Tickets)
+    enemies = this.physics.add.group();
+    for(let i=0; i<5; i++) {
+        let enemy = this.add.rectangle(Phaser.Math.Between(100, 700), Phaser.Math.Between(100, 500), 30, 30, 0xff3333);
+        enemies.add(enemy);
+        enemy.body.setCollideWorldBounds(true).setBounce(1);
+        enemy.body.setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(-100, 100));
+    }
+
+    // 4. Controls
+    cursors = this.input.keyboard.createCursorKeys();
+    this.input.on('pointerdown', () => fireBullet(this));
+
+    this.add.text(10, 10, 'WASD to Move | Click to Shoot', { color: '#00ff00' });
+}
+
+function update() {
+    // Tank Controls
+    if (cursors.left.isDown) player.angle -= 3;
+    if (cursors.right.isDown) player.angle += 3;
+    if (cursors.up.isDown) this.physics.velocityFromRotation(player.rotation, 200, player.body.velocity);
+
+    // Make enemies "jitter" like bugged software
+    enemies.children.iterate(enemy => {
+        if (Math.random() > 0.98) enemy.body.setVelocity(Phaser.Math.Between(-150, 150), Phaser.Math.Between(-150, 150));
+    });
+
+    // Collision Logic
+    this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
+        bullet.destroy();
+        enemy.setFillStyle(0xffffff); // Flash white on hit
+        setTimeout(() => enemy.destroy(), 50);
+    });
+}
+
+function fireBullet(scene) {
+    let bullet = scene.add.rectangle(player.x, player.y, 10, 4, 0xffff00);
+    scene.physics.add.existing(bullet);
+    scene.physics.velocityFromRotation(player.rotation, 500, bullet.body.velocity);
+    bullets.add(bullet);
+}
+</script>
+</body>
+</html>
