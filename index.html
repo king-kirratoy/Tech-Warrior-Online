@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tech Warrior: Prototype</title>
+    <title>Tech Warrior: Patch 1.1</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-    <style> body { margin: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; } </style>
+    <style> body { margin: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; } </style>
 </head>
 <body>
 <script>
@@ -13,65 +13,90 @@ const config = {
     width: 800,
     height: 600,
     physics: { default: 'arcade', arcade: { debug: false } },
-    scene: { create: create, update: update }
+    scene: { preload: preload, create: create, update: update }
 };
 
 const game = new Phaser.Game(config);
-let player, cursors, bullets, enemies;
+let player, keys, bullets, enemies;
+
+function preload() {}
 
 function create() {
-    // 1. Create Player Mech (A Container)
+    // 1. Better Input (Adding WASD + Arrows)
+    keys = this.input.keyboard.addKeys('W,A,S,D,UP,LEFT,RIGHT,DOWN');
+
+    // 2. Player Mech
     player = this.add.container(400, 300);
     let body = this.add.rectangle(0, 0, 40, 40, 0x333333).setStrokeStyle(2, 0x00ff00);
     let cannon = this.add.rectangle(20, 0, 30, 8, 0xaaaaaa);
     player.add([body, cannon]);
     
     this.physics.add.existing(player);
-    player.body.setCollideWorldBounds(true).setDrag(0.95).setDamping(true);
-
-    // 2. Bullets
-    bullets = this.physics.add.group({ defaultKey: 'bullet', maxSize: 10 });
+    player.body.setCollideWorldBounds(true);
     
-    // 3. Simple AI Bots (Tickets)
+    // FIX: Set Drag (Friction) so it stops when not pushing a key
+    player.body.setDrag(300); 
+    player.body.setAngularDrag(400);
+
+    // 3. Bullets (Simplified)
+    bullets = this.physics.add.group();
+    
+    // 4. Enemies
     enemies = this.physics.add.group();
     for(let i=0; i<5; i++) {
         let enemy = this.add.rectangle(Phaser.Math.Between(100, 700), Phaser.Math.Between(100, 500), 30, 30, 0xff3333);
         enemies.add(enemy);
-        enemy.body.setCollideWorldBounds(true).setBounce(1);
-        enemy.body.setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(-100, 100));
+        enemy.body.setBounce(1).setCollideWorldBounds(true).setVelocity(50, 50);
     }
 
-    // 4. Controls
-    cursors = this.input.keyboard.createCursorKeys();
     this.input.on('pointerdown', () => fireBullet(this));
-
-    this.add.text(10, 10, 'WASD to Move | Click to Shoot', { color: '#00ff00' });
+    this.add.text(10, 10, 'WASD to Move | Click to Shoot', { color: '#00ff00', fontSize: '18px' });
 }
 
 function update() {
-    // Tank Controls
-    if (cursors.left.isDown) player.angle -= 3;
-    if (cursors.right.isDown) player.angle += 3;
-    if (cursors.up.isDown) this.physics.velocityFromRotation(player.rotation, 200, player.body.velocity);
+    // FIX: Movement Logic (Rotation)
+    if (keys.A.isDown || keys.LEFT.isDown) {
+        player.body.setAngularVelocity(-150);
+    } else if (keys.D.isDown || keys.RIGHT.isDown) {
+        player.body.setAngularVelocity(150);
+    } else {
+        player.body.setAngularVelocity(0);
+    }
 
-    // Make enemies "jitter" like bugged software
-    enemies.children.iterate(enemy => {
-        if (Math.random() > 0.98) enemy.body.setVelocity(Phaser.Math.Between(-150, 150), Phaser.Math.Between(-150, 150));
+    // FIX: Forward/Backward Movement
+    if (keys.W.isDown || keys.UP.isDown) {
+        this.physics.velocityFromRotation(player.rotation, 200, player.body.velocity);
+    } else if (keys.S.isDown || keys.DOWN.isDown) {
+        this.physics.velocityFromRotation(player.rotation, -100, player.body.velocity);
+    }
+
+    // FIX: Bullet Cleanup (Prevents freezing/lag)
+    bullets.children.each(bullet => {
+        if (bullet.x < 0 || bullet.x > 800 || bullet.y < 0 || bullet.y > 600) {
+            bullet.destroy();
+        }
     });
 
     // Collision Logic
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
         bullet.destroy();
-        enemy.setFillStyle(0xffffff); // Flash white on hit
-        setTimeout(() => enemy.destroy(), 50);
+        enemy.destroy();
+        // Respawn enemy somewhere else to keep the game going
+        spawnEnemy(this);
     });
 }
 
 function fireBullet(scene) {
     let bullet = scene.add.rectangle(player.x, player.y, 10, 4, 0xffff00);
     scene.physics.add.existing(bullet);
-    scene.physics.velocityFromRotation(player.rotation, 500, bullet.body.velocity);
+    scene.physics.velocityFromRotation(player.rotation, 600, bullet.body.velocity);
     bullets.add(bullet);
+}
+
+function spawnEnemy(scene) {
+    let enemy = scene.add.rectangle(Phaser.Math.Between(50, 750), Phaser.Math.Between(50, 550), 30, 30, 0xff3333);
+    enemies.add(enemy);
+    enemy.body.setBounce(1).setCollideWorldBounds(true).setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(-100, 100));
 }
 </script>
 </body>
