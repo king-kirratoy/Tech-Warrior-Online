@@ -2,220 +2,165 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tech Warrior: Alpha 1.9.1</title>
+    <title>Tech Warrior 2.0</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; overflow: hidden; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; display: flex; justify-content: center; align-items: center; }
-        .stat-readout { background: rgba(0,15,0,0.98); padding: 25px; border: 3px solid #0f0; pointer-events: auto; width: 450px; box-shadow: 0 0 40px #0f0; }
-        .row { margin-bottom: 12px; display: flex; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #040; padding-bottom: 5px; }
-        .label { width: 100px; font-weight: bold; font-size: 11px; color: #0f0; }
-        button { background: #010; color: #0f0; border: 1px solid #0f0; cursor: pointer; padding: 6px 10px; margin: 2px; font-size: 11px; }
-        button:hover { background: #0f0; color: #000; }
-        button.selected { background: #0f0; color: #000; font-weight: bold; }
-        #weight-meter { margin: 15px 0; font-weight: bold; font-size: 18px; text-align: center; }
-        .danger { color: #f00; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+        .garage { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,20,0,0.95); padding: 20px; border: 2px solid #0f0; pointer-events: auto; width: 450px; }
+        .row { margin-bottom: 10px; border-bottom: 1px solid #040; padding-bottom: 5px; display: flex; align-items: center; }
+        .label { width: 100px; font-size: 11px; }
+        button { background: #020; color: #0f0; border: 1px solid #0f0; cursor: pointer; padding: 5px; margin: 2px; font-size: 11px; }
+        button.selected { background: #0f0; color: #000; }
+        #weight-meter { text-align: center; font-weight: bold; margin: 10px; }
     </style>
 </head>
 <body>
 
 <div id="ui-layer">
-    <div class="stat-readout" id="garage-menu">
-        <h2 style="text-align:center; margin-top:0;">MECH INTERFACE v1.9.1</h2>
+    <div class="garage" id="garage-menu">
+        <h2 style="text-align:center;">MECH ASSEMBLY</h2>
         <div id="controls-root"></div>
-        <div id="weight-meter">READY TO DEPLOY</div>
-        <button id="deploy-btn" style="width:100%; font-size: 20px; height: 50px; background:#0f0; color:#000;" onclick="handleDeployClick()">CONFIRM DEPLOYMENT</button>
+        <div id="weight-meter">...</div>
+        <button id="deploy-btn" style="width:100%; height:40px; background:#0f0; color:#000;" onclick="deploy()">DEPLOY</button>
     </div>
 </div>
 
 <script>
+// 1. DATA
 const WEAPONS = {
-    mg:     { name: 'MG', weight: 15, color: 0xaaaaaa, reload: 200 },
-    heavy:  { name: 'Heavy', weight: 45, color: 0x555555, reload: 2000 },
-    shield: { name: 'Shield', weight: 30, color: 0x00ffff, isShield: true },
-    sword:  { name: 'Sword', weight: 20, color: 0xffffff, isMelee: true }
+    mg:     { name: 'MG', w: 15, c: 0xaaaaaa, reload: 200 },
+    heavy:  { name: 'Heavy', w: 45, c: 0x555555, reload: 2000 },
+    shield: { name: 'Shield', w: 30, c: 0x00ffff, isShield: true },
+    sword:  { name: 'Sword', w: 20, c: 0xffffff, isMelee: true }
 };
 const CHASSIS = {
-    light:  { name: 'Light', maxW: 75, speed: 450, baseW: 10, scale: 0.8 },
-    medium: { name: 'Medium', maxW: 125, speed: 320, baseW: 25, scale: 1.1 },
-    heavy:  { name: 'Heavy', maxW: 210, speed: 220, baseW: 50, scale: 1.6 }
+    light:  { max: 75,  spd: 400, scale: 0.7 },
+    medium: { max: 125, spd: 300, scale: 1.0 },
+    heavy:  { max: 210, spd: 200, scale: 1.4 }
 };
-const MODS = {
-    speed: { name: 'Speed', weight: 10, boost: 120 },
-    jump:  { name: 'Jump', weight: 20, jump: true }
-};
-const COLORS = [{name:'Green', v:0x00ff00}, {name:'Red', v:0xff0000}, {name:'Blue', v:0x0088ff}, {name:'Yellow', v:0xffff00}];
-
-let loadout = { chassis: 'medium', L: 'mg', R: 'heavy', mod: 'speed', color: 0x00ff00 };
+let loadout = { chassis: 'medium', L: 'mg', R: 'heavy', color: 0x00ff00 };
 let activeArm = 'L';
-let reloadL = 0, reloadR = 0, jumpReady = true;
+let reloadL = 0, reloadR = 0;
 
+// 2. GAME SCENE
 class MainScene extends Phaser.Scene {
     constructor() { super('MainScene'); }
 
     create() {
-        // 1. BACKGROUND GRID (Z-Index: lowest)
-        this.add.grid(window.innerWidth/2, window.innerHeight/2, 5000, 5000, 64, 64, 0x000000)
-                .setOutlineStyle(0x004400).setAlpha(0.3).setDepth(0);
-        
-        this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,ONE,TWO');
+        this.add.grid(window.innerWidth/2, window.innerHeight/2, 4000, 4000, 64, 64, 0x000000, 0, 0x003300, 0.5);
+        this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
         this.bullets = this.physics.add.group();
         this.enemies = this.physics.add.group();
-
-        // 2. HUD CONTAINER (Z-Index: 1000)
-        this.hud = this.add.container(0, 0).setDepth(1000).setVisible(false);
-        this.hpBar = this.add.rectangle(150, window.innerHeight - 60, 200, 20, 0x00ff00);
-        this.shBar = this.add.rectangle(150, window.innerHeight - 35, 200, 10, 0x00aaff);
-        this.slotL = this.add.rectangle(window.innerWidth - 140, window.innerHeight - 70, 60, 60, 0x111111).setStrokeStyle(2, 0x00ff00);
-        this.slotR = this.add.rectangle(window.innerWidth - 70, window.innerHeight - 70, 60, 60, 0x111111).setStrokeStyle(2, 0x444444);
-        this.reL = this.add.rectangle(window.innerWidth - 140, window.innerHeight - 40, 60, 5, 0xff0000).setOrigin(0.5, 1);
-        this.reR = this.add.rectangle(window.innerWidth - 70, window.innerHeight - 40, 60, 5, 0xff0000).setOrigin(0.5, 1);
-        this.hud.add([this.hpBar, this.shBar, this.slotL, this.slotR, this.reL, this.reR]);
+        
+        // Setup HUD
+        this.hud = this.add.container(0, 0).setDepth(100).setVisible(false).setScrollFactor(0);
+        this.hpBar = this.add.rectangle(120, window.innerHeight - 40, 200, 20, 0x00ff00);
+        this.hud.add(this.hpBar);
 
         this.input.on('pointerdown', () => this.fire());
-        this.input.on('wheel', (p, go, dx, dy) => { activeArm = (activeArm === 'L') ? 'R' : 'L'; });
-        
-        this.isReady = true; 
-        for(let i=0; i<8; i++) this.spawnEnemy();
+        this.input.on('wheel', () => activeArm = (activeArm === 'L' ? 'R' : 'L'));
+
+        for(let i=0; i<6; i++) {
+            let e = this.add.rectangle(Phaser.Math.Between(100, 700), Phaser.Math.Between(100, 500), 40, 40, 0xff0000);
+            this.enemies.add(e);
+            this.physics.add.existing(e);
+            e.body.setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(-100, 100)).setBounce(1,1).setCollideWorldBounds(true);
+        }
     }
 
-    spawnEnemy() {
-        let e = this.add.rectangle(Phaser.Math.Between(100, window.innerWidth-100), Phaser.Math.Between(100, window.innerHeight-100), 50, 50, 0xff0000).setStrokeStyle(2, 0xffffff).setDepth(5);
-        this.enemies.add(e);
-        this.physics.add.existing(e);
-        e.body.setCollideWorldBounds(true).setBounce(1,1);
-        e.body.setVelocity(Phaser.Math.Between(-150, 150), Phaser.Math.Between(-150, 150));
-    }
-
-    spawnPlayer() {
+    spawn() {
         const sc = CHASSIS[loadout.chassis].scale;
-        const cx = window.innerWidth / 2;
-        const cy = window.innerHeight / 2;
-
-        // 3. PLAYER LEGS (Depth: 10)
-        this.legs = this.add.rectangle(cx, cy, 50, 50, 0x222222).setStrokeStyle(2, 0xffffff).setDepth(10);
-        this.physics.add.existing(this.legs);
-        this.legs.setScale(sc);
-        this.legs.body.setCollideWorldBounds(true).setDamping(true).setDrag(0.1);
-
-        // 4. PLAYER TORSO (Depth: 20)
-        this.torso = this.add.container(cx, cy).setDepth(20);
-        let body = this.add.rectangle(0, 0, 55, 55, loadout.color).setStrokeStyle(2, 0xffffff);
-        let lArm = this.add.rectangle(-40, 0, 20, 40, WEAPONS[loadout.L].color).setStrokeStyle(1, 0x000);
-        let rArm = this.add.rectangle(40, 0, 20, 40, WEAPONS[loadout.R].color).setStrokeStyle(1, 0x000);
-        this.shVis = this.add.arc(0, 0, 70, 330, 30, false, 0x00ffff, 0.4).setStrokeStyle(3, 0x00ffff).setVisible(false);
         
-        this.torso.add([body, lArm, rArm, this.shVis]);
-        this.torso.setScale(sc);
+        // LEGS (The physical body)
+        this.legs = this.add.rectangle(window.innerWidth/2, window.innerHeight/2, 50, 50, 0x333333);
+        this.physics.add.existing(this.legs);
+        this.legs.setScale(sc).setDepth(10);
+        this.legs.body.setCollideWorldBounds(true);
 
+        // TORSO (Follows legs)
+        this.torso = this.add.rectangle(0, 0, 60, 60, loadout.color).setStrokeStyle(2, 0xffffff);
+        this.torso.setScale(sc).setDepth(20);
+
+        // ARMS (Visual only)
+        this.lArmVis = this.add.rectangle(-35 * sc, 0, 20 * sc, 40 * sc, WEAPONS[loadout.L].c);
+        this.rArmVis = this.add.rectangle(35 * sc, 0, 20 * sc, 40 * sc, WEAPONS[loadout.R].c);
+        
         this.hud.setVisible(true);
-        this.deployed = true;
-    }
-
-    fire() {
-        if (!this.deployed) return;
-        let now = this.time.now;
-        let wKey = (activeArm === 'L') ? loadout.L : loadout.R;
-        let reloadTime = (activeArm === 'L') ? reloadL : reloadR;
-
-        if (now < reloadTime || WEAPONS[wKey].isShield) return;
-
-        let b = this.add.circle(this.torso.x, this.torso.y, wKey === 'heavy' ? 14 : 6, 0xffff00).setDepth(15);
-        this.physics.add.existing(b);
-        this.physics.velocityFromRotation(this.torso.rotation, 900, b.body.velocity);
-
-        if (activeArm === 'L') reloadL = now + WEAPONS[wKey].reload;
-        else reloadR = now + WEAPONS[wKey].reload;
+        this.isDeployed = true;
     }
 
     update(time) {
-        if (!this.deployed) return;
+        if (!this.isDeployed) return;
 
-        // Torso follows position of legs
+        // Torso follows legs exactly
         this.torso.x = this.legs.x;
         this.torso.y = this.legs.y;
+        this.lArmVis.x = this.legs.x + Math.cos(this.torso.rotation - Math.PI/2) * (35 * CHASSIS[loadout.chassis].scale);
+        this.lArmVis.y = this.legs.y + Math.sin(this.torso.rotation - Math.PI/2) * (35 * CHASSIS[loadout.chassis].scale);
+        this.rArmVis.x = this.legs.x + Math.cos(this.torso.rotation + Math.PI/2) * (35 * CHASSIS[loadout.chassis].scale);
+        this.rArmVis.y = this.legs.y + Math.sin(this.torso.rotation + Math.PI/2) * (35 * CHASSIS[loadout.chassis].scale);
 
-        // Torso follows Mouse
-        let angle = Phaser.Math.Angle.Between(this.torso.x, this.torso.y, this.input.x, this.input.y);
-        this.torso.setRotation(angle);
+        // Rotate Torso to Mouse
+        this.torso.rotation = Phaser.Math.Angle.Between(this.torso.x, this.torso.y, this.input.x, this.input.y);
+        this.lArmVis.rotation = this.torso.rotation;
+        this.rArmVis.rotation = this.torso.rotation;
 
-        // Movement
-        let speed = CHASSIS[loadout.chassis].speed + (loadout.mod === 'speed' ? MODS.speed.boost : 0);
+        // Move Legs
+        let speed = CHASSIS[loadout.chassis].spd;
         this.legs.body.setVelocity(0);
-
         if (this.keys.W.isDown) this.physics.velocityFromRotation(this.legs.rotation, speed, this.legs.body.velocity);
         if (this.keys.S.isDown) this.physics.velocityFromRotation(this.legs.rotation, -speed/2, this.legs.body.velocity);
-        if (this.keys.A.isDown) this.legs.setAngularVelocity(-220);
-        else if (this.keys.D.isDown) this.legs.setAngularVelocity(220);
+        if (this.keys.A.isDown) this.legs.setAngularVelocity(-200);
+        else if (this.keys.D.isDown) this.legs.setAngularVelocity(200);
         else this.legs.setAngularVelocity(0);
+    }
 
-        // Dash
-        if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) && loadout.mod === 'jump' && jumpReady) {
-            jumpReady = false;
-            this.physics.velocityFromRotation(this.legs.rotation, 1400, this.legs.body.velocity);
-            this.time.delayedCall(2500, () => { jumpReady = true; });
-        }
+    fire() {
+        if (!this.isDeployed) return;
+        let now = this.time.now;
+        let wKey = activeArm === 'L' ? loadout.L : loadout.R;
+        let reloadTime = activeArm === 'L' ? reloadL : reloadR;
 
-        // HUD & Shield Logic
-        this.slotL.setStrokeStyle(activeArm === 'L' ? 4 : 1, 0x00ff00);
-        this.slotR.setStrokeStyle(activeArm === 'R' ? 4 : 1, 0x00ff00);
-        this.shVis.setVisible(WEAPONS[activeArm === 'L' ? loadout.L : loadout.R].isShield);
+        if (now < reloadTime) return;
 
-        // Reload UI
-        this.reL.width = Math.max(0, ((reloadL - time) / WEAPONS[loadout.L].reload) * 60 || 0);
-        this.reR.width = Math.max(0, ((reloadR - time) / WEAPONS[loadout.R].reload) * 60 || 0);
+        let b = this.add.circle(this.torso.x, this.torso.y, wKey === 'heavy' ? 12 : 6, 0xffff00);
+        this.physics.add.existing(b);
+        this.physics.velocityFromRotation(this.torso.rotation, 600, b.body.velocity);
+        
+        if (activeArm === 'L') reloadL = now + WEAPONS[wKey].reload;
+        else reloadR = now + WEAPONS[wKey].reload;
     }
 }
 
-function buildMenu() {
+// 3. UI
+function buildUI() {
     const root = document.getElementById('controls-root');
     root.innerHTML = '';
-    const sections = [
-        { label: 'CHASSIS', k: 'chassis', d: CHASSIS },
-        { label: 'LEFT ARM', k: 'L', d: WEAPONS },
-        { label: 'RIGHT ARM', k: 'R', d: WEAPONS },
-        { label: 'LEG MODS', k: 'mod', d: MODS }
-    ];
-    sections.forEach(s => {
-        let div = document.createElement('div'); div.className = 'row';
-        div.innerHTML = `<div class="label">${s.label}:</div>`;
-        Object.keys(s.d).forEach(k => {
+    const cats = [{l:'CHASSIS', k:'chassis', d:CHASSIS}, {l:'LEFT', k:'L', d:WEAPONS}, {l:'RIGHT', k:'R', d:WEAPONS}];
+    cats.forEach(c => {
+        let row = document.createElement('div'); row.className = 'row';
+        row.innerHTML = `<div class="label">${c.l}</div>`;
+        Object.keys(c.d).forEach(key => {
             let b = document.createElement('button');
-            b.innerText = s.d[k].name || k.toUpperCase();
-            if(loadout[s.k] === k) b.className = 'selected';
-            b.onclick = () => { loadout[s.k] = k; buildMenu(); };
-            div.appendChild(b);
+            b.innerText = key.toUpperCase();
+            if(loadout[c.k] === key) b.className = 'selected';
+            b.onclick = () => { loadout[c.k] = key; buildUI(); };
+            row.appendChild(b);
         });
-        root.appendChild(div);
+        root.appendChild(row);
     });
-    let crow = document.createElement('div'); crow.className = 'row';
-    crow.innerHTML = `<div class="label">COLOR:</div>`;
-    COLORS.forEach(c => {
-        let b = document.createElement('button'); b.innerText = c.name;
-        if(loadout.color === c.v) b.className = 'selected';
-        b.onclick = () => { loadout.color = c.v; buildMenu(); };
-        crow.appendChild(b);
-    });
-    root.appendChild(crow);
-    
-    let max = CHASSIS[loadout.chassis].maxW;
-    let cur = CHASSIS[loadout.chassis].baseW + WEAPONS[loadout.L].weight + WEAPONS[loadout.R].weight + MODS[loadout.mod].weight;
-    document.getElementById('weight-meter').innerText = `TOTAL TONS: ${cur} / ${max}`;
-    document.getElementById('weight-meter').className = cur > max ? 'danger' : '';
-    document.getElementById('deploy-btn').disabled = cur > max;
 }
 
-function handleDeployClick() {
-    const s = game.scene.getScene('MainScene');
-    if (s && s.isReady) {
-        document.getElementById('garage-menu').style.display = 'none';
-        s.spawnPlayer();
-    }
+function deploy() {
+    const scene = game.scene.getScene('MainScene');
+    document.getElementById('garage-menu').style.display = 'none';
+    scene.spawn();
 }
 
 const config = { type: Phaser.AUTO, width: window.innerWidth, height: window.innerHeight, physics: { default: 'arcade' }, scene: MainScene };
 const game = new Phaser.Game(config);
-window.onload = buildMenu;
+window.onload = buildUI;
 </script>
 </body>
 </html>
