@@ -2,27 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tech Warrior: Garage & Loadout</title>
+    <title>Tech Warrior: Alpha 1.5</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', Courier, monospace; overflow: hidden; }
-        #ui-layer { position: absolute; top: 10px; left: 10px; pointer-events: none; }
-        .stat-readout { background: rgba(0,20,0,0.8); padding: 10px; border: 1px solid #0f0; margin-bottom: 5px; pointer-events: auto; }
+        body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; overflow: hidden; }
+        #ui-layer { position: absolute; top: 10px; left: 10px; pointer-events: none; z-index: 10; }
+        .stat-readout { background: rgba(0,20,0,0.9); padding: 15px; border: 2px solid #0f0; pointer-events: auto; }
         button { background: #050; color: #0f0; border: 1px solid #0f0; cursor: pointer; margin: 2px; padding: 5px; }
         button:hover { background: #0f0; color: #000; }
+        .weight-ok { color: #0f0; }
+        .weight-danger { color: #f00; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu">
-        <h2>--- GARAGE ---</h2>
+        <h2>--- TECH WARRIOR GARAGE ---</h2>
         <div>CHASSIS: 
             <button onclick="setChassis('light')">Light (75T)</button>
             <button onclick="setChassis('medium')">Medium (125T)</button>
             <button onclick="setChassis('heavy')">Heavy (200T)</button>
         </div>
-        <div>LEFT ARM: 
+        <div style="margin-top:10px;">LEFT ARM: 
             <button onclick="setWeapon('L', 'mg')">MG</button>
             <button onclick="setWeapon('L', 'heavy')">Heavy</button>
             <button onclick="setWeapon('L', 'shield')">Shield</button>
@@ -34,190 +36,194 @@
             <button onclick="setWeapon('R', 'shield')">Shield</button>
             <button onclick="setWeapon('R', 'sword')">Sword</button>
         </div>
-        <div>LEGS: 
-            <button onclick="setMod('speed')">Speed Mod</button>
+        <div style="margin-top:10px;">LEG MODS: 
+            <button onclick="setMod('speed')">Speed Servos</button>
             <button onclick="setMod('jump')">Jump Jets</button>
         </div>
-        <div>COLOR: 
+        <div style="margin-top:10px;">HULL COLOR: 
             <button onclick="setColor(0x00ff00)">Green</button>
             <button onclick="setColor(0xff0000)">Red</button>
             <button onclick="setColor(0x0000ff)">Blue</button>
+            <button onclick="setColor(0xffff00)">Yellow</button>
         </div>
         <hr>
-        <div id="weight-meter">WEIGHT: 0 / 0</div>
-        <button id="deploy-btn" style="width:100%; font-weight:bold;" onclick="deploy()">DEPLOY UNIT</button>
+        <div id="weight-meter">WEIGHT: 0 / 0 TONS</div>
+        <button id="deploy-btn" style="width:100%; font-size: 20px;" onclick="deploy()">DEPLOY MECH</button>
     </div>
 </div>
 
 <script>
 // --- DATA TABLES ---
-// --- NEW COMBAT CONSTANTS ---
-let activeArm = 'L'; // 'L' or 'R'
-let shieldHP = 100;
-let shieldActive = true;
-let canSwing = true;
-
-// --- UPDATED CREATE FUNCTION ---
-function create() {
-    // ... (previous setup code) ...
-
-    // ADD: Number keys for switching
-    keys.ONE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE);
-    keys.TWO = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO);
-
-    // ADD: Mouse Wheel listener
-    this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
-        activeArm = (activeArm === 'L') ? 'R' : 'L';
-        console.log("Switched to: " + activeArm);
-    });
-
-    // Handle Fire
-    this.input.on('pointerdown', () => {
-        let weaponType = (activeArm === 'L') ? currentLoadout.leftArm : currentLoadout.rightArm;
-        handleWeaponFire(this, weaponType);
-    });
-}
-
-function handleWeaponFire(scene, type) {
-    if (type === 'mg') fireMG(scene);
-    if (type === 'heavy') fireHeavy(scene);
-    if (type === 'sword' && canSwing) performSwordSwing(scene);
-}
-
-// --- WEAPON BEHAVIORS ---
-
-function fireMG(scene) {
-    let bullet = scene.add.circle(player.x, player.y, 4, 0xffff00);
-    scene.physics.add.existing(bullet);
-    scene.physics.velocityFromRotation(player.rotation, 600, bullet.body.velocity);
-    // Add small spread for MG
-    bullet.body.velocity.x += Phaser.Math.Between(-20, 20);
-    bullet.body.velocity.y += Phaser.Math.Between(-20, 20);
-}
-
-function fireHeavy(scene) {
-    let bullet = scene.add.circle(player.x, player.y, 10, 0xffaa00);
-    scene.physics.add.existing(bullet);
-    scene.physics.velocityFromRotation(player.rotation, 400, bullet.body.velocity);
-}
-
-function performSwordSwing(scene) {
-    canSwing = false;
-    let sword = (activeArm === 'L') ? player.list[1] : player.list[2]; // Grab Arm Rect
-    
-    scene.tweens.add({
-        targets: sword,
-        angle: { from: -90, to: 90 },
-        duration: 150,
-        yoyo: true,
-        onComplete: () => { canSwing = true; sword.setAngle(0); }
-    });
-}
-
-// --- SHIELD LOGIC (Update Loop) ---
-function updateShield(scene) {
-    if (!shieldActive) return;
-    
-    // We visually represent the shield as a semi-circle in front
-    // If shieldHP <= 0, we set shieldActive = false and start a 10s timer
-}
-    
 const WEAPONS = {
-    mg:     { name: 'Machine Gun', weight: 15, dmg: 5, color: 0xaaaaaa, type: 'range' },
-    heavy:  { name: 'Heavy Gun',   weight: 45, dmg: 20, color: 0x555555, type: 'range' },
-    shield: { name: 'Shield',      weight: 30, hp: 100, color: 0x00ffff, type: 'def' },
-    sword:  { name: 'Sword',       weight: 20, dmg: 30, color: 0xffffff, type: 'melee' }
+    mg:     { name: 'MG', weight: 15, color: 0xaaaaaa },
+    heavy:  { name: 'Heavy', weight: 45, color: 0x555555 },
+    shield: { name: 'Shield', weight: 30, color: 0x00ffff },
+    sword:  { name: 'Sword', weight: 20, color: 0xffffff }
 };
 
 const CHASSIS = {
-    light:  { name: 'Light',  maxW: 75,  speed: 300, color: 0x333333 },
-    medium: { name: 'Medium', maxW: 125, speed: 200, color: 0x444444 },
-    heavy:  { name: 'Heavy',  maxW: 200, speed: 120, color: 0x222222 }
+    light:  { maxW: 75,  speed: 350, baseW: 10 },
+    medium: { maxW: 125, speed: 250, baseW: 25 },
+    heavy:  { maxW: 200, speed: 150, baseW: 50 }
 };
 
 const MODS = {
-    speed: { name: 'Speed Mod', weight: 10, speedBoost: 50 },
-    jump:  { name: 'Jump Jets', weight: 20, jump: true }
+    speed: { weight: 10, boost: 60 },
+    jump:  { weight: 20, jump: true }
 };
 
-// --- GLOBAL LOADOUT ---
+// --- INITIAL STATE ---
 let currentLoadout = {
     chassis: 'medium',
     leftArm: 'mg',
-    rightArm: 'mg',
+    rightArm: 'heavy',
     mod: 'speed',
     color: 0x00ff00,
     totalWeight: 0
 };
 
-// --- GAME LOGIC ---
+let activeArm = 'L';
+let mechHP = 100;
+let shieldHP = 100;
+let isShieldCooling = false;
+let canSwing = true;
+let isDeployed = false;
+let jumpReady = true;
+
+// --- PHASER ENGINE ---
 const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
-    physics: { default: 'arcade' },
-    scene: { create: create, update: update }
+    physics: { default: 'arcade', arcade: { debug: false } },
+    scene: { preload: preload, create: create, update: update }
 };
 
 const game = new Phaser.Game(config);
-let player, keys, isDeployed = false;
+let player, keys, bullets, enemies, dust;
+
+function preload() {
+    // Generate a simple white circle for particles
+    let graphics = this.make.graphics({x: 0, y: 0, add: false});
+    graphics.fillStyle(0xffffff, 1);
+    graphics.fillCircle(5, 5, 5);
+    graphics.generateTexture('dust', 10, 10);
+}
 
 function create() {
-    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
-    this.updateUI = () => {
-        let w = CHASSIS[currentLoadout.chassis].maxW;
-        let cur = WEAPONS[currentLoadout.leftArm].weight + WEAPONS[currentLoadout.rightArm].weight + CHASSIS[currentLoadout.chassis].weight + (currentLoadout.mod ? MODS[currentLoadout.mod].weight : 0);
-        currentLoadout.totalWeight = cur;
-        document.getElementById('weight-meter').innerText = `WEIGHT: ${cur} / ${w} TONS`;
-        document.getElementById('deploy-btn').disabled = cur > w;
-    };
-    this.updateUI();
+    const scene = this;
+    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,ONE,TWO');
+    bullets = this.physics.add.group();
+    enemies = this.physics.add.group();
+
+    // Weapon UI Slots
+    this.ui = this.add.container(window.innerWidth - 180, window.innerHeight - 100).setScrollFactor(0);
+    this.slotL = this.add.rectangle(0, 0, 70, 70, 0x222222).setStrokeStyle(2, 0x00ff00);
+    this.slotR = this.add.rectangle(80, 0, 70, 70, 0x222222).setStrokeStyle(2, 0x777777);
+    this.labelL = this.add.text(-25, -10, 'L', {fontSize:'20px'});
+    this.labelR = this.add.text(55, -10, 'R', {fontSize:'20px'});
+    this.ui.add([this.slotL, this.slotR, this.labelL, this.labelR]);
+    this.ui.setVisible(false);
+
+    // Mouse Controls
+    this.input.on('wheel', () => { activeArm = (activeArm === 'L') ? 'R' : 'L'; });
+    this.input.on('pointerdown', () => {
+        if (!isDeployed) return;
+        let weapon = (activeArm === 'L') ? currentLoadout.leftArm : currentLoadout.rightArm;
+        fireWeapon(scene, weapon);
+    });
+
+    updateGarageUI();
 }
 
 function deploy() {
-    document.getElementById('garage-menu').style.display = 'none';
     isDeployed = true;
-    
-    let scene = game.scene.scenes[0];
-    player = scene.add.container(400, 300);
-    
-    // Draw Chassis
+    document.getElementById('garage-menu').style.display = 'none';
+    const scene = game.scene.scenes[0];
+    scene.ui.setVisible(true);
+
+    // Build Mech
+    player = scene.add.container(window.innerWidth/2, window.innerHeight/2);
     let base = scene.add.rectangle(0, 0, 50, 50, currentLoadout.color).setStrokeStyle(2, 0xffffff);
-    
-    // Draw Arms
     let lArm = scene.add.rectangle(-35, 0, 20, 40, WEAPONS[currentLoadout.leftArm].color);
     let rArm = scene.add.rectangle(35, 0, 20, 40, WEAPONS[currentLoadout.rightArm].color);
     
-    player.add([base, lArm, rArm]);
+    // Bars
+    scene.hpBar = scene.add.rectangle(0, -60, 60, 6, 0x00ff00);
+    scene.shBar = scene.add.rectangle(0, -50, 60, 6, 0x00aaff);
+    
+    player.add([base, lArm, rArm, scene.hpBar, scene.shBar]);
     scene.physics.add.existing(player);
-    player.body.setCollideWorldBounds(true).setDrag(400);
+    player.body.setCollideWorldBounds(true).setDrag(500);
 }
 
 function update() {
     if (!isDeployed) return;
+    const scene = this;
 
-    let moveSpeed = CHASSIS[currentLoadout.chassis].speed;
-    if(currentLoadout.mod === 'speed') moveSpeed += MODS.speed.speedBoost;
-    moveSpeed -= (currentLoadout.totalWeight * 0.5);
+    // Movement
+    let speed = CHASSIS[currentLoadout.chassis].speed;
+    if(currentLoadout.mod === 'speed') speed += MODS.speed.boost;
+    speed -= (currentLoadout.totalWeight * 0.4);
 
-    if (keys.A.isDown) player.body.setAngularVelocity(-150);
-    else if (keys.D.isDown) player.body.setAngularVelocity(150);
+    if (keys.A.isDown) player.body.setAngularVelocity(-180);
+    else if (keys.D.isDown) player.body.setAngularVelocity(180);
     else player.body.setAngularVelocity(0);
 
-    if (keys.W.isDown) {
-        this.physics.velocityFromRotation(player.rotation, moveSpeed, player.body.velocity);
+    if (keys.W.isDown) scene.physics.velocityFromRotation(player.rotation, speed, player.body.velocity);
+    
+    // Jump Jets
+    if (Phaser.Input.Keyboard.JustDown(keys.SPACE) && currentLoadout.mod === 'jump' && jumpReady) {
+        jumpReady = false;
+        scene.physics.velocityFromRotation(player.rotation, speed * 3, player.body.velocity);
+        setTimeout(() => { jumpReady = true; }, 3000);
+    }
+
+    // Weapon Select
+    if (keys.ONE.isDown) activeArm = 'L';
+    if (keys.TWO.isDown) activeArm = 'R';
+    scene.slotL.setStrokeStyle(activeArm === 'L' ? 4 : 2, activeArm === 'L' ? 0x00ff00 : 0x777777);
+    scene.slotR.setStrokeStyle(activeArm === 'R' ? 4 : 2, activeArm === 'R' ? 0x00ff00 : 0x777777);
+
+    // Dust
+    if (player.body.speed > 50) {
+        let d = scene.add.image(player.x, player.y, 'dust').setAlpha(0.3);
+        scene.tweens.add({ targets: d, alpha: 0, duration: 400, onComplete: () => d.destroy() });
     }
 }
 
-// --- UI SETTERS ---
-function setChassis(type) { currentLoadout.chassis = type; game.scene.scenes[0].updateUI(); }
-function setWeapon(side, type) { 
-    if(side === 'L') currentLoadout.leftArm = type; 
-    else currentLoadout.rightArm = type;
-    game.scene.scenes[0].updateUI(); 
+function fireWeapon(scene, type) {
+    if (type === 'mg') {
+        let b = scene.add.circle(player.x, player.y, 4, 0xffff00);
+        scene.physics.add.existing(b);
+        scene.physics.velocityFromRotation(player.rotation, 700, b.body.velocity);
+    } else if (type === 'heavy') {
+        let b = scene.add.circle(player.x, player.y, 10, 0xffaa00);
+        scene.physics.add.existing(b);
+        scene.physics.velocityFromRotation(player.rotation, 400, b.body.velocity);
+    } else if (type === 'sword' && canSwing) {
+        canSwing = false;
+        let arm = activeArm === 'L' ? player.list[1] : player.list[2];
+        scene.tweens.add({ targets: arm, angle: 90, duration: 100, yoyo: true, onComplete: () => { canSwing = true; arm.angle = 0; }});
+    }
 }
-function setMod(type) { currentLoadout.mod = type; game.scene.scenes[0].updateUI(); }
-function setColor(color) { currentLoadout.color = color; }
+
+// UI Functions
+function updateGarageUI() {
+    let max = CHASSIS[currentLoadout.chassis].maxW;
+    let current = CHASSIS[currentLoadout.chassis].baseW + WEAPONS[currentLoadout.leftArm].weight + WEAPONS[currentLoadout.rightArm].weight + MODS[currentLoadout.mod].weight;
+    currentLoadout.totalWeight = current;
+    let meter = document.getElementById('weight-meter');
+    meter.innerText = `WEIGHT: ${current} / ${max} TONS`;
+    meter.className = current > max ? 'weight-danger' : 'weight-ok';
+    document.getElementById('deploy-btn').disabled = current > max;
+}
+
+function setChassis(val) { currentLoadout.chassis = val; updateGarageUI(); }
+function setWeapon(arm, val) { if(arm==='L') currentLoadout.leftArm = val; else currentLoadout.rightArm = val; updateGarageUI(); }
+function setMod(val) { currentLoadout.mod = val; updateGarageUI(); }
+function setColor(val) { currentLoadout.color = val; }
+
 </script>
 </body>
 </html>
