@@ -2,102 +2,151 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tech Warrior: Patch 1.1</title>
+    <title>Tech Warrior: Garage & Loadout</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-    <style> body { margin: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; } </style>
+    <style>
+        body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', Courier, monospace; overflow: hidden; }
+        #ui-layer { position: absolute; top: 10px; left: 10px; pointer-events: none; }
+        .stat-readout { background: rgba(0,20,0,0.8); padding: 10px; border: 1px solid #0f0; margin-bottom: 5px; pointer-events: auto; }
+        button { background: #050; color: #0f0; border: 1px solid #0f0; cursor: pointer; margin: 2px; padding: 5px; }
+        button:hover { background: #0f0; color: #000; }
+    </style>
 </head>
 <body>
+
+<div id="ui-layer">
+    <div class="stat-readout" id="garage-menu">
+        <h2>--- GARAGE ---</h2>
+        <div>CHASSIS: 
+            <button onclick="setChassis('light')">Light (75T)</button>
+            <button onclick="setChassis('medium')">Medium (125T)</button>
+            <button onclick="setChassis('heavy')">Heavy (200T)</button>
+        </div>
+        <div>LEFT ARM: 
+            <button onclick="setWeapon('L', 'mg')">MG</button>
+            <button onclick="setWeapon('L', 'heavy')">Heavy</button>
+            <button onclick="setWeapon('L', 'shield')">Shield</button>
+            <button onclick="setWeapon('L', 'sword')">Sword</button>
+        </div>
+        <div>RIGHT ARM: 
+            <button onclick="setWeapon('R', 'mg')">MG</button>
+            <button onclick="setWeapon('R', 'heavy')">Heavy</button>
+            <button onclick="setWeapon('R', 'shield')">Shield</button>
+            <button onclick="setWeapon('R', 'sword')">Sword</button>
+        </div>
+        <div>LEGS: 
+            <button onclick="setMod('speed')">Speed Mod</button>
+            <button onclick="setMod('jump')">Jump Jets</button>
+        </div>
+        <div>COLOR: 
+            <button onclick="setColor(0x00ff00)">Green</button>
+            <button onclick="setColor(0xff0000)">Red</button>
+            <button onclick="setColor(0x0000ff)">Blue</button>
+        </div>
+        <hr>
+        <div id="weight-meter">WEIGHT: 0 / 0</div>
+        <button id="deploy-btn" style="width:100%; font-weight:bold;" onclick="deploy()">DEPLOY UNIT</button>
+    </div>
+</div>
+
 <script>
+// --- DATA TABLES ---
+const WEAPONS = {
+    mg:     { name: 'Machine Gun', weight: 15, dmg: 5, color: 0xaaaaaa, type: 'range' },
+    heavy:  { name: 'Heavy Gun',   weight: 45, dmg: 20, color: 0x555555, type: 'range' },
+    shield: { name: 'Shield',      weight: 30, hp: 100, color: 0x00ffff, type: 'def' },
+    sword:  { name: 'Sword',       weight: 20, dmg: 30, color: 0xffffff, type: 'melee' }
+};
+
+const CHASSIS = {
+    light:  { name: 'Light',  maxW: 75,  speed: 300, color: 0x333333 },
+    medium: { name: 'Medium', maxW: 125, speed: 200, color: 0x444444 },
+    heavy:  { name: 'Heavy',  maxW: 200, speed: 120, color: 0x222222 }
+};
+
+const MODS = {
+    speed: { name: 'Speed Mod', weight: 10, speedBoost: 50 },
+    jump:  { name: 'Jump Jets', weight: 20, jump: true }
+};
+
+// --- GLOBAL LOADOUT ---
+let currentLoadout = {
+    chassis: 'medium',
+    leftArm: 'mg',
+    rightArm: 'mg',
+    mod: 'speed',
+    color: 0x00ff00,
+    totalWeight: 0
+};
+
+// --- GAME LOGIC ---
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    physics: { default: 'arcade', arcade: { debug: false } },
-    scene: { preload: preload, create: create, update: update }
+    width: window.innerWidth,
+    height: window.innerHeight,
+    physics: { default: 'arcade' },
+    scene: { create: create, update: update }
 };
 
 const game = new Phaser.Game(config);
-let player, keys, bullets, enemies;
-
-function preload() {}
+let player, keys, isDeployed = false;
 
 function create() {
-    // 1. Better Input (Adding WASD + Arrows)
-    keys = this.input.keyboard.addKeys('W,A,S,D,UP,LEFT,RIGHT,DOWN');
+    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
+    this.updateUI = () => {
+        let w = CHASSIS[currentLoadout.chassis].maxW;
+        let cur = WEAPONS[currentLoadout.leftArm].weight + WEAPONS[currentLoadout.rightArm].weight + CHASSIS[currentLoadout.chassis].weight + (currentLoadout.mod ? MODS[currentLoadout.mod].weight : 0);
+        currentLoadout.totalWeight = cur;
+        document.getElementById('weight-meter').innerText = `WEIGHT: ${cur} / ${w} TONS`;
+        document.getElementById('deploy-btn').disabled = cur > w;
+    };
+    this.updateUI();
+}
 
-    // 2. Player Mech
-    player = this.add.container(400, 300);
-    let body = this.add.rectangle(0, 0, 40, 40, 0x333333).setStrokeStyle(2, 0x00ff00);
-    let cannon = this.add.rectangle(20, 0, 30, 8, 0xaaaaaa);
-    player.add([body, cannon]);
+function deploy() {
+    document.getElementById('garage-menu').style.display = 'none';
+    isDeployed = true;
     
-    this.physics.add.existing(player);
-    player.body.setCollideWorldBounds(true);
+    let scene = game.scene.scenes[0];
+    player = scene.add.container(400, 300);
     
-    // FIX: Set Drag (Friction) so it stops when not pushing a key
-    player.body.setDrag(300); 
-    player.body.setAngularDrag(400);
-
-    // 3. Bullets (Simplified)
-    bullets = this.physics.add.group();
+    // Draw Chassis
+    let base = scene.add.rectangle(0, 0, 50, 50, currentLoadout.color).setStrokeStyle(2, 0xffffff);
     
-    // 4. Enemies
-    enemies = this.physics.add.group();
-    for(let i=0; i<5; i++) {
-        let enemy = this.add.rectangle(Phaser.Math.Between(100, 700), Phaser.Math.Between(100, 500), 30, 30, 0xff3333);
-        enemies.add(enemy);
-        enemy.body.setBounce(1).setCollideWorldBounds(true).setVelocity(50, 50);
-    }
-
-    this.input.on('pointerdown', () => fireBullet(this));
-    this.add.text(10, 10, 'WASD to Move | Click to Shoot', { color: '#00ff00', fontSize: '18px' });
+    // Draw Arms
+    let lArm = scene.add.rectangle(-35, 0, 20, 40, WEAPONS[currentLoadout.leftArm].color);
+    let rArm = scene.add.rectangle(35, 0, 20, 40, WEAPONS[currentLoadout.rightArm].color);
+    
+    player.add([base, lArm, rArm]);
+    scene.physics.add.existing(player);
+    player.body.setCollideWorldBounds(true).setDrag(400);
 }
 
 function update() {
-    // FIX: Movement Logic (Rotation)
-    if (keys.A.isDown || keys.LEFT.isDown) {
-        player.body.setAngularVelocity(-150);
-    } else if (keys.D.isDown || keys.RIGHT.isDown) {
-        player.body.setAngularVelocity(150);
-    } else {
-        player.body.setAngularVelocity(0);
+    if (!isDeployed) return;
+
+    let moveSpeed = CHASSIS[currentLoadout.chassis].speed;
+    if(currentLoadout.mod === 'speed') moveSpeed += MODS.speed.speedBoost;
+    moveSpeed -= (currentLoadout.totalWeight * 0.5);
+
+    if (keys.A.isDown) player.body.setAngularVelocity(-150);
+    else if (keys.D.isDown) player.body.setAngularVelocity(150);
+    else player.body.setAngularVelocity(0);
+
+    if (keys.W.isDown) {
+        this.physics.velocityFromRotation(player.rotation, moveSpeed, player.body.velocity);
     }
-
-    // FIX: Forward/Backward Movement
-    if (keys.W.isDown || keys.UP.isDown) {
-        this.physics.velocityFromRotation(player.rotation, 200, player.body.velocity);
-    } else if (keys.S.isDown || keys.DOWN.isDown) {
-        this.physics.velocityFromRotation(player.rotation, -100, player.body.velocity);
-    }
-
-    // FIX: Bullet Cleanup (Prevents freezing/lag)
-    bullets.children.each(bullet => {
-        if (bullet.x < 0 || bullet.x > 800 || bullet.y < 0 || bullet.y > 600) {
-            bullet.destroy();
-        }
-    });
-
-    // Collision Logic
-    this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
-        bullet.destroy();
-        enemy.destroy();
-        // Respawn enemy somewhere else to keep the game going
-        spawnEnemy(this);
-    });
 }
 
-function fireBullet(scene) {
-    let bullet = scene.add.rectangle(player.x, player.y, 10, 4, 0xffff00);
-    scene.physics.add.existing(bullet);
-    scene.physics.velocityFromRotation(player.rotation, 600, bullet.body.velocity);
-    bullets.add(bullet);
+// --- UI SETTERS ---
+function setChassis(type) { currentLoadout.chassis = type; game.scene.scenes[0].updateUI(); }
+function setWeapon(side, type) { 
+    if(side === 'L') currentLoadout.leftArm = type; 
+    else currentLoadout.rightArm = type;
+    game.scene.scenes[0].updateUI(); 
 }
-
-function spawnEnemy(scene) {
-    let enemy = scene.add.rectangle(Phaser.Math.Between(50, 750), Phaser.Math.Between(50, 550), 30, 30, 0xff3333);
-    enemies.add(enemy);
-    enemy.body.setBounce(1).setCollideWorldBounds(true).setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(-100, 100));
-}
+function setMod(type) { currentLoadout.mod = type; game.scene.scenes[0].updateUI(); }
+function setColor(color) { currentLoadout.color = color; }
 </script>
 </body>
 </html>
