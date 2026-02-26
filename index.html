@@ -119,7 +119,7 @@ const CHASSIS = {
 };
 
 let loadout = { chassis: 'medium', L: 'mg', R: 'gl', mod: 'none', color: 0x00ff00 };
-let player, torso, cockpit, legMarker, swordSlash, keys, bullets, enemies, shieldGraphic;
+let player, torso, legMarker, swordSlash, keys, bullets, enemies, shieldGraphic;
 let reloadBar, reloadBg, jumpBar, jumpBg, isDeployed = false, activeArm = 'L', reloadL = 0, reloadR = 0, lastJumpTime = 0, lastDamageTime = 0, isJumping = false, smokeParticles;
 
 const config = {
@@ -191,8 +191,8 @@ function deployMech() {
     player.shield = 100;
 
     legMarker = scene.add.rectangle(0, 0, 6, 50, 0xff6600).setDepth(6).setScale(s.scale);
-    torso = scene.add.rectangle(0, 0, 55, 55, loadout.color).setStrokeStyle(2, 0xffffff).setDepth(10).setScale(s.scale);
-    cockpit = scene.add.rectangle(0, 0, 20, 10, 0xff6600).setDepth(12);
+    torso = buildShapeMech(scene, loadout.chassis, loadout.color);
+    torso.setDepth(10);
     
     swordSlash = scene.add.arc(0, 0, 60, 0, 90, false, 0xffffff, 0.8).setVisible(false).setDepth(15);
     reloadBg = scene.add.rectangle(0, 0, 50, 6, 0x333333).setDepth(20).setVisible(false);
@@ -204,6 +204,39 @@ function deployMech() {
 
     isDeployed = true;
     updateHUD();
+}
+
+function buildShapeMech(scene, type, color) {
+    let container = scene.add.container(0, 0);
+    let s = CHASSIS[type].scale;
+
+    if (type === 'heavy') {
+        // HEAVY: A wide, tank-like brutalist design
+        let shoulders = scene.add.rectangle(0, 0, 100, 40, 0x333333).setStrokeStyle(2, 0xffffff);
+        let core = scene.add.rectangle(0, 0, 60, 70, color).setStrokeStyle(2, 0xffffff);
+        let cockpit = scene.add.rectangle(20, 0, 15, 30, 0x00ffff).setStrokeStyle(1, 0xffffff);
+        let vents = scene.add.rectangle(-20, 0, 10, 40, 0x222222); 
+        container.add([shoulders, core, vents, cockpit]);
+    } 
+    else if (type === 'light') {
+        // LIGHT: Sleek, aerodynamic, "V" shaped
+        let shoulders = scene.add.rectangle(0, 0, 15, 60, 0x444444).setStrokeStyle(2, 0xffffff);
+        let core = scene.add.rectangle(10, 0, 20, 10, color).setStrokeStyle(2, 0xffffff);
+        let cockpit = scene.add.rectangle(22, 0, 15, 20, 0x0F61A1).setStrokeStyle(1, 0xffffff);
+        let engine = scene.add.rectangle(-15, 0, 15, 25, 0x222222);
+        container.add([shoulders, core, cockpit]);
+    } 
+    else {
+        // MEDIUM: The Classic balanced silhouette
+        let shoulders = scene.add.rectangle(0, 0, 35, 80, 0x444444).setStrokeStyle(2, 0xffffff);
+        let core = scene.add.rectangle(10, 0, 40, 30, color).setStrokeStyle(2, 0xffffff);
+        let cockpit = scene.add.rectangle(22, 0, 15, 20, 0x0F61A1).setStrokeStyle(1, 0xffffff);
+        let engine = scene.add.rectangle(-15, 0, 15, 25, 0x222222);
+        container.add([shoulders, core, cockpit]);
+    }
+
+    container.setScale(s);
+    return container;
 }
 
 function fire(scene) {
@@ -331,18 +364,47 @@ function updateBars() {
 function update(time) {
     if (!isDeployed) return;
 
-    // Shield Regen Logic
+    // 1. Shield Regen Logic
     if (time > lastDamageTime + 3000 && player.shield < 100) {
         player.shield += 0.2;
         updateBars();
     }
 
+    // 2. Jump Jet Activation & HUD
     let s = CHASSIS[loadout.chassis].spd;
-    if (keys.SPACE.isDown && loadout.mod === 'jump' && !isJumping && time > lastJumpTime + 2000) {
-        isJumping = true; lastJumpTime = time;
+    let jumpCooldown = 2000;
+
+    if (keys.SPACE.isDown && loadout.mod === 'jump' && !isJumping && time > lastJumpTime + jumpCooldown) {
+        isJumping = true; 
+        lastJumpTime = time;
         this.physics.velocityFromRotation(player.rotation, 600, player.body.velocity);
-        this.tweens.add({ targets: [player, torso, cockpit, legMarker], scale: '+=0.2', duration: 200, yoyo: true, onComplete: () => isJumping = false });
+        
+        // Tween the entire torso container for the "jump" look
+        this.tweens.add({ 
+            targets: [player, torso], 
+            scale: '+=0.2', 
+            duration: 200, 
+            yoyo: true, 
+            onComplete: () => isJumping = false 
+        });
     }
+
+    // Update Jump HUD Position & Progress
+    if (loadout.mod === 'jump') {
+        let elapsed = time - lastJumpTime;
+        if (elapsed < jumpCooldown) {
+            jumpBg.setVisible(true).setPosition(player.x, player.y + 45);
+            jumpBar.setVisible(true).setPosition(player.x, player.y + 45);
+            let progress = Math.min(1, elapsed / jumpCooldown);
+            jumpBar.width = progress * 50;
+            jumpBar.setFillStyle(progress === 1 ? 0x00ff00 : 0xff6600);
+        } else {
+            jumpBg.setVisible(false);
+            jumpBar.setVisible(false);
+        }
+    }
+
+    // 3. Movement Logic
     if (!isJumping) {
         player.body.setVelocity(0);
         if (keys.W.isDown) this.physics.velocityFromRotation(player.rotation, s, player.body.velocity);
@@ -351,14 +413,26 @@ function update(time) {
         else if (keys.D.isDown) player.body.setAngularVelocity(200);
         else player.body.setAngularVelocity(0);
     }
+
+    // 4. Torso & Leg Sync
     torso.setPosition(player.x, player.y);
     let angle = Phaser.Math.Angle.Between(player.x, player.y, this.input.activePointer.worldX, this.input.activePointer.worldY);
     torso.setRotation(angle);
-    legMarker.setPosition(player.x + Math.cos(player.rotation)*(35*player.scale), player.y + Math.sin(player.rotation)*(35*player.scale)).setRotation(player.rotation);
-    cockpit.setPosition(player.x + Math.cos(angle)*(25*player.scale), player.y + Math.sin(angle)*(25*player.scale)).setRotation(angle);
-    
+
+    // Leg marker shows movement direction vs torso aiming direction
+    legMarker.setPosition(
+        player.x + Math.cos(player.rotation) * (35 * player.scale), 
+        player.y + Math.sin(player.rotation) * (35 * player.scale)
+    ).setRotation(player.rotation);
+
+    // 5. Weapon FX
     let weapon = WEAPONS[activeArm === 'L' ? loadout.L : loadout.R];
     shieldGraphic.setPosition(player.x, player.y).setRotation(angle).setVisible(weapon.isShield && !isJumping);
+
+    // 6. Enemy UI Sync
+    enemies.children.each(e => { 
+        if(e.bar) e.bar.setPosition(e.x, e.y - 35); 
+    });
 }
 
 function updateHUD() {
