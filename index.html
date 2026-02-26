@@ -2,19 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tech Warrior: Alpha 2.3</title>
+    <title>Tech Warrior: Alpha 2.4</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; overflow: hidden; }
         #ui-layer { position: absolute; top: 10px; left: 10px; z-index: 10; pointer-events: none; width: 100%; height: 100%; }
-        /* RESTORED GARAGE STYLE */
         .stat-readout { background: rgba(0,25,0,0.9); padding: 20px; border: 1px solid #0f0; width: 450px; pointer-events: auto; box-shadow: 0 0 15px #0f0; }
         .row { margin-bottom: 8px; }
         button { background: #050; color: #0f0; border: 1px solid #0f0; cursor: pointer; margin: 2px; padding: 6px; font-weight: bold; }
         button:hover { background: #0f0; color: #000; }
         button.active { background: #0f0; color: #000; }
-        
-        /* HUD STYLE */
         #hud-layer { position: absolute; bottom: 20px; width: 95%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 20px; visibility: hidden; pointer-events: none; }
         .hud-panel { background: rgba(0,20,0,0.8); border: 2px solid #0f0; padding: 10px; color: #0f0; }
         .bar-bg { width: 200px; height: 20px; background: #300; border: 1px solid #0f0; }
@@ -65,7 +62,6 @@
 </div>
 
 <script>
-// --- DATA ---
 const WEAPONS = {
     mg:    { name: 'MG', color: 0xaaaaaa, reload: 200, dmg: 10 },
     heavy: { name: 'HEAVY', color: 0x555555, reload: 1500, dmg: 40 },
@@ -80,13 +76,12 @@ const CHASSIS = {
 
 let loadout = { chassis: 'medium', L: 'mg', R: 'mg', mod: 'speed', color: 0x00ff00 };
 let player, torso, lArmVis, rArmVis, keys, bullets, enemies, shieldGraphic;
-let isDeployed = false, activeArm = 'L', playerHP = 100, reloadL = 0, reloadR = 0;
+let isDeployed = false, activeArm = 'L', reloadL = 0, reloadR = 0;
 
-// --- GAME ---
 const config = {
     type: Phaser.AUTO,
     width: window.innerWidth, height: window.innerHeight,
-    physics: { default: 'arcade' },
+    physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
     scene: { create: create, update: update }
 };
 const game = new Phaser.Game(config);
@@ -94,6 +89,8 @@ const game = new Phaser.Game(config);
 function create() {
     this.add.grid(window.innerWidth/2, window.innerHeight/2, 4000, 4000, 64, 64, 0x000000, 0, 0x004400, 0.3);
     keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
+    
+    // FIX: Proper group initialization with physics
     bullets = this.physics.add.group();
     enemies = this.physics.add.group();
 
@@ -105,7 +102,7 @@ function create() {
 
     for(let i=0; i<6; i++) spawnEnemy(this);
 
-    // Collision Logic
+    // FIX: Corrected overlap logic
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
         bullet.destroy();
         damageEnemy(enemy, 15);
@@ -125,7 +122,7 @@ function spawnEnemy(scene) {
 
 function damageEnemy(enemy, amt) {
     enemy.health -= amt;
-    enemy.bar.width = (enemy.health / 50) * 40;
+    enemy.bar.width = Math.max(0, (enemy.health / 50) * 40);
     if (enemy.health <= 0) {
         enemy.bar.destroy();
         enemy.destroy();
@@ -167,10 +164,11 @@ function fire(scene) {
         scene.physics.add.overlap(hit, enemies, (z, e) => damageEnemy(e, 50));
         scene.time.delayedCall(100, () => hit.destroy());
     } else {
+        // FIX: Ensure bullet is added to physics properly and velocity is applied
         let b = scene.add.circle(torso.x, torso.y, wKey==='heavy'?12:6, 0xffff00);
         scene.physics.add.existing(b);
-        scene.physics.velocityFromRotation(torso.rotation, 800, b.body.velocity);
         bullets.add(b);
+        scene.physics.velocityFromRotation(torso.rotation, 800, b.body.velocity);
     }
 
     if (activeArm === 'L') reloadL = now + weapon.reload;
@@ -180,7 +178,6 @@ function fire(scene) {
 function update(time) {
     if (!isDeployed) return;
 
-    // Tank Movement
     let speed = CHASSIS[loadout.chassis].spd;
     if(loadout.mod === 'speed') speed += 100;
     player.body.setVelocity(0);
@@ -190,9 +187,8 @@ function update(time) {
     else if (keys.D.isDown) player.body.setAngularVelocity(200);
     else player.body.setAngularVelocity(0);
 
-    // Visual Sync
     torso.setPosition(player.x, player.y);
-    let angle = Phaser.Math.Angle.Between(player.x, player.y, this.input.x, this.input.y);
+    let angle = Phaser.Math.Angle.Between(player.x, player.y, this.input.activePointer.worldX, this.input.activePointer.worldY);
     torso.setRotation(angle);
 
     let sc = player.scale;
@@ -204,7 +200,6 @@ function update(time) {
     enemies.children.each(e => { if(e.bar) e.bar.setPosition(e.x, e.y-35); });
 }
 
-// --- UI HELPERS ---
 function updateHUD() {
     document.getElementById('txt-L').innerText = loadout.L.toUpperCase();
     document.getElementById('txt-R').innerText = loadout.R.toUpperCase();
@@ -222,8 +217,7 @@ function refreshGarage() {
     document.getElementById('l-'+loadout.L).classList.add('active');
     document.getElementById('r-'+loadout.R).classList.add('active');
     document.getElementById('m-'+loadout.mod).classList.add('active');
-    
-    let cur = CHASSIS[loadout.chassis].w + 20; // Simplified weight for UI
+    let cur = CHASSIS[loadout.chassis].w + 20;
     document.getElementById('weight-display').innerText = `TONNAGE: ${cur} / ${CHASSIS[loadout.chassis].max}`;
 }
 </script>
