@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tech Warrior: Alpha 1.8</title>
+    <title>Tech Warrior: Alpha 1.9</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; overflow: hidden; }
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; display: flex; justify-content: center; align-items: center; }
         .stat-readout { background: rgba(0,10,0,0.95); padding: 25px; border: 2px solid #0f0; pointer-events: auto; width: 450px; box-shadow: 0 0 30px rgba(0,255,0,0.2); }
-        .row { margin-bottom: 12px; display: flex; align-items: center; flex-wrap: wrap; }
-        .label { width: 100px; font-weight: bold; font-size: 11px; color: #aaa; }
+        .row { margin-bottom: 12px; display: flex; align-items: center; flex-wrap: wrap; border-bottom: 1px solid #020; padding-bottom: 5px; }
+        .label { width: 100px; font-weight: bold; font-size: 11px; color: #0f0; }
         button { background: #020; color: #0f0; border: 1px solid #0f0; cursor: pointer; padding: 6px 10px; margin: 2px; font-size: 11px; }
         button.selected { background: #0f0; color: #000; font-weight: bold; }
         #weight-meter { margin: 15px 0; font-weight: bold; font-size: 18px; border-top: 1px solid #333; padding-top: 10px; text-align: center; }
@@ -20,10 +20,10 @@
 
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu">
-        <h2 style="text-align:center; color:#0f0;">TECH WARRIOR OS v1.8</h2>
+        <h2 style="text-align:center; color:#0f0;">--- TECH WARRIOR GARAGE ---</h2>
         <div id="controls-root"></div>
         <div id="weight-meter">SYSTEM IDLE</div>
-        <button id="deploy-btn" style="width:100%; font-size: 20px; height: 50px; background:#0f0; color:#000;" onclick="handleDeployClick()">INITIALIZE DEPLOYMENT</button>
+        <button id="deploy-btn" style="width:100%; font-size: 20px; height: 50px; background:#0f0; color:#000;" onclick="handleDeployClick()">DEPLOY MECH</button>
     </div>
 </div>
 
@@ -36,64 +36,82 @@ const WEAPONS = {
     sword:  { name: 'Sword', weight: 20, color: 0xffffff, isMelee: true }
 };
 const CHASSIS = {
-    light:  { name: 'Light', maxW: 75, speed: 400, baseW: 10, scale: 0.7 },
-    medium: { name: 'Medium', maxW: 125, speed: 300, baseW: 25, scale: 1.0 },
-    heavy:  { name: 'Heavy', maxW: 210, speed: 200, baseW: 50, scale: 1.4 }
+    light:  { name: 'Light', maxW: 75, speed: 450, baseW: 10, scale: 0.8 },
+    medium: { name: 'Medium', maxW: 125, speed: 320, baseW: 25, scale: 1.1 },
+    heavy:  { name: 'Heavy', maxW: 210, speed: 220, baseW: 50, scale: 1.6 }
 };
 const MODS = {
-    speed: { name: 'Speed', weight: 10, boost: 100 },
+    speed: { name: 'Speed', weight: 10, boost: 120 },
     jump:  { name: 'Jump', weight: 20, jump: true }
 };
-const COLORS = [{name:'Green', v:0x00ff00}, {name:'Red', v:0xff0000}, {name:'Blue', v:0x0088ff}];
+const COLORS = [{name:'Green', v:0x00ff00}, {name:'Red', v:0xff0000}, {name:'Blue', v:0x0088ff}, {name:'Yellow', v:0xffff00}];
 
 let loadout = { chassis: 'medium', L: 'mg', R: 'heavy', mod: 'speed', color: 0x00ff00 };
 let activeArm = 'L';
 let reloadL = 0, reloadR = 0, jumpReady = true;
 
-// --- PHASER ENGINE ---
 class MainScene extends Phaser.Scene {
     constructor() { super('MainScene'); }
 
     create() {
-        // Setup Grid Background so we can see movement
-        this.add.grid(1500, 1500, 3000, 3000, 64, 64, 0x000000).setOutlineStyle(0x002200);
-        this.physics.world.setBounds(0, 0, 3000, 3000);
-
+        // Fixed Grid - Ensures you have a sense of movement without camera lock
+        this.add.grid(window.innerWidth/2, window.innerHeight/2, 2000, 2000, 64, 64, 0x000000).setOutlineStyle(0x004400).setAlpha(0.5);
+        
         this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,ONE,TWO');
         this.bullets = this.physics.add.group();
-        
-        // HUD (Created hidden)
-        this.hud = this.add.container(0, 0).setScrollFactor(0).setDepth(100).setVisible(false);
+        this.enemies = this.physics.add.group();
+
+        // HUD - Fixed to screen coordinates
+        this.hud = this.add.container(0, 0).setDepth(100).setVisible(false);
         this.hpBar = this.add.rectangle(150, window.innerHeight - 60, 200, 20, 0x00ff00);
         this.shBar = this.add.rectangle(150, window.innerHeight - 35, 200, 10, 0x00aaff);
+        
         this.slotL = this.add.rectangle(window.innerWidth - 140, window.innerHeight - 70, 60, 60, 0x111111).setStrokeStyle(2, 0x00ff00);
         this.slotR = this.add.rectangle(window.innerWidth - 70, window.innerHeight - 70, 60, 60, 0x111111).setStrokeStyle(2, 0x444444);
-        this.reL = this.add.rectangle(window.innerWidth - 140, window.innerHeight - 70, 60, 0, 0xff0000, 0.4).setOrigin(0.5, 1);
-        this.reR = this.add.rectangle(window.innerWidth - 70, window.innerHeight - 70, 60, 0, 0xff0000, 0.4).setOrigin(0.5, 1);
+        
+        // Progress bars for reloads
+        this.reL = this.add.rectangle(window.innerWidth - 140, window.innerHeight - 40, 60, 5, 0xff0000).setOrigin(0.5, 1);
+        this.reR = this.add.rectangle(window.innerWidth - 70, window.innerHeight - 40, 60, 5, 0xff0000).setOrigin(0.5, 1);
+        
         this.hud.add([this.hpBar, this.shBar, this.slotL, this.slotR, this.reL, this.reR]);
 
         this.input.on('pointerdown', () => this.fire());
-        this.input.on('wheel', () => { activeArm = (activeArm === 'L') ? 'R' : 'L'; });
+        this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY) => {
+            activeArm = (activeArm === 'L') ? 'R' : 'L';
+        });
         
         this.isReady = true; 
+        for(let i=0; i<5; i++) this.spawnEnemy();
+    }
+
+    spawnEnemy() {
+        let e = this.add.rectangle(Phaser.Math.Between(100, 700), Phaser.Math.Between(100, 500), 50, 50, 0xff0000).setStrokeStyle(2, 0xffffff);
+        this.enemies.add(e);
+        this.physics.add.existing(e);
+        e.body.setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(-100, 100)).setBounce(1).setCollideWorldBounds(true);
     }
 
     spawnPlayer() {
-        const scale = CHASSIS[loadout.chassis].scale;
-        this.legs = this.add.rectangle(1500, 1500, 50, 50, 0x222222).setStrokeStyle(2, 0xffffff);
-        this.physics.add.existing(this.legs);
-        this.legs.setScale(scale);
+        const sc = CHASSIS[loadout.chassis].scale;
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
 
-        this.torso = this.add.container(1500, 1500);
+        // Base Legs
+        this.legs = this.add.rectangle(centerX, centerY, 50, 50, 0x222222).setStrokeStyle(2, 0xffffff);
+        this.physics.add.existing(this.legs);
+        this.legs.setScale(sc);
+        this.legs.body.setCollideWorldBounds(true);
+
+        // Torso Container
+        this.torso = this.add.container(centerX, centerY);
         let body = this.add.rectangle(0, 0, 55, 55, loadout.color).setStrokeStyle(2, 0xffffff);
-        let lArm = this.add.rectangle(-40, 0, 25, 45, WEAPONS[loadout.L].color);
-        let rArm = scene.add.rectangle(40, 0, 25, 45, WEAPONS[loadout.R].color);
-        this.shVis = this.add.arc(0, 0, 70, 330, 30, false, 0x00ffff, 0.3).setStrokeStyle(3, 0x00ffff);
+        let lArm = this.add.rectangle(-40, 0, 20, 40, WEAPONS[loadout.L].color);
+        let rArm = this.add.rectangle(40, 0, 20, 40, WEAPONS[loadout.R].color);
+        this.shVis = this.add.arc(0, 0, 70, 330, 30, false, 0x00ffff, 0.3).setStrokeStyle(3, 0x00ffff).setVisible(false);
         
         this.torso.add([body, lArm, rArm, this.shVis]);
-        this.torso.setScale(scale);
+        this.torso.setScale(sc);
 
-        this.cameras.main.startFollow(this.legs, true, 0.1, 0.1);
         this.hud.setVisible(true);
         this.deployed = true;
     }
@@ -117,59 +135,70 @@ class MainScene extends Phaser.Scene {
     update(time) {
         if (!this.deployed) return;
 
-        this.torso.setPosition(this.legs.x, this.legs.y);
-        let angle = Phaser.Math.Angle.Between(this.torso.x, this.torso.y, this.input.activePointer.worldX + this.cameras.main.scrollX, this.input.activePointer.worldY + this.cameras.main.scrollY);
+        // Sync Torso to Legs
+        this.torso.x = this.legs.x;
+        this.torso.y = this.legs.y;
+
+        // Torso Rotation to Mouse
+        let angle = Phaser.Math.Angle.Between(this.torso.x, this.torso.y, this.input.x, this.input.y);
         this.torso.setRotation(angle);
 
-        let speed = CHASSIS[loadout.chassis].speed + (loadout.mod === 'speed' ? 100 : 0);
+        // Movement Math
+        let speed = CHASSIS[loadout.chassis].speed + (loadout.mod === 'speed' ? MODS.speed.boost : 0);
         this.legs.body.setVelocity(0);
+
         if (this.keys.W.isDown) this.physics.velocityFromRotation(this.legs.rotation, speed, this.legs.body.velocity);
         if (this.keys.S.isDown) this.physics.velocityFromRotation(this.legs.rotation, -speed/2, this.legs.body.velocity);
         if (this.keys.A.isDown) this.legs.setAngularVelocity(-200);
         else if (this.keys.D.isDown) this.legs.setAngularVelocity(200);
         else this.legs.setAngularVelocity(0);
 
-        // Jump Jet
+        // Jump Jet (Dash)
         if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) && loadout.mod === 'jump' && jumpReady) {
             jumpReady = false;
-            this.physics.velocityFromRotation(this.legs.rotation, 1500, this.legs.body.velocity);
-            this.time.delayedCall(3000, () => { jumpReady = true; });
+            this.physics.velocityFromRotation(this.legs.rotation, 1200, this.legs.body.velocity);
+            this.time.delayedCall(2000, () => { jumpReady = true; });
         }
 
-        // HUD
-        this.reL.height = Math.max(0, ((reloadL - time) / WEAPONS[loadout.L].reload) * 60 || 0);
-        this.reR.height = Math.max(0, ((reloadR - time) / WEAPONS[loadout.R].reload) * 60 || 0);
+        // HUD Highlights & Shield
         this.slotL.setStrokeStyle(activeArm === 'L' ? 4 : 1, 0x00ff00);
         this.slotR.setStrokeStyle(activeArm === 'R' ? 4 : 1, 0x00ff00);
-        this.shVis.setVisible(WEAPONS[activeArm === 'L' ? loadout.L : loadout.R].isShield);
+        
+        let activeW = (activeArm === 'L') ? loadout.L : loadout.R;
+        this.shVis.setVisible(WEAPONS[activeW].isShield);
+
+        // Reload Bars
+        this.reL.width = Math.max(0, ((reloadL - time) / WEAPONS[loadout.L].reload) * 60 || 0);
+        this.reR.width = Math.max(0, ((reloadR - time) / WEAPONS[loadout.R].reload) * 60 || 0);
     }
 }
 
-// --- GARAGE ENGINE ---
+// --- UI GENERATOR ---
 function buildMenu() {
     const root = document.getElementById('controls-root');
     root.innerHTML = '';
-    const categories = [
-        { lab: 'CHASSIS', key: 'chassis', data: CHASSIS },
-        { lab: 'LEFT ARM', key: 'L', data: WEAPONS },
-        { lab: 'RIGHT ARM', key: 'R', data: WEAPONS },
-        { lab: 'LEG MODS', key: 'mod', data: MODS }
+    const sections = [
+        { label: 'CHASSIS', key: 'chassis', data: CHASSIS },
+        { label: 'LEFT ARM', key: 'L', data: WEAPONS },
+        { label: 'RIGHT ARM', key: 'R', data: WEAPONS },
+        { label: 'LEG MODS', key: 'mod', data: MODS }
     ];
-    categories.forEach(cat => {
-        let row = document.createElement('div'); row.className = 'row';
-        row.innerHTML = `<div class="label">${cat.lab}</div>`;
-        Object.keys(cat.data).forEach(k => {
+
+    sections.forEach(s => {
+        let div = document.createElement('div'); div.className = 'row';
+        div.innerHTML = `<div class="label">${s.label}:</div>`;
+        Object.keys(s.data).forEach(k => {
             let b = document.createElement('button');
-            b.innerText = cat.data[k].name || k.toUpperCase();
-            if(loadout[cat.key] === k) b.className = 'selected';
-            b.onclick = () => { loadout[cat.key] = k; buildMenu(); };
-            row.appendChild(b);
+            b.innerText = s.data[k].name || k.toUpperCase();
+            if(loadout[s.key] === k) b.className = 'selected';
+            b.onclick = () => { loadout[s.key] = k; buildMenu(); };
+            div.appendChild(b);
         });
-        root.appendChild(row);
+        root.appendChild(div);
     });
-    // Color Row
+
     let crow = document.createElement('div'); crow.className = 'row';
-    crow.innerHTML = `<div class="label">COLOR</div>`;
+    crow.innerHTML = `<div class="label">HULL COLOR:</div>`;
     COLORS.forEach(c => {
         let b = document.createElement('button'); b.innerText = c.name;
         if(loadout.color === c.v) b.className = 'selected';
