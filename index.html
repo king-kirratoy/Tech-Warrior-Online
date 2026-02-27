@@ -26,16 +26,28 @@
         }
         
         /* Modernized Garage Menu */
-        .stat-readout { 
-            background: rgba(12, 16, 20, 0.95); /* Semi-transparent blue-gray */
-            padding: 25px; 
-            border: 1px solid rgba(0, 255, 0, 0.5); /* Subtle neon border */
-            width: 750px; 
-            pointer-events: auto; 
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.15); /* Soft holographic glow */
-            margin: 0; 
-            border-radius: 10px;
-        }
+.stat-readout { 
+    /* 1. Dimensions and Spacing */
+    width: 950px; 
+    padding: 25px; 
+    border-radius: 10px;
+    margin: 0;
+    
+    /* 2. Positioning and Interactivity */
+    position: relative;
+    overflow: hidden;
+    pointer-events: auto; 
+
+    /* 3. The Visuals (Combining everything into one background block) */
+    background: linear-gradient(rgba(12, 16, 20, 0.85), rgba(12, 16, 20, 0.85)), 
+                url('assets/hangar-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    
+    /* 4. Borders and Glow */
+    border: 1px solid rgba(0, 255, 0, 0.4);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
 
 /* --- MODERNIZED AC6 DATA CELLS --- */
 .row { 
