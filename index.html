@@ -55,36 +55,48 @@
 <body>
 
 <div id="ui-layer">
-    <div class="stat-readout" id="garage-menu">
+    <div class="stat-readout" id="garage-menu" style="width: 750px;">
         <h2 style="text-align:center; margin-top:0;">--- MECH HANGAR ---</h2>
-        <div class="row">CHASSIS: 
-            <button id="c-light" onclick="setChassis('light')">Light</button>
-            <button id="c-medium" onclick="setChassis('medium')" class="active">Medium</button>
-            <button id="c-heavy" onclick="setChassis('heavy')">Heavy</button>
+        
+        <div style="display: flex; gap: 20px; align-items: flex-start;">
+            
+            <div style="flex: 1;">
+                <div class="row">CHASSIS: 
+                    <button id="c-light" onclick="setChassis('light')">Light</button>
+                    <button id="c-medium" onclick="setChassis('medium')" class="active">Medium</button>
+                    <button id="c-heavy" onclick="setChassis('heavy')">Heavy</button>
+                </div>
+                <div class="row">LEFT ARM: 
+                    <button id="l-mg" onclick="setWeapon('L','mg')" class="active">MG</button>
+                    <button id="l-heavy" onclick="setWeapon('L','heavy')">HVY</button>
+                    <button id="l-sword" onclick="setWeapon('L','sword')">SWRD</button>
+                </div>
+                <div class="row">RIGHT ARM: 
+                    <button id="r-shield" onclick="setWeapon('R','shield')">SHLD</button>
+                    <button id="r-gl" onclick="setWeapon('R','gl')" class="active">GL</button>
+                </div>
+                <div class="row">SYSTEM MOD: 
+                    <button id="m-none" onclick="setMod('none')" class="active">NONE</button>
+                    <button id="m-jump" onclick="setMod('jump')">JUMP JETS</button>
+                </div>
+                <div class="row">COLOR: 
+                    <div id="col-00ff00" class="color-btn active" style="background:#00ff00" onclick="setColor(0x00ff00)"></div>
+                    <div id="col-0088ff" class="color-btn" style="background:#0088ff" onclick="setColor(0x0088ff)"></div>
+                    <div id="col-ff3300" class="color-btn" style="background:#ff3300" onclick="setColor(0xff3300)"></div>
+                    <div id="col-ffff00" class="color-btn" style="background:#ffff00" onclick="setColor(0xffff00)"></div>
+                </div>
+            </div>
+
+            <div id="preview-container" style="width: 280px; height: 180px; border: 1px solid #0f0; background: rgba(0,20,0,0.5); display: flex; justify-content: center; align-items: center;">
+                <img id="preview-img" src="assets/medium-mech.png" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 0 5px #0f0);">
+            </div>
         </div>
-        <div class="row">LEFT ARM: 
-            <button id="l-mg" onclick="setWeapon('L','mg')" class="active">MG</button>
-            <button id="l-heavy" onclick="setWeapon('L','heavy')">HVY</button>
-            <button id="l-sword" onclick="setWeapon('L','sword')">SWRD</button>
-        </div>
-        <div class="row">RIGHT ARM: 
-            <button id="r-shield" onclick="setWeapon('R','shield')">SHLD</button>
-            <button id="r-gl" onclick="setWeapon('R','gl')" class="active">GL</button>
-        </div>
-        <div class="row">SYSTEM MOD: 
-            <button id="m-none" onclick="setMod('none')" class="active">NONE</button>
-            <button id="m-jump" onclick="setMod('jump')">JUMP JETS</button>
-        </div>
-        <div class="row">COLOR: 
-            <div id="col-00ff00" class="color-btn active" style="background:#00ff00" onclick="setColor(0x00ff00)"></div>
-            <div id="col-0088ff" class="color-btn" style="background:#0088ff" onclick="setColor(0x0088ff)"></div>
-            <div id="col-ff3300" class="color-btn" style="background:#ff3300" onclick="setColor(0xff3300)"></div>
-            <div id="col-ffff00" class="color-btn" style="background:#ffff00" onclick="setColor(0xffff00)"></div>
-        </div>
+
         <hr style="border:0; border-top:1px solid #0f0; margin:10px 0;">
-        <div id="weight-display" style="text-align:center; font-weight:bold;">TONNAGE: 125 / 150</div>
+        <div id="weight-display" style="text-align:center; font-weight:bold;">WEIGHT: 125 / 150</div>
         <button id="deploy-btn" style="width:100%; font-size: 18px; margin-top:10px;" onclick="deployMech()">DEPLOY UNIT</button>
     </div>
+</div>
 
     <div id="hud-container">
         <div class="console-frame">
@@ -450,17 +462,42 @@ function setMod(t) { loadout.mod = t; refreshGarage(); }
 function setColor(c) { loadout.color = c; refreshGarage(); }
 
 function refreshGarage() {
+    // 1. Clear all active states
     document.querySelectorAll('button, .color-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('c-'+loadout.chassis).classList.add('active');
-    document.getElementById('l-'+loadout.L).classList.add('active');
-    document.getElementById('r-'+loadout.R).classList.add('active');
-    document.getElementById('m-'+loadout.mod).classList.add('active');
-    let cid = "col-" + loadout.color.toString(16).padStart(6, '0');
-    if(document.getElementById(cid)) document.getElementById(cid).classList.add('active');
+
+    // 2. Highlight selected buttons
+    const buttons = [
+        'c-' + loadout.chassis,
+        'l-' + loadout.L,
+        'r-' + loadout.R,
+        'm-' + loadout.mod
+    ];
+    buttons.forEach(id => {
+        let el = document.getElementById(id);
+        if (el) el.classList.add('active');
+    });
+
+    // 3. Update the Preview Image
+    const previewImg = document.getElementById('preview-img');
+    if (previewImg) {
+        // Ensure this matches your GitHub filename exactly!
+        previewImg.src = `assets/${loadout.chassis}-mech.png`;
+    }
+
+    // 4. Color Selection Highlight
+    let cid = "col-" + loadout.color.toString(16).padStart(6, '0').toLowerCase();
+    let colEl = document.getElementById(cid);
+    if (colEl) colEl.classList.add('active');
+
+    // 5. Weight Calculation
     let total = WEAPONS[loadout.L].w + WEAPONS[loadout.R].w + (loadout.mod === 'jump' ? 25 : 0);
     let max = CHASSIS[loadout.chassis].max;
-    document.getElementById('weight-display').innerText = `TONNAGE: ${total} / ${max}`;
-    document.getElementById('weight-display').style.color = total > max ? '#f00' : '#0f0';
+    
+    const weightDisplay = document.getElementById('weight-display');
+    weightDisplay.innerText = `WEIGHT: ${total} / ${max}`;
+    weightDisplay.style.color = total > max ? '#f00' : '#0f0';
+    
+    // Disable deploy if overweight
     document.getElementById('deploy-btn').disabled = total > max;
 }
 </script>
