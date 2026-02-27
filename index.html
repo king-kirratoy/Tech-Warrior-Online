@@ -6,10 +6,31 @@
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #0f0; font-family: 'Courier New', monospace; overflow: hidden; }
-        #ui-layer { position: absolute; top: 0; left: 0; z-index: 10; width: 100%; height: 100%; pointer-events: none; }
+        #ui-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;          /* Use Flexbox to center the child */
+    justify-content: center; /* Horizontal centering */
+    align-items: center;     /* Vertical centering */
+    pointer-events: none;    /* Allows clicks to pass through to the game IF the menu is hidden */
+    z-index: 1000;
+}
         
         /* Garage Menu */
-        .stat-readout { background: rgba(0,25,0,0.9); padding: 20px; border: 1px solid #0f0; width: 450px; pointer-events: auto; box-shadow: 0 0 15px #0f0; margin: 20px; }
+        .stat-readout { 
+    background: rgba(0, 25, 0, 0.9); 
+    padding: 20px; 
+    border: 1px solid #0f0; 
+    /* Remove the 450px width; we set it to 750px in the HTML or here */
+    width: 750px; 
+    pointer-events: auto; 
+    box-shadow: 0 0 15px #0f0; 
+    /* Remove margin: 20px; to allow the Flexbox centering to work perfectly */
+    margin: 0; 
+}
         .row { margin-bottom: 8px; }
         button { background: #050; color: #0f0; border: 1px solid #0f0; cursor: pointer; margin: 2px; padding: 6px; font-weight: bold; pointer-events: auto; }
         button:hover { background: #0f0; color: #000; }
