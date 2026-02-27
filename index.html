@@ -305,6 +305,8 @@ button.active {
 						<button id="m-none" onclick="setMod('none')">NONE</button>
                         <button id="m-jump" onclick="setMod('jump')">JUMP</button>
 						<button id="m-shield" onclick="setMod('shield')">SHIELD</button>
+						<button id="m-ovrd" onclick="setMod('ovrd')">OVRD</button>
+						<button id="m-emp" onclick="setMod('emp')">EMP</button>
                     </div>
                 </div>
 
@@ -368,6 +370,7 @@ button.active {
 					<div id="cd-R" class="cd-overlay"></div> 
 					<span class="arm-label">SECONDARY</span>
 					<span id="txt-R" class="weap-name">GL</span>
+				
 				</div> <div id="slot-M" class="weapon-box">
 					<div id="cd-M" class="cd-overlay"></div>
 					<span class="arm-label">SYSTEM</span>
@@ -378,28 +381,30 @@ button.active {
 <script>
 const WEAPONS = {
     // PRIMARY WEAPONS 
-    'smg':   { name: 'SMG',   reload: 50,   dmg: 2,   weight: 25, bulletSize: 4,  speed: 900 },
-    'mg':    { name: 'MG',    reload: 500,  dmg: 25,   weight: 50, bulletSize: 6,  speed: 800 },
-    'sg':    { name: 'SG',    reload: 1000,  dmg: 7,   weight: 75, bulletSize: 5,  speed: 600, pellets: 5, range: 600 },
-	'br':    { name: 'BR',    reload: 1000,  dmg: 15,  weight: 75, bulletSize: 5,  speed: 1100, burst: 3 },
-    'hr':    { name: 'HR',    reload: 1500, dmg: 90,  weight: 100, bulletSize: 12, speed: 1000 },
+    'smg':   { name: 'SMG',   reload: 50,   dmg: 8,   weight: 25, bulletSize: 4,  speed: 900 },
+    'mg':    { name: 'MG',    reload: 450,  dmg: 25,   weight: 50, bulletSize: 6,  speed: 800 },
+    'sg':    { name: 'SG',    reload: 1000,  dmg: 15,   weight: 75, bulletSize: 5,  speed: 600, pellets: 5, range: 600 },
+	'br':    { name: 'BR',    reload: 1000,  dmg: 20,  weight: 75, bulletSize: 5,  speed: 1100, burst: 3 },
+    'hr':    { name: 'HR',    reload: 1750, dmg: 90,  weight: 100, bulletSize: 12, speed: 1000 },
 
     // SECONDARY WEAPONS 
     'sr':    { name: 'SR',    reload: 2500, dmg: 200, weight: 125, bulletSize: 6,  speed: 2000 },
     'gl':    { name: 'GL',    reload: 2000, dmg: 150, weight: 125, explosive: true },
     'rl':    { name: 'RL',    reload: 2500, dmg: 180,  weight: 150, explosive: true, bulletSize: 12, speed: 800},
-    'plsm':  { name: 'PLSM',  reload: 3000, dmg: 200, weight: 150, size: 25 },
+    'plsm':  { name: 'PLSM',  reload: 3500, dmg: 300, weight: 150, size: 30 },
 
     // SYSTEM MODIFICATIONS
     'none':   { name: 'NONE',   reload: 0, dmg: 0, weight: 0 },
     'jump':   { name: 'JUMP',   reload: 0, dmg: 0, weight: 25 },
-    'shield': { name: 'SHIELD', reload: 0, dmg: 0, weight: 50, activeTime: 2000, cooldown: 8000, isShield: true }
+    'shield': { name: 'SHIELD', reload: 0, dmg: 0, weight: 50, activeTime: 2000, cooldown: 8000, isShield: true },
+	'ovrd': { name: 'OVRD', weight: 75, duration: 3000, cooldown: 12000 },
+	'emp':    { name: 'EMP',  weight: 75, radius: 250,  cooldown: 10000 }
 };
 
 const CHASSIS = {
     light:  { max: 75, spd: 400, scale: 0.7, hp: 350 }, 
     medium: { max: 150, spd: 280, scale: 1.0, hp: 450 },
-    heavy:  { max: 200, spd: 180, scale: 1.4, hp: 650 }
+    heavy:  { max: 250, spd: 180, scale: 1.4, hp: 650 }
 };
 
 // --- INITIAL LOADOUT CONFIGURATION --- //
@@ -412,7 +417,7 @@ let loadout = {
 };
 
 // --- GLOBAL VARIABLES --- //
-let player, torso, legMarker, swordSlash, keys, enemies, bullets, shieldGraphic;
+let player, torso, keys, enemies, bullets, shieldGraphic;
 let reloadBar, reloadBg, smokeParticles;
 
 // --- MECH STATE TRACKING --- //
@@ -423,6 +428,7 @@ let reloadR = 0;
 let lastDamageTime = 0;
 let isJumping = false;
 let isShieldActive = false; 
+let isOvrdActive = false;
 let lastModTime = 0;      
 
 const config = {
@@ -449,11 +455,13 @@ function create() {
     enemies = this.physics.add.group();
 
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
-        if (!bullet.isGLBall) {
-            bullet.destroy(); 
-            damageEnemy(enemy, 15); 
-        }
-    });
+		if (!bullet.isGLBall) {
+			let dmg = bullet.damageValue || 10; 
+        
+			bullet.destroy(); 
+			damageEnemy(enemy, dmg); 
+		}
+	});
 
     this.input.on('pointerdown', () => fire(this));
     this.input.on('wheel', () => { activeArm = (activeArm === 'L' ? 'R' : 'L'); updateHUD(); });
@@ -490,11 +498,11 @@ function damageEnemy(e, amt) {
 function deployMech() {
     document.getElementById('ui-layer').style.display = 'none';
     
-	const hud = document.getElementById('hud-container');
+    const hud = document.getElementById('hud-container');
     if (hud) {
         hud.style.display = 'flex'; 
     }
-	
+    
     let scene = game.scene.scenes[0];
     let s = CHASSIS[loadout.chassis];
 
@@ -508,16 +516,15 @@ function deployMech() {
     player.maxHp = s.hp; 
     player.hp = s.hp;
     player.shield = 100;
-	player.maxShield = 100;
+    player.maxShield = 100;
 
-    legMarker = scene.add.rectangle(0, 0, 6, 50, 0xff6600).setDepth(6).setScale(s.scale);
     torso = buildShapeMech(scene, loadout.chassis, loadout.color);
     torso.setDepth(10);
-	
+
     shieldGraphic = scene.add.circle(0, 0, 50, 0x00ffff, 0.15)
-		.setStrokeStyle(2, 0x00ffff)
-		.setVisible(false)
-		.setDepth(12);
+        .setStrokeStyle(2, 0x00ffff)
+        .setVisible(false)
+        .setDepth(12);
     
     smokeParticles = scene.add.particles(0, 0, 'smoke', { 
         scale: { start: 0.5, end: 0 }, 
@@ -531,27 +538,30 @@ function deployMech() {
     lastModTime = -10000;
     isDeployed = true;
     updateHUD();
-	updateBars();
+    updateBars();
 }
 
 function buildShapeMech(scene, type, color) {
     let container = scene.add.container(0, 0);
     let s = CHASSIS[type].scale;
     if (type === 'heavy') {
-        let shoulders = scene.add.rectangle(0, 0, 100, 40, 0x333333).setStrokeStyle(2, 0xffffff);
-        let core = scene.add.rectangle(0, 0, 60, 70, color).setStrokeStyle(2, 0xffffff);
-        let cockpit = scene.add.rectangle(20, 0, 15, 30, 0x00ffff).setStrokeStyle(1, 0xffffff);
-        container.add([shoulders, core, cockpit]);
+        let shoulders = scene.add.rectangle(0, 0, 40, 100, 0x333333).setStrokeStyle(2, 0xffffff);
+        let core = scene.add.rectangle(0, 0, 60, 70, 0x333333).setStrokeStyle(2, 0xffffff);
+		let head = scene.add.rectangle(0, 0, 40, 30, color).setStrokeStyle(2, 0xffffff);
+        let cockpit = scene.add.rectangle(20, 0, 8, 30, 0x0F61A1).setStrokeStyle(1, 0xffffff);
+        container.add([shoulders, core, head, cockpit]);
     } else if (type === 'light') {
-        let shoulders = scene.add.rectangle(0, 0, 15, 60, 0x444444).setStrokeStyle(2, 0xffffff);
-        let core = scene.add.rectangle(10, 0, 20, 10, color).setStrokeStyle(2, 0xffffff);
-        let cockpit = scene.add.rectangle(22, 0, 15, 20, 0x0F61A1).setStrokeStyle(1, 0xffffff);
-        container.add([shoulders, core, cockpit]);
+        let shoulders = scene.add.rectangle(0, 0, 25, 60, 0x444444).setStrokeStyle(2, 0xffffff);
+        let core = scene.add.rectangle(0, 0, 40, 40, 0x444444).setStrokeStyle(2, 0xffffff);
+		let head = scene.add.rectangle(0, 0, 25, 20, color).setStrokeStyle(2, 0xffffff);
+        let cockpit = scene.add.rectangle(10, 0, 10, 20, 0x0F61A1).setStrokeStyle(1, 0xffffff);
+        container.add([shoulders, core, head, cockpit]);
     } else {
         let shoulders = scene.add.rectangle(0, 0, 35, 80, 0x444444).setStrokeStyle(2, 0xffffff);
-        let core = scene.add.rectangle(10, 0, 40, 30, color).setStrokeStyle(2, 0xffffff);
-        let cockpit = scene.add.rectangle(22, 0, 15, 20, 0x0F61A1).setStrokeStyle(1, 0xffffff);
-        container.add([shoulders, core, cockpit]);
+        let core = scene.add.rectangle(0, 0, 50, 50, 0x444444).setStrokeStyle(2, 0xffffff);
+		let head = scene.add.rectangle(0, 0, 35, 25, color).setStrokeStyle(2, 0xffffff);
+        let cockpit = scene.add.rectangle(14, 0, 10, 25, 0x0F61A1).setStrokeStyle(1, 0xffffff);
+        container.add([shoulders, core, head, cockpit]);
     }
     container.setScale(s);
     return container;
@@ -562,7 +572,8 @@ function fire(scene) {
     if (!isDeployed || isJumping) return;
     let now = scene.time.now;
     let wKey = activeArm === 'L' ? loadout.L : loadout.R;
-    let weapon = WEAPONS[wKey];
+	let weapon = WEAPONS[wKey];
+	let actualReload = isOvrdActive ? (weapon.reload * 0.5) : weapon.reload;
     let last = activeArm === 'L' ? reloadL : reloadR;
 
     if (now < last || wKey === 'none') return;
@@ -617,7 +628,7 @@ function fire(scene) {
                     // Explosion trigger starts ONLY now
                     scene.time.delayedCall(fuseTime, () => { 
                         if(ball.active) { 
-                            createExplosion(scene, ball.x, ball.y, 100, weapon.dmg); 
+                            createExplosion(scene, ball.x, ball.y, 100, weapon.dmg);
                             ball.destroy(); 
                             timerText.destroy();
                         }
@@ -661,11 +672,10 @@ function fire(scene) {
 
         // 3. Collision Logic
         scene.physics.add.overlap(rocket, enemies, (r, e) => {
-            createExplosion(scene, r.x, r.y, 80, 180);
-            particles.stop(); 
-            scene.time.delayedCall(500, () => particles.destroy());
-            r.destroy();
-        });
+			// Pulls 'dmg' directly from the WEAPONS['rl'] stats
+			createExplosion(scene, r.x, r.y, 80, weapon.dmg); 
+			// ... rest of logic
+		});
 
         // 4. Cleanup if it misses
         scene.time.delayedCall(2000, () => {
@@ -685,6 +695,7 @@ function fire(scene) {
             let offset = (Math.random() - 0.5) * spread;
             let b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
             scene.physics.add.existing(b);
+			b.damageValue = weapon.dmg;
             bullets.add(b);
             scene.physics.velocityFromRotation(torso.rotation + offset, weapon.speed, b.body.velocity);
             scene.time.delayedCall(800, () => { if(b.active) b.destroy(); }); 
@@ -695,6 +706,7 @@ function fire(scene) {
     else if (wKey === 'plsm') {
         let p = scene.add.circle(torso.x, torso.y, 25, 0x00ffff).setAlpha(0.8);
         scene.physics.add.existing(p);
+		p.damageValue = weapon.dmg;
         bullets.add(p);
         scene.physics.velocityFromRotation(torso.rotation, 300, p.body.velocity);
         scene.tweens.add({ targets: p, alpha: 0.3, duration: 100, yoyo: true, repeat: -1 });
@@ -704,24 +716,21 @@ function fire(scene) {
     // --- STANDARD PROJECTILES (SMG, MG, BR, HR, SR) --- //
     else {
         // Helper function to handle bullet creation and cleanup
-        const fireRound = (offsetAngle = 0) => {
+        const fireRound = (dmgValue, offsetAngle = 0) => {
             let b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
             scene.physics.add.existing(b); 
+			b.damageValue = dmgValue;
             bullets.add(b); 
-            scene.physics.velocityFromRotation(torso.rotation + offsetAngle, weapon.speed, b.body.velocity);
-            
-            // This ensures every bullet is cleaned up after 2 seconds
+            scene.physics.velocityFromRotation(torso.rotation + offsetAngle, weapon.speed, b.body.velocity);  
             scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
         };
 
         if (wKey === 'br') {
-            // Burst Logic: Fire 3 rounds with 60ms between each
             for (let i = 0; i < weapon.burst; i++) {
-                scene.time.delayedCall(i * 60, () => fireRound());
+                scene.time.delayedCall(i * 60, () => fireRound(weapon.dmg));
             }
         } else {
-            // Single shot for everything else (SMG, MG, HR, SR)
-            fireRound();
+            fireRound(weapon.dmg);
         }
         
         // Handle Kickback and Camera Shake
@@ -735,8 +744,8 @@ function fire(scene) {
 
     // --- FINAL STEP: Update the cooldown timer ---
     // This MUST stay at the very bottom of the fire function
-    if (activeArm === 'L') reloadL = now + weapon.reload;
-    else reloadR = now + weapon.reload;
+    if (activeArm === 'L') reloadL = now + actualReload;
+	else reloadR = now + actualReload;
 }
 
 function takePlayerDamage(amt) {
@@ -760,60 +769,123 @@ function refreshMechColor() {
 }
 
 function updateBars() {
-	if (!player) return;
-    let hpPercent = (player.hp / player.maxHp) * 100;
+    if (!player) return;
     let hpFill = document.getElementById('hp-fill');
     let shFill = document.getElementById('sh-fill');
+    let shBarElement = document.getElementById('sh-bar'); // Check for the bar container
 
     if (hpFill) {
+        let hpPercent = (player.hp / player.maxHp) * 100;
         hpFill.style.width = Math.max(0, hpPercent) + "%";
         hpFill.style.background = hpPercent < 25 ? "#f00" : "#0f0";
     }
-    if (shFill && shBar) {
+    if (shFill && shBarElement) {
         shFill.style.width = Math.max(0, player.shield) + "%";
-        shBar.style.opacity = "1"; 
     }
 }
 
 function update(time) {
     if (!isDeployed) return;
+
+    // --- 1. INNATE SHIELD REGENERATION ---
+    // Regenerates shield if no damage taken for 5 seconds
     if (time > lastDamageTime + 5000 && player.shield < 100) { 
         player.shield += 0.2; 
         updateBars(); 
     }
 
-    let s = CHASSIS[loadout.chassis].spd;
+    // --- 2. ENEMY AI MOVEMENT ---
+    // Enemies seek the player unless they are currently stunned by EMP
+    enemies.getChildren().forEach(enemy => {
+        if (player && !enemy.isStunned) {
+            let angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+            enemy.body.setVelocity(
+                Math.cos(angleToPlayer) * 100,
+                Math.sin(angleToPlayer) * 100
+            );
+            if (enemy.bar) {
+                enemy.bar.setPosition(enemy.x, enemy.y - 35);
+            }
+        } else if (enemy.isStunned) {
+            // Freeze movement during EMP stun
+            enemy.body.setVelocity(0, 0);
+        }
+    });
+
+    // --- 3. DYNAMIC SPEED CALCULATION ---
+    // Applies a 1.75x speed multiplier if Ovrd is active
+    let s = CHASSIS[loadout.chassis].spd * (isOvrdActive ? 1.75 : 1);
 	
-    // --- SPACEBAR MODULES --- //
-    let currentModCD = (loadout.mod === 'shield') ? 8000 : 2000;
+    // --- 4. SPACEBAR MODULE ACTIVATION ---
+    // Determine cooldown based on the specific module equipped
+    let currentModCD = 2000; // Default for Jump
+    if (loadout.mod === 'shield') currentModCD = 8000;
+    else if (loadout.mod === 'emp') currentModCD = 10000;
+    else if (loadout.mod === 'ovrd') currentModCD = 12000;
 
-	if (keys.SPACE.isDown && !isJumping && !isShieldActive && time > lastModTime + currentModCD) {
+    // Trigger activation if Space is pressed and no other mod/jump is currently active
+    if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isOvrdActive && time > lastModTime + currentModCD) {
     
-		if (loadout.mod === 'jump') {
-			isJumping = true;
-			this.physics.velocityFromRotation(player.rotation, 600, player.body.velocity);
-			this.tweens.add({ 
-				targets: [player, torso], 
-				scale: '+=0.2', 
-				duration: 200, 
-				yoyo: true, 
-				onComplete: () => {
-					isJumping = false;
-					lastModTime = game.scene.scenes[0].time.now; // Fixed: Use global game scene
-				} 
-			});
-		} 
-		else if (loadout.mod === 'shield') {
-			isShieldActive = true;
-        
-			// Shield duration: 2 seconds
-			this.time.delayedCall(3000, () => { 
-				isShieldActive = false; 
-				lastModTime = game.scene.scenes[0].time.now; // Fixed: Use global game scene
-			});
-		}
-	}
+        if (loadout.mod === 'jump') {
+            isJumping = true;
+            this.physics.velocityFromRotation(player.rotation, 900, player.body.velocity);
+            this.tweens.add({ 
+                targets: [player, torso], 
+                scale: '+=0.2', 
+                duration: 200, 
+                yoyo: true, 
+                onComplete: () => {
+                    isJumping = false;
+                    lastModTime = game.scene.scenes[0].time.now;
+                } 
+            });
+        } 
+        else if (loadout.mod === 'shield') {
+            isShieldActive = true;
+            this.time.delayedCall(3000, () => { 
+                isShieldActive = false; 
+                lastModTime = game.scene.scenes[0].time.now;
+            });
+        }   
+        else if (loadout.mod === 'ovrd') {
+            isOvrdActive = true;
+            // Visual feedback: Red border glow for the duration
+            torso.list.forEach(shape => { if(shape.setStrokeStyle) shape.setStrokeStyle(3, 0xff0000); });
 
+            this.time.delayedCall(3000, () => {
+                isOvrdActive = false;
+                refreshMechColor(); // Resets to base armor color
+                lastModTime = game.scene.scenes[0].time.now;
+            }); 
+        }
+        else if (loadout.mod === 'emp') {
+            // Visual Ring Expansion
+            let ring = this.add.circle(player.x, player.y, 10, 0x00ffff, 0.2).setStrokeStyle(2, 0x00ffff).setDepth(12);
+            this.tweens.add({
+                targets: ring,
+                radius: 250,
+                alpha: 0,
+                duration: 400,
+                onComplete: () => ring.destroy()
+            });
+
+            // Logic: Stun nearby enemies
+            enemies.getChildren().forEach(enemy => {
+                let dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+                if (dist < 250) {
+                    enemy.isStunned = true;
+                    enemy.setStrokeStyle(4, 0xffffff); // Highlight stun state
+                    this.time.delayedCall(2500, () => {
+                        enemy.isStunned = false;
+                        enemy.setStrokeStyle(2, 0xffffff);
+                    });
+                }
+            });
+            lastModTime = time; // EMP is instant; cooldown starts now
+        }
+    }
+
+    // --- 5. PLAYER MOVEMENT CONTROLS ---
     if (!isJumping) {
         player.body.setVelocity(0);
         if (keys.W.isDown) this.physics.velocityFromRotation(player.rotation, s, player.body.velocity);
@@ -823,15 +895,17 @@ function update(time) {
         else player.body.setAngularVelocity(0);
     }
 
+    // --- 6. VISUAL POSITIONING ---
     torso.setPosition(player.x, player.y);
     let angle = Phaser.Math.Angle.Between(player.x, player.y, this.input.activePointer.worldX, this.input.activePointer.worldY);
     torso.setRotation(angle);
-    legMarker.setPosition(player.x, player.y).setRotation(player.rotation);
+    
+    // Position and toggle the blue shield bubble
+    shieldGraphic.setPosition(player.x, player.y).setVisible(isShieldActive);
 	
-	shieldGraphic.setPosition(player.x, player.y).setVisible(isShieldActive);
-	
-	if (isDeployed) {
-        // --- Primary Cooldown Visual --- //
+    // --- 7. HUD COOLDOWN VISUALS ---
+    if (isDeployed) {
+        // Primary Weapon Cooldown
         let cdL = document.getElementById('cd-L');
         if (cdL && loadout.L !== 'none') {
             let totalTime = WEAPONS[loadout.L].reload;
@@ -840,7 +914,7 @@ function update(time) {
             cdL.style.height = percent + "%";
         }
 
-        // --- Secondary Cooldown Visual --- //
+        // Secondary Weapon Cooldown
         let cdR = document.getElementById('cd-R');
         if (cdR && loadout.R !== 'none') {
             let totalTime = WEAPONS[loadout.R].reload;
@@ -849,48 +923,61 @@ function update(time) {
             cdR.style.height = percent + "%";
         }
 		
-		// --- SYSTEM/MODULE COOLDOWN VISUAL --- //
-		let cdM = document.getElementById('cd-M');
-		let txtM = document.getElementById('txt-M');
+        // System Module Cooldown
+        let cdM = document.getElementById('cd-M');
+        let txtM = document.getElementById('txt-M');
 
-		if (cdM && loadout.mod !== 'none') {
-			// 1. Update the Label
-		if (txtM) txtM.innerText = loadout.mod.toUpperCase();
+        if (cdM && loadout.mod !== 'none') {
+            if (txtM) txtM.innerText = loadout.mod.toUpperCase();
 
-			// 2. Calculate Cooldown
-			let cooldownDuration = (loadout.mod === 'shield') ? 8000 : 2000;
-			let elapsed = time - lastModTime;
-			let percent = 0;
+            let cooldownDuration = 2000;
+            if (loadout.mod === 'shield') cooldownDuration = 8000;
+            if (loadout.mod === 'emp') cooldownDuration = 10000;
+            if (loadout.mod === 'ovrd') cooldownDuration = 12000;
 
-			// State 1: Active
-			if (isShieldActive || isJumping) {
-				percent = 100;
-			} 
-			// State 2: Cooling Down
-			else if (lastModTime > 0 && elapsed < cooldownDuration) {
-				percent = (1 - (elapsed / cooldownDuration)) * 100;
-			}
+            let elapsed = time - lastModTime;
+            let percent = 0;
 
-			// 3. Apply to HUD (Visual bar only)
-			cdM.style.height = percent + "%";
-		}
+            // Stay at 100% height while active
+            if (isShieldActive || isJumping || isOvrdActive) {
+                percent = 100;
+            } 
+            // Drain while cooling down
+            else if (lastModTime > 0 && elapsed < cooldownDuration) {
+                percent = (1 - (elapsed / cooldownDuration)) * 100;
+            }
+
+            cdM.style.height = percent + "%";
+        }
     }
 }
 
 function updateHUD() {
-	const txtL = document.getElementById('txt-L');
+    const txtL = document.getElementById('txt-L');
     const txtR = document.getElementById('txt-R');
+    const txtM = document.getElementById('txt-M');
     const slotL = document.getElementById('slot-L');
     const slotR = document.getElementById('slot-R');
+    const slotM = document.getElementById('slot-M');
 
     if (txtL) txtL.innerText = loadout.L ? loadout.L.toUpperCase() : "---";
     if (txtR) txtR.innerText = loadout.R ? loadout.R.toUpperCase() : "---";
+    if (txtM) txtM.innerText = loadout.mod ? loadout.mod.toUpperCase() : "NONE";
 
+    // --- OPACITY LOGIC ---
+    // Weapons fade when not selected (1 vs 0.4)
     if (slotL) slotL.style.opacity = activeArm === 'L' ? '1' : '0.4';
     if (slotR) slotR.style.opacity = activeArm === 'R' ? '1' : '0.4';
     
-    if (slotL) slotL.style.borderColor = activeArm === 'L' ? '#fff' : 'rgba(0, 255, 0, 0.4)';
-    if (slotR) slotR.style.borderColor = activeArm === 'R' ? '#fff' : 'rgba(0, 255, 0, 0.4)';
+    // System slot fades if NOTHING is equipped (1 vs 0.4)
+    if (slotM) slotM.style.opacity = loadout.mod === 'none' ? '0.4' : '1';
+
+    // --- BORDER COLOR LOGIC ---
+    if (slotL) slotL.style.borderColor = activeArm === 'L' ? '#00ffff' : 'rgba(0, 255, 0, 0.4)';
+    if (slotR) slotR.style.borderColor = activeArm === 'R' ? '#00ffff' : 'rgba(0, 255, 0, 0.4)';
+    
+    // System slot is always blue (if equipped) or green (if empty) to match the arms
+    if (slotM) slotM.style.borderColor = loadout.mod === 'none' ? 'rgba(0, 255, 0, 0.4)' : '#00ffff';
 }
 
 function setChassis(t) { 
@@ -915,7 +1002,14 @@ function refreshGarage() {
     document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
 
     // 2. Highlight selected buttons
-    ['c-' + loadout.chassis, 'l-' + loadout.L, 'r-' + loadout.R, 'm-' + loadout.mod].forEach(id => {
+    let activeIDs = [
+        'c-' + loadout.chassis, 
+        'l-' + loadout.L, 
+        'r-' + loadout.R, 
+        'm-' + loadout.mod
+    ];
+	
+	activeIDs.forEach(id => {
         let el = document.getElementById(id); 
         if (el) el.classList.add('active');
     });
@@ -972,7 +1066,10 @@ function createExplosion(scene, x, y, radius, damage) {
     scene.tweens.add({ targets: blast, scale: 1.5, alpha: 0, duration: 300, onComplete: () => blast.destroy() });
 }
 
-refreshGarage();
+window.onload = () => {
+    refreshGarage();
+    updateHUD(); 
+};
 </script>
 </body>
 </html>
