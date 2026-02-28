@@ -305,7 +305,7 @@ button.active {
 						<button id="m-none" onclick="setMod('none')">NONE</button>
                         <button id="m-jump" onclick="setMod('jump')">JUMP</button>
 						<button id="m-shield" onclick="setMod('shield')">SHIELD</button>
-						<button id="m-ovrd" onclick="setMod('ovrd')">OVRD</button>
+						<button id="m-rage" onclick="setMod('ovrd')">OVRD</button>
 						<button id="m-emp" onclick="setMod('emp')">EMP</button>
                     </div>
                 </div>
@@ -381,11 +381,11 @@ button.active {
 <script>
 const WEAPONS = {
     // PRIMARY WEAPONS 
-    'smg':   { name: 'SMG',   reload: 50,   dmg: 8,   weight: 25, bulletSize: 4,  speed: 900 },
-    'mg':    { name: 'MG',    reload: 450,  dmg: 25,   weight: 50, bulletSize: 6,  speed: 800 },
-    'sg':    { name: 'SG',    reload: 1000,  dmg: 15,   weight: 75, bulletSize: 5,  speed: 600, pellets: 5, range: 600 },
+    'smg':   { name: 'SMG',   reload: 50,   dmg: 3,   weight: 25, bulletSize: 4,  speed: 900 },
+    'mg':    { name: 'MG',    reload: 300,  dmg: 30,   weight: 50, bulletSize: 6,  speed: 850 },
+    'sg':    { name: 'SG',    reload: 700,  dmg: 12,   weight: 75, bulletSize: 5,  speed: 600, pellets: 5, range: 600 },
 	'br':    { name: 'BR',    reload: 1000,  dmg: 20,  weight: 75, bulletSize: 5,  speed: 1100, burst: 3 },
-    'hr':    { name: 'HR',    reload: 1750, dmg: 90,  weight: 100, bulletSize: 12, speed: 1000 },
+    'hr':    { name: 'HR',    reload: 1750, dmg: 120,  weight: 100, bulletSize: 12, speed: 1100 },
 
     // SECONDARY WEAPONS 
     'sr':    { name: 'SR',    reload: 2500, dmg: 200, weight: 125, bulletSize: 6,  speed: 2000 },
@@ -450,21 +450,19 @@ function preload() {
 
 function create() {
     this.add.grid(window.innerWidth/2, window.innerHeight/2, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
-    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
+    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,F');
     bullets = this.physics.add.group();
     enemies = this.physics.add.group();
 
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
 		if (!bullet.isGLBall) {
-			let dmg = bullet.damageValue || 10; 
-        
+			let dmg = bullet.damageValue || 2; 
+		    showDamageText(this, enemy.x, enemy.y, dmg);
 			bullet.destroy(); 
 			damageEnemy(enemy, dmg); 
 		}
 	});
 
-    this.input.on('pointerdown', () => fire(this));
-    this.input.on('wheel', () => { activeArm = (activeArm === 'L' ? 'R' : 'L'); updateHUD(); });
     for(let i=0; i<6; i++) spawnEnemy(this);
 
     this.hangarOverlay = this.add.rectangle(window.innerWidth/2, window.innerHeight/2, window.innerWidth, window.innerHeight, 0x0c1014, 0.7).setScrollFactor(0).setDepth(1000);
@@ -568,19 +566,28 @@ function buildShapeMech(scene, type, color) {
 }
 
 // --- WEAPON FIRING --- //
-function fire(scene) {
+function fire(scene, side) { // Add 'side' parameter
     if (!isDeployed || isJumping) return;
     let now = scene.time.now;
-    let wKey = activeArm === 'L' ? loadout.L : loadout.R;
-	let weapon = WEAPONS[wKey];
-	let actualReload = isOvrdActive ? (weapon.reload * 0.5) : weapon.reload;
-    let last = activeArm === 'L' ? reloadL : reloadR;
+    
+    // Use the side passed in ('L' or 'R')
+    let wKey = (side === 'L') ? loadout.L : loadout.R;
+    let weapon = WEAPONS[wKey];
+    if (!weapon || wKey === 'none') return;
 
-    if (now < last || wKey === 'none') return;
+    let actualReload = isOvrdActive ? (weapon.reload * 0.5) : weapon.reload;
+    let last = (side === 'L') ? reloadL : reloadR;
 
-    let slotId = 'slot-' + activeArm;
-    document.getElementById(slotId).classList.add('active-firing');
-    scene.time.delayedCall(100, () => document.getElementById(slotId).classList.remove('active-firing'));
+    // Check cooldown
+    if (now < last) return;
+
+    // Update HUD visual for the specific slot
+    let slotId = 'slot-' + side;
+    let slotEl = document.getElementById(slotId);
+    if (slotEl) {
+        slotEl.classList.add('active-firing');
+        scene.time.delayedCall(100, () => slotEl.classList.remove('active-firing'));
+    }
 
     // --- GRENADE LAUNCHER--- //
     if (wKey === 'gl') {
@@ -744,7 +751,7 @@ function fire(scene) {
 
     // --- FINAL STEP: Update the cooldown timer ---
     // This MUST stay at the very bottom of the fire function
-    if (activeArm === 'L') reloadL = now + actualReload;
+    if (side === 'L') reloadL = now + actualReload;
 	else reloadR = now + actualReload;
 }
 
@@ -813,18 +820,18 @@ function update(time) {
     });
 
     // --- 3. DYNAMIC SPEED CALCULATION ---
-    // Applies a 1.75x speed multiplier if Ovrd is active
-    let s = CHASSIS[loadout.chassis].spd * (isOvrdActive ? 1.75 : 1);
+    // Applies a 1.75x speed multiplier if Rage is active
+    let s = CHASSIS[loadout.chassis].spd * (isRageActive ? 1.75 : 1);
 	
     // --- 4. SPACEBAR MODULE ACTIVATION ---
     // Determine cooldown based on the specific module equipped
     let currentModCD = 2000; // Default for Jump
     if (loadout.mod === 'shield') currentModCD = 8000;
     else if (loadout.mod === 'emp') currentModCD = 10000;
-    else if (loadout.mod === 'ovrd') currentModCD = 12000;
+    else if (loadout.mod === 'rage') currentModCD = 12000;
 
     // Trigger activation if Space is pressed and no other mod/jump is currently active
-    if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isOvrdActive && time > lastModTime + currentModCD) {
+    if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + currentModCD) {
     
         if (loadout.mod === 'jump') {
             isJumping = true;
@@ -847,13 +854,13 @@ function update(time) {
                 lastModTime = game.scene.scenes[0].time.now;
             });
         }   
-        else if (loadout.mod === 'ovrd') {
-            isOvrdActive = true;
+        else if (loadout.mod === 'rage') {
+            isRageActive = true;
             // Visual feedback: Red border glow for the duration
             torso.list.forEach(shape => { if(shape.setStrokeStyle) shape.setStrokeStyle(3, 0xff0000); });
 
             this.time.delayedCall(3000, () => {
-                isOvrdActive = false;
+                isRageActive = false;
                 refreshMechColor(); // Resets to base armor color
                 lastModTime = game.scene.scenes[0].time.now;
             }); 
@@ -885,7 +892,7 @@ function update(time) {
         }
     }
 
-    // --- 5. PLAYER MOVEMENT CONTROLS ---
+    // PLAYER MOVEMENT CONTROLS
     if (!isJumping) {
         player.body.setVelocity(0);
         if (keys.W.isDown) this.physics.velocityFromRotation(player.rotation, s, player.body.velocity);
@@ -895,7 +902,17 @@ function update(time) {
         else player.body.setAngularVelocity(0);
     }
 
-    // --- 6. VISUAL POSITIONING ---
+    // Primary Fire (Hold Left Click)
+	if (this.input.activePointer.isDown) {
+		fire(this, 'L');
+	}
+
+	// Secondary Fire (Hold F)
+	if (keys.F.isDown) {
+		fire(this, 'R');
+	}
+
+    // VISUAL POSITIONING 
     torso.setPosition(player.x, player.y);
     let angle = Phaser.Math.Angle.Between(player.x, player.y, this.input.activePointer.worldX, this.input.activePointer.worldY);
     torso.setRotation(angle);
@@ -933,13 +950,13 @@ function update(time) {
             let cooldownDuration = 2000;
             if (loadout.mod === 'shield') cooldownDuration = 8000;
             if (loadout.mod === 'emp') cooldownDuration = 10000;
-            if (loadout.mod === 'ovrd') cooldownDuration = 12000;
+            if (loadout.mod === 'rage') cooldownDuration = 12000;
 
             let elapsed = time - lastModTime;
             let percent = 0;
 
             // Stay at 100% height while active
-            if (isShieldActive || isJumping || isOvrdActive) {
+            if (isShieldActive || isJumping || isRageActive) {
                 percent = 100;
             } 
             // Drain while cooling down
@@ -965,19 +982,26 @@ function updateHUD() {
     if (txtM) txtM.innerText = loadout.mod ? loadout.mod.toUpperCase() : "NONE";
 
     // --- OPACITY LOGIC ---
-    // Weapons fade when not selected (1 vs 0.4)
-    if (slotL) slotL.style.opacity = activeArm === 'L' ? '1' : '0.4';
-    if (slotR) slotR.style.opacity = activeArm === 'R' ? '1' : '0.4';
-    
-    // System slot fades if NOTHING is equipped (1 vs 0.4)
+    // Slots fade to 0.4 if NOTHING is equipped in them
+    if (slotL) slotL.style.opacity = loadout.L === 'none' ? '0.4' : '1';
+    if (slotR) slotR.style.opacity = loadout.R === 'none' ? '0.4' : '1';
     if (slotM) slotM.style.opacity = loadout.mod === 'none' ? '0.4' : '1';
 
     // --- BORDER COLOR LOGIC ---
-    if (slotL) slotL.style.borderColor = activeArm === 'L' ? '#00ffff' : 'rgba(0, 255, 0, 0.4)';
-    if (slotR) slotR.style.borderColor = activeArm === 'R' ? '#00ffff' : 'rgba(0, 255, 0, 0.4)';
+    // Primary Slot: Blue if weapon equipped, Green if empty
+    if (slotL) {
+        slotL.style.borderColor = loadout.L !== 'none' ? '#00ffff' : 'rgba(0, 255, 0, 0.4)';
+    }
+
+    // Secondary Slot: Blue if weapon equipped, Green if empty
+    if (slotR) {
+        slotR.style.borderColor = loadout.R !== 'none' ? '#00ffff' : 'rgba(0, 255, 0, 0.4)';
+    }
     
-    // System slot is always blue (if equipped) or green (if empty) to match the arms
-    if (slotM) slotM.style.borderColor = loadout.mod === 'none' ? 'rgba(0, 255, 0, 0.4)' : '#00ffff';
+    // System slot remains Cyan if equipped
+    if (slotM) {
+        slotM.style.borderColor = loadout.mod === 'none' ? 'rgba(0, 255, 0, 0.4)' : '#00ffff';
+    }
 }
 
 function setChassis(t) { 
@@ -1061,9 +1085,48 @@ function refreshGarage() {
 function createExplosion(scene, x, y, radius, damage) {
     let blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
     scene.physics.add.existing(blast);
-    scene.physics.add.overlap(blast, enemies, (z, e) => damageEnemy(e, damage));
+    scene.physics.add.overlap(blast, enemies, (z, e) => {
+        // Show the damage number for each enemy in the blast
+        showDamageText(scene, e.x, e.y, damage);
+        damageEnemy(e, damage);
+    });
+	
     if (Phaser.Math.Distance.Between(x, y, player.x, player.y) < radius) takePlayerDamage(damage * 0.75);
     scene.tweens.add({ targets: blast, scale: 1.5, alpha: 0, duration: 300, onComplete: () => blast.destroy() });
+}
+
+function showDamageText(scene, x, y, amount) {
+    let color = "#ffff00"; // Default: Electric Yellow
+    let fontSize = "20px";
+
+    if (amount >= 90 && amount < 150) {
+        color = "#ffaa00"; // Brighter Neon Orange
+        fontSize = "24px";
+    } else if (amount >= 150) {
+        color = "#ff0055"; // Brighter Laser Red/Magenta
+        fontSize = "28px";
+    }
+
+    let dmgText = scene.add.text(x, y - 20, amount, {
+        font: `bold ${fontSize} monospace`,
+        fill: color,
+        stroke: "#000000",
+        strokeThickness: 4
+    }).setOrigin(0.5).setDepth(20);
+
+    // This adds the "Glow" effect to make the colors feel brighter
+    dmgText.setShadow(0, 0, color, 8, true, true);
+
+    scene.tweens.add({
+        targets: dmgText,
+        y: y - 100, // Floats a bit higher
+        alpha: 0,
+        scale: (amount >= 90 ? 1.3 : 1.0),
+        duration: 2000,
+		hold: 500,
+        ease: 'Back.easeOut', // Adds a slight "pop" at the start
+        onComplete: () => dmgText.destroy()
+    });
 }
 
 window.onload = () => {
