@@ -1,88 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Tech Warrior: Alpha 3.0</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-    <style>
-        /* Modern high-tech base colors */
-        body { 
-            margin: 0; 
-            background: #0c1014; /* Deep cold gray from image */
-            color: #c8d2d9; /* Off-white technical text */
-            font-family: 'Verdana', 'Segoe UI', sans-serif; /* Cleaner modern font */
-            overflow: hidden; 
-        }
+<meta charset="UTF-8">
+<title>Tech Warrior: Alpha 3.0</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<style>
+/* --- 1. CORE ENGINE & THEMING --- */
+body { 
+    margin: 0; 
+    background: #0c1014; 
+    color: #c8d2d9; 
+    font-family: 'Verdana', 'Segoe UI', sans-serif; 
+    overflow: hidden; 
+}
 
-        #ui-layer {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none;
-            z-index: 1000;
-        }
-        
-        /* Modernized Garage Menu */
+#ui-layer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* --- 2. GARAGE MENU (HANGAR) --- */
 .stat-readout { 
-    /* 1. Dimensions and Spacing */
     width: 950px; 
     padding: 25px; 
     border-radius: 10px;
-    margin: 0;
-    
-    /* 2. Positioning and Interactivity */
     position: relative;
     overflow: hidden;
     pointer-events: auto; 
-
-    /* 3. The Visuals (Combining everything into one background block) */
     background: linear-gradient(rgba(12, 16, 20, 0.85), rgba(12, 16, 20, 0.85)), 
                 url('assets/hangar-bg.jpg');
     background-size: cover;
     background-position: center;
-    
-    /* 4. Borders and Glow */
     border: 1px solid rgba(0, 255, 0, 0.4);
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
 }
 
-/* --- MODERNIZED AC6 DATA CELLS --- */
 .row { 
     margin-bottom: 22px; 
     display: flex; 
-    flex-direction: column; /* Moves labels (CHASSIS, etc.) ABOVE the buttons */
+    flex-direction: column; 
     gap: 6px; 
 }
 
-/* Label styling for the section headers */
 .row-label {
     font-size: 11px;
-    color: rgba(0, 255, 0, 0.7); /* Neon green at lower opacity */
+    color: rgba(0, 255, 0, 0.7);
     letter-spacing: 1.5px;
     text-transform: uppercase;
     font-weight: bold;
 }
 
-/* Container to hold the horizontal buttons */
-.options-group {
-    display: flex;
-    gap: 5px;
-}
+.options-group { display: flex; gap: 5px; }
 
-/* Modernized Technical Buttons */
 button { 
-    background: rgba(255, 255, 255, 0.04); /* Transparent dark glass look */
+    background: rgba(255, 255, 255, 0.04); 
     color: #c8d2d9; 
     border: 1px solid rgba(255, 255, 255, 0.1); 
-    border-left: 3px solid transparent; /* Hidden until active */
+    border-left: 3px solid transparent; 
     cursor: pointer; 
     padding: 10px 12px; 
     font-size: 13px;
-    text-align: left; /* Aligns text to the left like the AC6 list */
-    flex: 1; /* Ensures buttons fill the row width evenly */
+    text-align: left; 
+    flex: 1; 
     transition: all 0.2s ease;
     font-family: 'Segoe UI', sans-serif;
 }
@@ -92,41 +77,30 @@ button:hover {
     border-color: rgba(0, 255, 0, 0.3); 
 }
 
+button.active { 
+    background: rgba(0, 255, 0, 0.12); 
+    color: #fff; 
+    border-color: rgba(0, 255, 0, 0.5);
+    border-left: 3px solid #0f0;
+    box-shadow: inset 8px 0 15px rgba(0, 255, 0, 0.05);
+}
+
 #deploy-btn {
     width: 100%;
     font-size: 18px;
     margin-top: 15px;
     padding: 15px;
-    
-    /* Overriding the global 'text-align: left' */
     text-align: center; 
     display: flex;
     justify-content: center;
     align-items: center;
-
-    /* Matching the AC6 theme but without the left-side bar */
     background: rgba(0, 255, 0, 0.1);
     border: 1px solid rgba(0, 255, 0, 0.5);
-    border-left: 1px solid rgba(0, 255, 0, 0.5); /* Removes the 3px 'pip' */
     color: #fff;
     text-transform: uppercase;
     letter-spacing: 2px;
-    transition: 0.3s;
 }
 
-#deploy-btn:hover {
-    background: rgba(0, 255, 0, 0.2);
-    box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-}
-
-#deploy-btn:disabled {
-    background: rgba(255, 0, 0, 0.05);
-    border-color: rgba(255, 0, 0, 0.2);
-    color: rgba(255, 255, 255, 0.2);
-    cursor: not-allowed;
-}
-
-/* Helper for the color square inside the button */
 .color-preview {
     width: 12px;
     height: 12px;
@@ -136,127 +110,106 @@ button:hover {
     vertical-align: middle;
 }
 
-/* Ensure the Armour Color buttons align text and preview correctly */
-.options-group button {
-    display: flex;
-    align-items: center;
+/* --- 3. COMBAT HUD --- */
+#hud-container { 
+    position: fixed; 
+    bottom: 30px; 
+    left: 30px; 
+    z-index: 9999; 
+    display: none;
+    pointer-events: none;
 }
 
-/* The "Selected" state with the glowing left-side accent */
-button.active { 
-    background: rgba(0, 255, 0, 0.12); 
-    color: #fff; 
-    border-color: rgba(0, 255, 0, 0.5);
-    border-left: 3px solid #0f0; /* The tactical highlight bar */
-    box-shadow: inset 8px 0 15px rgba(0, 255, 0, 0.05);
+.console-frame { 
+    display: flex; 
+    align-items: flex-end; 
+    gap: 20px; 
+    padding: 15px; 
+    background: rgba(12, 16, 20, 0.85); 
+    border-left: 4px solid #0f0; 
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
 }
-        /* Unified HUD Console (Modernized) */
-        #hud-container { 
-			position: fixed; 
-			bottom: 30px; 
-			left: 30px; 
-			z-index: 9999; 
-			display: none;
-			pointer-events: none;
-		}
-        
-        .console-frame { 
-            display: flex; 
-            align-items: flex-end; 
-            gap: 20px; 
-            padding: 15px; 
-            background: rgba(12, 16, 20, 0.85); 
-            border-left: 4px solid #0f0; /* Accent strip on the side */
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
-        }
 
-        .stats-group { display: flex; flex-direction: column; gap: 6px; }
-        .hud-label { font-weight: bold; font-size: 11px; color: #0f0; opacity: 0.8; text-transform: uppercase; }
-        
-        #hp-bar { width: 250px; height: 18px; background: rgba(0, 40, 0, 0.3); border: 1px solid rgba(0, 255, 0, 0.3); }
-        #hp-fill { height: 100%; background: #0f0; transition: width 0.2s; box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); }
-        
-        #sh-bar { width: 250px; height: 6px; background: rgba(0, 20, 40, 0.3); border: 1px solid rgba(0, 255, 255, 0.3); margin-top: 2px; }
-        #sh-fill { height: 100%; background: #00ffff; box-shadow: 0 0 8px #00ffff; transition: width 0.3s; }
+.stats-group { display: flex; flex-direction: column; gap: 6px; }
 
-        #weapon-slots { display: flex; gap: 10px; }
-        .weapon-box { 
-			width: 60px; 
-			height: 60px; 
-			border: 1px solid rgba(0, 255, 0, 0.4); 
-			background: rgba(255, 255, 255, 0.03); 
-			display: flex; 
-			flex-direction: column; 
-			justify-content: center; 
-			align-items: center; 
-			color: #c8d2d9; 
-			position: relative; 
-			overflow: hidden;   
-	}
-	
-		.cd-overlay {
-			position: absolute;
-			bottom: 0;
-			left: 0;
-			width: 100%;
-			height: 0%; /* JS will change this from 0% to 100% */
-			background: rgba(255, 0, 0, 0.3); /* Transparent red */
-			border-top: 2px solid #ff0000;
-			pointer-events: none; /* So it doesn't block clicks */
-			transition: none; /* We want instant updates from the engine */
-	}
-	
-        .weapon-box.active-firing { border-color: #fff; box-shadow: 0 0 15px #fff; color: #fff; background: rgba(255, 255, 255, 0.1); }
-        
-        .arm-label { opacity: 0.5; font-size: 9px; text-transform: uppercase; }
-        .weap-name { font-weight: bold; font-size: 11px; }
+.hud-label { 
+    font-weight: bold; 
+    font-size: 11px; 
+    color: #0f0; 
+    opacity: 0.8; 
+    text-transform: uppercase; 
+}
 
-        .color-btn { 
-    		width: 22px;   
-    		height: 22px;  
-    		border: 1px solid #444; 
-    		display: inline-block; 
-    		cursor: pointer; 
-    		margin-right: 6px; 
-    		transition: 0.2s; 
-    		pointer-events: auto; 
-    		vertical-align: middle; 
-	}
-        
-	.color-btn.active { 
-    		border: 2px solid #fff; 
-    		transform: scale(1.2); /* Makes the selected one pop slightly */
-    		box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); 
-	}
-        
-        .pulse-warning { animation: pulse 0.5s infinite alternate; }
-        @keyframes pulse { from { opacity: 1; filter: brightness(1.5); } to { opacity: 0.4; } }
+/* Health and Shield numerical readouts */
+#hp-text, #sh-text {
+    font-size: 11px;
+    font-family: 'monospace';
+    letter-spacing: 1px;
+}
 
-/* --- WEIGHT CAPACITY BAR --- */
+#hp-bar { width: 250px; height: 18px; background: rgba(0, 40, 0, 0.3); border: 1px solid rgba(0, 255, 0, 0.3); }
+#hp-fill { height: 100%; background: #0f0; transition: width 0.2s; box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); }
+
+#sh-bar { width: 250px; height: 6px; background: rgba(0, 20, 40, 0.3); border: 1px solid rgba(0, 255, 255, 0.3); margin-top: 2px; }
+#sh-fill { height: 100%; background: #00ffff; box-shadow: 0 0 8px #00ffff; transition: width 0.3s; }
+
+/* --- 4. WEAPON & MODULE SLOTS --- */
+#weapon-slots { display: flex; gap: 10px; align-items: flex-end; }
+
+.weapon-container { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+
+.key-hint {
+    font-size: 9px;
+    font-weight: bold;
+    color: #c8d2d9;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.weapon-box { 
+    width: 60px; height: 60px; 
+    border: 1px solid rgba(0, 255, 0, 0.4); 
+    background: rgba(255, 255, 255, 0.03); 
+    display: flex; flex-direction: column; justify-content: center; align-items: center; 
+    color: #c8d2d9; position: relative; overflow: hidden;   
+}
+
+.weapon-box.active-firing { border-color: #fff; box-shadow: 0 0 15px #fff; color: #fff; background: rgba(255, 255, 255, 0.1); }
+
+.cd-overlay {
+    position: absolute; bottom: 0; left: 0;
+    width: 100%; height: 0%;
+    background: rgba(255, 0, 0, 0.3);
+    border-top: 2px solid #ff0000;
+    pointer-events: none;
+}
+
+.arm-label { opacity: 0.5; font-size: 9px; text-transform: uppercase; }
+.weap-name { font-weight: bold; font-size: 11px; }
+
+/* --- 5. UTILITY CLASSES --- */
 #weight-bar-bg {
-    width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.05); /* Matching the button transparency */
+    width: 100%; height: 8px;
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 10px;
     overflow: hidden;
-    /* Optional: Subtle glow to the container */
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
 #weight-bar-fill {
-    height: 100%;
-    background: #0f0;
-    transition: width 0.3s ease, background-color 0.3s;
-    /* Makes the bar itself glow slightly */
+    height: 100%; background: #0f0;
+    transition: width 0.3s ease;
     box-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
 }
 
-        /* Custom scrollbar for a tech look if needed */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #0c1014; }
-        ::-webkit-scrollbar-thumb { background: #0f0; }
-    </style>
+.pulse-warning { animation: pulse 0.5s infinite alternate; }
+@keyframes pulse { from { opacity: 1; filter: brightness(1.5); } to { opacity: 0.4; } }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #0c1014; }
+::-webkit-scrollbar-thumb { background: #0f0; }
+</style>
 </head>
 <body>
 
@@ -305,7 +258,7 @@ button.active {
 						<button id="m-none" onclick="setMod('none')">NONE</button>
                         <button id="m-jump" onclick="setMod('jump')">JUMP</button>
 						<button id="m-shield" onclick="setMod('shield')">SHIELD</button>
-						<button id="m-rage" onclick="setMod('ovrd')">OVRD</button>
+						<button id="m-rage" onclick="setMod('rage')">RAGE</button>
 						<button id="m-emp" onclick="setMod('emp')">EMP</button>
                     </div>
                 </div>
@@ -353,30 +306,46 @@ button.active {
 	<div id="hud-container">
 		<div class="console-frame">
 			<div class="stats-group">
-				<div class="hud-label">HEALTH</div>
+				<div style="display: flex; justify-content: space-between; align-items: center;">
+					<div class="hud-label">HEALTH</div>
+					<div id="hp-text" style="font-size: 11px; color: #0f0; font-family: monospace;">450/450</div>
+				</div>
 				<div id="hp-bar"><div id="hp-fill" style="width: 100%;"></div></div>
-				<div class="hud-label" style="color: #00ffff;">SHIELD</div>
+            
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+					<div class="hud-label" style="color: #00ffff;">SHIELD</div>
+					<div id="sh-text" style="font-size: 11px; color: #00ffff; font-family: monospace;">100/100</div>
+				</div>
 				<div id="sh-bar"><div id="sh-fill" style="width: 100%;"></div></div>
 			</div>
-        
 			<div id="weapon-slots">
-				<div id="slot-L" class="weapon-box">
-					<div id="cd-L" class="cd-overlay"></div> 
-					<span class="arm-label">PRIMARY</span>
-					<span id="txt-L" class="weap-name">SMG</span>
+				<div class="weapon-container">
+					<div class="key-hint">M1</div>
+					<div id="slot-L" class="weapon-box">
+						<div id="cd-L" class="cd-overlay"></div> 
+						<span class="arm-label">PRIMARY</span>
+						<span id="txt-L" class="weap-name">SMG</span>
+					</div>
 				</div>
 
-				<div id="slot-R" class="weapon-box">
-					<div id="cd-R" class="cd-overlay"></div> 
-					<span class="arm-label">SECONDARY</span>
-					<span id="txt-R" class="weap-name">GL</span>
-				
-				</div> <div id="slot-M" class="weapon-box">
-					<div id="cd-M" class="cd-overlay"></div>
-					<span class="arm-label">SYSTEM</span>
-					<span id="txt-M" class="weap-name">JUMP</span>
+				<div class="weapon-container">
+					<div class="key-hint">F</div>
+					<div id="slot-R" class="weapon-box">
+						<div id="cd-R" class="cd-overlay"></div> 
+						<span class="arm-label">SECONDARY</span>
+						<span id="txt-R" class="weap-name">GL</span>
+					</div>
 				</div>
-			</div> </div> </div>
+
+				<div class="weapon-container">
+					<div class="key-hint">SPACE</div>
+					<div id="slot-M" class="weapon-box">
+						<div id="cd-M" class="cd-overlay"></div>
+						<span class="arm-label">SYSTEM</span>
+						<span id="txt-M" class="weap-name">JUMP</span>
+					</div>
+				</div>
+			</div>
 
 <script>
 const WEAPONS = {
@@ -397,7 +366,7 @@ const WEAPONS = {
     'none':   { name: 'NONE',   reload: 0, dmg: 0, weight: 0 },
     'jump':   { name: 'JUMP',   reload: 0, dmg: 0, weight: 25 },
     'shield': { name: 'SHIELD', reload: 0, dmg: 0, weight: 50, activeTime: 2000, cooldown: 8000, isShield: true },
-	'ovrd': { name: 'OVRD', weight: 75, duration: 3000, cooldown: 12000 },
+	'rage': { name: 'RAGE', weight: 75, duration: 3000, cooldown: 12000 },
 	'emp':    { name: 'EMP',  weight: 75, radius: 250,  cooldown: 10000 }
 };
 
@@ -425,10 +394,10 @@ let isDeployed = false;
 let activeArm = 'L';
 let reloadL = 0;
 let reloadR = 0;
-let lastDamageTime = 0;
+let lastDamageTime = -99999;
 let isJumping = false;
 let isShieldActive = false; 
-let isOvrdActive = false;
+let isRageActive = false;
 let lastModTime = 0;      
 
 const config = {
@@ -448,6 +417,14 @@ function preload() {
     g.generateTexture('smoke', 20, 20);
 }
 
+function darkenColor(hex, amount = 0.4) {
+    if (hex === undefined || hex === null) return 0x333333; // Emergency fallback
+    let r = ((hex >> 16) & 0xFF) * amount;
+    let g = ((hex >> 8) & 0xFF) * amount;
+    let b = (hex & 0xFF) * amount;
+    return (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
+}
+
 function create() {
     this.add.grid(window.innerWidth/2, window.innerHeight/2, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
     keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,F');
@@ -456,6 +433,7 @@ function create() {
 
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
 		if (!bullet.isGLBall) {
+		    createImpactSparks(this, enemy.x, enemy.y);
 			let dmg = bullet.damageValue || 2; 
 		    showDamageText(this, enemy.x, enemy.y, dmg);
 			bullet.destroy(); 
@@ -467,6 +445,45 @@ function create() {
 
     this.hangarOverlay = this.add.rectangle(window.innerWidth/2, window.innerHeight/2, window.innerWidth, window.innerHeight, 0x0c1014, 0.7).setScrollFactor(0).setDepth(1000);
     this.hangarGrid = this.add.grid(window.innerWidth/2, window.innerHeight/2, window.innerWidth, window.innerHeight, 16, 16, 0, 0, 0x00ff00, 0.05).setScrollFactor(0).setDepth(1001);
+}
+
+function createMuzzleFlash(scene, x, y, angle, distance = 40, color = 0xffffff) {
+    if (!scene || !scene.add) return;
+
+    // Position the flash at the barrel tip
+    let fx = x + Math.cos(angle) * distance;
+    let fy = y + Math.sin(angle) * distance;
+    
+    // Created with a smaller radius (6) and white color
+    let flash = scene.add.circle(fx, fy, 6, color, 1).setDepth(15);
+    
+    // Add a tiny "shrink" animation to make it look less static
+    scene.tweens.add({
+        targets: flash,
+        scale: 0.2,
+        duration: 50,
+        onComplete: () => flash.destroy()
+    });
+}
+
+function createImpactSparks(scene, x, y) {
+    for (let i = 0; i < 4; i++) {
+        let spark = scene.add.rectangle(x, y, 6, 2, 0xffffff).setDepth(20);
+        scene.physics.add.existing(spark);
+        
+        let angle = Math.random() * Math.PI * 2;
+        let speed = 200 + Math.random() * 200;
+        
+        scene.physics.velocityFromRotation(angle, speed, spark.body.velocity);
+        
+        scene.tweens.add({
+            targets: spark,
+            alpha: 0,
+            scaleX: 0,
+            duration: 200,
+            onComplete: () => spark.destroy()
+        });
+    }
 }
 
 function spawnEnemy(scene) {
@@ -513,11 +530,13 @@ function deployMech() {
     
     player.maxHp = s.hp; 
     player.hp = s.hp;
-    player.shield = 100;
     player.maxShield = 100;
+	player.shield = 100;
 
     torso = buildShapeMech(scene, loadout.chassis, loadout.color);
     torso.setDepth(10);
+	refreshMechColor();
+	scene.time.delayedCall(10, () => refreshMechColor());
 
     shieldGraphic = scene.add.circle(0, 0, 50, 0x00ffff, 0.15)
         .setStrokeStyle(2, 0x00ffff)
@@ -533,6 +552,8 @@ function deployMech() {
         on: false 
     }).setDepth(4);
 
+    player.isProcessingDamage = false; 
+    lastDamageTime = -99999;
     lastModTime = -10000;
     isDeployed = true;
     updateHUD();
@@ -545,19 +566,19 @@ function buildShapeMech(scene, type, color) {
     if (type === 'heavy') {
         let shoulders = scene.add.rectangle(0, 0, 40, 100, 0x333333).setStrokeStyle(2, 0xffffff);
         let core = scene.add.rectangle(0, 0, 60, 70, 0x333333).setStrokeStyle(2, 0xffffff);
-		let head = scene.add.rectangle(0, 0, 40, 30, color).setStrokeStyle(2, 0xffffff);
+		let head = scene.add.rectangle(0, 0, 40, 30, color).setStrokeStyle(2, 0xffffff).setName('mechHead');
         let cockpit = scene.add.rectangle(20, 0, 8, 30, 0x0F61A1).setStrokeStyle(1, 0xffffff);
         container.add([shoulders, core, head, cockpit]);
     } else if (type === 'light') {
         let shoulders = scene.add.rectangle(0, 0, 25, 60, 0x444444).setStrokeStyle(2, 0xffffff);
         let core = scene.add.rectangle(0, 0, 40, 40, 0x444444).setStrokeStyle(2, 0xffffff);
-		let head = scene.add.rectangle(0, 0, 25, 20, color).setStrokeStyle(2, 0xffffff);
+		let head = scene.add.rectangle(0, 0, 25, 20, color).setStrokeStyle(2, 0xffffff).setName('mechHead');
         let cockpit = scene.add.rectangle(10, 0, 10, 20, 0x0F61A1).setStrokeStyle(1, 0xffffff);
         container.add([shoulders, core, head, cockpit]);
     } else {
         let shoulders = scene.add.rectangle(0, 0, 35, 80, 0x444444).setStrokeStyle(2, 0xffffff);
         let core = scene.add.rectangle(0, 0, 50, 50, 0x444444).setStrokeStyle(2, 0xffffff);
-		let head = scene.add.rectangle(0, 0, 35, 25, color).setStrokeStyle(2, 0xffffff);
+		let head = scene.add.rectangle(0, 0, 35, 25, color).setStrokeStyle(2, 0xffffff).setName('mechHead');
         let cockpit = scene.add.rectangle(14, 0, 10, 25, 0x0F61A1).setStrokeStyle(1, 0xffffff);
         container.add([shoulders, core, head, cockpit]);
     }
@@ -565,17 +586,20 @@ function buildShapeMech(scene, type, color) {
     return container;
 }
 
-// --- WEAPON FIRING --- //
-function fire(scene, side) { // Add 'side' parameter
+// WEAPON FIRING
+function fire(scene, side) { 
     if (!isDeployed || isJumping) return;
     let now = scene.time.now;
     
-    // Use the side passed in ('L' or 'R')
     let wKey = (side === 'L') ? loadout.L : loadout.R;
     let weapon = WEAPONS[wKey];
     if (!weapon || wKey === 'none') return;
 
-    let actualReload = isOvrdActive ? (weapon.reload * 0.5) : weapon.reload;
+	let barrelDist = 40; // Default for Heavy
+    if (loadout.chassis === 'light') barrelDist = 25;
+    else if (loadout.chassis === 'medium') barrelDist = 32;
+
+    let actualReload = isRageActive ? (weapon.reload * 0.5) : weapon.reload;
     let last = (side === 'L') ? reloadL : reloadR;
 
     // Check cooldown
@@ -589,27 +613,27 @@ function fire(scene, side) { // Add 'side' parameter
         scene.time.delayedCall(100, () => slotEl.classList.remove('active-firing'));
     }
 
-    // --- GRENADE LAUNCHER--- //
+    // --- GRENADE LAUNCHER --- //
     if (wKey === 'gl') {
         let targetX = scene.input.activePointer.worldX;
         let targetY = scene.input.activePointer.worldY;
         let distance = Phaser.Math.Distance.Between(torso.x, torso.y, targetX, targetY);
-        
+
         // 1. Create the Grenade
         let ball = scene.add.circle(torso.x, torso.y, 10, 0xffaa00).setStrokeStyle(2, 0xffffff).setDepth(14);
         scene.physics.add.existing(ball);
         scene.physics.velocityFromRotation(torso.rotation, distance * 2, ball.body.velocity);
         ball.body.setDrag(distance * 2); 
 
-        // 2. Create the Yellow Timer Text (Initially Hidden/Static)
+        // 2. Create the Yellow Timer Text
         let fuseTime = 2000; 
         let fuseStarted = false;
         let startTime = 0;
         
         let timerText = scene.add.text(ball.x, ball.y - 20, "2.0", {
             font: "bold 14px monospace",
-            fill: "#ffff00" // Yellow text
-        }).setOrigin(0.5).setDepth(15).setVisible(false); // Hide until it lands
+            fill: "#ffff00"
+        }).setOrigin(0.5).setDepth(15).setVisible(false);
 
         // 3. Update Loop
         let timerEvent = scene.time.addEvent({
@@ -620,19 +644,14 @@ function fire(scene, side) { // Add 'side' parameter
                     timerEvent.destroy();
                     return;
                 }
-
-                // Follow the ball position
                 timerText.setPosition(ball.x, ball.y - 20);
-
-                // Check if the ball has slowed down enough to be "landed"
                 let speed = ball.body.velocity.length();
                 
                 if (!fuseStarted && speed < 20) {
                     fuseStarted = true;
                     startTime = scene.time.now;
-                    timerText.setVisible(true); // Show the timer now
+                    timerText.setVisible(true);
                     
-                    // Explosion trigger starts ONLY now
                     scene.time.delayedCall(fuseTime, () => { 
                         if(ball.active) { 
                             createExplosion(scene, ball.x, ball.y, 100, weapon.dmg);
@@ -642,13 +661,10 @@ function fire(scene, side) { // Add 'side' parameter
                     });
                 }
 
-                // Update the countdown if the fuse is running
                 if (fuseStarted) {
                     let elapsed = scene.time.now - startTime;
                     let remaining = Math.max(0, (fuseTime - elapsed) / 1000);
                     timerText.setText(remaining.toFixed(1));
-
-                    // Red blink for the final half-second
                     if (remaining < 0.5) {
                         timerText.setFill(scene.time.now % 200 < 100 ? "#ffffff" : "#ff0000");
                     }
@@ -657,16 +673,15 @@ function fire(scene, side) { // Add 'side' parameter
             loop: true
         });
     }
-	
-	// --- ROCKET LAUNCHER--- //
+    
+    // --- ROCKET LAUNCHER --- //
     else if (wKey === 'rl') {
-        // 1. Create the Rocket
+        createMuzzleFlash(scene, torso.x, torso.y, torso.rotation, barrelDist);
         let rocket = scene.add.rectangle(torso.x, torso.y, 24, 10, 0xff4400).setDepth(14);
         scene.physics.add.existing(rocket);
         rocket.setRotation(torso.rotation);
         scene.physics.velocityFromRotation(torso.rotation, weapon.speed, rocket.body.velocity);
 
-        // 2. Create the Smoke Trail Emitter
         let particles = scene.add.particles(0, 0, 'smoke', {
             speed: 20,
             scale: { start: 0.6, end: 0 },
@@ -677,70 +692,72 @@ function fire(scene, side) { // Add 'side' parameter
             follow: rocket 
         }).setDepth(13);
 
-        // 3. Collision Logic
         scene.physics.add.overlap(rocket, enemies, (r, e) => {
-			// Pulls 'dmg' directly from the WEAPONS['rl'] stats
-			createExplosion(scene, r.x, r.y, 80, weapon.dmg); 
-			// ... rest of logic
-		});
+            createExplosion(scene, r.x, r.y, 80, weapon.dmg); 
+			particles.stop();
+			scene.time.delayedCall(400, () => particles.destroy());
+            r.destroy();
+        });
 
-        // 4. Cleanup if it misses
         scene.time.delayedCall(2000, () => {
             if (rocket.active) {
                 particles.stop();
-                scene.time.delayedCall(500, () => particles.destroy());
+                scene.time.delayedCall(400, () => particles.destroy());
                 rocket.destroy();
             }
         });
     }
-	
-	// --- SHOTGUN --- //
-	else if (wKey === 'sg') {
+    
+    // --- SHOTGUN --- //
+    else if (wKey === 'sg') {
         const pellets = weapon.pellets;
         const spread = 0.3; 
         for (let i = 0; i < pellets; i++) {
-            let offset = (Math.random() - 0.5) * spread;
+            let offsetAngle = (Math.random() - 0.5) * spread;
             let b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
+            createMuzzleFlash(scene, torso.x, torso.y, torso.rotation + offsetAngle, barrelDist);
             scene.physics.add.existing(b);
-			b.damageValue = weapon.dmg;
+            b.damageValue = weapon.dmg;
             bullets.add(b);
-            scene.physics.velocityFromRotation(torso.rotation + offset, weapon.speed, b.body.velocity);
+            scene.physics.velocityFromRotation(torso.rotation + offsetAngle, weapon.speed, b.body.velocity);
             scene.time.delayedCall(800, () => { if(b.active) b.destroy(); }); 
         }
     }
-	
-	// --- PLASMA RIFLE --- //
+    
+    // --- PLASMA RIFLE --- //
     else if (wKey === 'plsm') {
         let p = scene.add.circle(torso.x, torso.y, 25, 0x00ffff).setAlpha(0.8);
         scene.physics.add.existing(p);
-		p.damageValue = weapon.dmg;
+        p.damageValue = weapon.dmg;
         bullets.add(p);
         scene.physics.velocityFromRotation(torso.rotation, 300, p.body.velocity);
         scene.tweens.add({ targets: p, alpha: 0.3, duration: 100, yoyo: true, repeat: -1 });
         scene.time.delayedCall(3000, () => { if(p.active) p.destroy(); });
     }
-	
+    
     // --- STANDARD PROJECTILES (SMG, MG, BR, HR, SR) --- //
     else {
-        // Helper function to handle bullet creation and cleanup
         const fireRound = (dmgValue, offsetAngle = 0) => {
             let b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
             scene.physics.add.existing(b); 
-			b.damageValue = dmgValue;
+            b.damageValue = dmgValue;
             bullets.add(b); 
             scene.physics.velocityFromRotation(torso.rotation + offsetAngle, weapon.speed, b.body.velocity);  
+            
+            // Standard yellow flash
+            createMuzzleFlash(scene, torso.x, torso.y, torso.rotation + offsetAngle, barrelDist);
+            
             scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
         };
 
         if (wKey === 'br') {
             for (let i = 0; i < weapon.burst; i++) {
-                scene.time.delayedCall(i * 60, () => fireRound(weapon.dmg));
+                scene.time.delayedCall(i * 60, () => fireRound(weapon.dmg, 0));
             }
         } else {
-            fireRound(weapon.dmg);
+            fireRound(weapon.dmg, 0);
         }
         
-        // Handle Kickback and Camera Shake
         if (wKey === 'hr' || wKey === 'sr') {
             let recoil = (wKey === 'sr') ? 250 : 150;
             player.body.velocity.x -= Math.cos(torso.rotation) * recoil;
@@ -749,45 +766,88 @@ function fire(scene, side) { // Add 'side' parameter
         }
     }
 
-    // --- FINAL STEP: Update the cooldown timer ---
-    // This MUST stay at the very bottom of the fire function
     if (side === 'L') reloadL = now + actualReload;
-	else reloadR = now + actualReload;
+    else reloadR = now + actualReload;
 }
 
 function takePlayerDamage(amt) {
-    if (isShieldActive) return;
-	lastDamageTime = game.scene.scenes[0].time.now;
-    let mod = WEAPONS[loadout.mod];
+    // 1. Exit if player is invalid, shield mod is active, or we are already processing a hit
+    if (!player || !player.active || isShieldActive || player.isProcessingDamage) return;
+    
+    // 2. Lock the function (This MUST be true to prevent the crash)
+    player.isProcessingDamage = true;
+    
+    let currentTime = game.scene.scenes[0].time.now;
+    lastDamageTime = currentTime; 
+    player.lastHitTime = currentTime; 
+
+    // 3. Damage Math
     if (player.shield > 0) {
-        player.shield -= amt * 0.5; 
+        let shieldSoak = amt * 0.5;
+        player.shield = Math.max(0, player.shield - shieldSoak);
         amt *= 0.5; 
     }
-    player.hp -= amt;
+    player.hp = Math.max(0, player.hp - amt);
+    
+    // 4. Update the HUD
     updateBars();
-    torso.list.forEach(shape => { if(shape.setFillStyle) shape.setFillStyle(0xffffff); });
-    game.scene.scenes[0].time.delayedCall(50, () => { refreshMechColor(); });
 
+    // 5. Unlock the function after a 50ms "grace period"
+    game.scene.scenes[0].time.delayedCall(50, () => {
+        if (player) player.isProcessingDamage = false;
+    });
+
+    // 6. Death Check
     if (player.hp <= 0) location.reload();
 }
 
 function refreshMechColor() {
-    torso.list.forEach(shape => { if(shape.setFillStyle && shape.width !== 15) shape.setFillStyle(loadout.color); });
+    if (!torso || !torso.list || !isDeployed) return;
+
+    let headColor = isRageActive ? 0xff0000 : loadout.color;
+    // Core/Shoulders become 40% of the original brightness
+    let bodyColor = isRageActive ? 0x660000 : darkenColor(loadout.color, 0.4);
+
+    torso.list.forEach(shape => {
+        // Only attempt to change color if the shape exists and has the property
+        if (shape && shape.setFillStyle) {
+            if (shape.name === 'mechHead') {
+                shape.setFillStyle(headColor);
+            } else if (shape.width >= 25) { 
+                shape.setFillStyle(bodyColor);
+            }
+        }
+    });
 }
 
 function updateBars() {
-    if (!player) return;
-    let hpFill = document.getElementById('hp-fill');
-    let shFill = document.getElementById('sh-fill');
-    let shBarElement = document.getElementById('sh-bar'); // Check for the bar container
+    if (!player || !isDeployed) return;
 
+    // 1. Health Updates
+    const hpFill = document.getElementById('hp-fill');
+    const hpText = document.getElementById('hp-text');
     if (hpFill) {
         let hpPercent = (player.hp / player.maxHp) * 100;
         hpFill.style.width = Math.max(0, hpPercent) + "%";
         hpFill.style.background = hpPercent < 25 ? "#f00" : "#0f0";
     }
-    if (shFill && shBarElement) {
-        shFill.style.width = Math.max(0, player.shield) + "%";
+    if (hpText) {
+        hpText.innerText = Math.ceil(Math.max(0, player.hp)) + "/" + player.maxHp;
+    }
+
+    // 2. Shield Updates (The likely crash site)
+    const shFill = document.getElementById('sh-fill');
+    const shText = document.getElementById('sh-text');
+    
+    // We use a fallback || 100 to prevent division by zero errors
+    let mSh = player.maxShield || 100; 
+    let shPercent = (player.shield / mSh) * 100;
+
+    if (shFill) {
+        shFill.style.width = Math.max(0, Math.min(100, shPercent)) + "%";
+    }
+    if (shText) {
+        shText.innerText = Math.ceil(Math.max(0, player.shield)) + "/" + mSh;
     }
 }
 
@@ -796,10 +856,16 @@ function update(time) {
 
     // --- 1. INNATE SHIELD REGENERATION ---
     // Regenerates shield if no damage taken for 5 seconds
-    if (time > lastDamageTime + 5000 && player.shield < 100) { 
-        player.shield += 0.2; 
-        updateBars(); 
-    }
+    let secondsSinceHit = (time - lastDamageTime) / 1000;
+
+	// ONLY recharge if we've actually been hit before AND it's been 5 seconds
+	if (lastDamageTime > 0 && secondsSinceHit >= 5) { 
+		if (player.shield < player.maxShield) {
+			player.shield += 1.0; // I lowered this slightly; 0.5 is very fast!
+			if (player.shield > player.maxShield) player.shield = player.maxShield;
+			updateBars();
+		}
+	}
 
     // --- 2. ENEMY AI MOVEMENT ---
     // Enemies seek the player unless they are currently stunned by EMP
@@ -856,8 +922,7 @@ function update(time) {
         }   
         else if (loadout.mod === 'rage') {
             isRageActive = true;
-            // Visual feedback: Red border glow for the duration
-            torso.list.forEach(shape => { if(shape.setStrokeStyle) shape.setStrokeStyle(3, 0xff0000); });
+            refreshMechColor();
 
             this.time.delayedCall(3000, () => {
                 isRageActive = false;
@@ -910,6 +975,27 @@ function update(time) {
 	// Secondary Fire (Hold F)
 	if (keys.F.isDown) {
 		fire(this, 'R');
+	}
+
+    if (isRageActive && time % 150 < 20) { // Spawns slightly less often (every 150ms)
+		// We use the real buildShapeMech for that "Great" look
+		let ghost = buildShapeMech(this, loadout.chassis, 0xff0000);
+		ghost.setPosition(torso.x, torso.y).setRotation(torso.rotation);
+    
+		// Force the "Red Fury" tint on all parts
+		ghost.list.forEach(shape => {
+			if (shape.setTint) shape.setTint(0xff0000);
+		});
+
+		ghost.setAlpha(0.4).setDepth(9);
+    
+		this.tweens.add({
+			targets: ghost,
+			alpha: 0,
+			scale: 1.1, 
+			duration: 400,
+			onComplete: () => ghost.destroy() // Critical for preventing crashes
+		});
 	}
 
     // VISUAL POSITIONING 
@@ -1085,14 +1171,34 @@ function refreshGarage() {
 function createExplosion(scene, x, y, radius, damage) {
     let blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
     scene.physics.add.existing(blast);
+    
+    let hasDealtPlayerDamage = false; // Local scoped gate
+
+    // Damage Enemies
     scene.physics.add.overlap(blast, enemies, (z, e) => {
-        // Show the damage number for each enemy in the blast
         showDamageText(scene, e.x, e.y, damage);
         damageEnemy(e, damage);
     });
-	
-    if (Phaser.Math.Distance.Between(x, y, player.x, player.y) < radius) takePlayerDamage(damage * 0.75);
-    scene.tweens.add({ targets: blast, scale: 1.5, alpha: 0, duration: 300, onComplete: () => blast.destroy() });
+
+    // Damage Player
+    if (player && player.active && !isShieldActive) {
+        let dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
+        if (dist < radius && !hasDealtPlayerDamage) {
+            hasDealtPlayerDamage = true; 
+            // Ensure we pass the damage clearly
+            takePlayerDamage(Math.floor(damage * 0.75)); 
+            scene.cameras.main.shake(200, 0.01);
+        }
+    }
+
+    // Animation
+    scene.tweens.add({ 
+        targets: blast, 
+        scale: 1.5, 
+        alpha: 0, 
+        duration: 300, 
+        onComplete: () => blast.destroy() 
+    });
 }
 
 function showDamageText(scene, x, y, amount) {
