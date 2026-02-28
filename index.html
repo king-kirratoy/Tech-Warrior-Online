@@ -58,6 +58,12 @@ body {
 
 .options-group { display: flex; gap: 5px; }
 
+.options-group button {
+    display: flex;
+    align-items: center;
+    white-space: nowrap; /* This prevents "YELLOW" from dropping to a new line */
+}
+
 button { 
     background: rgba(255, 255, 255, 0.04); 
     color: #c8d2d9; 
@@ -128,6 +134,10 @@ button.active {
     background: rgba(12, 16, 20, 0.85); 
     border-left: 4px solid #0f0; 
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+#hud-accent {
+    transition: border-color 0.3s ease;
 }
 
 .stats-group { display: flex; flex-direction: column; gap: 6px; }
@@ -304,7 +314,7 @@ button.active {
 	
 	</div> </div> </div> 
 	<div id="hud-container">
-		<div class="console-frame">
+		<div class="console-frame" id="hud-accent">
 			<div class="stats-group">
 				<div style="display: flex; justify-content: space-between; align-items: center;">
 					<div class="hud-label">HEALTH</div>
@@ -823,30 +833,35 @@ function refreshMechColor() {
 function updateBars() {
     if (!player || !isDeployed) return;
 
-    // 1. Health Updates
     const hpFill = document.getElementById('hp-fill');
     const hpText = document.getElementById('hp-text');
-    if (hpFill) {
+    const hudAccent = document.getElementById('hud-accent');
+    const shFill = document.getElementById('sh-fill');
+    const shText = document.getElementById('sh-text');
+
+    if (hpFill && hpText && hudAccent) {
         let hpPercent = (player.hp / player.maxHp) * 100;
+        let statusColor = "#00ff00"; // Default Green
+
+        if (hpPercent <= 25) {
+            statusColor = "#ff0000"; // Danger Red
+        } else if (hpPercent <= 55) {
+            statusColor = "#ffff00"; // Caution Yellow
+        }
+
+        // Apply dynamic color to Bar and Side Strip ONLY
+        hpFill.style.background = statusColor;
         hpFill.style.width = Math.max(0, hpPercent) + "%";
-        hpFill.style.background = hpPercent < 25 ? "#f00" : "#0f0";
-    }
-    if (hpText) {
+        hudAccent.style.borderColor = statusColor;
+
+        // HP Text remains its default color (Green)
         hpText.innerText = Math.ceil(Math.max(0, player.hp)) + "/" + player.maxHp;
     }
 
-    // 2. Shield Updates (The likely crash site)
-    const shFill = document.getElementById('sh-fill');
-    const shText = document.getElementById('sh-text');
-    
-    // We use a fallback || 100 to prevent division by zero errors
-    let mSh = player.maxShield || 100; 
-    let shPercent = (player.shield / mSh) * 100;
-
-    if (shFill) {
+    if (shFill && shText) {
+        let mSh = player.maxShield || 100;
+        let shPercent = (player.shield / mSh) * 100;
         shFill.style.width = Math.max(0, Math.min(100, shPercent)) + "%";
-    }
-    if (shText) {
         shText.innerText = Math.ceil(Math.max(0, player.shield)) + "/" + mSh;
     }
 }
