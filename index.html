@@ -1426,11 +1426,6 @@ function startIntro() {
         fadeOutIntro();
     }, 8000);
 
-    // When the video ends, fade out and enable the game UI
-    video.onended = () => {
-        fadeOutIntro();
-    };
-
     // Allow skipping
     introLayer.onclick = () => {
         fadeOutIntro();
