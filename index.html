@@ -9,13 +9,14 @@
 #skip-hint.initialize-pulse {
     animation: pulse-amber 2s infinite ease-in-out; !important;
     color: #ffaa00 !important;
+    font-weight: bold;
 	opacity: 1 !important;
 }
 
 @keyframes pulse-amber {
-    0% { opacity: 0.3; text-shadow: 0 0 5px #ffaa00; }
+    0% { opacity: 0.4; text-shadow: 0 0 5px #ffaa00; }
     50% { opacity: 1; text-shadow: 0 0 20px #ffaa00; }
-    100% { opacity: 0.3; text-shadow: 0 0 5px #ffaa00; }
+    100% { opacity: 0.4; text-shadow: 0 0 5px #ffaa00; }
 }
 
 /* --- 1. CORE ENGINE & THEMING --- */
@@ -268,14 +269,12 @@ button.active {
 </head>
 <body>
 
-// INTRO VIDEO CONTAINER
 <div id="intro-layer" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center;">
     <video id="intro-video" width="100%" height="100%" style="object-fit: cover;" playsinline>
-		<source src="assets/Mech-Intro.mp4" type="video/mp4">
-	</video>
-	<div id="skip-hint" style="position: absolute; bottom: 40px; color: rgba(200, 210, 217, 0.5); font-size: 12px; letter-spacing: 2px; cursor: pointer;">
-		CLICK TO SKIP
-	</div>
+        <source src="assets/Mech-Intro.mp4" type="video/mp4">
+    </video>
+    <div id="skip-hint" style="position: absolute; bottom: 40px; font-size: 12px; letter-spacing: 2px; cursor: pointer; font-family: monospace;">
+        </div>
 </div>
 
 <div id="ui-layer">
@@ -1426,55 +1425,68 @@ window.onload = () => {
     updateHUD(); 
 };
 
+let pulseInterval; // Global variable to stop the pulse later
+
 function startIntro() {
     const introLayer = document.getElementById('intro-layer');
     const video = document.getElementById('intro-video');
     const skipHint = document.getElementById('skip-hint');
 
+    // Start the manual JS Pulse
     if (skipHint) {
         skipHint.innerText = "CLICK TO INITIALIZE SYSTEMS";
-        skipHint.classList.add('initialize-pulse');
+        runPulse(skipHint); 
     }
 
     introLayer.onclick = () => {
+        clearInterval(pulseInterval); // Stop the pulsing
         video.play();
         
-        // Remove pulse and dim the text
-        skipHint.classList.remove('initialize-pulse');
         skipHint.innerText = "SYSTEMS ONLINE - CLICK TO SKIP";
-        skipHint.style.animation = "none"; 
         skipHint.style.color = "rgba(200, 210, 217, 0.3)";
+        skipHint.style.opacity = "1";
 
-        // MASTER TIMER: Set to 6 seconds (6000ms)
-        // This will start the 2-second fade BEFORE the video ends.
+        // Master Timer: Start fade at 6 seconds
         let masterTimer = setTimeout(() => {
-            console.log("6 Second Mark: Starting early transition.");
             fadeOutIntro();
         }, 6000); 
 
-        // Manual Skip Override
         introLayer.onclick = () => {
-            clearTimeout(masterTimer);
-            fadeOutIntro();
-        };
-        
-        // Safety: If video ends before the timer (unlikely here)
-        video.onended = () => {
             clearTimeout(masterTimer);
             fadeOutIntro();
         };
     };
 }
 
+// Manual JS Pulse Function
+function runPulse(element) {
+    let opacity = 0.3;
+    let increasing = true;
+    element.style.color = "#ffaa00"; // Force Amber color
+
+    pulseInterval = setInterval(() => {
+        if (increasing) {
+            opacity += 0.05;
+            if (opacity >= 1) increasing = false;
+        } else {
+            opacity -= 0.05;
+            if (opacity <= 0.3) increasing = true;
+        }
+        element.style.opacity = opacity;
+    }, 50); // Updates every 50ms for smooth motion
+}
+
 function fadeOutIntro() {
     const introLayer = document.getElementById('intro-layer');
     if (!introLayer || introLayer.style.display === 'none') return;
 
+    console.log("Executing Fade Transition...");
     introLayer.style.transition = "opacity 2s ease-in-out";
     introLayer.style.opacity = "0";
 
     setTimeout(() => {
         introLayer.style.display = 'none';
+        console.log("Intro Layer Removed. Hangar Active.");
     }, 2000);
 }
 
