@@ -1431,42 +1431,55 @@ function startIntro() {
     const video = document.getElementById('intro-video');
     const skipHint = document.getElementById('skip-hint');
 
-    // Setup the "Wait" state
-    skipHint.innerText = "CLICK TO INITIALIZE SYSTEMS";
-    skipHint.classList.add('initialize-pulse');
+    console.log("System Initializing: Waiting for User Click...");
+    if (skipHint) {
+        skipHint.innerText = "CLICK TO INITIALIZE SYSTEMS";
+        skipHint.classList.add('initialize-pulse');
+    }
 
     introLayer.onclick = () => {
-        // 1. Play with Audio (Unlocked by this click!)
+        console.log("Systems Online: Video Playing.");
         video.play();
         
-        // 2. Visual Cleanup
+        // Visual Cleanup
         skipHint.classList.remove('initialize-pulse');
         skipHint.innerText = "CLICK TO SKIP";
         skipHint.style.color = "rgba(200, 210, 217, 0.3)";
 
-        // 3. The 8-Second Sync
-        // This starts exactly when the video starts playing
-        setTimeout(() => {
+        // SAFETY 1: The 8-Second Timer
+        let transitionTimer = setTimeout(() => {
+            console.log("Timer Triggered: Starting Fade.");
             fadeOutIntro();
         }, 8000);
 
-        // 4. Update click to become a 'Skip' button now
-        introLayer.onclick = () => fadeOutIntro();
+        // SAFETY 2: If the video ends naturally
+        video.onended = () => {
+            console.log("Video Ended Naturally: Starting Fade.");
+            clearTimeout(transitionTimer); // Prevent double-calling
+            fadeOutIntro();
+        };
+
+        // SAFETY 3: Re-bind click to Skip (Manual override)
+        introLayer.onclick = () => {
+            console.log("User Skipped Intro: Starting Fade.");
+            clearTimeout(transitionTimer);
+            fadeOutIntro();
+        };
     };
 }
 
-// INTRO VIDEO TRANSITION
 function fadeOutIntro() {
     const introLayer = document.getElementById('intro-layer');
-    if (!introLayer) return;
-    
-    video.pause();
+    if (!introLayer || introLayer.style.display === 'none') return;
+
+    console.log("Executing Fade Transition...");
     introLayer.style.transition = "opacity 2s ease-in-out";
     introLayer.style.opacity = "0";
-    
+
     setTimeout(() => {
         introLayer.style.display = 'none';
-    }, 1500);
+        console.log("Intro Layer Removed. Hangar Active.");
+    }, 2000);
 }
 
 </script>
