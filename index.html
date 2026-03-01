@@ -456,22 +456,22 @@ button.active {
 // WEAPON ATTRIBUTES
 const WEAPONS = {
     // PRIMARY WEAPONS 
-    'smg':   { name: 'SMG',   reload: 50,   dmg: 3,   weight: 25, bulletSize: 4,  speed: 900 },
-    'mg':    { name: 'MG',    reload: 300,  dmg: 30,   weight: 50, bulletSize: 6,  speed: 850 },
-    'sg':    { name: 'SG',    reload: 700,  dmg: 12,   weight: 75, bulletSize: 5,  speed: 600, pellets: 5, range: 600 },
-	'br':    { name: 'BR',    reload: 1000,  dmg: 20,  weight: 75, bulletSize: 5,  speed: 1100, burst: 3 },
-    'hr':    { name: 'HR',    reload: 1750, dmg: 120,  weight: 100, bulletSize: 12, speed: 1100 },
+    'smg':   { name: 'SMG',   reload: 50,   dmg: 3,   weight: 25,  bulletSize: 4,  speed: 900 },
+    'mg':    { name: 'MG',    reload: 300,  dmg: 30,  weight: 50,  bulletSize: 6,  speed: 850 },
+    'sg':    { name: 'SG',    reload: 700,  dmg: 12,  weight: 75,  bulletSize: 5,  speed: 600, pellets: 5, range: 600 },
+	'br':    { name: 'BR',    reload: 1000, dmg: 20,  weight: 75,  bulletSize: 5,  speed: 1100, burst: 3 },
+    'hr':    { name: 'HR',    reload: 1750, dmg: 120, weight: 100, bulletSize: 12, speed: 1100 },
     // SECONDARY WEAPONS 
-    'sr':    { name: 'SR',    reload: 3500, dmg: 200, weight: 125, bulletSize: 6,  speed: 2000 },
-    'gl':    { name: 'GL',    reload: 3500, dmg: 150, weight: 125, explosive: true },
-    'rl':    { name: 'RL',    reload: 3500, dmg: 180, weight: 150, explosive: true, bulletSize: 12, speed: 800},
+    'sr':    { name: 'SR',    reload: 2500, dmg: 200, weight: 125, bulletSize: 6,  speed: 2000 },
+    'gl':    { name: 'GL',    reload: 2500, dmg: 100, weight: 125, explosive: true },
+    'rl':    { name: 'RL',    reload: 3500, dmg: 150, weight: 150, explosive: true, bulletSize: 12, speed: 800},
     'plsm':  { name: 'PLSM',  reload: 3500, dmg: 300, weight: 150, size: 30 },
     // SYSTEM MODIFICATIONS
-    'none':   { name: 'NONE',   reload: 0, dmg: 0, weight: 0 },
-    'jump':   { name: 'JUMP',   reload: 0, dmg: 0, weight: 25 },
-    'shield': { name: 'SHIELD', reload: 0, dmg: 0, weight: 50, activeTime: 2000, cooldown: 8000, isShield: true },
-	'rage':   { name: 'RAGE', weight: 75, duration: 3000, cooldown: 12000 },
-	'emp':    { name: 'EMP',  weight: 75, radius: 250,  cooldown: 10000 }
+    'none':   { name: 'NONE',   weight: 0 },
+    'jump':   { name: 'JUMP',   weight: 25 , jumpSpeed: 900, airTime: 200, cooldown: 3500},
+    'shield': { name: 'SHIELD', weight: 50, shieldTime: 3500, cooldown: 7000 },
+	'rage':   { name: 'RAGE',   weight: 75, rageTime: 3500, cooldown: 10500 },
+	'emp':    { name: 'EMP',    weight: 75, radius: 350, empSpeed: 400, stunTime: 3500, cooldown: 10500 }
 };
 
 // MECH ATTRIBUTES
@@ -513,7 +513,7 @@ const config = {
     physics: { 
 		default: 'arcade',
 		arcade: { 
-			debug: true 
+			debug: false
 		}
 	},
     scene: { preload: preload, create: create, update: update }
@@ -553,14 +553,6 @@ function create() {
 		}
 	});
 
-	this.physics.add.overlap(enemyBullets, player, (bullet, p) => {
-		createImpactSparks(this, p.x, p.y);
-		bullet.destroy(); 
-		if (!isShieldActive) {
-			takePlayerDamage(15); 
-		}
-	});
-
     for(let i=0; i<6; i++) spawnEnemy(this);
 
     this.hangarOverlay = this.add.rectangle(window.innerWidth/2, window.innerHeight/2, window.innerWidth, window.innerHeight, 0x0c1014, 0.7).setScrollFactor(0).setDepth(1000);
@@ -589,23 +581,95 @@ function createMuzzleFlash(scene, x, y, angle, distance = 40, color = 0xffffff) 
 
 // WEAPON IMPACT SPARKS ON MECHS
 function createImpactSparks(scene, x, y) {
-    for (let i = 0; i < 4; i++) {
-        let spark = scene.add.rectangle(x, y, 6, 2, 0xffffff).setDepth(20);
+    for (let i = 0; i < 6; i++) { // Number of sparks
+        // Choose between two colors: Gold/Orange and Bright Yellow
+        let sparkColor = Phaser.Math.RND.pick([0xffaa00, 0xffff00, 0xffffff]);
+        
+        let spark = scene.add.rectangle(x, y, 6, 2, sparkColor).setDepth(20);
         scene.physics.add.existing(spark);
         
         let angle = Math.random() * Math.PI * 2;
-        let speed = 200 + Math.random() * 200;
+        let speed = 200 + Math.random() * 250;
         
+        scene.physics.velocityFromRotation(angle, speed, spark.body.velocity);
+        
+        // Add a bit of "gravity" to the sparks so they arc downward slightly
+        spark.body.setAccelerationY(400); 
+
+        scene.tweens.add({
+            targets: spark,
+            alpha: 0,
+            scaleX: 0,
+            duration: 300, // Slightly longer duration
+            onComplete: () => spark.destroy()
+        });
+    }
+}
+
+// WEAPON IMPACT SPARKS ON SHIELDS
+function createShieldSparks(scene, x, y) {
+    for (let i = 0; i < 5; i++) {
+        let spark = scene.add.rectangle(x, y, 10, 2, 0x00ffff).setDepth(100);
+        scene.physics.add.existing(spark);
+        
+        let angle = Math.random() * Math.PI * 2;
+        let speed = Phaser.Math.Between(400, 600); // Faster, "snappier" sparks
         scene.physics.velocityFromRotation(angle, speed, spark.body.velocity);
         
         scene.tweens.add({
             targets: spark,
             alpha: 0,
-            scaleX: 0,
-            duration: 200,
+            scaleX: 2, // Stretches them out like lightning bolts
+            duration: 150, // Very quick flash
             onComplete: () => spark.destroy()
         });
     }
+}
+
+// SHIELD BREAK ANIMATION
+function createShieldBreak(scene, x, y) {
+    const count = 15; 
+    
+    for (let i = 0; i < count; i++) {
+        // --- Equilateral Geometry ---
+        // We'll use a side length of 14 for a "small but visible" shard.
+        // Point 1: Top Tip
+        // Point 2: Bottom Right
+        // Point 3: Bottom Left
+        let side = 14; 
+        let height = side * (Math.sqrt(3)/2); // Standard equilateral height formula
+        
+        let x1 = 0;           let y1 = -height/2;
+        let x2 = side/2;      let y2 = height/2;
+        let x3 = -side/2;     let y3 = height/2;
+
+        let shard = scene.add.triangle(x, y, x1, y1, x2, y2, x3, y3, 0xddffff, 0.8);
+        scene.physics.add.existing(shard);
+        
+        // Glowing cyan border
+        shard.setStrokeStyle(1.5, 0x00ffff, 1);
+        
+        // Physics
+        let angle = Math.random() * Math.PI * 2;
+        let speed = Phaser.Math.Between(150, 400);
+        scene.physics.velocityFromRotation(angle, speed, shard.body.velocity);
+        
+        // Higher spin makes small triangles look like "glittering" glass
+        shard.body.setAngularVelocity(Phaser.Math.Between(-600, 600));
+        shard.body.setDrag(80);
+
+        // Animation
+        scene.tweens.add({
+            targets: shard,
+            alpha: 0,
+            scale: { start: 0.8, end: 0.1 }, // Starts slightly smaller (0.8)
+            duration: 1200, 
+            ease: 'Cubic.easeOut',
+            onComplete: () => shard.destroy()
+        });
+    }
+    
+    scene.cameras.main.shake(250, 0.007); // Slightly lighter shake for smaller shards
 }
 
 // SPAWN ENEMY MECH
@@ -639,7 +703,7 @@ function damageEnemy(e, amt) {
 		scene.cameras.main.shake(250, 0.008);
         
         // 1. Create the visual explosion
-        createExplosion(scene, e.x, e.y, 60, 0); // 0 damage so they don't chain-kill others
+        createExplosion(scene, e.x, e.y, 60, 0);
         
         // 2. Spawn the mechanical debris using the enemy's head color
         spawnDebris(scene, e.x, e.y, 0x664400); 
@@ -674,12 +738,41 @@ function deployMech() {
 	player.body.setOffset(0, -10);
     player.setScale(s.scale).body.setCollideWorldBounds(true);
     
+	scene.physics.add.overlap(enemyBullets, player, (p, bullet) => {
+		if (!bullet || !bullet.active) return;
+		
+		// SHIELD-BLOCK LOGIC
+		if (isShieldActive) {
+			// 1. Create Blue "Short-Circuit" Sparks
+			createShieldSparks(scene, bullet.x, bullet.y);
+        
+			// 2. Show "0" or "BLOCKED" text in Blue
+			showDamageText(scene, bullet.x, bullet.y, 0, true); 
+
+			// 3. Destroy bullet before it can trigger hull damage
+			bullet.destroy();
+			return; // EXIT the function here so no hull sparks or damage happen
+		}
+		
+        createImpactSparks(scene, p.x, p.y);
+		let currentShield = player.shield > 0;
+		showDamageText(scene, p.x, p.y, 15, currentShield);
+		
+		if (player.shield > 0 && (player.shield - 7.5) <= 0) { 
+			createShieldBreak(scene, p.x, p.y);
+			
+		}	
+
+		bullet.destroy(); 
+        processPlayerDamage(15); 
+    });
+	
     player.maxHp = s.hp; 
     player.hp = s.hp;
     player.maxShield = 100;
 	player.shield = 100;
 
-    torso = buildShapeMech(scene, loadout.chassis, loadout.color);
+    torso = buildPlayerMech(scene, loadout.chassis, loadout.color);
     torso.setDepth(10);
 	refreshMechColor();
 	scene.time.delayedCall(10, () => refreshMechColor());
@@ -711,7 +804,7 @@ function deployMech() {
 }
 
 // BUILD PLAYER MECH
-function buildShapeMech(scene, type, color) {
+function buildPlayerMech(scene, type, color) {
     let container = scene.add.container(0, 0);
     let s = CHASSIS[type].scale;
     if (type === 'heavy') {
@@ -980,35 +1073,27 @@ function enemyFire(scene, enemy) {
     scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
 }
 
-// PLAYER MECH DAMAGE
-function takePlayerDamage(amt) {
-    // 1. Exit if player is invalid, shield mod is active, or we are already processing a hit
+// PROCESS PLAYER DAMAGE
+function processPlayerDamage(amt) {
     if (!player || !player.active || isShieldActive || player.isProcessingDamage) return;
-    
-    // 2. Lock the function (This MUST be true to prevent the crash)
     player.isProcessingDamage = true;
-    
     let currentTime = game.scene.scenes[0].time.now;
     lastDamageTime = currentTime; 
     player.lastHitTime = currentTime; 
-
-    // 3. Damage Math
+     // PASSIVE SHIELD DAMAGE MATH
     if (player.shield > 0) {
         let shieldSoak = amt * 0.5;
         player.shield = Math.max(0, player.shield - shieldSoak);
         amt *= 0.5; 
     }
-    player.hp = Math.max(0, player.hp - amt);
-    
-    // 4. Update the HUD
+    player.hp = Math.max(0, player.hp - amt);  
+    // UPDATE HUD
     updateBars();
-
-    // 5. Unlock the function after a 50ms "grace period"
+    // UNLOCK FUNCTION
     game.scene.scenes[0].time.delayedCall(50, () => {
         if (player) player.isProcessingDamage = false;
     });
-
-    // 6. Death Check
+    // DEATH CHECK
     if (player.hp <= 0) location.reload();
 }
 
@@ -1084,77 +1169,75 @@ function update(time) {
 	}
 
     // ENEMY AI MOVEMENT
-    enemies.getChildren().forEach(enemy => {
-    if (player && !enemy.isStunned) {
-        let dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y);
-        let angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+	enemies.getChildren().forEach(enemy => {
+		let dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y);
+		let angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
         
-        let speed = 120; // Base enemy speed
-        let vx = 0;
-        let vy = 0;
+		if (player && !enemy.isStunned) {
+			let speed = 120; 
+			let vx = 0;
+			let vy = 0;
 
-        // THE "SMART" AI DECISION TREE
+			// THE "SMART" AI DECISION TREE
+			if (dist > 350) {
+				vx = Math.cos(angleToPlayer) * speed;
+				vy = Math.sin(angleToPlayer) * speed;
+			} 
+			else if (dist < 200) {
+				vx = -Math.cos(angleToPlayer) * (speed * 1.2);
+				vy = -Math.sin(angleToPlayer) * (speed * 1.2);
+			} 
+			else {
+				let strafeAngle = angleToPlayer + Math.PI / 2;
+				vx = Math.cos(strafeAngle) * speed;
+				vy = Math.sin(strafeAngle) * speed;
+			}
+
+			// Only shoot if within 500px and every 1.5 to 2 seconds
+			if (dist < 500) {
+				if (!enemy.lastFireTime || time > enemy.lastFireTime + 1800) {
+					enemyFire(this, enemy);
+					enemy.lastFireTime = time + Phaser.Math.Between(-200, 200); 
+				}
+			}
         
-        if (dist > 350) {
-            // State: Too far. Move toward player.
-            vx = Math.cos(angleToPlayer) * speed;
-            vy = Math.sin(angleToPlayer) * speed;
-        } 
-        else if (dist < 200) {
-            // State: Too close! Back away to maintain range.
-            vx = -Math.cos(angleToPlayer) * (speed * 1.2);
-            vy = -Math.sin(angleToPlayer) * (speed * 1.2);
-        } 
-        else {
-            // State: Golden Range. Circle the player (Strafing).
-            // We add 90 degrees (Math.PI / 2) to the angle to move sideways.
-            let strafeAngle = angleToPlayer + Math.PI / 2;
-            vx = Math.cos(strafeAngle) * speed;
-            vy = Math.sin(strafeAngle) * speed;
-        }
+			enemy.body.setVelocity(vx, vy);
+			enemy.body.setImmovable(false); // Make sure they CAN move when not stunned
+			enemy.visuals.setRotation(angleToPlayer);
+			
+		} else {
+			// STUNNED STATE
+			enemy.body.setVelocity(0, 0);
+			enemy.body.setImmovable(true); 
+		}
 
-		// Only shoot if within 500px and every 1.5 to 2 seconds
-        if (dist < 500) {
-            if (!enemy.lastFireTime || time > enemy.lastFireTime + 1800) {
-                enemyFire(this, enemy);
-                enemy.lastFireTime = time + Phaser.Math.Between(-200, 200); // Add variance
-            }
-        }
-		
-        enemy.body.setVelocity(vx, vy);
-        // Face the player regardless of movement direction
-        enemy.visuals.setPosition(enemy.x, enemy.y);
-        enemy.visuals.setRotation(angleToPlayer);
+		// --- CRITICAL VISUAL SYNC ---
+		// These must stay OUTSIDE the if(!enemy.isStunned) block so the 
+		// visual mech stays pinned to the hitbox even when frozen.
+		enemy.visuals.setPosition(enemy.x, enemy.y);
 
-        if (enemy.bar) {
-            enemy.bar.setPosition(enemy.x, enemy.y - 45);
-        }
-    } else if (enemy.isStunned) {
-        enemy.body.setVelocity(0, 0);
-    }
-});
-
-    // --- 3. DYNAMIC SPEED CALCULATION ---
+		if (enemy.bar) {
+			enemy.bar.setPosition(enemy.x, enemy.y - 45);
+		}
+	}); 
+    // DYNAMIC SPEED CALCULATION
     // Applies a 1.75x speed multiplier if Rage is active
-    let s = CHASSIS[loadout.chassis].spd * (isRageActive ? 1.75 : 1);
-	
-    // --- 4. SPACEBAR MODULE ACTIVATION ---
-    // Determine cooldown based on the specific module equipped
-    let currentModCD = 2000; // Default for Jump
-    if (loadout.mod === 'shield') currentModCD = 8000;
-    else if (loadout.mod === 'emp') currentModCD = 10000;
-    else if (loadout.mod === 'rage') currentModCD = 12000;
-
-    // Trigger activation if Space is pressed and no other mod/jump is currently active
+    let s = CHASSIS[loadout.chassis].spd * (isRageActive ? 1.75 : 1);	
+    // DYNAMIC COOLDOWN CALCULATION
+    let currentModCD = 0;
+	if (loadout.mod !== 'none') {
+		currentModCD = WEAPONS[loadout.mod].cooldown;
+	}	
+    // TRIGGER MOD ACTIVATION
     if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + currentModCD) {
-    
+        // JUMP ACTIVATION
         if (loadout.mod === 'jump') {
             isJumping = true;
-            this.physics.velocityFromRotation(player.rotation, 900, player.body.velocity);
+            this.physics.velocityFromRotation(player.rotation, WEAPONS.jump.jumpSpeed, player.body.velocity);
             this.tweens.add({ 
                 targets: [player, torso], 
                 scale: '+=0.2', 
-                duration: 200, 
+                duration: WEAPONS.jump.airTime, 
                 yoyo: true, 
                 onComplete: () => {
                     isJumping = false;
@@ -1162,50 +1245,61 @@ function update(time) {
                 } 
             });
         } 
+		// SHIELD ACTIVATION
         else if (loadout.mod === 'shield') {
             isShieldActive = true;
-            this.time.delayedCall(3000, () => { 
-                isShieldActive = false; 
+            this.time.delayedCall(WEAPONS.shield.shieldTime, () => { 
+				isShieldActive = false;
                 lastModTime = game.scene.scenes[0].time.now;
             });
         }   
+		// RAGE ACTIVATION
         else if (loadout.mod === 'rage') {
-            isRageActive = true;
-            refreshMechColor();
-
-            this.time.delayedCall(3000, () => {
-                isRageActive = false;
-                refreshMechColor(); // Resets to base armor color
-                lastModTime = game.scene.scenes[0].time.now;
-            }); 
-        }
+			isRageActive = true;
+			refreshMechColor();
+			this.time.delayedCall(WEAPONS.rage.rageTime, () => {
+				isRageActive = false;
+				refreshMechColor();
+				lastModTime = game.scene.scenes[0].time.now;
+			});
+		}
+		// EMP ACTIVATION
         else if (loadout.mod === 'emp') {
-            // Visual Ring Expansion
             let ring = this.add.circle(player.x, player.y, 10, 0x00ffff, 0.2).setStrokeStyle(2, 0x00ffff).setDepth(12);
             this.tweens.add({
                 targets: ring,
-                radius: 250,
+                radius: WEAPONS.emp.radius,
                 alpha: 0,
-                duration: 400,
+                duration: WEAPONS.emp.empSpeed,
                 onComplete: () => ring.destroy()
             });
-
-            // Logic: Stun nearby enemies
+            // STUN NEARBY ENEMIES
             enemies.getChildren().forEach(enemy => {
-                let dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
-                if (dist < 250) {
-                    enemy.isStunned = true;
-                    enemy.setStrokeStyle(4, 0xffffff); // Highlight stun state
-                    this.time.delayedCall(2500, () => {
-                        enemy.isStunned = false;
-                        enemy.setStrokeStyle(2, 0xffffff);
-                    });
-                }
-            });
-            lastModTime = time; // EMP is instant; cooldown starts now
+				let dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+    
+				if (dist < WEAPONS.emp.radius) {
+					enemy.isStunned = true;
+        
+					// 1. DO NOT set stroke on 'enemy' (that's the hitbox rectangle)
+					// 2. DO set stroke on the visuals instead
+					if (enemy.visuals && enemy.visuals.setStrokeStyle) {
+						enemy.visuals.setStrokeStyle(4, 0x00ffff); 
+					}
+
+					this.time.delayedCall(WEAPONS.emp.stunTime, () => {
+						enemy.isStunned = false;
+						enemy.body.setImmovable(false);
+            
+						// 3. Clear the stroke from the visuals
+						if (enemy.visuals && enemy.visuals.setStrokeStyle) {
+							enemy.visuals.setStrokeStyle(2, 0xffffff); // Return to normal
+						}
+					});
+				}
+			});
+            lastModTime = time; 
         }
     }
-
     // PLAYER MOVEMENT CONTROLS
     if (!isJumping) {
         player.body.setVelocity(0);
@@ -1215,20 +1309,18 @@ function update(time) {
         else if (keys.D.isDown) player.body.setAngularVelocity(200);
         else player.body.setAngularVelocity(0);
     }
-	
-    // Primary Fire (Hold Left Click)
+    // PRIMARY FIRE
 	if (this.input.activePointer.isDown) {
 		fire(this, 'L');
 	}
-
-	// Secondary Fire (Hold F)
+	// SECONDARY FIRE
 	if (keys.F.isDown) {
 		fire(this, 'R');
 	}
 
     if (isRageActive && time % 150 < 20) { // Spawns slightly less often (every 150ms)
-		// We use the real buildShapeMech for that "Great" look
-		let ghost = buildShapeMech(this, loadout.chassis, 0xff0000);
+		// We use the real buildPlayerMech for that "Great" look
+		let ghost = buildPlayerMech(this, loadout.chassis, 0xff0000);
 		ghost.setPosition(torso.x, torso.y).setRotation(torso.rotation);
     
 		// Force the "Red Fury" tint on all parts
@@ -1255,9 +1347,9 @@ function update(time) {
     // Position and toggle the blue shield bubble
     shieldGraphic.setPosition(player.x, player.y).setVisible(isShieldActive);
 	
-    // --- 7. HUD COOLDOWN VISUALS ---
+    // HUD COOLDOWN VISUALS
     if (isDeployed) {
-        // Primary Weapon Cooldown
+        // PRIMARY WEAPON COOLDOWN
         let cdL = document.getElementById('cd-L');
         if (cdL && loadout.L !== 'none') {
             let totalTime = WEAPONS[loadout.L].reload;
@@ -1266,7 +1358,7 @@ function update(time) {
             cdL.style.height = percent + "%";
         }
 
-        // Secondary Weapon Cooldown
+        // SECONDARY WEAPON COOLDOWN
         let cdR = document.getElementById('cd-R');
         if (cdR && loadout.R !== 'none') {
             let totalTime = WEAPONS[loadout.R].reload;
@@ -1275,30 +1367,20 @@ function update(time) {
             cdR.style.height = percent + "%";
         }
 		
-        // System Module Cooldown
+        // SYSTEM MODIFICATION COOLDOWN
         let cdM = document.getElementById('cd-M');
         let txtM = document.getElementById('txt-M');
-
         if (cdM && loadout.mod !== 'none') {
             if (txtM) txtM.innerText = loadout.mod.toUpperCase();
-
-            let cooldownDuration = 2000;
-            if (loadout.mod === 'shield') cooldownDuration = 8000;
-            if (loadout.mod === 'emp') cooldownDuration = 10000;
-            if (loadout.mod === 'rage') cooldownDuration = 12000;
-
+            let cooldownDuration = WEAPONS[loadout.mod].cooldown;
             let elapsed = time - lastModTime;
             let percent = 0;
-
-            // Stay at 100% height while active
             if (isShieldActive || isJumping || isRageActive) {
                 percent = 100;
             } 
-            // Drain while cooling down
             else if (lastModTime > 0 && elapsed < cooldownDuration) {
                 percent = (1 - (elapsed / cooldownDuration)) * 100;
             }
-
             cdM.style.height = percent + "%";
         }
     }
@@ -1428,30 +1510,28 @@ function refreshGarage() {
 	}
 }
 }
+
+// CREATE EXPLOSION
 function createExplosion(scene, x, y, radius, damage) {
     let blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
     scene.physics.add.existing(blast);
-    
-    let hasDealtPlayerDamage = false; // Local scoped gate
-
-    // Damage Enemies
+    let hasDealtPlayerDamage = false; 
+    // DAMAGE ENEMIES
     scene.physics.add.overlap(blast, enemies, (z, e) => {
         showDamageText(scene, e.x, e.y, damage);
         damageEnemy(e, damage);
     });
-
-    // Damage Player
+    // DAMAGE PLAYER
     if (player && player.active && !isShieldActive) {
         let dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
         if (dist < radius && !hasDealtPlayerDamage) {
             hasDealtPlayerDamage = true; 
             // Ensure we pass the damage clearly
-            takePlayerDamage(Math.floor(damage * 0.75)); 
+            processPlayerDamage(Math.floor(damage * 0.75)); 
             scene.cameras.main.shake(200, 0.01);
         }
     }
-
-    // Animation
+    // EXPLOSION ANIMATION
     scene.tweens.add({ 
         targets: blast, 
         scale: 1.5, 
@@ -1490,36 +1570,45 @@ function spawnDebris(scene, x, y, color) {
     }
 }
 
-function showDamageText(scene, x, y, amount) {
-    let color = "#ffff00"; // Default: Electric Yellow
-    let fontSize = "20px";
-
-    if (amount >= 90 && amount < 150) {
-        color = "#ffaa00"; // Brighter Neon Orange
-        fontSize = "24px";
-    } else if (amount >= 150) {
-        color = "#ff0055"; // Brighter Laser Red/Magenta
-        fontSize = "28px";
+function showDamageText(scene, x, y, amount, hasShield = false) {
+     // IF THERE'S NO DAMAGE AND NO SHIELD, DON'T SHOW ANYTHING
+	if (amount <= 0 && !isShieldActive) {
+        return; 
     }
-
-    let dmgText = scene.add.text(x, y - 20, amount, {
+	// DETERMINE TEXT COLOR
+	let color = "#ffff00"; // Default: Electric Yellow
+    let fontSize = "20px";
+    if (hasShield) {
+		color = "#00ffff"; // Shield Blue
+		fontSize = "22px";
+    } else {
+		if (amount >= 90 && amount < 150) {
+			color = "#ffaa00"; // Brighter Neon Orange
+			fontSize = "24px";
+		} else if (amount >= 150) {
+			color = "#ff0055"; // Brighter Laser Red/Magenta
+			fontSize = "28px";
+		}
+    }
+	// SHIELD IMPACT TEXT
+	let displayText = amount === 0 ? "BLOCK" : amount;
+    let dmgText = scene.add.text(x, y - 20, displayText, {
         font: `bold ${fontSize} monospace`,
         fill: color,
         stroke: "#000000",
         strokeThickness: 4
-    }).setOrigin(0.5).setDepth(20);
+    }).setOrigin(0.5).setDepth(100);
 
-    // This adds the "Glow" effect to make the colors feel brighter
     dmgText.setShadow(0, 0, color, 8, true, true);
 
     scene.tweens.add({
         targets: dmgText,
-        y: y - 100, // Floats a bit higher
+        y: y - 100, 
         alpha: 0,
         scale: (amount >= 90 ? 1.3 : 1.0),
-        duration: 2000,
+        duration: 1500,
 		hold: 500,
-        ease: 'Back.easeOut', // Adds a slight "pop" at the start
+        ease: 'Back.easeOut',
         onComplete: () => dmgText.destroy()
     });
 }
