@@ -1416,19 +1416,27 @@ window.onload = () => {
 function startIntro() {
     const introLayer = document.getElementById('intro-layer');
     const video = document.getElementById('intro-video');
+    const skipHint = document.getElementById('skip-hint');
 
-    // Start playing
-    video.play().catch(error => {
-        console.log("Autoplay blocked, waiting for user click.");
-    });
+    // Update the text to tell the user to act
+    skipHint.innerText = "CLICK TO INITIALIZE SYSTEMS";
+    skipHint.style.color = "#ffaa00"; // Use your Amber color
 
-    setTimeout(() => {
-        fadeOutIntro();
-    }, 8000);
-
-    // Allow skipping
     introLayer.onclick = () => {
-        fadeOutIntro();
+        // This human interaction UNLOCKS the audio
+        video.play();
+        
+        // Change the hint back to skip mode
+        skipHint.innerText = "CLICK TO SKIP";
+        skipHint.style.color = "rgba(200, 210, 217, 0.5)";
+
+        // Set your 8-second transition timer now that it's actually playing
+        setTimeout(() => {
+            fadeOutIntro();
+        }, 8000);
+
+        // Re-bind click to skip early
+        introLayer.onclick = () => fadeOutIntro();
     };
 }
 
