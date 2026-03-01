@@ -9,14 +9,13 @@
 #skip-hint.initialize-pulse {
     animation: pulse-amber 2s infinite ease-in-out; !important;
     color: #ffaa00 !important;
-    font-weight: bold;
 	opacity: 1 !important;
 }
 
 @keyframes pulse-amber {
-    0% { opacity: 0.4; text-shadow: 0 0 5px #ffaa00; }
+    0% { opacity: 0.3; text-shadow: 0 0 5px #ffaa00; }
     50% { opacity: 1; text-shadow: 0 0 20px #ffaa00; }
-    100% { opacity: 0.4; text-shadow: 0 0 5px #ffaa00; }
+    100% { opacity: 0.3; text-shadow: 0 0 5px #ffaa00; }
 }
 
 /* --- 1. CORE ENGINE & THEMING --- */
@@ -1432,7 +1431,6 @@ function startIntro() {
     const video = document.getElementById('intro-video');
     const skipHint = document.getElementById('skip-hint');
 
-    // 1. Force the pulse on load
     if (skipHint) {
         skipHint.innerText = "CLICK TO INITIALIZE SYSTEMS";
         skipHint.classList.add('initialize-pulse');
@@ -1441,26 +1439,26 @@ function startIntro() {
     introLayer.onclick = () => {
         video.play();
         
-        // Remove pulse and change text
+        // Remove pulse and dim the text
         skipHint.classList.remove('initialize-pulse');
         skipHint.innerText = "SYSTEMS ONLINE - CLICK TO SKIP";
-        skipHint.style.animation = "none"; // Kill the animation manually
+        skipHint.style.animation = "none"; 
         skipHint.style.color = "rgba(200, 210, 217, 0.3)";
 
-        // 2. THE MASTER TIMER (Set to 8 seconds)
-        // This will run no matter what, unless you click to skip.
+        // MASTER TIMER: Set to 6 seconds (6000ms)
+        // This will start the 2-second fade BEFORE the video ends.
         let masterTimer = setTimeout(() => {
-            console.log("8 Second Master Timer hit.");
+            console.log("6 Second Mark: Starting early transition.");
             fadeOutIntro();
-        }, 8000);
+        }, 6000); 
 
-        // 3. Manual Skip Override
+        // Manual Skip Override
         introLayer.onclick = () => {
-            clearTimeout(masterTimer); // Stop the 8s timer so it doesn't fire twice
+            clearTimeout(masterTimer);
             fadeOutIntro();
         };
         
-        // 4. Video End Override (If video is shorter than 8s)
+        // Safety: If video ends before the timer (unlikely here)
         video.onended = () => {
             clearTimeout(masterTimer);
             fadeOutIntro();
@@ -1472,13 +1470,11 @@ function fadeOutIntro() {
     const introLayer = document.getElementById('intro-layer');
     if (!introLayer || introLayer.style.display === 'none') return;
 
-    console.log("Executing Fade Transition...");
     introLayer.style.transition = "opacity 2s ease-in-out";
     introLayer.style.opacity = "0";
 
     setTimeout(() => {
         introLayer.style.display = 'none';
-        console.log("Intro Layer Removed. Hangar Active.");
     }, 2000);
 }
 
