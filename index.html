@@ -258,7 +258,7 @@ button.active {
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu" style="width: 750px;">
         
-        <h2 style="text-align:center; margin-top:0; margin-bottom: 25px; letter-spacing: 2px; color: #00FF00B3;">--- MECH HANGAR ---</h2>
+        <h2 style="text-align:center; margin-top:0; margin-bottom: 25px; letter-spacing: 2px; color: #c8d2d9;">--- MECH HANGAR ---</h2>
         
         <div style="display: flex; gap: 30px; align-items: flex-start;">
             
@@ -533,16 +533,23 @@ function createImpactSparks(scene, x, y) {
     }
 }
 
+// SPAWN ENEMY MECH
 function spawnEnemy(scene) {
     let x = Phaser.Math.Between(200, window.innerWidth - 200);
     let y = Phaser.Math.Between(200, window.innerHeight - 200);
-    let e = scene.add.rectangle(x, y, 40, 40, 0xff0000).setStrokeStyle(2, 0xffffff);
+
+    // 1. Create the Hitbox (Physical presence)
+    let e = scene.add.rectangle(x, y, 50, 50, 0x000000, 0); // Invisible hitbox
     scene.physics.add.existing(e);
     
+    // 2. Create the Visuals (The appearance)
+    e.visuals = buildEnemyMech(scene);
+    e.visuals.setPosition(x, y);
+
     e.health = 450; 
     e.maxHealth = 450; 
     
-    e.bar = scene.add.rectangle(x, y-35, 40, 5, 0x00ff00);
+    e.bar = scene.add.rectangle(x, y-45, 40, 5, 0x00ff00);
     enemies.add(e);
 }
 
@@ -551,9 +558,22 @@ function damageEnemy(e, amt) {
     if(e.bar) e.bar.width = Math.max(0, (e.health / e.maxHealth) * 40);
     
     if (e.health <= 0) { 
+        let scene = game.scene.scenes[0];
+		
+		scene.cameras.main.shake(250, 0.008);
+        
+        // 1. Create the visual explosion
+        createExplosion(scene, e.x, e.y, 60, 0); // 0 damage so they don't chain-kill others
+        
+        // 2. Spawn the mechanical debris using the enemy's head color
+        spawnDebris(scene, e.x, e.y, 0x664400); 
+
+        // 3. Cleanup
         if(e.bar) e.bar.destroy(); 
+        if(e.visuals) e.visuals.destroy(); 
         e.destroy(); 
-        setTimeout(() => spawnEnemy(game.scene.scenes[0]), 2000); 
+        
+        setTimeout(() => spawnEnemy(scene), 2000); 
     }
 }
 
@@ -573,6 +593,7 @@ function deployMech() {
 
     player = scene.add.rectangle(window.innerWidth/2, window.innerHeight/2, 70, 50, 0x222222).setStrokeStyle(2, 0xffffff).setDepth(5);
     scene.physics.add.existing(player);
+	player.body.setCircle(25);
     player.setScale(s.scale).body.setCollideWorldBounds(true);
     
     player.maxHp = s.hp; 
@@ -599,6 +620,10 @@ function deployMech() {
         on: false 
     }).setDepth(4);
 
+    // Player and Enemy collision
+    scene.physics.add.collider(player, enemies);
+	scene.physics.add.collider(enemies, enemies);
+	
     player.isProcessingDamage = false; 
     lastDamageTime = -99999;
     lastModTime = -10000;
@@ -607,6 +632,7 @@ function deployMech() {
     updateBars();
 }
 
+// BUILD PLAYER MECH
 function buildShapeMech(scene, type, color) {
     let container = scene.add.container(0, 0);
     let s = CHASSIS[type].scale;
@@ -630,6 +656,24 @@ function buildShapeMech(scene, type, color) {
         container.add([shoulders, core, head, cockpit]);
     }
     container.setScale(s);
+    return container;
+}
+
+// BUILD ENEMY MECH
+function buildEnemyMech(scene) {
+    let container = scene.add.container(0, 0);
+    
+    // Enemy Colors
+    let bodyCol = 0x664400; // Dark gray
+    let headCol = 0xffaa00; // Dark red for the "Head"
+    let eyeCol = 0xff0000;  // Bright red for the "Cockpit"
+
+    let shoulders = scene.add.rectangle(0, 0, 35, 80, bodyCol).setStrokeStyle(2, 0xffffff);
+    let core = scene.add.rectangle(0, 0, 50, 50, bodyCol).setStrokeStyle(2, 0xffffff);
+    let head = scene.add.rectangle(0, 0, 35, 25, headCol).setStrokeStyle(2, 0xffffff);
+    let cockpit = scene.add.rectangle(14, 0, 10, 25, eyeCol).setStrokeStyle(1, 0xffffff);
+
+    container.add([shoulders, core, head, cockpit]);
     return container;
 }
 
@@ -919,23 +963,49 @@ function update(time) {
 		}
 	}
 
-    // --- 2. ENEMY AI MOVEMENT ---
-    // Enemies seek the player unless they are currently stunned by EMP
+    // ENEMY AI MOVEMENT
     enemies.getChildren().forEach(enemy => {
-        if (player && !enemy.isStunned) {
-            let angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
-            enemy.body.setVelocity(
-                Math.cos(angleToPlayer) * 100,
-                Math.sin(angleToPlayer) * 100
-            );
-            if (enemy.bar) {
-                enemy.bar.setPosition(enemy.x, enemy.y - 35);
-            }
-        } else if (enemy.isStunned) {
-            // Freeze movement during EMP stun
-            enemy.body.setVelocity(0, 0);
+    if (player && !enemy.isStunned) {
+        let dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y);
+        let angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+        
+        let speed = 120; // Base enemy speed
+        let vx = 0;
+        let vy = 0;
+
+        // --- THE "SMART" DECISION TREE ---
+        
+        if (dist > 350) {
+            // State: Too far. Move toward player.
+            vx = Math.cos(angleToPlayer) * speed;
+            vy = Math.sin(angleToPlayer) * speed;
+        } 
+        else if (dist < 200) {
+            // State: Too close! Back away to maintain range.
+            vx = -Math.cos(angleToPlayer) * (speed * 1.2);
+            vy = -Math.sin(angleToPlayer) * (speed * 1.2);
+        } 
+        else {
+            // State: Golden Range. Circle the player (Strafing).
+            // We add 90 degrees (Math.PI / 2) to the angle to move sideways.
+            let strafeAngle = angleToPlayer + Math.PI / 2;
+            vx = Math.cos(strafeAngle) * speed;
+            vy = Math.sin(strafeAngle) * speed;
         }
-    });
+
+        enemy.body.setVelocity(vx, vy);
+        
+        // Face the player regardless of movement direction
+        enemy.visuals.setPosition(enemy.x, enemy.y);
+        enemy.visuals.setRotation(angleToPlayer);
+
+        if (enemy.bar) {
+            enemy.bar.setPosition(enemy.x, enemy.y - 45);
+        }
+    } else if (enemy.isStunned) {
+        enemy.body.setVelocity(0, 0);
+    }
+});
 
     // --- 3. DYNAMIC SPEED CALCULATION ---
     // Applies a 1.75x speed multiplier if Rage is active
@@ -1018,7 +1088,7 @@ function update(time) {
         else if (keys.D.isDown) player.body.setAngularVelocity(200);
         else player.body.setAngularVelocity(0);
     }
-
+	
     // Primary Fire (Hold Left Click)
 	if (this.input.activePointer.isDown) {
 		fire(this, 'L');
@@ -1214,7 +1284,7 @@ function refreshGarage() {
         let percentage = Math.min(100, (total / max) * 100);
         barFill.style.width = percentage + "%";
         
-        weightDisplay.style.color = isOver ? '#ff3300' : '#00FF00B3';
+        weightDisplay.style.color = isOver ? '#ff3300' : '#c8d2d9';
         barFill.style.background = isOver ? '#ff3300' : '#ffaa00';
 		barFill.style.boxShadow = isOver ? '0 0 10px #ff3300' : '0 0 10px rgba(255, 170, 0, 0.4)';
         
@@ -1262,6 +1332,35 @@ function createExplosion(scene, x, y, radius, damage) {
         duration: 300, 
         onComplete: () => blast.destroy() 
     });
+}
+
+// MECH DEATH EXPLOSION
+function spawnDebris(scene, x, y, color) {
+    for (let i = 0; i < 8; i++) {
+        // Create a small 'chunk' of metal
+        let chunk = scene.add.rectangle(x, y, Phaser.Math.Between(5, 15), Phaser.Math.Between(5, 15), color);
+        chunk.setStrokeStyle(1, 0xffffff);
+        scene.physics.add.existing(chunk);
+
+        // Random trajectory
+        let angle = Math.random() * Math.PI * 2;
+        let speed = Phaser.Math.Between(150, 400);
+        scene.physics.velocityFromRotation(angle, speed, chunk.body.velocity);
+        
+        // Add some spin
+        chunk.body.setAngularVelocity(Phaser.Math.Between(-500, 500));
+        // Add friction so they slow down
+        chunk.body.setDrag(200);
+
+        // Fade and destroy
+        scene.tweens.add({
+            targets: chunk,
+            alpha: 0,
+            scale: 0.5,
+            duration: Phaser.Math.Between(800, 1500),
+            onComplete: () => chunk.destroy()
+        });
+    }
 }
 
 function showDamageText(scene, x, y, amount) {
