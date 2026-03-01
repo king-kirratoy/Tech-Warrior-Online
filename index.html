@@ -5,6 +5,19 @@
 <title>Tech Warrior: Alpha 3.0</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <style>
+// INTRO INITIALIZE
+@keyframes pulse-amber {
+    0% { opacity: 0.4; text-shadow: 0 0 5px #ffaa00; }
+    50% { opacity: 1; text-shadow: 0 0 20px #ffaa00; }
+    100% { opacity: 0.4; text-shadow: 0 0 5px #ffaa00; }
+}
+
+.initialize-pulse {
+    animation: pulse-amber 2s infinite ease-in-out;
+    color: #ffaa00 !important;
+    font-weight: bold;
+}
+
 /* --- 1. CORE ENGINE & THEMING --- */
 body { 
     margin: 0; 
@@ -257,7 +270,7 @@ button.active {
 
 // INTRO VIDEO CONTAINER
 <div id="intro-layer" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center;">
-    <video id="intro-video" width="100%" height="100%" style="object-fit: cover;" autoplay muted playsinline>
+    <video id="intro-video" width="100%" height="100%" style="object-fit: cover;" playsinline>
 		<source src="assets/Mech-Intro.mp4" type="video/mp4">
 	</video>
     <div id="skip-hint" style="position: absolute; bottom: 40px; color: rgba(200, 210, 217, 0.5); font-size: 20px; letter-spacing: 2px; cursor: pointer;">
@@ -1418,24 +1431,26 @@ function startIntro() {
     const video = document.getElementById('intro-video');
     const skipHint = document.getElementById('skip-hint');
 
-    // Update the text to tell the user to act
+    // Setup the "Wait" state
     skipHint.innerText = "CLICK TO INITIALIZE SYSTEMS";
-    skipHint.style.color = "#ffaa00"; // Use your Amber color
+    skipHint.classList.add('initialize-pulse');
 
     introLayer.onclick = () => {
-        // This human interaction UNLOCKS the audio
+        // 1. Play with Audio (Unlocked by this click!)
         video.play();
         
-        // Change the hint back to skip mode
+        // 2. Visual Cleanup
+        skipHint.classList.remove('initialize-pulse');
         skipHint.innerText = "CLICK TO SKIP";
-        skipHint.style.color = "rgba(200, 210, 217, 0.5)";
+        skipHint.style.color = "rgba(200, 210, 217, 0.3)";
 
-        // Set your 8-second transition timer now that it's actually playing
+        // 3. The 8-Second Sync
+        // This starts exactly when the video starts playing
         setTimeout(() => {
             fadeOutIntro();
         }, 8000);
 
-        // Re-bind click to skip early
+        // 4. Update click to become a 'Skip' button now
         introLayer.onclick = () => fadeOutIntro();
     };
 }
