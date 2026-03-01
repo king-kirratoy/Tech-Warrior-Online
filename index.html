@@ -273,8 +273,8 @@ button.active {
     <video id="intro-video" width="100%" height="100%" style="object-fit: cover;" playsinline>
         <source src="assets/Mech-Intro.mp4" type="video/mp4">
     </video>
-    <div id="skip-hint" style="position: absolute; bottom: 40px; font-size: 12px; letter-spacing: 2px; cursor: pointer; font-family: monospace;">
-        </div>
+    <div id="skip-hint" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; letter-spacing: 5px; cursor: pointer; font-family: 'Courier New', monospace; text-align: center; white-space: nowrap; pointer-events: none;">
+		</div>
 </div>
 
 <div id="ui-layer">
@@ -1439,9 +1439,11 @@ function startIntro() {
     }
 
     introLayer.onclick = () => {
-        clearInterval(pulseInterval); // Stop the pulsing
+        clearInterval(pulseInterval); 
         video.play();
-        
+        skipHint.style.top = "90%"; 
+		skipHint.style.fontSize = "12px";
+		skipHint.style.letterSpacing = "2px";
         skipHint.innerText = "SYSTEMS ONLINE - CLICK TO SKIP";
         skipHint.style.color = "rgba(200, 210, 217, 0.3)";
         skipHint.style.opacity = "1";
