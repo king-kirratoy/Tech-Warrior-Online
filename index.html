@@ -255,6 +255,16 @@ button.active {
 </head>
 <body>
 
+// INTRO VIDEO CONTAINER
+<div id="intro-layer" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center;">
+    <video id="intro-video" width="100%" height="100%" style="object-fit: cover;">
+        <source src="assets/Mech-Intro.mp4" type="video/mp4">
+    </video>
+    <div id="skip-hint" style="position: absolute; bottom: 40px; color: rgba(200, 210, 217, 0.5); font-size: 12px; letter-spacing: 2px; cursor: pointer;">
+        CLICK TO SKIP
+    </div>
+</div>
+
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu" style="width: 750px;">
         
@@ -404,16 +414,16 @@ const WEAPONS = {
     'hr':    { name: 'HR',    reload: 1750, dmg: 120,  weight: 100, bulletSize: 12, speed: 1100 },
 
     // SECONDARY WEAPONS 
-    'sr':    { name: 'SR',    reload: 2500, dmg: 200, weight: 125, bulletSize: 6,  speed: 2000 },
-    'gl':    { name: 'GL',    reload: 2000, dmg: 150, weight: 125, explosive: true },
-    'rl':    { name: 'RL',    reload: 2500, dmg: 180,  weight: 150, explosive: true, bulletSize: 12, speed: 800},
+    'sr':    { name: 'SR',    reload: 3500, dmg: 200, weight: 125, bulletSize: 6,  speed: 2000 },
+    'gl':    { name: 'GL',    reload: 3500, dmg: 150, weight: 125, explosive: true },
+    'rl':    { name: 'RL',    reload: 3500, dmg: 180, weight: 150, explosive: true, bulletSize: 12, speed: 800},
     'plsm':  { name: 'PLSM',  reload: 3500, dmg: 300, weight: 150, size: 30 },
 
     // SYSTEM MODIFICATIONS
     'none':   { name: 'NONE',   reload: 0, dmg: 0, weight: 0 },
     'jump':   { name: 'JUMP',   reload: 0, dmg: 0, weight: 25 },
     'shield': { name: 'SHIELD', reload: 0, dmg: 0, weight: 50, activeTime: 2000, cooldown: 8000, isShield: true },
-	'rage': { name: 'RAGE', weight: 75, duration: 3000, cooldown: 12000 },
+	'rage':   { name: 'RAGE', weight: 75, duration: 3000, cooldown: 12000 },
 	'emp':    { name: 'EMP',  weight: 75, radius: 250,  cooldown: 10000 }
 };
 
@@ -423,7 +433,7 @@ const CHASSIS = {
     heavy:  { max: 250, spd: 180, scale: 1.4, hp: 650 }
 };
 
-// --- INITIAL LOADOUT CONFIGURATION --- //
+// INITIAL LOADOUT CONFIGURATION
 let loadout = {
     chassis: 'light',  
     L: 'smg',
@@ -432,11 +442,11 @@ let loadout = {
     color: 0x00ff00 
 };
 
-// --- GLOBAL VARIABLES --- //
+// GLOBAL VARIABLES
 let player, torso, keys, enemies, bullets, shieldGraphic;
 let reloadBar, reloadBg, smokeParticles;
 
-// --- MECH STATE TRACKING --- //
+// MECH STATE TRACKING 
 let isDeployed = false;
 let activeArm = 'L';
 let reloadL = 0;
@@ -1398,9 +1408,45 @@ function showDamageText(scene, x, y, amount) {
 }
 
 window.onload = () => {
+    startIntro();
     refreshGarage();
     updateHUD(); 
 };
+
+function startIntro() {
+    const introLayer = document.getElementById('intro-layer');
+    const video = document.getElementById('intro-video');
+
+    // Start playing
+    video.play().catch(error => {
+        console.log("Autoplay blocked, waiting for user click.");
+    });
+
+    // When the video ends, fade out and enable the game UI
+    video.onended = () => {
+        fadeOutIntro();
+    };
+
+    // Allow skipping
+    introLayer.onclick = () => {
+        fadeOutIntro();
+    };
+}
+
+// INTRO VIDEO TRANSITION
+function fadeOutIntro() {
+    const introLayer = document.getElementById('intro-layer');
+    const video = document.getElementById('intro-video');
+    
+    video.pause();
+    introLayer.style.transition = "opacity 1.5s ease";
+    introLayer.style.opacity = "0";
+    
+    setTimeout(() => {
+        introLayer.style.display = 'none';
+    }, 1500);
+}
+
 </script>
 </body>
 </html>
