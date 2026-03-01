@@ -6,16 +6,17 @@
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <style>
 // INTRO INITIALIZE
+#skip-hint.initialize-pulse {
+    animation: pulse-amber 2s infinite ease-in-out; !important;
+    color: #ffaa00 !important;
+    font-weight: bold;
+	opacity: 1 !important;
+}
+
 @keyframes pulse-amber {
     0% { opacity: 0.4; text-shadow: 0 0 5px #ffaa00; }
     50% { opacity: 1; text-shadow: 0 0 20px #ffaa00; }
     100% { opacity: 0.4; text-shadow: 0 0 5px #ffaa00; }
-}
-
-.initialize-pulse {
-    animation: pulse-amber 2s infinite ease-in-out; !important;
-    color: #ffaa00 !important;
-    font-weight: bold;
 }
 
 /* --- 1. CORE ENGINE & THEMING --- */
@@ -1431,38 +1432,37 @@ function startIntro() {
     const video = document.getElementById('intro-video');
     const skipHint = document.getElementById('skip-hint');
 
-    console.log("System Initializing: Waiting for User Click...");
+    // 1. Force the pulse on load
     if (skipHint) {
         skipHint.innerText = "CLICK TO INITIALIZE SYSTEMS";
         skipHint.classList.add('initialize-pulse');
     }
 
     introLayer.onclick = () => {
-        console.log("Systems Online: Video Playing.");
         video.play();
         
-        // Visual Cleanup
+        // Remove pulse and change text
         skipHint.classList.remove('initialize-pulse');
-        skipHint.innerText = "CLICK TO SKIP";
+        skipHint.innerText = "SYSTEMS ONLINE - CLICK TO SKIP";
+        skipHint.style.animation = "none"; // Kill the animation manually
         skipHint.style.color = "rgba(200, 210, 217, 0.3)";
 
-        // SAFETY 1: The 8-Second Timer
-        let transitionTimer = setTimeout(() => {
-            console.log("Timer Triggered: Starting Fade.");
+        // 2. THE MASTER TIMER (Set to 8 seconds)
+        // This will run no matter what, unless you click to skip.
+        let masterTimer = setTimeout(() => {
+            console.log("8 Second Master Timer hit.");
             fadeOutIntro();
         }, 8000);
 
-        // SAFETY 2: If the video ends naturally
-        video.onended = () => {
-            console.log("Video Ended Naturally: Starting Fade.");
-            clearTimeout(transitionTimer); // Prevent double-calling
+        // 3. Manual Skip Override
+        introLayer.onclick = () => {
+            clearTimeout(masterTimer); // Stop the 8s timer so it doesn't fire twice
             fadeOutIntro();
         };
-
-        // SAFETY 3: Re-bind click to Skip (Manual override)
-        introLayer.onclick = () => {
-            console.log("User Skipped Intro: Starting Fade.");
-            clearTimeout(transitionTimer);
+        
+        // 4. Video End Override (If video is shorter than 8s)
+        video.onended = () => {
+            clearTimeout(masterTimer);
             fadeOutIntro();
         };
     };
