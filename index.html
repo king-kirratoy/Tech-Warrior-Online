@@ -1422,6 +1422,10 @@ function startIntro() {
         console.log("Autoplay blocked, waiting for user click.");
     });
 
+    setTimeout(() => {
+        fadeOutIntro();
+    }, 5000);
+
     // When the video ends, fade out and enable the game UI
     video.onended = () => {
         fadeOutIntro();
