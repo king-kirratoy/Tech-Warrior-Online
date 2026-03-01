@@ -5,21 +5,6 @@
 <title>Tech Warrior: Alpha 3.0</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <style>
-// INTRO INITIALIZE
-#skip-hint.initialize-pulse {
-    animation: pulse-amber 2s infinite ease-in-out; !important;
-    color: #ffaa00 !important;
-    font-weight: bold;
-	opacity: 1 !important;
-}
-
-@keyframes pulse-amber {
-    0% { opacity: 0.4; text-shadow: 0 0 5px #ffaa00; }
-    50% { opacity: 1; text-shadow: 0 0 20px #ffaa00; }
-    100% { opacity: 0.4; text-shadow: 0 0 5px #ffaa00; }
-}
-
-/* --- 1. CORE ENGINE & THEMING --- */
 body { 
     margin: 0; 
     background: #0c1014; 
@@ -39,7 +24,6 @@ body {
     z-index: 1000;
 }
 
-/* --- 2. GARAGE MENU (HANGAR) --- */
 .stat-readout { 
     width: 950px; 
     padding: 25px; 
@@ -48,7 +32,7 @@ body {
     overflow: hidden;
     pointer-events: auto; 
     background: linear-gradient(rgba(12, 16, 20, 0.85), rgba(12, 16, 20, 0.85)), 
-                url('assets/hangar-bg.jpg');
+    url('assets/hangar-bg.jpg');
     background-size: cover;
     background-position: center;
     border: 1px solid rgba(0, 255, 0, 0.7);
@@ -70,12 +54,15 @@ body {
     font-weight: bold;
 }
 
-.options-group { display: flex; gap: 5px; }
+.options-group { 
+	display: flex; 
+	gap: 5px; 
+}
 
 .options-group button {
     display: flex;
     align-items: center;
-    white-space: nowrap; /* This prevents "YELLOW" from dropping to a new line */
+    white-space: nowrap; 
 }
 
 button { 
@@ -123,7 +110,6 @@ button.active {
     cursor: pointer;
 }
 
-
 #deploy-btn:hover:not(:disabled) {
     /* Hover state: Industrial Amber Glow */
     background: rgba(255, 170, 0, 0.15);
@@ -149,7 +135,6 @@ button.active {
     vertical-align: middle;
 }
 
-/* --- 3. COMBAT HUD --- */
 #hud-container { 
     position: fixed; 
     bottom: 30px; 
@@ -173,7 +158,11 @@ button.active {
     transition: border-color 0.3s ease;
 }
 
-.stats-group { display: flex; flex-direction: column; gap: 6px; }
+.stats-group { 
+	display: flex; 
+	flex-direction: column; 
+	gap: 6px; 
+}
 
 .hud-label { 
     font-weight: bold; 
@@ -183,23 +172,53 @@ button.active {
     text-transform: uppercase; 
 }
 
-/* Health and Shield numerical readouts */
 #hp-text, #sh-text {
     font-size: 11px;
     font-family: 'monospace';
     letter-spacing: 1px;
 }
 
-#hp-bar { width: 250px; height: 18px; background: rgba(0, 40, 0, 0.3); border: 1px solid rgba(0, 255, 0, 0.3); }
-#hp-fill { height: 100%; background: #0f0; transition: width 0.2s; box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); }
+#hp-bar { 
+	width: 250px; 
+	height: 18px; 
+	background: rgba(0, 40, 0, 0.3); 
+	border: 1px solid rgba(0, 255, 0, 0.3); 
+}
 
-#sh-bar { width: 250px; height: 6px; background: rgba(0, 20, 40, 0.3); border: 1px solid rgba(0, 255, 255, 0.3); margin-top: 2px; }
-#sh-fill { height: 100%; background: #00ffff; box-shadow: 0 0 8px #00ffff; transition: width 0.3s; }
+#hp-fill { 
+	height: 100%; 
+	background: #0f0; 
+	transition: width 0.2s; 
+	box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); 
+}
 
-/* --- 4. WEAPON & MODULE SLOTS --- */
-#weapon-slots { display: flex; gap: 10px; align-items: flex-end; }
+#sh-bar { 
+	width: 250px; 
+	height: 6px; 
+	background: rgba(0, 20, 40, 0.3); 
+	border: 1px solid rgba(0, 255, 255, 0.3); 
+	margin-top: 2px; 
+}
 
-.weapon-container { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+#sh-fill { 
+	height: 100%; 
+	background: #00ffff; 
+	box-shadow: 0 0 8px #00ffff; 
+	transition: width 0.3s; 
+}
+
+#weapon-slots { 
+	display: flex; 
+	gap: 10px; 
+	align-items: flex-end; 
+}
+
+.weapon-container { 
+	display: flex; 
+	flex-direction: column; 
+	align-items: center; 
+	gap: 4px; 
+}
 
 .key-hint {
     font-size: 9px;
@@ -240,10 +259,17 @@ button.active {
     pointer-events: none;
 }
 
-.arm-label { opacity: 0.5; font-size: 9px; text-transform: uppercase; }
-.weap-name { font-weight: bold; font-size: 11px; }
+.arm-label { 
+	opacity: 0.5; 
+	font-size: 9px; 
+	text-transform: uppercase; 
+}
 
-/* --- 5. UTILITY CLASSES --- */
+.weap-name { 
+	font-weight: bold; 
+	font-size: 11px; 
+}
+
 #weight-bar-bg {
     width: 100%; height: 8px;
     background: rgba(255, 170, 0, 0.05);
@@ -259,12 +285,25 @@ button.active {
     box-shadow: 0 0 10px rgba(255, 170, 0, 0.4);
 }
 
-.pulse-warning { animation: pulse 0.5s infinite alternate; }
-@keyframes pulse { from { opacity: 1; filter: brightness(1.5); } to { opacity: 0.4; } }
+.pulse-warning { 
+	animation: pulse 0.5s infinite alternate; 
+}
 
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: #0c1014; }
-::-webkit-scrollbar-thumb { background: #0f0; }
+@keyframes pulse { 
+	from { opacity: 1; filter: brightness(1.5); } to { opacity: 0.4; } }
+
+::-webkit-scrollbar { 
+	width: 4px; 
+}
+
+::-webkit-scrollbar-track {
+	background: #0c1014; 
+}
+
+::-webkit-scrollbar-thumb { 
+	background: #0f0; 
+}
+
 </style>
 </head>
 <body>
@@ -279,11 +318,8 @@ button.active {
 
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu" style="width: 750px;">
-        
         <h2 style="text-align:center; margin-top:0; margin-bottom: 25px; letter-spacing: 2px; color: #c8d2d9;">--- MECH HANGAR ---</h2>
-        
-        <div style="display: flex; gap: 30px; align-items: flex-start;">
-            
+        <div style="display: flex; gap: 30px; align-items: flex-start;">  
             <div style="flex: 1.4;">
                 <div class="row">
                     <span class="row-label">■ Chassis</span>
@@ -417,6 +453,7 @@ button.active {
 			</div>
 
 <script>
+// WEAPON ATTRIBUTES
 const WEAPONS = {
     // PRIMARY WEAPONS 
     'smg':   { name: 'SMG',   reload: 50,   dmg: 3,   weight: 25, bulletSize: 4,  speed: 900 },
@@ -424,13 +461,11 @@ const WEAPONS = {
     'sg':    { name: 'SG',    reload: 700,  dmg: 12,   weight: 75, bulletSize: 5,  speed: 600, pellets: 5, range: 600 },
 	'br':    { name: 'BR',    reload: 1000,  dmg: 20,  weight: 75, bulletSize: 5,  speed: 1100, burst: 3 },
     'hr':    { name: 'HR',    reload: 1750, dmg: 120,  weight: 100, bulletSize: 12, speed: 1100 },
-
     // SECONDARY WEAPONS 
     'sr':    { name: 'SR',    reload: 3500, dmg: 200, weight: 125, bulletSize: 6,  speed: 2000 },
     'gl':    { name: 'GL',    reload: 3500, dmg: 150, weight: 125, explosive: true },
     'rl':    { name: 'RL',    reload: 3500, dmg: 180, weight: 150, explosive: true, bulletSize: 12, speed: 800},
     'plsm':  { name: 'PLSM',  reload: 3500, dmg: 300, weight: 150, size: 30 },
-
     // SYSTEM MODIFICATIONS
     'none':   { name: 'NONE',   reload: 0, dmg: 0, weight: 0 },
     'jump':   { name: 'JUMP',   reload: 0, dmg: 0, weight: 25 },
@@ -439,6 +474,7 @@ const WEAPONS = {
 	'emp':    { name: 'EMP',  weight: 75, radius: 250,  cooldown: 10000 }
 };
 
+// MECH ATTRIBUTES
 const CHASSIS = {
     light:  { max: 75, spd: 400, scale: 0.7, hp: 350 }, 
     medium: { max: 150, spd: 280, scale: 1.0, hp: 450 },
@@ -486,8 +522,9 @@ function preload() {
     g.generateTexture('smoke', 20, 20);
 }
 
+// MECH BODY ARMOUR COLORS
 function darkenColor(hex, amount = 0.4) {
-    if (hex === undefined || hex === null) return 0x333333; // Emergency fallback
+    if (hex === undefined || hex === null) return 0x333333; 
     let r = ((hex >> 16) & 0xFF) * amount;
     let g = ((hex >> 8) & 0xFF) * amount;
     let b = (hex & 0xFF) * amount;
@@ -516,6 +553,7 @@ function create() {
     this.hangarGrid = this.add.grid(window.innerWidth/2, window.innerHeight/2, window.innerWidth, window.innerHeight, 16, 16, 0, 0, 0x00ff00, 0.05).setScrollFactor(0).setDepth(1001);
 }
 
+// WEAPON MUZZLE FLASHES
 function createMuzzleFlash(scene, x, y, angle, distance = 40, color = 0xffffff) {
     if (!scene || !scene.add) return;
 
@@ -535,6 +573,7 @@ function createMuzzleFlash(scene, x, y, angle, distance = 40, color = 0xffffff) 
     });
 }
 
+// WEAPON IMPACT SPARKS ON MECHS
 function createImpactSparks(scene, x, y) {
     for (let i = 0; i < 4; i++) {
         let spark = scene.add.rectangle(x, y, 6, 2, 0xffffff).setDepth(20);
@@ -575,6 +614,7 @@ function spawnEnemy(scene) {
     enemies.add(e);
 }
 
+// DAMAGING ENEMY MECH
 function damageEnemy(e, amt) {
     e.health -= amt;
     if(e.bar) e.bar.width = Math.max(0, (e.health / e.maxHealth) * 40);
@@ -599,6 +639,7 @@ function damageEnemy(e, amt) {
     }
 }
 
+// DEPLOYING PLAYER MECH
 function deployMech() {
     document.getElementById('ui-layer').style.display = 'none';
     
@@ -726,7 +767,7 @@ function fire(scene, side) {
         scene.time.delayedCall(100, () => slotEl.classList.remove('active-firing'));
     }
 
-    // --- GRENADE LAUNCHER --- //
+    // GRENADE LAUNCHER
     if (wKey === 'gl') {
         let targetX = scene.input.activePointer.worldX;
         let targetY = scene.input.activePointer.worldY;
@@ -787,7 +828,7 @@ function fire(scene, side) {
         });
     }
     
-    // --- ROCKET LAUNCHER --- //
+    // ROCKET LAUNCHER
     else if (wKey === 'rl') {
         createMuzzleFlash(scene, torso.x, torso.y, torso.rotation, barrelDist);
         let rocket = scene.add.rectangle(torso.x, torso.y, 24, 10, 0xff4400).setDepth(14);
@@ -821,7 +862,7 @@ function fire(scene, side) {
         });
     }
     
-    // --- SHOTGUN --- //
+    // SHOTGUN 
     else if (wKey === 'sg') {
         const pellets = weapon.pellets;
         const spread = 0.3; 
@@ -837,7 +878,7 @@ function fire(scene, side) {
         }
     }
     
-    // --- PLASMA RIFLE --- //
+    // PLASMA RIFLE
     else if (wKey === 'plsm') {
         let p = scene.add.circle(torso.x, torso.y, 25, 0x00ffff).setAlpha(0.8);
         scene.physics.add.existing(p);
@@ -848,7 +889,27 @@ function fire(scene, side) {
         scene.time.delayedCall(3000, () => { if(p.active) p.destroy(); });
     }
     
-    // --- STANDARD PROJECTILES (SMG, MG, BR, HR, SR) --- //
+	// SNIPER RIFLE
+	else if (wKey === 'sr') {
+		let b = scene.add.rectangle(torso.x, torso.y, 30, 4, 0xffffff); // Long white bolt
+		scene.physics.add.existing(b);
+		b.setRotation(torso.rotation);
+		b.damageValue = weapon.dmg;
+		bullets.add(b);
+		scene.physics.velocityFromRotation(torso.rotation, weapon.speed, b.body.velocity);
+    
+		createMuzzleFlash(scene, torso.x, torso.y, torso.rotation, barrelDist, 0xffffff);
+		scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
+		
+		player.body.velocity.x -= Math.cos(torso.rotation) * 250;
+		player.body.velocity.y -= Math.sin(torso.rotation) * 250;
+		
+		scene.cameras.main.shake(100, 0.01);
+		
+		scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
+	}
+	
+    // STANDARD PROJECTILES (SMG, MG, BR, HR)
     else {
         const fireRound = (dmgValue, offsetAngle = 0) => {
             let b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
@@ -871,11 +932,11 @@ function fire(scene, side) {
             fireRound(weapon.dmg, 0);
         }
         
-        if (wKey === 'hr' || wKey === 'sr') {
-            let recoil = (wKey === 'sr') ? 250 : 150;
+        if (wKey === 'hr') {
+            let recoil = 150;
             player.body.velocity.x -= Math.cos(torso.rotation) * recoil;
             player.body.velocity.y -= Math.sin(torso.rotation) * recoil;
-            scene.cameras.main.shake(100, (wKey === 'sr' ? 0.01 : 0.005));
+            scene.cameras.main.shake(100, 0.005);
         }
     }
 
@@ -883,6 +944,7 @@ function fire(scene, side) {
     else reloadR = now + actualReload;
 }
 
+// PLAYER MECH DAMAGE
 function takePlayerDamage(amt) {
     // 1. Exit if player is invalid, shield mod is active, or we are already processing a hit
     if (!player || !player.active || isShieldActive || player.isProcessingDamage) return;
@@ -1314,7 +1376,7 @@ function refreshGarage() {
         deployBtn.disabled = isOver;
 
         if (isOver) {
-            deployBtn.innerHTML = "<span>&#9888;</span> OVERWEIGHT <span>&#9888;</span>";
+            deployBtn.innerHTML = "<span>&#9888;</span>&nbsp; OVERWEIGHT &nbsp;<span>&#9888;</span>";
             deployBtn.classList.add('overweight'); // Triggers the RED theme
         } else {
             deployBtn.innerText = "DEPLOY MECH";
