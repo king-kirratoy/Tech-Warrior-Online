@@ -928,12 +928,12 @@ const WEAPONS = {
     // PRIMARY WEAPONS 
     'smg':   { name: 'SMG',   reload: 50,   dmg: 3,   weight: 25,  bulletSize: 4,  speed: 900 },
     'mg':    { name: 'MG',    reload: 300,  dmg: 30,  weight: 50,  bulletSize: 6,  speed: 850 },
-    'sg':    { name: 'SG',    reload: 700,  dmg: 12,  weight: 75,  bulletSize: 5,  speed: 600, pellets: 5, range: 600 },
-	'br':    { name: 'BR',    reload: 1000, dmg: 20,  weight: 75,  bulletSize: 5,  speed: 1100, burst: 3 },
+    'sg':    { name: 'SG',    reload: 750,  dmg: 12,  weight: 75,  bulletSize: 5,  speed: 600, pellets: 5, range: 600 },
+	'br':    { name: 'BR',    reload: 1000, dmg: 24,  weight: 75,  bulletSize: 5,  speed: 1100, burst: 3 },
     'hr':    { name: 'HR',    reload: 1750, dmg: 120, weight: 100, bulletSize: 12, speed: 1100 },
     // SECONDARY WEAPONS 
     'sr':    { name: 'SR',    reload: 2500, dmg: 200, weight: 125, bulletSize: 6,  speed: 2000 },
-    'gl':    { name: 'GL',    reload: 2500, dmg: 100, weight: 125, explosive: true },
+    'gl':    { name: 'GL',    reload: 3500, dmg: 150, weight: 125, explosive: true },
     'rl':    { name: 'RL',    reload: 3500, dmg: 150, weight: 150, explosive: true, bulletSize: 12, speed: 800},
     'plsm':  { name: 'PLSM',  reload: 3500, dmg: 300, weight: 150, size: 30 },
     // SYSTEM MODIFICATIONS
@@ -1104,21 +1104,42 @@ function fire(scene, side) {
     
 	// SNIPER RIFLE
 	else if (wKey === 'sr') {
-		let b = scene.add.rectangle(torso.x, torso.y, 30, 4, 0xffffff); // Long white bolt
+		let b = scene.add.rectangle(torso.x, torso.y, 60, 8, 0xffffff).setOrigin(0.5);
 		scene.physics.add.existing(b);
 		b.setRotation(torso.rotation);
+		b.setStrokeStyle(2, 0x00ffff);
 		b.damageValue = weapon.dmg;
 		bullets.add(b);
 		scene.physics.velocityFromRotation(torso.rotation, weapon.speed, b.body.velocity);
-    
+	    // MAKE BULLET PULSE
+		scene.tweens.add({
+			targets: b,
+			scaleY: 0.5,
+			duration: 50,
+			yoyo: true,
+			repeat: -1
+		});
 		createMuzzleFlash(scene, torso.x, torso.y, torso.rotation, barrelDist, 0xffffff);
+		// CREATE FADING TRACER LINE
+		let tracer = scene.add.line(0, 0, torso.x, torso.y, torso.x, torso.y, 0x00ffff)
+		.setOrigin(0, 0)
+		.setLineWidth(2)
+		.setAlpha(0.6);
+
+		scene.tweens.add({
+			targets: tracer,
+			alpha: 0,
+			duration: 500,
+			onUpdate: () => {
+				// STRETCH LINE FROM PLAYER TO BULLET
+				if (b.active) tracer.setTo(torso.x, torso.y, b.x, b.y);
+			},
+			onComplete: () => tracer.destroy()
+		});
 		scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
-		
-		player.body.velocity.x -= Math.cos(torso.rotation) * 250;
-		player.body.velocity.y -= Math.sin(torso.rotation) * 250;
-		
-		scene.cameras.main.shake(100, 0.01);
-		
+		player.body.velocity.x -= Math.cos(torso.rotation) * 400;
+		player.body.velocity.y -= Math.sin(torso.rotation) * 400;
+		scene.cameras.main.shake(150, 0.015);
 		scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
 	}
 	
@@ -1388,18 +1409,24 @@ function createShieldBreak(scene, x, y) {
 function createExplosion(scene, x, y, radius, damage) {
     let blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
     scene.physics.add.existing(blast);
+	// HIT LIST
+	let targetsHit = new Set();
     let hasDealtPlayerDamage = false; 
     // DAMAGE ENEMIES
     scene.physics.add.overlap(blast, enemies, (z, e) => {
-        showDamageText(scene, e.x, e.y, damage);
-        damageEnemy(e, damage);
+	    // ONLY APPLY DAMAGE IF ENEMY IS NOT IN HIT LIST
+        if (!targetsHit.has(e)) {
+            targetsHit.add(e); // ADD TO HIST LIST IMMEDIATELY
+            
+            showDamageText(scene, e.x, e.y, damage);
+            damageEnemy(e, damage);
+        }
     });
     // DAMAGE PLAYER
     if (player && player.active && !isShieldActive) {
         let dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
         if (dist < radius && !hasDealtPlayerDamage) {
             hasDealtPlayerDamage = true; 
-            // Ensure we pass the damage clearly
             processPlayerDamage(Math.floor(damage * 0.75)); 
             scene.cameras.main.shake(200, 0.01);
         }
@@ -1410,7 +1437,10 @@ function createExplosion(scene, x, y, radius, damage) {
         scale: 1.5, 
         alpha: 0, 
         duration: 300, 
-        onComplete: () => blast.destroy() 
+        onComplete: () => {
+			targetsHit.clear();
+			blast.destroy() 
+		}	
     });
 }
 
