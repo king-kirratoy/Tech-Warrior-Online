@@ -1435,7 +1435,7 @@ function startIntro() {
 // INTRO VIDEO TRANSITION
 function fadeOutIntro() {
     const introLayer = document.getElementById('intro-layer');
-    const video = document.getElementById('intro-video');
+    if (!introLayer) return;
     
     video.pause();
     introLayer.style.transition = "opacity 2s ease-in-out";
