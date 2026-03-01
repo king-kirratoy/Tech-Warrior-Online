@@ -257,10 +257,10 @@ button.active {
 
 // INTRO VIDEO CONTAINER
 <div id="intro-layer" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center;">
-    <video id="intro-video" width="100%" height="100%" style="object-fit: cover;">
-        <source src="assets/Mech-Intro.mp4" type="video/mp4">
-    </video>
-    <div id="skip-hint" style="position: absolute; bottom: 40px; color: rgba(200, 210, 217, 0.5); font-size: 12px; letter-spacing: 2px; cursor: pointer;">
+    <video id="intro-video" width="100%" height="100%" style="object-fit: cover;" autoplay muted playsinline>
+		<source src="assets/Mech-Intro.mp4" type="video/mp4">
+	</video>
+    <div id="skip-hint" style="position: absolute; bottom: 40px; color: rgba(200, 210, 217, 0.5); font-size: 20px; letter-spacing: 2px; cursor: pointer;">
         CLICK TO SKIP
     </div>
 </div>
