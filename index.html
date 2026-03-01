@@ -491,7 +491,7 @@ let loadout = {
 };
 
 // GLOBAL VARIABLES
-let player, torso, keys, enemies, bullets, shieldGraphic;
+let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic;
 let reloadBar, reloadBg, smokeParticles;
 
 // MECH STATE TRACKING 
@@ -510,7 +510,12 @@ const config = {
     parent: 'game-container', 
     width: window.innerWidth, 
     height: window.innerHeight,
-    physics: { default: 'arcade' },
+    physics: { 
+		default: 'arcade',
+		arcade: { 
+			debug: true 
+		}
+	},
     scene: { preload: preload, create: create, update: update }
 };
 const game = new Phaser.Game(config);
@@ -536,6 +541,7 @@ function create() {
     keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,F');
     bullets = this.physics.add.group();
     enemies = this.physics.add.group();
+	enemyBullets = this.physics.add.group();
 
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
 		if (!bullet.isGLBall) {
@@ -544,6 +550,14 @@ function create() {
 		    showDamageText(this, enemy.x, enemy.y, dmg);
 			bullet.destroy(); 
 			damageEnemy(enemy, dmg); 
+		}
+	});
+
+	this.physics.add.overlap(enemyBullets, player, (bullet, p) => {
+		createImpactSparks(this, p.x, p.y);
+		bullet.destroy(); 
+		if (!isShieldActive) {
+			takePlayerDamage(15); 
 		}
 	});
 
@@ -656,7 +670,8 @@ function deployMech() {
 
     player = scene.add.rectangle(window.innerWidth/2, window.innerHeight/2, 70, 50, 0x222222).setStrokeStyle(2, 0xffffff).setDepth(5);
     scene.physics.add.existing(player);
-	player.body.setCircle(25);
+	player.body.setCircle(35);
+	player.body.setOffset(0, -10);
     player.setScale(s.scale).body.setCollideWorldBounds(true);
     
     player.maxHp = s.hp; 
@@ -944,6 +959,27 @@ function fire(scene, side) {
     else reloadR = now + actualReload;
 }
 
+// ENEMY WEAPON FIRING
+function enemyFire(scene, enemy) {
+    if (!isDeployed || !player || !player.active || enemy.isStunned) return;
+
+    // Create a small red projectile
+    let b = scene.add.circle(enemy.x, enemy.y, 6, 0xff0000);
+    scene.physics.add.existing(b);
+    enemyBullets.add(b);
+	
+	b.body.setAllowGravity(false);
+
+    // Calculate angle to player
+    let angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+    
+    // Shoot at a slower speed than player (600) to give you a chance to dodge
+    scene.physics.velocityFromRotation(angle, 600, b.body.velocity);
+
+    // Cleanup bullet after 2 seconds
+    scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
+}
+
 // PLAYER MECH DAMAGE
 function takePlayerDamage(amt) {
     // 1. Exit if player is invalid, shield mod is active, or we are already processing a hit
@@ -1057,7 +1093,7 @@ function update(time) {
         let vx = 0;
         let vy = 0;
 
-        // --- THE "SMART" DECISION TREE ---
+        // THE "SMART" AI DECISION TREE
         
         if (dist > 350) {
             // State: Too far. Move toward player.
@@ -1077,8 +1113,15 @@ function update(time) {
             vy = Math.sin(strafeAngle) * speed;
         }
 
+		// Only shoot if within 500px and every 1.5 to 2 seconds
+        if (dist < 500) {
+            if (!enemy.lastFireTime || time > enemy.lastFireTime + 1800) {
+                enemyFire(this, enemy);
+                enemy.lastFireTime = time + Phaser.Math.Between(-200, 200); // Add variance
+            }
+        }
+		
         enemy.body.setVelocity(vx, vy);
-        
         // Face the player regardless of movement direction
         enemy.visuals.setPosition(enemy.x, enemy.y);
         enemy.visuals.setRotation(angleToPlayer);
