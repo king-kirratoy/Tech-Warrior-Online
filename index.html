@@ -562,6 +562,14 @@ function preload() {
     g.fillStyle(0xffffff, 1); 
 	g.fillCircle(10, 10, 10);
     g.generateTexture('smoke', 20, 20);
+	
+	// Load Weapon Sounds
+    this.load.audio('snd-smg', 'assets/sounds/smg_fire.wav');
+    this.load.audio('snd-sg', 'assets/sounds/shotgun_fire.mp3');
+    this.load.audio('snd-explosion', 'assets/sounds/explosion.mp3');    
+    // Load Impact Sounds
+    this.load.audio('snd-impact-metal', 'assets/sounds/impact_metal.mp3');
+    this.load.audio('snd-shield-hit', 'assets/sounds/shield_ping.mp3');
 }
 
 // INITIALIZE WORLD & SYSTEMS
@@ -852,7 +860,7 @@ function deployMech() {
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(false);
     if (scene.hangarGrid) scene.hangarGrid.setVisible(false);
 
-	player = scene.physics.add.sprite(2000, 2000, 'light-mech'); 
+	player = scene.physics.add.sprite(2000, 2000, 'player-mech'); 
     scene.physics.add.existing(player);
 	player.body.setCircle(35);
 	player.body.setOffset(0, -10);
@@ -864,20 +872,21 @@ function deployMech() {
 		let bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
 
 		if (isShieldActive) {
+			scene.sound.play('snd-shield-hit', { volume: 0.6 });
 			createShieldSparks(scene, bullet.x, bullet.y);
 			showDamageText(scene, bullet.x, bullet.y, 0, true); 
 			bullet.destroy();
 			return; 
 		}
 		
-        createImpactSparks(scene, p.x, p.y);
-		let currentShield = player.shield > 0;
-		showDamageText(scene, p.x, p.y, 15, currentShield);
-		
 		if (player.shield > 0 && (player.shield - 7.5) <= 0) { 
 			createShieldBreak(scene, p.x, p.y);	
 		}	
-
+		
+		scene.sound.play('snd-impact-metal', { volume: 0.5 });
+        createImpactSparks(scene, p.x, p.y);
+		let currentShield = player.shield > 0;
+		showDamageText(scene, p.x, p.y, 15, currentShield);	
 		bullet.destroy(); 
         processPlayerDamage(15, bulletAngle);
     });
@@ -1124,6 +1133,8 @@ function fire(scene, side) {
 	if (!wKey || wKey === 'none') return;
     let weapon = WEAPONS[wKey];
     if (!weapon || wKey === 'none') return;
+
+	scene.sound.play('snd-' + wKey, { volume: 0.4 });
 
 	let barrelDist = 40; // Default for Heavy
     if (loadout.chassis === 'light') barrelDist = 25;
@@ -1618,7 +1629,13 @@ function createShieldBreak(scene, x, y) {
 
 // CREATE EXPLOSION
 function createExplosion(scene, x, y, radius, damage) {
-    let blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
+    // Calculate distance to player for volume scaling
+    let dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
+    let vol = Math.max(0.1, 1 - (dist / 1000)); // Quieter the further away it is
+
+    scene.sound.play('snd-explosion', { volume: vol });
+	
+	let blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
     scene.physics.add.existing(blast);
 	// HIT LIST
 	let targetsHit = new Set();
@@ -1911,7 +1928,13 @@ function runPulse(element) {
 // INTRO FADEOUT
 function fadeOutIntro() {
     const introLayer = document.getElementById('intro-layer');
-    if (!introLayer || introLayer.style.display === 'none') return;
+    const video = document.getElementById('intro-video');
+	if (!introLayer || introLayer.style.display === 'none') return;
+
+	if (video) {
+        video.pause();      // Stops the video playback
+        video.currentTime = 0; // Resets it to the start (optional)
+    }
 
     console.log("Executing Fade Transition...");
     introLayer.style.transition = "opacity 2s ease-in-out";
