@@ -1326,12 +1326,10 @@ function fire(scene, side) {
     else {
         const fireRound = (dmgValue, offsetAngle = 0) => {
 			// --- TRIGGER SOUND HERE ---
-			if (scene.sound.exists('snd-' + wKey)) {
-				scene.sound.play('snd-' + wKey, { 
-					volume: 0.3, 
-					detune: Phaser.Math.Between(-100, 100) // Adds slight variety to each shot
-				});
-			}
+			scene.sound.play('snd-' + wKey, { 
+				volume: 0.3
+			});
+
             let b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
             scene.physics.add.existing(b); 
             b.damageValue = dmgValue;
