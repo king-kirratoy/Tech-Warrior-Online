@@ -530,10 +530,15 @@ const config = {
 	roundPixels: true,
     width: window.innerWidth, 
     height: window.innerHeight,
+	fps: {
+        target: 60,
+        forceSetTimeOut: true
+	},	
     physics: { 
 		default: 'arcade',
 		arcade: { 
-			debug: false
+			debug: false,
+			fps: 60
 		}
 	},
     scene: { preload: preload, create: create, update: update }
@@ -565,6 +570,7 @@ function preload() {
 	
 	// Load Weapon Sounds
     this.load.audio('snd-smg', 'assets/smg_fire.wav');
+	this.load.audio('snd-mg', 'assets/smg_fire.wav');
     //this.load.audio('snd-sg', 'assets/shotgun_fire.mp3');
     //this.load.audio('snd-explosion', 'assets/explosion.mp3');    
     // Load Impact Sounds
@@ -860,7 +866,8 @@ function deployMech() {
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(false);
     if (scene.hangarGrid) scene.hangarGrid.setVisible(false);
 
-	player = scene.physics.add.sprite(2000, 2000, 'player-mech'); 
+	player = scene.physics.add.sprite(2000, 2000, 'mech-legs'); 
+	player.setDepth(5);
     scene.physics.add.existing(player);
 	player.body.setCircle(35);
 	player.body.setOffset(0, -10);
@@ -1134,10 +1141,7 @@ function fire(scene, side) {
     let weapon = WEAPONS[wKey];
     if (!weapon || wKey === 'none') return;
 
-	scene.sound.play('snd-' + wKey, { 
-		volume: 0.4, 
-		rate: 1.0 // Forces original speed; try 0.8 if it's still too high
-	});
+	scene.sound.play('snd-' + wKey, { volume: 0.4 });
 
 	let barrelDist = 40; // Default for Heavy
     if (loadout.chassis === 'light') barrelDist = 25;
@@ -1636,7 +1640,7 @@ function createExplosion(scene, x, y, radius, damage) {
     let dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
     let vol = Math.max(0.1, 1 - (dist / 1000)); // Quieter the further away it is
 
-    scene.sound.play('snd-explosion', { volume: vol });
+    //scene.sound.play('snd-explosion', { volume: vol });
 	
 	let blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
     scene.physics.add.existing(blast);
