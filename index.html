@@ -569,8 +569,8 @@ function preload() {
     g.generateTexture('smoke', 20, 20);
 	
 	// Load Weapon Sounds
-    this.load.audio('snd-smg', 'assets/smg_fire.wav');
-	this.load.audio('snd-mg', 'assets/smg_fire.wav');
+    //this.load.audio('snd-smg', 'assets/smg_fire.wav');
+	//this.load.audio('snd-mg', 'assets/smg_fire.wav');
     //this.load.audio('snd-sg', 'assets/shotgun_fire.mp3');
     //this.load.audio('snd-explosion', 'assets/explosion.mp3');    
     // Load Impact Sounds
@@ -1331,13 +1331,6 @@ function fire(scene, side) {
             bullets.add(b); 
             scene.physics.velocityFromRotation(torso.rotation + offsetAngle, weapon.speed, b.body.velocity);  
             
-			if (scene.sound.exists('snd-' + wKey)) {
-				scene.sound.play('snd-' + wKey, { 
-					volume: 0.3, 
-					detune: Phaser.Math.Between(-100, 100) // Makes it sound "crunchy" and real
-				});
-			}
-
             // Standard yellow flash
             createMuzzleFlash(scene, torso.x, torso.y, torso.rotation + offsetAngle, barrelDist);
             
