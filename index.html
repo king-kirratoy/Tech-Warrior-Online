@@ -527,6 +527,7 @@ button.active {
 const config = {
     type: Phaser.AUTO,
     parent: 'game-container', 
+	roundPixels: true,
     width: window.innerWidth, 
     height: window.innerHeight,
     physics: { 
@@ -565,7 +566,7 @@ function preload() {
 
 // INITIALIZE WORLD & SYSTEMS
 function create() {
-    this.add.grid(window.innerWidth/2, window.innerHeight/2, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
+    this.add.grid(2000, 2000, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
     keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,F');
     bullets = this.physics.add.group();
     enemies = this.physics.add.group();
@@ -777,9 +778,23 @@ function update(time) {
 
     // VISUAL POSITIONING 
     torso.setPosition(player.x, player.y);
-    let angle = Phaser.Math.Angle.Between(player.x, player.y, this.input.activePointer.worldX, this.input.activePointer.worldY);
-    torso.setRotation(angle);
-    
+    let targetAngle = Phaser.Math.Angle.Between(
+        player.x, 
+        player.y, 
+        this.input.activePointer.worldX, 
+        this.input.activePointer.worldY
+    );
+    // Use a small "Lerp" to smooth the torso rotation so it doesn't 'snap'
+    torso.rotation = Phaser.Math.Angle.RotateTo(
+        torso.rotation, 
+        targetAngle, 
+        0.1 // Adjust this for "turret traverse speed"
+    );
+
+    // 3. SYNC POSITION
+    torso.setPosition(player.x, player.y);
+    shieldGraphic.setPosition(player.x, player.y);
+   
     // Position and toggle the blue shield bubble
     shieldGraphic.setPosition(player.x, player.y).setVisible(isShieldActive);
 	
@@ -837,7 +852,7 @@ function deployMech() {
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(false);
     if (scene.hangarGrid) scene.hangarGrid.setVisible(false);
 
-    player = scene.add.rectangle(window.innerWidth/2, window.innerHeight/2, 70, 50, 0x222222).setStrokeStyle(2, 0xffffff).setDepth(5);
+	player = scene.physics.add.sprite(2000, 2000, 'light-mech'); 
     scene.physics.add.existing(player);
 	player.body.setCircle(35);
 	player.body.setOffset(0, -10);
@@ -884,6 +899,14 @@ function deployMech() {
     torso.setDepth(10);
 	refreshMechColor();
 	scene.time.delayedCall(10, () => refreshMechColor());
+
+    // 1. Define the World and Camera limits (4000x4000)
+    scene.physics.world.setBounds(0, 0, 4000, 4000);
+    scene.cameras.main.setBounds(0, 0, 4000, 4000);
+    // 2. Force the camera to jump to the spawn point (2000, 2000) immediately
+    scene.cameras.main.centerOn(2000, 2000);
+    // 3. Now start following the player sprite
+    scene.cameras.main.startFollow(player, true, 0.5, 0.5);
 
     shieldGraphic = scene.add.circle(0, 0, 50, 0x00ffff, 0.15)
         .setStrokeStyle(2, 0x00ffff)
