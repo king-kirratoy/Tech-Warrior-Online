@@ -565,11 +565,11 @@ function preload() {
 	
 	// Load Weapon Sounds
     this.load.audio('snd-smg', 'assets/smg_fire.wav');
-    this.load.audio('snd-sg', 'assets/shotgun_fire.mp3');
-    this.load.audio('snd-explosion', 'assets/explosion.mp3');    
+    //this.load.audio('snd-sg', 'assets/shotgun_fire.mp3');
+    //this.load.audio('snd-explosion', 'assets/explosion.mp3');    
     // Load Impact Sounds
-    this.load.audio('snd-impact-metal', 'assets/impact_metal.mp3');
-    this.load.audio('snd-shield-hit', 'assets/shield_ping.mp3');
+    //this.load.audio('snd-impact-metal', 'assets/impact_metal.mp3');
+   // this.load.audio('snd-shield-hit', 'assets/shield_ping.mp3');
 }
 
 // INITIALIZE WORLD & SYSTEMS
@@ -872,7 +872,7 @@ function deployMech() {
 		let bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
 
 		if (isShieldActive) {
-			scene.sound.play('snd-shield-hit', { volume: 0.6 });
+			//scene.sound.play('snd-shield-hit', { volume: 0.6 });
 			createShieldSparks(scene, bullet.x, bullet.y);
 			showDamageText(scene, bullet.x, bullet.y, 0, true); 
 			bullet.destroy();
@@ -883,7 +883,7 @@ function deployMech() {
 			createShieldBreak(scene, p.x, p.y);	
 		}	
 		
-		scene.sound.play('snd-impact-metal', { volume: 0.5 });
+		//scene.sound.play('snd-impact-metal', { volume: 0.5 });
         createImpactSparks(scene, p.x, p.y);
 		let currentShield = player.shield > 0;
 		showDamageText(scene, p.x, p.y, 15, currentShield);	
@@ -1134,7 +1134,10 @@ function fire(scene, side) {
     let weapon = WEAPONS[wKey];
     if (!weapon || wKey === 'none') return;
 
-	scene.sound.play('snd-' + wKey, { volume: 0.4 });
+	scene.sound.play('snd-' + wKey, { 
+		volume: 0.4, 
+		rate: 1.0 // Forces original speed; try 0.8 if it's still too high
+	});
 
 	let barrelDist = 40; // Default for Heavy
     if (loadout.chassis === 'light') barrelDist = 25;
@@ -1932,7 +1935,7 @@ function fadeOutIntro() {
 	if (!introLayer || introLayer.style.display === 'none') return;
 
 	if (video) {
-        video.pause();      // Stops the video playback
+        video.muted = true; 
     }
 
     console.log("Executing Fade Transition...");
@@ -1941,6 +1944,7 @@ function fadeOutIntro() {
 
     setTimeout(() => {
         introLayer.style.display = 'none';
+		if (video) video.pause();
         console.log("Intro Layer Removed. Hangar Active.");
     }, 2000);
 }
