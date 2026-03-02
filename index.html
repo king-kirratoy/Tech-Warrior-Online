@@ -146,21 +146,35 @@ button.active {
 
 .console-frame { 
     display: flex; 
-    align-items: flex-end; 
+	flex-direction: row;
+    align-items: center; 
     gap: 20px; 
-    padding: 15px; 
+    padding: 15px 25px; 
     background: rgba(12, 16, 20, 0.85); 
-    border-left: 4px solid #0f0; 
-    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 255, 255, 0.3); /* Cyber Blue/Teal outline */
+	border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2), 
+		inset 0 0 10px rgba(0, 255, 255, 0.1);
 }
 
 #hud-accent {
-    transition: border-color 0.3s ease;
+    border-color: rgba(0, 255, 255, 0.5) !important;
+}
+
+.hud-background {
+    background: linear-gradient(
+        180deg, 
+        rgba(0, 255, 255, 0.05) 0%, 
+        rgba(0, 0, 0, 0) 50%, 
+        rgba(0, 255, 255, 0.05) 100%
+    );
+    border-radius: 4px;
 }
 
 .stats-group { 
 	display: flex; 
 	flex-direction: column; 
+	min-width: 150px;
 	gap: 6px; 
 }
 
@@ -304,6 +318,54 @@ button.active {
 	background: #0f0; 
 }
 
+.paper-doll {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.2));
+}
+
+.doll-row {
+  display: flex;
+  gap: 4px;
+}
+
+.align-top {
+	align-items: flex-start !important;
+}
+
+.side-column {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	align-items: flex-end;
+}
+
+.side-column:last-child {
+	align-items: flex-start;
+}
+
+.part {
+	background: #00ff00;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	box-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
+	display: block;
+	flex-shrink: 0;
+}
+
+.head { width: 12px; height: 12px; margin-bottom: 0; }
+.core { width: 12px; height: 48px; }
+.shoulder { width: 18px; height: 12px; }
+.arm { width: 12px; height: 42px; }
+
+.leg {
+	width: 12px;
+	height: 54px;
+	margin-top: -18px; 
+}
+
 </style>
 </head>
 <body>
@@ -397,7 +459,30 @@ button.active {
             </div> 
 	</div> </div> </div> 
 	<div id="hud-container">
+		<div class="hud-background">
 		<div class="console-frame" id="hud-accent">
+			<div class="paper-doll">
+				<div class="doll-row">
+					<div id="doll-head" class="part head"></div>
+				</div>
+				<div class="doll-row align-top">
+					<div class="side-column">
+						<div class="doll-row align-top">
+							<div id="doll-lArm" class="part arm"></div>
+							<div id="doll-lShoulder" class="part shoulder"></div>
+						</div>
+						<div id="doll-lLeg" class="part leg"></div>
+					</div>
+					<div id="doll-core" class="part core"></div>
+					<div class="side-column">
+						<div class="doll-row align-top">
+							<div id="doll-rShoulder" class="part shoulder"></div>
+							<div id="doll-rArm" class="part arm"></div>
+						</div>
+						<div id="doll-rLeg" class="part leg"></div>
+					</div>
+				</div>
+			</div>
 			<div class="stats-group">
 				<div style="display: flex; justify-content: space-between; align-items: center;">
 					<div class="hud-label">HEALTH</div>
@@ -436,6 +521,7 @@ button.active {
 					</div>
 				</div>
 			</div>
+			
 <script>
 // PHASER 2D GAME FRAMEWORK
 const config = {
@@ -739,7 +825,7 @@ function update(time) {
 // DEPLOY PLAYER MECH
 function deployMech() {
     document.getElementById('ui-layer').style.display = 'none';
-    
+   
     const hud = document.getElementById('hud-container');
     if (hud) {
         hud.style.display = 'flex'; 
@@ -760,17 +846,13 @@ function deployMech() {
 	scene.physics.add.overlap(enemyBullets, player, (p, bullet) => {
 		if (!bullet || !bullet.active) return;
 		
-		// SHIELD-BLOCK LOGIC
-		if (isShieldActive) {
-			// 1. Create Blue "Short-Circuit" Sparks
-			createShieldSparks(scene, bullet.x, bullet.y);
-        
-			// 2. Show "0" or "BLOCKED" text in Blue
-			showDamageText(scene, bullet.x, bullet.y, 0, true); 
+		let bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
 
-			// 3. Destroy bullet before it can trigger hull damage
+		if (isShieldActive) {
+			createShieldSparks(scene, bullet.x, bullet.y);
+			showDamageText(scene, bullet.x, bullet.y, 0, true); 
 			bullet.destroy();
-			return; // EXIT the function here so no hull sparks or damage happen
+			return; 
 		}
 		
         createImpactSparks(scene, p.x, p.y);
@@ -778,16 +860,23 @@ function deployMech() {
 		showDamageText(scene, p.x, p.y, 15, currentShield);
 		
 		if (player.shield > 0 && (player.shield - 7.5) <= 0) { 
-			createShieldBreak(scene, p.x, p.y);
-			
+			createShieldBreak(scene, p.x, p.y);	
 		}	
 
 		bullet.destroy(); 
-        processPlayerDamage(15); 
+        processPlayerDamage(15, bulletAngle);
     });
 	
-    player.maxHp = s.hp; 
-    player.hp = s.hp;
+	// PLAYER MECH COMPONENT HEALTH
+	player.comp = {
+		core:  { hp: s.coreHP, max: s.coreHP },
+		lArm:  { hp: s.armHP,  max: s.armHP },
+		rArm:  { hp: s.armHP,  max: s.armHP },
+		legs:  { hp: s.legHP,  max: s.legHP }
+	};
+	
+	player.maxHp = getTotalHP(loadout.chassis);
+	player.hp = player.maxHp;
     player.maxShield = 100;
 	player.shield = 100;
 
@@ -820,6 +909,40 @@ function deployMech() {
     isDeployed = true;
     updateHUD();
     updateBars();
+}
+
+// MECH PAPERDOLL HUD COLORS
+function updatePaperDoll() {
+    if (!player || !isDeployed) return;
+
+    // Helper to determine color based on health percentage
+    const getColor = (hp, max) => {
+        let pct = hp / max;
+        if (pct <= 0) return '#1a1a1a';    // Destroyed (Dark Gray/Black)
+        if (pct <= 0.25) return '#ff0000'; // Critical (Red)
+        if (pct <= 0.50) return '#ffaa00'; // Damaged (Orange)
+        if (pct <= 0.75) return '#ffff00'; // Caution (Yellow)
+        return '#00ff00';                  // Healthy (Green)
+    };
+
+    // 1. Update Core
+    let coreColor = getColor(player.comp.core.hp, player.comp.core.max);
+    document.getElementById('doll-core').style.background = coreColor;
+
+    // 2. Update Left Side (Arm + Shoulder share health)
+    let lArmColor = getColor(player.comp.lArm.hp, player.comp.lArm.max);
+    document.getElementById('doll-lArm').style.background = lArmColor;
+    document.getElementById('doll-lShoulder').style.background = lArmColor;
+
+    // 3. Update Right Side (Arm + Shoulder share health)
+    let rArmColor = getColor(player.comp.rArm.hp, player.comp.rArm.max);
+    document.getElementById('doll-rArm').style.background = rArmColor;
+    document.getElementById('doll-rShoulder').style.background = rArmColor;
+
+    // 4. Update Legs (Left and Right visuals share the 'legs' health pool)
+    let legColor = getColor(player.comp.legs.hp, player.comp.legs.max);
+    document.getElementById('doll-lLeg').style.background = legColor;
+    document.getElementById('doll-rLeg').style.background = legColor;
 }
 
 // SPAWN ENEMY MECH
@@ -909,10 +1032,26 @@ function refreshMechColor() {
 
 // MECH ATTRIBUTES
 const CHASSIS = {
-    light:  { max: 75, spd: 400, scale: 0.7, hp: 350 }, 
-    medium: { max: 150, spd: 280, scale: 1.0, hp: 450 },
-    heavy:  { max: 250, spd: 180, scale: 1.4, hp: 650 }
+    light: { 
+        max: 75, spd: 350, scale: 0.7, 
+        coreHP: 350, armHP: 200, legHP: 250 
+    }, 
+    medium: { 
+        max: 150, spd: 250, scale: 1.0, 
+        coreHP: 450, armHP: 300, legHP: 350
+    },
+    heavy: { 
+        max: 250, spd: 150, scale: 1.4, 
+        coreHP: 550, armHP: 400, legHP: 450
+    }
 };
+
+// MECH TOTAL HEALTH
+function getTotalHP(type) {
+    let s = CHASSIS[type];
+    if (!s) return 0;
+    return s.coreHP + (s.armHP * 2) + s.legHP;
+}
 
 // MECH BODY ARMOUR COLORS
 function darkenColor(hex, amount = 0.4) {
@@ -959,6 +1098,7 @@ function fire(scene, side) {
     let now = scene.time.now;
     
     let wKey = (side === 'L') ? loadout.L : loadout.R;
+	if (!wKey || wKey === 'none') return;
     let weapon = WEAPONS[wKey];
     if (!weapon || wKey === 'none') return;
 
@@ -1200,27 +1340,75 @@ function enemyFire(scene, enemy) {
 }
 
 // PROCESS PLAYER DAMAGE
-function processPlayerDamage(amt) {
+function processPlayerDamage(amt, bulletAngle) {
     if (!player || !player.active || isShieldActive || player.isProcessingDamage) return;
     player.isProcessingDamage = true;
     let currentTime = game.scene.scenes[0].time.now;
     lastDamageTime = currentTime; 
     player.lastHitTime = currentTime; 
+	
+	// 1. Calculate Relative Angle (-PI to PI)
+    // This tells us if the bullet hit the front, back, or sides relative to where the mech is facing.
+    let relAngle = Phaser.Math.Angle.Wrap(bulletAngle - player.rotation);
+
+    let target = 'core'; // Default target
+
+    // 2. Directional Logic Gate
+    if (relAngle > -0.78 && relAngle < 0.78) {
+        target = 'core'; // Front 90 degrees
+    } else if (relAngle < -2.35 || relAngle > 2.35) {
+        target = 'legs'; // Back 90 degrees
+    } else if (relAngle < 0) {
+        target = 'lArm'; // Left side
+    } else {
+        target = 'rArm'; // Right side
+    }
+
+    // 3. Apply Damage to the specific component
+    let component = player.comp[target];
+	// Safety check: If for some reason the target is missing, default to core
+	if (component.hp <= 0 && target !== 'core') {
+        console.log("LIMB DESTROYED - DAMAGE TRANSFERRED TO CORE");
+        component = player.comp.core;
+    }
+	
      // PASSIVE SHIELD DAMAGE MATH
     if (player.shield > 0) {
         let shieldSoak = amt * 0.5;
         player.shield = Math.max(0, player.shield - shieldSoak);
         amt *= 0.5; 
     }
-    player.hp = Math.max(0, player.hp - amt);  
+	
+    component.hp = Math.max(0, component.hp - amt);
+	let totalHP = 0;
+    for (let key in player.comp) {
+        totalHP += player.comp[key].hp;
+    }
+    player.hp = totalHP;
+	
+	// COMPONENT BREAK EFFECTS
+     // Check Left Arm
+    if (player.comp.lArm.hp <= 0 && loadout.L !== 'none') {
+        console.log("LEFT ARM DESTROYED - WEAPON OFFLINE");
+        loadout.L = 'none'; // Disables the weapon data
+        updateHUD();        // Updates the UI to show the slot is empty
+    }
+    // Check Right Arm
+    if (player.comp.rArm.hp <= 0 && loadout.R !== 'none') {
+        console.log("RIGHT ARM DESTROYED - WEAPON OFFLINE");
+        loadout.R = 'none'; // Disables the weapon data
+        updateHUD();        // Updates the UI to show the slot is empty
+    }
+	
     // UPDATE HUD
     updateBars();
+	updatePaperDoll();
     // UNLOCK FUNCTION
     game.scene.scenes[0].time.delayedCall(50, () => {
         if (player) player.isProcessingDamage = false;
     });
     // DEATH CHECK
-    if (player.hp <= 0) location.reload();
+    if (player.comp.core.hp <= 0) location.reload();
 }
 
 // PROCESS ENEMY DAMAGE
@@ -1427,7 +1615,7 @@ function createExplosion(scene, x, y, radius, damage) {
         let dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
         if (dist < radius && !hasDealtPlayerDamage) {
             hasDealtPlayerDamage = true; 
-            processPlayerDamage(Math.floor(damage * 0.75)); 
+            processPlayerDamage(Math.floor(damage * 0.75), player.rotation); 
             scene.cameras.main.shake(200, 0.01);
         }
     }
@@ -1516,7 +1704,8 @@ function refreshGarage() {
 	const shDisplay = document.getElementById('sh-display');
 	
     if (hpDisplay) {
-        hpDisplay.innerText = "HP: " + CHASSIS[loadout.chassis].hp;
+        let total = getTotalHP(loadout.chassis);
+        hpDisplay.innerText = "TOTAL HP: " + total;
     }
 	
 	if (shDisplay) {
