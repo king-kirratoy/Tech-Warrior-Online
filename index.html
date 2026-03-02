@@ -564,12 +564,12 @@ function preload() {
     g.generateTexture('smoke', 20, 20);
 	
 	// Load Weapon Sounds
-    this.load.audio('snd-smg', 'assets/sounds/smg_fire.wav');
-    this.load.audio('snd-sg', 'assets/sounds/shotgun_fire.mp3');
-    this.load.audio('snd-explosion', 'assets/sounds/explosion.mp3');    
+    this.load.audio('snd-smg', 'assets/smg_fire.wav');
+    this.load.audio('snd-sg', 'assets/shotgun_fire.mp3');
+    this.load.audio('snd-explosion', 'assets/explosion.mp3');    
     // Load Impact Sounds
-    this.load.audio('snd-impact-metal', 'assets/sounds/impact_metal.mp3');
-    this.load.audio('snd-shield-hit', 'assets/sounds/shield_ping.mp3');
+    this.load.audio('snd-impact-metal', 'assets/impact_metal.mp3');
+    this.load.audio('snd-shield-hit', 'assets/shield_ping.mp3');
 }
 
 // INITIALIZE WORLD & SYSTEMS
@@ -1933,7 +1933,6 @@ function fadeOutIntro() {
 
 	if (video) {
         video.pause();      // Stops the video playback
-        video.currentTime = 0; // Resets it to the start (optional)
     }
 
     console.log("Executing Fade Transition...");
