@@ -575,7 +575,7 @@ function preload() {
     //this.load.audio('snd-explosion', 'assets/explosion.mp3');    
     // Load Impact Sounds
     //this.load.audio('snd-impact-metal', 'assets/impact_metal.mp3');
-   // this.load.audio('snd-shield-hit', 'assets/shield_ping.mp3');
+    this.load.audio('snd-shield-hit', 'assets/shield_ping.wav');
 }
 
 // INITIALIZE WORLD & SYSTEMS
@@ -879,7 +879,7 @@ function deployMech() {
 		let bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
 
 		if (isShieldActive) {
-			//scene.sound.play('snd-shield-hit', { volume: 0.6 });
+			scene.sound.play('snd-shield-hit', { volume: 0.6 });
 			createShieldSparks(scene, bullet.x, bullet.y);
 			showDamageText(scene, bullet.x, bullet.y, 0, true); 
 			bullet.destroy();
