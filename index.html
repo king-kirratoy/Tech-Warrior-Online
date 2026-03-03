@@ -666,6 +666,28 @@ button.active {
         </div><!-- /console-frame -->
     </div><!-- /hud-background -->
 </div><!-- /hud-container -->
+<!-- ROUND HUD -->
+<div id="round-hud" style="display:none;position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;font-family:'Courier New',monospace;gap:28px;align-items:center;">
+  <div style="text-align:center;">
+    <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Round</div>
+    <div id="round-num" style="font-size:22px;letter-spacing:4px;color:#00ffff;text-shadow:0 0 10px rgba(0,255,255,0.5);">1</div>
+  </div>
+  <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
+  <div style="text-align:center;">
+    <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Remaining</div>
+    <div id="round-remaining" style="font-size:22px;letter-spacing:4px;color:#ff4400;text-shadow:0 0 10px rgba(255,68,0,0.5);">0</div>
+  </div>
+  <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
+  <div style="text-align:center;">
+    <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Destroyed</div>
+    <div id="round-kills" style="font-size:22px;letter-spacing:4px;color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.5);">0</div>
+  </div>
+</div>
+<!-- ROUND BANNER -->
+<div id="round-banner" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99998;pointer-events:none;text-align:center;font-family:'Courier New',monospace;">
+  <div id="round-banner-text" style="font-size:48px;letter-spacing:10px;color:#00ffff;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);"></div>
+  <div id="round-banner-sub"  style="font-size:13px;letter-spacing:5px;color:rgba(0,255,255,0.6);margin-top:8px;"></div>
+</div>
 
 
 <!-- DEATH SCREEN -->
@@ -759,6 +781,12 @@ let _savedL   = null;
 let _savedR   = null;
 let _savedMod = null;
 let _lArmDestroyed = false, _rArmDestroyed = false;
+// Round system
+let _round          = 1;
+let _roundKills     = 0;   // kills this round
+let _roundTotal     = 0;   // enemies in this round
+let _totalKills     = 0;   // all-time kills this session
+let _roundActive    = false;
 
 // Chassis-specific movement effect state
 let _footstepTimer  = 0;
@@ -961,6 +989,16 @@ function handleEnemyAI(scene, time) {
             if (dist < fireRange && (!enemy.lastFireTime || time > enemy.lastFireTime + fireRate)) {
                 enemyFire(scene, enemy, time);
                 enemy.lastFireTime = time + Phaser.Math.Between(-200, 200);
+            }
+
+            // Enemy mod activation
+            const eMod = enemy.loadout?.mod;
+            if (eMod && eMod !== 'none' && !enemy.isModActive) {
+                const modDef = WEAPONS[eMod];
+                const cooldown = modDef?.cooldown || 8000;
+                if (time > (enemy.lastModTime || -10000) + cooldown) {
+                    activateEnemyMod(scene, enemy, eMod, time);
+                }
             }
 
             // Separation: push away from nearby enemies to prevent stacking
@@ -1462,6 +1500,74 @@ function updateSlotCooldown(elementId, weaponKey, reloadTimestamp, time) {
 
 
 // ================================================================
+// ROUND SYSTEM
+// ================================================================
+
+function updateRoundHUD() {
+    const el = document.getElementById('round-hud');
+    if (el) el.style.display = 'flex';
+    const rn = document.getElementById('round-num');
+    const rr = document.getElementById('round-remaining');
+    const rk = document.getElementById('round-kills');
+    if (rn) rn.innerText = _round;
+    if (rr) rr.innerText = Math.max(0, _roundTotal - _roundKills);
+    if (rk) rk.innerText = _totalKills;
+}
+
+function showRoundBanner(title, sub, duration, onDone) {
+    const banner = document.getElementById('round-banner');
+    const bt = document.getElementById('round-banner-text');
+    const bs = document.getElementById('round-banner-sub');
+    if (!banner) { if (onDone) onDone(); return; }
+    if (bt) bt.innerText = title;
+    if (bs) bs.innerText = sub;
+    banner.style.display = 'block';
+    banner.style.opacity = '0';
+    banner.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => { banner.style.opacity = '1'; }, 20);
+    setTimeout(() => {
+        banner.style.opacity = '0';
+        setTimeout(() => {
+            banner.style.display = 'none';
+            if (onDone) onDone();
+        }, 350);
+    }, duration);
+}
+
+function startRound(roundNum) {
+    _round      = roundNum;
+    _roundKills = 0;
+    _roundTotal = roundNum + 2;   // round 1=3, round 2=4, etc.
+    _roundActive = true;
+    updateRoundHUD();
+
+    const scene = game.scene.scenes[0];
+    // Stagger spawns slightly so they don't all arrive at once
+    for (let i = 0; i < _roundTotal; i++) {
+        setTimeout(() => { if (isDeployed) spawnEnemy(scene); }, i * 400);
+    }
+}
+
+function onEnemyKilled() {
+    _roundKills++;
+    _totalKills++;
+    updateRoundHUD();
+
+    if (_roundKills >= _roundTotal) {
+        // Round cleared!
+        _roundActive = false;
+        const nextRound = _round + 1;
+        showRoundBanner(
+            'ROUND ' + _round + ' CLEARED',
+            'PREPARE FOR ROUND ' + nextRound,
+            2800,
+            () => startRound(nextRound)
+        );
+    }
+}
+
+
+// ================================================================
 // DEPLOY
 // ================================================================
 
@@ -1645,7 +1751,11 @@ function deployMech() {
             isDeployed = true;
             const sc = game.scene.scenes[0];
             // Always spawn 6 fresh enemies after landing
-            for (let i = 0; i < 6; i++) spawnEnemy(sc);
+            // Round system handles spawning
+            // Kick off round system on first deploy / respawn
+            document.getElementById('round-hud').style.display = 'flex';
+            showRoundBanner('ROUND ' + _round, (_round + 2) + ' ENEMY MECHS', 2000, null);
+            startRound(_round);
         }
     });
 }
@@ -1728,6 +1838,73 @@ function activateEMP(scene, time) {
 }
 
 
+function activateEnemyMod(scene, enemy, mod, time) {
+    enemy.isModActive = true;
+    enemy.lastModTime = time;
+
+    switch (mod) {
+        case 'jump': {
+            // Boost in current movement direction
+            const jSpeed = WEAPONS.jump.jumpSpeed * 0.8;
+            const jAngle = enemy.visuals.rotation;
+            enemy.body.setVelocity(Math.cos(jAngle) * jSpeed, Math.sin(jAngle) * jSpeed);
+            // Brief scale pulse to signal the jump
+            scene.tweens.add({
+                targets: [enemy.visuals, enemy.torso],
+                scaleX: enemy.visuals.scaleX * 1.3,
+                scaleY: enemy.visuals.scaleY * 1.3,
+                duration: WEAPONS.jump.airTime,
+                yoyo: true,
+                onComplete: () => { enemy.isModActive = false; }
+            });
+            break;
+        }
+        case 'shield': {
+            // Temporarily immune to damage
+            enemy.isShielded = true;
+            // Cyan ring around enemy
+            const sr = scene.add.circle(enemy.x, enemy.y,
+                50 * (CHASSIS[enemy.loadout.chassis]?.scale || 1), 0x00ffff, 0.15)
+                .setStrokeStyle(2, 0x00ffff).setDepth(7);
+            const shieldDur = WEAPONS.shield.shieldTime;
+            scene.tweens.add({ targets: sr, alpha: 0, duration: shieldDur,
+                onComplete: () => { sr.destroy(); enemy.isShielded = false; enemy.isModActive = false; }
+            });
+            break;
+        }
+        case 'rage': {
+            // Speed and fire-rate boost, tint red
+            const origSpeed = enemy.speed;
+            enemy.speed *= 1.6;
+            if (enemy.torso) enemy.torso.list?.forEach(s => s.setTint?.(0xff2200));
+            scene.time.delayedCall(WEAPONS.rage.rageTime, () => {
+                enemy.speed = origSpeed;
+                if (enemy.torso) enemy.torso.list?.forEach(s => s.clearTint?.());
+                enemy.isModActive = false;
+            });
+            break;
+        }
+        case 'emp': {
+            // EMP blast centered on enemy — stuns the player briefly
+            const ring = scene.add.circle(enemy.x, enemy.y, 10, 0xff6600, 0.2)
+                .setStrokeStyle(2, 0xff6600).setDepth(12);
+            scene.tweens.add({ targets: ring, radius: WEAPONS.emp.radius * 0.7, alpha: 0,
+                duration: WEAPONS.emp.empSpeed,
+                onComplete: () => { ring.destroy(); enemy.isModActive = false; }
+            });
+            if (player && Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y) < WEAPONS.emp.radius * 0.7) {
+                // Slow player briefly
+                const origKeys = keys;
+                scene.cameras.main.shake(300, 0.005);
+                player.body.setVelocity(0, 0);
+                scene.time.delayedCall(WEAPONS.emp.stunTime * 0.5, () => { /* player recovers */ });
+            }
+            break;
+        }
+    }
+}
+
+
 // ================================================================
 // ENEMY SPAWNING & AI FIRING
 // ================================================================
@@ -1777,7 +1954,7 @@ function spawnEnemy(scene) {
         attempts++;
     } while (
         player && isDeployed &&
-        Phaser.Math.Distance.Between(x, y, player.x, player.y) < 400 &&
+        Phaser.Math.Distance.Between(x, y, player.x, player.y) < 800 &&
         attempts < 20
     );
 
@@ -2120,6 +2297,7 @@ function processPlayerDamage(amt, bulletAngle) {
 }
 
 function damageEnemy(e, amt) {
+    if (e.isShielded) return; // mod shield active
     e.health -= amt;
     if (e.bar) e.bar.width = Math.max(0, (e.health / e.maxHealth) * (e.barMaxW || 40));
 
@@ -2133,7 +2311,7 @@ function damageEnemy(e, amt) {
         if (e.visuals) e.visuals.destroy();
         if (e.torso)   e.torso.destroy();
         e.destroy();
-        setTimeout(() => spawnEnemy(scene), 2000);
+        onEnemyKilled();
     }
 }
 
@@ -2646,9 +2824,9 @@ function respawnMech() {
     const hgc = document.getElementById('hangar-canvas');
     if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
     _resetHUDState();
+    _round = 1; _roundKills = 0; _totalKills = 0;
     const scene = game.scene.scenes[0];
     deployMech();
-    for (let i = 0; i < 6; i++) spawnEnemy(scene);
 }
 
 function returnToHangar() {
@@ -2659,6 +2837,8 @@ function returnToHangar() {
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(true);
     document.getElementById('ui-layer').style.display = 'flex';
     document.getElementById('hud-container').style.display = 'none';
+    const rhud = document.getElementById('round-hud'); if (rhud) rhud.style.display = 'none';
+    const rban = document.getElementById('round-banner'); if (rban) rban.style.display = 'none';
     document.getElementById('hangar-return-btn').style.display = 'none';
     startHangarGrid();
     // Reset HUD to clean state
