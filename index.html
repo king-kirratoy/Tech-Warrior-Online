@@ -812,6 +812,8 @@ let lastModTime     = 0;
 let isJumping       = false;
 let isShieldActive  = false;
 let isRageActive    = false;
+let isAmmoActive    = false;  // loot: 50% reload reduction for 8s
+let isChargeActive  = false;  // loot: 50% mod cooldown reduction for 10s
 
 
 
@@ -930,6 +932,7 @@ function update(time) {
     syncVisuals(this, time);
     updateCooldownOverlays(time);
     drawMinimap();
+    checkLootPickups(this);
 }
 
 
@@ -1096,8 +1099,30 @@ function handleEnemyAI(scene, time) {
         }
         // Sync shield ring to enemy position
         if (enemy.shieldRing?.active) enemy.shieldRing.setPosition(enemy.x, enemy.y);
+        // Sync commander label
+        if (enemy.cmdLabel?.active) {
+            enemy.cmdLabel.setPosition(enemy.x, enemy.y - 70);
+        }
+        // Commander buff aura — boost nearby standard enemies
+        if (enemy.isCommander && player) {
+            enemies.getChildren().forEach(other => {
+                if (other === enemy || !other.active) return;
+                const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, other.x, other.y);
+                if (d < 300) {
+                    const base = CHASSIS[other.loadout?.chassis]?.spd || 250;
+                    other.speed = base * 1.2;
+                } else {
+                    const base = CHASSIS[other.loadout?.chassis]?.spd || 250;
+                    if (other.speed > base) other.speed = base;
+                }
+            });
+        }
 
-        const _barY = enemy.y - 45 * (enemy.loadout ? CHASSIS[enemy.loadout.chassis].scale : 1);
+        const _barScale = enemy.isCommander ? 1.6 : (enemy.loadout ? CHASSIS[enemy.loadout.chassis].scale : 1);
+        const _barOff = enemy.isCommander ? 80
+                      : enemy.loadout?.chassis === 'heavy' ? 80
+                      : enemy.loadout?.chassis === 'light' ? 45 : 58;
+        const _barY = enemy.y - _barOff * _barScale;
         if (enemy.barBg)  enemy.barBg.setPosition(enemy.x, _barY);
         if (enemy.bar)    enemy.bar.setPosition(enemy.x, _barY);
 
@@ -1116,7 +1141,8 @@ function handlePlayerMovement(scene, time) {
     const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod].cooldown : 0;
 
     // Mod activation (SPACE)
-    if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + modCooldown) {
+    const effectiveModCooldown = isChargeActive ? modCooldown * 0.5 : modCooldown;
+    if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + effectiveModCooldown) {
         activateMod(scene, time);
     }
 
@@ -1598,9 +1624,15 @@ function startRound(roundNum) {
     updateRoundHUD();
 
     const scene = game.scene.scenes[0];
+    // Spawn commander from round 4 onward (guaranteed from round 6)
+    const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
+    const normalCount = spawnCmd ? _roundTotal - 1 : _roundTotal;
     // Stagger spawns slightly so they don't all arrive at once
-    for (let i = 0; i < _roundTotal; i++) {
+    for (let i = 0; i < normalCount; i++) {
         setTimeout(() => { if (isDeployed) spawnEnemy(scene); }, i * 400);
+    }
+    if (spawnCmd) {
+        setTimeout(() => { if (isDeployed) spawnCommander(scene); }, normalCount * 400 + 600);
     }
 }
 
@@ -2144,6 +2176,130 @@ function damageCover(scene, cover, amt) {
 }
 
 
+
+// ================================================================
+// LOOT DROP SYSTEM
+// ================================================================
+const LOOT_TYPES = {
+    repair: { label: 'REPAIR',  color: 0x00ff44, glow: '#00ff44', size: 10 },
+    ammo:   { label: 'AMMO',    color: 0xffdd00, glow: '#ffdd00', size: 10 },
+    charge: { label: 'CHARGE',  color: 0x00ffff, glow: '#00ffff', size: 10 },
+};
+
+let lootPickups = [];
+
+function spawnLoot(scene, x, y, forced) {
+    // Drop chance: 30% normal, 100% commander
+    if (!forced && Math.random() > 0.30) return;
+
+    const types = ['repair', 'ammo', 'charge'];
+    const type  = forced
+        ? types[Math.floor(Math.random() * types.length)]
+        : Phaser.Math.RND.pick(types);
+    const def   = LOOT_TYPES[type];
+
+    const orb = scene.add.circle(x, y, def.size, def.color, 0.9)
+        .setStrokeStyle(2, 0xffffff).setDepth(8);
+    scene.physics.add.existing(orb, true);
+
+    // Label
+    const label = scene.add.text(x, y - 18, def.label, {
+        font: 'bold 9px monospace', fill: def.glow
+    }).setOrigin(0.5).setDepth(9);
+
+    // Pulse tween
+    scene.tweens.add({
+        targets: orb, scaleX: 1.25, scaleY: 1.25,
+        duration: 500, yoyo: true, repeat: -1
+    });
+
+    const pickup = { orb, label, type, x, y };
+    lootPickups.push(pickup);
+
+    // Expire after 15s
+    scene.time.delayedCall(15000, () => removeLoot(pickup));
+}
+
+function removeLoot(pickup) {
+    if (pickup.orb?.active)   pickup.orb.destroy();
+    if (pickup.label?.active) pickup.label.destroy();
+    lootPickups = lootPickups.filter(p => p !== pickup);
+}
+
+function checkLootPickups(scene) {
+    if (!player?.active || !isDeployed) return;
+    lootPickups.slice().forEach(pickup => {
+        if (!pickup.orb?.active) { lootPickups = lootPickups.filter(p => p !== pickup); return; }
+        const dist = Phaser.Math.Distance.Between(player.x, player.y, pickup.x, pickup.y);
+        if (dist < 40) {
+            applyLoot(scene, pickup.type);
+            removeLoot(pickup);
+        }
+        // Sync label
+        if (pickup.label?.active) pickup.label.setPosition(pickup.x, pickup.y - 18);
+    });
+}
+
+function applyLoot(scene, type) {
+    const def = LOOT_TYPES[type];
+    // Flash text
+    const fx = scene.add.text(player.x, player.y - 40, def.label + ' PICKED UP', {
+        font: 'bold 13px monospace', fill: def.glow,
+        stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(100).setScrollFactor(0)
+      .setPosition(game.config.width/2, game.config.height * 0.35);
+    scene.tweens.add({ targets: fx, y: fx.y - 40, alpha: 0, duration: 1800,
+        onComplete: () => fx.destroy() });
+
+    switch (type) {
+        case 'repair': {
+            // Restore 20% max HP to the most damaged component
+            if (!player?.comp) break;
+            const comps = ['core','lArm','rArm','legs'];
+            let worst = null, worstPct = 1;
+            comps.forEach(k => {
+                const c = player.comp[k];
+                if (!c) return;
+                const pct = c.hp / c.max;
+                if (pct < worstPct) { worst = k; worstPct = pct; }
+            });
+            if (worst) {
+                const c = player.comp[worst];
+                c.hp = Math.min(c.max, c.hp + c.max * 0.20);
+                updateHUD();
+            }
+            break;
+        }
+        case 'ammo': {
+            // 50% faster reload for 8s — mirrors rage mode
+            isAmmoActive = true;
+            ['slot-L','slot-R'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.boxShadow = '0 0 20px #ffdd00';
+            });
+            scene.time.delayedCall(8000, () => {
+                isAmmoActive = false;
+                ['slot-L','slot-R'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.boxShadow = '';
+                });
+            });
+            break;
+        }
+        case 'charge': {
+            // 50% reduced mod cooldown for 10s
+            isChargeActive = true;
+            const el = document.getElementById('slot-M');
+            if (el) el.style.boxShadow = '0 0 20px #00ffff';
+            scene.time.delayedCall(10000, () => {
+                isChargeActive = false;
+                if (el) el.style.boxShadow = '';
+            });
+            break;
+        }
+    }
+}
+
 // ================================================================
 // ENEMY SPAWNING & AI FIRING
 // ================================================================
@@ -2155,6 +2311,8 @@ const ENEMY_COLORS = {
     medium: { body: 0x1a0000, head: 0xcc2200, eye: 0xff4400 },
     heavy:  { body: 0x0a0a1a, head: 0x4400cc, eye: 0xff0000 }
 };
+// Commander unit — dark armour with gold accent
+const COMMANDER_COLORS = { body: 0x1a1000, head: 0xddaa00, eye: 0xff8800 };
 
 // Primary weapon keys available to enemies (excludes none)
 const ENEMY_PRIMARY   = ['smg', 'mg', 'br', 'sg', 'hr'];
@@ -2254,7 +2412,8 @@ function spawnEnemy(scene) {
 
     // Health bar (scales with chassis HP)
     const barW = 40 + (loadoutE.chassis === 'heavy' ? 14 : loadoutE.chassis === 'light' ? -8 : 0);
-    const barY = y - 50 * chassisS.scale;
+    const _barOffset = loadoutE.chassis === 'heavy' ? 80 : loadoutE.chassis === 'light' ? 45 : 58;
+    const barY = y - _barOffset * chassisS.scale;
     e.barBg  = scene.add.rectangle(x, barY, barW, 5, 0x330000).setDepth(4);
     e.bar    = scene.add.rectangle(x, barY, barW, 5, 0x00ff00).setDepth(5);
     e.barMaxW = barW;
@@ -2270,6 +2429,76 @@ function spawnEnemy(scene) {
 
     enemies.add(e);
     // Collide new enemy with all existing cover objects
+    if (coverObjects) scene.physics.add.collider(e, coverObjects);
+}
+
+function spawnCommander(scene) {
+    // Commander: always heavy, gold/dark colours, boosted stats, active mod
+    let x, y, attempts = 0;
+    do {
+        x = Phaser.Math.Between(100, 3900);
+        y = Phaser.Math.Between(100, 3900);
+        attempts++;
+    } while (
+        player && isDeployed &&
+        Phaser.Math.Distance.Between(x, y, player.x, player.y) < 900 &&
+        attempts < 20
+    );
+
+    const chassisS = CHASSIS.heavy;
+    const cmdScale = 1.6;  // bigger than standard heavy (1.4)
+
+    // Pick a strong primary — HR or MG only
+    const primary   = Phaser.Math.RND.pick(['hr', 'mg']);
+    const secondary = Phaser.Math.RND.pick(['rl', 'plsm']);
+    const mod       = Phaser.Math.RND.pick(['rage', 'shield']);
+    const loadoutE  = { chassis: 'heavy', primary, secondary, mod };
+
+    // Hitbox
+    const e = scene.add.rectangle(x, y, 60, 60, 0x000000, 0);
+    scene.physics.add.existing(e);
+    e.body.setCircle(40);
+
+    // Visuals — use commander gold colours
+    e.visuals = buildEnemyMech(scene, 'heavy', COMMANDER_COLORS);
+    e.visuals.setPosition(x, y).setScale(cmdScale);
+    e.torso = buildEnemyTorso(scene, 'heavy', COMMANDER_COLORS);
+    e.torso.setPosition(x, y).setScale(cmdScale).setDepth(6);
+
+    // COMMANDER label above mech
+    e.cmdLabel = scene.add.text(x, y - 70, '[ COMMANDER ]', {
+        font: 'bold 10px monospace', fill: '#ddaa00',
+        stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(10);
+    scene.tweens.add({ targets: e.cmdLabel, alpha: 0.5, duration: 800, yoyo: true, repeat: -1 });
+
+    // Stats — 150% HP, boosted speed
+    e.loadout    = loadoutE;
+    e.isCommander = true;
+    e.behavior   = 'circle';
+    e.speed      = chassisS.spd * 1.2;
+    e.health     = Math.round(getTotalHP('heavy') * 0.65 * 1.5);
+    e.maxHealth  = e.health;
+    e.reloadL    = 0;
+    e.reloadR    = 0;
+    e.lastSecTime = -99999;
+    const _mc = WEAPONS[mod]?.cooldown || 8000;
+    e.lastModTime = -_mc * 0.1;  // activates mod quickly
+    e.isModActive = false;
+
+    // Gold health bar (wider)
+    const barW = 60;
+    const barY = y - 70 * cmdScale;
+    e.barBg  = scene.add.rectangle(x, barY, barW, 7, 0x332200).setDepth(4);
+    e.bar    = scene.add.rectangle(x, barY, barW, 7, 0xddaa00).setDepth(5);
+    e.barMaxW = barW;
+
+    e.fxFootTimer = 0; e.fxFootSide = 1;
+    e.fxShockTimer = 0;
+    e.fxLastX = x; e.fxLastY = y;
+    e.fxLastMX = x; e.fxLastMY = y;
+
+    enemies.add(e);
     if (coverObjects) scene.physics.add.collider(e, coverObjects);
 }
 
@@ -2425,7 +2654,7 @@ function fire(scene, side) {
     const weapon = WEAPONS[wKey];
     if (!weapon) return;
 
-    const reloadActual = isRageActive ? weapon.reload * 0.5 : weapon.reload;
+    const reloadActual = (isRageActive || isAmmoActive) ? weapon.reload * 0.5 : weapon.reload;
     const lastFired    = side === 'L' ? reloadL : reloadR;
     if (now < lastFired) return;
 
@@ -2667,14 +2896,28 @@ function damageEnemy(e, amt) {
 
     if (e.health <= 0) {
         const scene = game.scene.scenes[0];
-        scene.cameras.main.shake(250, 0.008);
-        createExplosion(scene, e.x, e.y, 60, 0);
-        const debrisCol = e.loadout ? ENEMY_COLORS[e.loadout.chassis].head : 0x664400;
-        spawnDebris(scene, e.x, e.y, debrisCol);
-        if (e.barBg)  e.barBg.destroy();
-        if (e.bar)     e.bar.destroy();
-        if (e.visuals) e.visuals.destroy();
-        if (e.torso)   e.torso.destroy();
+        if (e.isCommander) {
+            // Commander death — bigger explosion, heavy shake, guaranteed loot
+            scene.cameras.main.shake(500, 0.02);
+            createExplosion(scene, e.x, e.y, 120, 0);
+            scene.time.delayedCall(150, () => createExplosion(scene, e.x + Phaser.Math.Between(-30,30), e.y + Phaser.Math.Between(-30,30), 80, 0));
+            spawnDebris(scene, e.x, e.y, 0xddaa00);
+            spawnLoot(scene, e.x, e.y, true);  // guaranteed drop
+            // Show commander kill banner briefly
+            showRoundBanner('COMMANDER DESTROYED', '', 1500, null);
+        } else {
+            scene.cameras.main.shake(250, 0.008);
+            createExplosion(scene, e.x, e.y, 60, 0);
+            const debrisCol = e.loadout ? ENEMY_COLORS[e.loadout.chassis].head : 0x664400;
+            spawnDebris(scene, e.x, e.y, debrisCol);
+            spawnLoot(scene, e.x, e.y, false);  // 30% chance
+        }
+        if (e.barBg)    e.barBg.destroy();
+        if (e.bar)      e.bar.destroy();
+        if (e.visuals)  e.visuals.destroy();
+        if (e.torso)    e.torso.destroy();
+        if (e.cmdLabel) e.cmdLabel.destroy();
+        if (e.shieldRing?.active) e.shieldRing.destroy();
         e.destroy();
         onEnemyKilled();
     }
@@ -3142,8 +3385,9 @@ function _cleanupGame() {
     if (enemyBullets) enemyBullets.clear(true, true);
     if (enemies) {
         enemies.getChildren().forEach(e => {
-            if (e.barBg)   try { e.barBg.destroy(); }   catch(ex){}
-            if (e.bar)     try { e.bar.destroy(); }     catch(ex){}
+            if (e.barBg)   try { e.barBg.destroy(); }    catch(ex){}
+            if (e.bar)     try { e.bar.destroy(); }      catch(ex){}
+            if (e.cmdLabel) try { e.cmdLabel.destroy(); } catch(ex){}
             if (e.visuals) try { e.visuals.destroy(); } catch(ex){}
             if (e.torso)   try { e.torso.destroy(); }   catch(ex){}
         });
@@ -3153,7 +3397,7 @@ function _cleanupGame() {
     if (_savedL   !== null) { loadout.L   = _savedL;   _savedL   = null; }
     if (_savedR   !== null) { loadout.R   = _savedR;   _savedR   = null; }
     if (_savedMod !== null) { loadout.mod = _savedMod; _savedMod = null; }
-    isDeployed = false; isJumping = false; isShieldActive = false; isRageActive = false;
+    isDeployed = false; isJumping = false; isShieldActive = false; isRageActive = false; isAmmoActive = false; isChargeActive = false;
     reloadL = 0; reloadR = 0; lastDamageTime = -99999; lastModTime = -10000;
     _footstepTimer = 0; _footstepSide = 1; _shockwaveTimer = 0;
     _lastTorsoX = 0; _lastTorsoY = 0; _lastTorsoMX = 0; _lastTorsoMY = 0;
