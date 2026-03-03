@@ -1,0 +1,24 @@
+.hangar {
+    background-color: #f0f0f0;
+    border: 2px solid #ccc;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.hangar h1 {
+    font-size: 24px;
+    color: #333;
+}
+
+.hangar button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.hangar button:hover {
+    background-color: #45a049;
+}
