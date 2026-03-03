@@ -42,7 +42,7 @@ body {
     border-radius: 10px;
     pointer-events: auto;
     background:
-        linear-gradient(rgba(12,16,20,0.85), rgba(12,16,20,0.85)),
+        linear-gradient(rgba(12,16,20,0.92), rgba(12,16,20,0.92)),
         url('assets/hangar-bg.jpg') center / cover;
     border: 1px solid rgba(0,255,255,0.35);
     box-shadow: 0 0 40px rgba(0,0,0,0.7), 0 0 20px rgba(0,255,255,0.1);
@@ -296,6 +296,22 @@ button.active {
     background: rgba(255,170,0,0.15);
 }
 
+.weapon-box.arm-destroyed {
+    border: 1px solid #cc0000 !important;
+    box-shadow: 0 0 10px rgba(200,0,0,0.3) !important;
+    background: rgba(100,0,0,0.15) !important;
+    opacity: 1 !important;
+}
+.weapon-box.arm-destroyed .weap-name {
+    color: #ff4444;
+    font-size: 8px;
+    letter-spacing: 0.5px;
+}
+.weapon-box.arm-destroyed .arm-label {
+    color: rgba(255,80,80,0.7);
+    opacity: 1;
+}
+
 .cd-overlay {
     position: absolute;
     bottom: 0; left: 0;
@@ -474,6 +490,8 @@ button.active {
 <!-- ============================================================
      HANGAR / GARAGE UI
      ============================================================ -->
+<canvas id="hangar-canvas" style="position:fixed;inset:0;pointer-events:none;z-index:999;display:none;"></canvas>
+<div id="deploy-cover" style="display:none;position:fixed;inset:0;background:#0c1014;z-index:998;pointer-events:none;"></div>
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu">
         <h2 style="text-align:center; margin:0 0 25px; letter-spacing:8px; color:#00ffff; font-family:'Courier New',monospace; font-size:20px; text-shadow:0 0 14px rgba(0,255,255,0.6), 0 0 40px rgba(0,255,255,0.2); font-weight:normal;">MECH HANGAR</h2>
@@ -668,14 +686,14 @@ button.active {
                 style="width:200px;padding:16px;background:rgba(200,210,217,0.05);border:1px solid rgba(200,210,217,0.2);border-left:3px solid #c8d2d9;color:#c8d2d9;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;"
                 onmouseover="this.style.background='rgba(200,210,217,0.15)';this.style.boxShadow='0 0 20px rgba(200,210,217,0.15)';"
                 onmouseout="this.style.background='rgba(200,210,217,0.05)';this.style.boxShadow='none';">
-                &#8962; HANGAR
+                &#8962; MECH HANGAR
             </button>
         </div>
     </div>
 </div>
 <!-- HANGAR RETURN BTN -->
 <div id="hangar-return-btn" style="display:none;position:fixed;bottom:30px;right:30px;z-index:9999;">
-    <button onclick="returnToHangar()" style="padding:10px 18px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);">&#8962; &nbsp;HANGAR</button>
+    <button onclick="returnToHangar()" style="padding:10px 18px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);">&#8962; &nbsp;MECH HANGAR</button>
 </div>
 <!-- ============================================================
      GAME SCRIPT
@@ -742,6 +760,7 @@ let glowWedge;
 let _savedL   = null;
 let _savedR   = null;
 let _savedMod = null;
+let _lArmDestroyed = false, _rArmDestroyed = false;
 
 // Chassis-specific movement effect state
 let _footstepTimer  = 0;
@@ -819,7 +838,7 @@ function preload() {
 }
 
 function create() {
-    // Background grid
+    // Battlefield grid — static green world-space grid (scrolls with camera)
     this.add.grid(2000, 2000, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
 
     // Input
@@ -840,8 +859,7 @@ function create() {
         damageEnemy(enemy, dmg);
     });
 
-    // Spawn initial enemies
-    for (let i = 0; i < 6; i++) spawnEnemy(this);
+    // (enemies spawned on deploy, not at scene creation)
 
     // Hangar overlay (hidden once deployed)
     this.hangarOverlay = this.add.rectangle(
@@ -850,11 +868,7 @@ function create() {
         0x0c1014, 0.7
     ).setScrollFactor(0).setDepth(1000);
 
-    this.hangarGrid = this.add.grid(
-        window.innerWidth / 2, window.innerHeight / 2,
-        window.innerWidth, window.innerHeight,
-        16, 16, 0, 0, 0x00ff00, 0.05
-    ).setScrollFactor(0).setDepth(1001);
+    // (in-game Phaser grid removed — HTML canvas overlay used instead)
 }
 
 function update(time) {
@@ -1127,7 +1141,7 @@ function syncEnemyChassisEffect(scene, time, enemy) {
             if (dist >= 12) {
                 enemy.fxLastX = ex; enemy.fxLastY = ey;
                 const colors = ENEMY_COLORS[chassis];
-                const ghost  = buildEnemyMech(scene, chassis, colors);
+                const ghost  = buildEnemyTorso(scene, chassis, colors);
                 ghost.setPosition(ex, ey).setRotation(rot).setScale(scale);
                 ghost.setAlpha(0.3).setDepth(8);
                 scene.tweens.add({ targets: ghost, alpha: 0, duration: 220, onComplete: () => ghost.destroy() });
@@ -1155,7 +1169,7 @@ function syncEnemyChassisEffect(scene, time, enemy) {
             if (dist >= 16) {
                 enemy.fxLastMX = ex; enemy.fxLastMY = ey;
                 const colors = ENEMY_COLORS[chassis];
-                const ghost  = buildEnemyMech(scene, chassis, colors);
+                const ghost  = buildEnemyTorso(scene, chassis, colors);
                 ghost.setPosition(ex, ey).setRotation(rot).setScale(scale);
                 ghost.setAlpha(0.22).setDepth(8);
                 scene.tweens.add({ targets: ghost, alpha: 0, duration: 180, onComplete: () => ghost.destroy() });
@@ -1455,14 +1469,16 @@ function updateSlotCooldown(elementId, weaponKey, reloadTimestamp, time) {
 
 function deployMech() {
     document.getElementById('ui-layer').style.display = 'none';
-    document.getElementById('hud-container').style.display = 'flex';
-    document.getElementById('hangar-return-btn').style.display = 'block';
+    // Cover the battlefield with a black div until mech is ready to drop in
+    document.getElementById('deploy-cover').style.display = 'block';
+    // Hide animated grid canvas during gameplay
+    const hgc = document.getElementById('hangar-canvas');
+    if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
 
     const scene = game.scene.scenes[0];
     const s     = CHASSIS[loadout.chassis];
 
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(false);
-    if (scene.hangarGrid)    scene.hangarGrid.setVisible(false);
 
     // Leg hitbox dimensions per chassis
     const legDims = { light: [40,30], medium: [60,40], heavy: [70,40] };
@@ -1554,6 +1570,7 @@ function deployMech() {
     lastDamageTime = -99999;
     lastModTime    = -10000;
 
+    _lArmDestroyed = false; _rArmDestroyed = false;
     updateHUD();
     updateBars();
 
@@ -1567,26 +1584,33 @@ function deployMech() {
     // as it falls, landing with a shockwave. Controls locked until landed.
     const normalScale = CHASSIS[loadout.chassis].scale;
 
-    // Start mech above the visible area: offset Y up, alpha=0, normal scale
-    const dropOffsetY = 300;
-    player.y -= dropOffsetY;
-    torso.y  -= dropOffsetY;
-    player.setAlpha(0);
-    torso.setAlpha(0);
+    // Drop-in: start mech at spawn position, scale down from large to signal
+    // a drop from altitude. Moving the physics body up causes camera lag.
+    player.setAlpha(1);
+    torso.setAlpha(1);
     if (glowWedge) glowWedge.setVisible(false);
+
+    // Remove cover — mech is about to drop in
+    document.getElementById('deploy-cover').style.display = 'none';
+    document.getElementById('hud-container').style.display = 'flex';
+    document.getElementById('hangar-return-btn').style.display = 'block';
+    // Start large and shrink to simulate falling toward the camera
+    const dropScale = normalScale * 2.5;
+    player.setScale(dropScale);
+    torso.setScale(dropScale);
 
     // Lock movement during drop
     isDeployed = false;
 
-    // Fade in immediately so mech is visible throughout
-    scene.tweens.add({ targets: [player, torso], alpha: 1, duration: 150, ease: 'Linear' });
-
     scene.tweens.add({
         targets:  [player, torso],
-        y:        `+=${dropOffsetY}`,
-        duration: 900,
+        scaleX:   normalScale,
+        scaleY:   normalScale,
+        duration: 700,
         ease:     'Cubic.easeIn',
         onComplete: () => {
+            player.setScale(normalScale);
+            torso.setScale(normalScale);
             if (glowWedge) glowWedge.setVisible(true);
 
             // White shockwave ring
@@ -2073,13 +2097,13 @@ function processPlayerDamage(amt, bulletAngle) {
     // Recalculate total HP from components
     player.hp = Object.values(player.comp).reduce((sum, c) => sum + c.hp, 0);
 
-    // Limb destruction — disable the associated weapon
-    if (player.comp.lArm.hp <= 0 && loadout.L !== 'none') {
-        loadout.L = 'none';
+    // Limb destruction — disable weapon and mark broken regardless of loadout
+    if (player.comp.lArm.hp <= 0 && !_lArmDestroyed) {
+        loadout.L = 'none'; _lArmDestroyed = true;
         updateHUD();
     }
-    if (player.comp.rArm.hp <= 0 && loadout.R !== 'none') {
-        loadout.R = 'none';
+    if (player.comp.rArm.hp <= 0 && !_rArmDestroyed) {
+        loadout.R = 'none'; _rArmDestroyed = true;
         updateHUD();
     }
 
@@ -2292,61 +2316,49 @@ function buildPlayerMech(scene, type, color) {
 }
 
 function buildEnemyMech(scene, type, colors) {
-    // Lower body / legs only — torso rotates independently in e.torso
-    type   = type   || 'medium';
-    colors = colors || ENEMY_COLORS[type];
-    const container = scene.add.container(0, 0);
-    if (type === 'heavy') {
-        container.add([
-            scene.add.rectangle(0, 0, 40, 100, colors.body).setStrokeStyle(2, 0xffffff),
-            scene.add.rectangle(0, 0, 60,  70, colors.body).setStrokeStyle(2, 0xffffff)
-        ]);
-    } else if (type === 'light') {
-        container.add([
-            scene.add.rectangle(0, 0, 25, 60, colors.body).setStrokeStyle(2, 0xffffff),
-            scene.add.rectangle(0, 0, 40, 40, colors.body).setStrokeStyle(2, 0xffffff)
-        ]);
-    } else {
-        container.add([
-            scene.add.rectangle(0, 0, 35, 80, colors.body).setStrokeStyle(2, 0xffffff),
-            scene.add.rectangle(0, 0, 50, 50, colors.body).setStrokeStyle(2, 0xffffff)
-        ]);
-    }
-    return container;
+    // Invisible placeholder container — all visuals are in e.torso
+    // Kept so existing sync/destroy code doesn't break
+    return scene.add.container(0, 0);
 }
 
 function buildEnemyTorso(scene, type, colors) {
-    // Full upper body: core torso + shoulder wings + head + gun barrel
-    // Mirrors the player mech structure — all rotates together to face the player
+    // Complete mech visual — rotates as one unit to face the player.
+    // Coordinate system: rotation=0 = facing right (+X).
+    //   X axis = forward/backward (gun at +X, rear at -X)
+    //   Y axis = left/right perpendicular (shoulders at +Y and -Y)
     type   = type   || 'medium';
     colors = colors || ENEMY_COLORS[type];
-    const bodyCol = colors.body;
-    const headCol = colors.head;
-    const eyeCol  = colors.eye;
+    const body = colors.body;
+    const head = colors.head;
+    const eye  = colors.eye;
     const c = scene.add.container(0, 0);
     if (type === 'heavy') {
         c.add([
-            scene.add.rectangle(0,   0,  55, 60, bodyCol).setStrokeStyle(2, 0xffffff),  // core torso
-            scene.add.rectangle(-34, 0,  14, 45, bodyCol).setStrokeStyle(1, 0xffffff),  // left shoulder
-            scene.add.rectangle( 34, 0,  14, 45, bodyCol).setStrokeStyle(1, 0xffffff),  // right shoulder
-            scene.add.rectangle(0,   0,  40, 26, headCol).setStrokeStyle(2, 0xffffff),  // head
-            scene.add.rectangle(24,  0,  10, 26, eyeCol ).setStrokeStyle(1, 0xffffff),  // gun mount
+            // Core torso block
+            scene.add.rectangle(  0, 0,   52, 58, body).setStrokeStyle(2, 0xffffff),
+            // Shoulders perpendicular (along Y axis = left/right of facing)
+            scene.add.rectangle(  4, -38, 28, 14, body).setStrokeStyle(1, 0xffffff),
+            scene.add.rectangle(  4,  38, 28, 14, body).setStrokeStyle(1, 0xffffff),
+            // Head
+            scene.add.rectangle(  0, 0,   38, 24, head).setStrokeStyle(2, 0xffffff),
+            // Gun barrel (forward = +X)
+            scene.add.rectangle( 24, 0,   10, 24, eye ).setStrokeStyle(1, 0xffffff),
         ]);
     } else if (type === 'light') {
         c.add([
-            scene.add.rectangle(0,   0,  34, 36, bodyCol).setStrokeStyle(2, 0xffffff),  // core torso
-            scene.add.rectangle(-20, 0,  10, 28, bodyCol).setStrokeStyle(1, 0xffffff),  // left shoulder
-            scene.add.rectangle( 20, 0,  10, 28, bodyCol).setStrokeStyle(1, 0xffffff),  // right shoulder
-            scene.add.rectangle(0,   0,  22, 18, headCol).setStrokeStyle(2, 0xffffff),  // head
-            scene.add.rectangle(13,  0,   9, 18, eyeCol ).setStrokeStyle(1, 0xffffff),  // gun mount
+            scene.add.rectangle(  0, 0,   34, 36, body).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(  2, -22, 18, 10, body).setStrokeStyle(1, 0xffffff),
+            scene.add.rectangle(  2,  22, 18, 10, body).setStrokeStyle(1, 0xffffff),
+            scene.add.rectangle(  0, 0,   22, 18, head).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle( 13, 0,    9, 18, eye ).setStrokeStyle(1, 0xffffff),
         ]);
-    } else {
+    } else { // medium
         c.add([
-            scene.add.rectangle(0,   0,  44, 48, bodyCol).setStrokeStyle(2, 0xffffff),  // core torso
-            scene.add.rectangle(-26, 0,  12, 36, bodyCol).setStrokeStyle(1, 0xffffff),  // left shoulder
-            scene.add.rectangle( 26, 0,  12, 36, bodyCol).setStrokeStyle(1, 0xffffff),  // right shoulder
-            scene.add.rectangle(0,   0,  32, 22, headCol).setStrokeStyle(2, 0xffffff),  // head
-            scene.add.rectangle(18,  0,  10, 22, eyeCol ).setStrokeStyle(1, 0xffffff),  // gun mount
+            scene.add.rectangle(  0, 0,   44, 46, body).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(  3, -30, 22, 12, body).setStrokeStyle(1, 0xffffff),
+            scene.add.rectangle(  3,  30, 22, 12, body).setStrokeStyle(1, 0xffffff),
+            scene.add.rectangle(  0, 0,   32, 22, head).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle( 18, 0,   10, 22, eye ).setStrokeStyle(1, 0xffffff),
         ]);
     }
     return c;
@@ -2399,11 +2411,19 @@ function updateHUD() {
         const txt  = document.getElementById('txt-' + id);
         const slot = document.getElementById('slot-' + id);
         const val  = keys[id];
-        if (txt)  txt.innerText = val ? val.toUpperCase() : (id === 'M' ? 'NONE' : '---');
+        const destroyed = (id === 'L' && _lArmDestroyed) || (id === 'R' && _rArmDestroyed);
+        if (txt) txt.innerText = destroyed ? 'BROKEN' : (val ? val.toUpperCase() : (id === 'M' ? 'NONE' : '---'));
         if (slot) {
-            const active = val && val !== 'none';
-            slot.style.opacity     = active ? '1' : '0.4';
-            slot.style.borderColor = active ? '#00ffff' : 'rgba(0,255,0,0.4)';
+            slot.classList.toggle('arm-destroyed', destroyed);
+            if (!destroyed) {
+                const active = val && val !== 'none';
+                slot.style.opacity     = active ? '1' : '0.4';
+                slot.style.borderColor = active ? '#00ffff' : 'rgba(0,255,0,0.4)';
+            } else {
+                // Clear ALL inline styles so CSS class takes full effect
+                slot.style.cssText = '';
+                slot.style.opacity = '1';
+            }
         }
     });
 }
@@ -2572,11 +2592,17 @@ function _resetHUDState() {
         const el = document.getElementById(id);
         if (el) el.style.height = '0%';
     });
-    // Weapon slot opacity
+    // Weapon slot opacity + clear destroyed state
+    _lArmDestroyed = false; _rArmDestroyed = false;
     ['slot-L','slot-R','slot-M'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) { el.style.opacity = '1'; el.style.borderColor = '#00ffff'; }
+        if (el) { el.style.opacity = '1'; el.style.borderColor = '#00ffff'; el.classList.remove('arm-destroyed'); }
     });
+    // Reset weapon name text
+    const txtL = document.getElementById('txt-L'); if (txtL) txtL.innerText = (loadout.L || 'none').toUpperCase();
+    const txtR = document.getElementById('txt-R'); if (txtR) txtR.innerText = (loadout.R || 'none').toUpperCase();
+    const txtLEl = document.getElementById('txt-L'); if (txtLEl) txtLEl.style.fontSize = '';
+    const txtREl = document.getElementById('txt-R'); if (txtREl) txtREl.style.fontSize = '';
 }
 
 function showDeathScreen() {
@@ -2616,6 +2642,9 @@ function respawnMech() {
     _cleanupGame();
     document.getElementById('hud-container').style.display = 'flex';
     document.getElementById('hangar-return-btn').style.display = 'block';
+    // Hide animated grid canvas during gameplay
+    const hgc = document.getElementById('hangar-canvas');
+    if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
     _resetHUDState();
     const scene = game.scene.scenes[0];
     deployMech();
@@ -2628,10 +2657,10 @@ function returnToHangar() {
     const scene = game.scene.scenes[0];
     try { scene.input.setDefaultCursor('default'); } catch(e){}
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(true);
-    if (scene.hangarGrid)    scene.hangarGrid.setVisible(true);
     document.getElementById('ui-layer').style.display = 'flex';
     document.getElementById('hud-container').style.display = 'none';
     document.getElementById('hangar-return-btn').style.display = 'none';
+    startHangarGrid();
     // Reset HUD to clean state
     _resetHUDState();
     refreshGarage();
@@ -2680,7 +2709,8 @@ function startMenuGrid() {
         offset += 0.4;
         requestAnimationFrame(draw);
     }
-    draw();
+    // Small delay ensures canvas is correctly sized in iframe before first draw
+    setTimeout(draw, 50);
 }
 
 function startGame() {
@@ -2691,7 +2721,42 @@ function startGame() {
     setTimeout(() => {
         menu.style.display = 'none';
         document.getElementById('ui-layer').style.display = 'flex';
+        startHangarGrid();
     }, 600);
+}
+
+function startHangarGrid() {
+    const canvas = document.getElementById('hangar-canvas');
+    if (!canvas) return;
+    canvas.style.display = 'block';
+    if (canvas._gridRunning) return;
+    canvas._gridRunning = true;
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d');
+    let offset = 0;
+    function draw() {
+        if (!canvas._gridRunning) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const spacing = 48;
+        ctx.strokeStyle = 'rgba(0,255,255,0.06)';
+        ctx.lineWidth   = 1;
+        for (let y = (offset % spacing); y < canvas.height; y += spacing) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        }
+        for (let x = 0; x < canvas.width; x += spacing) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
+        const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width * 0.55);
+        grad.addColorStop(0,   'rgba(0,255,255,0.04)');
+        grad.addColorStop(0.5, 'rgba(0,255,255,0.01)');
+        grad.addColorStop(1,   'transparent');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        offset += 0.4;
+        requestAnimationFrame(draw);
+    }
+    draw();
 }
 
 window.onload = () => {
