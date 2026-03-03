@@ -206,13 +206,7 @@ button.active {
                 inset 0 0 10px rgba(0,255,255,0.1);
 }
 
-/* --- Health & Shield Bars --- */
-.stats-group {
-    display: flex;
-    flex-direction: column;
-    min-width: 150px;
-    gap: 6px;
-}
+/* Health bar removed — paper-doll serves as health indicator */
 
 .hud-label {
     font-weight: bold;
@@ -222,33 +216,27 @@ button.active {
     text-transform: uppercase;
 }
 
-#hp-bar {
-    width: 250px;
-    height: 18px;
-    background: rgba(0,40,0,0.3);
-    border: 1px solid rgba(0,255,0,0.3);
-}
-
-#hp-fill {
-    height: 100%;
-    background: #0f0;
-    transition: width 0.2s;
-    box-shadow: 0 0 10px rgba(0,255,0,0.5);
-}
-
-#sh-bar {
-    width: 250px;
-    height: 6px;
-    background: rgba(0,20,40,0.3);
+/* Vertical shield bar — sits right of paper-doll */
+#sh-bar-vert {
+    width: 8px;
+    height: 90px;
+    background: rgba(0,20,40,0.4);
     border: 1px solid rgba(0,255,255,0.3);
-    margin-top: 2px;
+    border-radius: 2px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    box-shadow: 0 0 6px rgba(0,255,255,0.15);
+    align-self: center;
 }
 
-#sh-fill {
+#sh-fill-vert {
+    width: 100%;
     height: 100%;
-    background: #00ffff;
+    background: linear-gradient(to top, #00ffff, rgba(0,200,255,0.6));
     box-shadow: 0 0 8px #00ffff;
-    transition: width 0.3s;
+    transition: height 0.3s;
 }
 
 /* --- Weapon Slots --- */
@@ -620,19 +608,9 @@ button.active {
                 </div>
             </div>
 
-            <!-- Health & Shield Bars -->
-            <div class="stats-group">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div class="hud-label">HEALTH</div>
-                    <div id="hp-text" style="font-size:11px; color:#0f0; font-family:monospace;">450/450</div>
-                </div>
-                <div id="hp-bar"><div id="hp-fill" style="width:100%;"></div></div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-                    <div class="hud-label" style="color:#00ffff;">SHIELD</div>
-                    <div id="sh-text" style="font-size:11px; color:#00ffff; font-family:monospace;">100/100</div>
-                </div>
-                <div id="sh-bar"><div id="sh-fill" style="width:100%;"></div></div>
+            <!-- Vertical shield bar -->
+            <div id="sh-bar-vert" title="Shield">
+                <div id="sh-fill-vert" style="height:100%;"></div>
             </div>
 
             <!-- Weapon Slots -->
@@ -712,7 +690,7 @@ button.active {
     </div>
 </div>
 <!-- HANGAR RETURN BTN -->
-<div id="hangar-return-btn" style="display:none;position:fixed;bottom:30px;right:30px;z-index:9999;">
+<div id="hangar-return-btn" style="display:none;position:fixed;top:20px;right:24px;z-index:9999;">
     <button onclick="returnToHangar()" style="padding:10px 18px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);">&#8962; &nbsp;MECH HANGAR</button>
 </div>
 <!-- ============================================================
@@ -773,6 +751,7 @@ let loadout = {
 
 // Phaser object references
 let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic;
+let coverObjects;
 let speedStreakLine, crosshair;
 let glowWedge;
 
@@ -874,6 +853,8 @@ function create() {
     bullets      = this.physics.add.group();
     enemies      = this.physics.add.group();
     enemyBullets = this.physics.add.group();
+    coverObjects = this.physics.add.staticGroup();
+    generateCover(this);
 
     // Player bullet ↔ enemy overlap
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
@@ -923,6 +904,7 @@ function update(time) {
     handleRageGhosts(this, time);
     syncVisuals(this, time);
     updateCooldownOverlays(time);
+    drawMinimap();
 }
 
 
@@ -1018,6 +1000,17 @@ function handleEnemyAI(scene, time) {
             if (dist < fireRange && time > (enemy.lastFireTime || 0) + wepReload * reloadMult) {
                 enemyFire(scene, enemy, time);
                 enemy.lastFireTime = time;
+            }
+
+            // Secondary weapon — fires less frequently, at same range
+            const secKey = enemy.loadout?.secondary;
+            if (secKey && secKey !== 'none') {
+                const secW   = WEAPONS[secKey];
+                const secCd  = (secW?.reload || 3500) * 1.2;
+                if (dist < fireRange && time > enemy.lastSecTime + secCd) {
+                    enemyFireSecondary(scene, enemy, secKey, time);
+                    enemy.lastSecTime = time;
+                }
             }
 
             // Enemy mod activation
@@ -1601,6 +1594,78 @@ function onEnemyKilled() {
 }
 
 
+function drawMinimap() {
+    const canvas = document.getElementById('minimap-canvas');
+    if (!canvas || !isDeployed) return;
+    const ctx   = canvas.getContext('2d');
+    const S     = 160;       // canvas size px
+    const W     = 4000;      // world size
+    const scale = S / W;
+
+    ctx.clearRect(0, 0, S, S);
+
+    // Background
+    ctx.fillStyle = 'rgba(0,8,4,0.0)';
+    ctx.fillRect(0, 0, S, S);
+
+    // Cover objects
+    if (coverObjects) {
+        coverObjects.getChildren().forEach(c => {
+            if (!c.active) return;
+            const cx = c.x * scale;
+            const cy = c.y * scale;
+            const cw = c.width  * scale;
+            const ch = c.height * scale;
+            ctx.fillStyle   = c.coverType === 'crate' ? 'rgba(140,100,30,0.7)' : 'rgba(60,80,60,0.7)';
+            ctx.strokeStyle = 'rgba(100,140,100,0.4)';
+            ctx.lineWidth   = 0.5;
+            ctx.fillRect(cx - cw/2, cy - ch/2, cw, ch);
+            ctx.strokeRect(cx - cw/2, cy - ch/2, cw, ch);
+        });
+    }
+
+    // Enemies
+    if (enemies) {
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            const ex = e.x * scale;
+            const ey = e.y * scale;
+            const r  = e.loadout?.chassis === 'heavy' ? 3.5
+                     : e.loadout?.chassis === 'light' ? 2.0 : 2.8;
+            ctx.beginPath();
+            ctx.arc(ex, ey, r, 0, Math.PI * 2);
+            ctx.fillStyle   = '#ff3300';
+            ctx.strokeStyle = '#ff6600';
+            ctx.lineWidth   = 0.8;
+            ctx.fill();
+            ctx.stroke();
+        });
+    }
+
+    // Player
+    if (player?.active) {
+        const px = player.x * scale;
+        const py = player.y * scale;
+        // Direction indicator
+        if (torso) {
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(px + Math.cos(torso.rotation) * 7, py + Math.sin(torso.rotation) * 7);
+            ctx.strokeStyle = 'rgba(0,255,255,0.6)';
+            ctx.lineWidth   = 1;
+            ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle   = '#00ffff';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth   = 1;
+        ctx.fill();
+        ctx.stroke();
+    }
+}
+
+
 // ================================================================
 // DEPLOY
 // ================================================================
@@ -1634,6 +1699,9 @@ function deployMech() {
     // Torso / turret
     torso = buildPlayerMech(scene, loadout.chassis, loadout.color);
     torso.setDepth(10);
+
+    // Player ↔ cover (player now exists)
+    if (coverObjects) scene.physics.add.collider(player, coverObjects);
 
     // World & camera
     scene.physics.world.setBounds(0, 0, 4000, 4000);
@@ -1732,6 +1800,7 @@ function deployMech() {
     document.getElementById('deploy-cover').style.display = 'none';
     document.getElementById('hud-container').style.display = 'flex';
     document.getElementById('hangar-return-btn').style.display = 'block';
+    const _mm = document.getElementById('minimap-wrap'); if (_mm) _mm.style.display = 'block';
 
     // ── DROP-IN: Y-axis fall with instant camera follow ──
     // Set camera lerp to instant so it tracks the mech even while offset above
@@ -1945,6 +2014,108 @@ function activateEnemyMod(scene, enemy, mod, time) {
 
 
 // ================================================================
+// COVER / BATTLEFIELD OBJECTS
+// ================================================================
+const COVER_DEFS = [
+    // { type: 'rock'|'wall'|'crate', w, h, hp (0=indestructible), color, strokeColor }
+    { type: 'rock',  w: 110, h:  90, hp: 0,   color: 0x445544, stroke: 0x88aa88 },
+    { type: 'rock',  w:  80, h:  70, hp: 0,   color: 0x445544, stroke: 0x88aa88 },
+    { type: 'rock',  w: 130, h: 100, hp: 0,   color: 0x334433, stroke: 0x667766 },
+    { type: 'wall',  w: 180, h:  28, hp: 0,   color: 0x445566, stroke: 0x8899aa },
+    { type: 'wall',  w:  28, h: 180, hp: 0,   color: 0x445566, stroke: 0x8899aa },
+    { type: 'wall',  w: 140, h:  24, hp: 0,   color: 0x445566, stroke: 0x8899aa },
+    { type: 'crate', w:  60, h:  60, hp: 280, color: 0x886622, stroke: 0xddaa44 },
+    { type: 'crate', w:  55, h:  55, hp: 280, color: 0x886622, stroke: 0xddaa44 },
+];
+
+function generateCover(scene) {
+    if (!coverObjects) return;
+    coverObjects.clear(true, true);
+
+    // Layout: scatter objects across the 4000x4000 world in a loose grid
+    // Avoid the center 400px radius (player spawn) and world edges (<150px)
+    const MARGIN    = 150;
+    const SAFE_DIST = 420;   // min dist from world center (2000,2000)
+    const MIN_SEP   = 160;   // min separation between cover objects
+    const placed    = [];
+
+    // Attempt to place a set number of each type
+    const schedule = [
+        ...Array(8).fill(COVER_DEFS[0]),   // large rocks
+        ...Array(6).fill(COVER_DEFS[1]),   // medium rocks
+        ...Array(4).fill(COVER_DEFS[2]),   // large rocks v2
+        ...Array(5).fill(COVER_DEFS[3]),   // h-walls
+        ...Array(5).fill(COVER_DEFS[4]),   // v-walls
+        ...Array(3).fill(COVER_DEFS[5]),   // short h-walls
+        ...Array(6).fill(COVER_DEFS[6]),   // crates
+        ...Array(4).fill(COVER_DEFS[7]),   // crates small
+    ];
+
+    schedule.forEach(def => {
+        let attempts = 0;
+        while (attempts < 40) {
+            attempts++;
+            const x = Phaser.Math.Between(MARGIN, 4000 - MARGIN);
+            const y = Phaser.Math.Between(MARGIN, 4000 - MARGIN);
+            const distCenter = Phaser.Math.Distance.Between(x, y, 2000, 2000);
+            if (distCenter < SAFE_DIST) continue;
+            const tooClose = placed.some(p =>
+                Phaser.Math.Distance.Between(x, y, p.x, p.y) < MIN_SEP);
+            if (tooClose) continue;
+
+            placed.push({ x, y });
+
+            const rect = scene.add.rectangle(x, y, def.w, def.h, def.color)
+                .setStrokeStyle(2, def.stroke)
+                .setDepth(3);
+            scene.physics.add.existing(rect, true); // true = static body
+
+            rect.coverType  = def.type;
+            rect.coverHp    = def.hp;
+            rect.coverMaxHp = def.hp;
+            rect.coverDef   = def;
+            coverObjects.add(rect);
+            break;
+        }
+    });
+
+    // Bullet ↔ cover collisions (player bullets)
+    scene.physics.add.collider(bullets, coverObjects, (bullet, cover) => {
+        createImpactSparks(scene, bullet.x, bullet.y);
+        bullet.destroy();
+        if (cover.coverHp > 0) damageCover(scene, cover, bullet.damageValue || 10);
+    });
+
+    // Enemy bullets ↔ cover
+    scene.physics.add.collider(enemyBullets, coverObjects, (bullet, cover) => {
+        bullet.destroy();
+        if (cover.coverHp > 0) damageCover(scene, cover, bullet.damageValue || 10);
+    });
+
+    // Player ↔ cover is added in deployMech() once player exists
+    // Enemies ↔ cover (set up each time an enemy spawns — see spawnEnemy)
+}
+
+function damageCover(scene, cover, amt) {
+    if (!cover?.active || cover.coverHp <= 0) return;
+    cover.coverHp -= amt;
+    // Darken toward charred black as damage increases
+    const pct = Math.max(0, cover.coverHp / cover.coverMaxHp);
+    const base = cover.coverDef.color;
+    const r = Math.floor(((base >> 16) & 0xff) * pct);
+    const g = Math.floor(((base >>  8) & 0xff) * pct);
+    const b = Math.floor(( base        & 0xff) * pct);
+    cover.setFillStyle((r << 16) | (g << 8) | b);
+
+    if (cover.coverHp <= 0) {
+        createExplosion(scene, cover.x, cover.y, 50, 0);
+        spawnDebris(scene, cover.x, cover.y, cover.coverDef.stroke);
+        cover.destroy();
+    }
+}
+
+
+// ================================================================
 // ENEMY SPAWNING & AI FIRING
 // ================================================================
 
@@ -2046,6 +2217,7 @@ function spawnEnemy(scene) {
     e.maxHealth  = e.health;
     e.reloadL    = 0;
     e.reloadR    = 0;
+    e.lastSecTime = -99999;  // secondary weapon cooldown
     // Stagger mod cooldown so enemies don't all fire simultaneously
     const _mc = WEAPONS[loadoutE.mod]?.cooldown || 8000;
     e.lastModTime = -_mc * Phaser.Math.FloatBetween(0.1, 0.8);
@@ -2068,6 +2240,8 @@ function spawnEnemy(scene) {
     e.fxLastMY     = y;
 
     enemies.add(e);
+    // Collide new enemy with all existing cover objects
+    if (coverObjects) scene.physics.add.collider(e, coverObjects);
 }
 
 function enemyFire(scene, enemy, time) {
@@ -2105,6 +2279,82 @@ function enemyFire(scene, enemy, time) {
         enemyBullets.add(b);
         scene.physics.velocityFromRotation(angle, bSpeed, b.body.velocity);
         scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
+    }
+}
+
+
+function enemyFireSecondary(scene, enemy, wKey, time) {
+    if (!isDeployed || !player?.active || enemy.isStunned) return;
+    const weapon = WEAPONS[wKey];
+    if (!weapon) return;
+
+    const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+    const ex = enemy.x, ey = enemy.y;
+
+    switch (wKey) {
+        case 'sr': {
+            // Sniper round — fast, accurate, bright tracer
+            const b = scene.add.rectangle(ex, ey, 50, 6, 0xffffff)
+                .setRotation(angle).setStrokeStyle(1, 0xff6600).setDepth(14);
+            scene.physics.add.existing(b);
+            b.body.setAllowGravity(false);
+            b.damageValue = weapon.dmg;
+            enemyBullets.add(b);
+            scene.physics.velocityFromRotation(angle, weapon.speed, b.body.velocity);
+            scene.time.delayedCall(2500, () => { if (b.active) b.destroy(); });
+            break;
+        }
+        case 'gl': {
+            // Grenade — lobs toward player, explodes on stop
+            const dist = Phaser.Math.Distance.Between(ex, ey, player.x, player.y);
+            const ball = scene.add.circle(ex, ey, 10, 0xff8800)
+                .setStrokeStyle(2, 0xffcc00).setDepth(14);
+            scene.physics.add.existing(ball);
+            ball.body.setAllowGravity(false);
+            ball.body.setDrag(dist * 1.8);
+            scene.physics.velocityFromRotation(angle, dist * 1.8, ball.body.velocity);
+            const fuseTime = 1800;
+            scene.time.delayedCall(fuseTime, () => {
+                if (ball.active) {
+                    createExplosion(scene, ball.x, ball.y, 90, weapon.dmg);
+                    ball.destroy();
+                }
+            });
+            break;
+        }
+        case 'rl': {
+            // Rocket — straight shot that explodes on impact or after 2s
+            const rocket = scene.add.rectangle(ex, ey, 22, 9, 0xff4400)
+                .setRotation(angle).setDepth(14);
+            scene.physics.add.existing(rocket);
+            rocket.body.setAllowGravity(false);
+            scene.physics.velocityFromRotation(angle, weapon.speed * 0.85, rocket.body.velocity);
+            // Overlap with player for direct hit
+            scene.physics.add.overlap(rocket, player, () => {
+                if (!rocket.active) return;
+                createExplosion(scene, rocket.x, rocket.y, 80, weapon.dmg);
+                rocket.destroy();
+            });
+            scene.time.delayedCall(2200, () => {
+                if (rocket.active) {
+                    createExplosion(scene, rocket.x, rocket.y, 80, weapon.dmg);
+                    rocket.destroy();
+                }
+            });
+            break;
+        }
+        case 'plsm': {
+            // Plasma — slow, large, pulsing ball
+            const p = scene.add.circle(ex, ey, 22, 0xff6600).setAlpha(0.85).setDepth(14);
+            scene.physics.add.existing(p);
+            p.body.setAllowGravity(false);
+            p.damageValue = weapon.dmg;
+            enemyBullets.add(p);
+            scene.physics.velocityFromRotation(angle, 260, p.body.velocity);
+            scene.tweens.add({ targets: p, alpha: 0.4, duration: 120, yoyo: true, repeat: -1 });
+            scene.time.delayedCall(3500, () => { if (p.active) p.destroy(); });
+            break;
+        }
     }
 }
 
@@ -2665,27 +2915,9 @@ function updateHUD() {
 
 function updateBars() {
     if (!player) return;
-
-    const hpFill   = document.getElementById('hp-fill');
-    const hpText   = document.getElementById('hp-text');
-    const hudAccent = document.getElementById('hud-accent');
-    const shFill   = document.getElementById('sh-fill');
-    const shText   = document.getElementById('sh-text');
-
-    if (hpFill && hpText) {
-        const pct   = (player.hp / player.maxHp) * 100;
-        const color = pct <= 25 ? '#ff0000' : pct <= 55 ? '#ffff00' : '#00ff00';
-        hpFill.style.background = color;
-        hpFill.style.width      = Math.max(0, pct) + '%';
-        if (hudAccent) hudAccent.style.borderColor = color;
-        hpText.innerText = Math.ceil(Math.max(0, player.hp)) + '/' + player.maxHp;
-    }
-
-    if (shFill && shText) {
-        const pct = (player.shield / (player.maxShield || 100)) * 100;
-        shFill.style.width = Math.max(0, Math.min(100, pct)) + '%';
-        shText.innerText   = Math.ceil(Math.max(0, player.shield)) + '/' + (player.maxShield || 100);
-    }
+    const shFillV  = document.getElementById('sh-fill-vert');
+    const shPct    = player.shield != null ? Math.max(0, player.shield / player.maxShield) : 1;
+    if (shFillV)   shFillV.style.height = (shPct * 100) + '%';
 }
 
 function updatePaperDoll() {
@@ -2810,18 +3042,11 @@ function _resetHUDState() {
         const el = document.getElementById(id);
         if (el) el.style.background = '#00ff00';
     });
-    // HP bar
-    const hpFill = document.getElementById('hp-fill');
-    const hpText = document.getElementById('hp-text');
-    const hudAcc = document.getElementById('hud-accent');
-    if (hpFill) { hpFill.style.width = '100%'; hpFill.style.background = '#00ff00'; }
-    if (hpText) hpText.innerText = '---/---';
-    if (hudAcc) hudAcc.style.borderColor = '#00ff00';
-    // Shield bar
-    const shFill = document.getElementById('sh-fill');
-    const shText = document.getElementById('sh-text');
-    if (shFill) shFill.style.width = '100%';
-    if (shText) shText.innerText = '100/100';
+    // Reset vertical shield bar
+    const hudAcc   = document.getElementById('hud-accent');
+    const shFillV2 = document.getElementById('sh-fill-vert');
+    if (shFillV2) shFillV2.style.height = '100%';
+    if (hudAcc) hudAcc.style.borderColor = '';
     // Cooldown overlays
     ['cd-L','cd-R','cd-M'].forEach(id => {
         const el = document.getElementById(id);
@@ -2878,6 +3103,7 @@ function respawnMech() {
     _cleanupGame();
     document.getElementById('hud-container').style.display = 'flex';
     document.getElementById('hangar-return-btn').style.display = 'block';
+    const _mm = document.getElementById('minimap-wrap'); if (_mm) _mm.style.display = 'block';
     // Hide animated grid canvas during gameplay
     const hgc = document.getElementById('hangar-canvas');
     if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
@@ -2896,6 +3122,7 @@ function returnToHangar() {
     document.getElementById('ui-layer').style.display = 'flex';
     document.getElementById('hud-container').style.display = 'none';
     const rhud = document.getElementById('round-hud'); if (rhud) rhud.style.display = 'none';
+    const _mm2 = document.getElementById('minimap-wrap'); if (_mm2) _mm2.style.display = 'none';
     const rban = document.getElementById('round-banner'); if (rban) rban.style.display = 'none';
     document.getElementById('hangar-return-btn').style.display = 'none';
     startHangarGrid();
@@ -3006,5 +3233,12 @@ window.onload = () => {
 };
 
 </script>
+
+<!-- MINIMAP -->
+<div id="minimap-wrap" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;pointer-events:none;">
+  <div style="position:relative;border:1px solid rgba(0,255,255,0.35);box-shadow:0 0 12px rgba(0,255,255,0.15);background:rgba(0,8,4,0.85);">
+    <canvas id="minimap-canvas" width="160" height="160"></canvas>
+  </div>
+</div>
 </body>
 </html>
