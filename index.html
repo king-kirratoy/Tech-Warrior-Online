@@ -805,7 +805,7 @@ function update(time) {
         0.1 // Adjust this for "turret traverse speed"
     );
 
-    // 3. SYNC POSITION
+    // SYNC POSITION
     torso.setPosition(player.x, player.y);
     shieldGraphic.setPosition(player.x, player.y);
    
@@ -853,42 +853,62 @@ function update(time) {
 
 // DEPLOY PLAYER MECH
 function deployMech() {
-    document.getElementById('ui-layer').style.display = 'none';
-   
+    document.getElementById('ui-layer').style.display = 'none'; 
     const hud = document.getElementById('hud-container');
     if (hud) {
         hud.style.display = 'flex'; 
-    }
-    
+    }    
+	
     let scene = game.scene.scenes[0];
     let s = CHASSIS[loadout.chassis];
-
+	let legW, legH;	
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(false);
     if (scene.hangarGrid) scene.hangarGrid.setVisible(false);
-
-	player = scene.physics.add.sprite(2000, 2000, 'mech-legs'); 
-	player.setDepth(5);
+	
+	// CHASSIS LEG DIMENSIONS
+	if (loadout.chassis === 'light') {
+		legW = 40; legH = 30;
+	} else if (loadout.chassis === 'heavy') {
+		legW = 70; legH = 40;
+	} else {
+		legW = 60; legH = 40; // Medium/Default
+	}	
+	
+	// CHASSIS LEGS
+	player = scene.add.rectangle(2000, 2000, legW, legH, 0x222222)
+		.setStrokeStyle(2, 0xffffff)
+		.setDepth(5);	
+	
     scene.physics.add.existing(player);
 	player.body.setCircle(35);
 	player.body.setOffset(0, -10);
-    player.setScale(s.scale).body.setCollideWorldBounds(true);
-    
+    player.setScale(s.scale).body.setCollideWorldBounds(true); 
+	torso = buildPlayerMech(scene, loadout.chassis, loadout.color);
+    torso.setDepth(10);
+	
+	// 1. Define the World and Camera limits (4000x4000)
+    scene.physics.world.setBounds(0, 0, 4000, 4000);
+    scene.cameras.main.setBounds(0, 0, 4000, 4000);
+	
+    // 2. Force the camera to jump to the spawn point (2000, 2000) immediately
+    scene.cameras.main.centerOn(2000, 2000);
+	
+    // 3. Now start following the player
+    scene.cameras.main.startFollow(player, true, 0.5, 0.5);	
 	scene.physics.add.overlap(enemyBullets, player, (p, bullet) => {
-		if (!bullet || !bullet.active) return;
-		
+		if (!bullet || !bullet.active) return;	
 		let bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
-
 		if (isShieldActive) {
 			scene.sound.play('snd-shield-hit', { volume: 0.6 });
 			createShieldSparks(scene, bullet.x, bullet.y);
 			showDamageText(scene, bullet.x, bullet.y, 0, true); 
 			bullet.destroy();
 			return; 
-		}
+		}		
 		
 		if (player.shield > 0 && (player.shield - 7.5) <= 0) { 
 			createShieldBreak(scene, p.x, p.y);	
-		}	
+		}			
 		
 		//scene.sound.play('snd-impact-metal', { volume: 0.5 });
         createImpactSparks(scene, p.x, p.y);
@@ -896,7 +916,7 @@ function deployMech() {
 		showDamageText(scene, p.x, p.y, 15, currentShield);	
 		bullet.destroy(); 
         processPlayerDamage(15, bulletAngle);
-    });
+    });	
 	
 	// PLAYER MECH COMPONENT HEALTH
 	player.comp = {
@@ -910,19 +930,8 @@ function deployMech() {
 	player.hp = player.maxHp;
     player.maxShield = 100;
 	player.shield = 100;
-
-    torso = buildPlayerMech(scene, loadout.chassis, loadout.color);
-    torso.setDepth(10);
 	refreshMechColor();
 	scene.time.delayedCall(10, () => refreshMechColor());
-
-    // 1. Define the World and Camera limits (4000x4000)
-    scene.physics.world.setBounds(0, 0, 4000, 4000);
-    scene.cameras.main.setBounds(0, 0, 4000, 4000);
-    // 2. Force the camera to jump to the spawn point (2000, 2000) immediately
-    scene.cameras.main.centerOn(2000, 2000);
-    // 3. Now start following the player sprite
-    scene.cameras.main.startFollow(player, true, 0.5, 0.5);
 
     shieldGraphic = scene.add.circle(0, 0, 50, 0x00ffff, 0.15)
         .setStrokeStyle(2, 0x00ffff)
