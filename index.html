@@ -482,7 +482,7 @@ button.active {
     <div class="stat-readout" id="garage-menu">
         <h2 style="text-align:center; margin:0 0 25px; letter-spacing:8px; color:#00ffff; font-family:'Courier New',monospace; font-size:20px; text-shadow:0 0 14px rgba(0,255,255,0.6), 0 0 40px rgba(0,255,255,0.2); font-weight:normal;">MECH HANGAR</h2>
 
-        <div style="display:flex; gap:30px; align-items:flex-start;">
+        <div style="display:flex; gap:30px; align-items:stretch;">
 
             <!-- LEFT COLUMN: BUILD OPTIONS -->
             <div style="flex:1.4;">
@@ -549,7 +549,7 @@ button.active {
             </div><!-- /left column -->
 
             <!-- RIGHT COLUMN: PREVIEW & STATS -->
-            <div style="flex:1; display:flex; flex-direction:column; align-items:center;">
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;">
 
                 <!-- Mech Preview Image -->
                 <div id="preview-container" style="width:280px; height:180px; border:1px solid rgba(0,255,255,0.4); background:rgba(0,10,20,0.6); box-shadow:0 0 14px rgba(0,255,255,0.12); display:flex; justify-content:center; align-items:center;">
@@ -562,15 +562,16 @@ button.active {
                     <div id="sh-display" style="font-weight:bold; font-size:14px; color:#00ffff;">SHIELD: 100</div>
                 </div>
 
-                <!-- Weight Display -->
-                <div id="weight-display" style="text-align:center; font-weight:bold; font-size:14px; margin:60px 0 4px;">
-                    WEIGHT: 0 / 100
+                <!-- Weight + Deploy — pushed to bottom to align with armour color row -->
+                <div style="margin-top:auto; width:100%; padding-bottom:28px;">
+                    <div id="weight-display" style="text-align:center; font-weight:bold; font-size:14px; margin:0 0 4px;">
+                        WEIGHT: 0 / 100
+                    </div>
+                    <div id="weight-bar-bg" style="width:100%; height:8px; background:rgba(255,255,255,0.1); border:1px solid #444; margin-bottom:10px; overflow:hidden;">
+                        <div id="weight-bar-fill" style="width:0%; height:100%; background:#0f0; transition:width 0.3s ease;"></div>
+                    </div>
+                    <button id="deploy-btn" onclick="deployMech()">DEPLOY MECH</button>
                 </div>
-                <div id="weight-bar-bg" style="width:100%; height:8px; background:rgba(255,255,255,0.1); border:1px solid #444; margin-bottom:10px; overflow:hidden;">
-                    <div id="weight-bar-fill" style="width:0%; height:100%; background:#0f0; transition:width 0.3s ease;"></div>
-                </div>
-
-                <button id="deploy-btn" onclick="deployMech()">DEPLOY MECH</button>
             </div><!-- /right column -->
 
         </div><!-- /flex row -->
@@ -645,20 +646,22 @@ button.active {
     </div><!-- /hud-background -->
 </div><!-- /hud-container -->
 <!-- ROUND HUD -->
-<div id="round-hud" style="display:none;position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;font-family:'Courier New',monospace;gap:28px;align-items:center;">
-  <div style="text-align:center;">
-    <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Round</div>
-    <div id="round-num" style="font-size:22px;letter-spacing:4px;color:#00ffff;text-shadow:0 0 10px rgba(0,255,255,0.5);">1</div>
-  </div>
-  <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
-  <div style="text-align:center;">
-    <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Remaining</div>
-    <div id="round-remaining" style="font-size:22px;letter-spacing:4px;color:#ff4400;text-shadow:0 0 10px rgba(255,68,0,0.5);">0</div>
-  </div>
-  <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
-  <div style="text-align:center;">
-    <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Destroyed</div>
-    <div id="round-kills" style="font-size:22px;letter-spacing:4px;color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.5);">0</div>
+<div id="round-hud" style="display:none;position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;font-family:'Courier New',monospace;">
+  <div style="display:flex;gap:28px;align-items:center;padding:12px 24px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-radius:12px;box-shadow:0 0 10px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.1);">
+    <div style="text-align:center;">
+      <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Round</div>
+      <div id="round-num" style="font-size:22px;letter-spacing:4px;color:#00ffff;text-shadow:0 0 10px rgba(0,255,255,0.5);">1</div>
+    </div>
+    <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
+    <div style="text-align:center;">
+      <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Remaining</div>
+      <div id="round-remaining" style="font-size:22px;letter-spacing:4px;color:#ff4400;text-shadow:0 0 10px rgba(255,68,0,0.5);">0</div>
+    </div>
+    <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
+    <div style="text-align:center;">
+      <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Destroyed</div>
+      <div id="round-kills" style="font-size:22px;letter-spacing:4px;color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.5);">0</div>
+    </div>
   </div>
 </div>
 <!-- ROUND BANNER -->
@@ -671,8 +674,28 @@ button.active {
 <!-- DEATH SCREEN -->
 <div id="death-screen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:99999;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;">
     <div style="text-align:center;">
-        <div id="death-title" style="font-size:52px;letter-spacing:8px;color:#ff0000;text-shadow:0 0 30px #ff0000;margin-bottom:12px;">MECH DESTROYED</div>
-        <div style="font-size:13px;color:rgba(200,210,217,0.5);letter-spacing:3px;margin-bottom:48px;">CORE SYSTEMS OFFLINE</div>
+        <div id="death-title" style="font-size:52px;letter-spacing:8px;color:#ff0000;text-shadow:0 0 30px #ff0000;margin-bottom:6px;">MECH DESTROYED</div>
+        <div style="font-size:13px;color:rgba(200,210,217,0.5);letter-spacing:3px;margin-bottom:28px;">CORE SYSTEMS OFFLINE</div>
+        <!-- Score Panel -->
+        <div style="display:inline-flex;gap:0;margin-bottom:32px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-radius:12px;box-shadow:0 0 10px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.1);overflow:hidden;">
+            <div style="padding:16px 28px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
+                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Round</div>
+                <div id="score-round" style="font-size:28px;letter-spacing:4px;color:#00ffff;text-shadow:0 0 10px rgba(0,255,255,0.6);">1</div>
+            </div>
+            <div style="padding:16px 28px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
+                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Kills</div>
+                <div id="score-kills" style="font-size:28px;letter-spacing:4px;color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.6);">0</div>
+            </div>
+            <div style="padding:16px 28px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
+                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Best Round</div>
+                <div id="score-best" style="font-size:28px;letter-spacing:4px;color:#ffaa00;text-shadow:0 0 10px rgba(255,170,0,0.6);">0</div>
+            </div>
+            <div style="padding:16px 28px;text-align:center;">
+                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Session Kills</div>
+                <div id="score-session" style="font-size:28px;letter-spacing:4px;color:#ff4400;text-shadow:0 0 10px rgba(255,68,0,0.6);">0</div>
+            </div>
+        </div>
+        <br>
         <div style="display:flex;gap:20px;justify-content:center;">
             <button onclick="respawnMech()"
                 style="width:200px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;"
@@ -765,6 +788,8 @@ let _round          = 1;
 let _roundKills     = 0;   // kills this round
 let _roundTotal     = 0;   // enemies in this round
 let _totalKills     = 0;   // all-time kills this session
+let _bestRound      = 0;   // best round reached this session
+let _sessionKills   = 0;   // cumulative kills across all runs this session
 let _roundActive    = false;
 
 // Chassis-specific movement effect state
@@ -1002,12 +1027,16 @@ function handleEnemyAI(scene, time) {
                 enemy.lastFireTime = time;
             }
 
-            // Secondary weapon — fires less frequently, at same range
+            // Secondary weapon — fires less frequently, with per-weapon range gates
             const secKey = enemy.loadout?.secondary;
             if (secKey && secKey !== 'none') {
-                const secW   = WEAPONS[secKey];
-                const secCd  = (secW?.reload || 3500) * 1.2;
-                if (dist < fireRange && time > enemy.lastSecTime + secCd) {
+                const secW    = WEAPONS[secKey];
+                const secCd   = (secW?.reload || 3500) * 1.2;
+                // Per-weapon range gates: GL and EMP only fire when player is close enough
+                const secRange = secKey === 'emp' ? WEAPONS.emp.radius
+                               : secKey === 'gl'  ? 700
+                               : fireRange;
+                if (dist < secRange && time > enemy.lastSecTime + secCd) {
                     enemyFireSecondary(scene, enemy, secKey, time);
                     enemy.lastSecTime = time;
                 }
@@ -1968,7 +1997,7 @@ function activateEnemyMod(scene, enemy, mod, time) {
         case 'shield': {
             // Temporarily immune to damage — mirrors player shield exactly
             enemy.isShielded = true;
-            const shieldRadius = 50 * (CHASSIS[enemy.loadout.chassis]?.scale || 1);
+            const shieldRadius = 72 * (CHASSIS[enemy.loadout.chassis]?.scale || 1);
             const sr = scene.add.circle(enemy.x, enemy.y, shieldRadius, 0x00ffff, 0.15)
                 .setStrokeStyle(2, 0x00ffff).setDepth(7);
             enemy.shieldRing = sr;
@@ -1996,11 +2025,11 @@ function activateEnemyMod(scene, enemy, mod, time) {
             // EMP blast centered on enemy — stuns the player briefly
             const ring = scene.add.circle(enemy.x, enemy.y, 10, 0xff6600, 0.2)
                 .setStrokeStyle(2, 0xff6600).setDepth(12);
-            scene.tweens.add({ targets: ring, radius: WEAPONS.emp.radius * 0.7, alpha: 0,
+            scene.tweens.add({ targets: ring, radius: WEAPONS.emp.radius, alpha: 0,
                 duration: WEAPONS.emp.empSpeed,
                 onComplete: () => { ring.destroy(); enemy.isModActive = false; }
             });
-            if (player && Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y) < WEAPONS.emp.radius * 0.7) {
+            if (player && Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y) < WEAPONS.emp.radius) {
                 // Slow player briefly
                 const origKeys = keys;
                 scene.cameras.main.shake(300, 0.005);
@@ -2305,19 +2334,42 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
             break;
         }
         case 'gl': {
-            // Grenade — lobs toward player, explodes on stop
-            const dist = Phaser.Math.Distance.Between(ex, ey, player.x, player.y);
+            // Grenade — lobs toward player with fuse timer matching player GL
+            const gDist = Phaser.Math.Distance.Between(ex, ey, player.x, player.y);
             const ball = scene.add.circle(ex, ey, 10, 0xff8800)
                 .setStrokeStyle(2, 0xffcc00).setDepth(14);
             scene.physics.add.existing(ball);
             ball.body.setAllowGravity(false);
-            ball.body.setDrag(dist * 1.8);
-            scene.physics.velocityFromRotation(angle, dist * 1.8, ball.body.velocity);
-            const fuseTime = 1800;
-            scene.time.delayedCall(fuseTime, () => {
-                if (ball.active) {
-                    createExplosion(scene, ball.x, ball.y, 90, weapon.dmg);
-                    ball.destroy();
+            ball.body.setDrag(gDist * 1.8);
+            scene.physics.velocityFromRotation(angle, gDist * 1.8, ball.body.velocity);
+            // Fuse countdown — same as player GL
+            const fuseTime  = 2000;
+            let fuseStarted = false;
+            let startTime   = 0;
+            const timerText = scene.add.text(ball.x, ball.y - 16, '', {
+                font: 'bold 13px monospace', fill: '#ffff00'
+            }).setOrigin(0.5).setDepth(15).setVisible(false);
+            const timerEvent = scene.time.addEvent({
+                delay: 50, loop: true,
+                callback: () => {
+                    if (!ball.active) { timerText.destroy(); timerEvent.destroy(); return; }
+                    timerText.setPosition(ball.x, ball.y - 16);
+                    if (!fuseStarted && ball.body.velocity.length() < 20) {
+                        fuseStarted = true;
+                        startTime   = scene.time.now;
+                        timerText.setVisible(true);
+                        scene.time.delayedCall(fuseTime, () => {
+                            if (ball.active) {
+                                createExplosion(scene, ball.x, ball.y, 90, weapon.dmg);
+                                ball.destroy(); timerText.destroy();
+                            }
+                        });
+                    }
+                    if (fuseStarted) {
+                        const rem = Math.max(0, (fuseTime - (scene.time.now - startTime)) / 1000);
+                        timerText.setText(rem.toFixed(1));
+                        if (rem < 0.5) timerText.setFill(scene.time.now % 200 < 100 ? '#ffffff' : '#ff0000');
+                    }
                 }
             });
             break;
@@ -3067,6 +3119,15 @@ function _resetHUDState() {
 
 function showDeathScreen() {
     isDeployed = false;
+    // Update session bests
+    if (_round > _bestRound) _bestRound = _round;
+    _sessionKills += _totalKills;
+    // Populate score panel
+    const el = id => document.getElementById(id);
+    if (el('score-round'))   el('score-round').innerText   = _round;
+    if (el('score-kills'))   el('score-kills').innerText   = _totalKills;
+    if (el('score-best'))    el('score-best').innerText    = _bestRound;
+    if (el('score-session')) el('score-session').innerText = _sessionKills;
     const ds = document.getElementById('death-screen');
     if (ds) ds.style.display = 'flex';
 }
@@ -3108,7 +3169,7 @@ function respawnMech() {
     const hgc = document.getElementById('hangar-canvas');
     if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
     _resetHUDState();
-    _round = 1; _roundKills = 0; _totalKills = 0;
+    _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
     const scene = game.scene.scenes[0];
     deployMech();
 }
