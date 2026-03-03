@@ -881,8 +881,9 @@ function create() {
         const dmg = bullet.damageValue || 2;
         bullet.destroy();
         if (enemy.isShielded) {
-            // Shield absorbs the hit — show cyan sparks, no damage
+            // Shield absorbs the hit — show cyan sparks + BLOCK text, no damage
             createShieldSparks(this, enemy.x, enemy.y);
+            showDamageText(this, enemy.x, enemy.y, 0, true);
             return;
         }
         createImpactSparks(this, enemy.x, enemy.y);
