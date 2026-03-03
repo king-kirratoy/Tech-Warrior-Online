@@ -5,18 +5,30 @@
 <title>Tech Warrior: Alpha 3.0</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <style>
-body { 
-    margin: 0; 
-    background: #0c1014; 
-    color: #c8d2d9; 
-    font-family: 'Verdana', 'Segoe UI', sans-serif; 
-    overflow: hidden; 
+
+/* ============================================================
+   BASE / RESET
+   ============================================================ */
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #0c1014;
+    color: #c8d2d9;
+    font-family: 'Verdana', 'Segoe UI', sans-serif;
+    overflow: hidden;
 }
 
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: #0c1014; }
+::-webkit-scrollbar-thumb { background: #0f0; }
+
+/* ============================================================
+   HANGAR / GARAGE UI
+   ============================================================ */
 #ui-layer {
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
+    inset: 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -24,85 +36,84 @@ body {
     z-index: 1000;
 }
 
-.stat-readout { 
-    width: 950px; 
-    padding: 25px; 
+.stat-readout {
+    width: 750px;
+    padding: 25px;
     border-radius: 10px;
-    position: relative;
-    overflow: hidden;
-    pointer-events: auto; 
-    background: linear-gradient(rgba(12, 16, 20, 0.85), rgba(12, 16, 20, 0.85)), 
-    url('assets/hangar-bg.jpg');
-    background-size: cover;
-    background-position: center;
-    border: 1px solid rgba(0, 255, 0, 0.7);
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+    background:
+        linear-gradient(rgba(12,16,20,0.85), rgba(12,16,20,0.85)),
+        url('assets/hangar-bg.jpg') center / cover;
+    border: 1px solid rgba(0,255,0,0.7);
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
 }
 
-.row { 
-    margin-bottom: 22px; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 6px; 
+/* --- Rows & Labels --- */
+.row {
+    margin-bottom: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .row-label {
     font-size: 11px;
-    color: rgba(0, 255, 0, 0.7);
+    color: rgba(0,255,0,0.7);
     letter-spacing: 1.5px;
     text-transform: uppercase;
     font-weight: bold;
 }
 
-.options-group { 
-	display: flex; 
-	gap: 5px; 
+/* --- Option Buttons --- */
+.options-group {
+    display: flex;
+    gap: 5px;
 }
 
 .options-group button {
     display: flex;
     align-items: center;
-    white-space: nowrap; 
+    white-space: nowrap;
 }
 
-button { 
-    background: rgba(255, 255, 255, 0.04); 
-    color: #c8d2d9; 
-    border: 1px solid rgba(255, 255, 255, 0.1); 
-    border-left: 3px solid transparent; 
-    cursor: pointer; 
-    padding: 10px 12px; 
+button {
+    background: rgba(255,255,255,0.04);
+    color: #c8d2d9;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    padding: 10px 12px;
     font-size: 13px;
-    text-align: left; 
-    flex: 1; 
+    text-align: left;
+    flex: 1;
     transition: all 0.2s ease;
     font-family: 'Segoe UI', sans-serif;
 }
 
-button:hover { 
-    background: rgba(0, 255, 0, 0.08); 
-    border-color: rgba(0, 255, 0, 0.3); 
+button:hover {
+    background: rgba(0,255,0,0.08);
+    border-color: rgba(0,255,0,0.3);
 }
 
-button.active { 
-    background: rgba(0, 255, 0, 0.12); 
-    color: #fff; 
-    border-color: rgba(0, 255, 0, 0.5);
+button.active {
+    background: rgba(0,255,0,0.12);
+    color: #fff;
+    border-color: rgba(0,255,0,0.5);
     border-left: 3px solid #0f0;
-    box-shadow: inset 8px 0 15px rgba(0, 255, 0, 0.05);
+    box-shadow: inset 8px 0 15px rgba(0,255,0,0.05);
 }
 
+/* --- Deploy Button --- */
 #deploy-btn {
     width: 100%;
     font-size: 18px;
     margin-top: 15px;
     padding: 15px;
-    text-align: center; 
     display: flex;
     justify-content: center;
     align-items: center;
-	background: rgba(200, 210, 217, 0.05); 
-    border: 1px solid rgba(200, 210, 217, 0.2);
+    background: rgba(200,210,217,0.05);
+    border: 1px solid rgba(200,210,217,0.2);
     color: #c8d2d9;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -111,127 +122,139 @@ button.active {
 }
 
 #deploy-btn:hover:not(:disabled) {
-    /* Hover state: Industrial Amber Glow */
-    background: rgba(255, 170, 0, 0.15);
+    background: rgba(255,170,0,0.15);
     border-color: #ffaa00;
     color: #fff;
-    box-shadow: 0 0 20px rgba(255, 170, 0, 0.2);
+    box-shadow: 0 0 20px rgba(255,170,0,0.2);
 }
 
 #deploy-btn.overweight {
-    background: rgba(255, 50, 0, 0.1) !important;
+    background: rgba(255,50,0,0.1) !important;
     border-color: #ff3300 !important;
     color: #ff3300 !important;
     cursor: not-allowed;
-    box-shadow: inset 0 0 10px rgba(255, 50, 0, 0.2);
+    box-shadow: inset 0 0 10px rgba(255,50,0,0.2);
 }
 
+/* --- Color Swatch --- */
 .color-preview {
     width: 12px;
     height: 12px;
     display: inline-block;
     margin-right: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255,255,255,0.3);
     vertical-align: middle;
 }
 
-#hud-container { 
-    position: fixed; 
-    bottom: 30px; 
-    left: 30px; 
-    z-index: 9999; 
+/* --- Weight Bar --- */
+#weight-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,170,0,0.05);
+    border: 1px solid rgba(255,170,0,0.2);
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+#weight-bar-fill {
+    height: 100%;
+    background: #ffaa00;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(255,170,0,0.4);
+}
+
+/* ============================================================
+   IN-GAME HUD
+   ============================================================ */
+#hud-container {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    z-index: 9999;
     display: none;
     pointer-events: none;
 }
 
-.console-frame { 
-    display: flex; 
-	flex-direction: row;
-    align-items: center; 
-    gap: 20px; 
-    padding: 15px 25px; 
-    background: rgba(12, 16, 20, 0.85); 
-    border: 1px solid rgba(0, 255, 255, 0.3); /* Cyber Blue/Teal outline */
-	border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2), 
-		inset 0 0 10px rgba(0, 255, 255, 0.1);
-}
-
-#hud-accent {
-    border-color: rgba(0, 255, 255, 0.5) !important;
-}
-
 .hud-background {
     background: linear-gradient(
-        180deg, 
-        rgba(0, 255, 255, 0.05) 0%, 
-        rgba(0, 0, 0, 0) 50%, 
-        rgba(0, 255, 255, 0.05) 100%
+        180deg,
+        rgba(0,255,255,0.05) 0%,
+        rgba(0,0,0,0) 50%,
+        rgba(0,255,255,0.05) 100%
     );
     border-radius: 4px;
 }
 
-.stats-group { 
-	display: flex; 
-	flex-direction: column; 
-	min-width: 150px;
-	gap: 6px; 
+.console-frame {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    padding: 15px 25px;
+    background: rgba(12,16,20,0.85);
+    border: 1px solid rgba(0,255,255,0.3);
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,255,255,0.2),
+                inset 0 0 10px rgba(0,255,255,0.1);
 }
 
-.hud-label { 
-    font-weight: bold; 
-    font-size: 11px; 
-    color: #0f0; 
-    opacity: 0.8; 
-    text-transform: uppercase; 
+/* --- Health & Shield Bars --- */
+.stats-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 150px;
+    gap: 6px;
 }
 
-#hp-text, #sh-text {
+.hud-label {
+    font-weight: bold;
     font-size: 11px;
-    font-family: 'monospace';
-    letter-spacing: 1px;
+    color: #0f0;
+    opacity: 0.8;
+    text-transform: uppercase;
 }
 
-#hp-bar { 
-	width: 250px; 
-	height: 18px; 
-	background: rgba(0, 40, 0, 0.3); 
-	border: 1px solid rgba(0, 255, 0, 0.3); 
+#hp-bar {
+    width: 250px;
+    height: 18px;
+    background: rgba(0,40,0,0.3);
+    border: 1px solid rgba(0,255,0,0.3);
 }
 
-#hp-fill { 
-	height: 100%; 
-	background: #0f0; 
-	transition: width 0.2s; 
-	box-shadow: 0 0 10px rgba(0, 255, 0, 0.5); 
+#hp-fill {
+    height: 100%;
+    background: #0f0;
+    transition: width 0.2s;
+    box-shadow: 0 0 10px rgba(0,255,0,0.5);
 }
 
-#sh-bar { 
-	width: 250px; 
-	height: 6px; 
-	background: rgba(0, 20, 40, 0.3); 
-	border: 1px solid rgba(0, 255, 255, 0.3); 
-	margin-top: 2px; 
+#sh-bar {
+    width: 250px;
+    height: 6px;
+    background: rgba(0,20,40,0.3);
+    border: 1px solid rgba(0,255,255,0.3);
+    margin-top: 2px;
 }
 
-#sh-fill { 
-	height: 100%; 
-	background: #00ffff; 
-	box-shadow: 0 0 8px #00ffff; 
-	transition: width 0.3s; 
+#sh-fill {
+    height: 100%;
+    background: #00ffff;
+    box-shadow: 0 0 8px #00ffff;
+    transition: width 0.3s;
 }
 
-#weapon-slots { 
-	display: flex; 
-	gap: 10px; 
-	align-items: flex-end; 
+/* --- Weapon Slots --- */
+#weapon-slots {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
 }
 
-.weapon-container { 
-	display: flex; 
-	flex-direction: column; 
-	align-items: center; 
-	gap: 4px; 
+.weapon-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
 }
 
 .key-hint {
@@ -241,1724 +264,1573 @@ button.active {
     opacity: 0.8;
     text-transform: uppercase;
     letter-spacing: 1px;
-	text-shadow: 0 0 3px rgba(255, 170, 0, 0.3);
+    text-shadow: 0 0 3px rgba(255,170,0,0.3);
 }
 
-.weapon-box { 
-    width: 60px; 
-	height: 60px; 
-    border: 1px solid rgba(255, 170, 0, 0.4); 
-    background: rgba(255, 170, 0, 0.05); 
-    display: flex; 
-	flex-direction: column; 
-	justify-content: center; 
-	align-items: center; 
-    color: #c8d2d9; 
-	position: relative; 
-	overflow: hidden;   
+.weapon-box {
+    width: 60px;
+    height: 60px;
+    border: 1px solid rgba(255,170,0,0.4);
+    background: rgba(255,170,0,0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #c8d2d9;
+    position: relative;
+    overflow: hidden;
 }
 
-.weapon-box.active-firing { 
-	border-color: #ffaa00; 
-    box-shadow: 0 0 15px rgba(255, 170, 0, 0.5); 
-    color: #fff; 
-    background: rgba(255, 170, 0, 0.15); 
+.weapon-box.active-firing {
+    border-color: #ffaa00;
+    box-shadow: 0 0 15px rgba(255,170,0,0.5);
+    color: #fff;
+    background: rgba(255,170,0,0.15);
 }
 
 .cd-overlay {
-    position: absolute; bottom: 0; left: 0;
+    position: absolute;
+    bottom: 0; left: 0;
     width: 100%; height: 0%;
-    background: rgba(255, 0, 0, 0.3);
+    background: rgba(255,0,0,0.3);
     border-top: 2px solid #ff0000;
     pointer-events: none;
 }
 
-.arm-label { 
-	opacity: 0.5; 
-	font-size: 9px; 
-	text-transform: uppercase; 
+.arm-label {
+    opacity: 0.5;
+    font-size: 9px;
+    text-transform: uppercase;
 }
 
-.weap-name { 
-	font-weight: bold; 
-	font-size: 11px; 
+.weap-name {
+    font-weight: bold;
+    font-size: 11px;
 }
 
-#weight-bar-bg {
-    width: 100%; height: 8px;
-    background: rgba(255, 170, 0, 0.05);
-    border: 1px solid rgba(255, 170, 0, 0.2);
-    margin-bottom: 10px;
-    overflow: hidden;
-}
-
-#weight-bar-fill {
-    height: 100%; 
-	background: #ffaa00;
-    transition: width 0.3s ease;
-    box-shadow: 0 0 10px rgba(255, 170, 0, 0.4);
-}
-
-.pulse-warning { 
-	animation: pulse 0.5s infinite alternate; 
-}
-
-@keyframes pulse { 
-	from { opacity: 1; filter: brightness(1.5); } to { opacity: 0.4; } }
-
-::-webkit-scrollbar { 
-	width: 4px; 
-}
-
-::-webkit-scrollbar-track {
-	background: #0c1014; 
-}
-
-::-webkit-scrollbar-thumb { 
-	background: #0f0; 
-}
-
+/* ============================================================
+   PAPER DOLL
+   ============================================================ */
 .paper-doll {
-  display: flex;
-  flex-shrink: 0;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.2));
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    filter: drop-shadow(0 0 5px rgba(0,255,255,0.2));
 }
 
-.doll-row {
-  display: flex;
-  gap: 4px;
-}
-
-.align-top {
-	align-items: flex-start !important;
-}
+.doll-row    { display: flex; gap: 4px; }
+.align-top   { align-items: flex-start !important; }
 
 .side-column {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	align-items: flex-end;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
 }
 
-.side-column:last-child {
-	align-items: flex-start;
-}
+.side-column:last-child { align-items: flex-start; }
 
 .part {
-	background: #00ff00;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-	box-shadow: 0 0 8px rgba(0, 255, 0, 0.4);
-	display: block;
-	flex-shrink: 0;
+    background: #00ff00;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 0 8px rgba(0,255,0,0.4);
+    display: block;
+    flex-shrink: 0;
 }
 
-.head { width: 12px; height: 12px; margin-bottom: 0; }
-.core { width: 12px; height: 48px; }
+.head     { width: 12px; height: 12px; }
+.core     { width: 12px; height: 48px; }
 .shoulder { width: 18px; height: 12px; }
-.arm { width: 12px; height: 42px; }
+.arm      { width: 12px; height: 42px; }
+.leg      { width: 12px; height: 54px; margin-top: -18px; }
 
-.leg {
-	width: 12px;
-	height: 54px;
-	margin-top: -18px; 
+/* ============================================================
+   INTRO SCREEN
+   ============================================================ */
+#intro-layer {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
+
+#intro-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#skip-hint {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 28px;
+    letter-spacing: 5px;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* ============================================================
+   MISC ANIMATIONS
+   ============================================================ */
+@keyframes pulse {
+    from { opacity: 1; filter: brightness(1.5); }
+    to   { opacity: 0.4; }
+}
+
+.pulse-warning { animation: pulse 0.5s infinite alternate; }
 
 </style>
 </head>
 <body>
-<div id="intro-layer" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center;">
-    <video id="intro-video" width="100%" height="100%" style="object-fit: cover;" playsinline>
+
+<!-- ============================================================
+     INTRO SCREEN
+     ============================================================ -->
+<div id="intro-layer">
+    <video id="intro-video" width="100%" height="100%" style="object-fit:cover;" playsinline>
         <source src="assets/Mech-Intro.mp4" type="video/mp4">
     </video>
-    <div id="skip-hint" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; letter-spacing: 5px; cursor: pointer; font-family: 'Courier New', monospace; text-align: center; white-space: nowrap; pointer-events: none;">
-		</div>
+    <div id="skip-hint"></div>
 </div>
+
+<!-- ============================================================
+     HANGAR / GARAGE UI
+     ============================================================ -->
 <div id="ui-layer">
-    <div class="stat-readout" id="garage-menu" style="width: 750px;">
-        <h2 style="text-align:center; margin-top:0; margin-bottom: 25px; letter-spacing: 2px; color: #c8d2d9;">--- MECH HANGAR ---</h2>
-        <div style="display: flex; gap: 30px; align-items: flex-start;">  
-            <div style="flex: 1.4;">
+    <div class="stat-readout" id="garage-menu">
+        <h2 style="text-align:center; margin:0 0 25px; letter-spacing:2px; color:#c8d2d9;">--- MECH HANGAR ---</h2>
+
+        <div style="display:flex; gap:30px; align-items:flex-start;">
+
+            <!-- LEFT COLUMN: BUILD OPTIONS -->
+            <div style="flex:1.4;">
+
                 <div class="row">
                     <span class="row-label">■ Chassis</span>
                     <div class="options-group">
-                        <button id="c-light" onclick="setChassis('light')">LIGHT</button>
+                        <button id="c-light"  onclick="setChassis('light')">LIGHT</button>
                         <button id="c-medium" onclick="setChassis('medium')">MEDIUM</button>
-                        <button id="c-heavy" onclick="setChassis('heavy')">HEAVY</button>
+                        <button id="c-heavy"  onclick="setChassis('heavy')">HEAVY</button>
                     </div>
                 </div>
+
                 <div class="row">
                     <span class="row-label">■ Primary Weapon</span>
                     <div class="options-group">
-						<button id="l-smg" onclick="setWeapon('L','smg')">SMG</button>
-                        <button id="l-mg" onclick="setWeapon('L','mg')">MG</button>
-						<button id="l-br" onclick="setWeapon('L','br')">BR</button>
-						<button id="l-sg" onclick="setWeapon('L','sg')">SG</button>
-						<button id="l-hr" onclick="setWeapon('L','hr')">HR</button>
+                        <button id="l-smg" onclick="setWeapon('L','smg')">SMG</button>
+                        <button id="l-mg"  onclick="setWeapon('L','mg')">MG</button>
+                        <button id="l-br"  onclick="setWeapon('L','br')">BR</button>
+                        <button id="l-sg"  onclick="setWeapon('L','sg')">SG</button>
+                        <button id="l-hr"  onclick="setWeapon('L','hr')">HR</button>
                     </div>
                 </div>
+
                 <div class="row">
                     <span class="row-label">■ Secondary Weapon</span>
                     <div class="options-group">
-						<button id="r-none" onclick="setWeapon('R','none')">NONE</button>
-						<button id="r-sr" onclick="setWeapon('R','sr')">SR</button>
-						<button id="r-gl" onclick="setWeapon('R','gl')">GL</button>
-						<button id="r-rl" onclick="setWeapon('R','rl')">RL</button>
-						<button id="r-plsm" onclick="setWeapon('R','plsm')">PLSM</button>
+                        <button id="r-none" onclick="setWeapon('R','none')">NONE</button>
+                        <button id="r-sr"   onclick="setWeapon('R','sr')">SR</button>
+                        <button id="r-gl"   onclick="setWeapon('R','gl')">GL</button>
+                        <button id="r-rl"   onclick="setWeapon('R','rl')">RL</button>
+                        <button id="r-plsm" onclick="setWeapon('R','plsm')">PLSM</button>
                     </div>
                 </div>
+
                 <div class="row">
                     <span class="row-label">■ System Modification</span>
                     <div class="options-group">
-						<button id="m-none" onclick="setMod('none')">NONE</button>
-                        <button id="m-jump" onclick="setMod('jump')">JUMP</button>
-						<button id="m-shield" onclick="setMod('shield')">SHIELD</button>
-						<button id="m-rage" onclick="setMod('rage')">RAGE</button>
-						<button id="m-emp" onclick="setMod('emp')">EMP</button>
+                        <button id="m-none"   onclick="setMod('none')">NONE</button>
+                        <button id="m-jump"   onclick="setMod('jump')">JUMP</button>
+                        <button id="m-shield" onclick="setMod('shield')">SHIELD</button>
+                        <button id="m-rage"   onclick="setMod('rage')">RAGE</button>
+                        <button id="m-emp"    onclick="setMod('emp')">EMP</button>
                     </div>
                 </div>
+
                 <div class="row">
                     <span class="row-label">■ Armour Color</span>
                     <div class="options-group">
-                        <button id="col-00ff00" class="active" onclick="setColor(0x00ff00)">
-                            <span class="color-preview" style="background: #00ff00;"></span> GREEN
+                        <button id="col-00ff00" onclick="setColor(0x00ff00)">
+                            <span class="color-preview" style="background:#00ff00;"></span> GREEN
                         </button>
                         <button id="col-0088ff" onclick="setColor(0x0088ff)">
-                            <span class="color-preview" style="background: #0088ff;"></span> BLUE
+                            <span class="color-preview" style="background:#0088ff;"></span> BLUE
                         </button>
                         <button id="col-ff3300" onclick="setColor(0xff3300)">
-                            <span class="color-preview" style="background: #ff3300;"></span> RED
+                            <span class="color-preview" style="background:#ff3300;"></span> RED
                         </button>
                         <button id="col-ffff00" onclick="setColor(0xffff00)">
-                            <span class="color-preview" style="background: #ffff00;"></span> YELLOW
+                            <span class="color-preview" style="background:#ffff00;"></span> YELLOW
                         </button>
                     </div>
                 </div>
-            </div> 
-		<div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                <div id="preview-container" style="width: 280px; height: 180px; border: 1px solid #0f0; background: rgba(0,20,0,0.5); display: flex; justify-content: center; align-items: center;">
-                    <img id="preview-img" src="assets/medium-mech.png" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 0 5px #0f0);">
+            </div><!-- /left column -->
+
+            <!-- RIGHT COLUMN: PREVIEW & STATS -->
+            <div style="flex:1; display:flex; flex-direction:column; align-items:center;">
+
+                <!-- Mech Preview Image -->
+                <div id="preview-container" style="width:280px; height:180px; border:1px solid #0f0; background:rgba(0,20,0,0.5); display:flex; justify-content:center; align-items:center;">
+                    <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 0 5px #0f0);">
                 </div>
-                <div id="stats-preview" style="display: flex; justify-content: center; gap: 20px; margin-top: 10px;">
-					<div id="hp-display" style="font-weight:bold; font-size: 14px; color: #0f0;">
-						HP: 450
-					</div>
-					<div id="sh-display" style="font-weight:bold; font-size: 14px; color: #00ffff;">
-						SHIELD: 100
-					</div>
-				</div>
-                <div id="weight-display" style="text-align:center; font-weight:bold; font-size: 14px; margin-bottom: 4px; margin-top: 60px;">
+
+                <!-- HP / Shield Display -->
+                <div id="stats-preview" style="display:flex; justify-content:center; gap:20px; margin-top:10px;">
+                    <div id="hp-display" style="font-weight:bold; font-size:14px; color:#0f0;">HP: 450</div>
+                    <div id="sh-display" style="font-weight:bold; font-size:14px; color:#00ffff;">SHIELD: 100</div>
+                </div>
+
+                <!-- Weight Display -->
+                <div id="weight-display" style="text-align:center; font-weight:bold; font-size:14px; margin:60px 0 4px;">
                     WEIGHT: 0 / 100
                 </div>
-                <div id="weight-bar-bg" style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border: 1px solid #444; margin-bottom: 10px; margin-top: 5px; overflow: hidden;">
-                    <div id="weight-bar-fill" style="width: 0%; height: 100%; background: #0f0; transition: width 0.3s ease;"></div>
+                <div id="weight-bar-bg" style="width:100%; height:8px; background:rgba(255,255,255,0.1); border:1px solid #444; margin-bottom:10px; overflow:hidden;">
+                    <div id="weight-bar-fill" style="width:0%; height:100%; background:#0f0; transition:width 0.3s ease;"></div>
                 </div>
+
                 <button id="deploy-btn" onclick="deployMech()">DEPLOY MECH</button>
-            </div> 
-	</div> </div> </div> 
-	<div id="hud-container">
-		<div class="hud-background">
-		<div class="console-frame" id="hud-accent">
-			<div class="paper-doll">
-				<div class="doll-row">
-					<div id="doll-head" class="part head"></div>
-				</div>
-				<div class="doll-row align-top">
-					<div class="side-column">
-						<div class="doll-row align-top">
-							<div id="doll-lArm" class="part arm"></div>
-							<div id="doll-lShoulder" class="part shoulder"></div>
-						</div>
-						<div id="doll-lLeg" class="part leg"></div>
-					</div>
-					<div id="doll-core" class="part core"></div>
-					<div class="side-column">
-						<div class="doll-row align-top">
-							<div id="doll-rShoulder" class="part shoulder"></div>
-							<div id="doll-rArm" class="part arm"></div>
-						</div>
-						<div id="doll-rLeg" class="part leg"></div>
-					</div>
-				</div>
-			</div>
-			<div class="stats-group">
-				<div style="display: flex; justify-content: space-between; align-items: center;">
-					<div class="hud-label">HEALTH</div>
-					<div id="hp-text" style="font-size: 11px; color: #0f0; font-family: monospace;">450/450</div>
-				</div>
-				<div id="hp-bar"><div id="hp-fill" style="width: 100%;"></div></div>
-				<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-					<div class="hud-label" style="color: #00ffff;">SHIELD</div>
-					<div id="sh-text" style="font-size: 11px; color: #00ffff; font-family: monospace;">100/100</div>
-				</div>
-				<div id="sh-bar"><div id="sh-fill" style="width: 100%;"></div></div>
-			</div>
-			<div id="weapon-slots">
-				<div class="weapon-container">
-					<div class="key-hint">M1</div>
-					<div id="slot-L" class="weapon-box">
-						<div id="cd-L" class="cd-overlay"></div> 
-						<span class="arm-label">PRIMARY</span>
-						<span id="txt-L" class="weap-name">SMG</span>
-					</div>
-				</div>
-				<div class="weapon-container">
-					<div class="key-hint">F</div>
-					<div id="slot-R" class="weapon-box">
-						<div id="cd-R" class="cd-overlay"></div> 
-						<span class="arm-label">SECONDARY</span>
-						<span id="txt-R" class="weap-name">GL</span>
-					</div>
-				</div>
-				<div class="weapon-container">
-					<div class="key-hint">SPACE</div>
-					<div id="slot-M" class="weapon-box">
-						<div id="cd-M" class="cd-overlay"></div>
-						<span class="arm-label">SYSTEM</span>
-						<span id="txt-M" class="weap-name">JUMP</span>
-					</div>
-				</div>
-			</div>
-			
+            </div><!-- /right column -->
+
+        </div><!-- /flex row -->
+    </div><!-- /stat-readout -->
+</div><!-- /ui-layer -->
+
+<!-- ============================================================
+     IN-GAME HUD
+     ============================================================ -->
+<div id="hud-container">
+    <div class="hud-background">
+        <div class="console-frame" id="hud-accent">
+
+            <!-- Paper Doll -->
+            <div class="paper-doll">
+                <div class="doll-row">
+                    <div id="doll-head" class="part head"></div>
+                </div>
+                <div class="doll-row align-top">
+                    <div class="side-column">
+                        <div class="doll-row align-top">
+                            <div id="doll-lArm"      class="part arm"></div>
+                            <div id="doll-lShoulder" class="part shoulder"></div>
+                        </div>
+                        <div id="doll-lLeg" class="part leg"></div>
+                    </div>
+                    <div id="doll-core" class="part core"></div>
+                    <div class="side-column">
+                        <div class="doll-row align-top">
+                            <div id="doll-rShoulder" class="part shoulder"></div>
+                            <div id="doll-rArm"      class="part arm"></div>
+                        </div>
+                        <div id="doll-rLeg" class="part leg"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health & Shield Bars -->
+            <div class="stats-group">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="hud-label">HEALTH</div>
+                    <div id="hp-text" style="font-size:11px; color:#0f0; font-family:monospace;">450/450</div>
+                </div>
+                <div id="hp-bar"><div id="hp-fill" style="width:100%;"></div></div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                    <div class="hud-label" style="color:#00ffff;">SHIELD</div>
+                    <div id="sh-text" style="font-size:11px; color:#00ffff; font-family:monospace;">100/100</div>
+                </div>
+                <div id="sh-bar"><div id="sh-fill" style="width:100%;"></div></div>
+            </div>
+
+            <!-- Weapon Slots -->
+            <div id="weapon-slots">
+                <div class="weapon-container">
+                    <div class="key-hint">M1</div>
+                    <div id="slot-L" class="weapon-box">
+                        <div id="cd-L" class="cd-overlay"></div>
+                        <span class="arm-label">PRIMARY</span>
+                        <span id="txt-L" class="weap-name">SMG</span>
+                    </div>
+                </div>
+                <div class="weapon-container">
+                    <div class="key-hint">F</div>
+                    <div id="slot-R" class="weapon-box">
+                        <div id="cd-R" class="cd-overlay"></div>
+                        <span class="arm-label">SECONDARY</span>
+                        <span id="txt-R" class="weap-name">GL</span>
+                    </div>
+                </div>
+                <div class="weapon-container">
+                    <div class="key-hint">SPACE</div>
+                    <div id="slot-M" class="weapon-box">
+                        <div id="cd-M" class="cd-overlay"></div>
+                        <span class="arm-label">SYSTEM</span>
+                        <span id="txt-M" class="weap-name">JUMP</span>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /console-frame -->
+    </div><!-- /hud-background -->
+</div><!-- /hud-container -->
+
+
+<!-- ============================================================
+     GAME SCRIPT
+     ============================================================ -->
 <script>
-// PHASER 2D GAME FRAMEWORK
+
+// ================================================================
+// CONSTANTS & DATA TABLES
+// ================================================================
+
+/** Chassis definitions: max weapon weight, movement speed, visual scale, component HP */
+const CHASSIS = {
+    light:  { max: 75,  spd: 350, scale: 0.7, coreHP: 350, armHP: 200, legHP: 250 },
+    medium: { max: 150, spd: 250, scale: 1.0, coreHP: 450, armHP: 300, legHP: 350 },
+    heavy:  { max: 250, spd: 150, scale: 1.4, coreHP: 550, armHP: 400, legHP: 450 }
+};
+
+/**
+ * Weapon & modification definitions.
+ * Keys used: name, weight, reload (ms), dmg, bulletSize, speed,
+ *            pellets, burst, range, explosive,
+ *            jumpSpeed, airTime, shieldTime, rageTime,
+ *            radius, empSpeed, stunTime, cooldown
+ */
+const WEAPONS = {
+    // --- Primary weapons ---
+    smg:    { name: 'SMG',    reload: 50,   dmg: 3,   weight: 25,  bulletSize: 4,  speed: 900 },
+    mg:     { name: 'MG',     reload: 300,  dmg: 30,  weight: 50,  bulletSize: 6,  speed: 850 },
+    sg:     { name: 'SG',     reload: 750,  dmg: 12,  weight: 75,  bulletSize: 5,  speed: 600,  pellets: 5, range: 600 },
+    br:     { name: 'BR',     reload: 1000, dmg: 24,  weight: 75,  bulletSize: 5,  speed: 1100, burst: 3 },
+    hr:     { name: 'HR',     reload: 1750, dmg: 120, weight: 100, bulletSize: 12, speed: 1100 },
+    // --- Secondary weapons ---
+    sr:     { name: 'SR',     reload: 2500, dmg: 200, weight: 125, bulletSize: 6,  speed: 2000 },
+    gl:     { name: 'GL',     reload: 3500, dmg: 150, weight: 125, explosive: true },
+    rl:     { name: 'RL',     reload: 3500, dmg: 150, weight: 150, explosive: true, bulletSize: 12, speed: 800 },
+    plsm:   { name: 'PLSM',   reload: 3500, dmg: 300, weight: 150, size: 30 },
+    // --- System modifications ---
+    none:   { name: 'NONE',   weight: 0 },
+    jump:   { name: 'JUMP',   weight: 25,  jumpSpeed: 900,  airTime: 200,   cooldown: 3500 },
+    shield: { name: 'SHIELD', weight: 50,  shieldTime: 3500,                cooldown: 7000 },
+    rage:   { name: 'RAGE',   weight: 75,  rageTime: 3500,                  cooldown: 10500 },
+    emp:    { name: 'EMP',    weight: 75,  radius: 350, empSpeed: 400, stunTime: 3500, cooldown: 10500 }
+};
+
+// ================================================================
+// GAME STATE
+// ================================================================
+
+/** Current loadout selected in the garage. */
+let loadout = {
+    chassis: 'light',
+    L: 'smg',
+    R: 'none',
+    mod: 'none',
+    color: 0x00ff00
+};
+
+// Phaser object references
+let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic, smokeParticles;
+
+// Combat / cooldown state
+let isDeployed      = false;
+let reloadL         = 0;
+let reloadR         = 0;
+let lastDamageTime  = -99999;
+let lastModTime     = 0;
+
+// Modification active flags
+let isJumping       = false;
+let isShieldActive  = false;
+let isRageActive    = false;
+
+// Intro pulse timer
+let pulseInterval;
+
+
+// ================================================================
+// PHASER CONFIGURATION
+// ================================================================
+
 const config = {
     type: Phaser.AUTO,
-    parent: 'game-container', 
-	roundPixels: true,
-    width: window.innerWidth, 
+    parent: 'game-container',
+    roundPixels: true,
+    width:  window.innerWidth,
     height: window.innerHeight,
-	fps: {
-        target: 60,
-        forceSetTimeOut: true
-	},	
-    physics: { 
-		default: 'arcade',
-		arcade: { 
-			debug: false,
-			fps: 60
-		}
-	},
-    scene: { preload: preload, create: create, update: update }
+    fps:    { target: 60, forceSetTimeOut: true },
+    physics: {
+        default: 'arcade',
+        arcade:  { debug: false, fps: 60 }
+    },
+    scene: { preload, create, update }
 };
+
 const game = new Phaser.Game(config);
 
-// GLOBAL VARIABLES
-let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic;
-let reloadBar, reloadBg, smokeParticles;
-let pulseInterval; // Global variable to stop the pulse later
 
-// MECH STATE TRACKING 
-let isDeployed = false;
-let activeArm = 'L';
-let reloadL = 0;
-let reloadR = 0;
-let lastDamageTime = -99999;
-let isJumping = false;
-let isShieldActive = false; 
-let isRageActive = false;
-let lastModTime = 0;  
+// ================================================================
+// PHASER LIFECYCLE
+// ================================================================
 
-// PRELOAD GRAPHICS
 function preload() {
-    let g = this.make.graphics({x: 0, y: 0, add: false});
-    g.fillStyle(0xffffff, 1); 
-	g.fillCircle(10, 10, 10);
+    // Generate a simple white-circle texture used by smoke particles.
+    let g = this.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(10, 10, 10);
     g.generateTexture('smoke', 20, 20);
-	
-	// Load Weapon Sounds
-    //this.load.audio('snd-smg', 'assets/smg_fire.wav');
-	//this.load.audio('snd-mg', 'assets/smg_fire.wav');
-    //this.load.audio('snd-sg', 'assets/shotgun_fire.mp3');
-    //this.load.audio('snd-explosion', 'assets/explosion.mp3');    
-    // Load Impact Sounds
-    //this.load.audio('snd-impact-metal', 'assets/impact_metal.mp3');
-    this.load.audio('snd-shield-hit', 'assets/shield_ping.wav');
+
+    // Audio assets (uncomment paths when files are available)
+    // this.load.audio('snd-smg',          'assets/smg_fire.wav');
+    // this.load.audio('snd-mg',           'assets/smg_fire.wav');
+    // this.load.audio('snd-sg',           'assets/shotgun_fire.mp3');
+    // this.load.audio('snd-explosion',    'assets/explosion.mp3');
+    // this.load.audio('snd-impact-metal', 'assets/impact_metal.mp3');
+    this.load.audio('snd-shield-hit',   'assets/shield_ping.wav');
 }
 
-// INITIALIZE WORLD & SYSTEMS
 function create() {
+    // Background grid
     this.add.grid(2000, 2000, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
+
+    // Input
     keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,F');
-    bullets = this.physics.add.group();
-    enemies = this.physics.add.group();
-	enemyBullets = this.physics.add.group();
 
+    // Physics groups
+    bullets      = this.physics.add.group();
+    enemies      = this.physics.add.group();
+    enemyBullets = this.physics.add.group();
+
+    // Player bullet ↔ enemy overlap
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
-		if (!bullet.isGLBall) {
-		    createImpactSparks(this, enemy.x, enemy.y);
-			let dmg = bullet.damageValue || 2; 
-		    showDamageText(this, enemy.x, enemy.y, dmg);
-			bullet.destroy(); 
-			damageEnemy(enemy, dmg); 
-		}
-	});
+        if (bullet.isGLBall) return; // GL balls use a separate detonation path
+        createImpactSparks(this, enemy.x, enemy.y);
+        const dmg = bullet.damageValue || 2;
+        showDamageText(this, enemy.x, enemy.y, dmg);
+        bullet.destroy();
+        damageEnemy(enemy, dmg);
+    });
 
-    for(let i=0; i<6; i++) spawnEnemy(this);
+    // Spawn initial enemies
+    for (let i = 0; i < 6; i++) spawnEnemy(this);
 
-    this.hangarOverlay = this.add.rectangle(window.innerWidth/2, window.innerHeight/2, window.innerWidth, window.innerHeight, 0x0c1014, 0.7).setScrollFactor(0).setDepth(1000);
-    this.hangarGrid = this.add.grid(window.innerWidth/2, window.innerHeight/2, window.innerWidth, window.innerHeight, 16, 16, 0, 0, 0x00ff00, 0.05).setScrollFactor(0).setDepth(1001);
+    // Hangar overlay (hidden once deployed)
+    this.hangarOverlay = this.add.rectangle(
+        window.innerWidth / 2, window.innerHeight / 2,
+        window.innerWidth, window.innerHeight,
+        0x0c1014, 0.7
+    ).setScrollFactor(0).setDepth(1000);
+
+    this.hangarGrid = this.add.grid(
+        window.innerWidth / 2, window.innerHeight / 2,
+        window.innerWidth, window.innerHeight,
+        16, 16, 0, 0, 0x00ff00, 0.05
+    ).setScrollFactor(0).setDepth(1001);
 }
 
-// THE GAME LOOP
 function update(time) {
     if (!isDeployed) return;
 
-    // --- 1. INNATE SHIELD REGENERATION ---
-    // Regenerates shield if no damage taken for 5 seconds
-    let secondsSinceHit = (time - lastDamageTime) / 1000;
+    handleShieldRegen(time);
+    handleEnemyAI(this, time);
+    handlePlayerMovement(this, time);
+    handlePlayerFiring(this);
+    handleRageGhosts(this, time);
+    syncVisuals(this, time);
+    updateCooldownOverlays(time);
+}
 
-	// ONLY recharge if we've actually been hit before AND it's been 5 seconds
-	if (lastDamageTime > 0 && secondsSinceHit >= 5) { 
-		if (player.shield < player.maxShield) {
-			player.shield += 1.0; // I lowered this slightly; 0.5 is very fast!
-			if (player.shield > player.maxShield) player.shield = player.maxShield;
-			updateBars();
-		}
-	}
 
-    // ENEMY AI MOVEMENT
-	enemies.getChildren().forEach(enemy => {
-		let dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y);
-		let angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
-        
-		if (player && !enemy.isStunned) {
-			let speed = 120; 
-			let vx = 0;
-			let vy = 0;
+// ================================================================
+// UPDATE SUB-SYSTEMS (called each frame from update())
+// ================================================================
 
-			// THE "SMART" AI DECISION TREE
-			if (dist > 350) {
-				vx = Math.cos(angleToPlayer) * speed;
-				vy = Math.sin(angleToPlayer) * speed;
-			} 
-			else if (dist < 200) {
-				vx = -Math.cos(angleToPlayer) * (speed * 1.2);
-				vy = -Math.sin(angleToPlayer) * (speed * 1.2);
-			} 
-			else {
-				let strafeAngle = angleToPlayer + Math.PI / 2;
-				vx = Math.cos(strafeAngle) * speed;
-				vy = Math.sin(strafeAngle) * speed;
-			}
-
-			// Only shoot if within 500px and every 1.5 to 2 seconds
-			if (dist < 500) {
-				if (!enemy.lastFireTime || time > enemy.lastFireTime + 1800) {
-					enemyFire(this, enemy);
-					enemy.lastFireTime = time + Phaser.Math.Between(-200, 200); 
-				}
-			}
-        
-			enemy.body.setVelocity(vx, vy);
-			enemy.body.setImmovable(false); // Make sure they CAN move when not stunned
-			enemy.visuals.setRotation(angleToPlayer);
-			
-		} else {
-			// STUNNED STATE
-			enemy.body.setVelocity(0, 0);
-			enemy.body.setImmovable(true); 
-		}
-
-		// --- CRITICAL VISUAL SYNC ---
-		// These must stay OUTSIDE the if(!enemy.isStunned) block so the 
-		// visual mech stays pinned to the hitbox even when frozen.
-		enemy.visuals.setPosition(enemy.x, enemy.y);
-
-		if (enemy.bar) {
-			enemy.bar.setPosition(enemy.x, enemy.y - 45);
-		}
-	}); 
-    // DYNAMIC SPEED CALCULATION
-    // Applies a 1.75x speed multiplier if Rage is active
-    let s = CHASSIS[loadout.chassis].spd * (isRageActive ? 1.75 : 1);	
-    // DYNAMIC COOLDOWN CALCULATION
-    let currentModCD = 0;
-	if (loadout.mod !== 'none') {
-		currentModCD = WEAPONS[loadout.mod].cooldown;
-	}	
-    // TRIGGER MOD ACTIVATION
-    if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + currentModCD) {
-        // JUMP ACTIVATION
-        if (loadout.mod === 'jump') {
-            isJumping = true;
-            this.physics.velocityFromRotation(player.rotation, WEAPONS.jump.jumpSpeed, player.body.velocity);
-            this.tweens.add({ 
-                targets: [player, torso], 
-                scale: '+=0.2', 
-                duration: WEAPONS.jump.airTime, 
-                yoyo: true, 
-                onComplete: () => {
-                    isJumping = false;
-                    lastModTime = game.scene.scenes[0].time.now;
-                } 
-            });
-        } 
-		// SHIELD ACTIVATION
-        else if (loadout.mod === 'shield') {
-            isShieldActive = true;
-            this.time.delayedCall(WEAPONS.shield.shieldTime, () => { 
-				isShieldActive = false;
-                lastModTime = game.scene.scenes[0].time.now;
-            });
-        }   
-		// RAGE ACTIVATION
-        else if (loadout.mod === 'rage') {
-			isRageActive = true;
-			refreshMechColor();
-			this.time.delayedCall(WEAPONS.rage.rageTime, () => {
-				isRageActive = false;
-				refreshMechColor();
-				lastModTime = game.scene.scenes[0].time.now;
-			});
-		}
-		// EMP ACTIVATION
-        else if (loadout.mod === 'emp') {
-            let ring = this.add.circle(player.x, player.y, 10, 0x00ffff, 0.2).setStrokeStyle(2, 0x00ffff).setDepth(12);
-            this.tweens.add({
-                targets: ring,
-                radius: WEAPONS.emp.radius,
-                alpha: 0,
-                duration: WEAPONS.emp.empSpeed,
-                onComplete: () => ring.destroy()
-            });
-            // STUN NEARBY ENEMIES
-            enemies.getChildren().forEach(enemy => {
-				let dist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
-    
-				if (dist < WEAPONS.emp.radius) {
-					enemy.isStunned = true;
-        
-					// 1. DO NOT set stroke on 'enemy' (that's the hitbox rectangle)
-					// 2. DO set stroke on the visuals instead
-					if (enemy.visuals && enemy.visuals.setStrokeStyle) {
-						enemy.visuals.setStrokeStyle(4, 0x00ffff); 
-					}
-
-					this.time.delayedCall(WEAPONS.emp.stunTime, () => {
-						enemy.isStunned = false;
-						enemy.body.setImmovable(false);
-            
-						// 3. Clear the stroke from the visuals
-						if (enemy.visuals && enemy.visuals.setStrokeStyle) {
-							enemy.visuals.setStrokeStyle(2, 0xffffff); // Return to normal
-						}
-					});
-				}
-			});
-            lastModTime = time; 
-        }
-    }
-    // PLAYER MOVEMENT CONTROLS
-    if (!isJumping) {
-        player.body.setVelocity(0);
-        if (keys.W.isDown) this.physics.velocityFromRotation(player.rotation, s, player.body.velocity);
-        if (keys.S.isDown) this.physics.velocityFromRotation(player.rotation, -s/2, player.body.velocity);
-        if (keys.A.isDown) player.body.setAngularVelocity(-200);
-        else if (keys.D.isDown) player.body.setAngularVelocity(200);
-        else player.body.setAngularVelocity(0);
-    }
-    // PRIMARY FIRE
-	if (this.input.activePointer.isDown) {
-		fire(this, 'L');
-	}
-	// SECONDARY FIRE
-	if (keys.F.isDown) {
-		fire(this, 'R');
-	}
-
-    if (isRageActive && time % 150 < 20) { // Spawns slightly less often (every 150ms)
-		// We use the real buildPlayerMech for that "Great" look
-		let ghost = buildPlayerMech(this, loadout.chassis, 0xff0000);
-		ghost.setPosition(torso.x, torso.y).setRotation(torso.rotation);
-    
-		// Force the "Red Fury" tint on all parts
-		ghost.list.forEach(shape => {
-			if (shape.setTint) shape.setTint(0xff0000);
-		});
-
-		ghost.setAlpha(0.4).setDepth(9);
-    
-		this.tweens.add({
-			targets: ghost,
-			alpha: 0,
-			scale: 1.1, 
-			duration: 400,
-			onComplete: () => ghost.destroy() // Critical for preventing crashes
-		});
-	}
-
-    // VISUAL POSITIONING 
-    torso.setPosition(player.x, player.y);
-    let targetAngle = Phaser.Math.Angle.Between(
-        player.x, 
-        player.y, 
-        this.input.activePointer.worldX, 
-        this.input.activePointer.worldY
-    );
-    // Use a small "Lerp" to smooth the torso rotation so it doesn't 'snap'
-    torso.rotation = Phaser.Math.Angle.RotateTo(
-        torso.rotation, 
-        targetAngle, 
-        0.1 // Adjust this for "turret traverse speed"
-    );
-
-    // SYNC POSITION
-    torso.setPosition(player.x, player.y);
-    shieldGraphic.setPosition(player.x, player.y);
-   
-    // Position and toggle the blue shield bubble
-    shieldGraphic.setPosition(player.x, player.y).setVisible(isShieldActive);
-	
-    // HUD COOLDOWN VISUALS
-    if (isDeployed) {
-        // PRIMARY WEAPON COOLDOWN
-        let cdL = document.getElementById('cd-L');
-        if (cdL && loadout.L !== 'none') {
-            let totalTime = WEAPONS[loadout.L].reload;
-            let remaining = Math.max(0, reloadL - time);
-            let percent = (totalTime > 0) ? (remaining / totalTime) * 100 : 0;
-            cdL.style.height = percent + "%";
-        }
-
-        // SECONDARY WEAPON COOLDOWN
-        let cdR = document.getElementById('cd-R');
-        if (cdR && loadout.R !== 'none') {
-            let totalTime = WEAPONS[loadout.R].reload;
-            let remaining = Math.max(0, reloadR - time);
-            let percent = (totalTime > 0) ? (remaining / totalTime) * 100 : 0;
-            cdR.style.height = percent + "%";
-        }
-		
-        // SYSTEM MODIFICATION COOLDOWN
-        let cdM = document.getElementById('cd-M');
-        let txtM = document.getElementById('txt-M');
-        if (cdM && loadout.mod !== 'none') {
-            if (txtM) txtM.innerText = loadout.mod.toUpperCase();
-            let cooldownDuration = WEAPONS[loadout.mod].cooldown;
-            let elapsed = time - lastModTime;
-            let percent = 0;
-            if (isShieldActive || isJumping || isRageActive) {
-                percent = 100;
-            } 
-            else if (lastModTime > 0 && elapsed < cooldownDuration) {
-                percent = (1 - (elapsed / cooldownDuration)) * 100;
-            }
-            cdM.style.height = percent + "%";
-        }
+/** Passive shield regeneration — kicks in 5 s after last hit. */
+function handleShieldRegen(time) {
+    const secondsSinceHit = (time - lastDamageTime) / 1000;
+    if (lastDamageTime > 0 && secondsSinceHit >= 5 && player.shield < player.maxShield) {
+        player.shield = Math.min(player.maxShield, player.shield + 1.0);
+        updateBars();
     }
 }
 
-// DEPLOY PLAYER MECH
+/** Per-frame enemy AI: movement, strafing, and firing. */
+function handleEnemyAI(scene, time) {
+    enemies.getChildren().forEach(enemy => {
+        const dist  = Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y);
+        const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+        const speed = 120;
+
+        if (!enemy.isStunned) {
+            let vx = 0, vy = 0;
+
+            if (dist > 350) {
+                // Advance toward player
+                vx = Math.cos(angle) * speed;
+                vy = Math.sin(angle) * speed;
+            } else if (dist < 200) {
+                // Back away from player
+                vx = -Math.cos(angle) * (speed * 1.2);
+                vy = -Math.sin(angle) * (speed * 1.2);
+            } else {
+                // Strafe perpendicular to player
+                const strafe = angle + Math.PI / 2;
+                vx = Math.cos(strafe) * speed;
+                vy = Math.sin(strafe) * speed;
+            }
+
+            // Fire if in range and cooldown elapsed
+            if (dist < 500 && (!enemy.lastFireTime || time > enemy.lastFireTime + 1800)) {
+                enemyFire(scene, enemy);
+                enemy.lastFireTime = time + Phaser.Math.Between(-200, 200);
+            }
+
+            enemy.body.setVelocity(vx, vy);
+            enemy.body.setImmovable(false);
+            enemy.visuals.setRotation(angle);
+        } else {
+            enemy.body.setVelocity(0, 0);
+            enemy.body.setImmovable(true);
+        }
+
+        // Always sync visual container to physics body
+        enemy.visuals.setPosition(enemy.x, enemy.y);
+        if (enemy.bar) enemy.bar.setPosition(enemy.x, enemy.y - 45);
+    });
+}
+
+/** WASD movement and SPACE mod activation. */
+function handlePlayerMovement(scene, time) {
+    const speed = CHASSIS[loadout.chassis].spd * (isRageActive ? 1.75 : 1);
+    const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod].cooldown : 0;
+
+    // Mod activation (SPACE)
+    if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + modCooldown) {
+        activateMod(scene, time);
+    }
+
+    // Movement
+    if (!isJumping) {
+        player.body.setVelocity(0);
+        if (keys.W.isDown) scene.physics.velocityFromRotation(player.rotation, speed,      player.body.velocity);
+        if (keys.S.isDown) scene.physics.velocityFromRotation(player.rotation, -speed / 2, player.body.velocity);
+
+        if      (keys.A.isDown) player.body.setAngularVelocity(-200);
+        else if (keys.D.isDown) player.body.setAngularVelocity(200);
+        else                    player.body.setAngularVelocity(0);
+    }
+}
+
+/** Primary (M1) and secondary (F) weapon firing. */
+function handlePlayerFiring(scene) {
+    if (scene.input.activePointer.isDown) fire(scene, 'L');
+    if (keys.F.isDown)                    fire(scene, 'R');
+}
+
+/** Rage mode: spawns fading red ghost mechs behind the player. */
+function handleRageGhosts(scene, time) {
+    if (!isRageActive || time % 150 >= 20) return;
+
+    const ghost = buildPlayerMech(scene, loadout.chassis, 0xff0000);
+    ghost.setPosition(torso.x, torso.y).setRotation(torso.rotation);
+    ghost.list.forEach(shape => { if (shape.setTint) shape.setTint(0xff0000); });
+    ghost.setAlpha(0.4).setDepth(9);
+
+    scene.tweens.add({
+        targets: ghost,
+        alpha: 0, scale: 1.1,
+        duration: 400,
+        onComplete: () => ghost.destroy()
+    });
+}
+
+/** Sync torso/shield graphics to physics body and update turret aim. */
+function syncVisuals(scene, time) {
+    torso.setPosition(player.x, player.y);
+    shieldGraphic.setPosition(player.x, player.y).setVisible(isShieldActive);
+
+    const targetAngle = Phaser.Math.Angle.Between(
+        player.x, player.y,
+        scene.input.activePointer.worldX,
+        scene.input.activePointer.worldY
+    );
+    torso.rotation = Phaser.Math.Angle.RotateTo(torso.rotation, targetAngle, 0.1);
+}
+
+/** Drive the cooldown overlay heights in the HUD weapon slots. */
+function updateCooldownOverlays(time) {
+    if (!isDeployed) return;
+
+    // Primary weapon
+    updateSlotCooldown('cd-L', loadout.L, reloadL, time);
+
+    // Secondary weapon
+    updateSlotCooldown('cd-R', loadout.R, reloadR, time);
+
+    // System mod
+    const cdM  = document.getElementById('cd-M');
+    const txtM = document.getElementById('txt-M');
+    if (cdM && loadout.mod !== 'none') {
+        if (txtM) txtM.innerText = loadout.mod.toUpperCase();
+        const total   = WEAPONS[loadout.mod].cooldown;
+        const elapsed = time - lastModTime;
+        let pct = 0;
+        if (isShieldActive || isJumping || isRageActive) {
+            pct = 100;
+        } else if (lastModTime > 0 && elapsed < total) {
+            pct = (1 - elapsed / total) * 100;
+        }
+        cdM.style.height = pct + '%';
+    }
+}
+
+/** Helper: update a single weapon-slot cooldown overlay. */
+function updateSlotCooldown(elementId, weaponKey, reloadTimestamp, time) {
+    const el = document.getElementById(elementId);
+    if (!el || !weaponKey || weaponKey === 'none') return;
+    const total     = WEAPONS[weaponKey].reload;
+    const remaining = Math.max(0, reloadTimestamp - time);
+    el.style.height = (total > 0 ? (remaining / total) * 100 : 0) + '%';
+}
+
+
+// ================================================================
+// DEPLOY
+// ================================================================
+
 function deployMech() {
-    document.getElementById('ui-layer').style.display = 'none'; 
-    const hud = document.getElementById('hud-container');
-    if (hud) {
-        hud.style.display = 'flex'; 
-    }    
-	
-    let scene = game.scene.scenes[0];
-    let s = CHASSIS[loadout.chassis];
-	let legW, legH;	
+    document.getElementById('ui-layer').style.display = 'none';
+    document.getElementById('hud-container').style.display = 'flex';
+
+    const scene = game.scene.scenes[0];
+    const s     = CHASSIS[loadout.chassis];
+
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(false);
-    if (scene.hangarGrid) scene.hangarGrid.setVisible(false);
-	
-	// CHASSIS LEG DIMENSIONS
-	if (loadout.chassis === 'light') {
-		legW = 40; legH = 30;
-	} else if (loadout.chassis === 'heavy') {
-		legW = 70; legH = 40;
-	} else {
-		legW = 60; legH = 40; // Medium/Default
-	}	
-	
-	// CHASSIS LEGS
-	player = scene.add.rectangle(2000, 2000, legW, legH, 0x222222)
-		.setStrokeStyle(2, 0xffffff)
-		.setDepth(5);	
-	
+    if (scene.hangarGrid)    scene.hangarGrid.setVisible(false);
+
+    // Leg hitbox dimensions per chassis
+    const legDims = { light: [40,30], medium: [60,40], heavy: [70,40] };
+    const [legW, legH] = legDims[loadout.chassis] ?? legDims.medium;
+
+    // Physics body (legs / lower hull)
+    player = scene.add.rectangle(2000, 2000, legW, legH, 0x222222)
+        .setStrokeStyle(2, 0xffffff)
+        .setDepth(5);
     scene.physics.add.existing(player);
-	player.body.setCircle(35);
-	player.body.setOffset(0, -10);
-    player.setScale(s.scale).body.setCollideWorldBounds(true); 
-	torso = buildPlayerMech(scene, loadout.chassis, loadout.color);
+    player.body.setCircle(35);
+    player.body.setOffset(0, -10);
+    player.setScale(s.scale);
+    player.body.setCollideWorldBounds(true);
+
+    // Torso / turret
+    torso = buildPlayerMech(scene, loadout.chassis, loadout.color);
     torso.setDepth(10);
-	
-	// 1. Define the World and Camera limits (4000x4000)
+
+    // World & camera
     scene.physics.world.setBounds(0, 0, 4000, 4000);
     scene.cameras.main.setBounds(0, 0, 4000, 4000);
-	
-    // 2. Force the camera to jump to the spawn point (2000, 2000) immediately
     scene.cameras.main.centerOn(2000, 2000);
-	
-    // 3. Now start following the player
-    scene.cameras.main.startFollow(player, true, 0.5, 0.5);	
-	scene.physics.add.overlap(enemyBullets, player, (p, bullet) => {
-		if (!bullet || !bullet.active) return;	
-		let bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
-		if (isShieldActive) {
-			scene.sound.play('snd-shield-hit', { volume: 0.6 });
-			createShieldSparks(scene, bullet.x, bullet.y);
-			showDamageText(scene, bullet.x, bullet.y, 0, true); 
-			bullet.destroy();
-			return; 
-		}		
-		
-		if (player.shield > 0 && (player.shield - 7.5) <= 0) { 
-			createShieldBreak(scene, p.x, p.y);	
-		}			
-		
-		//scene.sound.play('snd-impact-metal', { volume: 0.5 });
-        createImpactSparks(scene, p.x, p.y);
-		let currentShield = player.shield > 0;
-		showDamageText(scene, p.x, p.y, 15, currentShield);	
-		bullet.destroy(); 
-        processPlayerDamage(15, bulletAngle);
-    });	
-	
-	// PLAYER MECH COMPONENT HEALTH
-	player.comp = {
-		core:  { hp: s.coreHP, max: s.coreHP },
-		lArm:  { hp: s.armHP,  max: s.armHP },
-		rArm:  { hp: s.armHP,  max: s.armHP },
-		legs:  { hp: s.legHP,  max: s.legHP }
-	};
-	
-	player.maxHp = getTotalHP(loadout.chassis);
-	player.hp = player.maxHp;
-    player.maxShield = 100;
-	player.shield = 100;
-	refreshMechColor();
-	scene.time.delayedCall(10, () => refreshMechColor());
+    scene.cameras.main.startFollow(player, true, 0.5, 0.5);
 
+    // Enemy bullet overlap
+    scene.physics.add.overlap(enemyBullets, player, (p, bullet) => {
+        if (!bullet || !bullet.active) return;
+
+        const bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
+
+        if (isShieldActive) {
+            scene.sound.play('snd-shield-hit', { volume: 0.6 });
+            createShieldSparks(scene, bullet.x, bullet.y);
+            showDamageText(scene, bullet.x, bullet.y, 0, true);
+            bullet.destroy();
+            return;
+        }
+
+        if (player.shield > 0 && player.shield - 7.5 <= 0) {
+            createShieldBreak(scene, p.x, p.y);
+        }
+
+        createImpactSparks(scene, p.x, p.y);
+        showDamageText(scene, p.x, p.y, 15, player.shield > 0);
+        bullet.destroy();
+        processPlayerDamage(15, bulletAngle);
+    });
+
+    // Component HP
+    player.comp = {
+        core: { hp: s.coreHP, max: s.coreHP },
+        lArm: { hp: s.armHP,  max: s.armHP  },
+        rArm: { hp: s.armHP,  max: s.armHP  },
+        legs: { hp: s.legHP,  max: s.legHP  }
+    };
+    player.maxHp     = getTotalHP(loadout.chassis);
+    player.hp        = player.maxHp;
+    player.maxShield = 100;
+    player.shield    = 100;
+
+    refreshMechColor();
+    scene.time.delayedCall(10, () => refreshMechColor()); // One-frame safety flush
+
+    // Shield bubble graphic
     shieldGraphic = scene.add.circle(0, 0, 50, 0x00ffff, 0.15)
         .setStrokeStyle(2, 0x00ffff)
         .setVisible(false)
         .setDepth(12);
-    
-    smokeParticles = scene.add.particles(0, 0, 'smoke', { 
-        scale: { start: 0.5, end: 0 }, 
-        alpha: { start: 0.4, end: 0 }, 
-        lifespan: 500, 
-        speed: 30, 
-        follow: player, 
-        on: false 
+
+    // Smoke particle system (used when mech is damaged)
+    smokeParticles = scene.add.particles(0, 0, 'smoke', {
+        scale:   { start: 0.5, end: 0 },
+        alpha:   { start: 0.4, end: 0 },
+        lifespan: 500,
+        speed:    30,
+        follow:   player,
+        on:       false
     }).setDepth(4);
 
-    // Player and Enemy collision
+    // Colliders
     scene.physics.add.collider(player, enemies);
-	scene.physics.add.collider(enemies, enemies);
-	
-    player.isProcessingDamage = false; 
+    scene.physics.add.collider(enemies, enemies);
+
+    // Reset state
+    player.isProcessingDamage = false;
     lastDamageTime = -99999;
-    lastModTime = -10000;
-    isDeployed = true;
+    lastModTime    = -10000;
+    isDeployed     = true;
+
     updateHUD();
     updateBars();
 }
 
-// MECH PAPERDOLL HUD COLORS
-function updatePaperDoll() {
-    if (!player || !isDeployed) return;
 
-    // Helper to determine color based on health percentage
-    const getColor = (hp, max) => {
-        let pct = hp / max;
-        if (pct <= 0) return '#1a1a1a';    // Destroyed (Dark Gray/Black)
-        if (pct <= 0.25) return '#ff0000'; // Critical (Red)
-        if (pct <= 0.50) return '#ffaa00'; // Damaged (Orange)
-        if (pct <= 0.75) return '#ffff00'; // Caution (Yellow)
-        return '#00ff00';                  // Healthy (Green)
-    };
+// ================================================================
+// MOD ACTIVATION
+// ================================================================
 
-    // 1. Update Core
-    let coreColor = getColor(player.comp.core.hp, player.comp.core.max);
-    document.getElementById('doll-core').style.background = coreColor;
-
-    // 2. Update Left Side (Arm + Shoulder share health)
-    let lArmColor = getColor(player.comp.lArm.hp, player.comp.lArm.max);
-    document.getElementById('doll-lArm').style.background = lArmColor;
-    document.getElementById('doll-lShoulder').style.background = lArmColor;
-
-    // 3. Update Right Side (Arm + Shoulder share health)
-    let rArmColor = getColor(player.comp.rArm.hp, player.comp.rArm.max);
-    document.getElementById('doll-rArm').style.background = rArmColor;
-    document.getElementById('doll-rShoulder').style.background = rArmColor;
-
-    // 4. Update Legs (Left and Right visuals share the 'legs' health pool)
-    let legColor = getColor(player.comp.legs.hp, player.comp.legs.max);
-    document.getElementById('doll-lLeg').style.background = legColor;
-    document.getElementById('doll-rLeg').style.background = legColor;
-}
-
-// SPAWN ENEMY MECH
-function spawnEnemy(scene) {
-    let x = Phaser.Math.Between(200, window.innerWidth - 200);
-    let y = Phaser.Math.Between(200, window.innerHeight - 200);
-
-    // 1. Create the Hitbox (Physical presence)
-    let e = scene.add.rectangle(x, y, 50, 50, 0x000000, 0); // Invisible hitbox
-    scene.physics.add.existing(e);
-    
-    // 2. Create the Visuals (The appearance)
-    e.visuals = buildEnemyMech(scene);
-    e.visuals.setPosition(x, y);
-
-    e.health = 450; 
-    e.maxHealth = 450; 
-    
-    e.bar = scene.add.rectangle(x, y-45, 40, 5, 0x00ff00);
-    enemies.add(e);
-}
-
-// BUILD PLAYER MECH
-function buildPlayerMech(scene, type, color) {
-    let container = scene.add.container(0, 0);
-    let s = CHASSIS[type].scale;
-    if (type === 'heavy') {
-        let shoulders = scene.add.rectangle(0, 0, 40, 100, 0x333333).setStrokeStyle(2, 0xffffff);
-        let core = scene.add.rectangle(0, 0, 60, 70, 0x333333).setStrokeStyle(2, 0xffffff);
-		let head = scene.add.rectangle(0, 0, 40, 30, color).setStrokeStyle(2, 0xffffff).setName('mechHead');
-        let cockpit = scene.add.rectangle(20, 0, 8, 30, 0x0F61A1).setStrokeStyle(1, 0xffffff);
-        container.add([shoulders, core, head, cockpit]);
-    } else if (type === 'light') {
-        let shoulders = scene.add.rectangle(0, 0, 25, 60, 0x444444).setStrokeStyle(2, 0xffffff);
-        let core = scene.add.rectangle(0, 0, 40, 40, 0x444444).setStrokeStyle(2, 0xffffff);
-		let head = scene.add.rectangle(0, 0, 25, 20, color).setStrokeStyle(2, 0xffffff).setName('mechHead');
-        let cockpit = scene.add.rectangle(10, 0, 10, 20, 0x0F61A1).setStrokeStyle(1, 0xffffff);
-        container.add([shoulders, core, head, cockpit]);
-    } else {
-        let shoulders = scene.add.rectangle(0, 0, 35, 80, 0x444444).setStrokeStyle(2, 0xffffff);
-        let core = scene.add.rectangle(0, 0, 50, 50, 0x444444).setStrokeStyle(2, 0xffffff);
-		let head = scene.add.rectangle(0, 0, 35, 25, color).setStrokeStyle(2, 0xffffff).setName('mechHead');
-        let cockpit = scene.add.rectangle(14, 0, 10, 25, 0x0F61A1).setStrokeStyle(1, 0xffffff);
-        container.add([shoulders, core, head, cockpit]);
+function activateMod(scene, time) {
+    switch (loadout.mod) {
+        case 'jump':   activateJump(scene);   break;
+        case 'shield': activateShield(scene); break;
+        case 'rage':   activateRage(scene);   break;
+        case 'emp':    activateEMP(scene, time); break;
     }
-    container.setScale(s);
-    return container;
 }
 
-// BUILD ENEMY MECH
-function buildEnemyMech(scene) {
-    let container = scene.add.container(0, 0);
-    
-    // Enemy Colors
-    let bodyCol = 0x664400; // Dark gray
-    let headCol = 0xffaa00; // Dark red for the "Head"
-    let eyeCol = 0xff0000;  // Bright red for the "Cockpit"
-
-    let shoulders = scene.add.rectangle(0, 0, 35, 80, bodyCol).setStrokeStyle(2, 0xffffff);
-    let core = scene.add.rectangle(0, 0, 50, 50, bodyCol).setStrokeStyle(2, 0xffffff);
-    let head = scene.add.rectangle(0, 0, 35, 25, headCol).setStrokeStyle(2, 0xffffff);
-    let cockpit = scene.add.rectangle(14, 0, 10, 25, eyeCol).setStrokeStyle(1, 0xffffff);
-
-    container.add([shoulders, core, head, cockpit]);
-    return container;
-}
-
-// REFRESH MECH COLOR
-function refreshMechColor() {
-    if (!torso || !torso.list || !isDeployed) return;
-
-    let headColor = isRageActive ? 0xff0000 : loadout.color;
-    // Core/Shoulders become 40% of the original brightness
-    let bodyColor = isRageActive ? 0x660000 : darkenColor(loadout.color, 0.4);
-
-    torso.list.forEach(shape => {
-        // Only attempt to change color if the shape exists and has the property
-        if (shape && shape.setFillStyle) {
-            if (shape.name === 'mechHead') {
-                shape.setFillStyle(headColor);
-            } else if (shape.width >= 25) { 
-                shape.setFillStyle(bodyColor);
-            }
+function activateJump(scene) {
+    isJumping = true;
+    scene.physics.velocityFromRotation(player.rotation, WEAPONS.jump.jumpSpeed, player.body.velocity);
+    scene.tweens.add({
+        targets: [player, torso],
+        scale: '+=0.2',
+        duration: WEAPONS.jump.airTime,
+        yoyo: true,
+        onComplete: () => {
+            isJumping = false;
+            lastModTime = game.scene.scenes[0].time.now;
         }
     });
 }
 
-// MECH ATTRIBUTES
-const CHASSIS = {
-    light: { 
-        max: 75, spd: 350, scale: 0.7, 
-        coreHP: 350, armHP: 200, legHP: 250 
-    }, 
-    medium: { 
-        max: 150, spd: 250, scale: 1.0, 
-        coreHP: 450, armHP: 300, legHP: 350
-    },
-    heavy: { 
-        max: 250, spd: 150, scale: 1.4, 
-        coreHP: 550, armHP: 400, legHP: 450
-    }
-};
-
-// MECH TOTAL HEALTH
-function getTotalHP(type) {
-    let s = CHASSIS[type];
-    if (!s) return 0;
-    return s.coreHP + (s.armHP * 2) + s.legHP;
+function activateShield(scene) {
+    isShieldActive = true;
+    scene.time.delayedCall(WEAPONS.shield.shieldTime, () => {
+        isShieldActive = false;
+        lastModTime = game.scene.scenes[0].time.now;
+    });
 }
 
-// MECH BODY ARMOUR COLORS
-function darkenColor(hex, amount = 0.4) {
-    if (hex === undefined || hex === null) return 0x333333; 
-    let r = ((hex >> 16) & 0xFF) * amount;
-    let g = ((hex >> 8) & 0xFF) * amount;
-    let b = (hex & 0xFF) * amount;
-    return (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
+function activateRage(scene) {
+    isRageActive = true;
+    refreshMechColor();
+    scene.time.delayedCall(WEAPONS.rage.rageTime, () => {
+        isRageActive = false;
+        refreshMechColor();
+        lastModTime = game.scene.scenes[0].time.now;
+    });
 }
 
-// WEAPON ATTRIBUTES
-const WEAPONS = {
-    // PRIMARY WEAPONS 
-    'smg':   { name: 'SMG',   reload: 50,   dmg: 3,   weight: 25,  bulletSize: 4,  speed: 900 },
-    'mg':    { name: 'MG',    reload: 300,  dmg: 30,  weight: 50,  bulletSize: 6,  speed: 850 },
-    'sg':    { name: 'SG',    reload: 750,  dmg: 12,  weight: 75,  bulletSize: 5,  speed: 600, pellets: 5, range: 600 },
-	'br':    { name: 'BR',    reload: 1000, dmg: 24,  weight: 75,  bulletSize: 5,  speed: 1100, burst: 3 },
-    'hr':    { name: 'HR',    reload: 1750, dmg: 120, weight: 100, bulletSize: 12, speed: 1100 },
-    // SECONDARY WEAPONS 
-    'sr':    { name: 'SR',    reload: 2500, dmg: 200, weight: 125, bulletSize: 6,  speed: 2000 },
-    'gl':    { name: 'GL',    reload: 3500, dmg: 150, weight: 125, explosive: true },
-    'rl':    { name: 'RL',    reload: 3500, dmg: 150, weight: 150, explosive: true, bulletSize: 12, speed: 800},
-    'plsm':  { name: 'PLSM',  reload: 3500, dmg: 300, weight: 150, size: 30 },
-    // SYSTEM MODIFICATIONS
-    'none':   { name: 'NONE',   weight: 0 },
-    'jump':   { name: 'JUMP',   weight: 25 , jumpSpeed: 900, airTime: 200, cooldown: 3500},
-    'shield': { name: 'SHIELD', weight: 50, shieldTime: 3500, cooldown: 7000 },
-	'rage':   { name: 'RAGE',   weight: 75, rageTime: 3500, cooldown: 10500 },
-	'emp':    { name: 'EMP',    weight: 75, radius: 350, empSpeed: 400, stunTime: 3500, cooldown: 10500 }
-};
+function activateEMP(scene, time) {
+    // Expanding ring visual
+    const ring = scene.add.circle(player.x, player.y, 10, 0x00ffff, 0.2)
+        .setStrokeStyle(2, 0x00ffff)
+        .setDepth(12);
+    scene.tweens.add({
+        targets: ring,
+        radius: WEAPONS.emp.radius,
+        alpha: 0,
+        duration: WEAPONS.emp.empSpeed,
+        onComplete: () => ring.destroy()
+    });
 
-// INITIAL LOADOUT CONFIGURATION
-let loadout = {
-    chassis: 'light',  
-    L: 'smg',
-    R: 'none',     
-    mod: 'none',
-    color: 0x00ff00 
-};
+    // Stun nearby enemies
+    enemies.getChildren().forEach(enemy => {
+        if (Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y) < WEAPONS.emp.radius) {
+            enemy.isStunned = true;
+            if (enemy.visuals?.setStrokeStyle) enemy.visuals.setStrokeStyle(4, 0x00ffff);
 
-// PLAYER WEAPON FIRING
-function fire(scene, side) { 
+            scene.time.delayedCall(WEAPONS.emp.stunTime, () => {
+                enemy.isStunned = false;
+                enemy.body.setImmovable(false);
+                if (enemy.visuals?.setStrokeStyle) enemy.visuals.setStrokeStyle(2, 0xffffff);
+            });
+        }
+    });
+
+    lastModTime = time;
+}
+
+
+// ================================================================
+// ENEMY SPAWNING & AI FIRING
+// ================================================================
+
+function spawnEnemy(scene) {
+    const x = Phaser.Math.Between(200, window.innerWidth  - 200);
+    const y = Phaser.Math.Between(200, window.innerHeight - 200);
+
+    // Invisible hitbox
+    const e = scene.add.rectangle(x, y, 50, 50, 0x000000, 0);
+    scene.physics.add.existing(e);
+
+    // Visual mech
+    e.visuals = buildEnemyMech(scene);
+    e.visuals.setPosition(x, y);
+
+    e.health    = 450;
+    e.maxHealth = 450;
+    e.bar       = scene.add.rectangle(x, y - 45, 40, 5, 0x00ff00);
+
+    enemies.add(e);
+}
+
+function enemyFire(scene, enemy) {
+    if (!isDeployed || !player?.active || enemy.isStunned) return;
+
+    const b = scene.add.circle(enemy.x, enemy.y, 6, 0xff0000);
+    scene.physics.add.existing(b);
+    b.body.setAllowGravity(false);
+    enemyBullets.add(b);
+
+    const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+    scene.physics.velocityFromRotation(angle, 600, b.body.velocity);
+    scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
+}
+
+
+// ================================================================
+// WEAPON FIRING
+// ================================================================
+
+function fire(scene, side) {
     if (!isDeployed || isJumping) return;
-    let now = scene.time.now;
-    
-    let wKey = (side === 'L') ? loadout.L : loadout.R;
-	if (!wKey || wKey === 'none') return;
-    let weapon = WEAPONS[wKey];
-    if (!weapon || wKey === 'none') return;
 
-	let barrelDist = 40; // Default for Heavy
-    if (loadout.chassis === 'light') barrelDist = 25;
-    else if (loadout.chassis === 'medium') barrelDist = 32;
+    const now   = scene.time.now;
+    const wKey  = side === 'L' ? loadout.L : loadout.R;
+    if (!wKey || wKey === 'none') return;
 
-    let actualReload = isRageActive ? (weapon.reload * 0.5) : weapon.reload;
-    let last = (side === 'L') ? reloadL : reloadR;
+    const weapon = WEAPONS[wKey];
+    if (!weapon) return;
 
-    // Check cooldown
-    if (now < last) return;
+    const reloadActual = isRageActive ? weapon.reload * 0.5 : weapon.reload;
+    const lastFired    = side === 'L' ? reloadL : reloadR;
+    if (now < lastFired) return;
 
-    // Update HUD visual for the specific slot
-    let slotId = 'slot-' + side;
-    let slotEl = document.getElementById(slotId);
+    // Flash the weapon slot
+    const slotEl = document.getElementById('slot-' + side);
     if (slotEl) {
         slotEl.classList.add('active-firing');
         scene.time.delayedCall(100, () => slotEl.classList.remove('active-firing'));
     }
 
-    // GRENADE LAUNCHER
-    if (wKey === 'gl') {
-        let targetX = scene.input.activePointer.worldX;
-        let targetY = scene.input.activePointer.worldY;
-        let distance = Phaser.Math.Distance.Between(torso.x, torso.y, targetX, targetY);
+    // Barrel distance offset (chassis-dependent)
+    const barrelDist = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
 
-        // 1. Create the Grenade
-        let ball = scene.add.circle(torso.x, torso.y, 10, 0xffaa00).setStrokeStyle(2, 0xffffff).setDepth(14);
-        scene.physics.add.existing(ball);
-        scene.physics.velocityFromRotation(torso.rotation, distance * 2, ball.body.velocity);
-        ball.body.setDrag(distance * 2); 
-
-        // 2. Create the Yellow Timer Text
-        let fuseTime = 2000; 
-        let fuseStarted = false;
-        let startTime = 0;
-        
-        let timerText = scene.add.text(ball.x, ball.y - 20, "2.0", {
-            font: "bold 14px monospace",
-            fill: "#ffff00"
-        }).setOrigin(0.5).setDepth(15).setVisible(false);
-
-        // 3. Update Loop
-        let timerEvent = scene.time.addEvent({
-            delay: 50,
-            callback: () => {
-                if (!ball.active) {
-                    timerText.destroy();
-                    timerEvent.destroy();
-                    return;
-                }
-                timerText.setPosition(ball.x, ball.y - 20);
-                let speed = ball.body.velocity.length();
-                
-                if (!fuseStarted && speed < 20) {
-                    fuseStarted = true;
-                    startTime = scene.time.now;
-                    timerText.setVisible(true);
-                    
-                    scene.time.delayedCall(fuseTime, () => { 
-                        if(ball.active) { 
-                            createExplosion(scene, ball.x, ball.y, 100, weapon.dmg);
-                            ball.destroy(); 
-                            timerText.destroy();
-                        }
-                    });
-                }
-
-                if (fuseStarted) {
-                    let elapsed = scene.time.now - startTime;
-                    let remaining = Math.max(0, (fuseTime - elapsed) / 1000);
-                    timerText.setText(remaining.toFixed(1));
-                    if (remaining < 0.5) {
-                        timerText.setFill(scene.time.now % 200 < 100 ? "#ffffff" : "#ff0000");
-                    }
-                }
-            },
-            loop: true
-        });
-    }
-    
-    // ROCKET LAUNCHER
-    else if (wKey === 'rl') {
-        createMuzzleFlash(scene, torso.x, torso.y, torso.rotation, barrelDist);
-        let rocket = scene.add.rectangle(torso.x, torso.y, 24, 10, 0xff4400).setDepth(14);
-        scene.physics.add.existing(rocket);
-        rocket.setRotation(torso.rotation);
-        scene.physics.velocityFromRotation(torso.rotation, weapon.speed, rocket.body.velocity);
-
-        let particles = scene.add.particles(0, 0, 'smoke', {
-            speed: 20,
-            scale: { start: 0.6, end: 0 },
-            alpha: { start: 0.5, end: 0 },
-            lifespan: 400,
-            frequency: 20,
-            blendMode: 'ADD',
-            follow: rocket 
-        }).setDepth(13);
-
-        scene.physics.add.overlap(rocket, enemies, (r, e) => {
-            createExplosion(scene, r.x, r.y, 80, weapon.dmg); 
-			particles.stop();
-			scene.time.delayedCall(400, () => particles.destroy());
-            r.destroy();
-        });
-
-        scene.time.delayedCall(2000, () => {
-            if (rocket.active) {
-                particles.stop();
-                scene.time.delayedCall(400, () => particles.destroy());
-                rocket.destroy();
-            }
-        });
-    }
-    
-    // SHOTGUN 
-    else if (wKey === 'sg') {
-        const pellets = weapon.pellets;
-        const spread = 0.3; 
-        for (let i = 0; i < pellets; i++) {
-            let offsetAngle = (Math.random() - 0.5) * spread;
-            let b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
-            createMuzzleFlash(scene, torso.x, torso.y, torso.rotation + offsetAngle, barrelDist);
-            scene.physics.add.existing(b);
-            b.damageValue = weapon.dmg;
-            bullets.add(b);
-            scene.physics.velocityFromRotation(torso.rotation + offsetAngle, weapon.speed, b.body.velocity);
-            scene.time.delayedCall(800, () => { if(b.active) b.destroy(); }); 
-        }
-    }
-    
-    // PLASMA RIFLE
-    else if (wKey === 'plsm') {
-        let p = scene.add.circle(torso.x, torso.y, 25, 0x00ffff).setAlpha(0.8);
-        scene.physics.add.existing(p);
-        p.damageValue = weapon.dmg;
-        bullets.add(p);
-        scene.physics.velocityFromRotation(torso.rotation, 300, p.body.velocity);
-        scene.tweens.add({ targets: p, alpha: 0.3, duration: 100, yoyo: true, repeat: -1 });
-        scene.time.delayedCall(3000, () => { if(p.active) p.destroy(); });
-    }
-    
-	// SNIPER RIFLE
-	else if (wKey === 'sr') {
-		let b = scene.add.rectangle(torso.x, torso.y, 60, 8, 0xffffff).setOrigin(0.5);
-		scene.physics.add.existing(b);
-		b.setRotation(torso.rotation);
-		b.setStrokeStyle(2, 0x00ffff);
-		b.damageValue = weapon.dmg;
-		bullets.add(b);
-		scene.physics.velocityFromRotation(torso.rotation, weapon.speed, b.body.velocity);
-	    // MAKE BULLET PULSE
-		scene.tweens.add({
-			targets: b,
-			scaleY: 0.5,
-			duration: 50,
-			yoyo: true,
-			repeat: -1
-		});
-		createMuzzleFlash(scene, torso.x, torso.y, torso.rotation, barrelDist, 0xffffff);
-		// CREATE FADING TRACER LINE
-		let tracer = scene.add.line(0, 0, torso.x, torso.y, torso.x, torso.y, 0x00ffff)
-		.setOrigin(0, 0)
-		.setLineWidth(2)
-		.setAlpha(0.6);
-
-		scene.tweens.add({
-			targets: tracer,
-			alpha: 0,
-			duration: 500,
-			onUpdate: () => {
-				// STRETCH LINE FROM PLAYER TO BULLET
-				if (b.active) tracer.setTo(torso.x, torso.y, b.x, b.y);
-			},
-			onComplete: () => tracer.destroy()
-		});
-		scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
-		player.body.velocity.x -= Math.cos(torso.rotation) * 400;
-		player.body.velocity.y -= Math.sin(torso.rotation) * 400;
-		scene.cameras.main.shake(150, 0.015);
-		scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
-	}
-	
-    // STANDARD PROJECTILES (SMG, MG, BR, HR)
-    else {
-        const fireRound = (dmgValue, offsetAngle = 0) => {
-            let b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
-            scene.physics.add.existing(b); 
-            b.damageValue = dmgValue;
-            bullets.add(b); 
-            scene.physics.velocityFromRotation(torso.rotation + offsetAngle, weapon.speed, b.body.velocity);  
-            
-            // Standard yellow flash
-            createMuzzleFlash(scene, torso.x, torso.y, torso.rotation + offsetAngle, barrelDist);
-            
-            scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
-        };
-
-        if (wKey === 'br') {
-            for (let i = 0; i < weapon.burst; i++) {
-                scene.time.delayedCall(i * 60, () => fireRound(weapon.dmg, 0));
-            }
-        } else {
-            fireRound(weapon.dmg, 0);
-        }
-        
-        if (wKey === 'hr') {
-            let recoil = 150;
-            player.body.velocity.x -= Math.cos(torso.rotation) * recoil;
-            player.body.velocity.y -= Math.sin(torso.rotation) * recoil;
-            scene.cameras.main.shake(100, 0.005);
-        }
+    // Dispatch to correct fire mode
+    switch (wKey) {
+        case 'gl':   fireGL(scene, weapon);   break;
+        case 'rl':   fireRL(scene, weapon, barrelDist); break;
+        case 'sg':   fireSG(scene, weapon, barrelDist); break;
+        case 'plsm': firePLSM(scene, weapon); break;
+        case 'sr':   fireSR(scene, weapon, barrelDist); break;
+        default:     fireStandard(scene, wKey, weapon, barrelDist); break;
     }
 
-    if (side === 'L') reloadL = now + actualReload;
-    else reloadR = now + actualReload;
+    if (side === 'L') reloadL = now + reloadActual;
+    else              reloadR = now + reloadActual;
 }
 
-// ENEMY WEAPON FIRING
-function enemyFire(scene, enemy) {
-    if (!isDeployed || !player || !player.active || enemy.isStunned) return;
+// --- Individual fire modes ---
 
-    // Create a small red projectile
-    let b = scene.add.circle(enemy.x, enemy.y, 6, 0xff0000);
+function fireGL(scene, weapon) {
+    const targetX = scene.input.activePointer.worldX;
+    const targetY = scene.input.activePointer.worldY;
+    const distance = Phaser.Math.Distance.Between(torso.x, torso.y, targetX, targetY);
+
+    const ball = scene.add.circle(torso.x, torso.y, 10, 0xffaa00)
+        .setStrokeStyle(2, 0xffffff)
+        .setDepth(14);
+    scene.physics.add.existing(ball);
+    scene.physics.velocityFromRotation(torso.rotation, distance * 2, ball.body.velocity);
+    ball.body.setDrag(distance * 2);
+
+    const fuseTime  = 2000;
+    let fuseStarted = false;
+    let startTime   = 0;
+
+    const timerText = scene.add.text(ball.x, ball.y - 20, '2.0', {
+        font: 'bold 14px monospace', fill: '#ffff00'
+    }).setOrigin(0.5).setDepth(15).setVisible(false);
+
+    const timerEvent = scene.time.addEvent({
+        delay: 50,
+        loop: true,
+        callback: () => {
+            if (!ball.active) { timerText.destroy(); timerEvent.destroy(); return; }
+            timerText.setPosition(ball.x, ball.y - 20);
+
+            if (!fuseStarted && ball.body.velocity.length() < 20) {
+                fuseStarted = true;
+                startTime   = scene.time.now;
+                timerText.setVisible(true);
+                scene.time.delayedCall(fuseTime, () => {
+                    if (ball.active) { createExplosion(scene, ball.x, ball.y, 100, weapon.dmg); ball.destroy(); timerText.destroy(); }
+                });
+            }
+
+            if (fuseStarted) {
+                const remaining = Math.max(0, (fuseTime - (scene.time.now - startTime)) / 1000);
+                timerText.setText(remaining.toFixed(1));
+                if (remaining < 0.5) timerText.setFill(scene.time.now % 200 < 100 ? '#ffffff' : '#ff0000');
+            }
+        }
+    });
+}
+
+function fireRL(scene, weapon, barrelDist) {
+    createMuzzleFlash(scene, torso.x, torso.y, torso.rotation, barrelDist);
+    const rocket = scene.add.rectangle(torso.x, torso.y, 24, 10, 0xff4400).setDepth(14);
+    scene.physics.add.existing(rocket);
+    rocket.setRotation(torso.rotation);
+    scene.physics.velocityFromRotation(torso.rotation, weapon.speed, rocket.body.velocity);
+
+    const particles = scene.add.particles(0, 0, 'smoke', {
+        speed: 20, scale: { start: 0.6, end: 0 }, alpha: { start: 0.5, end: 0 },
+        lifespan: 400, frequency: 20, blendMode: 'ADD', follow: rocket
+    }).setDepth(13);
+
+    scene.physics.add.overlap(rocket, enemies, (r) => {
+        createExplosion(scene, r.x, r.y, 80, weapon.dmg);
+        particles.stop();
+        scene.time.delayedCall(400, () => particles.destroy());
+        r.destroy();
+    });
+
+    scene.time.delayedCall(2000, () => {
+        if (rocket.active) { particles.stop(); scene.time.delayedCall(400, () => particles.destroy()); rocket.destroy(); }
+    });
+}
+
+function fireSG(scene, weapon, barrelDist) {
+    const spread = 0.3;
+    for (let i = 0; i < weapon.pellets; i++) {
+        const offset = (Math.random() - 0.5) * spread;
+        const b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
+        createMuzzleFlash(scene, torso.x, torso.y, torso.rotation + offset, barrelDist);
+        scene.physics.add.existing(b);
+        b.damageValue = weapon.dmg;
+        bullets.add(b);
+        scene.physics.velocityFromRotation(torso.rotation + offset, weapon.speed, b.body.velocity);
+        scene.time.delayedCall(800, () => { if (b.active) b.destroy(); });
+    }
+}
+
+function firePLSM(scene, weapon) {
+    const p = scene.add.circle(torso.x, torso.y, 25, 0x00ffff).setAlpha(0.8);
+    scene.physics.add.existing(p);
+    p.damageValue = weapon.dmg;
+    bullets.add(p);
+    scene.physics.velocityFromRotation(torso.rotation, 300, p.body.velocity);
+    scene.tweens.add({ targets: p, alpha: 0.3, duration: 100, yoyo: true, repeat: -1 });
+    scene.time.delayedCall(3000, () => { if (p.active) p.destroy(); });
+}
+
+function fireSR(scene, weapon, barrelDist) {
+    const b = scene.add.rectangle(torso.x, torso.y, 60, 8, 0xffffff)
+        .setOrigin(0.5)
+        .setRotation(torso.rotation)
+        .setStrokeStyle(2, 0x00ffff);
     scene.physics.add.existing(b);
-    enemyBullets.add(b);
-	
-	b.body.setAllowGravity(false);
+    b.damageValue = weapon.dmg;
+    bullets.add(b);
+    scene.physics.velocityFromRotation(torso.rotation, weapon.speed, b.body.velocity);
+    scene.tweens.add({ targets: b, scaleY: 0.5, duration: 50, yoyo: true, repeat: -1 });
+    createMuzzleFlash(scene, torso.x, torso.y, torso.rotation, barrelDist, 0xffffff);
 
-    // Calculate angle to player
-    let angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
-    
-    // Shoot at a slower speed than player (600) to give you a chance to dodge
-    scene.physics.velocityFromRotation(angle, 600, b.body.velocity);
+    // Fading tracer line
+    const tracer = scene.add.line(0, 0, torso.x, torso.y, torso.x, torso.y, 0x00ffff)
+        .setOrigin(0, 0).setLineWidth(2).setAlpha(0.6);
+    scene.tweens.add({
+        targets: tracer, alpha: 0, duration: 500,
+        onUpdate:   () => { if (b.active) tracer.setTo(torso.x, torso.y, b.x, b.y); },
+        onComplete: () => tracer.destroy()
+    });
 
-    // Cleanup bullet after 2 seconds
-    scene.time.delayedCall(2000, () => { if(b.active) b.destroy(); });
+    // Camera kick & recoil
+    scene.cameras.main.shake(150, 0.015);
+    player.body.velocity.x -= Math.cos(torso.rotation) * 400;
+    player.body.velocity.y -= Math.sin(torso.rotation) * 400;
+    scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
 }
 
-// PROCESS PLAYER DAMAGE
-function processPlayerDamage(amt, bulletAngle) {
-    if (!player || !player.active || isShieldActive || player.isProcessingDamage) return;
-    player.isProcessingDamage = true;
-    let currentTime = game.scene.scenes[0].time.now;
-    lastDamageTime = currentTime; 
-    player.lastHitTime = currentTime; 
-	
-	// 1. Calculate Relative Angle (-PI to PI)
-    // This tells us if the bullet hit the front, back, or sides relative to where the mech is facing.
-    let relAngle = Phaser.Math.Angle.Wrap(bulletAngle - player.rotation);
+function fireStandard(scene, wKey, weapon, barrelDist) {
+    const fireRound = (offsetAngle = 0) => {
+        const b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
+        scene.physics.add.existing(b);
+        b.damageValue = weapon.dmg;
+        bullets.add(b);
+        scene.physics.velocityFromRotation(torso.rotation + offsetAngle, weapon.speed, b.body.velocity);
+        createMuzzleFlash(scene, torso.x, torso.y, torso.rotation + offsetAngle, barrelDist);
+        scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
+    };
 
-    let target = 'core'; // Default target
-
-    // 2. Directional Logic Gate
-    if (relAngle > -0.78 && relAngle < 0.78) {
-        target = 'core'; // Front 90 degrees
-    } else if (relAngle < -2.35 || relAngle > 2.35) {
-        target = 'legs'; // Back 90 degrees
-    } else if (relAngle < 0) {
-        target = 'lArm'; // Left side
+    if (wKey === 'br') {
+        for (let i = 0; i < weapon.burst; i++) {
+            scene.time.delayedCall(i * 60, () => fireRound(0));
+        }
     } else {
-        target = 'rArm'; // Right side
+        fireRound(0);
     }
 
-    // 3. Apply Damage to the specific component
+    if (wKey === 'hr') {
+        player.body.velocity.x -= Math.cos(torso.rotation) * 150;
+        player.body.velocity.y -= Math.sin(torso.rotation) * 150;
+        scene.cameras.main.shake(100, 0.005);
+    }
+}
+
+
+// ================================================================
+// DAMAGE PROCESSING
+// ================================================================
+
+function processPlayerDamage(amt, bulletAngle) {
+    if (!player?.active || isShieldActive || player.isProcessingDamage) return;
+    player.isProcessingDamage = true;
+
+    const now = game.scene.scenes[0].time.now;
+    lastDamageTime = now;
+    player.lastHitTime = now;
+
+    // Determine which component was hit based on relative bullet angle
+    const rel    = Phaser.Math.Angle.Wrap(bulletAngle - player.rotation);
+    let   target = 'core';
+    if      (rel > -0.78 && rel < 0.78)     target = 'core'; // Front
+    else if (rel < -2.35 || rel > 2.35)     target = 'legs'; // Rear
+    else if (rel < 0)                        target = 'lArm'; // Left
+    else                                     target = 'rArm'; // Right
+
     let component = player.comp[target];
-	// Safety check: If for some reason the target is missing, default to core
-	if (component.hp <= 0 && target !== 'core') {
-        console.log("LIMB DESTROYED - DAMAGE TRANSFERRED TO CORE");
-        component = player.comp.core;
-    }
-	
-     // PASSIVE SHIELD DAMAGE MATH
+    // Redirect to core if limb is already destroyed
+    if (component.hp <= 0 && target !== 'core') component = player.comp.core;
+
+    // Passive shield absorbs 50% of damage
     if (player.shield > 0) {
-        let shieldSoak = amt * 0.5;
-        player.shield = Math.max(0, player.shield - shieldSoak);
-        amt *= 0.5; 
+        player.shield = Math.max(0, player.shield - amt * 0.5);
+        amt *= 0.5;
     }
-	
+
     component.hp = Math.max(0, component.hp - amt);
-	let totalHP = 0;
-    for (let key in player.comp) {
-        totalHP += player.comp[key].hp;
-    }
-    player.hp = totalHP;
-	
-	// COMPONENT BREAK EFFECTS
-     // Check Left Arm
+
+    // Recalculate total HP from components
+    player.hp = Object.values(player.comp).reduce((sum, c) => sum + c.hp, 0);
+
+    // Limb destruction — disable the associated weapon
     if (player.comp.lArm.hp <= 0 && loadout.L !== 'none') {
-        console.log("LEFT ARM DESTROYED - WEAPON OFFLINE");
-        loadout.L = 'none'; // Disables the weapon data
-        updateHUD();        // Updates the UI to show the slot is empty
+        loadout.L = 'none';
+        updateHUD();
     }
-    // Check Right Arm
     if (player.comp.rArm.hp <= 0 && loadout.R !== 'none') {
-        console.log("RIGHT ARM DESTROYED - WEAPON OFFLINE");
-        loadout.R = 'none'; // Disables the weapon data
-        updateHUD();        // Updates the UI to show the slot is empty
+        loadout.R = 'none';
+        updateHUD();
     }
-	
-    // UPDATE HUD
+
     updateBars();
-	updatePaperDoll();
-    // UNLOCK FUNCTION
+    updatePaperDoll();
+
+    // Re-enable damage processing after a brief lock
     game.scene.scenes[0].time.delayedCall(50, () => {
         if (player) player.isProcessingDamage = false;
     });
-    // DEATH CHECK
+
+    // Death
     if (player.comp.core.hp <= 0) location.reload();
 }
 
-// PROCESS ENEMY DAMAGE
 function damageEnemy(e, amt) {
     e.health -= amt;
-    if(e.bar) e.bar.width = Math.max(0, (e.health / e.maxHealth) * 40);
-    
-    if (e.health <= 0) { 
-        let scene = game.scene.scenes[0];
-		
-		scene.cameras.main.shake(250, 0.008);
-        
-        // 1. Create the visual explosion
+    if (e.bar) e.bar.width = Math.max(0, (e.health / e.maxHealth) * 40);
+
+    if (e.health <= 0) {
+        const scene = game.scene.scenes[0];
+        scene.cameras.main.shake(250, 0.008);
         createExplosion(scene, e.x, e.y, 60, 0);
-        
-        // 2. Spawn the mechanical debris using the enemy's head color
-        spawnDebris(scene, e.x, e.y, 0x664400); 
-
-        // 3. Cleanup
-        if(e.bar) e.bar.destroy(); 
-        if(e.visuals) e.visuals.destroy(); 
-        e.destroy(); 
-        
-        setTimeout(() => spawnEnemy(scene), 2000); 
+        spawnDebris(scene, e.x, e.y, 0x664400);
+        if (e.bar)     e.bar.destroy();
+        if (e.visuals) e.visuals.destroy();
+        e.destroy();
+        setTimeout(() => spawnEnemy(scene), 2000);
     }
 }
 
-// SHOW DAMAGE TEXT
-function showDamageText(scene, x, y, amount, hasShield = false) {
-     // IF THERE'S NO DAMAGE AND NO SHIELD, DON'T SHOW ANYTHING
-	if (amount <= 0 && !isShieldActive) {
-        return; 
-    }
-	// DETERMINE TEXT COLOR
-	let color = "#ffff00"; // Default: Electric Yellow
-    let fontSize = "20px";
-    if (hasShield) {
-		color = "#00ffff"; // Shield Blue
-		fontSize = "22px";
-    } else {
-		if (amount >= 90 && amount < 150) {
-			color = "#ffaa00"; // Brighter Neon Orange
-			fontSize = "24px";
-		} else if (amount >= 150) {
-			color = "#ff0055"; // Brighter Laser Red/Magenta
-			fontSize = "28px";
-		}
-    }
-	// SHIELD IMPACT TEXT
-	let displayText = amount === 0 ? "BLOCK" : amount;
-    let dmgText = scene.add.text(x, y - 20, displayText, {
-        font: `bold ${fontSize} monospace`,
-        fill: color,
-        stroke: "#000000",
-        strokeThickness: 4
-    }).setOrigin(0.5).setDepth(100);
 
-    dmgText.setShadow(0, 0, color, 8, true, true);
+// ================================================================
+// VISUAL FX
+// ================================================================
 
-    scene.tweens.add({
-        targets: dmgText,
-        y: y - 100, 
-        alpha: 0,
-        scale: (amount >= 90 ? 1.3 : 1.0),
-        duration: 1500,
-		hold: 500,
-        ease: 'Back.easeOut',
-        onComplete: () => dmgText.destroy()
-    });
-}
-
-// WEAPON MUZZLE FLASHES
 function createMuzzleFlash(scene, x, y, angle, distance = 40, color = 0xffffff) {
-    if (!scene || !scene.add) return;
-
-    // Position the flash at the barrel tip
-    let fx = x + Math.cos(angle) * distance;
-    let fy = y + Math.sin(angle) * distance;
-    
-    // Created with a smaller radius (6) and white color
-    let flash = scene.add.circle(fx, fy, 6, color, 1).setDepth(15);
-    
-    // Add a tiny "shrink" animation to make it look less static
-    scene.tweens.add({
-        targets: flash,
-        scale: 0.2,
-        duration: 50,
-        onComplete: () => flash.destroy()
-    });
+    if (!scene?.add) return;
+    const fx = scene.add.circle(
+        x + Math.cos(angle) * distance,
+        y + Math.sin(angle) * distance,
+        6, color, 1
+    ).setDepth(15);
+    scene.tweens.add({ targets: fx, scale: 0.2, duration: 50, onComplete: () => fx.destroy() });
 }
 
-// WEAPON IMPACT SPARKS ON MECHS
 function createImpactSparks(scene, x, y) {
-    for (let i = 0; i < 6; i++) { // Number of sparks
-        // Choose between two colors: Gold/Orange and Bright Yellow
-        let sparkColor = Phaser.Math.RND.pick([0xffaa00, 0xffff00, 0xffffff]);
-        
-        let spark = scene.add.rectangle(x, y, 6, 2, sparkColor).setDepth(20);
+    for (let i = 0; i < 6; i++) {
+        const color = Phaser.Math.RND.pick([0xffaa00, 0xffff00, 0xffffff]);
+        const spark = scene.add.rectangle(x, y, 6, 2, color).setDepth(20);
         scene.physics.add.existing(spark);
-        
-        let angle = Math.random() * Math.PI * 2;
-        let speed = 200 + Math.random() * 250;
-        
-        scene.physics.velocityFromRotation(angle, speed, spark.body.velocity);
-        
-        // Add a bit of "gravity" to the sparks so they arc downward slightly
-        spark.body.setAccelerationY(400); 
-
-        scene.tweens.add({
-            targets: spark,
-            alpha: 0,
-            scaleX: 0,
-            duration: 300, // Slightly longer duration
-            onComplete: () => spark.destroy()
-        });
+        const angle = Math.random() * Math.PI * 2;
+        scene.physics.velocityFromRotation(angle, 200 + Math.random() * 250, spark.body.velocity);
+        spark.body.setAccelerationY(400);
+        scene.tweens.add({ targets: spark, alpha: 0, scaleX: 0, duration: 300, onComplete: () => spark.destroy() });
     }
 }
 
-// WEAPON IMPACT SPARKS ON SHIELDS
 function createShieldSparks(scene, x, y) {
     for (let i = 0; i < 5; i++) {
-        let spark = scene.add.rectangle(x, y, 10, 2, 0x00ffff).setDepth(100);
+        const spark = scene.add.rectangle(x, y, 10, 2, 0x00ffff).setDepth(100);
         scene.physics.add.existing(spark);
-        
-        let angle = Math.random() * Math.PI * 2;
-        let speed = Phaser.Math.Between(400, 600); // Faster, "snappier" sparks
-        scene.physics.velocityFromRotation(angle, speed, spark.body.velocity);
-        
-        scene.tweens.add({
-            targets: spark,
-            alpha: 0,
-            scaleX: 2, // Stretches them out like lightning bolts
-            duration: 150, // Very quick flash
-            onComplete: () => spark.destroy()
-        });
+        const angle = Math.random() * Math.PI * 2;
+        scene.physics.velocityFromRotation(angle, Phaser.Math.Between(400, 600), spark.body.velocity);
+        scene.tweens.add({ targets: spark, alpha: 0, scaleX: 2, duration: 150, onComplete: () => spark.destroy() });
     }
 }
 
-// SHIELD BREAK ANIMATION
 function createShieldBreak(scene, x, y) {
-    const count = 15; 
-    
-    for (let i = 0; i < count; i++) {
-        // --- Equilateral Geometry ---
-        // We'll use a side length of 14 for a "small but visible" shard.
-        // Point 1: Top Tip
-        // Point 2: Bottom Right
-        // Point 3: Bottom Left
-        let side = 14; 
-        let height = side * (Math.sqrt(3)/2); // Standard equilateral height formula
-        
-        let x1 = 0;           let y1 = -height/2;
-        let x2 = side/2;      let y2 = height/2;
-        let x3 = -side/2;     let y3 = height/2;
+    const side   = 14;
+    const h      = side * (Math.sqrt(3) / 2);
+    const count  = 15;
 
-        let shard = scene.add.triangle(x, y, x1, y1, x2, y2, x3, y3, 0xddffff, 0.8);
+    for (let i = 0; i < count; i++) {
+        const shard = scene.add.triangle(x, y, 0, -h/2, side/2, h/2, -side/2, h/2, 0xddffff, 0.8)
+            .setStrokeStyle(1.5, 0x00ffff, 1);
         scene.physics.add.existing(shard);
-        
-        // Glowing cyan border
-        shard.setStrokeStyle(1.5, 0x00ffff, 1);
-        
-        // Physics
-        let angle = Math.random() * Math.PI * 2;
-        let speed = Phaser.Math.Between(150, 400);
-        scene.physics.velocityFromRotation(angle, speed, shard.body.velocity);
-        
-        // Higher spin makes small triangles look like "glittering" glass
+        const angle = Math.random() * Math.PI * 2;
+        scene.physics.velocityFromRotation(angle, Phaser.Math.Between(150, 400), shard.body.velocity);
         shard.body.setAngularVelocity(Phaser.Math.Between(-600, 600));
         shard.body.setDrag(80);
-
-        // Animation
         scene.tweens.add({
             targets: shard,
-            alpha: 0,
-            scale: { start: 0.8, end: 0.1 }, // Starts slightly smaller (0.8)
-            duration: 1200, 
-            ease: 'Cubic.easeOut',
+            alpha: 0, scale: { start: 0.8, end: 0.1 },
+            duration: 1200, ease: 'Cubic.easeOut',
             onComplete: () => shard.destroy()
         });
     }
-    
-    scene.cameras.main.shake(250, 0.007); // Slightly lighter shake for smaller shards
+    scene.cameras.main.shake(250, 0.007);
 }
 
-// CREATE EXPLOSION
 function createExplosion(scene, x, y, radius, damage) {
-    // Calculate distance to player for volume scaling
-    let dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
-    let vol = Math.max(0.1, 1 - (dist / 1000)); // Quieter the further away it is
-
-    //scene.sound.play('snd-explosion', { volume: vol });
-	
-	let blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
+    const blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
     scene.physics.add.existing(blast);
-	// HIT LIST
-	let targetsHit = new Set();
-    let hasDealtPlayerDamage = false; 
-    // DAMAGE ENEMIES
-    scene.physics.add.overlap(blast, enemies, (z, e) => {
-	    // ONLY APPLY DAMAGE IF ENEMY IS NOT IN HIT LIST
-        if (!targetsHit.has(e)) {
-            targetsHit.add(e); // ADD TO HIST LIST IMMEDIATELY
-            
-            showDamageText(scene, e.x, e.y, damage);
-            damageEnemy(e, damage);
-        }
+
+    const targetsHit         = new Set();
+    let   playerDamageDealt  = false;
+
+    scene.physics.add.overlap(blast, enemies, (_, e) => {
+        if (targetsHit.has(e)) return;
+        targetsHit.add(e);
+        showDamageText(scene, e.x, e.y, damage);
+        damageEnemy(e, damage);
     });
-    // DAMAGE PLAYER
-    if (player && player.active && !isShieldActive) {
-        let dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
-        if (dist < radius && !hasDealtPlayerDamage) {
-            hasDealtPlayerDamage = true; 
-            processPlayerDamage(Math.floor(damage * 0.75), player.rotation); 
+
+    if (player?.active && !isShieldActive) {
+        const dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
+        if (dist < radius && !playerDamageDealt) {
+            playerDamageDealt = true;
+            processPlayerDamage(Math.floor(damage * 0.75), player.rotation);
             scene.cameras.main.shake(200, 0.01);
         }
     }
-    // EXPLOSION ANIMATION
-    scene.tweens.add({ 
-        targets: blast, 
-        scale: 1.5, 
-        alpha: 0, 
-        duration: 300, 
-        onComplete: () => {
-			targetsHit.clear();
-			blast.destroy() 
-		}	
+
+    scene.tweens.add({
+        targets: blast, scale: 1.5, alpha: 0, duration: 300,
+        onComplete: () => { targetsHit.clear(); blast.destroy(); }
     });
 }
 
-// MECH DEATH EXPLOSION
 function spawnDebris(scene, x, y, color) {
     for (let i = 0; i < 8; i++) {
-        // Create a small 'chunk' of metal
-        let chunk = scene.add.rectangle(x, y, Phaser.Math.Between(5, 15), Phaser.Math.Between(5, 15), color);
-        chunk.setStrokeStyle(1, 0xffffff);
+        const chunk = scene.add.rectangle(
+            x, y,
+            Phaser.Math.Between(5, 15), Phaser.Math.Between(5, 15),
+            color
+        ).setStrokeStyle(1, 0xffffff);
         scene.physics.add.existing(chunk);
-
-        // Random trajectory
-        let angle = Math.random() * Math.PI * 2;
-        let speed = Phaser.Math.Between(150, 400);
-        scene.physics.velocityFromRotation(angle, speed, chunk.body.velocity);
-        
-        // Add some spin
+        scene.physics.velocityFromRotation(Math.random() * Math.PI * 2, Phaser.Math.Between(150, 400), chunk.body.velocity);
         chunk.body.setAngularVelocity(Phaser.Math.Between(-500, 500));
-        // Add friction so they slow down
         chunk.body.setDrag(200);
-
-        // Fade and destroy
         scene.tweens.add({
-            targets: chunk,
-            alpha: 0,
-            scale: 0.5,
+            targets: chunk, alpha: 0, scale: 0.5,
             duration: Phaser.Math.Between(800, 1500),
             onComplete: () => chunk.destroy()
         });
     }
 }
 
-// MECH HANGAR CONFIGURATION
-function refreshGarage() {
-    // 1. Reset all buttons
-    document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+function showDamageText(scene, x, y, amount, hasShield = false) {
+    if (amount <= 0 && !isShieldActive) return;
 
-    // 2. Highlight selected buttons
-    let activeIDs = [
-        'c-' + loadout.chassis, 
-        'l-' + loadout.L, 
-        'r-' + loadout.R, 
-        'm-' + loadout.mod
-    ];
-	
-	activeIDs.forEach(id => {
-        let el = document.getElementById(id); 
-        if (el) el.classList.add('active');
+    let color    = '#ffff00';
+    let fontSize = '20px';
+
+    if (hasShield) {
+        color    = '#00ffff';
+        fontSize = '22px';
+    } else if (amount >= 150) {
+        color    = '#ff0055';
+        fontSize = '28px';
+    } else if (amount >= 90) {
+        color    = '#ffaa00';
+        fontSize = '24px';
+    }
+
+    const label = amount === 0 ? 'BLOCK' : amount;
+    const txt   = scene.add.text(x, y - 20, label, {
+        font: `bold ${fontSize} monospace`,
+        fill: color,
+        stroke: '#000000',
+        strokeThickness: 4
+    }).setOrigin(0.5).setDepth(100);
+    txt.setShadow(0, 0, color, 8, true, true);
+
+    scene.tweens.add({
+        targets: txt, y: y - 100, alpha: 0,
+        scale:    amount >= 90 ? 1.3 : 1.0,
+        duration: 1500, hold: 500, ease: 'Back.easeOut',
+        onComplete: () => txt.destroy()
     });
-
-    // 3. Highlight Color
-    let hexColorString = loadout.color.toString(16).padStart(6, '0').toLowerCase();
-    let colEl = document.getElementById("col-" + hexColorString);
-    if (colEl) colEl.classList.add('active');
-
-    // 4. Update Preview
-    const previewImg = document.getElementById('preview-img');
-    if (previewImg) {
-        previewImg.src = `assets/${loadout.chassis}-mech.png`;
-        previewImg.style.filter = `drop-shadow(0 0 15px #${hexColorString})`;
-    }
-
-    // 5. Weight Math (Safe because we have 'none' entries in WEAPONS now)
-    let total = WEAPONS[loadout.L].weight + WEAPONS[loadout.R].weight + WEAPONS[loadout.mod].weight;
-    let max = CHASSIS[loadout.chassis].max;
-    let isOver = total > max;
-
-    // 6. Update UI
-    const weightDisplay = document.getElementById('weight-display');
-    const barFill = document.getElementById('weight-bar-fill');
-    const deployBtn = document.getElementById('deploy-btn');
-	const hpDisplay = document.getElementById('hp-display');
-	const shDisplay = document.getElementById('sh-display');
-	
-    if (hpDisplay) {
-        let total = getTotalHP(loadout.chassis);
-        hpDisplay.innerText = "TOTAL HP: " + total;
-    }
-	
-	if (shDisplay) {
-        // Using 100 as default, or a specific value if you add it to CHASSIS later
-        shDisplay.innerText = "SHIELD: 100";
-    }
-    
-    if (weightDisplay && barFill) {
-        weightDisplay.innerText = `WEIGHT: ${total} / ${max}`;
-        let percentage = Math.min(100, (total / max) * 100);
-        barFill.style.width = percentage + "%";
-        weightDisplay.style.color = isOver ? '#ff3300' : '#c8d2d9';
-        barFill.style.background = isOver ? '#ff3300' : '#ffaa00';
-		barFill.style.boxShadow = isOver ? '0 0 10px #ff3300' : '0 0 10px rgba(255, 170, 0, 0.4)';
-        
-        if (deployBtn) {
-        deployBtn.disabled = isOver;
-		}
-
-        if (isOver) {
-            deployBtn.innerHTML = "<span>&#9888;</span>&nbsp; OVERWEIGHT &nbsp;<span>&#9888;</span>";
-            deployBtn.classList.add('overweight'); // Triggers the RED theme
-        } else {
-            deployBtn.innerText = "DEPLOY MECH";
-            deployBtn.classList.remove('overweight'); // Returns to GRAY/AMBER
-        }
-	}
 }
 
-// PLAYER HUD CONFIGURATION
+
+// ================================================================
+// MECH BUILDING
+// ================================================================
+
+function buildPlayerMech(scene, type, color) {
+    const container = scene.add.container(0, 0);
+    const s = CHASSIS[type].scale;
+
+    if (type === 'heavy') {
+        container.add([
+            scene.add.rectangle(0, 0,  40, 100, 0x333333).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  60,  70, 0x333333).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  40,  30, color).setStrokeStyle(2, 0xffffff).setName('mechHead'),
+            scene.add.rectangle(20, 0,  8,  30, 0x0F61A1).setStrokeStyle(1, 0xffffff)
+        ]);
+    } else if (type === 'light') {
+        container.add([
+            scene.add.rectangle(0, 0,  25,  60, 0x444444).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  40,  40, 0x444444).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  25,  20, color).setStrokeStyle(2, 0xffffff).setName('mechHead'),
+            scene.add.rectangle(10, 0, 10,  20, 0x0F61A1).setStrokeStyle(1, 0xffffff)
+        ]);
+    } else { // medium
+        container.add([
+            scene.add.rectangle(0, 0,  35,  80, 0x444444).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  50,  50, 0x444444).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  35,  25, color).setStrokeStyle(2, 0xffffff).setName('mechHead'),
+            scene.add.rectangle(14, 0, 10,  25, 0x0F61A1).setStrokeStyle(1, 0xffffff)
+        ]);
+    }
+
+    container.setScale(s);
+    return container;
+}
+
+function buildEnemyMech(scene) {
+    const container = scene.add.container(0, 0);
+    container.add([
+        scene.add.rectangle(0, 0,  35,  80, 0x664400).setStrokeStyle(2, 0xffffff),
+        scene.add.rectangle(0, 0,  50,  50, 0x664400).setStrokeStyle(2, 0xffffff),
+        scene.add.rectangle(0, 0,  35,  25, 0xffaa00).setStrokeStyle(2, 0xffffff),
+        scene.add.rectangle(14, 0, 10,  25, 0xff0000).setStrokeStyle(1, 0xffffff)
+    ]);
+    return container;
+}
+
+function refreshMechColor() {
+    if (!torso?.list || !isDeployed) return;
+    const headColor = isRageActive ? 0xff0000 : loadout.color;
+    const bodyColor = isRageActive ? 0x660000 : darkenColor(loadout.color, 0.4);
+
+    torso.list.forEach(shape => {
+        if (!shape?.setFillStyle) return;
+        if (shape.name === 'mechHead') shape.setFillStyle(headColor);
+        else if (shape.width >= 25)   shape.setFillStyle(bodyColor);
+    });
+}
+
+
+// ================================================================
+// UTILITY FUNCTIONS
+// ================================================================
+
+/** Returns the sum of all component HP for a given chassis type. */
+function getTotalHP(type) {
+    const s = CHASSIS[type];
+    return s ? s.coreHP + s.armHP * 2 + s.legHP : 0;
+}
+
+/** Darkens a packed RGB hex colour by a multiplier (0–1). */
+function darkenColor(hex, amount = 0.4) {
+    if (hex == null) return 0x333333;
+    const r = ((hex >> 16) & 0xFF) * amount;
+    const g = ((hex >>  8) & 0xFF) * amount;
+    const b = ( hex        & 0xFF) * amount;
+    return (Math.floor(r) << 16) | (Math.floor(g) << 8) | Math.floor(b);
+}
+
+
+// ================================================================
+// HUD & GARAGE UI UPDATES
+// ================================================================
+
 function updateHUD() {
-    const txtL = document.getElementById('txt-L');
-    const txtR = document.getElementById('txt-R');
-    const txtM = document.getElementById('txt-M');
-    const slotL = document.getElementById('slot-L');
-    const slotR = document.getElementById('slot-R');
-    const slotM = document.getElementById('slot-M');
+    const slots = ['L', 'R', 'M'];
+    const keys  = { L: loadout.L, R: loadout.R, M: loadout.mod };
 
-    if (txtL) txtL.innerText = loadout.L ? loadout.L.toUpperCase() : "---";
-    if (txtR) txtR.innerText = loadout.R ? loadout.R.toUpperCase() : "---";
-    if (txtM) txtM.innerText = loadout.mod ? loadout.mod.toUpperCase() : "NONE";
-
-    // --- OPACITY LOGIC ---
-    // Slots fade to 0.4 if NOTHING is equipped in them
-    if (slotL) slotL.style.opacity = loadout.L === 'none' ? '0.4' : '1';
-    if (slotR) slotR.style.opacity = loadout.R === 'none' ? '0.4' : '1';
-    if (slotM) slotM.style.opacity = loadout.mod === 'none' ? '0.4' : '1';
-
-    // --- BORDER COLOR LOGIC ---
-    // Primary Slot: Blue if weapon equipped, Green if empty
-    if (slotL) {
-        slotL.style.borderColor = loadout.L !== 'none' ? '#00ffff' : 'rgba(0, 255, 0, 0.4)';
-    }
-
-    // Secondary Slot: Blue if weapon equipped, Green if empty
-    if (slotR) {
-        slotR.style.borderColor = loadout.R !== 'none' ? '#00ffff' : 'rgba(0, 255, 0, 0.4)';
-    }
-    
-    // System slot remains Cyan if equipped
-    if (slotM) {
-        slotM.style.borderColor = loadout.mod === 'none' ? 'rgba(0, 255, 0, 0.4)' : '#00ffff';
-    }
+    slots.forEach(id => {
+        const txt  = document.getElementById('txt-' + id);
+        const slot = document.getElementById('slot-' + id);
+        const val  = keys[id];
+        if (txt)  txt.innerText = val ? val.toUpperCase() : (id === 'M' ? 'NONE' : '---');
+        if (slot) {
+            const active = val && val !== 'none';
+            slot.style.opacity     = active ? '1' : '0.4';
+            slot.style.borderColor = active ? '#00ffff' : 'rgba(0,255,0,0.4)';
+        }
+    });
 }
 
-// UPDATE HEALTH & SHIELD BARS
 function updateBars() {
     if (!player || !isDeployed) return;
 
-    const hpFill = document.getElementById('hp-fill');
-    const hpText = document.getElementById('hp-text');
+    const hpFill   = document.getElementById('hp-fill');
+    const hpText   = document.getElementById('hp-text');
     const hudAccent = document.getElementById('hud-accent');
-    const shFill = document.getElementById('sh-fill');
-    const shText = document.getElementById('sh-text');
+    const shFill   = document.getElementById('sh-fill');
+    const shText   = document.getElementById('sh-text');
 
-    if (hpFill && hpText && hudAccent) {
-        let hpPercent = (player.hp / player.maxHp) * 100;
-        let statusColor = "#00ff00"; // Default Green
-
-        if (hpPercent <= 25) {
-            statusColor = "#ff0000"; // Danger Red
-        } else if (hpPercent <= 55) {
-            statusColor = "#ffff00"; // Caution Yellow
-        }
-
-        // Apply dynamic color to Bar and Side Strip ONLY
-        hpFill.style.background = statusColor;
-        hpFill.style.width = Math.max(0, hpPercent) + "%";
-        hudAccent.style.borderColor = statusColor;
-
-        // HP Text remains its default color (Green)
-        hpText.innerText = Math.ceil(Math.max(0, player.hp)) + "/" + player.maxHp;
+    if (hpFill && hpText) {
+        const pct   = (player.hp / player.maxHp) * 100;
+        const color = pct <= 25 ? '#ff0000' : pct <= 55 ? '#ffff00' : '#00ff00';
+        hpFill.style.background = color;
+        hpFill.style.width      = Math.max(0, pct) + '%';
+        if (hudAccent) hudAccent.style.borderColor = color;
+        hpText.innerText = Math.ceil(Math.max(0, player.hp)) + '/' + player.maxHp;
     }
 
     if (shFill && shText) {
-        let mSh = player.maxShield || 100;
-        let shPercent = (player.shield / mSh) * 100;
-        shFill.style.width = Math.max(0, Math.min(100, shPercent)) + "%";
-        shText.innerText = Math.ceil(Math.max(0, player.shield)) + "/" + mSh;
+        const pct = (player.shield / (player.maxShield || 100)) * 100;
+        shFill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+        shText.innerText   = Math.ceil(Math.max(0, player.shield)) + '/' + (player.maxShield || 100);
     }
 }
 
-function setChassis(t) { 
-    loadout.chassis = t; 
-    refreshGarage(); 
+function updatePaperDoll() {
+    if (!player || !isDeployed) return;
+
+    const getColor = (hp, max) => {
+        const pct = hp / max;
+        if (pct <= 0)    return '#1a1a1a';
+        if (pct <= 0.25) return '#ff0000';
+        if (pct <= 0.50) return '#ffaa00';
+        if (pct <= 0.75) return '#ffff00';
+        return '#00ff00';
+    };
+
+    const set = (id, color) => {
+        const el = document.getElementById(id);
+        if (el) el.style.background = color;
+    };
+
+    const coreColor = getColor(player.comp.core.hp, player.comp.core.max);
+    const lColor    = getColor(player.comp.lArm.hp, player.comp.lArm.max);
+    const rColor    = getColor(player.comp.rArm.hp, player.comp.rArm.max);
+    const legColor  = getColor(player.comp.legs.hp, player.comp.legs.max);
+
+    set('doll-core',      coreColor);
+    set('doll-lArm',      lColor);
+    set('doll-lShoulder', lColor);
+    set('doll-rArm',      rColor);
+    set('doll-rShoulder', rColor);
+    set('doll-lLeg',      legColor);
+    set('doll-rLeg',      legColor);
 }
+
+function refreshGarage() {
+    // Clear all active states
+    document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+
+    // Re-apply active state to selected options
+    ['c-' + loadout.chassis, 'l-' + loadout.L, 'r-' + loadout.R, 'm-' + loadout.mod].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+    });
+
+    // Colour button
+    const hexStr = loadout.color.toString(16).padStart(6, '0').toLowerCase();
+    const colEl  = document.getElementById('col-' + hexStr);
+    if (colEl) colEl.classList.add('active');
+
+    // Preview image
+    const previewImg = document.getElementById('preview-img');
+    if (previewImg) {
+        previewImg.src         = `assets/${loadout.chassis}-mech.png`;
+        previewImg.style.filter = `drop-shadow(0 0 15px #${hexStr})`;
+    }
+
+    // HP & shield display
+    const hpDisplay = document.getElementById('hp-display');
+    const shDisplay = document.getElementById('sh-display');
+    if (hpDisplay) hpDisplay.innerText = 'TOTAL HP: ' + getTotalHP(loadout.chassis);
+    if (shDisplay) shDisplay.innerText = 'SHIELD: 100';
+
+    // Weight
+    const total   = WEAPONS[loadout.L].weight + WEAPONS[loadout.R].weight + WEAPONS[loadout.mod].weight;
+    const max     = CHASSIS[loadout.chassis].max;
+    const isOver  = total > max;
+    const pct     = Math.min(100, (total / max) * 100);
+
+    const weightDisplay = document.getElementById('weight-display');
+    const barFill       = document.getElementById('weight-bar-fill');
+    const deployBtn     = document.getElementById('deploy-btn');
+
+    if (weightDisplay) {
+        weightDisplay.innerText    = `WEIGHT: ${total} / ${max}`;
+        weightDisplay.style.color  = isOver ? '#ff3300' : '#c8d2d9';
+    }
+
+    if (barFill) {
+        barFill.style.width      = pct + '%';
+        barFill.style.background = isOver ? '#ff3300' : '#ffaa00';
+        barFill.style.boxShadow  = isOver ? '0 0 10px #ff3300' : '0 0 10px rgba(255,170,0,0.4)';
+    }
+
+    if (deployBtn) {
+        deployBtn.disabled = isOver;
+        if (isOver) {
+            deployBtn.innerHTML = '<span>&#9888;</span>&nbsp; OVERWEIGHT &nbsp;<span>&#9888;</span>';
+            deployBtn.classList.add('overweight');
+        } else {
+            deployBtn.innerText = 'DEPLOY MECH';
+            deployBtn.classList.remove('overweight');
+        }
+    }
+}
+
+
+// ================================================================
+// GARAGE BUTTON HANDLERS
+// ================================================================
+
+function setChassis(t) { loadout.chassis = t;     refreshGarage(); }
 function setWeapon(side, type) {
     if (side === 'L') loadout.L = type;
-    else loadout.R = type;
+    else              loadout.R = type;
     refreshGarage();
 }
+function setMod(type)   { loadout.mod   = type; refreshGarage(); }
+function setColor(c)    { loadout.color = c;    refreshGarage(); }
 
-function setMod(type) {
-    loadout.mod = type;
-    refreshGarage();
+
+// ================================================================
+// INTRO SCREEN
+// ================================================================
+
+function startIntro() {
+    const introLayer = document.getElementById('intro-layer');
+    const video      = document.getElementById('intro-video');
+    const skipHint   = document.getElementById('skip-hint');
+
+    if (skipHint) {
+        skipHint.innerText = 'CLICK TO INITIALIZE SYSTEMS';
+        runPulse(skipHint);
+    }
+
+    introLayer.onclick = () => {
+        clearInterval(pulseInterval);
+        video.play();
+
+        Object.assign(skipHint.style, {
+            top: '90%', fontSize: '12px',
+            letterSpacing: '2px', color: 'rgba(200,210,217,0.3)', opacity: '1'
+        });
+        skipHint.innerText = 'SYSTEMS ONLINE - CLICK TO SKIP';
+
+        const masterTimer = setTimeout(() => fadeOutIntro(), 6000);
+        introLayer.onclick = () => { clearTimeout(masterTimer); fadeOutIntro(); };
+    };
 }
 
-function setColor(c) { 
-	loadout.color = c; 
-	refreshGarage(); }
+function runPulse(element) {
+    let opacity   = 0.3;
+    let direction = 1;
+    element.style.color = '#ffaa00';
+
+    pulseInterval = setInterval(() => {
+        opacity += direction * 0.05;
+        if (opacity >= 1)   direction = -1;
+        if (opacity <= 0.3) direction =  1;
+        element.style.opacity = opacity;
+    }, 50);
+}
+
+function fadeOutIntro() {
+    const introLayer = document.getElementById('intro-layer');
+    const video      = document.getElementById('intro-video');
+    if (!introLayer || introLayer.style.display === 'none') return;
+
+    if (video) video.muted = true;
+    introLayer.style.transition = 'opacity 2s ease-in-out';
+    introLayer.style.opacity    = '0';
+    setTimeout(() => {
+        introLayer.style.display = 'none';
+        if (video) video.pause();
+    }, 2000);
+}
+
+
+// ================================================================
+// ENTRY POINT
+// ================================================================
 
 window.onload = () => {
     startIntro();
     refreshGarage();
-    updateHUD(); 
+    updateHUD();
 };
-
-// GAME INTRO
-function startIntro() {
-    const introLayer = document.getElementById('intro-layer');
-    const video = document.getElementById('intro-video');
-    const skipHint = document.getElementById('skip-hint');
-
-    // Start the manual JS Pulse
-    if (skipHint) {
-        skipHint.innerText = "CLICK TO INITIALIZE SYSTEMS";
-        runPulse(skipHint); 
-    }
-
-    introLayer.onclick = () => {
-        clearInterval(pulseInterval); 
-        video.play();
-        skipHint.style.top = "90%"; 
-		skipHint.style.fontSize = "12px";
-		skipHint.style.letterSpacing = "2px";
-        skipHint.innerText = "SYSTEMS ONLINE - CLICK TO SKIP";
-        skipHint.style.color = "rgba(200, 210, 217, 0.3)";
-        skipHint.style.opacity = "1";
-
-        // Master Timer: Start fade at 6 seconds
-        let masterTimer = setTimeout(() => {
-            fadeOutIntro();
-        }, 6000); 
-
-        introLayer.onclick = () => {
-            clearTimeout(masterTimer);
-            fadeOutIntro();
-        };
-    };
-}
-
-// MANUAL JS PULSE INJECTION
-function runPulse(element) {
-    let opacity = 0.3;
-    let increasing = true;
-    element.style.color = "#ffaa00"; // Force Amber color
-
-    pulseInterval = setInterval(() => {
-        if (increasing) {
-            opacity += 0.05;
-            if (opacity >= 1) increasing = false;
-        } else {
-            opacity -= 0.05;
-            if (opacity <= 0.3) increasing = true;
-        }
-        element.style.opacity = opacity;
-    }, 50); // Updates every 50ms for smooth motion
-}
-
-// INTRO FADEOUT
-function fadeOutIntro() {
-    const introLayer = document.getElementById('intro-layer');
-    const video = document.getElementById('intro-video');
-	if (!introLayer || introLayer.style.display === 'none') return;
-
-	if (video) {
-        video.muted = true; 
-    }
-
-    console.log("Executing Fade Transition...");
-    introLayer.style.transition = "opacity 2s ease-in-out";
-    introLayer.style.opacity = "0";
-
-    setTimeout(() => {
-        introLayer.style.display = 'none';
-		if (video) video.pause();
-        console.log("Intro Layer Removed. Hangar Active.");
-    }, 2000);
-}
 
 </script>
 </body>
