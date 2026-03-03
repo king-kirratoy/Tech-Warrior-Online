@@ -109,12 +109,15 @@ button.active {
 /* --- Deploy Button --- */
 #deploy-btn {
     width: 100%;
+    box-sizing: border-box;
     font-size: 13px;
     margin-top: 15px;
     padding: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
     background: transparent;
     border: 1px solid rgba(0,255,255,0.35);
     border-top: 2px solid rgba(0,255,255,0.7);
@@ -123,7 +126,7 @@ button.active {
     text-transform: uppercase;
     letter-spacing: 4px;
     font-family: 'Courier New', monospace;
-    transition: all 0.3s ease;
+    transition: background 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
     cursor: pointer;
     box-shadow: 0 0 10px rgba(0,255,255,0.06);
 }
@@ -138,8 +141,11 @@ button.active {
 
 #deploy-btn.overweight {
     background: rgba(255,50,0,0.1) !important;
-    border-color: #ff3300 !important;
+    border: 1px solid #ff3300 !important;
+    border-top: 2px solid #ff3300 !important;
+    border-bottom: 2px solid #ff3300 !important;
     color: #ff3300 !important;
+    letter-spacing: 2px !important;
     cursor: not-allowed;
     box-shadow: inset 0 0 10px rgba(255,50,0,0.2);
 }
@@ -1078,8 +1084,10 @@ function preload() {
 }
 
 function create() {
-    // Battlefield grid — static green world-space grid (scrolls with camera)
-    this.add.grid(2000, 2000, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
+    // Battlefield grid — hidden until deployed
+    const _bfGrid = this.add.grid(2000, 2000, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
+    _bfGrid.setVisible(false);
+    this._bfGrid = _bfGrid;
 
     // Input
     keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,F');
@@ -1972,6 +1980,9 @@ function deployMech() {
 
     // Player ↔ cover (player now exists)
     if (coverObjects) scene.physics.add.collider(player, coverObjects);
+
+    // Show battlefield grid now that we're deployed
+    if (scene._bfGrid) scene._bfGrid.setVisible(true);
 
     // World & camera
     scene.physics.world.setBounds(0, 0, 4000, 4000);
@@ -3642,6 +3653,7 @@ function respawnMech() {
 }
 
 function returnToHangar() {
+    const _sc = game?.scene?.scenes[0]; if (_sc?._bfGrid) _sc._bfGrid.setVisible(false);
     document.getElementById('death-screen').style.display = 'none';
     _cleanupGame();
     const scene = game.scene.scenes[0];
