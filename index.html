@@ -2042,7 +2042,7 @@ function spawnEnemy(scene) {
                  ? 'sniper'
                  : Phaser.Math.RND.pick(_behaviorPool[loadoutE.chassis]);
     e.speed      = chassisS.spd;
-    e.health     = getTotalHP(loadoutE.chassis);
+    e.health     = Math.round(getTotalHP(loadoutE.chassis) * 0.65);
     e.maxHealth  = e.health;
     e.reloadL    = 0;
     e.reloadR    = 0;
@@ -2077,15 +2077,12 @@ function enemyFire(scene, enemy, time) {
     const weapon = WEAPONS[wKey];
     if (!weapon) return;
 
-    // Check reload cooldown
-    if (time < enemy.reloadL) return;
-    enemy.reloadL = time + weapon.reload * Phaser.Math.FloatBetween(0.9, 1.3);
-
+    // Reload timing handled by AI loop — no second gate needed
     const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
 
-    // Bullet size and speed vary by enemy weapon
+    // Bullet size and speed match weapon definition, same as player
     const bSize  = weapon.bulletSize || 6;
-    const bSpeed = Math.min(weapon.speed || 600, 700); // cap speed so it's always dodgeable
+    const bSpeed = weapon.speed || 600;
     const dmg    = weapon.dmg || 15;
 
     if (wKey === 'sg') {
