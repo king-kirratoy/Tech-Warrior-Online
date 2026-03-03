@@ -44,8 +44,8 @@ body {
     background:
         linear-gradient(rgba(12,16,20,0.85), rgba(12,16,20,0.85)),
         url('assets/hangar-bg.jpg') center / cover;
-    border: 1px solid rgba(0,255,0,0.7);
-    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    border: 1px solid rgba(0,255,255,0.35);
+    box-shadow: 0 0 40px rgba(0,0,0,0.7), 0 0 20px rgba(0,255,255,0.1);
 }
 
 /* --- Rows & Labels --- */
@@ -58,10 +58,11 @@ body {
 
 .row-label {
     font-size: 11px;
-    color: rgba(0,255,0,0.7);
-    letter-spacing: 1.5px;
+    color: rgba(0,255,255,0.85);
+    letter-spacing: 3px;
     text-transform: uppercase;
-    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 8px rgba(0,255,255,0.5);
 }
 
 /* --- Option Buttons --- */
@@ -91,41 +92,48 @@ button {
 }
 
 button:hover {
-    background: rgba(0,255,0,0.08);
-    border-color: rgba(0,255,0,0.3);
+    background: rgba(0,255,255,0.07);
+    border-color: rgba(0,255,255,0.3);
+    color: #fff;
 }
 
 button.active {
-    background: rgba(0,255,0,0.12);
+    background: rgba(0,255,255,0.1);
     color: #fff;
-    border-color: rgba(0,255,0,0.5);
-    border-left: 3px solid #0f0;
-    box-shadow: inset 8px 0 15px rgba(0,255,0,0.05);
+    border-color: rgba(0,255,255,0.5);
+    border-left: 3px solid #00ffff;
+    box-shadow: inset 8px 0 15px rgba(0,255,255,0.06), 0 0 8px rgba(0,255,255,0.1);
+    text-shadow: 0 0 6px rgba(0,255,255,0.4);
 }
 
 /* --- Deploy Button --- */
 #deploy-btn {
     width: 100%;
-    font-size: 18px;
+    font-size: 13px;
     margin-top: 15px;
-    padding: 15px;
+    padding: 12px;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(200,210,217,0.05);
-    border: 1px solid rgba(200,210,217,0.2);
-    color: #c8d2d9;
+    background: transparent;
+    border: 1px solid rgba(0,255,255,0.35);
+    border-top: 2px solid rgba(0,255,255,0.7);
+    border-bottom: 2px solid rgba(0,255,255,0.7);
+    color: #00ffff;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 4px;
+    font-family: 'Courier New', monospace;
     transition: all 0.3s ease;
     cursor: pointer;
+    box-shadow: 0 0 10px rgba(0,255,255,0.06);
 }
 
 #deploy-btn:hover:not(:disabled) {
-    background: rgba(255,170,0,0.15);
-    border-color: #ffaa00;
+    background: rgba(0,255,255,0.08);
+    border-color: rgba(0,255,255,0.9);
     color: #fff;
-    box-shadow: 0 0 20px rgba(255,170,0,0.2);
+    box-shadow: 0 0 24px rgba(0,255,255,0.2);
+    letter-spacing: 6px;
 }
 
 #deploy-btn.overweight {
@@ -347,34 +355,95 @@ button.active {
 .leg      { width: 12px; height: 54px; margin-top: -18px; }
 
 /* ============================================================
-   INTRO SCREEN
+   MAIN MENU
    ============================================================ */
-#intro-layer {
+#main-menu {
     position: fixed;
     inset: 0;
-    background: #000;
+    background: #0c1014;
     z-index: 9999;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-}
-
-#intro-video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-#skip-hint {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 28px;
-    letter-spacing: 5px;
     font-family: 'Courier New', monospace;
-    text-align: center;
-    white-space: nowrap;
+}
+
+#menu-canvas {
+    position: absolute;
+    inset: 0;
     pointer-events: none;
+}
+
+.menu-title {
+    font-size: 64px;
+    letter-spacing: 14px;
+    color: #00ffff;
+    text-shadow: 0 0 20px rgba(0,255,255,0.6), 0 0 60px rgba(0,255,255,0.2);
+    margin-bottom: 6px;
+    position: relative;
+    z-index: 1;
+    animation: titleFlicker 6s ease-in-out infinite;
+}
+
+.menu-subtitle {
+    font-size: 12px;
+    letter-spacing: 6px;
+    color: rgba(0,255,255,0.45);
+    margin-bottom: 70px;
+    position: relative;
+    z-index: 1;
+    text-transform: uppercase;
+}
+
+.menu-start-btn {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+    align-self: center;
+    padding: 11px 32px;
+    background: transparent;
+    border: 1px solid rgba(0,255,255,0.35);
+    border-top: 2px solid rgba(0,255,255,0.7);
+    border-bottom: 2px solid rgba(0,255,255,0.7);
+    color: #00ffff;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 0 20px rgba(0,255,255,0.08),
+                inset 0 0 20px rgba(0,255,255,0.03);
+}
+
+.menu-start-btn { flex: none !important; }
+.menu-start-btn:hover {
+    background: rgba(0,255,255,0.08);
+    border-color: rgba(0,255,255,0.9);
+    color: #fff;
+    box-shadow: 0 0 40px rgba(0,255,255,0.25),
+                inset 0 0 20px rgba(0,255,255,0.08);
+    letter-spacing: 8px;
+}
+
+.menu-version {
+    position: absolute;
+    bottom: 24px;
+    right: 30px;
+    font-size: 10px;
+    color: rgba(200,210,217,0.2);
+    letter-spacing: 2px;
+    z-index: 1;
+}
+
+@keyframes titleFlicker {
+    0%,100% { opacity:1; }
+    92%      { opacity:1; }
+    93%      { opacity:0.7; }
+    94%      { opacity:1; }
+    96%      { opacity:0.85; }
+    97%      { opacity:1; }
 }
 
 /* ============================================================
@@ -392,13 +461,14 @@ button.active {
 <body>
 
 <!-- ============================================================
-     INTRO SCREEN
+     MAIN MENU
      ============================================================ -->
-<div id="intro-layer">
-    <video id="intro-video" width="100%" height="100%" style="object-fit:cover;" playsinline>
-        <source src="assets/Mech-Intro.mp4" type="video/mp4">
-    </video>
-    <div id="skip-hint"></div>
+<div id="main-menu">
+    <canvas id="menu-canvas"></canvas>
+    <div class="menu-title">TECH WARRIOR ONLINE</div>
+    <div class="menu-subtitle">Combat Simulation Alpha 3.0</div>
+    <button class="menu-start-btn" onclick="startGame()">&#9654;&nbsp;&nbsp;DEPLOY TO BATTLEFIELD</button>
+    <div class="menu-version">v3.0 // ALPHA BUILD</div>
 </div>
 
 <!-- ============================================================
@@ -406,7 +476,7 @@ button.active {
      ============================================================ -->
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu">
-        <h2 style="text-align:center; margin:0 0 25px; letter-spacing:2px; color:#c8d2d9;">--- MECH HANGAR ---</h2>
+        <h2 style="text-align:center; margin:0 0 25px; letter-spacing:8px; color:#00ffff; font-family:'Courier New',monospace; font-size:20px; text-shadow:0 0 14px rgba(0,255,255,0.6), 0 0 40px rgba(0,255,255,0.2); font-weight:normal;">MECH HANGAR</h2>
 
         <div style="display:flex; gap:30px; align-items:flex-start;">
 
@@ -478,8 +548,8 @@ button.active {
             <div style="flex:1; display:flex; flex-direction:column; align-items:center;">
 
                 <!-- Mech Preview Image -->
-                <div id="preview-container" style="width:280px; height:180px; border:1px solid #0f0; background:rgba(0,20,0,0.5); display:flex; justify-content:center; align-items:center;">
-                    <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 0 5px #0f0);">
+                <div id="preview-container" style="width:280px; height:180px; border:1px solid rgba(0,255,255,0.4); background:rgba(0,10,20,0.6); box-shadow:0 0 14px rgba(0,255,255,0.12); display:flex; justify-content:center; align-items:center;">
+                    <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 0 8px rgba(0,255,255,0.6));">
                 </div>
 
                 <!-- HP / Shield Display -->
@@ -582,6 +652,31 @@ button.active {
 </div><!-- /hud-container -->
 
 
+<!-- DEATH SCREEN -->
+<div id="death-screen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:99999;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;">
+    <div style="text-align:center;">
+        <div id="death-title" style="font-size:52px;letter-spacing:8px;color:#ff0000;text-shadow:0 0 30px #ff0000;margin-bottom:12px;">MECH DESTROYED</div>
+        <div style="font-size:13px;color:rgba(200,210,217,0.5);letter-spacing:3px;margin-bottom:48px;">CORE SYSTEMS OFFLINE</div>
+        <div style="display:flex;gap:20px;justify-content:center;">
+            <button onclick="respawnMech()"
+                style="width:200px;padding:16px;background:rgba(0,255,0,0.08);border:1px solid rgba(0,255,0,0.5);border-left:3px solid #0f0;color:#0f0;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;"
+                onmouseover="this.style.background='rgba(0,255,0,0.22)';this.style.boxShadow='0 0 20px rgba(0,255,0,0.3)';"
+                onmouseout="this.style.background='rgba(0,255,0,0.08)';this.style.boxShadow='none';">
+                &#9654; RESPAWN
+            </button>
+            <button onclick="returnToHangar()"
+                style="width:200px;padding:16px;background:rgba(200,210,217,0.05);border:1px solid rgba(200,210,217,0.2);border-left:3px solid #c8d2d9;color:#c8d2d9;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;"
+                onmouseover="this.style.background='rgba(200,210,217,0.15)';this.style.boxShadow='0 0 20px rgba(200,210,217,0.15)';"
+                onmouseout="this.style.background='rgba(200,210,217,0.05)';this.style.boxShadow='none';">
+                &#8962; HANGAR
+            </button>
+        </div>
+    </div>
+</div>
+<!-- HANGAR RETURN BTN -->
+<div id="hangar-return-btn" style="display:none;position:fixed;bottom:30px;right:30px;z-index:9999;">
+    <button onclick="returnToHangar()" style="padding:10px 18px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);">&#8962; &nbsp;HANGAR</button>
+</div>
 <!-- ============================================================
      GAME SCRIPT
      ============================================================ -->
@@ -643,12 +738,19 @@ let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic;
 let speedStreakLine, crosshair;
 let glowWedge;
 
+// Saved loadout for respawn (module-level so player.destroy() does not wipe it)
+let _savedL   = null;
+let _savedR   = null;
+let _savedMod = null;
+
 // Chassis-specific movement effect state
 let _footstepTimer  = 0;
 let _footstepSide   = 1;
 let _shockwaveTimer = 0;
-let _lastTorsoX     = 0;
+let _lastTorsoX     = 0;  // light trail tracking
 let _lastTorsoY     = 0;
+let _lastTorsoMX    = 0;  // medium blur tracking
+let _lastTorsoMY    = 0;
 
 // Combat / cooldown state
 let isDeployed      = false;
@@ -662,8 +764,7 @@ let isJumping       = false;
 let isShieldActive  = false;
 let isRageActive    = false;
 
-// Intro pulse timer
-let pulseInterval;
+
 
 
 // ================================================================
@@ -714,7 +815,7 @@ function preload() {
     // this.load.audio('snd-sg',           'assets/shotgun_fire.mp3');
     // this.load.audio('snd-explosion',    'assets/explosion.mp3');
     // this.load.audio('snd-impact-metal', 'assets/impact_metal.mp3');
-    this.load.audio('snd-shield-hit',   'assets/shield_ping.wav');
+    // this.load.audio('snd-shield-hit',   'assets/shield_ping.wav');
 }
 
 function create() {
@@ -787,35 +888,96 @@ function handleEnemyAI(scene, time) {
     enemies.getChildren().forEach(enemy => {
         const dist  = Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y);
         const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
-        const speed = 120;
+        const speed = enemy.speed || 120;
 
         if (!enemy.isStunned) {
             let vx = 0, vy = 0;
 
-            if (dist > 350) {
-                // Advance toward player
-                vx = Math.cos(angle) * speed;
-                vy = Math.sin(angle) * speed;
-            } else if (dist < 200) {
-                // Back away from player
-                vx = -Math.cos(angle) * (speed * 1.2);
-                vy = -Math.sin(angle) * (speed * 1.2);
-            } else {
-                // Strafe perpendicular to player
-                const strafe = angle + Math.PI / 2;
-                vx = Math.cos(strafe) * speed;
-                vy = Math.sin(strafe) * speed;
+            // AI BEHAVIOR PATTERNS
+            const beh = enemy.behavior || 'circle';
+
+            if (beh === 'circle') {
+                // Original: advance, strafe, retreat
+                if (dist > 350) {
+                    vx = Math.cos(angle) * speed;
+                    vy = Math.sin(angle) * speed;
+                } else if (dist < 200) {
+                    vx = -Math.cos(angle) * (speed * 1.2);
+                    vy = -Math.sin(angle) * (speed * 1.2);
+                } else {
+                    const strafe = angle + Math.PI / 2;
+                    vx = Math.cos(strafe) * speed;
+                    vy = Math.sin(strafe) * speed;
+                }
+            }
+            else if (beh === 'rusher') {
+                // Charges straight at the player at high speed
+                vx = Math.cos(angle) * speed * 1.4;
+                vy = Math.sin(angle) * speed * 1.4;
+            }
+            else if (beh === 'sniper') {
+                // Stays at long range, barely moves
+                if (dist > 480) {
+                    vx = Math.cos(angle) * speed * 0.5;
+                    vy = Math.sin(angle) * speed * 0.5;
+                } else if (dist < 400) {
+                    vx = -Math.cos(angle) * speed * 0.6;
+                    vy = -Math.sin(angle) * speed * 0.6;
+                } else {
+                    const strafe = angle + Math.PI / 2;
+                    vx = Math.cos(strafe) * speed * 0.3;
+                    vy = Math.sin(strafe) * speed * 0.3;
+                }
+            }
+            else if (beh === 'flanker') {
+                // Arcs wide to get behind the player
+                if (!enemy.flankDir) enemy.flankDir = Phaser.Math.RND.pick([-1, 1]);
+                if (dist > 500) {
+                    vx = Math.cos(angle) * speed;
+                    vy = Math.sin(angle) * speed;
+                } else {
+                    const fa = angle + (Math.PI / 2) * enemy.flankDir;
+                    vx = Math.cos(fa) * speed * 0.9 + Math.cos(angle) * speed * 0.3;
+                    vy = Math.sin(fa) * speed * 0.9 + Math.sin(angle) * speed * 0.3;
+                }
             }
 
-            // Fire if in range and cooldown elapsed
-            if (dist < 500 && (!enemy.lastFireTime || time > enemy.lastFireTime + 1800)) {
-                enemyFire(scene, enemy);
+            // Fire rate varies by behavior
+            const fireRange = enemy.behavior === 'sniper' ? 600 : 500;
+            const fireRate  = enemy.behavior === 'sniper' ? 1200
+                            : enemy.behavior === 'rusher' ? 2400 : 1800;
+            if (dist < fireRange && (!enemy.lastFireTime || time > enemy.lastFireTime + fireRate)) {
+                enemyFire(scene, enemy, time);
                 enemy.lastFireTime = time + Phaser.Math.Between(-200, 200);
             }
 
-            enemy.body.setVelocity(vx, vy);
+            // Separation: push away from nearby enemies to prevent stacking
+            enemies.getChildren().forEach(other => {
+                if (other === enemy || !other.active) return;
+                const sd = Phaser.Math.Distance.Between(enemy.x, enemy.y, other.x, other.y);
+                if (sd < 80 && sd > 0) {
+                    const sa = Phaser.Math.Angle.Between(other.x, other.y, enemy.x, enemy.y);
+                    const f  = (80 - sd) / 80 * speed * 1.5;
+                    vx += Math.cos(sa) * f;
+                    vy += Math.sin(sa) * f;
+                }
+            });
+
+            // Tank locomotion: rotate legs toward travel direction,
+            // then drive forward/back only along that axis
+            const desiredAngle = (vx !== 0 || vy !== 0)
+                ? Math.atan2(vy, vx)
+                : enemy.visuals.rotation;
+            // Smoothly rotate the visual body toward desired angle
+            enemy.visuals.rotation = Phaser.Math.Angle.RotateTo(
+                enemy.visuals.rotation, desiredAngle, 0.08);
+            // Drive physics body along the visual facing direction only
+            const spd = Math.sqrt(vx*vx + vy*vy);
+            enemy.body.setVelocity(
+                Math.cos(enemy.visuals.rotation) * spd,
+                Math.sin(enemy.visuals.rotation) * spd
+            );
             enemy.body.setImmovable(false);
-            enemy.visuals.setRotation(angle);
         } else {
             enemy.body.setVelocity(0, 0);
             enemy.body.setImmovable(true);
@@ -823,13 +985,28 @@ function handleEnemyAI(scene, time) {
 
         // Always sync visual container to physics body
         enemy.visuals.setPosition(enemy.x, enemy.y);
-        if (enemy.bar) enemy.bar.setPosition(enemy.x, enemy.y - 45);
+
+        // Torso aims at player independently
+        if (enemy.torso && player) {
+            enemy.torso.setPosition(enemy.x, enemy.y);
+            const aimAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+            enemy.torso.rotation = Phaser.Math.Angle.RotateTo(enemy.torso.rotation, aimAngle, 0.1);
+        }
+
+        if (enemy.bar) enemy.bar.setPosition(enemy.x, enemy.y - 45 * (enemy.loadout ? CHASSIS[enemy.loadout.chassis].scale : 1));
+
+        // Chassis movement FX
+        syncEnemyChassisEffect(scene, time, enemy);
     });
 }
 
 /** WASD movement and SPACE mod activation. */
 function handlePlayerMovement(scene, time) {
-    const speed = CHASSIS[loadout.chassis].spd * (isRageActive ? 1.75 : 1);
+    const legsHp = player?.comp?.legs?.hp;
+    const legsDestroyed = (legsHp !== undefined && legsHp !== null && legsHp <= 0);
+    const speed = CHASSIS[loadout.chassis].spd
+        * (isRageActive ? 1.75 : 1)
+        * (legsDestroyed ? 0.5 : 1);
     const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod].cooldown : 0;
 
     // Mod activation (SPACE)
@@ -904,8 +1081,7 @@ function syncChassisEffect(scene, time) {
     else if (loadout.chassis === 'medium') syncMediumFootsteps(scene, time, moving);
     else if (loadout.chassis === 'heavy')  syncHeavyShockwave(scene, time, moving);
 
-    // Clear medium motion blur tracking position when not on medium
-    if (loadout.chassis !== 'medium') { _lastTorsoX = torso.x; _lastTorsoY = torso.y; }
+
 }
 
 /**
@@ -914,8 +1090,9 @@ function syncChassisEffect(scene, time) {
  * @param {number} h        print height
  * @param {number} fadeTime ms until fully transparent
  */
-function spawnFootprint(scene, x, y, rotation, w, h, fadeTime) {
-    const print = scene.add.rectangle(x, y, w, h, loadout.color, 0.6)
+function spawnFootprint(scene, x, y, rotation, w, h, fadeTime, color) {
+    const printColor = color !== undefined ? color : loadout.color;
+    const print = scene.add.rectangle(x, y, w, h, printColor, 0.6)
         .setRotation(rotation)
         .setDepth(2);
     scene.tweens.add({
@@ -925,6 +1102,102 @@ function spawnFootprint(scene, x, y, rotation, w, h, fadeTime) {
         ease:     'Cubic.easeIn',
         onComplete: () => print.destroy()
     });
+}
+
+/**
+ * Per-enemy chassis movement effects — mirrors player effects but uses
+ * per-enemy state stored on the entity itself.
+ */
+function syncEnemyChassisEffect(scene, time, enemy) {
+    if (!enemy.loadout) return;
+    const chassis = enemy.loadout.chassis;
+    const vx = enemy.body?.velocity?.x || 0;
+    const vy = enemy.body?.velocity?.y || 0;
+    const speed   = Math.sqrt(vx*vx + vy*vy);
+    const moving  = speed > 10;
+    const rot     = enemy.visuals.rotation;
+    const ex      = enemy.x;
+    const ey      = enemy.y;
+    const scale   = CHASSIS[chassis].scale;
+
+    if (chassis === 'light') {
+        // Ghost trail
+        if (moving) {
+            const dist = Phaser.Math.Distance.Between(ex, ey, enemy.fxLastX, enemy.fxLastY);
+            if (dist >= 12) {
+                enemy.fxLastX = ex; enemy.fxLastY = ey;
+                const colors = ENEMY_COLORS[chassis];
+                const ghost  = buildEnemyMech(scene, chassis, colors);
+                ghost.setPosition(ex, ey).setRotation(rot).setScale(scale);
+                ghost.setAlpha(0.3).setDepth(8);
+                scene.tweens.add({ targets: ghost, alpha: 0, duration: 220, onComplete: () => ghost.destroy() });
+            }
+        }
+        // Footprints
+        if (moving && time >= enemy.fxFootTimer) {
+            const interval = Math.max(90, 260 - speed * 0.5);
+            enemy.fxFootTimer = time + interval;
+            const perp = rot + Math.PI / 2;
+            const rear = rot + Math.PI;
+            const rx = ex + Math.cos(rear) * 12 * scale;
+            const ry = ey + Math.sin(rear) * 12 * scale;
+            spawnFootprint(scene,
+                rx + Math.cos(perp) * 8 * scale * enemy.fxFootSide,
+                ry + Math.sin(perp) * 8 * scale * enemy.fxFootSide,
+                rot, 12 * scale, 6 * scale, 1200, 0xcc2200);
+            enemy.fxFootSide *= -1;
+        }
+    }
+    else if (chassis === 'medium') {
+        // Motion blur
+        if (moving) {
+            const dist = Phaser.Math.Distance.Between(ex, ey, enemy.fxLastMX, enemy.fxLastMY);
+            if (dist >= 16) {
+                enemy.fxLastMX = ex; enemy.fxLastMY = ey;
+                const colors = ENEMY_COLORS[chassis];
+                const ghost  = buildEnemyMech(scene, chassis, colors);
+                ghost.setPosition(ex, ey).setRotation(rot).setScale(scale);
+                ghost.setAlpha(0.22).setDepth(8);
+                scene.tweens.add({ targets: ghost, alpha: 0, duration: 180, onComplete: () => ghost.destroy() });
+            }
+        }
+        // Footprints
+        if (moving && time >= enemy.fxFootTimer) {
+            const interval = Math.max(140, 340 - speed * 0.6);
+            enemy.fxFootTimer = time + interval;
+            const perp = rot + Math.PI / 2;
+            const rear = rot + Math.PI;
+            const rx = ex + Math.cos(rear) * 16 * scale;
+            const ry = ey + Math.sin(rear) * 16 * scale;
+            spawnFootprint(scene,
+                rx + Math.cos(perp) * 12 * scale * enemy.fxFootSide,
+                ry + Math.sin(perp) * 12 * scale * enemy.fxFootSide,
+                rot, 16 * scale, 8 * scale, 1800, 0xcc2200);
+            enemy.fxFootSide *= -1;
+        }
+    }
+    else if (chassis === 'heavy') {
+        if (moving && time >= enemy.fxShockTimer) {
+            const interval = Math.max(320, 700 - speed * 1.2);
+            enemy.fxShockTimer = time + interval;
+            const perp = rot + Math.PI / 2;
+            const rear = rot + Math.PI;
+            const rx = ex + Math.cos(rear) * 24 * scale;
+            const ry = ey + Math.sin(rear) * 24 * scale;
+            [-1, 1].forEach(side => {
+                spawnFootprint(scene,
+                    rx + Math.cos(perp) * 20 * scale * side,
+                    ry + Math.sin(perp) * 20 * scale * side,
+                    rot, 22 * scale, 11 * scale, 2500, 0xcc2200);
+            });
+            // Shockwave ring (uses enemy head color)
+            const col = ENEMY_COLORS[chassis].head;
+            const ring = scene.add.circle(ex, ey, 10, col, 0)
+                .setStrokeStyle(3, col, 0.9).setDepth(3);
+            scene.tweens.add({ targets: ring, radius: 70 * scale, alpha: 0, duration: 500,
+                ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
+        }
+    }
 }
 
 /**
@@ -976,16 +1249,16 @@ function syncMediumFootsteps(scene, time, moving) {
     // Spawn a faint ghost every 18px of movement, very low alpha and fast fade.
     // Much subtler than the light trail — feels like blur rather than echo.
     if (moving) {
-        const dist = Phaser.Math.Distance.Between(torso.x, torso.y, _lastTorsoX, _lastTorsoY);
-        if (dist >= 18) {
-            _lastTorsoX = torso.x;
-            _lastTorsoY = torso.y;
+        const dist = Phaser.Math.Distance.Between(torso.x, torso.y, _lastTorsoMX, _lastTorsoMY);
+        if (dist >= 14) {
+            _lastTorsoMX = torso.x;
+            _lastTorsoMY = torso.y;
 
             const ghost = buildPlayerMech(scene, loadout.chassis, loadout.color);
             ghost.setPosition(torso.x, torso.y).setRotation(torso.rotation);
-            ghost.setAlpha(0.18).setDepth(8);
-            ghost.list.forEach(s => { if (s?.setFillStyle) s.setFillStyle(darkenColor(loadout.color, 0.5)); });
-            scene.tweens.add({ targets: ghost, alpha: 0, duration: 160, onComplete: () => ghost.destroy() });
+            ghost.setAlpha(0.28).setDepth(8);
+            ghost.list.forEach(s => { if (s?.setFillStyle) s.setFillStyle(darkenColor(loadout.color, 0.55)); });
+            scene.tweens.add({ targets: ghost, alpha: 0, duration: 200, onComplete: () => ghost.destroy() });
         }
     }
 
@@ -1098,24 +1371,35 @@ function syncGlowWedge() {
  *   gap   = empty space from center to where arms begin
  */
 function drawCrosshair(g) {
-    const size  = 14;  // overall bracket radius
-    const len   = 6;   // arm length
-    const col   = 0x00ffff;
-    const alpha = 0.9;
+    const size = 14;
+    const len  = 6;
+    const col  = 0x00ffff; // matches shield bar / sh-text color in HUD
 
-    g.lineStyle(1.5, col, alpha);
+    // Outer soft bloom
+    g.lineStyle(5, col, 0.18);
+    g.beginPath(); g.moveTo(-size, -size+len); g.lineTo(-size, -size); g.lineTo(-size+len, -size); g.strokePath();
+    g.beginPath(); g.moveTo( size-len, -size); g.lineTo( size, -size); g.lineTo( size, -size+len); g.strokePath();
+    g.beginPath(); g.moveTo( size,  size-len); g.lineTo( size,  size); g.lineTo( size-len,  size); g.strokePath();
+    g.beginPath(); g.moveTo(-size+len,  size); g.lineTo(-size,  size); g.lineTo(-size,  size-len); g.strokePath();
 
-    // Top-left
-    g.beginPath(); g.moveTo(-size, -size + len); g.lineTo(-size, -size); g.lineTo(-size + len, -size); g.strokePath();
-    // Top-right
-    g.beginPath(); g.moveTo( size - len, -size); g.lineTo( size, -size); g.lineTo( size, -size + len); g.strokePath();
-    // Bottom-right
-    g.beginPath(); g.moveTo( size, size - len); g.lineTo( size,  size); g.lineTo( size - len,  size); g.strokePath();
-    // Bottom-left
-    g.beginPath(); g.moveTo(-size + len,  size); g.lineTo(-size,  size); g.lineTo(-size,  size - len); g.strokePath();
+    // Mid glow
+    g.lineStyle(2.5, col, 0.5);
+    g.beginPath(); g.moveTo(-size, -size+len); g.lineTo(-size, -size); g.lineTo(-size+len, -size); g.strokePath();
+    g.beginPath(); g.moveTo( size-len, -size); g.lineTo( size, -size); g.lineTo( size, -size+len); g.strokePath();
+    g.beginPath(); g.moveTo( size,  size-len); g.lineTo( size,  size); g.lineTo( size-len,  size); g.strokePath();
+    g.beginPath(); g.moveTo(-size+len,  size); g.lineTo(-size,  size); g.lineTo(-size,  size-len); g.strokePath();
 
-    // Center dot
-    g.fillStyle(col, alpha);
+    // Sharp bright core
+    g.lineStyle(1.5, col, 1.0);
+    g.beginPath(); g.moveTo(-size, -size+len); g.lineTo(-size, -size); g.lineTo(-size+len, -size); g.strokePath();
+    g.beginPath(); g.moveTo( size-len, -size); g.lineTo( size, -size); g.lineTo( size, -size+len); g.strokePath();
+    g.beginPath(); g.moveTo( size,  size-len); g.lineTo( size,  size); g.lineTo( size-len,  size); g.strokePath();
+    g.beginPath(); g.moveTo(-size+len,  size); g.lineTo(-size,  size); g.lineTo(-size,  size-len); g.strokePath();
+
+    // Center dot with halo
+    g.fillStyle(col, 0.35);
+    g.fillCircle(0, 0, 4);
+    g.fillStyle(col, 1.0);
     g.fillCircle(0, 0, 1.5);
 }
 
@@ -1172,6 +1456,7 @@ function updateSlotCooldown(elementId, weaponKey, reloadTimestamp, time) {
 function deployMech() {
     document.getElementById('ui-layer').style.display = 'none';
     document.getElementById('hud-container').style.display = 'flex';
+    document.getElementById('hangar-return-btn').style.display = 'block';
 
     const scene = game.scene.scenes[0];
     const s     = CHASSIS[loadout.chassis];
@@ -1209,7 +1494,7 @@ function deployMech() {
         const bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
 
         if (isShieldActive) {
-            scene.sound.play('snd-shield-hit', { volume: 0.6 });
+            // scene.sound.play('snd-shield-hit', { volume: 0.6 });
             createShieldSparks(scene, bullet.x, bullet.y);
             showDamageText(scene, bullet.x, bullet.y, 0, true);
             bullet.destroy();
@@ -1241,8 +1526,9 @@ function deployMech() {
     refreshMechColor();
     scene.time.delayedCall(10, () => refreshMechColor()); // One-frame safety flush
 
-    // Shield bubble — radius scales with chassis size
-    const shieldRadius = 50 * CHASSIS[loadout.chassis].scale;
+    // Shield bubble — base 72px scaled by chassis so it clears the hull on all sizes
+    // light: 72*0.7 = ~50px  medium: 72*1.0 = 72px  heavy: 72*1.4 = ~101px
+    const shieldRadius = 72 * CHASSIS[loadout.chassis].scale;
     shieldGraphic = scene.add.circle(0, 0, shieldRadius, 0x00ffff, 0.15)
         .setStrokeStyle(2, 0x00ffff)
         .setVisible(false)
@@ -1264,14 +1550,80 @@ function deployMech() {
     scene.physics.add.collider(player, enemies);
     scene.physics.add.collider(enemies, enemies);
 
-    // Reset state
     player.isProcessingDamage = false;
     lastDamageTime = -99999;
     lastModTime    = -10000;
-    isDeployed     = true;
 
     updateHUD();
     updateBars();
+
+    // Save weapon loadout before drop (module-level, survives player.destroy())
+    _savedL   = loadout.L;
+    _savedR   = loadout.R;
+    _savedMod = loadout.mod;
+
+    // ── DROP-IN SEQUENCE ──────────────────────────────────────────
+    // Mech starts large (close to camera / high altitude) then shrinks
+    // as it falls, landing with a shockwave. Controls locked until landed.
+    const normalScale = CHASSIS[loadout.chassis].scale;
+
+    // Start mech above the visible area: offset Y up, alpha=0, normal scale
+    const dropOffsetY = 300;
+    player.y -= dropOffsetY;
+    torso.y  -= dropOffsetY;
+    player.setAlpha(0);
+    torso.setAlpha(0);
+    if (glowWedge) glowWedge.setVisible(false);
+
+    // Lock movement during drop
+    isDeployed = false;
+
+    // Fade in immediately so mech is visible throughout
+    scene.tweens.add({ targets: [player, torso], alpha: 1, duration: 150, ease: 'Linear' });
+
+    scene.tweens.add({
+        targets:  [player, torso],
+        y:        `+=${dropOffsetY}`,
+        duration: 900,
+        ease:     'Cubic.easeIn',
+        onComplete: () => {
+            if (glowWedge) glowWedge.setVisible(true);
+
+            // White shockwave ring
+            const w1 = scene.add.circle(player.x, player.y, 8, 0xffffff, 0)
+                .setStrokeStyle(4, 0xffffff, 1.0).setDepth(15);
+            scene.tweens.add({ targets: w1, radius: 120 * normalScale, alpha: 0,
+                duration: 600, ease: 'Cubic.easeOut', onComplete: () => w1.destroy() });
+
+            // Armour-coloured ring
+            const w2 = scene.add.circle(player.x, player.y, 8, loadout.color, 0)
+                .setStrokeStyle(2.5, loadout.color, 0.85).setDepth(14);
+            scene.tweens.add({ targets: w2, radius: 90 * normalScale, alpha: 0,
+                duration: 500, ease: 'Cubic.easeOut', onComplete: () => w2.destroy() });
+
+            // Dust/debris burst
+            const dust = scene.add.particles(player.x, player.y, 'smoke', {
+                lifespan:  { min: 400, max: 700 },
+                scale:     { start: 1.4, end: 0 },
+                alpha:     { start: 0.7, end: 0 },
+                speed:     { min: 80, max: 220 },
+                angle:     { min: 0, max: 360 },
+                tint:      0xaaaaaa,
+                quantity:  24,
+                frequency: -1
+            }).setDepth(6);
+            scene.time.delayedCall(900, () => dust.destroy());
+
+            // Camera shake on landing
+            scene.cameras.main.shake(300, 0.018);
+
+            // Unlock movement + spawn enemies now that scene is ready
+            isDeployed = true;
+            const sc = game.scene.scenes[0];
+            // Always spawn 6 fresh enemies after landing
+            for (let i = 0; i < 6; i++) spawnEnemy(sc);
+        }
+    });
 }
 
 
@@ -1356,36 +1708,141 @@ function activateEMP(scene, time) {
 // ENEMY SPAWNING & AI FIRING
 // ================================================================
 
-function spawnEnemy(scene) {
-    const x = Phaser.Math.Between(200, window.innerWidth  - 200);
-    const y = Phaser.Math.Between(200, window.innerHeight - 200);
+// Enemy color palettes per chassis type — hostile oranges/reds so they read
+// as clearly distinct from the player's customisable armor color.
+const ENEMY_COLORS = {
+    light:  { body: 0x1a0a00, head: 0xff6600, eye: 0xff0000 },
+    medium: { body: 0x1a0000, head: 0xcc2200, eye: 0xff4400 },
+    heavy:  { body: 0x0a0a1a, head: 0x4400cc, eye: 0xff0000 }
+};
 
-    // Invisible hitbox
+// Primary weapon keys available to enemies (excludes none)
+const ENEMY_PRIMARY   = ['smg', 'mg', 'br', 'sg', 'hr'];
+const ENEMY_SECONDARY = ['none', 'none', 'sr', 'gl', 'rl', 'plsm']; // weighted toward none
+const ENEMY_MODS      = ['none', 'none', 'none', 'jump', 'shield', 'rage', 'emp'];
+
+function randomEnemyLoadout() {
+    const chassis   = Phaser.Math.RND.pick(['light', 'medium', 'heavy']);
+    const maxWeight = CHASSIS[chassis].max;
+
+    // Pick weapons that fit within the chassis weight limit
+    let primary   = 'smg';
+    let secondary = 'none';
+    let mod       = 'none';
+
+    const primaryOptions = ENEMY_PRIMARY.filter(w => WEAPONS[w].weight <= maxWeight);
+    primary = Phaser.Math.RND.pick(primaryOptions);
+
+    const remainAfterPrimary = maxWeight - WEAPONS[primary].weight;
+    const secOptions = ENEMY_SECONDARY.filter(w => WEAPONS[w].weight <= remainAfterPrimary);
+    secondary = Phaser.Math.RND.pick(secOptions);
+
+    const remainAfterSec = remainAfterPrimary - WEAPONS[secondary].weight;
+    const modOptions = ENEMY_MODS.filter(m => WEAPONS[m].weight <= remainAfterSec);
+    mod = Phaser.Math.RND.pick(modOptions);
+
+    return { chassis, primary, secondary, mod };
+}
+
+function spawnEnemy(scene) {
+    // Spawn away from the player if deployed, otherwise random
+    let x, y, attempts = 0;
+    do {
+        x = Phaser.Math.Between(100, 3900);
+        y = Phaser.Math.Between(100, 3900);
+        attempts++;
+    } while (
+        player && isDeployed &&
+        Phaser.Math.Distance.Between(x, y, player.x, player.y) < 400 &&
+        attempts < 20
+    );
+
+    const loadoutE  = randomEnemyLoadout();
+    const chassisS  = CHASSIS[loadoutE.chassis];
+    const colors    = ENEMY_COLORS[loadoutE.chassis];
+
+    // Hitbox
     const e = scene.add.rectangle(x, y, 50, 50, 0x000000, 0);
     scene.physics.add.existing(e);
+    e.body.setCircle(35);
 
-    // Visual mech
-    e.visuals = buildEnemyMech(scene);
+    // Visual
+    e.visuals = buildEnemyMech(scene, loadoutE.chassis, colors);
     e.visuals.setPosition(x, y);
+    e.visuals.setScale(chassisS.scale);
 
-    e.health    = 450;
-    e.maxHealth = 450;
-    e.bar       = scene.add.rectangle(x, y - 45, 40, 5, 0x00ff00);
+    // Separate torso that rotates independently toward player (like player's torso)
+    e.torso = buildEnemyTorso(scene, loadoutE.chassis, colors);
+    e.torso.setPosition(x, y);
+    e.torso.setScale(chassisS.scale);
+    e.torso.setDepth(6);
+
+    // Stats — use the same component HP as the chassis defines
+    e.loadout    = loadoutE;
+    e.speed      = chassisS.spd;
+    e.health     = getTotalHP(loadoutE.chassis);
+    e.maxHealth  = e.health;
+    e.reloadL    = 0;
+    e.reloadR    = 0;
+    e.lastModTime = -10000;
+    e.isModActive = false;
+
+    // Health bar (scales with chassis HP)
+    const barW = 40 + (loadoutE.chassis === 'heavy' ? 14 : loadoutE.chassis === 'light' ? -8 : 0);
+    e.bar = scene.add.rectangle(x, y - 50 * chassisS.scale, barW, 5, 0x00ff00);
+    e.barMaxW = barW;
+
+    // Per-enemy chassis effect state
+    e.fxFootTimer  = 0;
+    e.fxFootSide   = 1;
+    e.fxShockTimer = 0;
+    e.fxLastX      = x;
+    e.fxLastY      = y;
+    e.fxLastMX     = x;
+    e.fxLastMY     = y;
 
     enemies.add(e);
 }
 
-function enemyFire(scene, enemy) {
+function enemyFire(scene, enemy, time) {
     if (!isDeployed || !player?.active || enemy.isStunned) return;
 
-    const b = scene.add.circle(enemy.x, enemy.y, 6, 0xff0000);
-    scene.physics.add.existing(b);
-    b.body.setAllowGravity(false);
-    enemyBullets.add(b);
+    const wKey  = enemy.loadout?.primary || 'smg';
+    const weapon = WEAPONS[wKey];
+    if (!weapon) return;
+
+    // Check reload cooldown
+    if (time < enemy.reloadL) return;
+    enemy.reloadL = time + weapon.reload * Phaser.Math.FloatBetween(0.9, 1.3);
 
     const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
-    scene.physics.velocityFromRotation(angle, 600, b.body.velocity);
-    scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
+
+    // Bullet size and speed vary by enemy weapon
+    const bSize  = weapon.bulletSize || 6;
+    const bSpeed = Math.min(weapon.speed || 600, 700); // cap speed so it's always dodgeable
+    const dmg    = weapon.dmg || 15;
+
+    if (wKey === 'sg') {
+        // Shotgun: spray pellets
+        for (let i = 0; i < (weapon.pellets || 5); i++) {
+            const spread = (Math.random() - 0.5) * 0.35;
+            const b = scene.add.circle(enemy.x, enemy.y, bSize, 0xff4400);
+            scene.physics.add.existing(b);
+            b.body.setAllowGravity(false);
+            b.damageValue = dmg;
+            enemyBullets.add(b);
+            scene.physics.velocityFromRotation(angle + spread, bSpeed, b.body.velocity);
+            scene.time.delayedCall(1500, () => { if (b.active) b.destroy(); });
+        }
+    } else {
+        const b = scene.add.circle(enemy.x, enemy.y, bSize, 0xff2200);
+        scene.physics.add.existing(b);
+        b.body.setAllowGravity(false);
+        b.damageValue = dmg;
+        enemyBullets.add(b);
+        scene.physics.velocityFromRotation(angle, bSpeed, b.body.velocity);
+        scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
+    }
 }
 
 
@@ -1635,20 +2092,22 @@ function processPlayerDamage(amt, bulletAngle) {
     });
 
     // Death
-    if (player.comp.core.hp <= 0) location.reload();
+    if (player.comp.core.hp <= 0) showDeathScreen();
 }
 
 function damageEnemy(e, amt) {
     e.health -= amt;
-    if (e.bar) e.bar.width = Math.max(0, (e.health / e.maxHealth) * 40);
+    if (e.bar) e.bar.width = Math.max(0, (e.health / e.maxHealth) * (e.barMaxW || 40));
 
     if (e.health <= 0) {
         const scene = game.scene.scenes[0];
         scene.cameras.main.shake(250, 0.008);
         createExplosion(scene, e.x, e.y, 60, 0);
-        spawnDebris(scene, e.x, e.y, 0x664400);
+        const debrisCol = e.loadout ? ENEMY_COLORS[e.loadout.chassis].head : 0x664400;
+        spawnDebris(scene, e.x, e.y, debrisCol);
         if (e.bar)     e.bar.destroy();
         if (e.visuals) e.visuals.destroy();
+        if (e.torso)   e.torso.destroy();
         e.destroy();
         setTimeout(() => spawnEnemy(scene), 2000);
     }
@@ -1832,15 +2291,65 @@ function buildPlayerMech(scene, type, color) {
     return container;
 }
 
-function buildEnemyMech(scene) {
+function buildEnemyMech(scene, type, colors) {
+    // Lower body / legs only — torso rotates independently in e.torso
+    type   = type   || 'medium';
+    colors = colors || ENEMY_COLORS[type];
     const container = scene.add.container(0, 0);
-    container.add([
-        scene.add.rectangle(0, 0,  35,  80, 0x664400).setStrokeStyle(2, 0xffffff),
-        scene.add.rectangle(0, 0,  50,  50, 0x664400).setStrokeStyle(2, 0xffffff),
-        scene.add.rectangle(0, 0,  35,  25, 0xffaa00).setStrokeStyle(2, 0xffffff),
-        scene.add.rectangle(14, 0, 10,  25, 0xff0000).setStrokeStyle(1, 0xffffff)
-    ]);
+    if (type === 'heavy') {
+        container.add([
+            scene.add.rectangle(0, 0, 40, 100, colors.body).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0, 60,  70, colors.body).setStrokeStyle(2, 0xffffff)
+        ]);
+    } else if (type === 'light') {
+        container.add([
+            scene.add.rectangle(0, 0, 25, 60, colors.body).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0, 40, 40, colors.body).setStrokeStyle(2, 0xffffff)
+        ]);
+    } else {
+        container.add([
+            scene.add.rectangle(0, 0, 35, 80, colors.body).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0, 50, 50, colors.body).setStrokeStyle(2, 0xffffff)
+        ]);
+    }
     return container;
+}
+
+function buildEnemyTorso(scene, type, colors) {
+    // Full upper body: core torso + shoulder wings + head + gun barrel
+    // Mirrors the player mech structure — all rotates together to face the player
+    type   = type   || 'medium';
+    colors = colors || ENEMY_COLORS[type];
+    const bodyCol = colors.body;
+    const headCol = colors.head;
+    const eyeCol  = colors.eye;
+    const c = scene.add.container(0, 0);
+    if (type === 'heavy') {
+        c.add([
+            scene.add.rectangle(0,   0,  55, 60, bodyCol).setStrokeStyle(2, 0xffffff),  // core torso
+            scene.add.rectangle(-34, 0,  14, 45, bodyCol).setStrokeStyle(1, 0xffffff),  // left shoulder
+            scene.add.rectangle( 34, 0,  14, 45, bodyCol).setStrokeStyle(1, 0xffffff),  // right shoulder
+            scene.add.rectangle(0,   0,  40, 26, headCol).setStrokeStyle(2, 0xffffff),  // head
+            scene.add.rectangle(24,  0,  10, 26, eyeCol ).setStrokeStyle(1, 0xffffff),  // gun mount
+        ]);
+    } else if (type === 'light') {
+        c.add([
+            scene.add.rectangle(0,   0,  34, 36, bodyCol).setStrokeStyle(2, 0xffffff),  // core torso
+            scene.add.rectangle(-20, 0,  10, 28, bodyCol).setStrokeStyle(1, 0xffffff),  // left shoulder
+            scene.add.rectangle( 20, 0,  10, 28, bodyCol).setStrokeStyle(1, 0xffffff),  // right shoulder
+            scene.add.rectangle(0,   0,  22, 18, headCol).setStrokeStyle(2, 0xffffff),  // head
+            scene.add.rectangle(13,  0,   9, 18, eyeCol ).setStrokeStyle(1, 0xffffff),  // gun mount
+        ]);
+    } else {
+        c.add([
+            scene.add.rectangle(0,   0,  44, 48, bodyCol).setStrokeStyle(2, 0xffffff),  // core torso
+            scene.add.rectangle(-26, 0,  12, 36, bodyCol).setStrokeStyle(1, 0xffffff),  // left shoulder
+            scene.add.rectangle( 26, 0,  12, 36, bodyCol).setStrokeStyle(1, 0xffffff),  // right shoulder
+            scene.add.rectangle(0,   0,  32, 22, headCol).setStrokeStyle(2, 0xffffff),  // head
+            scene.add.rectangle(18,  0,  10, 22, eyeCol ).setStrokeStyle(1, 0xffffff),  // gun mount
+        ]);
+    }
+    return c;
 }
 
 function refreshMechColor() {
@@ -1900,7 +2409,7 @@ function updateHUD() {
 }
 
 function updateBars() {
-    if (!player || !isDeployed) return;
+    if (!player) return;
 
     const hpFill   = document.getElementById('hp-fill');
     const hpText   = document.getElementById('hp-text');
@@ -2031,71 +2540,166 @@ function setMod(type)   { loadout.mod   = type; refreshGarage(); }
 function setColor(c)    { loadout.color = c;    refreshGarage(); }
 
 
+// (intro removed)
+
+
 // ================================================================
-// INTRO SCREEN
+// DEATH SCREEN & HANGAR NAVIGATION
 // ================================================================
 
-function startIntro() {
-    const introLayer = document.getElementById('intro-layer');
-    const video      = document.getElementById('intro-video');
-    const skipHint   = document.getElementById('skip-hint');
+/** Resets all HUD elements to their initial clean state. Called before any redeploy or hangar return. */
+function _resetHUDState() {
+    // Paper doll — all green
+    ['doll-head','doll-core','doll-lArm','doll-lShoulder',
+     'doll-rArm','doll-rShoulder','doll-lLeg','doll-rLeg'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.background = '#00ff00';
+    });
+    // HP bar
+    const hpFill = document.getElementById('hp-fill');
+    const hpText = document.getElementById('hp-text');
+    const hudAcc = document.getElementById('hud-accent');
+    if (hpFill) { hpFill.style.width = '100%'; hpFill.style.background = '#00ff00'; }
+    if (hpText) hpText.innerText = '---/---';
+    if (hudAcc) hudAcc.style.borderColor = '#00ff00';
+    // Shield bar
+    const shFill = document.getElementById('sh-fill');
+    const shText = document.getElementById('sh-text');
+    if (shFill) shFill.style.width = '100%';
+    if (shText) shText.innerText = '100/100';
+    // Cooldown overlays
+    ['cd-L','cd-R','cd-M'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.height = '0%';
+    });
+    // Weapon slot opacity
+    ['slot-L','slot-R','slot-M'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.opacity = '1'; el.style.borderColor = '#00ffff'; }
+    });
+}
 
-    if (skipHint) {
-        skipHint.innerText = 'CLICK TO INITIALIZE SYSTEMS';
-        runPulse(skipHint);
-    }
+function showDeathScreen() {
+    isDeployed = false;
+    const ds = document.getElementById('death-screen');
+    if (ds) ds.style.display = 'flex';
+}
 
-    introLayer.onclick = () => {
-        clearInterval(pulseInterval);
-        video.play();
-
-        Object.assign(skipHint.style, {
-            top: '90%', fontSize: '12px',
-            letterSpacing: '2px', color: 'rgba(200,210,217,0.3)', opacity: '1'
+function _cleanupGame() {
+    const scene = game.scene.scenes[0];
+    [player, torso, shieldGraphic, glowWedge, crosshair, speedStreakLine].forEach(obj => {
+        if (obj) { try { obj.destroy(); } catch(e){} }
+    });
+    player = torso = shieldGraphic = glowWedge = crosshair = speedStreakLine = null;
+    if (bullets)      bullets.clear(true, true);
+    if (enemyBullets) enemyBullets.clear(true, true);
+    if (enemies) {
+        enemies.getChildren().forEach(e => {
+            if (e.bar)     try { e.bar.destroy(); }     catch(ex){}
+            if (e.visuals) try { e.visuals.destroy(); } catch(ex){}
+            if (e.torso)   try { e.torso.destroy(); }   catch(ex){}
         });
-        skipHint.innerText = 'SYSTEMS ONLINE - CLICK TO SKIP';
-
-        const masterTimer = setTimeout(() => fadeOutIntro(), 6000);
-        introLayer.onclick = () => { clearTimeout(masterTimer); fadeOutIntro(); };
-    };
+        enemies.clear(true, true);
+    }
+    // Restore weapons/mod destroyed during play
+    if (_savedL   !== null) { loadout.L   = _savedL;   _savedL   = null; }
+    if (_savedR   !== null) { loadout.R   = _savedR;   _savedR   = null; }
+    if (_savedMod !== null) { loadout.mod = _savedMod; _savedMod = null; }
+    isDeployed = false; isJumping = false; isShieldActive = false; isRageActive = false;
+    reloadL = 0; reloadR = 0; lastDamageTime = -99999; lastModTime = -10000;
+    _footstepTimer = 0; _footstepSide = 1; _shockwaveTimer = 0;
+    _lastTorsoX = 0; _lastTorsoY = 0; _lastTorsoMX = 0; _lastTorsoMY = 0;
 }
 
-function runPulse(element) {
-    let opacity   = 0.3;
-    let direction = 1;
-    element.style.color = '#ffaa00';
-
-    pulseInterval = setInterval(() => {
-        opacity += direction * 0.05;
-        if (opacity >= 1)   direction = -1;
-        if (opacity <= 0.3) direction =  1;
-        element.style.opacity = opacity;
-    }, 50);
+function respawnMech() {
+    document.getElementById('death-screen').style.display = 'none';
+    _cleanupGame();
+    document.getElementById('hud-container').style.display = 'flex';
+    document.getElementById('hangar-return-btn').style.display = 'block';
+    _resetHUDState();
+    const scene = game.scene.scenes[0];
+    deployMech();
+    for (let i = 0; i < 6; i++) spawnEnemy(scene);
 }
 
-function fadeOutIntro() {
-    const introLayer = document.getElementById('intro-layer');
-    const video      = document.getElementById('intro-video');
-    if (!introLayer || introLayer.style.display === 'none') return;
-
-    if (video) video.muted = true;
-    introLayer.style.transition = 'opacity 2s ease-in-out';
-    introLayer.style.opacity    = '0';
-    setTimeout(() => {
-        introLayer.style.display = 'none';
-        if (video) video.pause();
-    }, 2000);
+function returnToHangar() {
+    document.getElementById('death-screen').style.display = 'none';
+    _cleanupGame();
+    const scene = game.scene.scenes[0];
+    try { scene.input.setDefaultCursor('default'); } catch(e){}
+    if (scene.hangarOverlay) scene.hangarOverlay.setVisible(true);
+    if (scene.hangarGrid)    scene.hangarGrid.setVisible(true);
+    document.getElementById('ui-layer').style.display = 'flex';
+    document.getElementById('hud-container').style.display = 'none';
+    document.getElementById('hangar-return-btn').style.display = 'none';
+    // Reset HUD to clean state
+    _resetHUDState();
+    refreshGarage();
+    updateHUD();
 }
-
 
 // ================================================================
 // ENTRY POINT
 // ================================================================
 
+// Animated grid drawn on the menu canvas
+function startMenuGrid() {
+    const canvas = document.getElementById('menu-canvas');
+    if (!canvas) return;
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d');
+    let offset = 0;
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const spacing = 48;
+        ctx.strokeStyle = 'rgba(0,255,255,0.06)';
+        ctx.lineWidth   = 1;
+
+        // Scrolling horizontal lines
+        for (let y = (offset % spacing); y < canvas.height; y += spacing) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        }
+        // Vertical lines (static)
+        for (let x = 0; x < canvas.width; x += spacing) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
+
+        // Faint horizon glow at center
+        const grad = ctx.createRadialGradient(
+            canvas.width/2, canvas.height/2, 0,
+            canvas.width/2, canvas.height/2, canvas.width * 0.6
+        );
+        grad.addColorStop(0,   'rgba(0,255,255,0.04)');
+        grad.addColorStop(0.5, 'rgba(0,255,255,0.01)');
+        grad.addColorStop(1,   'transparent');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        offset += 0.4;
+        requestAnimationFrame(draw);
+    }
+    draw();
+}
+
+function startGame() {
+    const menu = document.getElementById('main-menu');
+    if (!menu) return;
+    menu.style.transition = 'opacity 0.6s ease';
+    menu.style.opacity = '0';
+    setTimeout(() => {
+        menu.style.display = 'none';
+        document.getElementById('ui-layer').style.display = 'flex';
+    }, 600);
+}
+
 window.onload = () => {
-    startIntro();
+    startMenuGrid();
     refreshGarage();
     updateHUD();
+    // Hide hangar UI until after main menu
+    document.getElementById('ui-layer').style.display = 'none';
 };
 
 </script>
