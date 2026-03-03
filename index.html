@@ -639,7 +639,16 @@ let loadout = {
 };
 
 // Phaser object references
-let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic, smokeParticles;
+let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic;
+let speedStreakLine, crosshair;
+let glowWedge;
+
+// Chassis-specific movement effect state
+let _footstepTimer  = 0;
+let _footstepSide   = 1;
+let _shockwaveTimer = 0;
+let _lastTorsoX     = 0;
+let _lastTorsoY     = 0;
 
 // Combat / cooldown state
 let isDeployed      = false;
@@ -683,11 +692,21 @@ const game = new Phaser.Game(config);
 // ================================================================
 
 function preload() {
-    // Generate a simple white-circle texture used by smoke particles.
+    // Soft white circle — used by damage smoke particles
     let g = this.make.graphics({ x: 0, y: 0, add: false });
     g.fillStyle(0xffffff, 1);
     g.fillCircle(10, 10, 10);
     g.generateTexture('smoke', 20, 20);
+
+    // Bright radial bloom — used exclusively by the thrust exhaust emitter.
+    // Concentric circles from opaque centre to transparent edge give a
+    // convincing glow that responds well to tinting + ADD blend mode.
+    let tg = this.make.graphics({ x: 0, y: 0, add: false });
+    for (let i = 8; i >= 0; i--) {
+        tg.fillStyle(0xffffff, (i / 8));
+        tg.fillCircle(16, 16, (8 - i + 1) * 2);
+    }
+    tg.generateTexture('thrust', 32, 32);
 
     // Audio assets (uncomment paths when files are available)
     // this.load.audio('snd-smg',          'assets/smg_fire.wav');
@@ -853,7 +872,7 @@ function handleRageGhosts(scene, time) {
     });
 }
 
-/** Sync torso/shield graphics to physics body and update turret aim. */
+/** Sync torso/shield graphics to physics body, update turret aim, and run chassis effects. */
 function syncVisuals(scene, time) {
     torso.setPosition(player.x, player.y);
     shieldGraphic.setPosition(player.x, player.y).setVisible(isShieldActive);
@@ -864,6 +883,249 @@ function syncVisuals(scene, time) {
         scene.input.activePointer.worldY
     );
     torso.rotation = Phaser.Math.Angle.RotateTo(torso.rotation, targetAngle, 0.1);
+
+    syncChassisEffect(scene, time);
+    syncGlowWedge();
+    syncCrosshair(scene);
+}
+
+/**
+ * CHASSIS MOVEMENT EFFECTS
+ * Called each frame from syncVisuals.
+ * Light  → ghost torso trail
+ * Medium → alternating footstep dust puffs
+ * Heavy  → periodic ground shockwaves + camera nudge
+ */
+function syncChassisEffect(scene, time) {
+    const speed  = player.body.velocity.length();
+    const moving = speed > 10;
+
+    if      (loadout.chassis === 'light')  syncLightTrail(scene, time, moving);
+    else if (loadout.chassis === 'medium') syncMediumFootsteps(scene, time, moving);
+    else if (loadout.chassis === 'heavy')  syncHeavyShockwave(scene, time, moving);
+
+    // Clear medium motion blur tracking position when not on medium
+    if (loadout.chassis !== 'medium') { _lastTorsoX = torso.x; _lastTorsoY = torso.y; }
+}
+
+/**
+ * Shared helper — stamps a single boot-shaped rectangle on the ground.
+ * @param {number} w        print width
+ * @param {number} h        print height
+ * @param {number} fadeTime ms until fully transparent
+ */
+function spawnFootprint(scene, x, y, rotation, w, h, fadeTime) {
+    const print = scene.add.rectangle(x, y, w, h, loadout.color, 0.6)
+        .setRotation(rotation)
+        .setDepth(2);
+    scene.tweens.add({
+        targets:  print,
+        alpha:    0,
+        duration: fadeTime,
+        ease:     'Cubic.easeIn',
+        onComplete: () => print.destroy()
+    });
+}
+
+/**
+ * Light mech: ghost torso trail + small quick-fading footprints.
+ * Prints: 12×6, stance 8px, fast cadence, fade in 1200ms.
+ */
+function syncLightTrail(scene, time, moving) {
+    if (!moving) return;
+
+    // --- Ghost trail ---
+    const dist = Phaser.Math.Distance.Between(torso.x, torso.y, _lastTorsoX, _lastTorsoY);
+    if (dist >= 10) {
+        _lastTorsoX = torso.x;
+        _lastTorsoY = torso.y;
+
+        const ghost = buildPlayerMech(scene, loadout.chassis, loadout.color);
+        ghost.setPosition(torso.x, torso.y).setRotation(torso.rotation);
+        ghost.setAlpha(0.35).setDepth(8);
+        ghost.list.forEach(s => { if (s?.setFillStyle) s.setFillStyle(darkenColor(loadout.color, 0.6)); });
+        scene.tweens.add({ targets: ghost, alpha: 0, duration: 220, onComplete: () => ghost.destroy() });
+    }
+
+    // --- Footprints ---
+    if (time < _footstepTimer) return;
+    const speed    = player.body.velocity.length();
+    const interval = Math.max(90, 260 - speed * 0.5);
+    _footstepTimer = time + interval;
+
+    const perp = player.rotation + Math.PI / 2;
+    const rear = player.rotation + Math.PI;
+    const rx   = player.x + Math.cos(rear) * 12;
+    const ry   = player.y + Math.sin(rear) * 12;
+
+    spawnFootprint(scene,
+        rx + Math.cos(perp) * 8 * _footstepSide,
+        ry + Math.sin(perp) * 8 * _footstepSide,
+        player.rotation, 12, 6, 1200
+    );
+    _footstepSide *= -1;
+}
+
+/**
+ * Medium mech: footprints + speed-line streak behind the torso.
+ * Prints: 16×8, stance 12px, medium cadence, fade in 1800ms.
+ * Streak: fading line drawn opposite travel direction, length/alpha scale with speed.
+ */
+function syncMediumFootsteps(scene, time, moving) {
+    // --- Subtle motion blur ---
+    // Spawn a faint ghost every 18px of movement, very low alpha and fast fade.
+    // Much subtler than the light trail — feels like blur rather than echo.
+    if (moving) {
+        const dist = Phaser.Math.Distance.Between(torso.x, torso.y, _lastTorsoX, _lastTorsoY);
+        if (dist >= 18) {
+            _lastTorsoX = torso.x;
+            _lastTorsoY = torso.y;
+
+            const ghost = buildPlayerMech(scene, loadout.chassis, loadout.color);
+            ghost.setPosition(torso.x, torso.y).setRotation(torso.rotation);
+            ghost.setAlpha(0.18).setDepth(8);
+            ghost.list.forEach(s => { if (s?.setFillStyle) s.setFillStyle(darkenColor(loadout.color, 0.5)); });
+            scene.tweens.add({ targets: ghost, alpha: 0, duration: 160, onComplete: () => ghost.destroy() });
+        }
+    }
+
+    // --- Footprints ---
+    if (!moving || time < _footstepTimer) return;
+    const speed    = player.body.velocity.length();
+    const interval = Math.max(140, 340 - speed * 0.6);
+    _footstepTimer = time + interval;
+
+    const perp = player.rotation + Math.PI / 2;
+    const rear = player.rotation + Math.PI;
+    const rx   = player.x + Math.cos(rear) * 16;
+    const ry   = player.y + Math.sin(rear) * 16;
+
+    spawnFootprint(scene,
+        rx + Math.cos(perp) * 12 * _footstepSide,
+        ry + Math.sin(perp) * 12 * _footstepSide,
+        player.rotation, 16, 8, 1800
+    );
+    _footstepSide *= -1;
+}
+
+/**
+ * Heavy mech: large footprints + shockwave ring + camera thud.
+ * Prints: 22×11, stance 20px, slow cadence, fade in 2500ms.
+ */
+function syncHeavyShockwave(scene, time, moving) {
+    if (!moving || time < _shockwaveTimer) return;
+
+    const speed     = player.body.velocity.length();
+    const interval  = Math.max(320, 700 - speed * 1.2);
+    _shockwaveTimer = time + interval;
+
+    const perp = player.rotation + Math.PI / 2;
+    const rear = player.rotation + Math.PI;
+    const rx   = player.x + Math.cos(rear) * 24;
+    const ry   = player.y + Math.sin(rear) * 24;
+
+    // --- Footprints (both feet per step, wide stance) ---
+    [-1, 1].forEach(side => {
+        spawnFootprint(scene,
+            rx + Math.cos(perp) * 20 * side,
+            ry + Math.sin(perp) * 20 * side,
+            player.rotation, 22, 11, 2500
+        );
+    });
+
+    // --- Shockwave ring ---
+    const ring = scene.add.circle(player.x, player.y, 10, loadout.color, 0)
+        .setStrokeStyle(3, loadout.color, 0.9)
+        .setDepth(3);
+    scene.tweens.add({
+        targets:  ring,
+        radius:   70,
+        alpha:    0,
+        duration: 500,
+        ease:     'Cubic.easeOut',
+        onComplete: () => ring.destroy()
+    });
+
+    // --- Camera thud ---
+    scene.cameras.main.shake(80, 0.004);
+}
+
+/**
+ * Redraws the glow wedge each frame.
+ * A soft filled arc sits at the front of the legs, always facing the
+ * direction the legs are pointed, tinted in the mech's armour colour.
+ */
+function syncGlowWedge() {
+    if (!glowWedge) return;
+    glowWedge.clear();
+
+    const r      = player.rotation;
+    const spread = 0.55;                        // half-angle (~31°)
+    const scale  = CHASSIS[loadout.chassis].scale;
+
+    // Push the wedge clear of the largest possible torso graphic.
+    // Base offset of 42px (clears heavy torso at scale 1.4 ≈ 58px wide)
+    // then add per-chassis padding so it visually hugs the hull edge.
+    const hullRadius = 42 * scale;              // inner edge — just past the hull
+    const wedgeDepth = 55 * scale;              // how far the cone projects forward
+    const inner      = hullRadius;
+    const outer      = hullRadius + wedgeDepth;
+
+    const col = loadout.color;
+
+    // Three layers: wide soft halo → medium glow → tight bright core
+    const layers = [
+        { iR: inner,        oR: outer + 28 * scale, sp: 1.5,  alpha: 0.07 },
+        { iR: inner,        oR: outer + 10 * scale, sp: 1.2,  alpha: 0.14 },
+        { iR: inner,        oR: outer,               sp: 1.0,  alpha: 0.32 },
+    ];
+
+    layers.forEach(({ iR, oR, sp, alpha }) => {
+        glowWedge.fillStyle(col, alpha);
+        glowWedge.beginPath();
+        glowWedge.arc(player.x, player.y, oR, r - spread * sp, r + spread * sp, false);
+        glowWedge.arc(player.x, player.y, iR, r + spread * sp, r - spread * sp, true);
+        glowWedge.closePath();
+        glowWedge.fillPath();
+    });
+}
+
+/**
+ * Draws the static bracket-corner crosshair onto a Graphics object.
+ * Called once at deploy — the shape never changes, only its position moves.
+ *   size  = half-width/height of the full bracket area
+ *   len   = length of each corner arm
+ *   gap   = empty space from center to where arms begin
+ */
+function drawCrosshair(g) {
+    const size  = 14;  // overall bracket radius
+    const len   = 6;   // arm length
+    const col   = 0x00ffff;
+    const alpha = 0.9;
+
+    g.lineStyle(1.5, col, alpha);
+
+    // Top-left
+    g.beginPath(); g.moveTo(-size, -size + len); g.lineTo(-size, -size); g.lineTo(-size + len, -size); g.strokePath();
+    // Top-right
+    g.beginPath(); g.moveTo( size - len, -size); g.lineTo( size, -size); g.lineTo( size, -size + len); g.strokePath();
+    // Bottom-right
+    g.beginPath(); g.moveTo( size, size - len); g.lineTo( size,  size); g.lineTo( size - len,  size); g.strokePath();
+    // Bottom-left
+    g.beginPath(); g.moveTo(-size + len,  size); g.lineTo(-size,  size); g.lineTo(-size,  size - len); g.strokePath();
+
+    // Center dot
+    g.fillStyle(col, alpha);
+    g.fillCircle(0, 0, 1.5);
+}
+
+/** Moves the crosshair graphic to the current mouse position each frame. */
+function syncCrosshair(scene) {
+    if (!crosshair) return;
+    crosshair.setPosition(
+        scene.input.activePointer.x,
+        scene.input.activePointer.y
+    );
 }
 
 /** Drive the cooldown overlay heights in the HUD weapon slots. */
@@ -921,9 +1183,8 @@ function deployMech() {
     const legDims = { light: [40,30], medium: [60,40], heavy: [70,40] };
     const [legW, legH] = legDims[loadout.chassis] ?? legDims.medium;
 
-    // Physics body (legs / lower hull)
-    player = scene.add.rectangle(2000, 2000, legW, legH, 0x222222)
-        .setStrokeStyle(2, 0xffffff)
+    // Physics body (legs / lower hull) — invisible, used for collision only
+    player = scene.add.rectangle(2000, 2000, legW, legH, 0x000000, 0)
         .setDepth(5);
     scene.physics.add.existing(player);
     player.body.setCircle(35);
@@ -980,21 +1241,24 @@ function deployMech() {
     refreshMechColor();
     scene.time.delayedCall(10, () => refreshMechColor()); // One-frame safety flush
 
-    // Shield bubble graphic
-    shieldGraphic = scene.add.circle(0, 0, 50, 0x00ffff, 0.15)
+    // Shield bubble — radius scales with chassis size
+    const shieldRadius = 50 * CHASSIS[loadout.chassis].scale;
+    shieldGraphic = scene.add.circle(0, 0, shieldRadius, 0x00ffff, 0.15)
         .setStrokeStyle(2, 0x00ffff)
         .setVisible(false)
         .setDepth(12);
 
-    // Smoke particle system (used when mech is damaged)
-    smokeParticles = scene.add.particles(0, 0, 'smoke', {
-        scale:   { start: 0.5, end: 0 },
-        alpha:   { start: 0.4, end: 0 },
-        lifespan: 500,
-        speed:    30,
-        follow:   player,
-        on:       false
-    }).setDepth(4);
+    // --- FRONT GLOW WEDGE ---
+    glowWedge = scene.add.graphics().setDepth(4);
+
+    // --- MOTION BLUR (medium only) ---
+    speedStreakLine = scene.add.graphics().setDepth(3);
+
+    // --- CROSSHAIR ---
+    // Drawn once as a static bracket-corner style graphic, follows mouse each frame.
+    crosshair = scene.add.graphics().setDepth(9999).setScrollFactor(0);
+    drawCrosshair(crosshair);
+    scene.input.setDefaultCursor('none');
 
     // Colliders
     scene.physics.add.collider(player, enemies);
@@ -1583,6 +1847,8 @@ function refreshMechColor() {
     if (!torso?.list || !isDeployed) return;
     const headColor = isRageActive ? 0xff0000 : loadout.color;
     const bodyColor = isRageActive ? 0x660000 : darkenColor(loadout.color, 0.4);
+
+    // Reset footstep/shockwave timers so effects re-sync after color change
 
     torso.list.forEach(shape => {
         if (!shape?.setFillStyle) return;
