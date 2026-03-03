@@ -684,7 +684,7 @@ button.active {
   </div>
 </div>
 <!-- ROUND BANNER -->
-<div id="round-banner" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99998;pointer-events:none;text-align:center;font-family:'Courier New',monospace;">
+<div id="round-banner" style="display:none;position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);z-index:99998;pointer-events:none;text-align:center;font-family:'Courier New',monospace;">
   <div id="round-banner-text" style="font-size:48px;letter-spacing:10px;color:#00ffff;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);"></div>
   <div id="round-banner-sub"  style="font-size:13px;letter-spacing:5px;color:rgba(0,255,255,0.6);margin-top:8px;"></div>
 </div>
@@ -698,14 +698,14 @@ button.active {
         <div style="display:flex;gap:20px;justify-content:center;">
             <button onclick="respawnMech()"
                 style="width:200px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;"
-                onmouseover="this.style.background='rgba(0,255,255,0.15)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.25)';"
-                onmouseout="this.style.background='rgba(0,255,255,0.05)';this.style.boxShadow='none';">
+                onmouseover="this.style.background='rgba(0,255,255,0.15)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.25)';this.style.letterSpacing='4px';"
+                onmouseout="this.style.background='rgba(0,255,255,0.05)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
                 &#9654; RESPAWN
             </button>
             <button onclick="returnToHangar()"
                 style="width:200px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;"
-                onmouseover="this.style.background='rgba(0,255,255,0.15)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.25)';"
-                onmouseout="this.style.background='rgba(0,255,255,0.05)';this.style.boxShadow='none';">
+                onmouseover="this.style.background='rgba(0,255,255,0.15)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.25)';this.style.letterSpacing='4px';"
+                onmouseout="this.style.background='rgba(0,255,255,0.05)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
                 &#8962; MECH HANGAR
             </button>
         </div>
@@ -878,10 +878,15 @@ function create() {
     // Player bullet ↔ enemy overlap
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
         if (bullet.isGLBall) return; // GL balls use a separate detonation path
-        createImpactSparks(this, enemy.x, enemy.y);
         const dmg = bullet.damageValue || 2;
-        showDamageText(this, enemy.x, enemy.y, dmg);
         bullet.destroy();
+        if (enemy.isShielded) {
+            // Shield absorbs the hit — show cyan sparks, no damage
+            createShieldSparks(this, enemy.x, enemy.y);
+            return;
+        }
+        createImpactSparks(this, enemy.x, enemy.y);
+        showDamageText(this, enemy.x, enemy.y, dmg);
         damageEnemy(enemy, dmg);
     });
 
@@ -951,9 +956,20 @@ function handleEnemyAI(scene, time) {
                 }
             }
             else if (beh === 'rusher') {
-                // Charges straight at the player at high speed
-                vx = Math.cos(angle) * speed * 1.4;
-                vy = Math.sin(angle) * speed * 1.4;
+                // Close in fast, but stop ramming at melee range — strafe instead
+                if (dist > 260) {
+                    vx = Math.cos(angle) * speed * 1.4;
+                    vy = Math.sin(angle) * speed * 1.4;
+                } else if (dist < 160) {
+                    // Back off slightly if too close
+                    vx = -Math.cos(angle) * speed * 0.9;
+                    vy = -Math.sin(angle) * speed * 0.9;
+                } else {
+                    // Preferred combat range — circle aggressively
+                    const strafe = angle + Math.PI / 2;
+                    vx = Math.cos(strafe) * speed * 1.2;
+                    vy = Math.sin(strafe) * speed * 1.2;
+                }
             }
             else if (beh === 'sniper') {
                 // Stays at long range, barely moves
@@ -982,21 +998,24 @@ function handleEnemyAI(scene, time) {
                 }
             }
 
-            // Fire rate varies by behavior
-            const fireRange = enemy.behavior === 'sniper' ? 600 : 500;
-            const fireRate  = enemy.behavior === 'sniper' ? 1200
-                            : enemy.behavior === 'rusher' ? 2400 : 1800;
-            if (dist < fireRange && (!enemy.lastFireTime || time > enemy.lastFireTime + fireRate)) {
+            // Weapon-driven fire rate — weapon.reload scaled by behavior
+            const fireRange  = enemy.behavior === 'sniper' ? 700 : 500;
+            const wepReload  = WEAPONS[enemy.loadout?.primary || 'smg']?.reload || 300;
+            const reloadMult = enemy.behavior === 'sniper' ? 1.4
+                             : enemy.behavior === 'rusher' ? 0.85
+                             : enemy.behavior === 'flanker' ? 1.0 : 1.1;
+            if (dist < fireRange && time > (enemy.lastFireTime || 0) + wepReload * reloadMult) {
                 enemyFire(scene, enemy, time);
-                enemy.lastFireTime = time + Phaser.Math.Between(-200, 200);
+                enemy.lastFireTime = time;
             }
 
             // Enemy mod activation
             const eMod = enemy.loadout?.mod;
             if (eMod && eMod !== 'none' && !enemy.isModActive) {
-                const modDef = WEAPONS[eMod];
+                const modDef   = WEAPONS[eMod];
                 const cooldown = modDef?.cooldown || 8000;
-                if (time > (enemy.lastModTime || -10000) + cooldown) {
+                const lastMT   = enemy.lastModTime ?? -99999;
+                if (time > lastMT + cooldown) {
                     activateEnemyMod(scene, enemy, eMod, time);
                 }
             }
@@ -1042,6 +1061,8 @@ function handleEnemyAI(scene, time) {
             const aimAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
             enemy.torso.rotation = Phaser.Math.Angle.RotateTo(enemy.torso.rotation, aimAngle, 0.1);
         }
+        // Sync shield ring to enemy position
+        if (enemy.shieldRing?.active) enemy.shieldRing.setPosition(enemy.x, enemy.y);
 
         if (enemy.bar) enemy.bar.setPosition(enemy.x, enemy.y - 45 * (enemy.loadout ? CHASSIS[enemy.loadout.chassis].scale : 1));
 
@@ -1860,15 +1881,17 @@ function activateEnemyMod(scene, enemy, mod, time) {
             break;
         }
         case 'shield': {
-            // Temporarily immune to damage
+            // Temporarily immune to damage — mirrors player shield exactly
             enemy.isShielded = true;
-            // Cyan ring around enemy
-            const sr = scene.add.circle(enemy.x, enemy.y,
-                50 * (CHASSIS[enemy.loadout.chassis]?.scale || 1), 0x00ffff, 0.15)
+            const shieldRadius = 50 * (CHASSIS[enemy.loadout.chassis]?.scale || 1);
+            const sr = scene.add.circle(enemy.x, enemy.y, shieldRadius, 0x00ffff, 0.15)
                 .setStrokeStyle(2, 0x00ffff).setDepth(7);
-            const shieldDur = WEAPONS.shield.shieldTime;
-            scene.tweens.add({ targets: sr, alpha: 0, duration: shieldDur,
-                onComplete: () => { sr.destroy(); enemy.isShielded = false; enemy.isModActive = false; }
+            enemy.shieldRing = sr;
+            scene.time.delayedCall(WEAPONS.shield.shieldTime, () => {
+                if (sr?.active) sr.destroy();
+                enemy.shieldRing = null;
+                enemy.isShielded = false;
+                enemy.isModActive = false;
             });
             break;
         }
@@ -1926,21 +1949,35 @@ function randomEnemyLoadout() {
     const chassis   = Phaser.Math.RND.pick(['light', 'medium', 'heavy']);
     const maxWeight = CHASSIS[chassis].max;
 
-    // Pick weapons that fit within the chassis weight limit
-    let primary   = 'smg';
-    let secondary = 'none';
-    let mod       = 'none';
+    // Weight-biased pick: build a pool where heavier options appear more times.
+    // Each option gets (weight / 25) entries so heavier weapons are more likely.
+    function weightedPick(keys) {
+        const pool = [];
+        keys.forEach(k => {
+            const w = WEAPONS[k].weight || 1;
+            const tickets = Math.max(1, Math.round(w / 25));
+            for (let i = 0; i < tickets; i++) pool.push(k);
+        });
+        return Phaser.Math.RND.pick(pool);
+    }
 
+    // Primary: always pick something, biased toward heavier
     const primaryOptions = ENEMY_PRIMARY.filter(w => WEAPONS[w].weight <= maxWeight);
-    primary = Phaser.Math.RND.pick(primaryOptions);
+    const primary = weightedPick(primaryOptions);
 
+    // Secondary: exclude 'none' if any real weapon fits the remaining budget
     const remainAfterPrimary = maxWeight - WEAPONS[primary].weight;
-    const secOptions = ENEMY_SECONDARY.filter(w => WEAPONS[w].weight <= remainAfterPrimary);
-    secondary = Phaser.Math.RND.pick(secOptions);
+    const secReal = ['sr', 'gl', 'rl', 'plsm'].filter(w => WEAPONS[w].weight <= remainAfterPrimary);
+    const secondary = secReal.length > 0
+        ? weightedPick(secReal)          // always equip something if it fits
+        : 'none';
 
+    // Mod: exclude 'none' if any real mod fits
     const remainAfterSec = remainAfterPrimary - WEAPONS[secondary].weight;
-    const modOptions = ENEMY_MODS.filter(m => WEAPONS[m].weight <= remainAfterSec);
-    mod = Phaser.Math.RND.pick(modOptions);
+    const modReal = ['jump', 'shield', 'rage', 'emp'].filter(m => WEAPONS[m].weight <= remainAfterSec);
+    const mod = modReal.length > 0
+        ? weightedPick(modReal)          // always equip something if it fits
+        : 'none';
 
     return { chassis, primary, secondary, mod };
 }
@@ -1980,12 +2017,22 @@ function spawnEnemy(scene) {
 
     // Stats — use the same component HP as the chassis defines
     e.loadout    = loadoutE;
+    const _behaviorPool = {
+        light:  ['rusher', 'rusher', 'flanker'],
+        medium: ['circle', 'flanker', 'circle'],
+        heavy:  ['circle', 'sniper',  'circle']
+    };
+    e.behavior   = (loadoutE.primary === 'hr' || loadoutE.primary === 'sr')
+                 ? 'sniper'
+                 : Phaser.Math.RND.pick(_behaviorPool[loadoutE.chassis]);
     e.speed      = chassisS.spd;
     e.health     = getTotalHP(loadoutE.chassis);
     e.maxHealth  = e.health;
     e.reloadL    = 0;
     e.reloadR    = 0;
-    e.lastModTime = -10000;
+    // Stagger mod cooldown so enemies don't all fire simultaneously
+    const _mc = WEAPONS[loadoutE.mod]?.cooldown || 8000;
+    e.lastModTime = -_mc * Phaser.Math.FloatBetween(0.1, 0.8);
     e.isModActive = false;
 
     // Health bar (scales with chassis HP)
@@ -2466,24 +2513,25 @@ function buildPlayerMech(scene, type, color) {
     const container = scene.add.container(0, 0);
     const s = CHASSIS[type].scale;
 
+    const bodyCol = darkenColor(color, 0.4);
     if (type === 'heavy') {
         container.add([
-            scene.add.rectangle(0, 0,  40, 100, 0x333333).setStrokeStyle(2, 0xffffff),
-            scene.add.rectangle(0, 0,  60,  70, 0x333333).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  40, 100, bodyCol).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  60,  70, bodyCol).setStrokeStyle(2, 0xffffff),
             scene.add.rectangle(0, 0,  40,  30, color).setStrokeStyle(2, 0xffffff).setName('mechHead'),
             scene.add.rectangle(20, 0,  8,  30, 0x0F61A1).setStrokeStyle(1, 0xffffff)
         ]);
     } else if (type === 'light') {
         container.add([
-            scene.add.rectangle(0, 0,  25,  60, 0x444444).setStrokeStyle(2, 0xffffff),
-            scene.add.rectangle(0, 0,  40,  40, 0x444444).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  25,  60, bodyCol).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  40,  40, bodyCol).setStrokeStyle(2, 0xffffff),
             scene.add.rectangle(0, 0,  25,  20, color).setStrokeStyle(2, 0xffffff).setName('mechHead'),
             scene.add.rectangle(10, 0, 10,  20, 0x0F61A1).setStrokeStyle(1, 0xffffff)
         ]);
     } else { // medium
         container.add([
-            scene.add.rectangle(0, 0,  35,  80, 0x444444).setStrokeStyle(2, 0xffffff),
-            scene.add.rectangle(0, 0,  50,  50, 0x444444).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  35,  80, bodyCol).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  50,  50, bodyCol).setStrokeStyle(2, 0xffffff),
             scene.add.rectangle(0, 0,  35,  25, color).setStrokeStyle(2, 0xffffff).setName('mechHead'),
             scene.add.rectangle(14, 0, 10,  25, 0x0F61A1).setStrokeStyle(1, 0xffffff)
         ]);
@@ -2506,7 +2554,7 @@ function buildEnemyTorso(scene, type, colors) {
     //   Y axis = left/right perpendicular (shoulders at +Y and -Y)
     type   = type   || 'medium';
     colors = colors || ENEMY_COLORS[type];
-    const body = colors.body;
+    const body = darkenColor(colors.head, 0.45);
     const head = colors.head;
     const eye  = colors.eye;
     const c = scene.add.container(0, 0);
