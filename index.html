@@ -819,7 +819,215 @@ let isChargeActive  = false;  // loot: 50% mod cooldown reduction for 10s
 
 
 // ================================================================
-// PHASER CONFIGURATION
+
+// ================================================================
+// SYNTHESIZED SOUND ENGINE  (Web Audio API — no asset files needed)
+// ================================================================
+let _ac          = null;
+let _masterVol   = 0.3;
+let _activeNodes = 0;
+const _MAX_NODES = 12;   // hard cap — prevents flooding the AudioContext
+const _sndThrottle = {}; // per-sound last-played timestamps
+
+function _getAC() {
+    if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)();
+    if (_ac.state === 'suspended') _ac.resume();
+    return _ac;
+}
+
+/** Returns true if this sound key is allowed to play (throttle in ms) */
+function _canPlay(key, minGap) {
+    const now = performance.now();
+    if (_activeNodes >= _MAX_NODES) return false;
+    if (_sndThrottle[key] && now - _sndThrottle[key] < minGap) return false;
+    _sndThrottle[key] = now;
+    return true;
+}
+
+function _tone(freq, type, duration, vol, freqEnd, startDelay = 0) {
+    try {
+        const ac   = _getAC();
+        const osc  = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ac.currentTime + startDelay);
+        if (freqEnd !== undefined)
+            osc.frequency.exponentialRampToValueAtTime(
+                Math.max(1, freqEnd), ac.currentTime + startDelay + duration);
+        gain.gain.setValueAtTime(vol * _masterVol, ac.currentTime + startDelay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + startDelay + duration);
+        _activeNodes++;
+        osc.onended = () => { _activeNodes = Math.max(0, _activeNodes - 1); };
+        osc.start(ac.currentTime + startDelay);
+        osc.stop(ac.currentTime + startDelay + duration);
+    } catch(e) {}
+}
+
+function _noise(duration, vol, startDelay = 0, highpass = 0, lowpass = 0) {
+    try {
+        const ac     = _getAC();
+        const bufLen = Math.ceil(ac.sampleRate * Math.min(duration, 0.5));
+        const buf    = ac.createBuffer(1, bufLen, ac.sampleRate);
+        const data   = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+        const src  = ac.createBufferSource();
+        src.buffer = buf;
+        const gain = ac.createGain();
+        src.connect(gain);
+        let node = gain;
+        if (highpass > 0) {
+            const hp = ac.createBiquadFilter();
+            hp.type = 'highpass'; hp.frequency.value = highpass;
+            gain.connect(hp); node = hp;
+        }
+        if (lowpass > 0) {
+            const lp = ac.createBiquadFilter();
+            lp.type = 'lowpass'; lp.frequency.value = lowpass;
+            node.connect(lp); node = lp;
+        }
+        node.connect(ac.destination);
+        gain.gain.setValueAtTime(vol * _masterVol, ac.currentTime + startDelay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + startDelay + duration);
+        _activeNodes++;
+        src.onended = () => { _activeNodes = Math.max(0, _activeNodes - 1); };
+        src.start(ac.currentTime + startDelay);
+        src.stop(ac.currentTime + startDelay + duration);
+    } catch(e) {}
+}
+
+// ── Per-weapon fire sounds ─────────────────────────────────────────
+// minGap controls max fire rate for sound (independent of game fire rate)
+function sndFire(wKey) {
+    const gaps = { smg:80, mg:180, sg:300, br:120, hr:400, sr:500, rl:400, gl:300, plsm:400 };
+    const gap  = gaps[wKey] || 150;
+    if (!_canPlay('fire_' + wKey, gap)) return;
+    switch (wKey) {
+        case 'smg':
+            _noise(0.05, 0.25, 0, 2000, 8000);
+            break;
+        case 'mg':
+            _noise(0.09, 0.35, 0, 800, 5000);
+            _tone(100, 'sawtooth', 0.07, 0.12, 50);
+            break;
+        case 'sg':
+            _noise(0.14, 0.55, 0, 200, 3000);
+            _tone(70, 'sawtooth', 0.10, 0.18, 25);
+            break;
+        case 'br':
+            _noise(0.06, 0.28, 0, 1500, 7000);
+            break;
+        case 'hr':
+            _noise(0.20, 0.65, 0, 80, 1200);
+            _tone(50, 'sine', 0.18, 0.3, 18);
+            break;
+        case 'sr':
+            _noise(0.07, 0.4, 0, 3000, 0);
+            _tone(500, 'sine', 0.09, 0.2, 55);
+            break;
+        case 'rl':
+            _noise(0.18, 0.45, 0, 80, 1800);
+            _tone(65, 'sawtooth', 0.18, 0.22, 25);
+            break;
+        case 'gl':
+            _tone(110, 'sine', 0.09, 0.28, 55);
+            _noise(0.07, 0.18, 0, 400, 2000);
+            break;
+        case 'plsm':
+            _tone(440, 'sine', 0.08, 0.14, 220);
+            _tone(880, 'sine', 0.10, 0.08, 440, 0.04);
+            break;
+    }
+}
+
+function sndEnemyFire(wKey) {
+    if (!_canPlay('efr_' + wKey, 200)) return;
+    switch (wKey) {
+        case 'smg': _noise(0.04, 0.08, 0, 2000, 8000); break;
+        case 'mg':  _noise(0.08, 0.12, 0, 800, 5000);  break;
+        case 'sg':  _noise(0.10, 0.18, 0, 200, 3000);  break;
+        case 'hr':  _noise(0.16, 0.22, 0, 80, 1200); _tone(42, 'sawtooth', 0.15, 0.12, 18); break;
+        case 'sr':  _noise(0.06, 0.14, 0, 3000, 0); break;
+        default:    _noise(0.06, 0.08, 0, 600, 5000);  break;
+    }
+}
+
+function sndExplosion(large = false) {
+    if (!_canPlay('exp', 80)) return;
+    const vol = large ? 0.7 : 0.4;
+    const dur = large ? 0.5 : 0.25;
+    _noise(dur, vol, 0, 0, large ? 600 : 350);
+    _tone(large ? 45 : 75, 'sine', dur * 0.8, vol * 0.5, 18);
+}
+
+function sndShieldBlock() {
+    if (!_canPlay('sblk', 120)) return;
+    _tone(1100, 'sine', 0.09, 0.28, 700);
+}
+
+function sndShieldActivate() {
+    if (!_canPlay('sact', 500)) return;
+    _tone(300, 'sine', 0.25, 0.18, 800);
+}
+
+function sndShieldDeactivate() {
+    _tone(700, 'sine', 0.18, 0.12, 180);
+}
+
+function sndEMP() {
+    if (!_canPlay('emp', 500)) return;
+    _noise(0.35, 0.4, 0, 1200, 0);
+    _tone(75, 'sawtooth', 0.35, 0.25, 18);
+}
+
+function sndRage() {
+    _tone(110, 'sawtooth', 0.28, 0.3, 220);
+    _tone(75,  'square',   0.35, 0.18, 150, 0.05);
+}
+
+function sndJump() {
+    _noise(0.22, 0.3, 0, 350, 3000);
+    _tone(180, 'sine', 0.18, 0.18, 550, 0.02);
+}
+
+function sndPlayerHit() {
+    if (!_canPlay('phit', 120)) return;
+    _noise(0.09, 0.28, 0, 250, 3000);
+    _tone(130, 'sawtooth', 0.07, 0.18, 50);
+}
+
+function sndLoot(type) {
+    switch(type) {
+        case 'repair': _tone(440,'sine',0.08,0.2,660); _tone(660,'sine',0.08,0.15,880,0.08); break;
+        case 'ammo':   _tone(330,'square',0.06,0.18,660); _tone(550,'square',0.06,0.12,880,0.06); break;
+        case 'charge': _tone(500,'sine',0.09,0.18,1000); _tone(750,'sine',0.09,0.1,1400,0.08); break;
+    }
+}
+
+function sndEnemyDeath(isCommander = false) {
+    if (!_canPlay('edth', 60)) return;
+    const vol = isCommander ? 0.7 : 0.35;
+    const dur = isCommander ? 0.45 : 0.22;
+    _noise(dur, vol, 0, 0, isCommander ? 500 : 350);
+    _tone(isCommander ? 38 : 55, 'sawtooth', dur, vol * 0.6, 14);
+}
+
+function sndCommanderSpawn() {
+    _tone(55, 'sawtooth', 0.45, 0.35, 38);
+    _tone(75, 'square',   0.35, 0.18, 55, 0.1);
+    _noise(0.28, 0.18, 0.18, 0, 450);
+}
+
+function sndRoundClear() {
+    _tone(440,'sine',0.1,0.28,660); _tone(660,'sine',0.1,0.22,880,0.1); _tone(880,'sine',0.14,0.18,1100,0.2);
+}
+
+function sndRoundStart() {
+    _tone(220,'square',0.11,0.22,330); _tone(330,'square',0.11,0.18,440,0.11);
+}
+
+// PHASER GAME CONFIG
 // ================================================================
 
 const config = {
@@ -1644,12 +1852,13 @@ function onEnemyKilled() {
     if (_roundKills >= _roundTotal) {
         // Round cleared!
         _roundActive = false;
+        sndRoundClear();
         const nextRound = _round + 1;
         showRoundBanner(
             'ROUND ' + _round + ' CLEARED',
             'PREPARE FOR ROUND ' + nextRound,
             2800,
-            () => startRound(nextRound)
+            () => { sndRoundStart(); startRound(nextRound); }
         );
     }
 }
@@ -1777,7 +1986,7 @@ function deployMech() {
         const bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
 
         if (isShieldActive) {
-            // scene.sound.play('snd-shield-hit', { volume: 0.6 });
+            sndShieldBlock();
             createShieldSparks(scene, bullet.x, bullet.y);
             showDamageText(scene, bullet.x, bullet.y, 0, true);
             bullet.destroy();
@@ -1939,6 +2148,7 @@ function activateMod(scene, time) {
 }
 
 function activateJump(scene) {
+    sndJump();
     isJumping = true;
     scene.physics.velocityFromRotation(player.rotation, WEAPONS.jump.jumpSpeed, player.body.velocity);
     scene.tweens.add({
@@ -1954,14 +2164,17 @@ function activateJump(scene) {
 }
 
 function activateShield(scene) {
+    sndShieldActivate();
     isShieldActive = true;
     scene.time.delayedCall(WEAPONS.shield.shieldTime, () => {
         isShieldActive = false;
+        sndShieldDeactivate();
         lastModTime = game.scene.scenes[0].time.now;
     });
 }
 
 function activateRage(scene) {
+    sndRage();
     isRageActive = true;
     refreshMechColor();
     scene.time.delayedCall(WEAPONS.rage.rageTime, () => {
@@ -1972,6 +2185,7 @@ function activateRage(scene) {
 }
 
 function activateEMP(scene, time) {
+    sndEMP();
     // Expanding ring visual
     const ring = scene.add.circle(player.x, player.y, 10, 0x00ffff, 0.2)
         .setStrokeStyle(2, 0x00ffff)
@@ -2054,6 +2268,7 @@ function activateEnemyMod(scene, enemy, mod, time) {
             break;
         }
         case 'emp': {
+            sndEMP();
             // EMP blast centered on enemy — stuns the player briefly
             const ring = scene.add.circle(enemy.x, enemy.y, 10, 0xff6600, 0.2)
                 .setStrokeStyle(2, 0xff6600).setDepth(12);
@@ -2241,6 +2456,7 @@ function checkLootPickups(scene) {
 }
 
 function applyLoot(scene, type) {
+    sndLoot(type);
     const def = LOOT_TYPES[type];
     // Flash text
     const fx = scene.add.text(player.x, player.y - 40, def.label + ' PICKED UP', {
@@ -2500,6 +2716,7 @@ function spawnCommander(scene) {
 
     enemies.add(e);
     if (coverObjects) scene.physics.add.collider(e, coverObjects);
+    sndCommanderSpawn();
 }
 
 function enemyFire(scene, enemy, time) {
@@ -2510,6 +2727,7 @@ function enemyFire(scene, enemy, time) {
     if (!weapon) return;
 
     // Reload timing handled by AI loop — no second gate needed
+    sndEnemyFire(wKey);
     const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
 
     // Bullet size and speed match weapon definition, same as player
@@ -2669,6 +2887,7 @@ function fire(scene, side) {
     const barrelDist = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
 
     // Dispatch to correct fire mode
+    sndFire(wKey);
     switch (wKey) {
         case 'gl':   fireGL(scene, weapon);   break;
         case 'rl':   fireRL(scene, weapon, barrelDist); break;
@@ -2839,6 +3058,7 @@ function fireStandard(scene, wKey, weapon, barrelDist) {
 function processPlayerDamage(amt, bulletAngle) {
     if (!player?.active || isShieldActive || player.isProcessingDamage) return;
     player.isProcessingDamage = true;
+    sndPlayerHit();
 
     const now = game.scene.scenes[0].time.now;
     lastDamageTime = now;
@@ -2897,6 +3117,7 @@ function damageEnemy(e, amt) {
     if (e.health <= 0) {
         const scene = game.scene.scenes[0];
         if (e.isCommander) {
+            sndEnemyDeath(true);
             // Commander death — bigger explosion, heavy shake, guaranteed loot
             scene.cameras.main.shake(500, 0.02);
             createExplosion(scene, e.x, e.y, 120, 0);
@@ -2906,6 +3127,7 @@ function damageEnemy(e, amt) {
             // Show commander kill banner briefly
             showRoundBanner('COMMANDER DESTROYED', '', 1500, null);
         } else {
+            sndEnemyDeath(false);
             scene.cameras.main.shake(250, 0.008);
             createExplosion(scene, e.x, e.y, 60, 0);
             const debrisCol = e.loadout ? ENEMY_COLORS[e.loadout.chassis].head : 0x664400;
@@ -2984,6 +3206,7 @@ function createShieldBreak(scene, x, y) {
 }
 
 function createExplosion(scene, x, y, radius, damage) {
+    sndExplosion(radius >= 90);
     const blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
     scene.physics.add.existing(blast);
 
