@@ -719,7 +719,7 @@ button.active {
     </div>
 </div>
 <!-- HANGAR RETURN BTN -->
-<div id="hangar-return-btn" style="display:none;position:fixed;top:20px;right:24px;z-index:9999;">
+<div id="hangar-return-btn" style="display:none;position:fixed;top:20px;left:24px;z-index:9999;">
     <button onclick="returnToHangar()" style="padding:10px 18px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);">&#8962; &nbsp;MECH HANGAR</button>
 </div>
 <!-- ============================================================
@@ -1101,8 +1101,11 @@ function create() {
 
     // Player bullet ↔ enemy overlap
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
-        if (bullet.isGLBall) return; // GL balls use a separate detonation path
+        if (bullet.isGLBall) return;
+        // Capture angle and damage BEFORE destroying bullet (velocity zeroes on destroy)
+        const _bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
         const dmg = bullet.damageValue || 2;
+        const _bx2 = bullet.x, _by2 = bullet.y;
         bullet.destroy();
         if (enemy.isShielded) {
             // Shield absorbs hit — sparks at bullet pos + BLOCK text
@@ -1122,7 +1125,7 @@ function create() {
         }
         createImpactSparks(this, enemy.x, enemy.y);
         showDamageText(this, enemy.x, enemy.y, dmg);
-        damageEnemy(enemy, dmg);
+        damageEnemy(enemy, dmg, _bAngle);
     });
 
     // (enemies spawned on deploy, not at scene creation)
@@ -1334,13 +1337,7 @@ function handleEnemyAI(scene, time) {
             });
         }
 
-        const _barScale = enemy.isCommander ? 1.6 : (enemy.loadout ? CHASSIS[enemy.loadout.chassis].scale : 1);
-        const _barOff = enemy.isCommander ? 80
-                      : enemy.loadout?.chassis === 'heavy' ? 80
-                      : enemy.loadout?.chassis === 'light' ? 45 : 58;
-        const _barY = enemy.y - _barOff * _barScale;
-        if (enemy.barBg)  enemy.barBg.setPosition(enemy.x, _barY);
-        if (enemy.bar)    enemy.bar.setPosition(enemy.x, _barY);
+        // Health bar removed — paper doll HUD used instead
 
         // Chassis movement FX
         syncEnemyChassisEffect(scene, time, enemy);
@@ -2627,23 +2624,21 @@ function spawnEnemy(scene) {
                  ? 'sniper'
                  : Phaser.Math.RND.pick(_behaviorPool[loadoutE.chassis]);
     e.speed      = chassisS.spd;
-    e.health     = Math.round(getTotalHP(loadoutE.chassis) * 0.65);
-    e.maxHealth  = e.health;
+    const _hm = 0.50;
+    e.comp = {
+        core: { hp: Math.round(chassisS.coreHP * _hm), max: Math.round(chassisS.coreHP * _hm) },
+        lArm: { hp: Math.round(chassisS.armHP  * _hm), max: Math.round(chassisS.armHP  * _hm) },
+        rArm: { hp: Math.round(chassisS.armHP  * _hm), max: Math.round(chassisS.armHP  * _hm) },
+        legs: { hp: Math.round(chassisS.legHP  * _hm), max: Math.round(chassisS.legHP  * _hm) },
+    };
+    e.health    = Object.values(e.comp).reduce((s,c) => s + c.hp, 0);
+    e.maxHealth = e.health;
     e.reloadL    = 0;
     e.reloadR    = 0;
-    e.lastSecTime = -99999;  // secondary weapon cooldown
-    // Stagger mod cooldown so enemies don't all fire simultaneously
+    e.lastSecTime = -99999;
     const _mc = WEAPONS[loadoutE.mod]?.cooldown || 8000;
     e.lastModTime = -_mc * Phaser.Math.FloatBetween(0.1, 0.8);
     e.isModActive = false;
-
-    // Health bar (scales with chassis HP)
-    const barW = 40 + (loadoutE.chassis === 'heavy' ? 14 : loadoutE.chassis === 'light' ? -8 : 0);
-    const _barOffset = loadoutE.chassis === 'heavy' ? 80 : loadoutE.chassis === 'light' ? 45 : 58;
-    const barY = y - _barOffset * chassisS.scale;
-    e.barBg  = scene.add.rectangle(x, barY, barW, 5, 0x330000).setDepth(4);
-    e.bar    = scene.add.rectangle(x, barY, barW, 5, 0x00ff00).setDepth(5);
-    e.barMaxW = barW;
 
     // Per-enemy chassis effect state
     e.fxFootTimer  = 0;
@@ -2704,21 +2699,21 @@ function spawnCommander(scene) {
     e.isCommander = true;
     e.behavior   = 'circle';
     e.speed      = chassisS.spd * 1.2;
-    e.health     = Math.round(getTotalHP('heavy') * 0.65 * 1.5);
-    e.maxHealth  = e.health;
+    const _cm = 0.50 * 1.5;
+    e.comp = {
+        core: { hp: Math.round(chassisS.coreHP * _cm), max: Math.round(chassisS.coreHP * _cm) },
+        lArm: { hp: Math.round(chassisS.armHP  * _cm), max: Math.round(chassisS.armHP  * _cm) },
+        rArm: { hp: Math.round(chassisS.armHP  * _cm), max: Math.round(chassisS.armHP  * _cm) },
+        legs: { hp: Math.round(chassisS.legHP  * _cm), max: Math.round(chassisS.legHP  * _cm) },
+    };
+    e.health    = Object.values(e.comp).reduce((s,c) => s + c.hp, 0);
+    e.maxHealth = e.health;
     e.reloadL    = 0;
     e.reloadR    = 0;
     e.lastSecTime = -99999;
     const _mc = WEAPONS[mod]?.cooldown || 8000;
-    e.lastModTime = -_mc * 0.1;  // activates mod quickly
+    e.lastModTime = -_mc * 0.1;
     e.isModActive = false;
-
-    // Gold health bar (wider)
-    const barW = 60;
-    const barY = y - 70 * cmdScale;
-    e.barBg  = scene.add.rectangle(x, barY, barW, 7, 0x332200).setDepth(4);
-    e.bar    = scene.add.rectangle(x, barY, barW, 7, 0xddaa00).setDepth(5);
-    e.barMaxW = barW;
 
     e.fxFootTimer = 0; e.fxFootSide = 1;
     e.fxShockTimer = 0;
@@ -3120,12 +3115,28 @@ function processPlayerDamage(amt, bulletAngle) {
     if (player.comp.core.hp <= 0) showDeathScreen();
 }
 
-function damageEnemy(e, amt) {
-    if (e.isShielded) return; // mod shield active
-    e.health -= amt;
-    if (e.bar) e.bar.width = Math.max(0, (e.health / e.maxHealth) * (e.barMaxW || 40));
+function damageEnemy(e, amt, bulletAngle) {
+    if (!e.active || e.health <= 0) return;
+    if (e.isShielded) return;
+    if (!e.comp) { e.health -= amt; }
+    else {
+        const eRot = e.torso ? e.torso.rotation : 0;
+        const rel  = (bulletAngle !== undefined)
+            ? Phaser.Math.Angle.Wrap(bulletAngle - eRot) : 0;
+        let target = 'core';
+        if      (rel > -0.78 && rel < 0.78)  target = 'core';
+        else if (rel < -2.35 || rel > 2.35)  target = 'legs';
+        else if (rel < 0)                     target = 'lArm';
+        else                                  target = 'rArm';
+        if (e.comp[target].hp <= 0 && target !== 'core') target = 'core';
+        e.comp[target].hp = Math.max(0, e.comp[target].hp - amt);
+        e.health = Object.values(e.comp).reduce((s,c) => s + c.hp, 0);
+        updateEnemyDoll(e);
+    }
 
-    if (e.health <= 0) {
+    // Die when core is destroyed (same logic as player)
+    const _coreDead = e.comp ? e.comp.core.hp <= 0 : e.health <= 0;
+    if (_coreDead) {
         const scene = game.scene.scenes[0];
         if (e.isCommander) {
             sndEnemyDeath(true);
@@ -3145,8 +3156,7 @@ function damageEnemy(e, amt) {
             spawnDebris(scene, e.x, e.y, debrisCol);
             spawnLoot(scene, e.x, e.y, false);  // 30% chance
         }
-        if (e.barBg)    e.barBg.destroy();
-        if (e.bar)      e.bar.destroy();
+        // bars removed
         if (e.visuals)  e.visuals.destroy();
         if (e.torso)    e.torso.destroy();
         if (e.cmdLabel) e.cmdLabel.destroy();
@@ -3156,6 +3166,57 @@ function damageEnemy(e, amt) {
     }
 }
 
+
+
+let _eDollTarget   = null;
+let _eDollHideTimer = null;
+
+function updateEnemyDoll(e) {
+    const hud = document.getElementById('enemy-doll-hud');
+    if (!hud || !isDeployed) return;
+    _eDollTarget = e;
+    hud.style.display = 'block';
+    if (_eDollHideTimer) clearTimeout(_eDollHideTimer);
+    _eDollHideTimer = setTimeout(() => {
+        hud.style.display = 'none';
+        _eDollTarget = null;
+    }, 3000);
+    const label = document.getElementById('edoll-label');
+    if (label) {
+        label.innerText = e.isCommander ? '[ COMMANDER ]'
+            : (e.loadout?.chassis?.toUpperCase() || 'TARGET');
+        label.style.color = e.isCommander ? 'rgba(221,170,0,0.8)' : 'rgba(0,255,255,0.5)';
+    }
+    const getCol = (hp, max) => {
+        const pct = hp / max;
+        if (pct <= 0)    return '#1a1a1a';
+        if (pct <= 0.25) return '#ff0000';
+        if (pct <= 0.50) return '#ff6600';
+        if (pct <= 0.75) return '#ffff00';
+        return e.isCommander ? '#ddaa00' : '#00ff88';
+    };
+    const glow = (hp, max) => {
+        const pct = hp / max;
+        if (pct <= 0)    return 'none';
+        if (pct <= 0.25) return '0 0 8px rgba(255,0,0,0.6)';
+        return e.isCommander ? '0 0 8px rgba(221,170,0,0.4)' : '0 0 8px rgba(255,68,0,0.4)';
+    };
+    const set = (id, comp) => {
+        const el = document.getElementById(id);
+        if (!el || !comp) return;
+        el.style.background = getCol(comp.hp, comp.max);
+        el.style.boxShadow  = glow(comp.hp, comp.max);
+    };
+    if (!e.comp) return;
+    set('edoll-core',      e.comp.core);
+    set('edoll-lArm',      e.comp.lArm);
+    set('edoll-lShoulder', e.comp.lArm);
+    set('edoll-rArm',      e.comp.rArm);
+    set('edoll-rShoulder', e.comp.rArm);
+    set('edoll-lLeg',      e.comp.legs);
+    set('edoll-rLeg',      e.comp.legs);
+    set('edoll-head',      e.comp.core);
+}
 
 // ================================================================
 // VISUAL FX
@@ -3619,8 +3680,7 @@ function _cleanupGame() {
     if (enemyBullets) enemyBullets.clear(true, true);
     if (enemies) {
         enemies.getChildren().forEach(e => {
-            if (e.barBg)   try { e.barBg.destroy(); }    catch(ex){}
-            if (e.bar)     try { e.bar.destroy(); }      catch(ex){}
+            // bars removed
             if (e.cmdLabel) try { e.cmdLabel.destroy(); } catch(ex){}
             if (e.visuals) try { e.visuals.destroy(); } catch(ex){}
             if (e.torso)   try { e.torso.destroy(); }   catch(ex){}
@@ -3663,6 +3723,8 @@ function returnToHangar() {
     document.getElementById('hud-container').style.display = 'none';
     const rhud = document.getElementById('round-hud'); if (rhud) rhud.style.display = 'none';
     const _mm2 = document.getElementById('minimap-wrap'); if (_mm2) _mm2.style.display = 'none';
+    const _edh = document.getElementById('enemy-doll-hud'); if (_edh) _edh.style.display = 'none';
+    _eDollTarget = null;
     const rban = document.getElementById('round-banner'); if (rban) rban.style.display = 'none';
     document.getElementById('hangar-return-btn').style.display = 'none';
     startHangarGrid();
@@ -3778,6 +3840,35 @@ window.onload = () => {
 <div id="minimap-wrap" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;pointer-events:none;">
   <div style="position:relative;border:1px solid rgba(0,255,255,0.35);box-shadow:0 0 12px rgba(0,255,255,0.15);background:rgba(0,8,4,0.85);">
     <canvas id="minimap-canvas" width="160" height="160"></canvas>
+  </div>
+</div>
+
+<!-- ENEMY PAPER DOLL HUD -->
+<div id="enemy-doll-hud" style="display:none;position:fixed;top:20px;right:24px;z-index:9999;pointer-events:none;font-family:'Courier New',monospace;">
+  <div style="padding:10px 14px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-radius:12px;box-shadow:0 0 10px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.1);">
+    <div id="edoll-label" style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-align:center;margin-bottom:6px;text-transform:uppercase;">TARGET</div>
+    <div class="paper-doll">
+      <div class="doll-row">
+        <div id="edoll-head" class="part head"></div>
+      </div>
+      <div class="doll-row align-top">
+        <div class="side-column">
+          <div class="doll-row align-top">
+            <div id="edoll-lArm"      class="part arm"></div>
+            <div id="edoll-lShoulder" class="part shoulder"></div>
+          </div>
+          <div id="edoll-lLeg" class="part leg"></div>
+        </div>
+        <div id="edoll-core" class="part core"></div>
+        <div class="side-column">
+          <div class="doll-row align-top">
+            <div id="edoll-rShoulder" class="part shoulder"></div>
+            <div id="edoll-rArm"      class="part arm"></div>
+          </div>
+          <div id="edoll-rLeg" class="part leg"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 </body>
