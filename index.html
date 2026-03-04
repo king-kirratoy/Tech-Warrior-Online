@@ -4288,24 +4288,67 @@ function _hpBar(label, hp, max, color) {
         <span class="stats-value" style="font-size:13px;min-width:70px;text-align:right;color:${barColor}">${Math.round(hp)} / ${Math.round(max)}</span>
     </div>`;
 }
+function _hpBarBoosted(label, hp, max, baseMax) {
+    const pct = max > 0 ? Math.round(hp/max*100) : 0;
+    const barColor = pct > 60 ? '#00ff88' : pct > 30 ? '#ffdd00' : '#ff4466';
+    const bonus = Math.round(max - baseMax);
+    const bonusHtml = bonus > 0
+        ? `<span style="color:#44ff88;font-size:0.8em;margin-left:5px;">+${bonus}</span>`
+        : '';
+    return `<div class="stats-hp-bar">
+        <span class="stats-label" style="min-width:70px">${label}</span>
+        <div class="stats-hp-track"><div class="stats-hp-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        <span class="stats-value" style="font-size:13px;min-width:90px;text-align:right;color:${barColor}">${Math.round(hp)} / ${Math.round(baseMax)}${bonusHtml}</span>
+    </div>`;
+}
+
+function _perkBonus(value, base) {
+    // Returns an HTML string: base value in normal colour, perk bonus in bright green
+    const diff = Math.round(value - base);
+    if (diff <= 0) return String(Math.round(value));
+    return `${Math.round(base)}<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${diff}</span>`;
+}
+function _perkBonusPct(mult, label) {
+    // Shows e.g.  "75"  or  "75  +15 from perks"
+    const base = Math.round(mult === 1 ? 0 : 0); // unused — see callers
+    return label;
+}
+function _perkReduction(value, base) {
+    // For reload: lower is better — show reduction in green
+    const diff = Math.round(base - value);
+    if (diff <= 0) return String(Math.round(value));
+    return `${Math.round(value)}<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">−${diff}</span>`;
+}
 
 function populateStats() {
     const ch = loadout.chassis;
     const chassisData = CHASSIS[ch];
 
     // ── CHASSIS & HP ──────────────────────────────────────────
+    const baseShield = chassisData?.max || 75;
     let chassisHtml = '';
     chassisHtml += _statRow('Chassis Type', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
-    chassisHtml += _statRow('Shield', `${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}`, 'purple');
+    // Shield: show base vs current max
+    const shieldBonus = Math.round((player?.maxShield||0) - baseShield);
+    const shieldVal = shieldBonus > 0
+        ? `${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}<span style="color:#cc88ff;font-size:0.85em;margin-left:6px;">(+${shieldBonus} from perks)</span>`
+        : `${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}`;
+    chassisHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple">${shieldVal}</span></div>`;
     chassisHtml += '<div style="margin-top:12px;margin-bottom:6px;font-size:12px;letter-spacing:2px;color:rgba(0,255,255,0.35);">HULL INTEGRITY</div>';
     if (player?.comp) {
-        chassisHtml += _hpBar('Core', player.comp.core.hp, player.comp.core.max, '#00ffff');
-        chassisHtml += _hpBar('L.Arm', player.comp.lArm.hp, player.comp.lArm.max, '#00ff88');
-        chassisHtml += _hpBar('R.Arm', player.comp.rArm.hp, player.comp.rArm.max, '#00ff88');
-        chassisHtml += _hpBar('Legs', player.comp.legs.hp, player.comp.legs.max, '#ffdd00');
-        const totalHp = Object.values(player.comp).reduce((s,c)=>s+c.hp,0);
+        const baseHP = { core: chassisData?.coreHP||212, lArm: chassisData?.armHP||120, rArm: chassisData?.armHP||120, legs: chassisData?.legHP||152 };
+        chassisHtml += _hpBarBoosted('Core',  player.comp.core.hp,  player.comp.core.max,  baseHP.core);
+        chassisHtml += _hpBarBoosted('L.Arm', player.comp.lArm.hp,  player.comp.lArm.max,  baseHP.lArm);
+        chassisHtml += _hpBarBoosted('R.Arm', player.comp.rArm.hp,  player.comp.rArm.max,  baseHP.rArm);
+        chassisHtml += _hpBarBoosted('Legs',  player.comp.legs.hp,  player.comp.legs.max,  baseHP.legs);
+        const totalHp  = Object.values(player.comp).reduce((s,c)=>s+c.hp,0);
         const totalMax = Object.values(player.comp).reduce((s,c)=>s+c.max,0);
-        chassisHtml += '<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;">' + _statRow('Total HP', `${Math.round(totalHp)} / ${Math.round(totalMax)}`) + '</div>';
+        const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
+        const totalBonusHp = Math.round(totalMax - totalBase);
+        const totalLabel = totalBonusHp > 0
+            ? `${Math.round(totalHp)} / ${Math.round(totalMax)}<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">(+${totalBonusHp} from perks)</span>`
+            : `${Math.round(totalHp)} / ${Math.round(totalMax)}`;
+        chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalLabel}</span></div></div>`;
     }
     document.getElementById('stat-chassis-info').innerHTML = chassisHtml;
 
@@ -4319,14 +4362,21 @@ function populateStats() {
         wHtml += `<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(0,255,255,0.1);">`;
         wHtml += `<div style="font-size:13px;letter-spacing:2px;color:rgba(0,255,255,0.7);margin-bottom:8px;">${side}: ${w.name}</div>`;
         if (w.dmg) {
-            const effDmg = Math.round(w.dmg * (_perkState.dmgMult||1));
-            const reload = Math.round((w.reload||0) * (_perkState.reloadMult||1));
-            const dps = reload > 0 ? Math.round(effDmg / reload * 1000) : 0;
-            wHtml += _statRow('Damage/Shot', effDmg + (w.pellets?` × ${w.pellets} pellets`:''));
-            wHtml += _statRow('Reload (ms)', reload, reload < 500 ? 'green' : reload < 1500 ? 'yellow' : 'orange');
-            wHtml += _statRow('DPS (est.)', dps, dps > 200 ? 'green' : dps > 80 ? 'yellow' : 'orange');
+            const baseDmg  = w.dmg;
+            const effDmg   = Math.round(baseDmg * (_perkState.dmgMult||1));
+            const baseRld  = w.reload || 0;
+            const effRld   = Math.round(baseRld * (_perkState.reloadMult||1));
+            const baseDps  = baseRld > 0 ? Math.round(baseDmg / baseRld * 1000) : 0;
+            const effDps   = effRld  > 0 ? Math.round(effDmg  / effRld  * 1000) : 0;
+            const dmgSuffix = w.pellets ? ` × ${w.pellets} pellets` : '';
+            wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value">${_perkBonus(effDmg, baseDmg)}${dmgSuffix}</span></div>`;
+            wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}">${_perkReduction(effRld, baseRld)}</span></div>`;
+            wHtml += `<div class="stats-row"><span class="stats-label">DPS (est.)</span><span class="stats-value ${effDps>200?'green':effDps>80?'yellow':'orange'}">${_perkBonus(effDps, baseDps)}</span></div>`;
         }
-        if (w.radius) wHtml += _statRow('Blast Radius', Math.round(w.radius * (_perkState.blastMult||1)));
+        if (w.radius) {
+            const effRad = Math.round(w.radius * (_perkState.blastMult||1));
+            wHtml += `<div class="stats-row"><span class="stats-label">Blast Radius</span><span class="stats-value">${_perkBonus(effRad, w.radius)}</span></div>`;
+        }
         if (w.cooldown) wHtml += _statRow('Mod Cooldown', w.cooldown + 'ms');
         wHtml += '</div>';
     });
@@ -4338,18 +4388,20 @@ function populateStats() {
     const baseSpd = chassisData?.spd || 200;
     const effSpd  = Math.round(baseSpd * (_perkState.speedMult||1));
     const legsOk  = player?.comp?.legs?.hp > 0;
-    mobHtml += _statRow('Base Speed', baseSpd);
-    mobHtml += _statRow('Effective Speed', effSpd, effSpd > baseSpd ? 'green' : '');
+    const spdLabel = `<div class="stats-row"><span class="stats-label">Speed</span><span class="stats-value ${effSpd>baseSpd?'green':''}">${_perkBonus(effSpd, baseSpd)}</span></div>`;
+    mobHtml += spdLabel;
     mobHtml += _statRow('Legs Status', legsOk ? 'OPERATIONAL' : 'DESTROYED', legsOk ? 'green' : 'red');
     if (!legsOk) mobHtml += _statRow('Speed Penalty', '−50%', 'red');
     mobHtml += '<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:10px;padding-top:10px;"></div>';
-    mobHtml += _statRow('Max Shield', Math.round(player?.maxShield||0), 'purple');
-    mobHtml += _statRow('Regen Rate', `${(1.0*(_perkState.shieldRegenMult||1)).toFixed(1)}/frame`, 'purple');
+    const baseRegenRate = 1.0;
+    const effRegenRate  = baseRegenRate * (_perkState.shieldRegenMult||1);
+    mobHtml += `<div class="stats-row"><span class="stats-label">Shield Regen</span><span class="stats-value purple">${_perkBonus(effRegenRate.toFixed(1), baseRegenRate.toFixed(1))}/frame</span></div>`;
     if (_perkState.noShieldRegen) mobHtml += _statRow('Regen Active', 'DISABLED', 'red');
     if (_perkState.immovable) mobHtml += _statRow('Immovable', '3× regen while still', 'purple');
-    if (_perkState.dodgeChance > 0) mobHtml += _statRow('Dodge Chance', Math.round(_perkState.dodgeChance*100) + '%', 'green');
-    if (_perkState.fortress > 0) mobHtml += _statRow('Dmg Reduction', Math.round(Math.min(75,_perkState.fortress*100)) + '%', 'green');
-    if (_perkState.autoRepair > 0) mobHtml += _statRow('Auto-Repair', `+${_perkState.autoRepair} HP/sec`, 'green');
+    if (_perkState.dodgeChance > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dodge Chance</span><span class="stats-value green">0%<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${Math.round(_perkState.dodgeChance*100)}% from perks</span></span></div>`;
+    if (_perkState.fortress > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dmg Reduction</span><span class="stats-value green">0%<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${Math.round(Math.min(75,_perkState.fortress*100))}% from perks</span></span></div>`;
+    if (_perkState.autoRepair > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Auto-Repair</span><span class="stats-value green">0<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${_perkState.autoRepair} HP/sec from perks</span></span></div>`;
+    if (_perkState.critChance > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Crit Chance</span><span class="stats-value green">0%<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${Math.round(_perkState.critChance*100)}% from perks</span></span></div>`;
     document.getElementById('stat-mobility-info').innerHTML = mobHtml;
 
     // ── RUN STATS ─────────────────────────────────────────────
