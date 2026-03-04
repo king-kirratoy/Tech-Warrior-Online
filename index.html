@@ -4194,11 +4194,16 @@ function _resetHUDState() {
 
 function showDeathScreen() {
     isDeployed = false;
-    // Stop player physics and detach camera so it doesn't drift
+    // Pause the Phaser scene so the update loop stops running against destroyed objects
     const _dScene = game?.scene?.scenes[0];
+    if (_dScene) {
+        try { _dScene.physics.pause(); } catch(e) {}
+        try { _dScene.cameras.main.stopFollow(); } catch(e) {}
+        try { _dScene.input.setDefaultCursor('default'); } catch(e) {}
+    }
+    // Stop player physics
     if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
-    if (_dScene) { try { _dScene.cameras.main.stopFollow(); } catch(e){} }
-    // Update session bests
+    document.body.style.cursor = 'default';
     if (_round > _bestRound) _bestRound = _round;
     // Populate score panel
     const el = id => document.getElementById(id);
@@ -4245,6 +4250,9 @@ function _cleanupGame() {
 
 function respawnMech() {
     document.getElementById('death-screen').style.display = 'none';
+    // Resume physics before cleanup so destroys work cleanly
+    const _rScene = game?.scene?.scenes[0];
+    if (_rScene) { try { _rScene.physics.resume(); } catch(e){} }
     _cleanupGame();
     document.getElementById('hud-container').style.display = 'flex';
     document.getElementById('top-left-btns').style.display = 'flex';
@@ -4491,6 +4499,8 @@ function togglePause() {
 
 function goToMainMenu() {
     if (_isPaused) togglePause();
+    const _gmScene = game?.scene?.scenes[0];
+    if (_gmScene) { try { _gmScene.physics.resume(); } catch(e){} }
     _cleanupGame();
     // Reset round state
     _round = 1; _roundKills = 0; _totalKills = 0; _roundActive = false;
