@@ -1236,8 +1236,8 @@ function handleEnemyAI(scene, time) {
                     vx = Math.cos(angle) * speed;
                     vy = Math.sin(angle) * speed;
                 } else if (dist < 200) {
-                    vx = -Math.cos(angle) * (speed * 1.2);
-                    vy = -Math.sin(angle) * (speed * 1.2);
+                    vx = -Math.cos(angle) * speed;
+                    vy = -Math.sin(angle) * speed;
                 } else {
                     const strafe = angle + Math.PI / 2;
                     vx = Math.cos(strafe) * speed;
@@ -1245,19 +1245,17 @@ function handleEnemyAI(scene, time) {
                 }
             }
             else if (beh === 'rusher') {
-                // Close in fast, but stop ramming at melee range — strafe instead
+                // Close in at base speed — no faster than the player
                 if (dist > 260) {
-                    vx = Math.cos(angle) * speed * 1.4;
-                    vy = Math.sin(angle) * speed * 1.4;
+                    vx = Math.cos(angle) * speed;
+                    vy = Math.sin(angle) * speed;
                 } else if (dist < 160) {
-                    // Back off slightly if too close
-                    vx = -Math.cos(angle) * speed * 0.9;
-                    vy = -Math.sin(angle) * speed * 0.9;
+                    vx = -Math.cos(angle) * speed * 0.8;
+                    vy = -Math.sin(angle) * speed * 0.8;
                 } else {
-                    // Preferred combat range — circle aggressively
                     const strafe = angle + Math.PI / 2;
-                    vx = Math.cos(strafe) * speed * 1.2;
-                    vy = Math.sin(strafe) * speed * 1.2;
+                    vx = Math.cos(strafe) * speed;
+                    vy = Math.sin(strafe) * speed;
                 }
             }
             else if (beh === 'sniper') {
@@ -1282,8 +1280,8 @@ function handleEnemyAI(scene, time) {
                     vy = Math.sin(angle) * speed;
                 } else {
                     const fa = angle + (Math.PI / 2) * enemy.flankDir;
-                    vx = Math.cos(fa) * speed * 0.9 + Math.cos(angle) * speed * 0.3;
-                    vy = Math.sin(fa) * speed * 0.9 + Math.sin(angle) * speed * 0.3;
+                    vx = Math.cos(fa) * speed * 0.75 + Math.cos(angle) * speed * 0.25;
+                    vy = Math.sin(fa) * speed * 0.75 + Math.sin(angle) * speed * 0.25;
                 }
             }
 
@@ -2402,16 +2400,118 @@ function activateEnemyMod(scene, enemy, mod, time) {
 // COVER / BATTLEFIELD OBJECTS
 // ================================================================
 const COVER_DEFS = [
-    // { type: 'rock'|'wall'|'crate', w, h, hp (0=indestructible), color, strokeColor }
-    { type: 'rock',  w: 110, h:  90, hp: 0,   color: 0x445544, stroke: 0x88aa88 },
-    { type: 'rock',  w:  80, h:  70, hp: 0,   color: 0x445544, stroke: 0x88aa88 },
-    { type: 'rock',  w: 130, h: 100, hp: 0,   color: 0x334433, stroke: 0x667766 },
-    { type: 'wall',  w: 180, h:  28, hp: 0,   color: 0x445566, stroke: 0x8899aa },
-    { type: 'wall',  w:  28, h: 180, hp: 0,   color: 0x445566, stroke: 0x8899aa },
-    { type: 'wall',  w: 140, h:  24, hp: 0,   color: 0x445566, stroke: 0x8899aa },
-    { type: 'crate', w:  60, h:  60, hp: 280, color: 0x886622, stroke: 0xddaa44 },
-    { type: 'crate', w:  55, h:  55, hp: 280, color: 0x886622, stroke: 0xddaa44 },
+    // { type, w, h, hp (0=indestructible), color, stroke }
+    { type: 'rock',     w: 110, h:  90, hp: 0,   color: 0x445544, stroke: 0x88aa88 },
+    { type: 'rock',     w:  80, h:  70, hp: 0,   color: 0x445544, stroke: 0x88aa88 },
+    { type: 'rock',     w: 130, h: 100, hp: 0,   color: 0x334433, stroke: 0x667766 },
+    { type: 'wall',     w: 180, h:  28, hp: 0,   color: 0x445566, stroke: 0x8899aa },
+    { type: 'wall',     w:  28, h: 180, hp: 0,   color: 0x445566, stroke: 0x8899aa },
+    { type: 'wall',     w: 140, h:  24, hp: 0,   color: 0x445566, stroke: 0x8899aa },
+    { type: 'crate',    w:  60, h:  60, hp: 280, color: 0x886622, stroke: 0xddaa44 },
+    { type: 'crate',    w:  55, h:  55, hp: 280, color: 0x886622, stroke: 0xddaa44 },
+    // Buildings (index 8-11) — drawn via placeBuilding(), physics body sizes below
+    { type: 'building', w: 130, h: 110, hp: 0,   color: 0x3a3f4a, stroke: 0x6a7080, variant: 'small'  },
+    { type: 'building', w: 170, h: 140, hp: 0,   color: 0x323844, stroke: 0x5a6070, variant: 'medium' },
+    { type: 'building', w: 230, h: 190, hp: 0,   color: 0x2c313c, stroke: 0x505868, variant: 'large'  },
+    { type: 'building', w: 150, h: 120, hp: 0,   color: 0x3d3530, stroke: 0x6a5a50, variant: 'ruin'   },
 ];
+
+
+function placeBuilding(scene, x, y, def) {
+    const w = def.w, h = def.h;
+    const g = scene.add.graphics().setDepth(3);
+    const v = def.variant;
+
+    // ── Base fill ────────────────────────────────────────────────
+    g.fillStyle(def.color, 1);
+    g.fillRect(x - w/2, y - h/2, w, h);
+
+    // ── Outer border ─────────────────────────────────────────────
+    g.lineStyle(2, def.stroke, 1);
+    g.strokeRect(x - w/2, y - h/2, w, h);
+
+    if (v === 'small' || v === 'medium' || v === 'large') {
+        // Rooftop edge trim (inner border 6px in)
+        g.lineStyle(1, def.stroke, 0.5);
+        g.strokeRect(x - w/2 + 6, y - h/2 + 6, w - 12, h - 12);
+
+        // Windows — 2 rows of dark rectangles
+        const winW = 14, winH = 10, winGapX = 22, winGapY = 20;
+        const cols = Math.floor((w - 30) / winGapX);
+        const rows = v === 'large' ? 3 : 2;
+        const startX = x - (cols - 1) * winGapX / 2;
+        const startY = y - (rows - 1) * winGapY / 2;
+        g.fillStyle(0x0a0e14, 0.9);
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const wx = startX + c * winGapX - winW/2;
+                const wy = startY + r * winGapY - winH/2;
+                g.fillRect(wx, wy, winW, winH);
+                // Window frame
+                g.lineStyle(1, def.stroke, 0.4);
+                g.strokeRect(wx, wy, winW, winH);
+            }
+        }
+
+        // Door (bottom center)
+        if (v !== 'small') {
+            g.fillStyle(0x080c10, 1);
+            g.fillRect(x - 10, y + h/2 - 22, 20, 22);
+            g.lineStyle(1, def.stroke, 0.5);
+            g.strokeRect(x - 10, y + h/2 - 22, 20, 22);
+        }
+
+        // Rooftop details — centre box (HVAC / elevator)
+        if (v === 'large') {
+            g.fillStyle(0x252a33, 1);
+            g.fillRect(x - 22, y - 16, 44, 32);
+            g.lineStyle(1, def.stroke, 0.6);
+            g.strokeRect(x - 22, y - 16, 44, 32);
+            // Antenna
+            g.lineStyle(2, 0x8899aa, 0.7);
+            g.beginPath();
+            g.moveTo(x, y - 16);
+            g.lineTo(x, y - h/2 - 12);
+            g.strokePath();
+            g.fillStyle(0xaabbcc, 0.9);
+            g.fillRect(x - 2, y - h/2 - 14, 4, 4);
+        }
+        if (v === 'medium') {
+            // Side wing suggestion — darker strip on right
+            g.fillStyle(0x252a33, 0.6);
+            g.fillRect(x + w/2 - 28, y - h/2 + 8, 22, h - 16);
+            g.lineStyle(1, def.stroke, 0.3);
+            g.strokeRect(x + w/2 - 28, y - h/2 + 8, 22, h - 16);
+        }
+
+    } else if (v === 'ruin') {
+        // Ruined building — jagged inner walls, rubble look
+        // Broken top-left corner
+        g.fillStyle(0x1a1510, 1);
+        g.fillTriangle(x - w/2, y - h/2,  x - w/2 + 40, y - h/2,  x - w/2, y - h/2 + 35);
+        // Crumbled right side
+        g.fillStyle(0x1a1510, 1);
+        g.fillRect(x + w/2 - 30, y - 20, 30, h/2 + 10);
+        // Interior rubble lines
+        g.lineStyle(1, 0x5a4a40, 0.5);
+        g.beginPath(); g.moveTo(x - 20, y - h/2); g.lineTo(x - 20, y + 20); g.strokePath();
+        g.beginPath(); g.moveTo(x - w/2, y + 10); g.lineTo(x + 10, y + 10); g.strokePath();
+        // A few scattered debris rects
+        g.fillStyle(0x4a3f38, 0.8);
+        g.fillRect(x - w/2 + 8,  y + h/2 - 12, 18, 10);
+        g.fillRect(x + 5,        y + h/2 - 10, 14,  8);
+        g.fillRect(x - 10,       y - h/2 + 5,  20,  8);
+    }
+
+    // ── Physics body (static rectangle matching footprint) ───────
+    const body = scene.add.rectangle(x, y, w, h, 0x000000, 0).setDepth(3);
+    scene.physics.add.existing(body, true);
+    body.coverType  = 'building';
+    body.coverHp    = 0;
+    body.coverMaxHp = 0;
+    body.coverDef   = def;
+    coverObjects.add(body);
+}
 
 function generateCover(scene) {
     if (!coverObjects) return;
@@ -2424,45 +2524,89 @@ function generateCover(scene) {
     const MIN_SEP   = 160;   // min separation between cover objects
     const placed    = [];
 
-    // Attempt to place a set number of each type
-    const schedule = [
-        ...Array(8).fill(COVER_DEFS[0]),   // large rocks
-        ...Array(6).fill(COVER_DEFS[1]),   // medium rocks
-        ...Array(4).fill(COVER_DEFS[2]),   // large rocks v2
-        ...Array(5).fill(COVER_DEFS[3]),   // h-walls
-        ...Array(5).fill(COVER_DEFS[4]),   // v-walls
-        ...Array(3).fill(COVER_DEFS[5]),   // short h-walls
-        ...Array(6).fill(COVER_DEFS[6]),   // crates
-        ...Array(4).fill(COVER_DEFS[7]),   // crates small
-    ];
-
-    schedule.forEach(def => {
-        let attempts = 0;
-        while (attempts < 40) {
-            attempts++;
-            const x = Phaser.Math.Between(MARGIN, 4000 - MARGIN);
-            const y = Phaser.Math.Between(MARGIN, 4000 - MARGIN);
-            const distCenter = Phaser.Math.Distance.Between(x, y, 2000, 2000);
-            if (distCenter < SAFE_DIST) continue;
-            const tooClose = placed.some(p =>
-                Phaser.Math.Distance.Between(x, y, p.x, p.y) < MIN_SEP);
-            if (tooClose) continue;
-
+    // Helper: try to place at a random position within bounds
+    const tryPlace = (def, xMin, xMax, yMin, yMax, minSep) => {
+        const sep = minSep || MIN_SEP;
+        for (let attempt = 0; attempt < 50; attempt++) {
+            const x = Phaser.Math.Between(xMin, xMax);
+            const y = Phaser.Math.Between(yMin, yMax);
+            if (Phaser.Math.Distance.Between(x, y, 2000, 2000) < SAFE_DIST) continue;
+            if (placed.some(p => Phaser.Math.Distance.Between(x, y, p.x, p.y) < sep)) continue;
             placed.push({ x, y });
+            if (def.type === 'building') {
+                placeBuilding(scene, x, y, def);
+            } else {
+                const rect = scene.add.rectangle(x, y, def.w, def.h, def.color)
+                    .setStrokeStyle(2, def.stroke).setDepth(3);
+                scene.physics.add.existing(rect, true);
+                rect.coverType = def.type; rect.coverHp = def.hp;
+                rect.coverMaxHp = def.hp; rect.coverDef = def;
+                coverObjects.add(rect);
+            }
+            return true;
+        }
+        return false;
+    };
 
-            const rect = scene.add.rectangle(x, y, def.w, def.h, def.color)
-                .setStrokeStyle(2, def.stroke)
-                .setDepth(3);
-            scene.physics.add.existing(rect, true); // true = static body
+    const M = MARGIN;
+    const Q = { // quadrant shorthands
+        full:  [M, 4000-M, M, 4000-M],
+        tl:    [M, 1800, M, 1800],
+        tr:    [2200, 4000-M, M, 1800],
+        bl:    [M, 1800, 2200, 4000-M],
+        br:    [2200, 4000-M, 2200, 4000-M],
+        mid:   [1400, 2600, 1400, 2600],
+    };
 
-            rect.coverType  = def.type;
-            rect.coverHp    = def.hp;
-            rect.coverMaxHp = def.hp;
-            rect.coverDef   = def;
+    // ── Global scatter ───────────────────────────────────────────
+    for (let i=0;i<10;i++) tryPlace(COVER_DEFS[0], ...Q.full);   // large rocks
+    for (let i=0;i<8;i++)  tryPlace(COVER_DEFS[1], ...Q.full);   // medium rocks
+    for (let i=0;i<6;i++)  tryPlace(COVER_DEFS[2], ...Q.full);   // large rocks v2
+    for (let i=0;i<7;i++)  tryPlace(COVER_DEFS[3], ...Q.full);   // h-walls
+    for (let i=0;i<7;i++)  tryPlace(COVER_DEFS[4], ...Q.full);   // v-walls
+    for (let i=0;i<5;i++)  tryPlace(COVER_DEFS[5], ...Q.full);   // short h-walls
+    for (let i=0;i<8;i++)  tryPlace(COVER_DEFS[6], ...Q.full);   // crates
+    for (let i=0;i<6;i++)  tryPlace(COVER_DEFS[7], ...Q.full);   // small crates
+
+    // ── Buildings — spread across all quadrants ──────────────────
+    tryPlace(COVER_DEFS[10], ...Q.tl);    // medium building top-left
+    tryPlace(COVER_DEFS[11], ...Q.tl);    // large building top-left
+    tryPlace(COVER_DEFS[8],  ...Q.tr);    // small building top-right
+    tryPlace(COVER_DEFS[10], ...Q.tr);    // medium building top-right
+    tryPlace(COVER_DEFS[9],  ...Q.bl);    // medium building bottom-left
+    tryPlace(COVER_DEFS[11], ...Q.bl);    // large building bottom-left
+    tryPlace(COVER_DEFS[8],  ...Q.br);    // small building bottom-right
+    tryPlace(COVER_DEFS[9],  ...Q.br);    // medium building bottom-right
+    tryPlace(COVER_DEFS[11], ...Q.br);    // large building bottom-right
+    tryPlace(COVER_DEFS[8],  ...Q.br);    // another small building bottom-right
+    tryPlace(COVER_DEFS[11], ...Q.br);    // extra large building bottom-right
+
+    // ── Extra density: center (mid-ring around spawn) ─────────────
+    // Use a mid-ring: 500-900px from center
+    for (let i=0;i<6;i++) {
+        for (let attempt=0;attempt<60;attempt++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist  = Phaser.Math.Between(520, 950);
+            const x = Math.round(2000 + Math.cos(angle) * dist);
+            const y = Math.round(2000 + Math.sin(angle) * dist);
+            if (x < M || x > 4000-M || y < M || y > 4000-M) continue;
+            if (placed.some(p => Phaser.Math.Distance.Between(x,y,p.x,p.y) < MIN_SEP)) continue;
+            placed.push({x,y});
+            const def = [COVER_DEFS[0],COVER_DEFS[3],COVER_DEFS[4],COVER_DEFS[6]][i%4];
+            const rect = scene.add.rectangle(x,y,def.w,def.h,def.color)
+                .setStrokeStyle(2,def.stroke).setDepth(3);
+            scene.physics.add.existing(rect,true);
+            rect.coverType=def.type; rect.coverHp=def.hp;
+            rect.coverMaxHp=def.hp; rect.coverDef=def;
             coverObjects.add(rect);
             break;
         }
-    });
+    }
+
+    // ── Ruin buildings sprinkled globally ────────────────────────
+    tryPlace(COVER_DEFS[11], ...Q.tl);
+    tryPlace(COVER_DEFS[11], ...Q.tr);
+    tryPlace(COVER_DEFS[11], ...Q.br);
 
     // Bullet ↔ cover collisions (player bullets)
     scene.physics.add.collider(bullets, coverObjects, (bullet, cover) => {
