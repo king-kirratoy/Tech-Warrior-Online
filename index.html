@@ -1173,7 +1173,10 @@ function handleEnemyAI(scene, time) {
     enemies.getChildren().forEach(enemy => {
         const dist  = Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y);
         const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
-        const speed = enemy.speed || 120;
+        // Speed — halved if legs destroyed
+        const _baseSpd = CHASSIS[enemy.loadout?.chassis]?.spd || (enemy.isCommander ? 180 : 150);
+        const _legsOk  = !enemy.comp || enemy.comp.legs.hp > 0;
+        const speed    = _legsOk ? (enemy.speed || _baseSpd) : _baseSpd * 0.5;
 
         if (!enemy.isStunned && !enemy.isJumping) {
             let vx = 0, vy = 0;
@@ -3061,7 +3064,7 @@ function fireStandard(scene, wKey, weapon, barrelDist) {
 // DAMAGE PROCESSING
 // ================================================================
 
-function processPlayerDamage(amt, bulletAngle) {
+function processPlayerDamage(amt, bulletAngle, explosive = false) {
     if (!player?.active || isShieldActive || player.isProcessingDamage) return;
     player.isProcessingDamage = true;
     sndPlayerHit();
@@ -3070,13 +3073,21 @@ function processPlayerDamage(amt, bulletAngle) {
     lastDamageTime = now;
     player.lastHitTime = now;
 
-    // Determine which component was hit based on relative bullet angle
-    const rel    = Phaser.Math.Angle.Wrap(bulletAngle - player.rotation);
-    let   target = 'core';
-    if      (rel > -0.78 && rel < 0.78)     target = 'core'; // Front
-    else if (rel < -2.35 || rel > 2.35)     target = 'legs'; // Rear
-    else if (rel < 0)                        target = 'lArm'; // Left
-    else                                     target = 'rArm'; // Right
+    if (explosive) {
+        // Explosive: split evenly across all 4 parts
+        const share = amt / 4;
+        Object.values(player.comp).forEach(c => { c.hp = Math.max(0, c.hp - share); });
+        player.hp = Object.values(player.comp).reduce((s,c) => s + c.hp, 0);
+        updateBars(); updatePaperDoll();
+        if (player.comp.lArm.hp <= 0 && !_lArmDestroyed) { loadout.L = 'none'; _lArmDestroyed = true; updateHUD(); }
+        if (player.comp.rArm.hp <= 0 && !_rArmDestroyed) { loadout.R = 'none'; _rArmDestroyed = true; updateHUD(); }
+        game.scene.scenes[0].time.delayedCall(50, () => { if (player) player.isProcessingDamage = false; });
+        if (player.comp.core.hp <= 0) showDeathScreen();
+        return;
+    }
+    // Weighted random hit — legs 35%, core 25%, lArm 20%, rArm 20%
+    const _r = Math.random();
+    let   target = _r < 0.35 ? 'legs' : _r < 0.60 ? 'core' : _r < 0.80 ? 'lArm' : 'rArm';
 
     let component = player.comp[target];
     // Redirect to core if limb is already destroyed
@@ -3115,19 +3126,19 @@ function processPlayerDamage(amt, bulletAngle) {
     if (player.comp.core.hp <= 0) showDeathScreen();
 }
 
-function damageEnemy(e, amt, bulletAngle) {
+function damageEnemy(e, amt, bulletAngle, explosive = false) {
     if (!e.active || e.health <= 0) return;
     if (e.isShielded) return;
     if (!e.comp) { e.health -= amt; }
-    else {
-        const eRot = e.torso ? e.torso.rotation : 0;
-        const rel  = (bulletAngle !== undefined)
-            ? Phaser.Math.Angle.Wrap(bulletAngle - eRot) : 0;
-        let target = 'core';
-        if      (rel > -0.78 && rel < 0.78)  target = 'core';
-        else if (rel < -2.35 || rel > 2.35)  target = 'legs';
-        else if (rel < 0)                     target = 'lArm';
-        else                                  target = 'rArm';
+    else if (explosive) {
+        const share = amt / 4;
+        Object.values(e.comp).forEach(c => { c.hp = Math.max(0, c.hp - share); });
+        e.health = Object.values(e.comp).reduce((s,c) => s + c.hp, 0);
+        updateEnemyDoll(e);
+    } else {
+        // Weighted random hit — legs 35%, core 25%, lArm 20%, rArm 20%
+        const _er = Math.random();
+        let target = _er < 0.35 ? 'legs' : _er < 0.60 ? 'core' : _er < 0.80 ? 'lArm' : 'rArm';
         if (e.comp[target].hp <= 0 && target !== 'core') target = 'core';
         e.comp[target].hp = Math.max(0, e.comp[target].hp - amt);
         e.health = Object.values(e.comp).reduce((s,c) => s + c.hp, 0);
@@ -3290,14 +3301,14 @@ function createExplosion(scene, x, y, radius, damage) {
         if (targetsHit.has(e)) return;
         targetsHit.add(e);
         showDamageText(scene, e.x, e.y, damage);
-        damageEnemy(e, damage);
+        damageEnemy(e, damage, undefined, true);
     });
 
     if (player?.active && !isShieldActive) {
         const dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
         if (dist < radius && !playerDamageDealt) {
             playerDamageDealt = true;
-            processPlayerDamage(Math.floor(damage * 0.75), player.rotation);
+            processPlayerDamage(Math.floor(damage * 0.75), null, true);
             scene.cameras.main.shake(200, 0.01);
         }
     }
