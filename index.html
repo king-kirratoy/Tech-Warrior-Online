@@ -702,22 +702,30 @@ button.active {
         <div id="death-title" style="font-size:52px;letter-spacing:8px;color:#ff0000;text-shadow:0 0 30px #ff0000;margin-bottom:6px;">MECH DESTROYED</div>
         <div style="font-size:13px;color:rgba(200,210,217,0.5);letter-spacing:3px;margin-bottom:28px;">CORE SYSTEMS OFFLINE</div>
         <!-- Score Panel -->
-        <div style="display:inline-flex;gap:0;margin-bottom:32px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-radius:12px;box-shadow:0 0 10px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.1);overflow:hidden;">
-            <div style="padding:16px 28px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
+        <div style="display:inline-flex;gap:0;margin-bottom:24px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-radius:12px;box-shadow:0 0 10px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.1);overflow:hidden;">
+            <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
                 <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Round</div>
                 <div id="score-round" style="font-size:28px;letter-spacing:4px;color:#00ffff;text-shadow:0 0 10px rgba(0,255,255,0.6);">1</div>
             </div>
-            <div style="padding:16px 28px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
+            <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
                 <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Kills</div>
                 <div id="score-kills" style="font-size:28px;letter-spacing:4px;color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.6);">0</div>
             </div>
-            <div style="padding:16px 28px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
-                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Best Round</div>
-                <div id="score-best" style="font-size:28px;letter-spacing:4px;color:#ffaa00;text-shadow:0 0 10px rgba(255,170,0,0.6);">0</div>
+            <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
+                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Accuracy</div>
+                <div id="score-accuracy" style="font-size:28px;letter-spacing:4px;color:#ffaa00;text-shadow:0 0 10px rgba(255,170,0,0.6);">0%</div>
             </div>
-            <div style="padding:16px 28px;text-align:center;">
-                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Session Kills</div>
-                <div id="score-session" style="font-size:28px;letter-spacing:4px;color:#ff4400;text-shadow:0 0 10px rgba(255,68,0,0.6);">0</div>
+            <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
+                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Dmg Dealt</div>
+                <div id="score-dmg-dealt" style="font-size:28px;letter-spacing:4px;color:#ff6600;text-shadow:0 0 10px rgba(255,102,0,0.6);">0</div>
+            </div>
+            <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
+                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Dmg Taken</div>
+                <div id="score-dmg-taken" style="font-size:28px;letter-spacing:4px;color:#ff2244;text-shadow:0 0 10px rgba(255,34,68,0.6);">0</div>
+            </div>
+            <div style="padding:14px 22px;text-align:center;">
+                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Perks</div>
+                <div id="score-perks" style="font-size:28px;letter-spacing:4px;color:#cc88ff;text-shadow:0 0 10px rgba(200,136,255,0.6);">0</div>
             </div>
         </div>
         <br>
@@ -820,10 +828,14 @@ let _lArmDestroyed = false, _rArmDestroyed = false;
 let _round          = 1;
 let _roundKills     = 0;   // kills this round
 let _roundTotal     = 0;   // enemies in this round
-let _totalKills     = 0;   // all-time kills this session
-let _bestRound      = 0;   // best round reached this session
-let _sessionKills   = 0;   // cumulative kills across all runs this session
+let _totalKills     = 0;
+let _shotsFired     = 0;   // total shots fired this run
+let _shotsHit       = 0;   // player bullets that hit an enemy this run
+let _damageDealt    = 0;   // total damage dealt to enemies this run
+let _damageTaken    = 0;   // total damage taken by player this run
+let _perksEarned    = 0;   // perks picked this run
 let _roundActive    = false;
+let _roundClearing  = false; // freeze movement during round-clear banner + perk menu
 
 // Chassis-specific movement effect state
 let _footstepTimer  = 0;
@@ -1151,6 +1163,7 @@ function create() {
         // Capture angle and damage BEFORE destroying bullet (velocity zeroes on destroy)
         const _bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
         const dmg = bullet.damageValue || 2;
+        _shotsHit++; _damageDealt += dmg;
         const _bx2 = bullet.x, _by2 = bullet.y;
         bullet.destroy();
         if (enemy.isShielded) {
@@ -1187,7 +1200,7 @@ function create() {
 }
 
 function update(time) {
-    if (!isDeployed || _isPaused) return;
+    if (!isDeployed || _isPaused || _roundClearing) return;
 
     handleShieldRegen(time);
     handleEnemyAI(this, time);
@@ -1357,11 +1370,13 @@ function handleEnemyAI(scene, time) {
         // Always sync visual container to physics body
         enemy.visuals.setPosition(enemy.x, enemy.y);
 
-        // Torso aims at player independently
-        if (enemy.torso && player) {
+        // Torso aims at player independently (not while stunned)
+        if (enemy.torso && player && !enemy.isStunned) {
             enemy.torso.setPosition(enemy.x, enemy.y);
             const aimAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
             enemy.torso.rotation = Phaser.Math.Angle.RotateTo(enemy.torso.rotation, aimAngle, 0.1);
+        } else if (enemy.torso) {
+            enemy.torso.setPosition(enemy.x, enemy.y); // keep position synced even when stunned
         }
         // Sync shield ring to enemy position
         if (enemy.shieldRing?.active) enemy.shieldRing.setPosition(enemy.x, enemy.y);
@@ -1887,15 +1902,23 @@ function showPerkMenu(nextRound) {
         cards.appendChild(card);
     });
     menu.style.display = 'flex';
+    const _psc = game?.scene?.scenes[0];
+    if (_psc) { try { _psc.input.setDefaultCursor('default'); } catch(e){} }
+    document.body.style.cursor = 'default';
 }
 
 function pickPerk(key, nextRound) {
     if (!_perks[key]) return;
     _pickedPerks.push(key);
+    _perksEarned++;
     _perks[key].apply();
     updateBars(); updatePaperDoll();
     const menu = document.getElementById('perk-menu');
     if (menu) menu.style.display = 'none';
+    _roundClearing = false;
+    const _rsc = game?.scene?.scenes[0];
+    if (_rsc) { try { _rsc.input.setDefaultCursor('none'); } catch(e){} }
+    document.body.style.cursor = 'none';
     sndRoundStart();
     startRound(nextRound);
 }
@@ -1949,12 +1972,15 @@ function onEnemyKilled() {
 
     if (_roundKills >= _roundTotal) {
         _roundActive = false;
+        _roundClearing = true;
+        // Stop player momentum so camera doesn't drift
+        if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
         sndRoundClear();
         _healPlayerFull();
         const nextRound = _round + 1;
         showRoundBanner(
             'ROUND ' + _round + ' CLEARED',
-            'SELECT A PERK',
+            '',
             2200,
             () => showPerkMenu(nextRound)
         );
@@ -3101,6 +3127,7 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
 
 function fire(scene, side) {
     if (!isDeployed || isJumping || _isPaused) return;
+    _shotsFired++;
 
     const now   = scene.time.now;
     const wKey  = side === 'L' ? loadout.L : loadout.R;
@@ -3301,6 +3328,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     lastDamageTime = now;
     player.lastHitTime = now;
 
+    _damageTaken += amt;
     if (explosive) {
         // Explosive: split evenly across all 4 parts
         const share = amt / 4;
@@ -3899,15 +3927,20 @@ function showDeathScreen() {
     isDeployed = false;
     // Update session bests
     if (_round > _bestRound) _bestRound = _round;
-    _sessionKills += _totalKills;
     // Populate score panel
     const el = id => document.getElementById(id);
-    if (el('score-round'))   el('score-round').innerText   = _round;
-    if (el('score-kills'))   el('score-kills').innerText   = _totalKills;
-    if (el('score-best'))    el('score-best').innerText    = _bestRound;
-    if (el('score-session')) el('score-session').innerText = _sessionKills;
+    const _acc = _shotsFired > 0 ? Math.round(_shotsHit / _shotsFired * 100) : 0;
+    if (el('score-round'))     el('score-round').innerText     = _round;
+    if (el('score-kills'))     el('score-kills').innerText     = _totalKills;
+    if (el('score-accuracy'))  el('score-accuracy').innerText  = _acc + '%';
+    if (el('score-dmg-dealt')) el('score-dmg-dealt').innerText = Math.round(_damageDealt);
+    if (el('score-dmg-taken')) el('score-dmg-taken').innerText = Math.round(_damageTaken);
+    if (el('score-perks'))     el('score-perks').innerText     = _perksEarned;
     const ds = document.getElementById('death-screen');
     if (ds) ds.style.display = 'flex';
+    const _dsc = game?.scene?.scenes[0];
+    if (_dsc) { try { _dsc.input.setDefaultCursor('default'); } catch(e){} }
+    document.body.style.cursor = 'default';
 }
 
 function _cleanupGame() {
@@ -3950,6 +3983,9 @@ function respawnMech() {
     _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
     _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, adrenaline:false, ammoCache:false };
     _pickedPerks = [];
+    _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
+    _roundClearing = false;
+    _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     const scene = game.scene.scenes[0];
     deployMech();
 }
@@ -3987,6 +4023,8 @@ function goToMainMenu() {
     _round = 1; _roundKills = 0; _totalKills = 0; _roundActive = false;
     _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, adrenaline:false, ammoCache:false };
     _pickedPerks = [];
+    _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
+    _roundClearing = false;
     // Restore cursor (Phaser hides it on deploy)
     const sc = game?.scene?.scenes[0];
     if (sc) { try { sc.input.setDefaultCursor('default'); } catch(e){} }
@@ -4174,7 +4212,6 @@ window.onload = () => {
 </div>
 
 <div id="perk-menu" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(5,8,12,0.92);font-family:'Courier New',monospace;flex-direction:column;align-items:center;justify-content:center;gap:28px;">
-  <div style="font-size:11px;letter-spacing:6px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:-10px;">Round Complete</div>
   <div style="font-size:22px;letter-spacing:4px;color:#00ffff;text-transform:uppercase;text-shadow:0 0 20px rgba(0,255,255,0.6);">Select a Perk</div>
   <div id="perk-cards" style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;max-width:900px;"></div>
   <div style="font-size:9px;letter-spacing:2px;color:rgba(0,255,255,0.3);margin-top:4px;">CHOOSE 1 — CHOICE IS PERMANENT</div>
