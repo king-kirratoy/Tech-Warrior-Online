@@ -150,6 +150,25 @@ button.active {
     box-shadow: inset 0 0 10px rgba(255,50,0,0.2);
 }
 
+/* ── Perk cards ─────────────────────────────────────────── */
+.perk-card {
+    width: 190px; padding: 22px 18px;
+    background: rgba(12,16,20,0.95);
+    border: 1px solid rgba(0,255,255,0.25);
+    border-top: 2px solid rgba(0,255,255,0.6);
+    border-radius: 10px; cursor: pointer;
+    transition: all 0.2s ease; text-align: center;
+    box-shadow: 0 0 12px rgba(0,255,255,0.08);
+}
+.perk-card:hover {
+    background: rgba(0,255,255,0.08);
+    border-color: rgba(0,255,255,0.8);
+    box-shadow: 0 0 28px rgba(0,255,255,0.25);
+    transform: translateY(-3px);
+}
+.perk-card-title { font-size:12px; letter-spacing:2px; color:#00ffff; text-transform:uppercase; margin-bottom:10px; }
+.perk-card-desc  { font-size:9px;  letter-spacing:1px; color:rgba(200,210,217,0.7); line-height:1.5; }
+
 /* --- Color Swatch --- */
 .color-preview {
     width: 12px;
@@ -704,13 +723,13 @@ button.active {
         <br>
         <div style="display:flex;gap:20px;justify-content:center;">
             <button onclick="respawnMech()"
-                style="width:200px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;"
+                style="width:200px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
                 onmouseover="this.style.background='rgba(0,255,255,0.15)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.25)';this.style.letterSpacing='4px';"
                 onmouseout="this.style.background='rgba(0,255,255,0.05)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
                 &#9654; RESPAWN
             </button>
             <button onclick="returnToHangar()"
-                style="width:200px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;"
+                style="width:200px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
                 onmouseover="this.style.background='rgba(0,255,255,0.15)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.25)';this.style.letterSpacing='4px';"
                 onmouseout="this.style.background='rgba(0,255,255,0.05)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
                 &#8962; MECH HANGAR
@@ -719,8 +738,16 @@ button.active {
     </div>
 </div>
 <!-- HANGAR RETURN BTN -->
-<div id="hangar-return-btn" style="display:none;position:fixed;top:20px;left:24px;z-index:9999;">
-    <button onclick="returnToHangar()" style="padding:10px 18px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);">&#8962; &nbsp;MECH HANGAR</button>
+<div id="top-left-btns" style="display:none;position:fixed;top:20px;left:24px;z-index:9999;gap:10px;align-items:center;">
+    <div id="main-menu-btn-wrap">
+        <button onclick="goToMainMenu()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">MAIN MENU</button>
+    </div>
+    <div id="hangar-return-btn">
+        <button onclick="returnToHangar()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">HANGAR</button>
+    </div>
+    <div id="pause-btn-wrap">
+        <button id="pause-btn" onclick="togglePause()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">PAUSE</button>
+    </div>
 </div>
 <!-- ============================================================
      GAME SCRIPT
@@ -733,9 +760,9 @@ button.active {
 
 /** Chassis definitions: max weapon weight, movement speed, visual scale, component HP */
 const CHASSIS = {
-    light:  { max: 75,  spd: 350, scale: 0.7, coreHP: 265, armHP: 150, legHP: 190 },
-    medium: { max: 150, spd: 250, scale: 1.0, coreHP: 340, armHP: 225, legHP: 265 },
-    heavy:  { max: 250, spd: 150, scale: 1.4, coreHP: 415, armHP: 300, legHP: 340 }
+    light:  { max: 75,  spd: 250, scale: 0.7, coreHP: 212, armHP: 120, legHP: 152 },
+    medium: { max: 150, spd: 200, scale: 1.0, coreHP: 272, armHP: 180, legHP: 212 },
+    heavy:  { max: 250, spd: 150, scale: 1.4, coreHP: 332, armHP: 240, legHP: 272 }
 };
 
 /**
@@ -809,6 +836,25 @@ let _lastTorsoMY    = 0;
 
 // Combat / cooldown state
 let isDeployed      = false;
+
+// ── Perk system state ────────────────────────────────────────────
+const _perks = {
+    reinforce_core:  { label: 'Reinforce Core',   desc: '+25% core max HP',            apply: () => { player.comp.core.max = Math.round(player.comp.core.max*1.25); player.comp.core.hp = player.comp.core.max; } },
+    reinforce_arms:  { label: 'Reinforce Arms',   desc: '+25% arm max HP',             apply: () => { ['lArm','rArm'].forEach(k=>{player.comp[k].max=Math.round(player.comp[k].max*1.25);player.comp[k].hp=player.comp[k].max;}); } },
+    reinforce_legs:  { label: 'Reinforce Legs',   desc: '+25% leg max HP',             apply: () => { player.comp.legs.max = Math.round(player.comp.legs.max*1.25); player.comp.legs.hp = player.comp.legs.max; } },
+    thick_plating:   { label: 'Thick Plating',    desc: '+15% all part max HP',        apply: () => { Object.values(player.comp).forEach(c=>{c.max=Math.round(c.max*1.15);c.hp=c.max;}); } },
+    extended_shield: { label: 'Extended Shield',  desc: '+30% max shield capacity',    apply: () => { player.maxShield=Math.round(player.maxShield*1.30); player.shield=player.maxShield; } },
+    shield_regen:    { label: 'Shield Regen',     desc: 'Shield regens 2× faster',     apply: () => { _perkState.shieldRegenMult = (_perkState.shieldRegenMult||1)*2; } },
+    heavy_rounds:    { label: 'Heavy Rounds',     desc: '+20% all weapon damage',       apply: () => { _perkState.dmgMult = (_perkState.dmgMult||1)*1.20; } },
+    rapid_reload:    { label: 'Rapid Reload',     desc: '-20% all weapon reload times', apply: () => { _perkState.reloadMult = (_perkState.reloadMult||1)*0.80; } },
+    overclock:       { label: 'Overclock',        desc: '+15% movement speed',          apply: () => { _perkState.speedMult = (_perkState.speedMult||1)*1.15; } },
+    salvager:        { label: 'Salvager',         desc: 'Loot drop rate +25%',          apply: () => { _perkState.lootMult = (_perkState.lootMult||1)*1.25; } },
+    adrenaline:      { label: 'Adrenaline',       desc: 'Kills restore 5% core HP',     apply: () => { _perkState.adrenaline = true; } },
+    ammo_cache:      { label: 'Ammo Cache',       desc: 'Start each round with Ammo buff', apply: () => { _perkState.ammoCache = true; } },
+};
+let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, adrenaline:false, ammoCache:false };
+let _pickedPerks = [];
+let _savedLoadoutL = null, _savedLoadoutR = null;
 let reloadL         = 0;
 let reloadR         = 0;
 let lastDamageTime  = -99999;
@@ -1141,7 +1187,7 @@ function create() {
 }
 
 function update(time) {
-    if (!isDeployed) return;
+    if (!isDeployed || _isPaused) return;
 
     handleShieldRegen(time);
     handleEnemyAI(this, time);
@@ -1163,7 +1209,7 @@ function update(time) {
 function handleShieldRegen(time) {
     const secondsSinceHit = (time - lastDamageTime) / 1000;
     if (lastDamageTime > 0 && secondsSinceHit >= 5 && player.shield < player.maxShield) {
-        player.shield = Math.min(player.maxShield, player.shield + 1.0);
+        player.shield = Math.min(player.maxShield, player.shield + 1.0 * (_perkState.shieldRegenMult || 1));
         updateBars();
     }
 }
@@ -1271,7 +1317,7 @@ function handleEnemyAI(scene, time) {
             const eMod = enemy.loadout?.mod;
             if (eMod && eMod !== 'none' && !enemy.isModActive) {
                 const modDef   = WEAPONS[eMod];
-                const cooldown = modDef?.cooldown || 8000;
+                const cooldown = (modDef?.cooldown || 8000) * 1.5; // enemies wait 1.5x player cooldown
                 const lastMT   = enemy.lastModTime ?? -99999;
                 if (time > lastMT + cooldown) {
                     activateEnemyMod(scene, enemy, eMod, time);
@@ -1353,7 +1399,8 @@ function handlePlayerMovement(scene, time) {
     const legsDestroyed = (legsHp !== undefined && legsHp !== null && legsHp <= 0);
     const speed = CHASSIS[loadout.chassis].spd
         * (isRageActive ? 1.75 : 1)
-        * (legsDestroyed ? 0.5 : 1);
+        * (legsDestroyed ? 0.5 : 1)
+        * (_perkState.speedMult || 1);
     const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod].cooldown : 0;
 
     // Mod activation (SPACE)
@@ -1762,7 +1809,7 @@ function syncCrosshair(scene) {
 
 /** Drive the cooldown overlay heights in the HUD weapon slots. */
 function updateCooldownOverlays(time) {
-    if (!isDeployed) return;
+    if (!isDeployed || _isPaused) return;
 
     // Primary weapon
     updateSlotCooldown('cd-L', loadout.L, reloadL, time);
@@ -1812,6 +1859,49 @@ function updateRoundHUD() {
     if (rk) rk.innerText = _totalKills;
 }
 
+
+function _healPlayerFull() {
+    if (!player?.comp) return;
+    Object.values(player.comp).forEach(c => { c.hp = c.max; });
+    player.hp = Object.values(player.comp).reduce((s,c)=>s+c.hp,0);
+    player.shield = player.maxShield;
+    if (_lArmDestroyed) { _lArmDestroyed = false; if (_savedL) loadout.L = _savedL; }
+    if (_rArmDestroyed) { _rArmDestroyed = false; if (_savedR) loadout.R = _savedR; }
+    updateHUD(); updateBars(); updatePaperDoll();
+    if (_perkState.ammoCache) { isAmmoActive = true; setTimeout(()=>{ isAmmoActive=false; },8000); }
+}
+
+function showPerkMenu(nextRound) {
+    const menu = document.getElementById('perk-menu');
+    if (!menu) return;
+    const pool   = Object.keys(_perks);
+    const avail  = pool.filter(k => !_pickedPerks.includes(k));
+    const source = avail.length >= 3 ? avail : pool;
+    const picks  = [...source].sort(()=>Math.random()-0.5).slice(0,3);
+    const cards  = document.getElementById('perk-cards');
+    cards.innerHTML = '';
+    picks.forEach(key => {
+        const p    = _perks[key];
+        const card = document.createElement('div');
+        card.className = 'perk-card';
+        card.innerHTML = `<div class="perk-card-title">${p.label}</div><div class="perk-card-desc">${p.desc}</div>`;
+        card.onclick = () => pickPerk(key, nextRound);
+        cards.appendChild(card);
+    });
+    menu.style.display = 'flex';
+}
+
+function pickPerk(key, nextRound) {
+    if (!_perks[key]) return;
+    _pickedPerks.push(key);
+    _perks[key].apply();
+    updateBars(); updatePaperDoll();
+    const menu = document.getElementById('perk-menu');
+    if (menu) menu.style.display = 'none';
+    sndRoundStart();
+    startRound(nextRound);
+}
+
 function showRoundBanner(title, sub, duration, onDone) {
     const banner = document.getElementById('round-banner');
     const bt = document.getElementById('round-banner-text');
@@ -1856,17 +1946,19 @@ function onEnemyKilled() {
     _roundKills++;
     _totalKills++;
     updateRoundHUD();
+    if (_perkState.adrenaline && player?.comp?.core)
+        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + player.comp.core.max*0.05);
 
     if (_roundKills >= _roundTotal) {
-        // Round cleared!
         _roundActive = false;
         sndRoundClear();
+        _healPlayerFull();
         const nextRound = _round + 1;
         showRoundBanner(
             'ROUND ' + _round + ' CLEARED',
-            'PREPARE FOR ROUND ' + nextRound,
-            2800,
-            () => { sndRoundStart(); startRound(nextRound); }
+            'SELECT A PERK',
+            2200,
+            () => showPerkMenu(nextRound)
         );
     }
 }
@@ -2080,7 +2172,7 @@ function deployMech() {
     // Remove cover — mech is about to drop in
     document.getElementById('deploy-cover').style.display = 'none';
     document.getElementById('hud-container').style.display = 'flex';
-    document.getElementById('hangar-return-btn').style.display = 'block';
+    document.getElementById('top-left-btns').style.display = 'flex';
     const _mm = document.getElementById('minimap-wrap'); if (_mm) _mm.style.display = 'block';
 
     // ── DROP-IN: Y-axis fall with instant camera follow ──
@@ -2247,7 +2339,11 @@ function activateEnemyMod(scene, enemy, mod, time) {
                 scaleY: baseScaleY + 0.2,
                 duration: WEAPONS.jump.airTime,
                 yoyo: true,
-                onComplete: () => { enemy.isJumping = false; enemy.isModActive = false; }
+                onComplete: () => {
+                    enemy.isJumping = false;
+                    enemy.isModActive = false;
+                    enemy.lastModTime = scene.time.now; // cooldown starts after jump ends
+                }
             });
             break;
         }
@@ -2263,6 +2359,7 @@ function activateEnemyMod(scene, enemy, mod, time) {
                 enemy.shieldRing = null;
                 enemy.isShielded = false;
                 enemy.isModActive = false;
+                enemy.lastModTime = scene.time.now; // cooldown starts after shield ends
             });
             break;
         }
@@ -2275,6 +2372,7 @@ function activateEnemyMod(scene, enemy, mod, time) {
                 enemy.speed = origSpeed;
                 if (enemy.torso) enemy.torso.list?.forEach(s => s.clearTint?.());
                 enemy.isModActive = false;
+                enemy.lastModTime = scene.time.now; // cooldown starts after rage ends
             });
             break;
         }
@@ -2418,10 +2516,9 @@ function spawnLoot(scene, x, y, forced) {
     // Drop chance: 30% normal, 100% commander
     if (!forced && Math.random() > 0.30) return;
 
-    const types = ['repair', 'ammo', 'charge'];
-    const type  = forced
-        ? types[Math.floor(Math.random() * types.length)]
-        : Phaser.Math.RND.pick(types);
+    // Weighted type: repair 15%, ammo/charge split the rest
+    const _tr = Math.random();
+    const type = _tr < 0.15 ? 'repair' : _tr < 0.575 ? 'ammo' : 'charge';
     const def   = LOOT_TYPES[type];
 
     const orb = scene.add.circle(x, y, def.size, def.color, 0.9)
@@ -2480,21 +2577,8 @@ function applyLoot(scene, type) {
 
     switch (type) {
         case 'repair': {
-            // Restore 20% max HP to the most damaged component
-            if (!player?.comp) break;
-            const comps = ['core','lArm','rArm','legs'];
-            let worst = null, worstPct = 1;
-            comps.forEach(k => {
-                const c = player.comp[k];
-                if (!c) return;
-                const pct = c.hp / c.max;
-                if (pct < worstPct) { worst = k; worstPct = pct; }
-            });
-            if (worst) {
-                const c = player.comp[worst];
-                c.hp = Math.min(c.max, c.hp + c.max * 0.20);
-                updateHUD();
-            }
+            // Full heal + restore broken arms
+            _healPlayerFull();
             break;
         }
         case 'ammo': {
@@ -2872,7 +2956,7 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
 // ================================================================
 
 function fire(scene, side) {
-    if (!isDeployed || isJumping) return;
+    if (!isDeployed || isJumping || _isPaused) return;
 
     const now   = scene.time.now;
     const wKey  = side === 'L' ? loadout.L : loadout.R;
@@ -3713,18 +3797,78 @@ function respawnMech() {
     document.getElementById('death-screen').style.display = 'none';
     _cleanupGame();
     document.getElementById('hud-container').style.display = 'flex';
-    document.getElementById('hangar-return-btn').style.display = 'block';
+    document.getElementById('top-left-btns').style.display = 'flex';
     const _mm = document.getElementById('minimap-wrap'); if (_mm) _mm.style.display = 'block';
     // Hide animated grid canvas during gameplay
     const hgc = document.getElementById('hangar-canvas');
     if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
     _resetHUDState();
     _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
+    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, adrenaline:false, ammoCache:false };
+    _pickedPerks = [];
     const scene = game.scene.scenes[0];
     deployMech();
 }
 
+
+let _isPaused = false;
+
+function togglePause() {
+    const scene = game.scene.scenes[0];
+    if (!scene || !isDeployed) return;
+    _isPaused = !_isPaused;
+    const btn = document.getElementById('pause-btn');
+    const po  = document.getElementById('pause-overlay');
+    if (_isPaused) {
+        scene.physics.pause();
+        scene.time.paused = true;
+        try { scene.input.setDefaultCursor('default'); } catch(e) {}
+        document.body.style.cursor = 'default';
+        if (btn) { btn.innerHTML = 'RESUME'; btn.blur(); }
+        if (po)  po.style.display = 'flex';
+    } else {
+        scene.physics.resume();
+        scene.time.paused = false;
+        try { scene.input.setDefaultCursor('none'); } catch(e) {}
+        document.body.style.cursor = 'none';
+        if (btn) { btn.innerHTML = 'PAUSE'; btn.blur(); }
+        if (po)  po.style.display = 'none';
+    }
+}
+
+function goToMainMenu() {
+    if (_isPaused) togglePause();
+    _cleanupGame();
+    // Reset round state
+    _round = 1; _roundKills = 0; _totalKills = 0; _roundActive = false;
+    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, adrenaline:false, ammoCache:false };
+    _pickedPerks = [];
+    // Restore cursor (Phaser hides it on deploy)
+    const sc = game?.scene?.scenes[0];
+    if (sc) { try { sc.input.setDefaultCursor('default'); } catch(e){} }
+    document.body.style.cursor = 'default';
+    // Hide all in-game UI
+    document.getElementById('ui-layer').style.display = 'none';
+    document.getElementById('hud-container').style.display = 'none';
+    document.getElementById('top-left-btns').style.display = 'none';
+    const rhud = document.getElementById('round-hud'); if (rhud) rhud.style.display = 'none';
+    const mmw  = document.getElementById('minimap-wrap'); if (mmw) mmw.style.display = 'none';
+    const edh  = document.getElementById('enemy-doll-hud'); if (edh) edh.style.display = 'none';
+    const pm   = document.getElementById('perk-menu'); if (pm) pm.style.display = 'none';
+    const rb   = document.getElementById('round-banner'); if (rb) rb.style.display = 'none';
+    const ds   = document.getElementById('death-screen'); if (ds) ds.style.display = 'none';
+    const po   = document.getElementById('pause-overlay'); if (po) po.style.display = 'none';
+    // Stop hangar grid animation
+    const hgc = document.getElementById('hangar-canvas');
+    if (hgc) { hgc._gridRunning = false; hgc.style.display = 'none'; }
+    // Show main menu and restart its animated grid
+    const menu = document.getElementById('main-menu');
+    if (menu) { menu.style.opacity = '1'; menu.style.display = 'flex'; }
+    startMenuGrid();
+}
+
 function returnToHangar() {
+    if (_isPaused) { _isPaused=false; const s=game.scene.scenes[0]; if(s){s.physics.resume();s.time.paused=false;} const b=document.getElementById('pause-btn'); if(b) b.innerHTML='PAUSE'; }
     const _sc = game?.scene?.scenes[0]; if (_sc?._bfGrid) _sc._bfGrid.setVisible(false);
     document.getElementById('death-screen').style.display = 'none';
     _cleanupGame();
@@ -3736,9 +3880,10 @@ function returnToHangar() {
     const rhud = document.getElementById('round-hud'); if (rhud) rhud.style.display = 'none';
     const _mm2 = document.getElementById('minimap-wrap'); if (_mm2) _mm2.style.display = 'none';
     const _edh = document.getElementById('enemy-doll-hud'); if (_edh) _edh.style.display = 'none';
+    const _pm = document.getElementById('perk-menu'); if (_pm) _pm.style.display = 'none';
     _eDollTarget = null;
     const rban = document.getElementById('round-banner'); if (rban) rban.style.display = 'none';
-    document.getElementById('hangar-return-btn').style.display = 'none';
+    document.getElementById('top-left-btns').style.display = 'none';
     startHangarGrid();
     // Reset HUD to clean state
     _resetHUDState();
@@ -3883,5 +4028,30 @@ window.onload = () => {
     </div>
   </div>
 </div>
+
+<div id="perk-menu" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(5,8,12,0.92);font-family:'Courier New',monospace;flex-direction:column;align-items:center;justify-content:center;gap:28px;">
+  <div style="font-size:11px;letter-spacing:6px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:-10px;">Round Complete</div>
+  <div style="font-size:22px;letter-spacing:4px;color:#00ffff;text-transform:uppercase;text-shadow:0 0 20px rgba(0,255,255,0.6);">Select a Perk</div>
+  <div id="perk-cards" style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;max-width:900px;"></div>
+  <div style="font-size:9px;letter-spacing:2px;color:rgba(0,255,255,0.3);margin-top:4px;">CHOOSE 1 — CHOICE IS PERMANENT</div>
+</div>
+
+<div id="pause-overlay" style="display:none;position:fixed;inset:0;z-index:9998;pointer-events:none;align-items:center;justify-content:center;">
+  <div id="pause-text" style="font-family:'Courier New',monospace;font-size:36px;letter-spacing:12px;color:#00ffff;text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);animation:pausePulse 1.2s ease-in-out infinite;">PAUSED</div>
+</div>
+<style>
+@keyframes pausePulse {
+  0%,100% { opacity:1; text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4); }
+  50%      { opacity:0.4; text-shadow:0 0 10px rgba(0,255,255,0.3); }
+}
+</style>
+
+<style>
+#top-left-btns button:focus,
+#top-left-btns button:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 10px rgba(0,255,255,0.15) !important;
+}
+</style>
 </body>
 </html>
