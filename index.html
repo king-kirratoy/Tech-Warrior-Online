@@ -763,17 +763,16 @@ button.active {
         </div>
     </div>
 </div>
-<!-- HANGAR RETURN BTN -->
+<!-- IN-GAME BUTTONS -->
 <div id="top-left-btns" style="display:none;position:fixed;top:20px;left:24px;z-index:9999;gap:10px;align-items:center;">
     <div id="main-menu-btn-wrap">
         <button onclick="goToMainMenu()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">MAIN MENU</button>
     </div>
-    <div id="hangar-return-btn">
-        <button onclick="returnToHangar()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">HANGAR</button>
+    <div id="stats-btn-wrap">
+        <button id="stats-btn" onclick="toggleStats()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">STATS</button>
     </div>
     <div id="pause-btn-wrap">
         <button id="pause-btn" onclick="togglePause()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">PAUSE</button>
-        <button id="stats-btn" onclick="toggleStats()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">STATS</button>
     </div>
 </div>
 <!-- ============================================================
@@ -954,9 +953,9 @@ let isChargeActive  = false;  // loot: 50% mod cooldown reduction for 10s
 // SYNTHESIZED SOUND ENGINE  (Web Audio API — no asset files needed)
 // ================================================================
 let _ac          = null;
-let _masterVol   = 0.3;
+let _masterVol   = 0.32;
 let _activeNodes = 0;
-const _MAX_NODES = 12;   // hard cap — prevents flooding the AudioContext
+const _MAX_NODES = 48;   // generous cap — each weapon sound uses multiple tones
 const _sndThrottle = {}; // per-sound last-played timestamps
 
 function _getAC() {
@@ -1530,8 +1529,15 @@ function handlePlayerMovement(scene, time) {
 
 /** Primary (M1) and secondary (F) weapon firing. */
 function handlePlayerFiring(scene) {
-    if (scene.input.activePointer.isDown) fire(scene, 'L');
-    if (keys.F.isDown)                    fire(scene, 'R');
+    if (scene.input.activePointer.isDown) {
+        // Don't fire if the click landed on a UI element (button, overlay, etc.)
+        // scene.sys.canvas is the correct Phaser 3 reference to the game canvas element
+        const _target = document.elementFromPoint(scene.input.activePointer.x, scene.input.activePointer.y);
+        const _canvas = scene.sys.canvas;
+        if (_target && _canvas && _target !== _canvas) return;
+        fire(scene, 'L');
+    }
+    if (keys.F.isDown) fire(scene, 'R');
 }
 
 /** Rage mode: spawns fading red ghost mechs behind the player. */
@@ -2097,10 +2103,10 @@ function startRound(roundNum) {
     const normalCount = spawnCmd ? _roundTotal - 1 : _roundTotal;
     // Stagger spawns slightly so they don't all arrive at once
     for (let i = 0; i < normalCount; i++) {
-        setTimeout(() => { if (isDeployed) spawnEnemy(scene); }, i * 400);
+        setTimeout(() => { if (isDeployed && _roundActive) spawnEnemy(scene); }, i * 400);
     }
     if (spawnCmd) {
-        setTimeout(() => { if (isDeployed) spawnCommander(scene); }, normalCount * 400 + 600);
+        setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, normalCount * 400 + 600);
     }
 }
 
@@ -2134,6 +2140,8 @@ function onEnemyKilled() {
         _roundClearing = true;
         // Stop player momentum so camera doesn't drift
         if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
+        // Destroy any in-flight enemy bullets so they don't hit the player during perk screen
+        if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
         sndRoundClear();
         _healPlayerFull();
         const nextRound = _round + 1;
@@ -3288,7 +3296,6 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
 
 function fire(scene, side) {
     if (!isDeployed || isJumping || _isPaused) return;
-    _shotsFired++;
 
     const now   = scene.time.now;
     const wKey  = side === 'L' ? loadout.L : loadout.R;
@@ -3300,6 +3307,7 @@ function fire(scene, side) {
     const reloadActual = (isRageActive || isAmmoActive) ? weapon.reload * 0.5 : weapon.reload;
     const lastFired    = side === 'L' ? reloadL : reloadR;
     if (now < lastFired) return;
+    _shotsFired++; // only count shots that actually fire (after all guards)
 
     // Flash the weapon slot
     const slotEl = document.getElementById('slot-' + side);
@@ -3696,15 +3704,17 @@ function updateEnemyDoll(e) {
         const pct = hp / max;
         if (pct <= 0)    return '#1a1a1a';
         if (pct <= 0.25) return '#ff0000';
-        if (pct <= 0.50) return '#ff6600';
+        if (pct <= 0.50) return '#ffaa00';
         if (pct <= 0.75) return '#ffff00';
-        return e.isCommander ? '#ddaa00' : '#00ff88';
+        return e.isCommander ? '#ddaa00' : '#00ff00';
     };
     const glow = (hp, max) => {
         const pct = hp / max;
         if (pct <= 0)    return 'none';
         if (pct <= 0.25) return '0 0 8px rgba(255,0,0,0.6)';
-        return e.isCommander ? '0 0 8px rgba(221,170,0,0.4)' : '0 0 8px rgba(255,68,0,0.4)';
+        if (pct <= 0.50) return '0 0 8px rgba(255,170,0,0.5)';
+        if (pct <= 0.75) return '0 0 8px rgba(255,255,0,0.4)';
+        return e.isCommander ? '0 0 8px rgba(221,170,0,0.4)' : 'none';
     };
     const set = (id, comp) => {
         const el = document.getElementById(id);
@@ -4184,6 +4194,10 @@ function _resetHUDState() {
 
 function showDeathScreen() {
     isDeployed = false;
+    // Stop player physics and detach camera so it doesn't drift
+    const _dScene = game?.scene?.scenes[0];
+    if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
+    if (_dScene) { try { _dScene.cameras.main.stopFollow(); } catch(e){} }
     // Update session bests
     if (_round > _bestRound) _bestRound = _round;
     // Populate score panel
@@ -4431,10 +4445,20 @@ function populateStats() {
             if (!p) return;
             const chip = document.createElement('div');
             chip.className = 'stats-perk-chip';
+            chip.style.position = 'relative';
+            chip.style.cursor = 'default';
             const catColor = p.cat==='universal'?'#00ffff':p.cat==='light'?'#88ff88':p.cat==='medium'?'#ffcc00':p.cat==='heavy'?'#ff8844':'#cc88ff';
             chip.style.borderColor = catColor + '66';
             chip.style.color = catColor;
+            chip.title = p.desc; // native tooltip fallback
             chip.innerHTML = `${p.label}${n>1?` <span style="opacity:0.6">×${n}</span>`:''}`;
+            // Custom tooltip
+            const tip = document.createElement('div');
+            tip.style.cssText = `display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:rgba(5,10,18,0.97);border:1px solid ${catColor}66;border-radius:6px;padding:8px 12px;font-size:11px;letter-spacing:1px;color:rgba(200,210,217,0.85);white-space:nowrap;z-index:20000;pointer-events:none;box-shadow:0 0 12px rgba(0,0,0,0.6);`;
+            tip.textContent = p.desc;
+            chip.appendChild(tip);
+            chip.addEventListener('mouseenter', () => tip.style.display = 'block');
+            chip.addEventListener('mouseleave', () => tip.style.display = 'none');
             perksEl.appendChild(chip);
         });
     }
