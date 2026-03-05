@@ -37,8 +37,9 @@ body {
 }
 
 .stat-readout {
-    width: 750px;
-    padding: 25px;
+    width: 820px;
+    max-width: 98vw;
+    padding: 24px 28px;
     border-radius: 10px;
     pointer-events: auto;
     background:
@@ -50,10 +51,10 @@ body {
 
 /* --- Rows & Labels --- */
 .row {
-    margin-bottom: 22px;
+    margin-bottom: 14px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .row-label {
@@ -285,81 +286,94 @@ button.active {
 /* --- Weapon Slots --- */
 #weapon-slots {
     display: flex;
-    gap: 10px;
-    align-items: flex-end;
-}
-
-.weapon-container {
-    display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 4px;
+    gap: 5px;
+    min-width: 210px;
 }
 
-.key-hint {
-    font-size: 9px;
-    font-weight: bold;
-    color: #c8d2d9;
-    opacity: 0.8;
-    text-transform: uppercase;
+.weapon-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 26px;
+}
+
+.weapon-row.arm-destroyed .wr-bar-bg {
+    border-color: rgba(200,0,0,0.4) !important;
+    background: rgba(60,0,0,0.5) !important;
+}
+.weapon-row.arm-destroyed .wr-name { color: #ff4444 !important; }
+.weapon-row.arm-destroyed .wr-fill { background: rgba(180,0,0,0.4) !important; box-shadow: none !important; }
+
+.wr-key {
+    font-size: 8px;
     letter-spacing: 1px;
-    text-shadow: 0 0 3px rgba(255,170,0,0.3);
+    color: rgba(200,210,217,0.45);
+    text-transform: uppercase;
+    width: 30px;
+    text-align: right;
+    flex-shrink: 0;
+    font-family: 'Courier New', monospace;
 }
 
-.weapon-box {
-    width: 60px;
-    height: 60px;
-    border: 1px solid rgba(255,170,0,0.4);
-    background: rgba(255,170,0,0.05);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #c8d2d9;
+.wr-bar-bg {
+    flex: 1;
+    height: 100%;
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 3px;
     position: relative;
     overflow: hidden;
+    display: flex;
+    align-items: center;
 }
 
-.weapon-box.active-firing {
-    border-color: #ffaa00;
-    box-shadow: 0 0 15px rgba(255,170,0,0.5);
-    color: #fff;
-    background: rgba(255,170,0,0.15);
-}
-
-.weapon-box.arm-destroyed {
-    border: 2px solid #cc0000 !important;
-    box-shadow: 0 0 12px rgba(200,0,0,0.5) !important;
-    background: rgba(160,0,0,0.55) !important;
-    opacity: 1 !important;
-}
-.weapon-box.arm-destroyed .weap-name {
-    color: #ff4444;
-}
-.weapon-box.arm-destroyed .arm-label {
-    color: rgba(255,80,80,0.7);
-    opacity: 1;
-}
-
-.cd-overlay {
+.wr-fill {
     position: absolute;
-    bottom: 0; left: 0;
-    width: 100%; height: 0%;
-    background: rgba(255,0,0,0.3);
-    border-top: 2px solid #ff0000;
+    left: 0; top: 0; bottom: 0;
+    width: 0%;
+    border-radius: 3px 0 0 3px;
     pointer-events: none;
+    transition: width 0.05s linear;
 }
 
-.arm-label {
-    opacity: 0.5;
-    font-size: 9px;
-    text-transform: uppercase;
-}
-
-.weap-name {
+.wr-name {
+    position: relative;
+    z-index: 1;
+    font-size: 10px;
     font-weight: bold;
-    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    padding-left: 8px;
+    color: #c8d2d9;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
+
+.wr-label {
+    position: relative;
+    z-index: 1;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: rgba(200,210,217,0.35);
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    margin-left: auto;
+    padding-right: 8px;
+    flex-shrink: 0;
+}
+
+.wr-status {
+    font-size: 9px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+    text-align: right;
+    width: 36px;
+    flex-shrink: 0;
+}
+
+/* legacy stubs — kept so old JS .weapon-box refs don't throw */
+.weapon-box, .weapon-container, .key-hint, .arm-label, .weap-name, .cd-overlay { display: none !important; }
 
 /* ============================================================
    PAPER DOLL
@@ -501,6 +515,195 @@ button.active {
 
 .pulse-warning { animation: pulse 0.5s infinite alternate; }
 
+
+/* ============================================================
+   GARAGE DROPDOWN SYSTEM
+   ============================================================ */
+.dd-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 11px;
+}
+.dd-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(0,255,255,0.7);
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    width: 96px;
+    min-width: 96px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.dd-wrap {
+    position: relative;
+    flex: 1;
+}
+.dd-selected {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(0,255,255,0.25);
+    border-left: 3px solid rgba(0,255,255,0.5);
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #c8d2d9;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+.dd-selected:hover {
+    background: rgba(0,255,255,0.07);
+    border-color: rgba(0,255,255,0.5);
+    color: #fff;
+}
+.dd-selected.dd-open {
+    background: rgba(0,255,255,0.1);
+    border-color: rgba(0,255,255,0.7);
+    color: #fff;
+}
+.dd-selected .dd-name { flex: 1; letter-spacing: 2px; }
+.dd-selected .dd-wt   { font-size: 10px; color: rgba(0,255,255,0.5); margin-right: 10px; letter-spacing: 1px; }
+.dd-selected .dd-arrow { font-size: 9px; color: rgba(0,255,255,0.6); transition: transform 0.15s; }
+.dd-selected.dd-open .dd-arrow { transform: rotate(180deg); }
+
+.dd-list {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    z-index: 9000;
+    background: rgba(10,14,20,0.98);
+    border: 1px solid rgba(0,255,255,0.4);
+    border-top: none;
+    max-height: 340px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+}
+.dd-list.dd-list-open { display: block; }
+.dd-option {
+    display: flex;
+    flex-direction: column;
+    padding: 9px 12px 8px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #c8d2d9;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.1s;
+    gap: 3px;
+}
+.dd-option:hover     { background: rgba(0,255,255,0.09); color: #fff; }
+.dd-option.dd-active { background: rgba(0,255,255,0.13); color: #00ffff; }
+.dd-option.do-warn   { color: #ffaa00; }
+.dd-option.do-disabled { opacity: 0.28; cursor: not-allowed; pointer-events: none; }
+.dd-option.do-disabled .do-desc { opacity: 0.6; }
+.dd-option .do-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+.dd-option .do-name { flex: 1; letter-spacing: 1px; font-size: 12px; }
+.dd-option .do-wt   { font-size: 10px; color: rgba(0,255,255,0.45); min-width: 44px; text-align: right; letter-spacing: 1px; }
+.dd-option.do-warn .do-wt { color: rgba(255,170,0,0.6); }
+.dd-option .do-desc {
+    font-size: 10px;
+    color: rgba(200,210,217,0.5);
+    letter-spacing: 0.3px;
+    line-height: 1.5;
+    padding-left: 2px;
+}
+.dd-option.dd-active .do-desc { color: rgba(0,255,255,0.6); }
+.dd-option:hover .do-desc     { color: rgba(255,255,255,0.65); }
+.dd-option.do-warn .do-desc   { color: rgba(255,170,0,0.55); }
+/* Colour-specific option row */
+.dd-color-opt .do-header { gap: 10px; }
+.do-color-swatch {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.25);
+    flex-shrink: 0;
+    display: inline-block;
+}
+/* Colour swatch in the closed header */
+.dd-color-swatch-header {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.3);
+    flex-shrink: 0;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* #garage-desc removed — descriptions now inline in dropdown rows */
+#garage-stats-panel {
+    padding: 8px 10px;
+    background: rgba(0,5,12,0.55);
+    border: 1px solid rgba(0,255,255,0.16);
+    border-left: 3px solid rgba(0,255,255,0.38);
+}
+.gs-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-family: 'Courier New', monospace;
+    gap: 8px;
+}
+.gs-row:last-child { border-bottom: none; }
+.gs-label { font-size: 10px; letter-spacing: 3px; color: rgba(0,255,255,0.7); white-space: nowrap; text-transform: uppercase; font-family: 'Courier New', monospace; }
+.gs-val   { font-size: 10px; letter-spacing: 0.5px; text-align: right; font-family: 'Courier New', monospace; }
+
+/* Garage stats panel */
+#garage-stats-panel {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: rgba(0,5,12,0.6);
+    border: 1px solid rgba(0,255,255,0.18);
+    border-left: 3px solid rgba(0,255,255,0.4);
+}
+.gs-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-family: 'Courier New', monospace;
+}
+.gs-row:last-child { border-bottom: none; }
+.gs-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(0,255,255,0.5);
+    text-transform: uppercase;
+}
+.gs-val {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+}
+
+/* Dual-explosive warning */
+#dual-explosive-warn {
+    display: none;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: rgba(255,170,0,0.08);
+    border: 1px solid rgba(255,170,0,0.4);
+    border-left: 3px solid #ffaa00;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: #ffaa00;
+    letter-spacing: 1px;
+}
+
 </style>
 </head>
 <body>
@@ -523,102 +726,136 @@ button.active {
 <div id="deploy-cover" style="display:none;position:fixed;inset:0;background:#0c1014;z-index:998;pointer-events:none;"></div>
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu">
-        <h2 style="text-align:center; margin:0 0 25px; letter-spacing:8px; color:#00ffff; font-family:'Courier New',monospace; font-size:20px; text-shadow:0 0 14px rgba(0,255,255,0.6), 0 0 40px rgba(0,255,255,0.2); font-weight:normal;">MECH HANGAR</h2>
+        <h2 style="text-align:center;margin:0 0 20px;letter-spacing:8px;color:#00ffff;font-family:'Courier New',monospace;font-size:26px;text-shadow:0 0 18px rgba(0,255,255,0.7),0 0 40px rgba(0,255,255,0.2);font-weight:normal;">MECH HANGAR</h2>
 
-        <div style="display:flex; gap:30px; align-items:stretch;">
+        <div style="display:flex;gap:28px;align-items:flex-start;">
 
-            <!-- LEFT COLUMN: BUILD OPTIONS -->
-            <div style="flex:1.4;">
+            <!-- LEFT: BUILD OPTIONS -->
+            <div style="flex:1;min-width:0;">
 
-                <div class="row">
-                    <span class="row-label">■ Chassis</span>
-                    <div class="options-group">
-                        <button id="c-light"  onclick="setChassis('light')">LIGHT</button>
-                        <button id="c-medium" onclick="setChassis('medium')">MEDIUM</button>
-                        <button id="c-heavy"  onclick="setChassis('heavy')">HEAVY</button>
+                <div class="dd-row">
+                    <span class="dd-label">■ CHASSIS</span>
+                    <div style="display:flex;gap:6px;flex:1;">
+                        <button id="c-light"  onclick="setChassis('light')"  style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">LIGHT</button>
+                        <button id="c-medium" onclick="setChassis('medium')" style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">MEDIUM</button>
+                        <button id="c-heavy"  onclick="setChassis('heavy')"  style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">HEAVY</button>
                     </div>
                 </div>
 
-                <div class="row">
-                    <span class="row-label">■ Primary Weapon</span>
-                    <div class="options-group">
-                        <button id="l-smg" onclick="setWeapon('L','smg')">SMG</button>
-                        <button id="l-mg"  onclick="setWeapon('L','mg')">MG</button>
-                        <button id="l-br"  onclick="setWeapon('L','br')">BR</button>
-                        <button id="l-sg"  onclick="setWeapon('L','sg')">SG</button>
-                        <button id="l-hr"  onclick="setWeapon('L','hr')">HR</button>
+                <div class="dd-row">
+                    <span class="dd-label">■ LEFT ARM</span>
+                    <div class="dd-wrap" id="ddw-L">
+                        <div class="dd-selected" id="dds-L" onclick="toggleDD('L')">
+                            <span class="dd-name" id="ddn-L">NONE</span>
+                            <span class="dd-wt"   id="ddwt-L">—</span>
+                            <span class="dd-arrow">▼</span>
+                        </div>
+                        <div class="dd-list" id="ddl-L"></div>
                     </div>
                 </div>
 
-                <div class="row">
-                    <span class="row-label">■ Secondary Weapon</span>
-                    <div class="options-group">
-                        <button id="r-none" onclick="setWeapon('R','none')">NONE</button>
-                        <button id="r-sr"   onclick="setWeapon('R','sr')">SR</button>
-                        <button id="r-gl"   onclick="setWeapon('R','gl')">GL</button>
-                        <button id="r-rl"   onclick="setWeapon('R','rl')">RL</button>
-                        <button id="r-plsm" onclick="setWeapon('R','plsm')">PLSM</button>
+                <div class="dd-row">
+                    <span class="dd-label">■ RIGHT ARM</span>
+                    <div class="dd-wrap" id="ddw-R">
+                        <div class="dd-selected" id="dds-R" onclick="toggleDD('R')">
+                            <span class="dd-name" id="ddn-R">NONE</span>
+                            <span class="dd-wt"   id="ddwt-R">—</span>
+                            <span class="dd-arrow">▼</span>
+                        </div>
+                        <div class="dd-list" id="ddl-R"></div>
                     </div>
                 </div>
 
-                <div class="row">
-                    <span class="row-label">■ System Modification</span>
-                    <div class="options-group">
-                        <button id="m-none"   onclick="setMod('none')">NONE</button>
-                        <button id="m-jump"   onclick="setMod('jump')">JUMP</button>
-                        <button id="m-shield" onclick="setMod('shield')">SHIELD</button>
-                        <button id="m-rage"   onclick="setMod('rage')">RAGE</button>
-                        <button id="m-emp"    onclick="setMod('emp')">EMP</button>
+                <div class="dd-row">
+                    <span class="dd-label">■ LEGS</span>
+                    <div class="dd-wrap" id="ddw-G">
+                        <div class="dd-selected" id="dds-G" onclick="toggleDD('G')">
+                            <span class="dd-name" id="ddn-G">NONE</span>
+                            <span class="dd-wt"   id="ddwt-G">—</span>
+                            <span class="dd-arrow">▼</span>
+                        </div>
+                        <div class="dd-list" id="ddl-G"></div>
                     </div>
                 </div>
 
-                <div class="row">
-                    <span class="row-label">■ Armour Color</span>
-                    <div class="options-group">
-                        <button id="col-00ff00" onclick="setColor(0x00ff00)">
-                            <span class="color-preview" style="background:#00ff00;"></span> GREEN
-                        </button>
-                        <button id="col-0088ff" onclick="setColor(0x0088ff)">
-                            <span class="color-preview" style="background:#0088ff;"></span> BLUE
-                        </button>
-                        <button id="col-ff3300" onclick="setColor(0xff3300)">
-                            <span class="color-preview" style="background:#ff3300;"></span> RED
-                        </button>
-                        <button id="col-ffff00" onclick="setColor(0xffff00)">
-                            <span class="color-preview" style="background:#ffff00;"></span> YELLOW
-                        </button>
+                <div class="dd-row">
+                    <span class="dd-label">■ SHIELD</span>
+                    <div class="dd-wrap" id="ddw-S">
+                        <div class="dd-selected" id="dds-S" onclick="toggleDD('S')">
+                            <span class="dd-name" id="ddn-S">NONE</span>
+                            <span class="dd-wt"   id="ddwt-S">—</span>
+                            <span class="dd-arrow">▼</span>
+                        </div>
+                        <div class="dd-list" id="ddl-S"></div>
                     </div>
                 </div>
-            </div><!-- /left column -->
 
-            <!-- RIGHT COLUMN: PREVIEW & STATS -->
-            <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;">
-
-                <!-- Mech Preview Image -->
-                <div id="preview-container" style="width:280px; height:180px; border:1px solid rgba(0,255,255,0.4); background:rgba(0,10,20,0.6); box-shadow:0 0 14px rgba(0,255,255,0.12); display:flex; justify-content:center; align-items:center;">
-                    <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%; max-height:100%; object-fit:contain; filter:drop-shadow(0 0 8px rgba(0,255,255,0.6));">
-                </div>
-
-                <!-- HP / Shield Display -->
-                <div id="stats-preview" style="display:flex; justify-content:center; gap:20px; margin-top:10px;">
-                    <div id="hp-display" style="font-weight:bold; font-size:14px; color:#0f0;">HP: 450</div>
-                    <div id="sh-display" style="font-weight:bold; font-size:14px; color:#00ffff;">SHIELD: 100</div>
-                </div>
-
-                <!-- Weight + Deploy — pushed to bottom to align with armour color row -->
-                <div style="margin-top:auto; width:100%; padding-bottom:28px;">
-                    <div id="weight-display" style="text-align:center; font-weight:bold; font-size:14px; margin:0 0 4px;">
-                        WEIGHT: 0 / 100
+                <div class="dd-row">
+                    <span class="dd-label">■ MOD</span>
+                    <div class="dd-wrap" id="ddw-M">
+                        <div class="dd-selected" id="dds-M" onclick="toggleDD('M')">
+                            <span class="dd-name" id="ddn-M">NONE</span>
+                            <span class="dd-wt"   id="ddwt-M">—</span>
+                            <span class="dd-arrow">▼</span>
+                        </div>
+                        <div class="dd-list" id="ddl-M"></div>
                     </div>
-                    <div id="weight-bar-bg" style="width:100%; height:8px; background:rgba(255,255,255,0.1); border:1px solid #444; margin-bottom:10px; overflow:hidden;">
-                        <div id="weight-bar-fill" style="width:0%; height:100%; background:#0f0; transition:width 0.3s ease;"></div>
-                    </div>
-                    <button id="deploy-btn" onclick="deployMech()">DEPLOY MECH</button>
                 </div>
-            </div><!-- /right column -->
 
-        </div><!-- /flex row -->
-    </div><!-- /stat-readout -->
+                <div class="dd-row">
+                    <span class="dd-label">■ AUGMENT</span>
+                    <div class="dd-wrap" id="ddw-A">
+                        <div class="dd-selected" id="dds-A" onclick="toggleDD('A')">
+                            <span class="dd-name" id="ddn-A">NONE</span>
+                            <span class="dd-wt"   id="ddwt-A">—</span>
+                            <span class="dd-arrow">▼</span>
+                        </div>
+                        <div class="dd-list" id="ddl-A"></div>
+                    </div>
+                </div>
+
+                <div class="dd-row">
+                    <span class="dd-label">■ COLOUR</span>
+                    <div class="dd-wrap" id="ddw-C">
+                        <div class="dd-selected" id="dds-C" onclick="toggleDD('C')">
+                            <span id="dd-color-swatch-C" class="dd-color-swatch-header"></span>
+                            <span class="dd-name" id="ddn-C">GREEN</span>
+                            <span class="dd-arrow">▼</span>
+                        </div>
+                        <div class="dd-list" id="ddl-C"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top:16px;">
+                    <div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);font-family:'Courier New',monospace;margin-bottom:6px;text-transform:uppercase;">■ BUILD DETAILS</div>
+                    <div id="garage-stats-panel"></div>
+                </div>
+
+                <div id="dual-explosive-warn">⚠ DUAL EXPLOSIVE LOADOUT — high self-damage risk</div>
+
+            </div><!-- /left -->
+
+            <!-- RIGHT: PREVIEW + WEIGHT + DEPLOY -->
+            <div style="width:210px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0;">
+
+                <div id="preview-container" style="width:200px;height:140px;border:1px solid rgba(0,255,255,0.4);background:rgba(0,10,20,0.6);box-shadow:0 0 14px rgba(0,255,255,0.12);display:flex;justify-content:center;align-items:center;">
+                    <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 8px rgba(0,255,255,0.6));">
+                </div>
+
+                <div style="width:100%;margin-top:20px;">
+                    <div id="weight-display" style="text-align:center;font-weight:bold;font-size:12px;font-family:'Courier New',monospace;margin-bottom:4px;">WEIGHT: 0 / 110</div>
+                    <div id="weight-bar-bg" style="width:100%;height:7px;background:rgba(255,255,255,0.08);border:1px solid #444;overflow:hidden;">
+                        <div id="weight-bar-fill" style="width:0%;height:100%;background:#ffaa00;transition:width 0.3s ease;"></div>
+                    </div>
+                </div>
+
+                <div style="width:100%;margin-top:auto;display:flex;justify-content:flex-end;">
+                    <button id="deploy-btn" onclick="deployMech()" style="width:100%;margin-top:12px;">DEPLOY MECH</button>
+                </div>
+
+            </div><!-- /right -->
+        </div>
+    </div>
 </div><!-- /ui-layer -->
 
 <!-- ============================================================
@@ -657,31 +894,50 @@ button.active {
                 <div id="sh-fill-vert" style="height:100%;"></div>
             </div>
 
-            <!-- Weapon Slots -->
+            <!-- Weapon Slots — horizontal bar rows -->
             <div id="weapon-slots">
-                <div class="weapon-container">
-                    <div class="key-hint">M1</div>
-                    <div id="slot-L" class="weapon-box">
-                        <div id="cd-L" class="cd-overlay"></div>
-                        <span class="arm-label">PRIMARY</span>
-                        <span id="txt-L" class="weap-name">SMG</span>
+                <div class="weapon-row" id="slot-L">
+                    <span class="wr-key">M1</span>
+                    <div class="wr-bar-bg" style="border-color:rgba(0,200,255,0.2);">
+                        <div class="wr-fill" id="wr-fill-L" style="background:rgba(0,180,255,0.22);box-shadow:0 0 8px rgba(0,180,255,0.35);"></div>
+                        <span class="wr-name" id="txt-L">—</span>
+                        <span class="wr-label">PRIMARY</span>
                     </div>
+                    <span class="wr-status" id="wr-st-L" style="color:#44ccff;"></span>
                 </div>
-                <div class="weapon-container">
-                    <div class="key-hint">F</div>
-                    <div id="slot-R" class="weapon-box">
-                        <div id="cd-R" class="cd-overlay"></div>
-                        <span class="arm-label">SECONDARY</span>
-                        <span id="txt-R" class="weap-name">GL</span>
+                <div class="weapon-row" id="slot-R">
+                    <span class="wr-key">F</span>
+                    <div class="wr-bar-bg" style="border-color:rgba(255,140,0,0.2);">
+                        <div class="wr-fill" id="wr-fill-R" style="background:rgba(255,120,0,0.22);box-shadow:0 0 8px rgba(255,120,0,0.35);"></div>
+                        <span class="wr-name" id="txt-R">—</span>
+                        <span class="wr-label">SECONDARY</span>
                     </div>
+                    <span class="wr-status" id="wr-st-R" style="color:#ffaa44;"></span>
                 </div>
-                <div class="weapon-container">
-                    <div class="key-hint">SPACE</div>
-                    <div id="slot-M" class="weapon-box">
-                        <div id="cd-M" class="cd-overlay"></div>
-                        <span class="arm-label">SYSTEM</span>
-                        <span id="txt-M" class="weap-name">JUMP</span>
+                <div class="weapon-row" id="slot-M">
+                    <span class="wr-key">SPC</span>
+                    <div class="wr-bar-bg" style="border-color:rgba(180,80,255,0.2);">
+                        <div class="wr-fill" id="wr-fill-M" style="background:rgba(160,60,255,0.22);box-shadow:0 0 8px rgba(160,60,255,0.35);"></div>
+                        <span class="wr-name" id="txt-M">—</span>
+                        <span class="wr-label">SYSTEM</span>
                     </div>
+                    <span class="wr-status" id="wr-st-M" style="color:#bb88ff;"></span>
+                </div>
+                <div class="weapon-row" id="slot-leg-wrap" style="display:none;">
+                    <span class="wr-key">LEG</span>
+                    <div class="wr-bar-bg" style="border-color:rgba(220,200,0,0.2);">
+                        <div class="wr-fill" id="wr-fill-G" style="background:rgba(200,180,0,0.18);width:100%;"></div>
+                        <span class="wr-name" id="txt-G">—</span>
+                        <span class="wr-label">LEGS</span>
+                    </div>
+                    <span class="wr-status" id="wr-st-G" style="color:#ddcc44;"></span>
+                </div>
+                <!-- compat stubs so old JS getElementById refs don't null-error -->
+                <div style="display:none;">
+                    <div id="slot-L-box"><div id="cd-L"></div></div>
+                    <div id="slot-R-box"><div id="cd-R"></div></div>
+                    <div id="slot-M-box"><div id="cd-M"></div></div>
+                    <div id="slot-G"></div>
                 </div>
             </div>
 
@@ -771,9 +1027,7 @@ button.active {
     <div id="stats-btn-wrap">
         <button id="stats-btn" onclick="toggleStats()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">STATS</button>
     </div>
-    <div id="pause-btn-wrap">
-        <button id="pause-btn" onclick="togglePause()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">PAUSE</button>
-    </div>
+
 </div>
 <!-- ============================================================
      GAME SCRIPT
@@ -785,9 +1039,40 @@ button.active {
 // ================================================================
 
 /** Chassis definitions: max weapon weight, movement speed, visual scale, component HP */
+
+// ================================================================
+// AUGMENTS — passive system augmentation slot
+// ================================================================
+const SHIELD_SYSTEMS = {
+    none:            { name: 'NONE',            weight: 0,   maxShield: 0,   regenRate: 0,   regenDelay: 0,  desc: 'No shield system. Mech has no energy shield.' },
+    light_shield:    { name: 'LIGHT SHIELD',    weight: 20,  maxShield: 60,  regenRate: 1.2, regenDelay: 4,  desc: 'Light energy shield. 60 HP, fast regen after 4s without damage.' },
+    standard_shield: { name: 'STD. SHIELD',     weight: 40,  maxShield: 100, regenRate: 1.0, regenDelay: 5,  desc: 'Standard shield module. 100 HP shield, regenerates after 5s.' },
+    heavy_shield:    { name: 'HEAVY SHIELD',    weight: 60,  maxShield: 160, regenRate: 0.8, regenDelay: 6,  desc: 'Heavy shield array. 160 HP, slower regen, longer lockout after damage.' },
+    reactive_shield: { name: 'REACTIVE SHIELD', weight: 75, maxShield: 120, regenRate: 1.5, regenDelay: 3,  desc: 'Reactive matrix. 120 HP with fast 3s regen. Absorbs 65% of damage instead of 50%.' },
+    fortress_shield: { name: 'FORTRESS SHIELD', weight: 90, maxShield: 220, regenRate: 0.5, regenDelay: 8,  desc: 'Maximum protection. 220 HP fortress shield. Very slow regen, 8s lockout.' },
+};
+
+const AUGMENTS = {
+    none:           { name: 'NONE',           weight: 0,   desc: 'No augment equipped.' },
+    target_painter: { name: 'TARGET PAINTER', weight: 35,  desc: 'Hitting an enemy marks them. Marked enemies take +20% damage from all sources.' },
+    threat_analyzer:{ name: 'THREAT ANALY.',  weight: 35,  desc: 'Damaged enemies have their resistances reduced by 15% for 3s.' },
+    overclock_cpu:  { name: 'OVERCLOCK CPU',  weight: 50,  desc: 'All weapon reload times and mod cooldowns reduced by 12%.' },
+    reactive_plating:{ name: 'REACT. PLATING',weight: 50,  desc: 'Taking damage grants a stacking 5% damage reduction (max 5 stacks, resets on round end).' },
+    scrap_cannon:   { name: 'SCRAP CANNON',   weight: 65, desc: 'Destroyed enemy limbs explode for 30 AoE damage to nearby enemies.' },
+};
+
+// ── LEG SYSTEMS — equipped to legs, disabled when legs destroyed ──
+const LEG_SYSTEMS = {
+    none:           { name: 'NONE',          weight: 0,   desc: 'No leg system.' },
+    hydraulic_boost:{ name: 'HYDRO BOOST',   weight: 40,  desc: '+20% move speed. Legs take 15% less damage.' },
+    gyro_stabilizer:{ name: 'GYRO STAB.',    weight: 40,  desc: 'Eliminates slowdown from damaged legs. Aim accuracy +10%.' },
+    mine_layer:     { name: 'MINE LAYER',    weight: 55,  desc: 'Drops a proximity mine every 8s while moving. Mines deal 80 AoE damage.' },
+    mag_anchors:    { name: 'MAG ANCHORS',   weight: 50,  desc: 'While stationary: take 20% less damage and deal 15% more damage.' },
+    afterleg:       { name: 'AFTERLEG',      weight: 65, desc: 'JUMP mod launches farther (+50%). Landing creates a shockwave (60 dmg, 150px).' },
+};
 const CHASSIS = {
-    light:  { max: 75,  spd: 250, scale: 0.7, coreHP: 212, armHP: 120, legHP: 152 },
-    medium: { max: 150, spd: 200, scale: 1.0, coreHP: 272, armHP: 180, legHP: 212 },
+    light:  { max: 110, spd: 250, scale: 0.7, coreHP: 212, armHP: 120, legHP: 152 },
+    medium: { max: 175, spd: 200, scale: 1.0, coreHP: 272, armHP: 180, legHP: 212 },
     heavy:  { max: 250, spd: 150, scale: 1.4, coreHP: 332, armHP: 240, legHP: 272 }
 };
 
@@ -799,23 +1084,49 @@ const CHASSIS = {
  *            radius, empSpeed, stunTime, cooldown
  */
 const WEAPONS = {
-    // --- Primary weapons ---
-    smg:    { name: 'SMG',    reload: 50,   dmg: 4,   weight: 25,  bulletSize: 4,  speed: 900 },
-    mg:     { name: 'MG',     reload: 300,  dmg: 30,  weight: 50,  bulletSize: 6,  speed: 850 },
-    sg:     { name: 'SG',     reload: 750,  dmg: 15,  weight: 75,  bulletSize: 5,  speed: 600,  pellets: 5, range: 600 },
-    br:     { name: 'BR',     reload: 1000, dmg: 32,  weight: 75,  bulletSize: 5,  speed: 1100, burst: 3 },
-    hr:     { name: 'HR',     reload: 1750, dmg: 150, weight: 100, bulletSize: 12, speed: 1100 },
-    // --- Secondary weapons ---
-    sr:     { name: 'SR',     reload: 2500, dmg: 220, weight: 125, bulletSize: 6,  speed: 2000 },
-    gl:     { name: 'GL',     reload: 3500, dmg: 180, weight: 125, explosive: true },
-    rl:     { name: 'RL',     reload: 3500, dmg: 180, weight: 150, explosive: true, bulletSize: 12, speed: 800 },
-    plsm:   { name: 'PLSM',   reload: 3500, dmg: 320, weight: 150, size: 30 },
-    // --- System modifications ---
+    // ── PRIMARY WEAPONS ─────────────────────────────────────────────
+    // SMG: high fire rate, low dmg — identity: spray & suppression
+    smg:    { name: 'SMG',    reload: 55,   dmg: 6,   weight: 20,  bulletSize: 4,  speed: 950 },
+    // MG: solid sustained fire — identity: reliable workhorse
+    mg:     { name: 'MG',     reload: 280,  dmg: 28,  weight: 40,  bulletSize: 6,  speed: 870 },
+    // SG: close-range burst — identity: devastating at point blank, weak at range
+    sg:     { name: 'SG',     reload: 700,  dmg: 18,  weight: 55,  bulletSize: 5,  speed: 580,  pellets: 6, range: 500 },
+    // BR: burst precision — identity: mid-range burst, first shot accurate
+    br:     { name: 'BR',     reload: 900,  dmg: 30,  weight: 55,  bulletSize: 5,  speed: 1150, burst: 3 },
+    // HR: anti-armor heavy — identity: bonus dmg vs shields/heavy chassis
+    hr:     { name: 'HR',     reload: 1600, dmg: 160, weight: 75,  bulletSize: 12, speed: 1100, armorBuster: true },
+    // FTH: flamethrower — identity: short-range DoT cone, no bullet, spray fire
+    fth:    { name: 'FTH',    reload: 80,   dmg: 8,   weight: 55,  bulletSize: 8,  speed: 420,  flame: true, range: 350 },
+    // ── SECONDARY WEAPONS ───────────────────────────────────────────
+    // SR: precision eliminator — identity: pierce through all enemies in line
+    sr:     { name: 'SR',     reload: 2200, dmg: 240, weight: 90,  bulletSize: 6,  speed: 2200, pierce: true },
+    // GL: area denial — identity: short arm distance, big AOE
+    gl:     { name: 'GL',     reload: 3200, dmg: 200, weight: 90,  explosive: true, armDist: 80 },
+    // RL: high-risk heavy — identity: massive dmg+radius, can self-damage
+    rl:     { name: 'RL',     reload: 3200, dmg: 220, weight: 110, explosive: true, bulletSize: 12, speed: 820, selfDamage: true, radius: 120 },
+    // PLSM: channeled beam — identity: continuous growing orb
+    plsm:   { name: 'PLSM',   reload: 3200, dmg: 300, weight: 110, size: 32 },
+    // RAIL: railgun — identity: long charge, extreme single-target damage, pierces all
+    rail:   { name: 'RAIL',   reload: 4500, dmg: 450, weight: 110, bulletSize: 5,  speed: 3000, pierce: true, charge: true },
+    // ── SYSTEM MODIFICATIONS ────────────────────────────────────────
     none:   { name: 'NONE',   weight: 0 },
-    jump:   { name: 'JUMP',   weight: 25,  jumpSpeed: 900,  airTime: 200,   cooldown: 3500 },
-    shield: { name: 'SHIELD', weight: 50,  shieldTime: 3500,                cooldown: 7000 },
-    rage:   { name: 'RAGE',   weight: 75,  rageTime: 3500,                  cooldown: 10500 },
-    emp:    { name: 'EMP',    weight: 75,  radius: 350, empSpeed: 400, stunTime: 3500, cooldown: 10500 }
+    // JUMP: repositioning — now deals slam AoE damage on land
+    jump:   { name: 'JUMP',   weight: 20,  jumpSpeed: 950,  airTime: 220,   cooldown: 3500,  slamDmg: 40, slamRadius: 120 },
+    // SHIELD: defensive — 4s active, re-activation locked for 3s after deactivation
+    shield:  { name: 'SHIELD',  weight: 35,  shieldTime: 4000, cooldown: 8000 },
+    barrier: { name: 'BARRIER', weight: 35,  shieldTime: 4000, cooldown: 8000 },
+    // RAGE: offensive — brief invincibility on activation, boosted damage
+    rage:   { name: 'RAGE',   weight: 55,  rageTime: 3500,                  cooldown: 10500, invincFrames: 500 },
+    // EMP: crowd control — reduced cooldown to make it viable vs groups
+    emp:    { name: 'EMP',    weight: 50,  radius: 380, empSpeed: 380, stunTime: 3200, cooldown: 9000 },
+    // REPAIR DRONE: sustain — repairs most-damaged limb over time
+    repair: { name: 'REPAIR', weight: 35,  healAmount: 40, healTicks: 5, tickDelay: 500, cooldown: 12000 },
+    // ATTACK DRONE: offensive — deploys a turret that auto-fires at nearest enemy
+    atk_drone: { name: 'DRONE', weight: 55, droneDmg: 20, droneReload: 600, droneDuration: 8000, cooldown: 14000 },
+    // MISSILE POD: burst — fires 6 homing micro-missiles at up to 3 enemies
+    missile: { name: 'MISSILES', weight: 55, missileDmg: 55, missileCount: 6, cooldown: 11000 },
+    // DECOY: utility — hologram that draws enemy fire for 5s
+    decoy:  { name: 'DECOY',  weight: 20,  decoyDuration: 5000, cooldown: 10000 },
 };
 
 // ================================================================
@@ -825,11 +1136,26 @@ const WEAPONS = {
 /** Current loadout selected in the garage. */
 let loadout = {
     chassis: 'light',
-    L: 'smg',
+    L: 'none',
     R: 'none',
     mod: 'none',
+    aug: 'none',
+    leg: 'none',
+    shld: 'none',
     color: 0x00ff00
 };
+
+function resetLoadout() {
+    loadout.chassis = 'light';
+    loadout.L       = 'none';
+    loadout.R       = 'none';
+    loadout.mod     = 'none';
+    loadout.aug     = 'none';
+    loadout.leg     = 'none';
+    loadout.shld    = 'none';
+    loadout.color   = 0x00ff00;
+    closeAllDD();
+}
 
 // Phaser object references
 let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic;
@@ -841,9 +1167,12 @@ let glowWedge;
 let _savedL   = null;
 let _savedR   = null;
 let _savedMod = null;
-let _lArmDestroyed = false, _rArmDestroyed = false;
+let _savedAug = null;
+let _savedLeg = null;
+let _lArmDestroyed = false, _rArmDestroyed = false, _legsDestroyed = false;
 // Round system
 let _round          = 1;
+let _bestRound      = 1;
 let _roundKills     = 0;   // kills this round
 let _roundTotal     = 0;   // enemies in this round
 let _totalKills     = 0;
@@ -928,10 +1257,27 @@ const _perks = {
     chain_emp:       { cat:'emp',  label:'Chain EMP',       desc:'EMP stun chains to a 2nd nearby enemy',    apply: () => { _perkState.chainEmp=true; } },
     plsm_overcharge: { cat:'plsm', label:'Overcharge',      desc:'Plasma: +20% size & damage (stackable)',   apply: () => { _perkState.plsmMult=(_perkState.plsmMult||1)*1.20; } },
     hr_devastator:   { cat:'hr',   label:'Devastator',      desc:'HR: +15% damage & blast on impact (stackable)', apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.15; } },
+    // ── NEW WEAPON PERKS ───────────────────────────────────────────
+    fth_napalm:      { cat:'fth',  label:'Napalm',          desc:'FTH: Ignited enemies burn for 3s after leaving range (+5 dmg/tick)', apply: () => { _perkState.fthNapalm=true; } },
+    fth_wide_cone:   { cat:'fth',  label:'Wide Cone',       desc:'FTH: Flame spread +30%, range +20% (stackable)', apply: () => { _perkState.fthRange=(_perkState.fthRange||0)+0.20; } },
+    rail_capacitor:  { cat:'rail', label:'Capacitor',       desc:'RAIL: Charge time -20% (stackable)', apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.80; } },
+    rail_overload:   { cat:'rail', label:'Overload',        desc:'RAIL: +25% damage per enemy pierced (stackable)', apply: () => { _perkState.railPierceBonus=(_perkState.railPierceBonus||0)+0.25; } },
+    // ── AUGMENT PERKS ──────────────────────────────────────────────
+    painter_lock:    { cat:'target_painter',   label:'Target Lock', desc:'Painter: Marked enemies stay marked 2s longer', apply: () => { _perkState.painterDuration=(_perkState.painterDuration||0)+2000; } },
+    analyzer_deep:   { cat:'threat_analyzer',  label:'Deep Scan',   desc:'Analyzer: Resistance reduction increases to 25%', apply: () => { _perkState.analyzerDepth=true; } },
+    plating_stacks:  { cat:'reactive_plating', label:'Dense Weave', desc:'Reactive Plating: Max stacks increased to 8', apply: () => { _perkState.platingMaxStacks=8; } },
+    scrap_chain:     { cat:'scrap_cannon',     label:'Shrapnel',    desc:'Scrap Cannon: Each explosion can chain once to another nearby enemy', apply: () => { _perkState.scrapChain=true; } },
+    // ── LEG SYSTEM PERKS ───────────────────────────────────────────
+    boost_overdrive: { cat:'hydraulic_boost',  label:'Overdrive',   desc:'Hydro Boost: Speed bonus increased to +35%', apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.15; } },
+    gyro_counter:    { cat:'gyro_stabilizer',  label:'Countermove', desc:'Gyro: Dodging (JUMP) within 1s of being hit grants +20% dmg for 3s', apply: () => { _perkState.gyroCounter=true; } },
+    mine_cluster:    { cat:'mine_layer',       label:'Cluster Mine', desc:'Mine Layer: Mines spawn 3 submunitions on detonation', apply: () => { _perkState.mineCluster=true; } },
+    anchor_fortress: { cat:'mag_anchors',      label:'Fortress Mode', desc:'Mag Anchors: Dmg reduction while still increased to 35%', apply: () => { _perkState.anchorFortress=true; } },
+    afterleg_boost:  { cat:'afterleg',         label:'Jet Assist',  desc:'Afterleg: Shockwave damage +50% and radius +30%', apply: () => { _perkState.afterlegBoost=true; } },
 };
-let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0 };
+let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0 };
 let _pickedPerks = [];
-let _savedLoadoutL = null, _savedLoadoutR = null;
+let _lastOfferedPerks = [];
+// _savedLoadoutL / _savedLoadoutR removed — replaced by _savedL / _savedR
 let reloadL         = 0;
 let reloadR         = 0;
 let lastDamageTime  = -99999;
@@ -1029,7 +1375,7 @@ function _noise(duration, vol, startDelay = 0, highpass = 0, lowpass = 0) {
 // ── Per-weapon fire sounds ─────────────────────────────────────────
 // minGap controls max fire rate for sound (independent of game fire rate)
 function sndFire(wKey) {
-    const gaps = { smg:80, mg:180, sg:300, br:120, hr:400, sr:500, rl:400, gl:300, plsm:400 };
+    const gaps = { smg:80, mg:180, sg:300, br:120, hr:400, sr:500, rl:400, gl:300, plsm:400, fth:80, rail:4500 };
     const gap  = gaps[wKey] || 150;
     if (!_canPlay('fire_' + wKey, gap)) return;
     switch (wKey) {
@@ -1249,6 +1595,11 @@ function create() {
         }
         createImpactSparks(this, enemy.x, enemy.y);
         showDamageText(this, enemy.x, enemy.y, dmg);
+        if (_perkState.targetPainter && !enemy._painted) {
+            enemy._painted = true;
+            _perkState._paintedEnemy = enemy;
+            enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(2, 0xffaa00); });
+        }
         damageEnemy(enemy, dmg, _bAngle);
     });
 
@@ -1265,7 +1616,10 @@ function create() {
 }
 
 function update(time) {
-    if (!isDeployed || _isPaused || _roundClearing) return;
+    if (!isDeployed || _isPaused || _roundClearing) {
+        if (!isDeployed && window._lastDeployLog !== isDeployed) { console.log('[UPDATE] blocked: isDeployed=' + isDeployed + ' _isPaused=' + _isPaused + ' _roundClearing=' + _roundClearing); window._lastDeployLog = isDeployed; }
+        return;
+    }
 
     handleShieldRegen(time);
     handleEnemyAI(this, time);
@@ -1285,13 +1639,16 @@ function update(time) {
 
 /** Passive shield regeneration — kicks in 5 s after last hit. */
 function handleShieldRegen(time) {
+    if (!player?.active || !isDeployed) return;
     if (_perkState.noShieldRegen) return;
     const secondsSinceHit = (time - lastDamageTime) / 1000;
     // Immovable perk: triple regen while still
     const playerSpeed = player?.body ? Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2) : 999;
     const immovableBonus = (_perkState.immovable && playerSpeed < 10) ? 3 : 1;
-    if (lastDamageTime > 0 && secondsSinceHit >= 5 && player.shield < player.maxShield) {
-        player.shield = Math.min(player.maxShield, player.shield + 1.0 * (_perkState.shieldRegenMult || 1) * immovableBonus);
+    const regenDelay = player._shieldRegenDelay ?? 5;
+    const regenRate  = player._shieldRegenRate  ?? 1.0;
+    if (player.maxShield > 0 && lastDamageTime > 0 && secondsSinceHit >= regenDelay && player.shield < player.maxShield) {
+        player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * immovableBonus);
         updateBars();
     }
     // Auto-repair: regenerate core HP slowly
@@ -1322,9 +1679,12 @@ function handleShieldRegen(time) {
 
 /** Per-frame enemy AI: movement, strafing, and firing. */
 function handleEnemyAI(scene, time) {
+    if (!player?.active || !isDeployed) return;
     enemies.getChildren().forEach(enemy => {
         const dist  = Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y);
-        const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+        const _aimX = (enemy._decoyTarget) ? enemy._decoyTarget.x : player.x;
+        const _aimY = (enemy._decoyTarget) ? enemy._decoyTarget.y : player.y;
+        const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, _aimX, _aimY);
         // Speed — halved if legs destroyed
         const _baseSpd = CHASSIS[enemy.loadout?.chassis]?.spd || (enemy.isCommander ? 180 : 150);
         const _legsOk  = !enemy.comp || enemy.comp.legs.hp > 0;
@@ -1460,6 +1820,31 @@ function handleEnemyAI(scene, time) {
             enemy.body.setImmovable(true);
         }
 
+        // Passive shield regen
+        if ((enemy.maxShield||0) > 0 && enemy.shield < enemy.maxShield) {
+            const _secSinceHit = (time - (enemy._lastDamageTime || -99999)) / 1000;
+            if (_secSinceHit >= (enemy._shieldRegenDelay ?? 5)) {
+                enemy.shield = Math.min(enemy.maxShield, enemy.shield + (enemy._shieldRegenRate ?? 1.0));
+            }
+        }
+        // Mine Layer leg system
+        if (enemy.loadout?.leg === 'mine_layer' && enemy._legSystemActive) {
+            const _ev = enemy.body.velocity;
+            if (Math.abs(_ev.x) + Math.abs(_ev.y) > 20) {
+                enemy._mineTimer = (enemy._mineTimer || 0) + scene.game.loop.delta;
+                if (enemy._mineTimer >= 10000) {
+                    enemy._mineTimer = 0;
+                    dropEnemyMine(scene, enemy);
+                }
+            }
+        }
+        // Mag Anchors: track stationary state
+        if (enemy.loadout?.leg === 'mag_anchors' && enemy._legSystemActive) {
+            const _ev2 = enemy.body.velocity;
+            enemy._magAnchorsActive = (Math.abs(_ev2.x) + Math.abs(_ev2.y) < 15);
+        } else {
+            enemy._magAnchorsActive = false;
+        }
         // Always sync visual container to physics body
         enemy.visuals.setPosition(enemy.x, enemy.y);
 
@@ -1501,13 +1886,19 @@ function handleEnemyAI(scene, time) {
 
 /** WASD movement and SPACE mod activation. */
 function handlePlayerMovement(scene, time) {
+    if (!player?.active || !isDeployed) return;
     const legsHp = player?.comp?.legs?.hp;
     const legsDestroyed = (legsHp !== undefined && legsHp !== null && legsHp <= 0);
+    const _gyroOn = loadout.leg === 'gyro_stabilizer' && _perkState.legSystemActive;
+    const _legHpPct = (player?.comp?.legs?.hp ?? 1) / (player?.comp?.legs?.max ?? 1);
+    const _legMult = _gyroOn ? 1.0
+        : legsDestroyed ? 0.5
+        : _legHpPct < 0.5 ? (0.5 + _legHpPct) : 1.0;
     const speed = CHASSIS[loadout.chassis].spd
         * (isRageActive ? 1.75 : 1)
-        * (legsDestroyed ? 0.5 : 1)
+        * _legMult
         * (_perkState.speedMult || 1);
-    const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod].cooldown : 0;
+    const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod]?.cooldown || 0 : 0;
 
     // Mod activation (SPACE)
     const effectiveModCooldown = isChargeActive ? modCooldown * 0.5 : modCooldown;
@@ -1525,10 +1916,27 @@ function handlePlayerMovement(scene, time) {
         else if (keys.D.isDown) player.body.setAngularVelocity(200);
         else                    player.body.setAngularVelocity(0);
     }
+
+    // Mine Layer: drop a mine every 8 s while moving
+    if (loadout.leg === 'mine_layer' && _perkState.legSystemActive) {
+        const vel = player.body.velocity;
+        if (Math.abs(vel.x) + Math.abs(vel.y) > 20) {
+            _perkState.mineLayerTimer = (_perkState.mineLayerTimer || 0) + scene.game.loop.delta;
+            if (_perkState.mineLayerTimer >= 8000) {
+                _perkState.mineLayerTimer = 0;
+                dropMine(scene);
+            }
+        }
+    }
+
+    // Mag Anchors: flag stationary state for use in damage calculations
+    _perkState._magAnchorsActive = (loadout.leg === 'mag_anchors' && _perkState.legSystemActive &&
+        Math.abs(player.body.velocity.x) + Math.abs(player.body.velocity.y) < 15);
 }
 
 /** Primary (M1) and secondary (F) weapon firing. */
 function handlePlayerFiring(scene) {
+    if (!player?.active || !isDeployed) return;
     if (scene.input.activePointer.isDown) {
         // Don't fire if the click landed on a UI element (button, overlay, etc.)
         // scene.sys.canvas is the correct Phaser 3 reference to the game canvas element
@@ -1542,6 +1950,7 @@ function handlePlayerFiring(scene) {
 
 /** Rage mode: spawns fading red ghost mechs behind the player. */
 function handleRageGhosts(scene, time) {
+    if (!player?.active || !isDeployed) return;
     if (!isRageActive || time % 150 >= 20) return;
 
     const ghost = buildPlayerMech(scene, loadout.chassis, 0xff0000);
@@ -1559,6 +1968,7 @@ function handleRageGhosts(scene, time) {
 
 /** Sync torso/shield graphics to physics body, update turret aim, and run chassis effects. */
 function syncVisuals(scene, time) {
+    if (!player?.active || !torso?.active || !isDeployed) return;
     torso.setPosition(player.x, player.y);
     shieldGraphic.setPosition(player.x, player.y).setVisible(isShieldActive);
 
@@ -1920,40 +2330,55 @@ function syncCrosshair(scene) {
     );
 }
 
-/** Drive the cooldown overlay heights in the HUD weapon slots. */
+/** Drive horizontal bar fill widths in the HUD weapon rows. */
 function updateCooldownOverlays(time) {
     if (!isDeployed || _isPaused) return;
+    _updateBarRow('L', loadout.L, reloadL, time);
+    _updateBarRow('R', loadout.R, reloadR, time);
 
-    // Primary weapon
-    updateSlotCooldown('cd-L', loadout.L, reloadL, time);
-
-    // Secondary weapon
-    updateSlotCooldown('cd-R', loadout.R, reloadR, time);
-
-    // System mod
-    const cdM  = document.getElementById('cd-M');
-    const txtM = document.getElementById('txt-M');
-    if (cdM && loadout.mod !== 'none') {
-        if (txtM) txtM.innerText = loadout.mod.toUpperCase();
-        const total   = WEAPONS[loadout.mod].cooldown;
+    // System mod cooldown
+    if (loadout.mod && loadout.mod !== 'none') {
+        const total   = WEAPONS[loadout.mod]?.cooldown || 0;
         const elapsed = time - lastModTime;
         let pct = 0;
         if (isShieldActive || isJumping || isRageActive) {
             pct = 100;
         } else if (lastModTime > 0 && elapsed < total) {
-            pct = (1 - elapsed / total) * 100;
+            pct = Math.round((1 - elapsed / total) * 100);
         }
-        cdM.style.height = pct + '%';
+        const fill = document.getElementById('wr-fill-M');
+        const st   = document.getElementById('wr-st-M');
+        if (fill) fill.style.width = pct + '%';
+        if (st) {
+            if (pct > 0) { st.innerText = Math.ceil((total - Math.min(elapsed, total)) / 1000) + 's'; }
+            else { st.innerText = 'RDY'; }
+        }
     }
 }
 
-/** Helper: update a single weapon-slot cooldown overlay. */
+/** Legacy compat shim — used in a few places by old element IDs. */
 function updateSlotCooldown(elementId, weaponKey, reloadTimestamp, time) {
-    const el = document.getElementById(elementId);
-    if (!el || !weaponKey || weaponKey === 'none') return;
-    const total     = WEAPONS[weaponKey].reload;
+    const slotId = elementId.replace('cd-', '');
+    _updateBarRow(slotId, weaponKey, reloadTimestamp, time);
+}
+
+function _updateBarRow(slotId, weaponKey, reloadTimestamp, time) {
+    const fill = document.getElementById('wr-fill-' + slotId);
+    const st   = document.getElementById('wr-st-' + slotId);
+    if (!fill) return;
+    if (!weaponKey || weaponKey === 'none') {
+        fill.style.width = '0%';
+        if (st) st.innerText = '';
+        return;
+    }
+    const total     = WEAPONS[weaponKey]?.reload || 0;
     const remaining = Math.max(0, reloadTimestamp - time);
-    el.style.height = (total > 0 ? (remaining / total) * 100 : 0) + '%';
+    const pct       = total > 0 ? Math.round((remaining / total) * 100) : 0;
+    fill.style.width = pct + '%';
+    if (st) {
+        if (pct > 0) { st.innerText = (remaining / 1000).toFixed(1) + 's'; }
+        else { st.innerText = 'RDY'; }
+    }
 }
 
 
@@ -1988,10 +2413,16 @@ function _pickFrom(pool, n, exclude) {
     const avail = pool.filter(k => {
         if (exclude.includes(k)) return false;
         if (_perks[k].once && _pickedPerks.includes(k)) return false;
+        if (_lastOfferedPerks.includes(k)) return false;
         return true;
     });
-    const full = avail.length > 0 ? avail : pool.filter(k => !(_perks[k].once && _pickedPerks.includes(k)));
-    return [...full].sort(()=>Math.random()-0.5).slice(0,n);
+    const fallback = pool.filter(k => {
+        if (exclude.includes(k)) return false;
+        if (_perks[k].once && _pickedPerks.includes(k)) return false;
+        return true;
+    });
+    const src2 = avail.length >= n ? avail : fallback;
+    return [...src2].sort(() => Math.random() - 0.5).slice(0, n);
 }
 
 function showPerkMenu(nextRound) {
@@ -2002,13 +2433,15 @@ function showPerkMenu(nextRound) {
     const mod = loadout.mod || 'none';
     const wL  = loadout.L  || 'none';
     const wR  = loadout.R  || 'none';
+    const aug = loadout.aug || 'none';
+    const leg = loadout.leg || 'none';
 
     // Slot pools
     const universalPool = Object.keys(_perks).filter(k => _perks[k].cat === 'universal');
     const chassisPool   = Object.keys(_perks).filter(k => _perks[k].cat === ch);
-    const weaponPool    = Object.keys(_perks).filter(k =>
-        [wL, wR, mod].includes(_perks[k].cat)
-    );
+    // Slot 4: weapon/mod/aug/leg specific — combine all equipped categories
+    const specCats = [wL, wR, mod, aug, leg].filter(c => c && c !== 'none');
+    const weaponPool    = Object.keys(_perks).filter(k => specCats.includes(_perks[k].cat));
 
     const chosen = [];
     // Slots 1 & 2 — universal
@@ -2017,11 +2450,12 @@ function showPerkMenu(nextRound) {
     // Slot 3 — chassis
     const c = chassisPool.length > 0 ? _pickFrom(chassisPool, 1, chosen) : _pickFrom(universalPool, 1, chosen);
     chosen.push(...c);
-    // Slot 4 — weapon/mod specific
+    // Slot 4 — weapon/mod/aug/leg specific
     const w = weaponPool.length > 0 ? _pickFrom(weaponPool, 1, chosen) : _pickFrom(universalPool, 1, chosen);
     chosen.push(...w);
 
-    const SLOT_LABELS = ['UNIVERSAL', 'UNIVERSAL', ch.toUpperCase(), 'WEAPON'];
+    const _specLabel = specCats.length > 0 ? specCats[specCats.length-1].replace(/_/g,' ').toUpperCase() : 'WEAPON / MOD';
+    const SLOT_LABELS = ['UNIVERSAL', 'UNIVERSAL', ch.toUpperCase(), _specLabel];
     const SLOT_COLORS = ['#00ffff', '#00ffff', ch==='light'?'#88ff88':ch==='medium'?'#ffcc00':'#ff8844', '#cc88ff'];
 
     const cards = document.getElementById('perk-cards');
@@ -2035,12 +2469,14 @@ function showPerkMenu(nextRound) {
         const onceBadge  = p.once ? `<div class="perk-once-badge">ONE-TIME</div>` : '';
         card.innerHTML = `
             <div class="perk-slot-label" style="color:${SLOT_COLORS[idx]}">${SLOT_LABELS[idx]}</div>
-            ${stackBadge}${onceBadge}
+            ${stackBadge}
             <div class="perk-card-title">${p.label}</div>
-            <div class="perk-card-desc">${p.desc}</div>`;
+            <div class="perk-card-desc">${p.desc}</div>
+            ${onceBadge}`;
         card.onclick = () => pickPerk(key, nextRound);
         cards.appendChild(card);
     });
+    _lastOfferedPerks = [...chosen];
     menu.style.display = 'flex';
     const _psc = game?.scene?.scenes[0];
     if (_psc) { try { _psc.input.setDefaultCursor('default'); } catch(e){} }
@@ -2083,13 +2519,37 @@ function showRoundBanner(title, sub, duration, onDone) {
     }, duration);
 }
 
+function _clearMapForRound(scene) {
+    // Wipe all in-flight bullets
+    if (bullets)      bullets.getChildren().slice().forEach(b => { try { if (b.active) b.destroy(); } catch(e){} });
+    if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { try { if (b.active) b.destroy(); } catch(e){} });
+    // Wipe all loot pickups (orbs + labels)
+    lootPickups.forEach(p => {
+        try { if (p.orb?.active)   p.orb.destroy();   } catch(e) {}
+        try { if (p.label?.active) p.label.destroy(); } catch(e) {}
+    });
+    lootPickups = [];
+    // Teleport player to map center
+    if (player?.body) {
+        player.x = 2000; player.y = 2000;
+        player.body.setVelocity(0, 0);
+        player.body.setAngularVelocity(0);
+    }
+    if (torso) torso.setPosition(2000, 2000);
+    // Re-anchor camera
+    try {
+        scene.cameras.main.centerOn(2000, 2000);
+        scene.cameras.main.startFollow(player, true, 0.5, 0.5);
+    } catch(e) {}
+}
+
 function startRound(roundNum) {
     _round      = roundNum;
     _roundKills = 0;
     // Resilience: restore destroyed arms at 50% HP each new round
     if (_perkState.resilience && player?.comp) {
-        if (_lArmDestroyed) { _lArmDestroyed = false; loadout.L = _savedLoadoutL||'smg'; player.comp.lArm.hp = Math.round(player.comp.lArm.max*0.5); updateHUD(); }
-        if (_rArmDestroyed) { _rArmDestroyed = false; loadout.R = _savedLoadoutR||'none'; player.comp.rArm.hp = Math.round(player.comp.rArm.max*0.5); updateHUD(); }
+        if (_lArmDestroyed) { _lArmDestroyed = false; loadout.L = _savedL || loadout.L || 'none'; player.comp.lArm.hp = Math.round(player.comp.lArm.max*0.5); updateHUD(); }
+        if (_rArmDestroyed) { _rArmDestroyed = false; loadout.R = _savedR || loadout.R || 'none'; player.comp.rArm.hp = Math.round(player.comp.rArm.max*0.5); updateHUD(); }
     }
     // Iron Will resets each round
     if (_perkState.ironWill) _perkState._ironWillUsed = false;
@@ -2098,6 +2558,8 @@ function startRound(roundNum) {
     updateRoundHUD();
 
     const scene = game.scene.scenes[0];
+    // Round 2+: wipe map debris and reset player to center
+    if (roundNum > 1) _clearMapForRound(scene);
     // Spawn commander from round 4 onward (guaranteed from round 6)
     const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
     const normalCount = spawnCmd ? _roundTotal - 1 : _roundTotal;
@@ -2232,6 +2694,7 @@ function drawMinimap() {
 // ================================================================
 
 function deployMech() {
+    console.log('[DEPLOY] deployMech called. isDeployed=' + isDeployed);
     document.getElementById('ui-layer').style.display = 'none';
     // Cover the battlefield with a black div until mech is ready to drop in
     document.getElementById('deploy-cover').style.display = 'block';
@@ -2273,9 +2736,10 @@ function deployMech() {
     scene.cameras.main.centerOn(2000, 2000);
     scene.cameras.main.startFollow(player, true, 0.5, 0.5);
 
-    // Enemy bullet overlap
-    scene.physics.add.overlap(enemyBullets, player, (p, bullet) => {
+    // Enemy bullet overlap — stored so it can be destroyed on cleanup
+    _playerBulletOverlap = scene.physics.add.overlap(enemyBullets, player, (p, bullet) => {
         if (!bullet || !bullet.active) return;
+        if (!isDeployed || !player?.active) { if (bullet?.active) bullet.destroy(); return; }
 
         const bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
 
@@ -2306,8 +2770,13 @@ function deployMech() {
     };
     player.maxHp     = getTotalHP(loadout.chassis);
     player.hp        = player.maxHp;
-    player.maxShield = 100;
-    player.shield    = 100;
+    // Shield comes from equipped shield system — 0 if none
+    const _shldSys = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
+    player.maxShield = _shldSys.maxShield;
+    player.shield    = _shldSys.maxShield;
+    player._shieldRegenRate  = _shldSys.regenRate;
+    player._shieldRegenDelay = _shldSys.regenDelay;
+    player._shieldAbsorb     = (loadout.shld === 'reactive_shield') ? 0.65 : 0.50;
 
     refreshMechColor();
     scene.time.delayedCall(10, () => refreshMechColor()); // One-frame safety flush
@@ -2332,15 +2801,15 @@ function deployMech() {
     drawCrosshair(crosshair);
     scene.input.setDefaultCursor('none');
 
-    // Colliders
-    scene.physics.add.collider(player, enemies);
-    scene.physics.add.collider(enemies, enemies);
+    // Colliders — stored so they can be destroyed on cleanup
+    _playerEnemyCollider = scene.physics.add.collider(player, enemies);
+    _enemyEnemyCollider  = scene.physics.add.collider(enemies, enemies);
 
     player.isProcessingDamage = false;
     lastDamageTime = -99999;
     lastModTime    = -10000;
 
-    _lArmDestroyed = false; _rArmDestroyed = false;
+    _lArmDestroyed = false; _rArmDestroyed = false; _legsDestroyed = false;
     updateHUD();
     updateBars();
 
@@ -2348,6 +2817,8 @@ function deployMech() {
     _savedL   = loadout.L;
     _savedR   = loadout.R;
     _savedMod = loadout.mod;
+    _savedAug = loadout.aug;
+    _savedLeg = loadout.leg;
 
     // ── DROP-IN SEQUENCE ──────────────────────────────────────────
     // Mech starts large (close to camera / high altitude) then shrinks
@@ -2415,7 +2886,17 @@ function deployMech() {
             scene.cameras.main.shake(300, 0.018);
 
             // Unlock movement + spawn enemies now that scene is ready
+            // Guard: if player was destroyed during drop (bullet hit during tween), abort
+            console.log('[DEPLOY] drop-in tween complete. player.active=' + player?.active);
+            if (!player?.active) { console.log('[DEPLOY] player not active, aborting'); return; }
             isDeployed = true;
+            console.log('[DEPLOY] isDeployed set to TRUE');
+            _isPaused = false;
+            // Ensure physics and time are running (could be paused from death/stats)
+            try { game.scene.scenes[0].physics.resume(); } catch(e) {}
+            try { game.scene.scenes[0].time.paused = false; } catch(e) {}
+            applyAugment();
+            applyLegSystem();
             const sc = game.scene.scenes[0];
             // Always spawn 6 fresh enemies after landing
             // Round system handles spawning
@@ -2432,19 +2913,199 @@ function deployMech() {
 // MOD ACTIVATION
 // ================================================================
 
+
+// ── Apply augment passive effects on deploy ──────────────────────
+function applyAugment() {
+    if (!loadout.aug || loadout.aug === 'none') return;
+    switch (loadout.aug) {
+        case 'overclock_cpu':
+            // 12% reduction on all reloads and cooldowns — baked into multipliers
+            _perkState.reloadMult = (_perkState.reloadMult||1) * 0.88;
+            break;
+        case 'target_painter':
+            _perkState.targetPainter = true;
+            break;
+        case 'threat_analyzer':
+            _perkState.threatAnalyzer = true;
+            break;
+        case 'reactive_plating':
+            _perkState.reactivePlating = true;
+            break;
+        case 'scrap_cannon':
+            _perkState.scrapCannon = true;
+            break;
+    }
+}
+
+// ── Apply leg system passive effects on deploy ───────────────────
+function applyLegSystem() {
+    if (!loadout.leg || loadout.leg === 'none') return;
+    switch (loadout.leg) {
+        case 'hydraulic_boost':
+            _perkState.speedMult = (_perkState.speedMult||1) * 1.20;
+            break;
+        case 'gyro_stabilizer':
+            // Handled in movement — no leg speed penalty applied
+            break;
+        case 'mag_anchors':
+            // Handled in update loop — stat changes when player still
+            break;
+        case 'afterleg':
+            // Handled in activateJump — extended distance
+            break;
+        case 'mine_layer':
+            _perkState.mineLayerTimer = 0;
+            break;
+    }
+}
 function activateMod(scene, time) {
     switch (loadout.mod) {
-        case 'jump':   activateJump(scene);   break;
-        case 'shield': activateShield(scene); break;
-        case 'rage':   activateRage(scene);   break;
-        case 'emp':    activateEMP(scene, time); break;
+        case 'jump':      activateJump(scene);           break;
+        case 'barrier':   activateShield(scene);         break;
+        case 'rage':      activateRage(scene);           break;
+        case 'emp':       activateEMP(scene, time);      break;
+        case 'repair':    activateRepair(scene, time);   break;
+        case 'atk_drone': activateDrone(scene, time);    break;
+        case 'missile':   activateMissiles(scene, time); break;
+        case 'decoy':     activateDecoy(scene, time);    break;
     }
+}
+
+function activateRepair(scene, time) {
+    const mod = WEAPONS.repair;
+    const ticks = mod.healTicks;
+    for (let i = 0; i < ticks; i++) {
+        scene.time.delayedCall(i * mod.tickDelay, () => {
+            if (!player?.comp) return;
+            // Find most damaged part
+            const parts = Object.entries(player.comp).sort((a,b) => (a[1].hp/a[1].max) - (b[1].hp/b[1].max));
+            const [, part] = parts[0];
+            if (part && part.hp < part.max) {
+                part.hp = Math.min(part.max, part.hp + mod.healAmount / ticks);
+                updatePaperDoll();
+                updateBars();
+            }
+        });
+    }
+    // Repair glow visual
+    const ring = scene.add.circle(player.x, player.y, 30, 0x00ff88, 0.25)
+        .setStrokeStyle(2, 0x00ff88).setDepth(12);
+    scene.tweens.add({ targets: ring, radius: 80, alpha: 0, duration: mod.healTicks * mod.tickDelay,
+        onComplete: () => ring.destroy() });
+    lastModTime = time;
+}
+
+function activateDrone(scene, time) {
+    if (_perkState._droneActive) return;
+    _perkState._droneActive = true;
+    const mod = WEAPONS.atk_drone;
+    // Create drone visual
+    const drone = scene.add.circle(player.x, player.y - 60, 10, 0xffaa00, 0.9)
+        .setStrokeStyle(2, 0xffcc00).setDepth(14);
+    let droneReloadTimer = 0;
+    // Drone follows player and auto-fires
+    const droneTicker = scene.time.addEvent({
+        delay: mod.droneReload,
+        repeat: Math.floor(mod.droneDuration / mod.droneReload),
+        callback: () => {
+            if (!drone.active || !enemies) return;
+            drone.setPosition(player.x + (Math.random()-0.5)*40, player.y - 55);
+            // Find nearest enemy
+            let nearest = null, nearDist = Infinity;
+            enemies.getChildren().forEach(e => {
+                if (!e.active) return;
+                const d = Phaser.Math.Distance.Between(drone.x, drone.y, e.x, e.y);
+                if (d < nearDist) { nearDist = d; nearest = e; }
+            });
+            if (nearest) {
+                damageEnemy(scene, nearest, mod.droneDmg);
+                // Zap visual
+                const g = scene.add.graphics().setDepth(13);
+                g.lineStyle(1, 0xffcc00, 0.8);
+                g.lineBetween(drone.x, drone.y, nearest.x, nearest.y);
+                scene.time.delayedCall(80, () => g.destroy());
+            }
+        }
+    });
+    scene.time.delayedCall(mod.droneDuration, () => {
+        drone.destroy();
+        droneTicker.remove();
+        _perkState._droneActive = false;
+        lastModTime = scene.time.now;
+    });
+    lastModTime = time;
+}
+
+function activateMissiles(scene, time) {
+    const mod = WEAPONS.missile;
+    const count = mod.missileCount;
+    // Sort enemies by distance, pick up to 3
+    const sorted = enemies.getChildren()
+        .filter(e => e.active)
+        .sort((a,b) => Phaser.Math.Distance.Between(player.x,player.y,a.x,a.y) -
+                       Phaser.Math.Distance.Between(player.x,player.y,b.x,b.y))
+        .slice(0, 3);
+    if (!sorted.length) { lastModTime = time; return; }
+    for (let i = 0; i < count; i++) {
+        const target = sorted[i % sorted.length];
+        scene.time.delayedCall(i * 120, () => {
+            if (!target.active || !player) return;
+            // Missile visual — small fast circle
+            const m = scene.add.circle(player.x, player.y, 5, 0xff6600, 1).setDepth(13);
+            scene.tweens.add({
+                targets: m,
+                x: target.x + (Math.random()-0.5)*30,
+                y: target.y + (Math.random()-0.5)*30,
+                duration: 400 + Math.random()*200,
+                ease: 'Power2',
+                onComplete: () => {
+                    m.destroy();
+                    if (target.active) {
+                        damageEnemy(scene, target, mod.missileDmg);
+                        createExplosion(scene, target.x, target.y, 35, 0);
+                    }
+                }
+            });
+        });
+    }
+    lastModTime = time;
+}
+
+function activateDecoy(scene, time) {
+    const mod = WEAPONS.decoy;
+    // Build a ghost mech that draws fire
+    const decoyBody = scene.add.circle(player.x, player.y, 20, 0x0088ff, 0.4)
+        .setStrokeStyle(2, 0x00ccff).setDepth(5);
+    const decoyLabel = scene.add.text(player.x, player.y - 32, 'DECOY', {
+        font: '10px Courier New', fill: '#00ccff', alpha: 0.7
+    }).setDepth(15).setOrigin(0.5);
+
+    // Enemies temporarily target decoy position (shift their pursuit target)
+    const origX = player.x, origY = player.y;
+    enemies.getChildren().forEach(e => {
+        if (!e.active) return;
+        e._decoyTarget = { x: origX, y: origY };
+    });
+
+    // Pulse the decoy
+    scene.tweens.add({ targets: decoyBody, alpha: 0.15, duration: 400, yoyo: true, repeat: Math.floor(mod.decoyDuration/800) });
+
+    scene.time.delayedCall(mod.decoyDuration, () => {
+        decoyBody.destroy();
+        decoyLabel.destroy();
+        enemies.getChildren().forEach(e => { if (e) e._decoyTarget = null; });
+        lastModTime = scene.time.now;
+    });
+    lastModTime = time;
 }
 
 function activateJump(scene) {
     sndJump();
     isJumping = true;
-    scene.physics.velocityFromRotation(player.rotation, WEAPONS.jump.jumpSpeed, player.body.velocity);
+    // Afterleg augment: +50% jump distance
+    const jSpeedMult = (loadout.leg === 'afterleg' && _perkState.legSystemActive) ? 1.5 : 1.0;
+    const jumpSpd = WEAPONS.jump.jumpSpeed * (_perkState.jumpSpeedMult||1) * jSpeedMult;
+    scene.physics.velocityFromRotation(player.rotation, jumpSpd, player.body.velocity);
     scene.tweens.add({
         targets: [player, torso],
         scale: '+=0.2',
@@ -2453,6 +3114,21 @@ function activateJump(scene) {
         onComplete: () => {
             isJumping = false;
             lastModTime = game.scene.scenes[0].time.now;
+            // ── SLAM LANDING DAMAGE ──────────────────────────────
+            const slamDmg = WEAPONS.jump.slamDmg || 40;
+            const slamR   = (loadout.leg === 'afterleg' && _perkState.legSystemActive)
+                ? (WEAPONS.jump.slamRadius||120) * 1.5
+                : (WEAPONS.jump.slamRadius||120);
+            // Visual shockwave ring
+            const ring = scene.add.circle(player.x, player.y, 10, 0xffaa00, 0.3)
+                .setStrokeStyle(2, 0xffaa00).setDepth(12);
+            scene.tweens.add({ targets: ring, radius: slamR, alpha: 0, duration: 350, onComplete: () => ring.destroy() });
+            // Damage enemies in slam radius
+            enemies.getChildren().forEach(e => {
+                if (!e.active) return;
+                const dist = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+                if (dist < slamR) damageEnemy(scene, e, slamDmg * (1 - dist/slamR));
+            });
         }
     });
 }
@@ -2538,7 +3214,7 @@ function activateEnemyMod(scene, enemy, mod, time) {
             });
             break;
         }
-        case 'shield': {
+        case 'barrier': case 'shield': {
             // Temporarily immune to damage — mirrors player shield exactly
             enemy.isShielded = true;
             const shieldRadius = 72 * (CHASSIS[enemy.loadout.chassis]?.scale || 1);
@@ -2848,6 +3524,9 @@ const LOOT_TYPES = {
 };
 
 let lootPickups = [];
+let _playerBulletOverlap  = null;   // destroyed and re-registered each deploy
+let _playerEnemyCollider  = null;
+let _enemyEnemyCollider   = null;
 
 function spawnLoot(scene, x, y, forced) {
     // Drop chance: 30% normal, 100% commander
@@ -2973,37 +3652,49 @@ function randomEnemyLoadout() {
     const chassis   = Phaser.Math.RND.pick(['light', 'medium', 'heavy']);
     const maxWeight = CHASSIS[chassis].max;
 
-    // Weight-biased pick: build a pool where heavier options appear more times.
-    // Each option gets (weight / 25) entries so heavier weapons are more likely.
-    function weightedPick(keys) {
+    function weightedPick(keys, source) {
         const pool = [];
         keys.forEach(k => {
-            const w = WEAPONS[k].weight || 1;
-            const tickets = Math.max(1, Math.round(w / 25));
+            const w = source[k]?.weight || WEAPONS[k]?.weight || 1;
+            const tickets = Math.max(1, Math.round(w / 20));
             for (let i = 0; i < tickets; i++) pool.push(k);
         });
         return Phaser.Math.RND.pick(pool);
     }
 
-    // Primary: always pick something, biased toward heavier
     const primaryOptions = ENEMY_PRIMARY.filter(w => WEAPONS[w].weight <= maxWeight);
-    const primary = weightedPick(primaryOptions);
+    const primary = weightedPick(primaryOptions, WEAPONS);
+    let remain = maxWeight - (WEAPONS[primary].weight || 0);
 
-    // Secondary: exclude 'none' if any real weapon fits the remaining budget
-    const remainAfterPrimary = maxWeight - WEAPONS[primary].weight;
-    const secReal = ['sr', 'gl', 'rl', 'plsm'].filter(w => WEAPONS[w].weight <= remainAfterPrimary);
-    const secondary = secReal.length > 0
-        ? weightedPick(secReal)          // always equip something if it fits
-        : 'none';
+    const secReal = ['sr','gl','rl','plsm','rail'].filter(w => (WEAPONS[w]?.weight||999) <= remain);
+    const secondary = (secReal.length > 0 && Math.random() < 0.70)
+        ? weightedPick(secReal, WEAPONS) : 'none';
+    remain -= WEAPONS[secondary]?.weight || 0;
 
-    // Mod: exclude 'none' if any real mod fits
-    const remainAfterSec = remainAfterPrimary - WEAPONS[secondary].weight;
-    const modReal = ['shield', 'rage', 'emp'].filter(m => WEAPONS[m].weight <= remainAfterSec);
-    const mod = modReal.length > 0
-        ? weightedPick(modReal)          // always equip something if it fits
-        : 'none';
+    const modReal = ['barrier','rage','emp','repair','atk_drone','missile','decoy','jump']
+        .filter(m => (WEAPONS[m]?.weight||999) <= remain);
+    const mod = (modReal.length > 0 && Math.random() < 0.65)
+        ? weightedPick(modReal, WEAPONS) : 'none';
+    remain -= WEAPONS[mod]?.weight || 0;
 
-    return { chassis, primary, secondary, mod };
+    const shldReal = ['light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield']
+        .filter(s => (SHIELD_SYSTEMS[s]?.weight||999) <= remain);
+    const shld = (shldReal.length > 0 && Math.random() < 0.55)
+        ? Phaser.Math.RND.pick(shldReal) : 'none';
+    remain -= SHIELD_SYSTEMS[shld]?.weight || 0;
+
+    const legReal = ['hydraulic_boost','gyro_stabilizer','mine_layer','mag_anchors','afterleg']
+        .filter(l => (LEG_SYSTEMS[l]?.weight||999) <= remain);
+    const leg = (legReal.length > 0 && Math.random() < 0.50)
+        ? Phaser.Math.RND.pick(legReal) : 'none';
+    remain -= LEG_SYSTEMS[leg]?.weight || 0;
+
+    const augReal = ['target_painter','threat_analyzer','overclock_cpu','reactive_plating','scrap_cannon']
+        .filter(a => (AUGMENTS[a]?.weight||999) <= remain);
+    const aug = (augReal.length > 0 && Math.random() < 0.40)
+        ? Phaser.Math.RND.pick(augReal) : 'none';
+
+    return { chassis, primary, secondary, mod, shld, leg, aug };
 }
 
 function spawnEnemy(scene) {
@@ -3066,6 +3757,25 @@ function spawnEnemy(scene) {
     e.lastModTime = -_mc * Phaser.Math.FloatBetween(0.1, 0.8);
     e.isModActive = false;
 
+    // Shield system
+    const _eShldSys = SHIELD_SYSTEMS[loadoutE.shld] || SHIELD_SYSTEMS.none;
+    e.maxShield = _eShldSys.maxShield;
+    e.shield    = _eShldSys.maxShield;
+    e._shieldRegenRate  = _eShldSys.regenRate;
+    e._shieldRegenDelay = _eShldSys.regenDelay;
+    e._shieldAbsorb     = (loadoutE.shld === 'reactive_shield') ? 0.65 : 0.50;
+    e._lastDamageTime   = -99999;
+    // Leg system
+    e._legSystemActive = true;
+    if (loadoutE.leg === 'hydraulic_boost') e.speed = Math.round((e.speed||chassisS.spd) * 1.20);
+    if (loadoutE.leg === 'mine_layer') e._mineTimer = 0;
+    if (loadoutE.leg === 'mag_anchors') e._magAnchorsActive = false;
+    // Augment
+    e._augState = {};
+    e._reloadMult = (loadoutE.aug === 'overclock_cpu') ? 0.88 : 1.0;
+    if (loadoutE.aug === 'reactive_plating') e._augState.reactivePlatingStacks = 0;
+    if (loadoutE.aug === 'scrap_cannon')     e._augState.scrapCannon = true;
+
     // Per-enemy chassis effect state
     e.fxFootTimer  = 0;
     e.fxFootSide   = 1;
@@ -3099,8 +3809,11 @@ function spawnCommander(scene) {
     // Pick a strong primary — HR or MG only
     const primary   = Phaser.Math.RND.pick(['hr', 'mg']);
     const secondary = Phaser.Math.RND.pick(['rl', 'plsm']);
-    const mod       = Phaser.Math.RND.pick(['rage', 'shield']);
-    const loadoutE  = { chassis: 'heavy', primary, secondary, mod };
+    const mod       = Phaser.Math.RND.pick(['rage', 'barrier']);
+    const loadoutE  = { chassis: 'heavy', primary, secondary, mod,
+                        shld: 'heavy_shield',
+                        leg:  Phaser.Math.RND.pick(['mag_anchors', 'afterleg']),
+                        aug:  Phaser.Math.RND.pick(['reactive_plating', 'scrap_cannon']) };
 
     // Hitbox
     const e = scene.add.rectangle(x, y, 60, 60, 0x000000, 0);
@@ -3309,15 +4022,18 @@ function fire(scene, side) {
     if (now < lastFired) return;
     _shotsFired++; // only count shots that actually fire (after all guards)
 
+    // Barrel distance offset (chassis-dependent) — needed by all weapons
+    const barrelDist = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
+
+    if (wKey === 'fth')  { fireFTH(scene, weapon, side, barrelDist);  return; }
+    if (wKey === 'rail') { fireRAIL(scene, weapon, side, barrelDist); return; }
+
     // Flash the weapon slot
     const slotEl = document.getElementById('slot-' + side);
     if (slotEl) {
         slotEl.classList.add('active-firing');
         scene.time.delayedCall(100, () => slotEl.classList.remove('active-firing'));
     }
-
-    // Barrel distance offset (chassis-dependent)
-    const barrelDist = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
 
     // Dispatch to correct fire mode
     sndFire(wKey);
@@ -3335,6 +4051,88 @@ function fire(scene, side) {
 }
 
 // --- Individual fire modes ---
+
+function fireFTH(scene, weapon, side, barrelDist) {
+    const angle = Math.atan2(
+        scene.input.activePointer.worldY - torso.y,
+        scene.input.activePointer.worldX - torso.x
+    );
+    const maxRange = weapon.range || 350;
+    const dmg = Math.round(weapon.dmg * (_perkState.dmgMult||1));
+    // Fire 5 flame particles in a spread cone
+    for (let i = -2; i <= 2; i++) {
+        const a = angle + i * 0.055 + (Math.random()-0.5)*0.06;
+        const bx = torso.x + Math.cos(a) * barrelDist;
+        const by = torso.y + Math.sin(a) * barrelDist;
+        const b = scene.add.circle(bx, by, weapon.bulletSize, 0xff6600);
+        scene.physics.add.existing(b);
+        b.damageValue = dmg;
+        b._flame = true;
+        bullets.add(b);
+        scene.physics.velocityFromRotation(a, weapon.speed, b.body.velocity);
+        b.setDepth(11);
+        // Fade out and destroy when out of range
+        const startX = bx, startY = by;
+        const lifeMs = (maxRange / weapon.speed) * 1000;
+        scene.tweens.add({ targets: b, alpha: 0.3, duration: lifeMs });
+        scene.time.delayedCall(lifeMs, () => { if (b?.active) b.destroy(); });
+    }
+    sndFire('fth');
+    const reloadTime = Math.round(weapon.reload * (_perkState.reloadMult||1));
+    if (side === 'L') reloadL = scene.time.now + reloadTime;
+    else              reloadR = scene.time.now + reloadTime;
+}
+
+function fireRAIL(scene, weapon, side, barrelDist) {
+    // Railgun: instant hitscan beam piercing all enemies in line
+    const angle = Math.atan2(
+        scene.input.activePointer.worldY - torso.y,
+        scene.input.activePointer.worldX - torso.x
+    );
+    const ox = torso.x + Math.cos(angle) * barrelDist;
+    const oy = torso.y + Math.sin(angle) * barrelDist;
+    const rayLen = 3200;
+    const ex = ox + Math.cos(angle) * rayLen;
+    const ey = oy + Math.sin(angle) * rayLen;
+
+    // Draw rail beam — outer glow + bright core
+    const beam = scene.add.graphics().setDepth(15);
+    beam.lineStyle(6, 0x00ffff, 0.4);
+    beam.lineBetween(ox, oy, ex, ey);
+    beam.lineStyle(2, 0xffffff, 1.0);
+    beam.lineBetween(ox, oy, ex, ey);
+    scene.tweens.add({ targets: beam, alpha: 0, duration: 220, onComplete: () => beam.destroy() });
+
+    // Hitscan: check each enemy using point-to-line distance (no bad Phaser API)
+    const dmg = Math.round(weapon.dmg * (_perkState.dmgMult||1));
+    let hitCount = 0;
+    enemies.getChildren().forEach(e => {
+        if (!e.active) return;
+        // Point-to-segment distance
+        const dx = ex - ox, dy = ey - oy;
+        const lenSq = dx*dx + dy*dy;
+        let t = ((e.x - ox)*dx + (e.y - oy)*dy) / lenSq;
+        t = Math.max(0, Math.min(1, t));
+        const nearX = ox + t*dx;
+        const nearY = oy + t*dy;
+        const dist = Phaser.Math.Distance.Between(nearX, nearY, e.x, e.y);
+        if (dist < 32) {
+            damageEnemy(scene, e, dmg);
+            hitCount++;
+            // Impact flash at hit point
+            const flash = scene.add.circle(e.x, e.y, 12, 0x00ffff, 0.8).setDepth(15);
+            scene.tweens.add({ targets: flash, alpha: 0, radius: 28, duration: 150, onComplete: () => flash.destroy() });
+        }
+    });
+    if (hitCount > 0) _shotsHit += hitCount;
+
+    sndFire('sr'); // Use sniper sound for now
+    scene.cameras.main.shake(80, 0.006);
+
+    const reloadTime = Math.round(weapon.reload * (_perkState.reloadMult||1));
+    if (side === 'L') reloadL = scene.time.now + reloadTime;
+    else              reloadR = scene.time.now + reloadTime;
+}
 
 function fireGL(scene, weapon) {
     const targetX = scene.input.activePointer.worldX;
@@ -3489,6 +4287,7 @@ function fireStandard(scene, wKey, weapon, barrelDist) {
 // ================================================================
 
 function processPlayerDamage(amt, bulletAngle, explosive = false) {
+    console.log('[DMG] processPlayerDamage called. amt=' + amt + ' isDeployed=' + isDeployed + ' player.active=' + player?.active + ' isProcessingDamage=' + player?.isProcessingDamage);
     if (!player?.active || isShieldActive || player.isProcessingDamage) return;
     // Flicker invincibility
     if (_perkState._flickerActive) return;
@@ -3511,6 +4310,13 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     _damageTaken += amt;
     // Fortress perk: flat damage reduction
     if (_perkState.fortress > 0) amt = amt * (1 - Math.min(0.75, _perkState.fortress));
+    // Mag Anchors: -20% incoming damage while stationary
+    if (_perkState._magAnchorsActive) amt *= 0.80;
+    // Reactive Plating: each hit adds 5% DR, max 5 stacks
+    if (_perkState.reactivePlating) {
+        _perkState._reactivePlatingStacks = Math.min(5, (_perkState._reactivePlatingStacks||0) + 1);
+        amt *= (1 - 0.05 * _perkState._reactivePlatingStacks);
+    }
     // Last Stand: below 20% core, take 40% less
     if (_perkState.lastStand && player.comp.core.hp / player.comp.core.max < 0.20) amt *= 0.60;
     // Trigger flicker on hit
@@ -3536,19 +4342,26 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         updateBars(); updatePaperDoll();
         if (player.comp.lArm.hp <= 0 && !_lArmDestroyed) { loadout.L = 'none'; _lArmDestroyed = true; updateHUD(); }
         if (player.comp.rArm.hp <= 0 && !_rArmDestroyed) { loadout.R = 'none'; _rArmDestroyed = true; updateHUD(); }
-        game.scene.scenes[0].time.delayedCall(50, () => { if (player) player.isProcessingDamage = false; });
+        if (loadout.leg === 'hydraulic_boost' && _perkState.legSystemActive && player.comp.legs.hp > 0)
+            player.comp.legs.hp = Math.min(player.comp.legs.max, player.comp.legs.hp + share * 0.15);
+        if (player.comp.legs.hp <= 0 && !_legsDestroyed) { _legsDestroyed = true; _perkState.legSystemActive = false; updateHUD(); }
         // Iron Will: survive to 1 HP once per round
-    if (player.comp.core.hp <= 0 && _perkState.ironWill && !_perkState._ironWillUsed) {
-        player.comp.core.hp = 1;
-        _perkState._ironWillUsed = true;
-        const _sc2 = game.scene.scenes[0];
-        const iwTxt = _sc2.add.text(player.x, player.y - 40, 'IRON WILL!', {
-            font:'bold 20px monospace', fill:'#ff8844', stroke:'#000', strokeThickness:3
-        }).setDepth(20);
-        _sc2.tweens.add({ targets:iwTxt, y:iwTxt.y-40, alpha:0, duration:1200, onComplete:()=>iwTxt.destroy() });
-        updateBars(); updatePaperDoll();
-    }
-    if (player.comp.core.hp <= 0) showDeathScreen();
+        if (player.comp.core.hp <= 0 && _perkState.ironWill && !_perkState._ironWillUsed) {
+            player.comp.core.hp = 1;
+            _perkState._ironWillUsed = true;
+            const _sc2 = game.scene.scenes[0];
+            const iwTxt = _sc2.add.text(player.x, player.y - 40, 'IRON WILL!', {
+                font:'bold 20px monospace', fill:'#ff8844', stroke:'#000', strokeThickness:3
+            }).setDepth(20);
+            _sc2.tweens.add({ targets:iwTxt, y:iwTxt.y-40, alpha:0, duration:1200, onComplete:()=>iwTxt.destroy() });
+            updateBars(); updatePaperDoll();
+        }
+        if (player.comp.core.hp <= 0) {
+            player.isProcessingDamage = false;
+            showDeathScreen();
+        } else {
+            game.scene.scenes[0].time.delayedCall(50, () => { if (player) player.isProcessingDamage = false; });
+        }
         return;
     }
     // Weighted random hit — legs 35%, core 25%, lArm 20%, rArm 20%
@@ -3559,10 +4372,11 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     // Redirect to core if limb is already destroyed
     if (component.hp <= 0 && target !== 'core') component = player.comp.core;
 
-    // Passive shield absorbs 50% of damage
-    if (player.shield > 0) {
-        player.shield = Math.max(0, player.shield - amt * 0.5);
-        amt *= 0.5;
+    // Passive shield absorbs a portion of damage (fraction depends on shield system)
+    if (player.maxShield > 0 && player.shield > 0) {
+        const absorb = player._shieldAbsorb ?? 0.50;
+        player.shield = Math.max(0, player.shield - amt * absorb);
+        amt *= (1 - absorb);
     }
 
     component.hp = Math.max(0, component.hp - amt);
@@ -3571,6 +4385,8 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     player.hp = Object.values(player.comp).reduce((sum, c) => sum + c.hp, 0);
 
     // Limb destruction — disable weapon and mark broken regardless of loadout
+    if (loadout.leg === 'hydraulic_boost' && _perkState.legSystemActive && target === 'legs')
+        component.hp = Math.min(component.max, component.hp + amt * 0.15);
     if (player.comp.lArm.hp <= 0 && !_lArmDestroyed) {
         loadout.L = 'none'; _lArmDestroyed = true;
         updateHUD();
@@ -3583,26 +4399,47 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     updateBars();
     updatePaperDoll();
 
-    // Re-enable damage processing after a brief lock
-    game.scene.scenes[0].time.delayedCall(50, () => {
-        if (player) player.isProcessingDamage = false;
-    });
-
-    // Death
-    if (player.comp.core.hp <= 0) showDeathScreen();
+    // Death check — clear processing flag synchronously before death so
+    // no stale delayedCall fires against a destroyed player object
+    if (player.comp.core.hp <= 0) {
+        player.isProcessingDamage = false;
+        showDeathScreen();
+    } else {
+        // Still alive — re-enable damage processing after brief lock
+        game.scene.scenes[0].time.delayedCall(50, () => {
+            if (player) player.isProcessingDamage = false;
+        });
+    }
 }
 
 function damageEnemy(e, amt, bulletAngle, explosive = false) {
     if (!e.active || e.health <= 0) return;
-    // Armor piercing: percentage of damage ignores shield
+    // Active barrier mod (full block)
     if (e.isShielded) {
         if (_perkState.armorPierce > 0) {
-            const pierceDmg = amt * Math.min(0.90, _perkState.armorPierce);
-            amt = pierceDmg; // only the pierce portion gets through
+            amt = amt * Math.min(0.90, _perkState.armorPierce);
         } else { return; }
+    }
+    // Passive energy shield absorption
+    if ((e.maxShield||0) > 0 && (e.shield||0) > 0) {
+        const absorb = e._shieldAbsorb ?? 0.50;
+        e.shield = Math.max(0, e.shield - amt * absorb);
+        amt *= (1 - absorb);
+        e._lastDamageTime = game.scene.scenes[0].time.now;
+    }
+    // Enemy Reactive Plating: stacking DR
+    if (e._augState?.reactivePlatingStacks !== undefined) {
+        e._augState.reactivePlatingStacks = Math.min(5, e._augState.reactivePlatingStacks + 1);
+        amt *= (1 - 0.05 * e._augState.reactivePlatingStacks);
     }
     // Apply global dmg multiplier
     amt = amt * (_perkState.dmgMult || 1);
+    // Target Painter: painted enemy takes +20% damage
+    if (_perkState.targetPainter && _perkState._paintedEnemy === e) amt *= 1.20;
+    // Per-enemy damage multiplier (Threat Analyzer debuff)
+    if (e._dmgMult) amt *= e._dmgMult;
+    // Enemy Mag Anchors: 20% DR while stationary
+    if (e._magAnchorsActive) amt *= 0.80;
     // Siege mode: +X% if player moving slowly
     if (_perkState.siegeMode > 0 && player?.body) {
         const sp = Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2);
@@ -3610,6 +4447,8 @@ function damageEnemy(e, amt, bulletAngle, explosive = false) {
     }
     // Battle rhythm bonus
     if (_perkState._battleRhythmBonus > 0) amt *= (1 + _perkState._battleRhythmBonus);
+    // Mag Anchors: +15% outgoing damage while stationary
+    if (_perkState._magAnchorsActive) amt *= 1.15;
     // Predator: if charged, +50% dmg per stack
     if (_perkState._predatorCharged && _perkState.predatorStacks > 0) {
         amt *= (1 + 0.50 * _perkState.predatorStacks);
@@ -3639,8 +4478,36 @@ function damageEnemy(e, amt, bulletAngle, explosive = false) {
         e.comp[target].hp = Math.max(0, e.comp[target].hp - amt);
         e.health = Object.values(e.comp).reduce((s,c) => s + c.hp, 0);
         updateEnemyDoll(e);
+        // Scrap Cannon: destroyed limb explodes for 30 AoE
+        if (_perkState.scrapCannon && e.comp[target].hp <= 0 && !e["_scrapFired_" + target]) {
+            e["_scrapFired_" + target] = true;
+            const scene = game.scene.scenes[0];
+            createExplosion(scene, e.x, e.y, 45, 30);
+        }
+        // Enemy Scrap Cannon augment
+        if (e._augState?.scrapCannon && e.comp[target].hp <= 0 && !e["_eScrapFired_" + target]) {
+            e["_eScrapFired_" + target] = true;
+            const scene = game.scene.scenes[0];
+            createExplosion(scene, e.x, e.y, 40, 0);
+            processPlayerDamage(25, 0, true);
+        }
+        // Enemy own Scrap Cannon augment
+        if (e._augState?.scrapCannon && e.comp[target].hp <= 0 && !e["_eScrapFired_" + target]) {
+            e["_eScrapFired_" + target] = true;
+            const scene = game.scene.scenes[0];
+            createExplosion(scene, e.x, e.y, 40, 0);
+            processPlayerDamage(25, 0, true);
+        }
     }
 
+    // Threat Analyzer: hit enemy takes 15% more damage for 3 s
+    if (_perkState.threatAnalyzer && !e._analyzed) {
+        e._analyzed = true;
+        e._dmgMult = (e._dmgMult || 1) / 0.85;
+        game.scene.scenes[0].time.delayedCall(3000, () => {
+            if (e?.active) { e._dmgMult = (e._dmgMult || 1) * 0.85; e._analyzed = false; }
+        });
+    }
     // Die when core is destroyed (same logic as player)
     const _coreDead = e.comp ? e.comp.core.hp <= 0 : e.health <= 0;
     if (_coreDead) {
@@ -3679,6 +4546,49 @@ function damageEnemy(e, amt, bulletAngle, explosive = false) {
 }
 
 
+
+function dropMine(scene) {
+    if (!player?.active) return;
+    const mx = player.x + (Math.random()-0.5)*8;
+    const my = player.y + (Math.random()-0.5)*8;
+    const vis = scene.add.circle(mx, my, 7, 0xffaa00).setDepth(8).setStrokeStyle(2, 0xff6600);
+    scene.tweens.add({ targets:vis, scaleX:1.3, scaleY:1.3, yoyo:true, repeat:-1, duration:400 });
+    let armed = false;
+    const tick = scene.time.addEvent({ delay:150, loop:true, callback:() => {
+        if (!vis.active || armed) return;
+        enemies.getChildren().forEach(e => {
+            if (armed || !e.active) return;
+            if (Phaser.Math.Distance.Between(e.x, e.y, mx, my) < 55) {
+                armed = true; vis.destroy(); tick.remove();
+                createExplosion(scene, mx, my, 70, 80);
+                if (_perkState.mineCluster) {
+                    for (let s=0;s<3;s++) scene.time.delayedCall(s*120, () =>
+                        createExplosion(scene, mx+Phaser.Math.Between(-40,40), my+Phaser.Math.Between(-40,40), 40, 25));
+                }
+            }
+        });
+    }});
+    scene.time.delayedCall(30000, () => { if (!armed && vis.active) { vis.destroy(); tick.remove(); } });
+}
+
+function dropEnemyMine(scene, enemy) {
+    if (!enemy?.active) return;
+    const mx = enemy.x + (Math.random()-0.5)*8;
+    const my = enemy.y + (Math.random()-0.5)*8;
+    const vis = scene.add.circle(mx, my, 6, 0xff4400).setDepth(8).setStrokeStyle(2, 0xaa2200);
+    scene.tweens.add({ targets:vis, scaleX:1.3, scaleY:1.3, yoyo:true, repeat:-1, duration:500 });
+    let armed = false;
+    const tick = scene.time.addEvent({ delay:200, loop:true, callback:() => {
+        if (!vis.active || armed) return;
+        if (player?.active && Phaser.Math.Distance.Between(player.x, player.y, mx, my) < 55) {
+            armed = true; vis.destroy(); tick.remove();
+            processPlayerDamage(70, 0, true);
+            const scene2 = game.scene.scenes[0];
+            createExplosion(scene2, mx, my, 70, 0);
+        }
+    }});
+    scene.time.delayedCall(25000, () => { if (!armed && vis.active) { vis.destroy(); tick.remove(); } });
+}
 
 let _eDollTarget   = null;
 let _eDollHideTimer = null;
@@ -4016,28 +4926,37 @@ function darkenColor(hex, amount = 0.4) {
 // ================================================================
 
 function updateHUD() {
-    const slots = ['L', 'R', 'M'];
-    const keys  = { L: loadout.L, R: loadout.R, M: loadout.mod };
+    // ── Left arm ──
+    const _lRow = document.getElementById('slot-L');
+    const _lTxt = document.getElementById('txt-L');
+    const _lName = (loadout.L && loadout.L !== 'none') ? (WEAPONS[loadout.L]?.name || loadout.L.toUpperCase()) : '—';
+    if (_lTxt) _lTxt.innerText = _lArmDestroyed ? 'DESTROYED' : _lName;
+    if (_lRow) { _lRow.classList.toggle('arm-destroyed', _lArmDestroyed); _lRow.style.opacity = (loadout.L && loadout.L !== 'none') ? '1' : '0.3'; }
 
-    slots.forEach(id => {
-        const txt  = document.getElementById('txt-' + id);
-        const slot = document.getElementById('slot-' + id);
-        const val  = keys[id];
-        const destroyed = (id === 'L' && _lArmDestroyed) || (id === 'R' && _rArmDestroyed);
-        if (txt) txt.innerText = destroyed ? 'BROKE' : (val ? val.toUpperCase() : (id === 'M' ? 'NONE' : '---'));
-        if (slot) {
-            slot.classList.toggle('arm-destroyed', destroyed);
-            if (!destroyed) {
-                const active = val && val !== 'none';
-                slot.style.opacity     = active ? '1' : '0.4';
-                slot.style.borderColor = active ? '#00ffff' : 'rgba(0,255,0,0.4)';
-            } else {
-                // Clear ALL inline styles so CSS class takes full effect
-                slot.style.cssText = '';
-                slot.style.opacity = '1';
-            }
-        }
-    });
+    // ── Right arm ──
+    const _rRow = document.getElementById('slot-R');
+    const _rTxt = document.getElementById('txt-R');
+    const _rName = (loadout.R && loadout.R !== 'none') ? (WEAPONS[loadout.R]?.name || loadout.R.toUpperCase()) : '—';
+    if (_rTxt) _rTxt.innerText = _rArmDestroyed ? 'DESTROYED' : _rName;
+    if (_rRow) { _rRow.classList.toggle('arm-destroyed', _rArmDestroyed); _rRow.style.opacity = (loadout.R && loadout.R !== 'none') ? '1' : '0.3'; }
+
+    // ── System mod ──
+    const _mRow = document.getElementById('slot-M');
+    const _mTxt = document.getElementById('txt-M');
+    const _mName = (loadout.mod && loadout.mod !== 'none') ? (WEAPONS[loadout.mod]?.name || loadout.mod.toUpperCase()) : '—';
+    if (_mTxt) _mTxt.innerText = _mName;
+    if (_mRow) _mRow.style.opacity = (loadout.mod && loadout.mod !== 'none') ? '1' : '0.3';
+
+    // ── Leg system ──
+    const legWrap = document.getElementById('slot-leg-wrap');
+    const _gTxt   = document.getElementById('txt-G');
+    const legHas  = loadout.leg && loadout.leg !== 'none';
+    const legName = legHas ? (LEG_SYSTEMS[loadout.leg]?.name || loadout.leg.toUpperCase()) : '—';
+    if (_gTxt) _gTxt.innerText = _legsDestroyed ? 'OFFLINE' : legName;
+    if (legWrap) {
+        legWrap.classList.toggle('arm-destroyed', _legsDestroyed);
+        legWrap.style.display = legHas ? 'flex' : 'none';
+    }
 }
 
 function updateBars() {
@@ -4078,81 +4997,424 @@ function updatePaperDoll() {
     set('doll-rLeg',      legColor);
 }
 
-function refreshGarage() {
-    // Clear all active states
-    document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
 
-    // Re-apply active state to selected options
-    ['c-' + loadout.chassis, 'l-' + loadout.L, 'r-' + loadout.R, 'm-' + loadout.mod].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('active');
+// ================================================================
+// GARAGE DROPDOWN SYSTEM
+// ================================================================
+
+// All weapons available to both arms (free slot assignment)
+const WEAPON_OPTIONS = [
+    { key:'none', label:'NONE',        weight:0   },
+    { key:'smg',  label:'SUBMACHINE GUN', weight:20  },
+    { key:'mg',   label:'MACHINE GUN',  weight:40  },
+    { key:'br',   label:'BATTLE RIFLE',weight:55  },
+    { key:'sg',   label:'SHOTGUN',     weight:55  },
+    { key:'fth',  label:'FLAMETHROWER',weight:55  },
+    { key:'hr',   label:'HEAVY RIFLE', weight:75 },
+    { key:'sr',   label:'SNIPER RIFLE',weight:90 },
+    { key:'gl',   label:'GRENADE LCH.', weight:90 },
+    { key:'rl',   label:'ROCKET LCH.', weight:110 },
+    { key:'plsm', label:'PLASMA CANNON',weight:110 },
+    { key:'rail', label:'RAILGUN',     weight:110 },
+];
+
+const MOD_OPTIONS = [
+    { key:'none',      label:'NONE',         weight:0  },
+    { key:'jump',      label:'JUMP JETS',    weight:20 },
+    { key:'decoy',     label:'DECOY',        weight:20 },
+    { key:'repair',    label:'REPAIR DRONE', weight:35 },
+    { key:'barrier',   label:'BARRIER',      weight:35 },
+    { key:'rage',      label:'RAGE',         weight:55 },
+    { key:'emp',       label:'EMP BURST',    weight:50 },
+    { key:'atk_drone', label:'ATTACK DRONE', weight:55 },
+    { key:'missile',   label:'MISSILE POD',  weight:55 },
+];
+
+const AUG_OPTIONS = [
+    { key:'none',             label:'NONE',             weight:0   },
+    { key:'target_painter',   label:'TARGET PAINTER',   weight:35  },
+    { key:'threat_analyzer',  label:'THREAT ANALYZER',  weight:35  },
+    { key:'overclock_cpu',    label:'OVERCLOCK CPU',    weight:50  },
+    { key:'reactive_plating', label:'REACTIVE PLATING', weight:50  },
+    { key:'scrap_cannon',     label:'SCRAP CANNON',     weight:65 },
+];
+
+const LEG_OPTIONS = [
+    { key:'none',             label:'NONE',             weight:0   },
+    { key:'hydraulic_boost',  label:'HYDRO BOOST',      weight:40  },
+    { key:'gyro_stabilizer',  label:'GYRO STABILIZER',  weight:40  },
+    { key:'mine_layer',       label:'MINE LAYER',       weight:55  },
+    { key:'mag_anchors',      label:'MAG ANCHORS',      weight:50  },
+    { key:'afterleg',         label:'AFTERLEG',         weight:65 },
+];
+
+const SHIELD_OPTIONS = [
+    { key:'none',            label:'NONE',             weight:0   },
+    { key:'light_shield',    label:'LIGHT SHIELD',     weight:20  },
+    { key:'standard_shield', label:'STD. SHIELD',      weight:40  },
+    { key:'heavy_shield',    label:'HEAVY SHIELD',     weight:60  },
+    { key:'reactive_shield', label:'REACTIVE SHIELD',  weight:75 },
+    { key:'fortress_shield', label:'FORTRESS SHIELD',  weight:90 },
+];
+
+// Descriptions for every key
+const SLOT_DESCS = {
+    none:             { title:'NONE', desc:'Slot is empty.' },
+    smg:              { title:'SMG — SUBMACHINE GUN', desc:'High fire rate, low damage per shot. Best for sustained suppression and harassment at medium range.' },
+    mg:               { title:'MG — MACHINE GUN', desc:'Reliable workhorse. Strong sustained damage with moderate fire rate. Consistent at all ranges.' },
+    br:               { title:'BR — BATTLE RIFLE', desc:'3-shot burst. First shot always accurate. Reward deliberate aiming at mid-range.' },
+    sg:               { title:'SG — SHOTGUN', desc:'6 pellets per shot. Devastating at close range. Significant damage falloff beyond 500px.' },
+    fth:              { title:'FTH — FLAMETHROWER', desc:'Short-range fire cone. Multiple flame particles per burst. Effective up to ~350px.' },
+    hr:               { title:'HR — HEAVY RIFLE', desc:'High-damage single shots. Bonus damage vs shielded and heavy-chassis enemies. Strong anti-armor identity.' },
+    sr:               { title:'SR — SNIPER RIFLE', desc:'Extreme single-target damage. Pierces all enemies in a line. Very slow reload — use deliberately.' },
+    gl:               { title:'GL — GRENADE LAUNCHER', desc:'Arcing explosive shot with large AoE. Has minimum arm distance — safe to use at range.' },
+    rl:               { title:'RL — ROCKET LAUNCHER', desc:'Massive damage and blast radius. Can self-damage. High risk, high reward.' },
+    plsm:             { title:'PLSM — PLASMA CANNON', desc:'Large slow plasma orb. AoE on impact. Deals high damage to clustered enemies.' },
+    rail:             { title:'RAIL — RAILGUN', desc:'Instant hitscan beam. Extreme damage. Pierces every enemy in the line. Long reload.' },
+    jump:             { title:'JUMP JETS', desc:'Dash forward at high speed. Deals slam AoE damage (40 dmg, 120px) on landing. Afterleg boosts both.' },
+    barrier:          { title:'BARRIER', desc:'4 seconds of full damage immunity. Energy barrier absorbs all incoming fire. 3-second lockout after deactivation.' },
+    rage:             { title:'RAGE', desc:'3.5s damage boost + brief invincibility frames on activation. Higher cooldown.' },
+    emp:              { title:'EMP BURST', desc:'Expanding ring stuns all enemies within 380px for 3.2 seconds. Great vs groups.' },
+    repair:           { title:'REPAIR DRONE', desc:'Heals your most-damaged limb for 40 HP delivered over 5 ticks. Pulse visual confirms activation.' },
+    atk_drone:        { title:'ATTACK DRONE', desc:'Deploys an auto-turret that fires 20 dmg bolts at the nearest enemy every 0.6s for 8 seconds.' },
+    missile:          { title:'MISSILE POD', desc:'Launches 6 homing micro-missiles split across up to 3 nearest enemies. 55 dmg per hit.' },
+    decoy:            { title:'DECOY', desc:'Deploys a hologram at your position. Nearby enemies redirect targeting to the decoy for 5 seconds.' },
+    target_painter:   { title:'TARGET PAINTER', desc:'Hitting an enemy marks them. Marked enemies take +20% damage from all sources until they die or the mark expires.' },
+    threat_analyzer:  { title:'THREAT ANALYZER', desc:'Damaging an enemy reduces their resistance by 15% for 3 seconds. Rewards continuous aggression.' },
+    overclock_cpu:    { title:'OVERCLOCK CPU', desc:'Reduces all weapon reload times and mod cooldowns by 12%. Applied passively on deploy.' },
+    reactive_plating: { title:'REACTIVE PLATING', desc:'Each hit you receive adds a 5% damage reduction stack, up to 5 stacks max. Resets at round start.' },
+    scrap_cannon:     { title:'SCRAP CANNON', desc:'When an enemy part is destroyed, it explodes for 30 AoE damage to nearby enemies.' },
+    hydraulic_boost:  { title:'HYDRO BOOST', desc:'+20% movement speed. Legs take 15% less damage. Disabled if legs are destroyed.' },
+    gyro_stabilizer:  { title:'GYRO STABILIZER', desc:'Eliminates the speed penalty from damaged legs. Improves aim stability. Disabled if legs destroyed.' },
+    mine_layer:       { title:'MINE LAYER', desc:'Drops a proximity mine every 8 seconds while moving. Each mine deals 80 AoE damage on trigger.' },
+    mag_anchors:      { title:'MAG ANCHORS', desc:'While stationary: take 20% less damage and deal 15% more damage. Rewards positional play.' },
+    afterleg:         { title:'AFTERLEG', desc:'JUMP mod travels 50% farther. Landing shockwave deals 60 dmg in 150px. Disabled if legs destroyed.' },
+    light_shield:    { title:'LIGHT SHIELD',    desc:'60 HP energy shield. Absorbs 50% of incoming damage. Regenerates after 4s.' },
+    standard_shield: { title:'STD. SHIELD',     desc:'100 HP standard shield. Absorbs 50% of damage. Regenerates after 5s.' },
+    heavy_shield:    { title:'HEAVY SHIELD',    desc:'160 HP heavy array. Absorbs 50% of damage. Slower regen with 6s lockout.' },
+    reactive_shield: { title:'REACTIVE SHIELD', desc:'120 HP reactive matrix. Absorbs 65% of damage instead of 50%. Fast 3s regen.' },
+    fortress_shield: { title:'FORTRESS SHIELD', desc:'220 HP maximum-protection shield. Very slow regen, 8s lockout. Built for Heavy chassis.' },
+    col_00ff00: { title:'GREEN',         desc:'Head: bright green. Torso and shoulders: dark green.' },
+    col_00ccff: { title:'ELECTRIC BLUE', desc:'Head: electric cyan-blue. Torso and shoulders: deep navy.' },
+    col_ff3300: { title:'RED',           desc:'Head: bright red. Torso and shoulders: dark crimson.' },
+    col_ffff00: { title:'YELLOW',        desc:'Head: bright yellow. Torso and shoulders: dark olive.' },
+    col_ff8800: { title:'ORANGE',        desc:'Head: vivid orange. Torso and shoulders: burnt amber.' },
+    col_cc44ff: { title:'PURPLE',        desc:'Head: electric purple. Torso and shoulders: deep violet.' },
+    col_ffffff: { title:'WHITE',         desc:'Head: clean white. Torso and shoulders: steel grey.' },
+    col_00ffcc: { title:'TEAL',          desc:'Head: bright teal. Torso and shoulders: deep seafoam.' },
+    col_ff44cc: { title:'PINK',          desc:'Head: hot pink. Torso and shoulders: dark magenta.' },
+    col_ffcc00: { title:'GOLD',          desc:'Head: bright gold. Torso and shoulders: dark bronze.' },
+};
+
+// Colour options — head gets the selected colour, torso/body gets darkenColor(colour, 0.4)
+const COLOR_OPTIONS = [
+    { key:'00ff00', hex:0x00ff00, label:'GREEN',         hex6:'#00ff00' },
+    { key:'00ccff', hex:0x00ccff, label:'ELECTRIC BLUE', hex6:'#00ccff' },
+    { key:'ff3300', hex:0xff3300, label:'RED',           hex6:'#ff3300' },
+    { key:'ffff00', hex:0xffff00, label:'YELLOW',        hex6:'#ffff00' },
+    { key:'ff8800', hex:0xff8800, label:'ORANGE',        hex6:'#ff8800' },
+    { key:'cc44ff', hex:0xcc44ff, label:'PURPLE',        hex6:'#cc44ff' },
+    { key:'ffffff', hex:0xffffff, label:'WHITE',         hex6:'#ffffff' },
+    { key:'00ffcc', hex:0x00ffcc, label:'TEAL',          hex6:'#00ffcc' },
+    { key:'ff44cc', hex:0xff44cc, label:'PINK',          hex6:'#ff44cc' },
+    { key:'ffcc00', hex:0xffcc00, label:'GOLD',          hex6:'#ffcc00' },
+];
+
+// Explosive keys for dual-explosive warning
+const EXPLOSIVE_KEYS = new Set(['gl','rl','plsm','rail']);
+
+let _openDD = null; // currently open dropdown slot key
+
+function buildDD(slotId, options) {
+    const list = document.getElementById('ddl-' + slotId);
+    if (!list) return;
+    list.innerHTML = '';
+    const cap = CHASSIS[loadout.chassis]?.max || 999;
+    const currentTotal = _calcWeight(loadout);
+
+    options.forEach(opt => {
+        const slotKey = slotId === 'L' ? loadout.L : slotId === 'R' ? loadout.R
+                      : slotId === 'M' ? loadout.mod : slotId === 'A' ? loadout.aug
+                      : slotId === 'S' ? loadout.shld : loadout.leg;
+        const currentSlotW = WEAPONS[slotKey]?.weight ?? AUGMENTS[slotKey]?.weight
+                          ?? LEG_SYSTEMS[slotKey]?.weight ?? SHIELD_SYSTEMS[slotKey]?.weight ?? 0;
+        const wouldBe = currentTotal - currentSlotW + opt.weight;
+        const over = wouldBe > cap;
+        const desc = SLOT_DESCS[opt.key];
+        const descText = (desc && opt.key !== 'none') ? desc.desc : '';
+
+        // Check if this weapon is already in the other arm
+        const otherArm = slotId === 'L' ? loadout.R : slotId === 'R' ? loadout.L : null;
+        const isDisabled = (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
+
+        const div = document.createElement('div');
+        div.className = 'dd-option'
+            + (opt.key === slotKey ? ' dd-active' : '')
+            + (over && !isDisabled ? ' do-warn' : '')
+            + (isDisabled ? ' do-disabled' : '');
+        div.innerHTML = `
+            <div class="do-header">
+                <span class="do-name">${opt.label}</span>
+                <span class="do-wt">${opt.weight > 0 ? opt.weight + ' WT' : '—'}</span>
+            </div>
+            ${descText ? `<div class="do-desc">${descText}</div>` : ''}`;
+        if (!isDisabled) {
+            div.onclick = () => { selectSlot(slotId, opt.key); closeAllDD(); };
+        }
+        list.appendChild(div);
+    });
+}
+
+function buildColorDD() {
+    const list = document.getElementById('ddl-C');
+    if (!list) return;
+    list.innerHTML = '';
+    const curHex = loadout.color.toString(16).padStart(6,'0').toLowerCase();
+    COLOR_OPTIONS.forEach(opt => {
+        const desc = SLOT_DESCS['col_' + opt.key];
+        const div = document.createElement('div');
+        div.className = 'dd-option dd-color-opt' + (opt.key === curHex ? ' dd-active' : '');
+        div.innerHTML = `
+            <div class="do-header">
+                <span class="do-color-swatch" style="background:${opt.hex6};box-shadow:0 0 6px ${opt.hex6}55;"></span>
+                <span class="do-name">${opt.label}</span>
+            </div>
+            ${desc ? `<div class="do-desc">${desc.desc}</div>` : ''}`;
+        div.onclick = () => { loadout.color = opt.hex; closeAllDD(); refreshGarage(); };
+        list.appendChild(div);
+    });
+}
+
+function _calcWeight(lo) {
+    const w = (obj, key) => (key && key !== 'none') ? (obj[key]?.weight || 0) : 0;
+    return w(WEAPONS, lo.L) + w(WEAPONS, lo.R)
+         + w(WEAPONS, lo.mod)
+         + w(AUGMENTS, lo.aug)
+         + w(LEG_SYSTEMS, lo.leg)
+         + w(SHIELD_SYSTEMS, lo.shld);
+}
+
+function toggleDD(slotId) {
+    if (_openDD === slotId) { closeAllDD(); return; }
+    closeAllDD();
+    _openDD = slotId;
+    if (slotId === 'C') {
+        buildColorDD();
+    } else {
+        buildDD(slotId, slotId==='L'||slotId==='R' ? WEAPON_OPTIONS
+                      : slotId==='M' ? MOD_OPTIONS
+                      : slotId==='G' ? LEG_OPTIONS
+                      : slotId==='S' ? SHIELD_OPTIONS
+                      : slotId==='A' ? AUG_OPTIONS : LEG_OPTIONS);
+    }
+    document.getElementById('dds-' + slotId)?.classList.add('dd-open');
+    document.getElementById('ddl-' + slotId)?.classList.add('dd-list-open');
+    // descriptions live inline in each dd-option row
+}
+
+function closeAllDD() {
+    document.querySelectorAll('.dd-selected').forEach(el => el.classList.remove('dd-open'));
+    document.querySelectorAll('.dd-list').forEach(el => el.classList.remove('dd-list-open'));
+    _openDD = null;
+}
+
+// showDesc removed — descriptions now live inline in dropdown rows
+
+function selectSlot(slotId, key) {
+    if (slotId === 'L') {
+        loadout.L = key;
+        // If same weapon was in R, clear R
+        if (key !== 'none' && loadout.R === key) loadout.R = 'none';
+    } else if (slotId === 'R') {
+        loadout.R = key;
+        // If same weapon was in L, clear L
+        if (key !== 'none' && loadout.L === key) loadout.L = 'none';
+    } else if (slotId === 'M') {
+        loadout.mod = key;
+    } else if (slotId === 'A') {
+        loadout.aug = key;
+    } else if (slotId === 'G') {
+        loadout.leg = key;
+    } else if (slotId === 'S') {
+        loadout.shld = key;
+    }
+    refreshGarage();
+}
+
+function refreshGarage() {
+    // Update chassis buttons
+    ['light','medium','heavy'].forEach(ch => {
+        document.getElementById('c-' + ch)?.classList.toggle('active', loadout.chassis === ch);
     });
 
-    // Colour button
-    const hexStr = loadout.color.toString(16).padStart(6, '0').toLowerCase();
-    const colEl  = document.getElementById('col-' + hexStr);
-    if (colEl) colEl.classList.add('active');
+    // Update dropdown selected displays
+    const slots = [
+        { id:'L', opts:WEAPON_OPTIONS,  key:loadout.L },
+        { id:'R', opts:WEAPON_OPTIONS,  key:loadout.R },
+        { id:'M', opts:MOD_OPTIONS,     key:loadout.mod },
+        { id:'A', opts:AUG_OPTIONS,     key:loadout.aug },
+        { id:'G', opts:LEG_OPTIONS,     key:loadout.leg },
+        { id:'S', opts:SHIELD_OPTIONS,  key:loadout.shld },
+    ];
+    slots.forEach(({ id, opts, key }) => {
+        const opt = opts.find(o => o.key === key) || opts[0];
+        const nameEl = document.getElementById('ddn-' + id);
+        const wtEl   = document.getElementById('ddwt-' + id);
+        if (nameEl) nameEl.textContent = opt.label;
+        if (wtEl)   wtEl.textContent   = opt.weight > 0 ? opt.weight + ' WT' : '—';
+    });
+
+    // Colour dropdown header
+    const hexStr = loadout.color.toString(16).padStart(6,'0').toLowerCase();
+    const colOpt = COLOR_OPTIONS.find(o => o.key === hexStr) || COLOR_OPTIONS[0];
+    const colNameEl  = document.getElementById('ddn-C');
+    const colSwatchEl = document.getElementById('dd-color-swatch-C');
+    if (colNameEl)   colNameEl.textContent = colOpt.label;
+    if (colSwatchEl) { colSwatchEl.style.background = colOpt.hex6; colSwatchEl.style.boxShadow = `0 0 6px ${colOpt.hex6}55`; }
 
     // Preview image
     const previewImg = document.getElementById('preview-img');
     if (previewImg) {
-        previewImg.src         = `assets/${loadout.chassis}-mech.png`;
+        previewImg.src          = `assets/${loadout.chassis}-mech.png`;
         previewImg.style.filter = `drop-shadow(0 0 15px #${hexStr})`;
     }
 
-    // HP & shield display
-    const hpDisplay = document.getElementById('hp-display');
-    const shDisplay = document.getElementById('sh-display');
-    if (hpDisplay) hpDisplay.innerText = 'TOTAL HP: ' + getTotalHP(loadout.chassis);
-    if (shDisplay) shDisplay.innerText = 'SHIELD: 100';
+    // HP/SH now shown in stats panel via updateGarageStats()
 
     // Weight
-    const total   = WEAPONS[loadout.L].weight + WEAPONS[loadout.R].weight + WEAPONS[loadout.mod].weight;
-    const max     = CHASSIS[loadout.chassis].max;
-    const isOver  = total > max;
-    const pct     = Math.min(100, (total / max) * 100);
+    const total  = _calcWeight(loadout);
+    const max    = CHASSIS[loadout.chassis].max;
+    const isOver = total > max;
+    const pct    = Math.min(100, (total / max) * 100);
 
     const weightDisplay = document.getElementById('weight-display');
     const barFill       = document.getElementById('weight-bar-fill');
     const deployBtn     = document.getElementById('deploy-btn');
 
     if (weightDisplay) {
-        weightDisplay.innerText    = `WEIGHT: ${total} / ${max}`;
-        weightDisplay.style.color  = isOver ? '#ff3300' : '#c8d2d9';
+        weightDisplay.innerText   = `WEIGHT: ${total} / ${max}`;
+        weightDisplay.style.color = isOver ? '#ff3300' : '#c8d2d9';
     }
-
     if (barFill) {
         barFill.style.width      = pct + '%';
         barFill.style.background = isOver ? '#ff3300' : '#ffaa00';
         barFill.style.boxShadow  = isOver ? '0 0 10px #ff3300' : '0 0 10px rgba(255,170,0,0.4)';
     }
-
+    const noWeapon = loadout.L === 'none' && loadout.R === 'none';
     if (deployBtn) {
-        deployBtn.disabled = isOver;
+        deployBtn.disabled = isOver || noWeapon;
         if (isOver) {
             deployBtn.innerHTML = '<span>&#9888;</span>&nbsp; OVERWEIGHT &nbsp;<span>&#9888;</span>';
+            deployBtn.classList.add('overweight');
+        } else if (noWeapon) {
+            deployBtn.innerHTML = '<span>&#9888;</span>&nbsp; EQUIP WEAPON &nbsp;<span>&#9888;</span>';
             deployBtn.classList.add('overweight');
         } else {
             deployBtn.innerText = 'DEPLOY MECH';
             deployBtn.classList.remove('overweight');
         }
     }
+
+    // Dual-explosive warning
+    const dualWarn = document.getElementById('dual-explosive-warn');
+    if (dualWarn) {
+        const bothExplosive = EXPLOSIVE_KEYS.has(loadout.L) && EXPLOSIVE_KEYS.has(loadout.R);
+        dualWarn.style.display = bothExplosive ? 'block' : 'none';
+    }
+
+    updateGarageStats();
 }
 
+function updateGarageStats() {
+    const panel = document.getElementById('garage-stats-panel');
+    if (!panel) return;
+    const ch   = CHASSIS[loadout.chassis];
+    const shld = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
+    const oc   = loadout.aug === 'overclock_cpu';
+    const gyro = loadout.leg === 'gyro_stabilizer';
+    const hydro = loadout.leg === 'hydraulic_boost';
+    const mag  = loadout.leg === 'mag_anchors';
+
+    // ── HP breakdown (chassis-specific, not visible in dropdowns) ──
+    const totalHP = getTotalHP(loadout.chassis);
+    const coreHP  = ch.coreHP;
+    const armHP   = ch.armHP;
+    const legHP   = ch.legHP;
+    const hpBreak = coreHP + ' / ' + armHP + ' / ' + armHP + ' / ' + legHP;
+
+    // ── Speed (modified by legs) ──
+    const baseSpd = ch.spd;
+    const spd = Math.round(baseSpd * (hydro ? 1.20 : 1.0));
+    const spdStr = spd + ' u/s' + (hydro ? ' (+20%)' : '');
+
+    // ── Shield stats ──
+    const shAbsorb = loadout.shld === 'reactive_shield' ? 65 : 50;
+    const shHp     = shld.maxShield;
+    const shStr    = shHp > 0 ? shHp + ' HP · ' + shAbsorb + '% absorb · ' + shld.regenDelay + 's regen' : '—';
+
+    // ── Weapon fire rates (derived, not shown above) ──
+    const wL = WEAPONS[loadout.L];
+    const wR = WEAPONS[loadout.R];
+    const reloadMult = oc ? 0.88 : 1.0;
+    function fmtReload(w) {
+        if (!w || !w.reload) return null;
+        const r = Math.round(w.reload * reloadMult);
+        const dps = w.dmg ? (w.dmg / (r/1000)).toFixed(1) : null;
+        return dps ? dps + ' dps · ' + r + 'ms cd' : r + 'ms cd';
+    }
+    const lRate = fmtReload(wL);
+    const rRate = fmtReload(wR);
+
+    // ── Mod cooldown ──
+    const modW = WEAPONS[loadout.mod];
+    const modCd = modW?.cooldown ? Math.round(modW.cooldown * (oc ? 0.88 : 1.0) / 1000) + 's cd' : null;
+
+    // ── Passive effects summary ──
+    const passives = [];
+    if (gyro)  passives.push('leg penalty immunity');
+    if (mag)   passives.push('−20% dmg in / +15% dmg out when still');
+    if (loadout.aug === 'target_painter')   passives.push('hit marks: +20% dmg on target');
+    if (loadout.aug === 'threat_analyzer')  passives.push('hit debuff: −15% resist 3s');
+    if (loadout.aug === 'reactive_plating') passives.push('on hit: +5% DR stack (max 5)');
+    if (loadout.aug === 'scrap_cannon')     passives.push('limb destroy: 30 AoE');
+    if (loadout.leg === 'mine_layer')       passives.push('drop mine every 8s moving');
+    if (loadout.leg === 'afterleg')         passives.push('jump +50% dist · land shockwave');
+
+    const rows = [
+        ['TOTAL HP',   totalHP + ' HP',     '#00ff88'],
+        ['HP SPLIT',   'C ' + coreHP + ' / A ' + armHP + ' / L ' + legHP, '#55cc88'],
+        ['SPEED',      spdStr,              '#ffdd88'],
+        ['SHIELD HP',  shHp > 0 ? shStr : 'NONE', shHp > 0 ? '#00ffff' : '#445'],
+        lRate ? ['L FIRE RATE', lRate, '#c0c8d0'] : null,
+        rRate ? ['R FIRE RATE', rRate, '#c0c8d0'] : null,
+        modCd ? ['MOD CD',      modCd, '#ffaa44'] : null,
+        passives.length ? ['PASSIVES', passives.join(' · '), '#cc88ff'] : null,
+    ].filter(Boolean);
+
+    panel.innerHTML = rows.map(([lbl,val,col]) =>
+        `<div class="gs-row"><span class="gs-label">${lbl}</span><span class="gs-val" style="color:${col}">${val}</span></div>`
+    ).join('');
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', e => {
+    if (!e.target.closest('.dd-wrap')) closeAllDD();
+});
 
 // ================================================================
 // GARAGE BUTTON HANDLERS
 // ================================================================
 
-function setChassis(t) { loadout.chassis = t;     refreshGarage(); }
+function setChassis(t) { loadout.chassis = t; refreshGarage(); }
 function setWeapon(side, type) {
     if (side === 'L') loadout.L = type;
     else              loadout.R = type;
     refreshGarage();
 }
-function setMod(type)   { loadout.mod   = type; refreshGarage(); }
-function setColor(c)    { loadout.color = c;    refreshGarage(); }
-
+function setMod(type)   { loadout.mod = type; refreshGarage(); }
+function setAug(type)   { loadout.aug = type; refreshGarage(); }
+function setLeg(type)   { loadout.leg = type; refreshGarage(); }
+function setColor(c)    { loadout.color = c;  refreshGarage(); }
 
 // (intro removed)
 
@@ -4175,12 +5437,12 @@ function _resetHUDState() {
     if (shFillV2) shFillV2.style.height = '100%';
     if (hudAcc) hudAcc.style.borderColor = '';
     // Cooldown overlays
-    ['cd-L','cd-R','cd-M'].forEach(id => {
+    ['cd-L','cd-R','cd-M','cd-G'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.height = '0%';
     });
     // Weapon slot opacity + clear destroyed state
-    _lArmDestroyed = false; _rArmDestroyed = false;
+    _lArmDestroyed = false; _rArmDestroyed = false; _legsDestroyed = false;
     ['slot-L','slot-R','slot-M'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.style.opacity = '1'; el.style.borderColor = '#00ffff'; el.classList.remove('arm-destroyed'); }
@@ -4193,11 +5455,24 @@ function _resetHUDState() {
 }
 
 function showDeathScreen() {
+    console.log('[DEATH] showDeathScreen called. isDeployed=' + isDeployed + ' stack=' + new Error().stack.split('\n')[1]);
+    if (!isDeployed) return;  // already dead — prevent double-call
+    console.log('[DEATH] proceeding with death sequence');
     isDeployed = false;
+    _roundActive   = false;
+    _roundClearing = false;   // prevent update() from being permanently gated
+    // Close stats overlay if open
+    _isStats = false;
+    _isPaused = false;
+    const _statsOv = document.getElementById('stats-overlay');
+    if (_statsOv) _statsOv.style.display = 'none';
+    const _statsBtn = document.getElementById('stats-btn');
+    if (_statsBtn) _statsBtn.innerHTML = 'STATS';
     // Pause the Phaser scene so the update loop stops running against destroyed objects
     const _dScene = game?.scene?.scenes[0];
     if (_dScene) {
         try { _dScene.physics.pause(); } catch(e) {}
+        try { _dScene.time.paused = true; } catch(e) {}
         try { _dScene.cameras.main.stopFollow(); } catch(e) {}
         try { _dScene.input.setDefaultCursor('default'); } catch(e) {}
     }
@@ -4223,6 +5498,22 @@ function showDeathScreen() {
 
 function _cleanupGame() {
     const scene = game.scene.scenes[0];
+    // Destroy per-deploy physics overlap/colliders so they don't accumulate across respawns
+    // (each deployMech() registers new ones; stale ones would multiply damage callbacks)
+    if (_playerBulletOverlap) { try { scene.physics.world.removeCollider(_playerBulletOverlap); } catch(e){} _playerBulletOverlap = null; }
+    if (_playerEnemyCollider) { try { scene.physics.world.removeCollider(_playerEnemyCollider); } catch(e){} _playerEnemyCollider = null; }
+    if (_enemyEnemyCollider)  { try { scene.physics.world.removeCollider(_enemyEnemyCollider);  } catch(e){} _enemyEnemyCollider  = null; }
+    // Kill all tweens so stale onComplete callbacks don't fire against destroyed objects.
+    // NOTE: do NOT call scene.time.removeAllEvents() — it destroys Phaser internal clock
+    // events and breaks the scene. Mine/loot timer callbacks are all guarded with
+    // active checks so orphaned ones are harmless.
+    try { scene.tweens.killAll(); } catch(e) {}
+    // Destroy all loot pickups
+    lootPickups.forEach(p => {
+        try { if (p.orb?.active)   p.orb.destroy();   } catch(e) {}
+        try { if (p.label?.active) p.label.destroy(); } catch(e) {}
+    });
+    lootPickups = [];
     [player, torso, shieldGraphic, glowWedge, crosshair, speedStreakLine].forEach(obj => {
         if (obj) { try { obj.destroy(); } catch(e){} }
     });
@@ -4242,6 +5533,8 @@ function _cleanupGame() {
     if (_savedL   !== null) { loadout.L   = _savedL;   _savedL   = null; }
     if (_savedR   !== null) { loadout.R   = _savedR;   _savedR   = null; }
     if (_savedMod !== null) { loadout.mod = _savedMod; _savedMod = null; }
+    if (_savedAug !== null) { loadout.aug = _savedAug; _savedAug = null; }
+    if (_savedLeg !== null) { loadout.leg = _savedLeg; _savedLeg = null; }
     isDeployed = false; isJumping = false; isShieldActive = false; isRageActive = false; isAmmoActive = false; isChargeActive = false;
     reloadL = 0; reloadR = 0; lastDamageTime = -99999; lastModTime = -10000;
     _footstepTimer = 0; _footstepSide = 1; _shockwaveTimer = 0;
@@ -4249,11 +5542,23 @@ function _cleanupGame() {
 }
 
 function respawnMech() {
+    console.log('[RESPAWN] respawnMech called');
     document.getElementById('death-screen').style.display = 'none';
-    // Resume physics before cleanup so destroys work cleanly
+    // Fully clear all pause/stats state before resuming
+    _isPaused = false;
+    _isStats  = false;
+    const _statsOv2 = document.getElementById('stats-overlay');
+    if (_statsOv2) _statsOv2.style.display = 'none';
+    const _pauseOv = document.getElementById('pause-overlay');
+    if (_pauseOv) _pauseOv.style.display = 'none';
+    // Resume physics AND time before cleanup so destroys work cleanly
     const _rScene = game?.scene?.scenes[0];
-    if (_rScene) { try { _rScene.physics.resume(); } catch(e){} }
+    if (_rScene) {
+        try { _rScene.physics.resume(); } catch(e){}
+        try { _rScene.time.paused = false; } catch(e){}
+    }
     _cleanupGame();
+    console.log('[RESPAWN] _cleanupGame done. player=' + player + ' isDeployed=' + isDeployed);
     document.getElementById('hud-container').style.display = 'flex';
     document.getElementById('top-left-btns').style.display = 'flex';
     const _mm = document.getElementById('minimap-wrap'); if (_mm) _mm.style.display = 'block';
@@ -4262,7 +5567,7 @@ function respawnMech() {
     if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
     _resetHUDState();
     _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
-    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0 };
+    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0 };
     _pickedPerks = [];
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     _roundClearing = false;
@@ -4284,14 +5589,14 @@ function toggleStats() {
         overlay.style.display = 'flex';
         _isPaused = true;
         const scene = game?.scene?.scenes[0];
-        if (scene) { try { scene.input.setDefaultCursor('default'); } catch(e){} }
+        if (scene) { try { scene.physics.pause(); scene.time.paused = true; scene.input.setDefaultCursor('default'); } catch(e){} }
         document.body.style.cursor = 'default';
         if (btn) { btn.innerHTML = 'STATS ✓'; btn.blur(); }
     } else {
         overlay.style.display = 'none';
         _isPaused = false;
         const scene = game?.scene?.scenes[0];
-        if (scene) { try { scene.input.setDefaultCursor('none'); } catch(e){} }
+        if (scene) { try { scene.physics.resume(); scene.time.paused = false; scene.input.setDefaultCursor('none'); } catch(e){} }
         document.body.style.cursor = 'none';
         if (btn) { btn.innerHTML = 'STATS'; btn.blur(); }
     }
@@ -4504,10 +5809,12 @@ function goToMainMenu() {
     _cleanupGame();
     // Reset round state
     _round = 1; _roundKills = 0; _totalKills = 0; _roundActive = false;
-    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0 };
+    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0 };
     _pickedPerks = [];
+    _lastOfferedPerks = [];
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     _roundClearing = false;
+    resetLoadout(); // reset gear when returning to main menu
     // Restore cursor (Phaser hides it on deploy)
     const sc = game?.scene?.scenes[0];
     if (sc) { try { sc.input.setDefaultCursor('default'); } catch(e){} }
@@ -4531,11 +5838,12 @@ function goToMainMenu() {
     // Show main menu and restart its animated grid
     const menu = document.getElementById('main-menu');
     if (menu) { menu.style.opacity = '1'; menu.style.display = 'flex'; }
+    resetLoadout();
     startMenuGrid();
 }
 
 function returnToHangar() {
-    if (_isPaused) { _isPaused=false; const s=game.scene.scenes[0]; if(s){s.physics.resume();s.time.paused=false;} const b=document.getElementById('pause-btn'); if(b) b.innerHTML='PAUSE'; }
+    if (_isPaused) { _isPaused=false; const s=game.scene.scenes[0]; if(s){s.physics.resume();s.time.paused=false;} }
     const _sc = game?.scene?.scenes[0]; if (_sc?._bfGrid) _sc._bfGrid.setVisible(false);
     document.getElementById('death-screen').style.display = 'none';
     _cleanupGame();
@@ -4554,6 +5862,7 @@ function returnToHangar() {
     startHangarGrid();
     // Reset HUD to clean state
     _resetHUDState();
+    resetLoadout();
     refreshGarage();
     updateHUD();
 }
@@ -4611,6 +5920,7 @@ function startGame() {
     menu.style.opacity = '0';
     setTimeout(() => {
         menu.style.display = 'none';
+        resetLoadout();
         document.getElementById('ui-layer').style.display = 'flex';
         startHangarGrid();
     }, 600);
@@ -4748,6 +6058,145 @@ window.onload = () => {
   0%,100% { opacity:1; text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4); }
   50%      { opacity:0.4; text-shadow:0 0 10px rgba(0,255,255,0.3); }
 }
+
+/* ============================================================
+   GARAGE DROPDOWN SYSTEM
+   ============================================================ */
+.dd-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 11px;
+}
+.dd-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(0,255,255,0.7);
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    width: 96px;
+    min-width: 96px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.dd-wrap {
+    position: relative;
+    flex: 1;
+}
+.dd-selected {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(0,255,255,0.25);
+    border-left: 3px solid rgba(0,255,255,0.5);
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #c8d2d9;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+.dd-selected:hover {
+    background: rgba(0,255,255,0.07);
+    border-color: rgba(0,255,255,0.5);
+    color: #fff;
+}
+.dd-selected.dd-open {
+    background: rgba(0,255,255,0.1);
+    border-color: rgba(0,255,255,0.7);
+    color: #fff;
+}
+.dd-selected .dd-name { flex: 1; letter-spacing: 2px; }
+.dd-selected .dd-wt   { font-size: 10px; color: rgba(0,255,255,0.5); margin-right: 10px; letter-spacing: 1px; }
+.dd-selected .dd-arrow { font-size: 9px; color: rgba(0,255,255,0.6); transition: transform 0.15s; }
+.dd-selected.dd-open .dd-arrow { transform: rotate(180deg); }
+
+.dd-list {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    z-index: 9000;
+    background: rgba(10,14,20,0.98);
+    border: 1px solid rgba(0,255,255,0.4);
+    border-top: none;
+    max-height: 340px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+}
+.dd-list.dd-list-open { display: block; }
+.dd-option {
+    display: flex;
+    flex-direction: column;
+    padding: 9px 12px 8px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #c8d2d9;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.1s;
+    gap: 3px;
+}
+.dd-option:hover     { background: rgba(0,255,255,0.09); color: #fff; }
+.dd-option.dd-active { background: rgba(0,255,255,0.13); color: #00ffff; }
+.dd-option.do-warn   { color: #ffaa00; }
+.dd-option .do-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+.dd-option .do-name { flex: 1; letter-spacing: 1px; font-size: 12px; }
+.dd-option .do-wt   { font-size: 10px; color: rgba(0,255,255,0.45); min-width: 44px; text-align: right; letter-spacing: 1px; }
+.dd-option.do-warn .do-wt { color: rgba(255,170,0,0.6); }
+.dd-option .do-desc {
+    font-size: 10px;
+    color: rgba(200,210,217,0.5);
+    letter-spacing: 0.3px;
+    line-height: 1.5;
+    padding-left: 2px;
+}
+.dd-option.dd-active .do-desc { color: rgba(0,255,255,0.6); }
+.dd-option:hover .do-desc     { color: rgba(255,255,255,0.65); }
+.dd-option.do-warn .do-desc   { color: rgba(255,170,0,0.55); }
+/* Colour-specific option row */
+.dd-color-opt .do-header { gap: 10px; }
+.do-color-swatch {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.25);
+    flex-shrink: 0;
+    display: inline-block;
+}
+/* Colour swatch in the closed header */
+.dd-color-swatch-header {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.3);
+    flex-shrink: 0;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* #garage-desc removed — descriptions now inline in dropdown rows */
+
+/* Dual-explosive warning */
+#dual-explosive-warn {
+    display: none;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: rgba(255,170,0,0.08);
+    border: 1px solid rgba(255,170,0,0.4);
+    border-left: 3px solid #ffaa00;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: #ffaa00;
+    letter-spacing: 1px;
+}
+
 </style>
 
 <style>
@@ -4756,6 +6205,145 @@ window.onload = () => {
     outline: none !important;
     box-shadow: 0 0 10px rgba(0,255,255,0.15) !important;
 }
+
+/* ============================================================
+   GARAGE DROPDOWN SYSTEM
+   ============================================================ */
+.dd-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 11px;
+}
+.dd-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: rgba(0,255,255,0.7);
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+    width: 96px;
+    min-width: 96px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+.dd-wrap {
+    position: relative;
+    flex: 1;
+}
+.dd-selected {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(0,255,255,0.25);
+    border-left: 3px solid rgba(0,255,255,0.5);
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #c8d2d9;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+.dd-selected:hover {
+    background: rgba(0,255,255,0.07);
+    border-color: rgba(0,255,255,0.5);
+    color: #fff;
+}
+.dd-selected.dd-open {
+    background: rgba(0,255,255,0.1);
+    border-color: rgba(0,255,255,0.7);
+    color: #fff;
+}
+.dd-selected .dd-name { flex: 1; letter-spacing: 2px; }
+.dd-selected .dd-wt   { font-size: 10px; color: rgba(0,255,255,0.5); margin-right: 10px; letter-spacing: 1px; }
+.dd-selected .dd-arrow { font-size: 9px; color: rgba(0,255,255,0.6); transition: transform 0.15s; }
+.dd-selected.dd-open .dd-arrow { transform: rotate(180deg); }
+
+.dd-list {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    z-index: 9000;
+    background: rgba(10,14,20,0.98);
+    border: 1px solid rgba(0,255,255,0.4);
+    border-top: none;
+    max-height: 340px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+}
+.dd-list.dd-list-open { display: block; }
+.dd-option {
+    display: flex;
+    flex-direction: column;
+    padding: 9px 12px 8px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #c8d2d9;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.1s;
+    gap: 3px;
+}
+.dd-option:hover     { background: rgba(0,255,255,0.09); color: #fff; }
+.dd-option.dd-active { background: rgba(0,255,255,0.13); color: #00ffff; }
+.dd-option.do-warn   { color: #ffaa00; }
+.dd-option .do-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+.dd-option .do-name { flex: 1; letter-spacing: 1px; font-size: 12px; }
+.dd-option .do-wt   { font-size: 10px; color: rgba(0,255,255,0.45); min-width: 44px; text-align: right; letter-spacing: 1px; }
+.dd-option.do-warn .do-wt { color: rgba(255,170,0,0.6); }
+.dd-option .do-desc {
+    font-size: 10px;
+    color: rgba(200,210,217,0.5);
+    letter-spacing: 0.3px;
+    line-height: 1.5;
+    padding-left: 2px;
+}
+.dd-option.dd-active .do-desc { color: rgba(0,255,255,0.6); }
+.dd-option:hover .do-desc     { color: rgba(255,255,255,0.65); }
+.dd-option.do-warn .do-desc   { color: rgba(255,170,0,0.55); }
+/* Colour-specific option row */
+.dd-color-opt .do-header { gap: 10px; }
+.do-color-swatch {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.25);
+    flex-shrink: 0;
+    display: inline-block;
+}
+/* Colour swatch in the closed header */
+.dd-color-swatch-header {
+    width: 14px; height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.3);
+    flex-shrink: 0;
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* #garage-desc removed — descriptions now inline in dropdown rows */
+
+/* Dual-explosive warning */
+#dual-explosive-warn {
+    display: none;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: rgba(255,170,0,0.08);
+    border: 1px solid rgba(255,170,0,0.4);
+    border-left: 3px solid #ffaa00;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: #ffaa00;
+    letter-spacing: 1px;
+}
+
 </style>
 </body>
 </html>
