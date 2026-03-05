@@ -2048,8 +2048,8 @@ function handlePlayerFiring(scene) {
         const _canvas = scene.sys.canvas;
         if (_target && _canvas && _target !== _canvas) return;
         fire(scene, 'L');
-        // Dual-fire: when both arms have the same weapon, fire both simultaneously on left-click
-        if (loadout.R && loadout.R !== 'none' && loadout.L === loadout.R) {
+        // Dual-fire: Light chassis only — fires both arms simultaneously when same weapon equipped
+        if (loadout.chassis === 'light' && loadout.R && loadout.R !== 'none' && loadout.L === loadout.R) {
             fire(scene, 'R');
         }
     }
@@ -2057,7 +2057,7 @@ function handlePlayerFiring(scene) {
     // Right-click (held): fire R arm every frame (sustained weapons need this)
     if (ptr.rightButtonDown()) {
         // Don't double-fire R if left-click dual-fire already handled it this frame
-        const isDualFiring = loadout.L === loadout.R && loadout.R !== 'none' && ptr.leftButtonDown();
+        const isDualFiring = loadout.chassis === 'light' && loadout.L === loadout.R && loadout.R !== 'none' && ptr.leftButtonDown();
         if (!isDualFiring) fire(scene, 'R');
     }
 
@@ -4668,7 +4668,7 @@ function fire(scene, side) {
     // Left arm: perpendicular left  (rotation - PI/2)
     // Right arm: perpendicular right (rotation + PI/2)
     const barrelDist    = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
-    const armSideOffset = loadout.chassis === 'light' ? 12 : loadout.chassis === 'medium' ? 18 : 24;
+    const armSideOffset = loadout.chassis === 'light' ? 12 : loadout.chassis === 'medium' ? 26 : 42;
     const perpSign      = side === 'L' ? -1 : 1;  // L = left of forward, R = right
     // Shoulder position: offset perpendicular to facing direction
     const perpAngle = torso.rotation + perpSign * Math.PI / 2;
@@ -6047,21 +6047,24 @@ function buildDD(slotId, options) {
         const desc = SLOT_DESCS[opt.key];
         const descText = (desc && opt.key !== 'none') ? desc.desc : '';
 
-        // Check if same weapon is in the other arm — allowed (dual-wield), show badge
-        const otherArm = slotId === 'L' ? loadout.R : slotId === 'R' ? loadout.L : null;
-        const isDual = (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
+        // Check if same weapon is in the other arm — allowed only for light (dual-wield)
+        const otherArm  = slotId === 'L' ? loadout.R : slotId === 'R' ? loadout.L : null;
+        const isDual    = loadout.chassis === 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
+        // Non-light: weapon already equipped in the other arm — gray it out, block selection
+        const isBlocked = loadout.chassis !== 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
 
         const div = document.createElement('div');
         div.className = 'dd-option'
             + (opt.key === slotKey ? ' dd-active' : '')
-            + (over ? ' do-warn' : '');
+            + (over ? ' do-warn' : '')
+            + (isBlocked ? ' do-disabled' : '');
         div.innerHTML = `
             <div class="do-header">
-                <span class="do-name">${opt.label}${isDual ? ' <span style="font-size:9px;letter-spacing:1px;color:#00ffcc;background:rgba(0,255,204,0.12);padding:1px 5px;border:1px solid rgba(0,255,204,0.3);border-radius:2px;vertical-align:middle;">DUAL</span>' : ''}</span>
+                <span class="do-name">${opt.label}${isDual ? ' <span style="font-size:9px;letter-spacing:1px;color:#00ffcc;background:rgba(0,255,204,0.12);padding:1px 5px;border:1px solid rgba(0,255,204,0.3);border-radius:2px;vertical-align:middle;">DUAL</span>' : ''}${isBlocked ? ' <span style="font-size:9px;letter-spacing:1px;color:rgba(255,100,100,0.7);background:rgba(255,60,60,0.08);padding:1px 5px;border:1px solid rgba(255,60,60,0.25);border-radius:2px;vertical-align:middle;">IN USE</span>' : ''}</span>
                 <span class="do-wt">${opt.weight > 0 ? opt.weight + ' WT' : '—'}</span>
             </div>
             ${descText ? `<div class="do-desc">${descText}</div>` : ''}`;
-        div.onclick = () => { selectSlot(slotId, opt.key); closeAllDD(); };
+        if (!isBlocked) div.onclick = () => { selectSlot(slotId, opt.key); closeAllDD(); };
         list.appendChild(div);
     });
 }
@@ -6135,14 +6138,17 @@ function selectSlot(slotId, key) {
             loadout.L = key;
             loadout.R = key;
         } else {
-            // Normal: set the chosen side. Same weapon on both arms is allowed (dual-wield).
+            // Normal: set the chosen side.
+            // Only Light chassis can dual-wield (same weapon in both arms).
             if (slotId === 'L') {
-                // If L was previously 2H, clear R too
                 if (WEAPONS[loadout.L]?.twoHanded) loadout.R = 'none';
                 loadout.L = key;
+                // Non-light: if the other arm already has the same weapon, clear it
+                if (loadout.chassis !== 'light' && key !== 'none' && loadout.R === key) loadout.R = 'none';
             } else {
                 if (WEAPONS[loadout.R]?.twoHanded) loadout.L = 'none';
                 loadout.R = key;
+                if (loadout.chassis !== 'light' && key !== 'none' && loadout.L === key) loadout.L = 'none';
             }
         }
     } else if (slotId === 'M') {
@@ -6363,7 +6369,14 @@ document.addEventListener('click', e => {
 // GARAGE BUTTON HANDLERS
 // ================================================================
 
-function setChassis(t) { loadout.chassis = t; refreshGarage(); }
+function setChassis(t) {
+    loadout.chassis = t;
+    // Non-light: clear duplicate arm weapons (dual-wield is light-only)
+    if (t !== 'light' && loadout.L !== 'none' && loadout.L === loadout.R) loadout.R = 'none';
+    // Light: clear two-handed weapons (light can't use them)
+    if (t === 'light' && WEAPONS[loadout.L]?.twoHanded) { loadout.L = 'none'; loadout.R = 'none'; }
+    refreshGarage();
+}
 function setWeapon(side, type) {
     if (side === 'L') loadout.L = type;
     else              loadout.R = type;
