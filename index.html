@@ -641,24 +641,7 @@ button.active {
 }
 
 /* #garage-desc removed — descriptions now inline in dropdown rows */
-#garage-stats-panel {
-    padding: 8px 10px;
-    background: rgba(0,5,12,0.55);
-    border: 1px solid rgba(0,255,255,0.16);
-    border-left: 3px solid rgba(0,255,255,0.38);
-}
-.gs-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 2px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    font-family: 'Courier New', monospace;
-    gap: 8px;
-}
-.gs-row:last-child { border-bottom: none; }
-.gs-label { font-size: 10px; letter-spacing: 3px; color: rgba(0,255,255,0.7); white-space: nowrap; text-transform: uppercase; font-family: 'Courier New', monospace; }
-.gs-val   { font-size: 10px; letter-spacing: 0.5px; text-align: right; font-family: 'Courier New', monospace; }
+
 
 /* Garage stats panel */
 #garage-stats-panel {
@@ -672,20 +655,22 @@ button.active {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    padding: 3px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     font-family: 'Courier New', monospace;
+    gap: 10px;
 }
 .gs-row:last-child { border-bottom: none; }
 .gs-label {
-    font-size: 9px;
+    font-size: 12px;
     letter-spacing: 2px;
-    color: rgba(0,255,255,0.5);
+    color: rgba(0,255,255,0.65);
     text-transform: uppercase;
+    white-space: nowrap;
 }
 .gs-val {
-    font-size: 10px;
-    letter-spacing: 1px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
     text-align: right;
     font-family: 'Courier New', monospace;
 }
@@ -791,18 +776,6 @@ button.active {
                 </div>
 
                 <div class="dd-row">
-                    <span class="dd-label">■ DEFENSE</span>
-                    <div class="dd-wrap" id="ddw-S">
-                        <div class="dd-selected" id="dds-S" onclick="toggleDD('S')">
-                            <span class="dd-name" id="ddn-S">NONE</span>
-                            <span class="dd-wt"   id="ddwt-S">—</span>
-                            <span class="dd-arrow">▼</span>
-                        </div>
-                        <div class="dd-list" id="ddl-S"></div>
-                    </div>
-                </div>
-
-                <div class="dd-row">
                     <span class="dd-label">■ LEGS</span>
                     <div class="dd-wrap" id="ddw-G">
                         <div class="dd-selected" id="dds-G" onclick="toggleDD('G')">
@@ -811,6 +784,18 @@ button.active {
                             <span class="dd-arrow">▼</span>
                         </div>
                         <div class="dd-list" id="ddl-G"></div>
+                    </div>
+                </div>
+
+                <div class="dd-row">
+                    <span class="dd-label">■ DEFENSE</span>
+                    <div class="dd-wrap" id="ddw-S">
+                        <div class="dd-selected" id="dds-S" onclick="toggleDD('S')">
+                            <span class="dd-name" id="ddn-S">NONE</span>
+                            <span class="dd-wt"   id="ddwt-S">—</span>
+                            <span class="dd-arrow">▼</span>
+                        </div>
+                        <div class="dd-list" id="ddl-S"></div>
                     </div>
                 </div>
 
