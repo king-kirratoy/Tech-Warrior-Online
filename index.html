@@ -5555,33 +5555,37 @@ function showDeathScreen() {
 function _cleanupGame() {
     const scene = game.scene.scenes[0];
     // Destroy per-deploy physics overlap/colliders so they don't accumulate across respawns
-    // (each deployMech() registers new ones; stale ones would multiply damage callbacks)
     if (_playerBulletOverlap) { try { scene.physics.world.removeCollider(_playerBulletOverlap); } catch(e){} _playerBulletOverlap = null; }
     if (_playerEnemyCollider) { try { scene.physics.world.removeCollider(_playerEnemyCollider); } catch(e){} _playerEnemyCollider = null; }
     if (_enemyEnemyCollider)  { try { scene.physics.world.removeCollider(_enemyEnemyCollider);  } catch(e){} _enemyEnemyCollider  = null; }
-    // Kill all tweens so stale onComplete callbacks don't fire against destroyed objects.
-    // NOTE: do NOT call scene.time.removeAllEvents() — it destroys Phaser internal clock
-    // events and breaks the scene. Mine/loot timer callbacks are all guarded with
-    // active checks so orphaned ones are harmless.
+    // Kill all tweens
     try { scene.tweens.killAll(); } catch(e) {}
-    // Destroy all loot pickups
-    lootPickups.forEach(p => {
-        try { if (p.orb?.active)   p.orb.destroy();   } catch(e) {}
-        try { if (p.label?.active) p.label.destroy(); } catch(e) {}
-    });
+    // Clear loot tracking array (objects destroyed below with scene wipe)
     lootPickups = [];
-    [player, torso, shieldGraphic, glowWedge, crosshair, speedStreakLine].forEach(obj => {
-        if (obj) { try { obj.destroy(); } catch(e){} }
-    });
+    // ── Nuclear scene wipe: destroy every display object EXCEPT persistent
+    //    scene infrastructure: hangarOverlay, _bfGrid, and the physics groups
+    //    (bullets, enemyBullets, enemies, coverObjects) which are registered once
+    //    in create() and must survive. Everything else — particles, text, circles,
+    //    mine visuals, explosion rings, drones, ghosts — gets destroyed.
+    try {
+        const keep = [
+            scene.hangarOverlay, scene._bfGrid,
+            bullets, enemyBullets, enemies, coverObjects
+        ].filter(Boolean);
+        scene.children.list.slice().forEach(obj => {
+            if (keep.includes(obj)) return;
+            try { obj.destroy(); } catch(e) {}
+        });
+    } catch(e) {}
     player = torso = shieldGraphic = glowWedge = crosshair = speedStreakLine = null;
+    // Clear group contents (the groups themselves survive)
     if (bullets)      bullets.clear(true, true);
     if (enemyBullets) enemyBullets.clear(true, true);
     if (enemies) {
         enemies.getChildren().forEach(e => {
-            // bars removed
             if (e.cmdLabel) try { e.cmdLabel.destroy(); } catch(ex){}
-            if (e.visuals) try { e.visuals.destroy(); } catch(ex){}
-            if (e.torso)   try { e.torso.destroy(); }   catch(ex){}
+            if (e.visuals)  try { e.visuals.destroy();  } catch(ex){}
+            if (e.torso)    try { e.torso.destroy();    } catch(ex){}
         });
         enemies.clear(true, true);
     }
