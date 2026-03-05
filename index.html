@@ -4582,7 +4582,18 @@ function enemyFire(scene, enemy, time) {
     const ex = enemy.x, ey = enemy.y;
     const bSize  = weapon.bulletSize || 6;
     const bSpeed = weapon.speed || 600;
-    const dmg    = weapon.dmg || 15;
+    // Enemy damage scaling — enemies have perfect aim so high-dmg weapons are tuned down
+    const _enemyDmgScale = {
+        rail:  0.30,   // 450 → 135  (still scary but not instant death)
+        sr:    0.40,   // 240 → 96
+        plsm:  0.40,   // 300 → 120
+        siege: 0.35,   // 380 → 133
+        gl:    0.55,   // 200 → 110
+        rl:    0.55,   // 220 → 121
+        hr:    0.65,   // 160 → 104
+        br:    0.75,   // 30  → 22
+    };
+    const dmg    = Math.round((weapon.dmg || 15) * (_enemyDmgScale[wKey] || 1.0));
 
     // Dispatch by weapon type — mirrors player fire functions
     if (wKey === 'sg') {
