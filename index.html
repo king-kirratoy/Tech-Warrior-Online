@@ -3037,8 +3037,11 @@ function deployMech() {
     player = scene.add.rectangle(2000, 2000, legW, legH, 0x000000, 0)
         .setDepth(5);
     scene.physics.add.existing(player);
-    player.body.setCircle(35);
-    player.body.setOffset(0, -10);
+    // Hitbox circle sized to match each chassis's core visual
+    const _hitR   = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
+    const _hitOff = loadout.chassis === 'light' ? -8  : loadout.chassis === 'medium' ? -10 : -12;
+    player.body.setCircle(_hitR);
+    player.body.setOffset(-_hitR, _hitOff);
     player.setScale(s.scale);
     player.body.setCollideWorldBounds(true);
 
@@ -4126,6 +4129,9 @@ function generateCover(scene) {
     tryPlace(COVER_DEFS[11], ...Q.br);
 
     // Bullet ↔ cover collisions (player bullets)
+    // Sync static physics bodies after all objects placed
+    coverObjects.refresh();
+
     scene.physics.add.collider(bullets, coverObjects, (bullet, cover) => {
         createImpactSparks(scene, bullet.x, bullet.y);
         bullet.destroy();
@@ -4678,7 +4684,7 @@ function enemyFire(scene, enemy, time) {
         scene.time.delayedCall(3500, () => { if (p.active) p.destroy(); });
     } else if (wKey === 'rail') {
         // Railgun: instant line, pierces player, bright flash
-        const dist = 2200;
+        const dist = 900;
         const endX = ex + Math.cos(angle) * dist;
         const endY = ey + Math.sin(angle) * dist;
         // Check hit
@@ -4847,7 +4853,7 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
         }
         case 'rail': {
             // Railgun secondary — same as primary rail
-            const dist = 2200;
+            const dist = 900;
             const endX = ex + Math.cos(angle) * dist;
             const endY = ey + Math.sin(angle) * dist;
             if (player?.active) {
@@ -5100,7 +5106,7 @@ function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     );
     const ox = armOx + Math.cos(angle) * barrelDist;
     const oy = armOy + Math.sin(angle) * barrelDist;
-    const rayLen = 3200;
+    const rayLen = 900;
     const ex = ox + Math.cos(angle) * rayLen;
     const ey = oy + Math.sin(angle) * rayLen;
 
