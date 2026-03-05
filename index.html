@@ -743,6 +743,18 @@ button.active {
                 </div>
 
                 <div class="dd-row">
+                    <span class="dd-label">■ HEAD</span>
+                    <div class="dd-wrap" id="ddw-A">
+                        <div class="dd-selected" id="dds-A" onclick="toggleDD('A')">
+                            <span class="dd-name" id="ddn-A">NONE</span>
+                            <span class="dd-wt"   id="ddwt-A">—</span>
+                            <span class="dd-arrow">▼</span>
+                        </div>
+                        <div class="dd-list" id="ddl-A"></div>
+                    </div>
+                </div>
+
+                <div class="dd-row">
                     <span class="dd-label">■ LEFT ARM</span>
                     <div class="dd-wrap" id="ddw-L">
                         <div class="dd-selected" id="dds-L" onclick="toggleDD('L')">
@@ -767,31 +779,7 @@ button.active {
                 </div>
 
                 <div class="dd-row">
-                    <span class="dd-label">■ LEGS</span>
-                    <div class="dd-wrap" id="ddw-G">
-                        <div class="dd-selected" id="dds-G" onclick="toggleDD('G')">
-                            <span class="dd-name" id="ddn-G">NONE</span>
-                            <span class="dd-wt"   id="ddwt-G">—</span>
-                            <span class="dd-arrow">▼</span>
-                        </div>
-                        <div class="dd-list" id="ddl-G"></div>
-                    </div>
-                </div>
-
-                <div class="dd-row">
-                    <span class="dd-label">■ SHIELD</span>
-                    <div class="dd-wrap" id="ddw-S">
-                        <div class="dd-selected" id="dds-S" onclick="toggleDD('S')">
-                            <span class="dd-name" id="ddn-S">NONE</span>
-                            <span class="dd-wt"   id="ddwt-S">—</span>
-                            <span class="dd-arrow">▼</span>
-                        </div>
-                        <div class="dd-list" id="ddl-S"></div>
-                    </div>
-                </div>
-
-                <div class="dd-row">
-                    <span class="dd-label">■ MOD</span>
+                    <span class="dd-label">■ CORE</span>
                     <div class="dd-wrap" id="ddw-M">
                         <div class="dd-selected" id="dds-M" onclick="toggleDD('M')">
                             <span class="dd-name" id="ddn-M">NONE</span>
@@ -803,14 +791,26 @@ button.active {
                 </div>
 
                 <div class="dd-row">
-                    <span class="dd-label">■ AUGMENT</span>
-                    <div class="dd-wrap" id="ddw-A">
-                        <div class="dd-selected" id="dds-A" onclick="toggleDD('A')">
-                            <span class="dd-name" id="ddn-A">NONE</span>
-                            <span class="dd-wt"   id="ddwt-A">—</span>
+                    <span class="dd-label">■ DEFENSE</span>
+                    <div class="dd-wrap" id="ddw-S">
+                        <div class="dd-selected" id="dds-S" onclick="toggleDD('S')">
+                            <span class="dd-name" id="ddn-S">NONE</span>
+                            <span class="dd-wt"   id="ddwt-S">—</span>
                             <span class="dd-arrow">▼</span>
                         </div>
-                        <div class="dd-list" id="ddl-A"></div>
+                        <div class="dd-list" id="ddl-S"></div>
+                    </div>
+                </div>
+
+                <div class="dd-row">
+                    <span class="dd-label">■ LEGS</span>
+                    <div class="dd-wrap" id="ddw-G">
+                        <div class="dd-selected" id="dds-G" onclick="toggleDD('G')">
+                            <span class="dd-name" id="ddn-G">NONE</span>
+                            <span class="dd-wt"   id="ddwt-G">—</span>
+                            <span class="dd-arrow">▼</span>
+                        </div>
+                        <div class="dd-list" id="ddl-G"></div>
                     </div>
                 </div>
 
@@ -906,7 +906,7 @@ button.active {
                     <span class="wr-status" id="wr-st-L" style="color:#44ccff;"></span>
                 </div>
                 <div class="weapon-row" id="slot-R">
-                    <span class="wr-key">F</span>
+                    <span class="wr-key">M2</span>
                     <div class="wr-bar-bg" style="border-color:rgba(255,140,0,0.2);">
                         <div class="wr-fill" id="wr-fill-R" style="background:rgba(255,120,0,0.22);box-shadow:0 0 8px rgba(255,120,0,0.35);"></div>
                         <span class="wr-name" id="txt-R">—</span>
@@ -919,7 +919,7 @@ button.active {
                     <div class="wr-bar-bg" style="border-color:rgba(180,80,255,0.2);">
                         <div class="wr-fill" id="wr-fill-M" style="background:rgba(160,60,255,0.22);box-shadow:0 0 8px rgba(160,60,255,0.35);"></div>
                         <span class="wr-name" id="txt-M">—</span>
-                        <span class="wr-label">SYSTEM</span>
+                        <span class="wr-label">CORE</span>
                     </div>
                     <span class="wr-status" id="wr-st-M" style="color:#bb88ff;"></span>
                 </div>
@@ -1075,7 +1075,7 @@ const CHASSIS = {
     light:  { max: 160, spd: 250, scale: 0.7, coreHP: 212, armHP: 120, legHP: 152,
               dualFire: true,
               passiveReloadBonus: 0.80,
-              identity: 'Dual-fire both arms simultaneously. +20% reload speed. Arms fragile — protect them.' },
+              identity: 'Dual-fire: both arms fire simultaneously when matching weapons equipped. +20% reload speed. Arms fragile.' },
     medium: { max: 240, spd: 200, scale: 1.0, coreHP: 272, armHP: 180, legHP: 212,
               modCooldownMult: 0.85,
               killCooldownReduction: 500,
@@ -1626,7 +1626,13 @@ function create() {
     this._bfGrid = _bfGrid;
 
     // Input
-    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,F');
+    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
+
+    // Prevent right-click context menu on the game canvas so RMB can fire R arm
+    const _canvas = this.sys.canvas;
+    if (_canvas) _canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    // Right mouse button fires R arm — handled in handlePlayerFiring each frame
 
     // Physics groups
     bullets      = this.physics.add.group();
@@ -2002,17 +2008,30 @@ function handlePlayerMovement(scene, time) {
 /** Primary (M1) and secondary (F) weapon firing. */
 function handlePlayerFiring(scene) {
     if (!player?.active || !isDeployed) return;
-    if (scene.input.activePointer.isDown) {
-        const _target = document.elementFromPoint(scene.input.activePointer.x, scene.input.activePointer.y);
+    const ptr = scene.input.activePointer;
+
+    // Left-click: fire L arm (and R arm too if Light with matching weapons)
+    if (ptr.isDown && ptr.leftButtonDown()) {
+        const _target = document.elementFromPoint(ptr.x, ptr.y);
         const _canvas = scene.sys.canvas;
         if (_target && _canvas && _target !== _canvas) return;
         fire(scene, 'L');
-        // LIGHT chassis: dual-fire — both arms fire simultaneously on left-click
-        if (loadout.chassis === 'light' && loadout.R && loadout.R !== 'none') {
+        // LIGHT chassis: dual-fire — only when both arms have the same weapon
+        if (loadout.chassis === 'light'
+            && loadout.R && loadout.R !== 'none'
+            && loadout.L === loadout.R) {
             fire(scene, 'R');
         }
     }
-    if (keys.F.isDown) fire(scene, 'R');
+
+    // Right-click (held): fire R arm every frame (sustained weapons need this)
+    if (ptr.rightButtonDown()) {
+        // Don't double-fire R if light dual-fire already handled it
+        const isDualFiring = loadout.chassis === 'light' && loadout.L === loadout.R && ptr.leftButtonDown();
+        if (!isDualFiring) fire(scene, 'R');
+    }
+
+    // Unused comment stub
 }
 
 /** Rage mode: spawns fading red ghost mechs behind the player. */
@@ -2521,7 +2540,7 @@ function showPerkMenu(nextRound) {
     const w = weaponPool.length > 0 ? _pickFrom(weaponPool, 1, chosen) : _pickFrom(universalPool, 1, chosen);
     chosen.push(...w);
 
-    const _specLabel = specCats.length > 0 ? specCats[specCats.length-1].replace(/_/g,' ').toUpperCase() : 'WEAPON / MOD';
+    const _specLabel = specCats.length > 0 ? specCats[specCats.length-1].replace(/_/g,' ').toUpperCase() : 'WEAPON / CORE';
     const SLOT_LABELS = ['UNIVERSAL', 'UNIVERSAL', ch.toUpperCase(), _specLabel];
     const SLOT_COLORS = ['#00ffff', '#00ffff', ch==='light'?'#88ff88':ch==='medium'?'#ffcc00':'#ff8844', '#cc88ff'];
 
@@ -5122,7 +5141,6 @@ const MOD_OPTIONS = [
     { key:'none',      label:'NONE',         weight:0  },
     { key:'jump',      label:'JUMP JETS',    weight:15 },
     { key:'decoy',     label:'DECOY',        weight:15 },
-    { key:'shield',    label:'SHIELD',       weight:20 },
     { key:'barrier',   label:'BARRIER',      weight:20 },
     { key:'repair',    label:'REPAIR DRONE', weight:20 },
     { key:'emp',       label:'EMP BURST',    weight:30 },
@@ -5489,7 +5507,7 @@ function updateGarageStats() {
     const chassisDef = CHASSIS[loadout.chassis];
     const chassisTraits = [];
     if (loadout.chassis === 'light') {
-        chassisTraits.push('Dual-fire: both arms fire on click');
+        chassisTraits.push('Dual-fire: fires both arms simultaneously when same weapon is equipped in each');
         chassisTraits.push('+20% reload speed (passive)');
         chassisTraits.push('Arms: fragile — 30% less base HP');
     } else if (loadout.chassis === 'medium') {
@@ -5509,7 +5527,7 @@ function updateGarageStats() {
         ['SHIELD HP',  shHp > 0 ? shStr : 'NONE', shHp > 0 ? '#00ffff' : '#445'],
         lRate ? ['L FIRE RATE', lRate, '#c0c8d0'] : null,
         rRate ? ['R FIRE RATE', rRate, '#c0c8d0'] : null,
-        modCd ? ['MOD CD',      modCd, '#ffaa44'] : null,
+        modCd ? ['CORE CD',      modCd, '#ffaa44'] : null,
         chassisTraits.length ? ['CHASSIS', chassisTraits.join(' · '), loadout.chassis==='light'?'#88ff88':loadout.chassis==='medium'?'#ffcc44':'#ff8844'] : null,
         passives.length ? ['PASSIVES', passives.join(' · '), '#cc88ff'] : null,
     ].filter(Boolean);
@@ -5781,7 +5799,7 @@ function populateStats() {
     chassisHtml += _statRow('Chassis Type', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
     // Chassis identity traits
     const _cTraits = ch === 'light'
-        ? ['Dual-fire (both arms on click)', '+20% reload speed', 'Fragile arms']
+        ? ['Dual-fire when matching weapons equipped', '+20% reload speed', 'Fragile arms']
         : ch === 'medium'
         ? ['Mod cooldowns −15%', 'Kills −0.5s mod cd', 'Shield absorbs 60%']
         : ['Passive 15% damage reduction', 'No JUMP / AFTERLEG', 'Attrition tank'];
@@ -5812,7 +5830,7 @@ function populateStats() {
 
     // ── WEAPONS & DPS ────────────────────────────────────────
     let wHtml = '';
-    const sides = [['L', loadout.L], ['R', loadout.R], ['MOD', loadout.mod]];
+    const sides = [['L', loadout.L], ['R', loadout.R], ['CORE', loadout.mod]];
     sides.forEach(([side, key]) => {
         if (!key || key === 'none') return;
         const w = WEAPONS[key];
