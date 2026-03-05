@@ -173,6 +173,9 @@ button.active {
 .perk-card-desc  { font-size:12px;  letter-spacing:1px; color:rgba(200,210,217,0.7); line-height:1.5; }
 .perk-stack-badge { position:absolute; top:8px; right:8px; background:rgba(0,255,255,0.2); border:1px solid rgba(0,255,255,0.5); border-radius:4px; font-size:11px; letter-spacing:1px; color:#00ffff; padding:2px 5px; }
 .perk-once-badge  { display:inline-block; margin-bottom:6px; background:rgba(255,170,0,0.15); border:1px solid rgba(255,170,0,0.5); border-radius:4px; font-size:11px; letter-spacing:2px; color:#ffaa00; padding:2px 6px; }
+.perk-legendary-badge { display:inline-block; margin-bottom:6px; background:rgba(255,200,0,0.18); border:1px solid rgba(255,200,0,0.7); border-radius:4px; font-size:11px; letter-spacing:2px; color:#ffd700; padding:2px 6px; font-weight:bold; }
+.perk-card.legendary  { border-color:rgba(255,200,0,0.7); border-top:3px solid #ffd700; box-shadow:0 0 22px rgba(255,200,0,0.25),0 0 8px rgba(255,200,0,0.12); background:rgba(30,24,4,0.97); }
+.perk-card.legendary:hover { box-shadow:0 0 40px rgba(255,200,0,0.45),0 0 16px rgba(255,200,0,0.22); border-color:#ffd700; }
 .stats-panel { background:rgba(10,15,22,0.9); border:1px solid rgba(0,255,255,0.2); border-radius:10px; padding:20px 22px; }
 .stats-panel-title { font-size:12px; letter-spacing:4px; color:rgba(0,255,255,0.55); text-transform:uppercase; margin-bottom:14px; border-bottom:1px solid rgba(0,255,255,0.12); padding-bottom:8px; }
 .stats-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
@@ -989,12 +992,6 @@ button.active {
         </div>
         <br>
         <div style="display:flex;gap:20px;justify-content:center;">
-            <button onclick="respawnMech()"
-                style="width:200px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
-                onmouseover="this.style.background='rgba(0,255,255,0.15)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.25)';this.style.letterSpacing='4px';"
-                onmouseout="this.style.background='rgba(0,255,255,0.05)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
-                &#9654; RESPAWN
-            </button>
             <button onclick="returnToHangar()"
                 style="width:200px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
                 onmouseover="this.style.background='rgba(0,255,255,0.15)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.25)';this.style.letterSpacing='4px';"
@@ -1044,6 +1041,18 @@ const AUGMENTS = {
     overclock_cpu:  { name: 'OVERCLOCK CPU',  weight: 30,  desc: 'All weapon reload times and mod cooldowns reduced by 12%.' },
     reactive_plating:{ name: 'REACT. PLATING',weight: 30,  desc: 'Taking damage grants a stacking 5% damage reduction (max 5 stacks, resets on round end).' },
     scrap_cannon:   { name: 'SCRAP CANNON',   weight: 40,  desc: 'Destroyed enemy limbs explode for 30 AoE damage to nearby enemies.' },
+    // ── DRONE COMMANDER ────────────────────────────────────────
+    drone_relay:     { name: 'DRONE RELAY',    weight: 30,  desc: 'Attack Drone fires 40% faster and gains +60 bonus HP.' },
+    combat_ai:       { name: 'COMBAT AI',      weight: 25,  desc: 'Drone focuses your current target for coordinated fire.' },
+    multi_drone:     { name: 'MULTI-DRONE',    weight: 50,  desc: 'Deploy 2 attack drones simultaneously instead of 1.' },
+    // ── GHOST ASSASSIN ─────────────────────────────────────────
+    targeting_scope: { name: 'TARGET SCOPE',   weight: 30,  desc: 'SR/RAIL: +15% damage per 200px distance to target.' },
+    ballistic_weave: { name: 'BALLST. WEAVE',  weight: 25,  desc: '+10% bullet speed. Bullets ignore 20% of enemy shields.' },
+    neural_accel:    { name: 'NEURAL ACCEL.',  weight: 35,  desc: 'First 3s after landing from JUMP: all weapons deal 2× damage.' },
+    // ── INFERNO WALL ───────────────────────────────────────────
+    fuel_injector:   { name: 'FUEL INJECTOR',  weight: 30,  desc: 'FTH range +40%, cone width +30%.' },
+    thermal_core:    { name: 'THERMAL CORE',   weight: 25,  desc: 'FTH always ignites on hit. Ignite duration +1s.' },
+    pyromaniac_chip: { name: 'PYRO CHIP',      weight: 35,  desc: 'Ignited enemies spread fire to one adjacent enemy on death.' },
 };
 
 // ── LEG SYSTEMS — equipped to legs, disabled when legs destroyed ──
@@ -1303,9 +1312,48 @@ const _perks = {
     mine_cluster:    { cat:'mine_layer',        label:'Cluster Mine', desc:'Mine Layer: mines spawn 3 submunitions on detonation', apply: () => { _perkState.mineCluster=true; } },
     anchor_fortress: { cat:'mag_anchors',       label:'Fortress Mode',desc:'Mag Anchors: DR while still increased to 35%', apply: () => { _perkState.anchorFortress=true; } },
     afterleg_boost:  { cat:'afterleg',          label:'Jet Assist',   desc:'Afterleg: shockwave damage +50%, radius +30%', apply: () => { _perkState.afterlegBoost=true; } },
+
+    // ── DRONE COMMANDER PERKS ──────────────────────────────────────
+    drone_uplink:    { cat:'atk_drone', label:'Drone Uplink',     desc:'Drone damage +25% per stack',                  apply: () => { _perkState.droneUplink=(_perkState.droneUplink||0)+0.25; } },
+    rapid_relaunch:  { cat:'atk_drone', label:'Rapid Relaunch',   desc:'Drone cooldown −35% per stack',                apply: () => { _perkState.droneCdMult=(_perkState.droneCdMult||1)*0.65; } },
+    neural_link:     { cat:'atk_drone', label:'Neural Link',      desc:'While drone is active: reload speed +15%',     apply: () => { _perkState.neuralLink=(_perkState.neuralLink||0)+0.15; } },
+    swarm_logic:     { cat:'atk_drone', label:'Swarm Logic',      desc:'Each kill while drone is active: −2s drone cooldown', apply: () => { _perkState.swarmLogic=(_perkState.swarmLogic||0)+2000; } },
+    hardened_frame:  { cat:'atk_drone', label:'Hardened Frame',   desc:'Drone takes 50% less damage (stackable)',      apply: () => { _perkState.droneArmor=(_perkState.droneArmor||0)+0.50; } },
+    overwatch:       { cat:'atk_drone', label:'Overwatch',        desc:'Drone damage +20% per kill you make this round (resets each round)', apply: () => { _perkState.overwatchStacks=(_perkState.overwatchStacks||0)+1; } },
+    // LEGENDARY: Autonomous Unit
+    autonomous_unit: { cat:'atk_drone', once:true, legendary:true, label:'Autonomous Unit',
+        desc:'LEGENDARY — Drone deploys automatically each round and stays until destroyed. Respawns 12s after death. Kills reduce respawn by −1s each.',
+        apply: () => { _perkState.autonomousUnit=true; } },
+
+    // ── GHOST ASSASSIN PERKS ────────────────────────────────────
+    ghost_jump:      { cat:'jump', label:'Ghost Jump',     desc:'During JUMP air time, enemies stop targeting you',  apply: () => { _perkState.ghostJump=true; } },
+    kinetic_landing: { cat:'jump', label:'Kinetic Landing',desc:'Landing within 80px of enemy: 40–120 dmg scaled to jump distance', apply: () => { _perkState.kineticLanding=(_perkState.kineticLanding||0)+1; } },
+    double_tap_jump: { cat:'jump', label:'Double Tap',     desc:'JUMP has 2 charges per cooldown period',           apply: () => { _perkState.jumpCharges=2; } },
+    snap_charge:     { cat:'rail', label:'Snap Charge',    desc:'First RAIL shot each round fires instantly (no charge time)', apply: () => { _perkState.snapCharge=true; _perkState._snapChargeReady=true; } },
+    tungsten_core:   { cat:'rail', label:'Tungsten Core',  desc:'RAIL shots ignore enemy shields entirely',         apply: () => { _perkState.tungstenCore=true; } },
+    piercing_momentum:{ cat:'rail',label:'Piercing Momentum',desc:'Each enemy pierced by RAIL: +25% damage for that shot (stackable)', apply: () => { _perkState.piercingMomentum=(_perkState.piercingMomentum||0)+0.25; } },
+    one_shot:        { cat:'sr',  label:'One Shot',        desc:'SR: killing the target halves reload time',        apply: () => { _perkState.oneShot=true; } },
+    penetrator:      { cat:'sr',  label:'Penetrator',      desc:'SR: +20% damage per 200px traveled',              apply: () => { _perkState.penetrator=(_perkState.penetrator||0)+0.20; } },
+    // LEGENDARY: Phantom Protocol
+    phantom_protocol:{ cat:'jump', once:true, legendary:true, label:'Phantom Protocol',
+        desc:'LEGENDARY — For 3s after landing from JUMP: your next shot deals 4× damage and pierces all targets.',
+        apply: () => { _perkState.phantomProtocol=true; } },
+
+    // ── INFERNO WALL PERKS ──────────────────────────────────────
+    inferno:         { cat:'fth', label:'Inferno',         desc:'Ignited enemies spread fire to adjacent enemies on death', apply: () => { _perkState.inferno=true; } },
+    fuel_efficiency: { cat:'fth', label:'Fuel Efficiency', desc:'FTH reload −25% per stack',                       apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.75; } },
+    melt_armor:      { cat:'fth', label:'Melt Armor',      desc:'FTH hits reduce enemy DR by 10% for 4s (stacks to 3×)', apply: () => { _perkState.meltArmor=(_perkState.meltArmor||0)+1; } },
+    pressure_spray:  { cat:'fth', label:'Pressure Spray',  desc:'FTH slows enemies 20% while in the flame cone',   apply: () => { _perkState.pressureSpray=true; } },
+    napalm_strike:   { cat:'fth', label:'Napalm Strike',   desc:'FTH leaves a burning ground patch for 3s at impact point', apply: () => { _perkState.napalmStrike=true; } },
+    thorns_protocol: { cat:'barrier', label:'Thorns Protocol', desc:'While shield/barrier active: enemies hitting you take 20 reflected dmg per stack', apply: () => { _perkState.thornsProtocol=(_perkState.thornsProtocol||0)+20; } },
+    capacitor_armor: { cat:'barrier', label:'Capacitor Armor', desc:'Every 100 shield damage absorbed: next shot +25% damage', apply: () => { _perkState.capacitorArmor=(_perkState.capacitorArmor||0)+100; _perkState._capacitorCharge=0; } },
+    // LEGENDARY: Meltdown Core
+    meltdown_core:   { cat:'fth', once:true, legendary:true, label:'Meltdown Core',
+        desc:'LEGENDARY — Passive heat aura: enemies within 180px take 8 dmg/s. Activating Barrier/Shield spikes to 60 instant AoE at 250px.',
+        apply: () => { _perkState.meltdownCore=true; } },
 };
 
-let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false };
+let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false };
 let _pickedPerks = [];
 let _lastOfferedPerks = [];
 // _savedLoadoutL / _savedLoadoutR removed — replaced by _savedL / _savedR
@@ -1661,6 +1709,10 @@ function create() {
         }
         // Chain Reaction: chance to explode on kill (tracked in handleEnemyDeath)
         if (_perkState.chainReaction > 0) enemy._chainReactionCheck = true;
+        // One Shot: SR kill → halve reload timer
+        if (_perkState.oneShot && (wKey === 'sr' || (bullet?.damageValue >= WEAPONS.sr?.dmg * 0.8))) {
+            enemy._oneShotCandidate = true;
+        }
         if (_perkState.targetPainter && !enemy._painted) {
             enemy._painted = true;
             _perkState._paintedEnemy = enemy;
@@ -1684,6 +1736,50 @@ function create() {
                 this.tweens.add({ targets: cg, alpha: 0, duration: 180, onComplete: () => cg.destroy() });
             }
         }
+        // Thermal Core: FTH always ignites; Melt Armor: reduce enemy DR
+        if (bullet._flame) {
+            const igniteChance = _perkState.thermalCore ? 1.0 : (_perkState.incendiary || 0);
+            if (igniteChance > 0 && (igniteChance >= 1 || Math.random() < igniteChance) && !enemy._burning) {
+                const burnDur = _perkState.thermalCore ? 7 : 5; // thermal core +2 ticks
+                enemy._burning = true;
+                let _bt = 0;
+                const _bTimer = this.time.addEvent({ delay: 400, loop: true, callback: () => {
+                    if (!enemy.active || _bt >= burnDur) { enemy._burning = false; _bTimer.remove(); return; }
+                    damageEnemy(enemy, 5, 0);
+                    _bt++;
+                    const sp = this.add.circle(enemy.x+(Math.random()-0.5)*16, enemy.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
+                    this.tweens.add({ targets: sp, alpha:0, y:sp.y-8, duration:300, onComplete:()=>sp.destroy() });
+                }});
+            }
+            // Melt Armor: reduce DR on FTH hit
+            if (_perkState.meltArmor > 0) {
+                const stacks = Math.min(3, (enemy._meltArmorStacks||0) + 1);
+                enemy._meltArmorStacks = stacks;
+                enemy._dmgMult = (enemy._dmgMult || 1) / Math.max(0.1, 1 - stacks * 0.10);
+                clearTimeout(enemy._meltArmorTimer);
+                enemy._meltArmorTimer = setTimeout(() => {
+                    if (enemy.active) { enemy._meltArmorStacks = 0; enemy._dmgMult = 1; }
+                }, 4000);
+            }
+            // Pressure Spray: slow enemies in FTH cone
+            if (_perkState.pressureSpray && !enemy._fthSlowed) {
+                enemy._fthSlowed = true;
+                enemy._baseSpeed = enemy._baseSpeed || enemy.speed;
+                enemy.speed = Math.round(enemy.speed * 0.80);
+                clearTimeout(enemy._fthSlowTimer);
+                enemy._fthSlowTimer = setTimeout(() => {
+                    if (enemy.active) { enemy.speed = enemy._baseSpeed; enemy._fthSlowed = false; }
+                }, 300);
+            }
+        }
+        // Phantom Protocol: 4× pierce shot consumed on hit
+        if (_perkState._phantomShotReady) {
+            _perkState._phantomShotReady = false;
+            _perkState._phantomActive = false;
+            // The 4× mult was already applied during fire() — mark as consumed
+        }
+        // Ballistic Weave: ignore 20% of shield (applied pre-damageEnemy above) — handled in damageEnemy
+        // Targeting Scope: distance-based bonus — applied in fire() at shot creation
     });
 
     // (enemies spawned on deploy, not at scene creation)
@@ -1726,6 +1822,14 @@ function handleShieldRegen(time) {
             if (!e.active) return;
             const _bsd = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
             if (_bsd < 140) damageEnemy(e, 15 * (game.loop.delta / 1000), 0);
+        });
+    }
+    // Meltdown Core: passive heat aura — 8 dmg/s within 180px
+    if (_perkState.meltdownCore) {
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            const _md = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+            if (_md < 180) damageEnemy(e, 8 * (game.loop.delta / 1000), 0);
         });
     }
     if (_perkState.noShieldRegen) return;
@@ -1842,6 +1946,8 @@ function handleEnemyAI(scene, time) {
             }
 
             // Weapon-driven fire rate — weapon.reload scaled by behavior
+            // Ghost Jump: while player is jumping, enemies won't fire at player
+            if (isJumping && _perkState.ghostJump) return; // Ghost Jump: enemies won't fire
             const _pWep = enemy.loadout?.primary || 'smg';
             // Close-range weapons need tighter engagement
             const fireRange  = (_pWep === 'fth' || _pWep === 'sg') ? 320
@@ -2566,8 +2672,24 @@ function showPerkMenu(nextRound) {
     // Slot 3 — chassis
     const c = chassisPool.length > 0 ? _pickFrom(chassisPool, 1, chosen) : _pickFrom(universalPool, 1, chosen);
     chosen.push(...c);
-    // Slot 4 — weapon/mod/aug/leg specific
-    const w = weaponPool.length > 0 ? _pickFrom(weaponPool, 1, chosen) : _pickFrom(universalPool, 1, chosen);
+    // ── Legendary: offered in slot 4 if conditions met ──
+    // Conditions: round 5+, 2+ perks from that legendary's category, not yet picked
+    const _legendaryKeys = Object.keys(_perks).filter(k => _perks[k].legendary && !_pickedPerks.includes(k));
+    const _eligibleLeg = _legendaryKeys.filter(k => {
+        const cat = _perks[k].cat;
+        const catCount = _pickedPerks.filter(pk => _perks[pk]?.cat === cat).length;
+        return catCount >= 2 && _round >= 5;
+    });
+    const _offerLegendary = _eligibleLeg.length > 0 && Math.random() < 0.35 && !chosen.includes(_eligibleLeg[0]);
+
+    // Slot 4 — legendary (if eligible) or weapon/mod/aug/leg specific
+    let w;
+    if (_offerLegendary) {
+        const legKey = _eligibleLeg[Math.floor(Math.random() * _eligibleLeg.length)];
+        w = [legKey];
+    } else {
+        w = weaponPool.length > 0 ? _pickFrom(weaponPool, 1, chosen) : _pickFrom(universalPool, 1, chosen);
+    }
     chosen.push(...w);
 
     const _specLabel = specCats.length > 0 ? specCats[specCats.length-1].replace(/_/g,' ').toUpperCase() : 'WEAPON / CORE';
@@ -2582,11 +2704,14 @@ function showPerkMenu(nextRound) {
         card.className = 'perk-card';
         const timesHeld = _pickedPerks.filter(k=>k===key).length;
         const stackBadge = timesHeld > 0 ? `<div class="perk-stack-badge">×${timesHeld+1}</div>` : '';
-        const onceBadge  = p.once ? `<div class="perk-once-badge">ONE-TIME</div>` : '';
+        const onceBadge      = (p.once && !p.legendary) ? `<div class="perk-once-badge">ONE-TIME</div>` : '';
+        const legendaryBadge = p.legendary ? `<div class="perk-legendary-badge">✦ LEGENDARY</div>` : '';
+        if (p.legendary) card.classList.add('legendary');
         card.innerHTML = `
-            <div class="perk-slot-label" style="color:${SLOT_COLORS[idx]}">${SLOT_LABELS[idx]}</div>
+            <div class="perk-slot-label" style="color:${p.legendary ? '#ffd700' : SLOT_COLORS[idx]}">${p.legendary ? 'LEGENDARY' : SLOT_LABELS[idx]}</div>
             ${stackBadge}
-            <div class="perk-card-title">${p.label}</div>
+            ${legendaryBadge}
+            <div class="perk-card-title" style="${p.legendary ? 'color:#ffd700;' : ''}">${p.label}</div>
             <div class="perk-card-desc">${p.desc}</div>
             ${onceBadge}`;
         card.onclick = () => pickPerk(key, nextRound);
@@ -2677,6 +2802,16 @@ function startRound(roundNum) {
     if (_perkState.ironWill)   _perkState._ironWillUsed  = false;
     if (_perkState.glassStep)  _perkState._glassStepUsed = false;
     if (_perkState.killStreak > 0) { _perkState._killStreakCount = 0; _perkState._killStreakActive = false; }
+    // Per-round build perk resets
+    _perkState.overwatchKills    = 0;
+    _perkState._neuralAccelActive = false;
+    _perkState._phantomActive    = false;
+    _perkState._phantomShotReady = false;
+    _perkState._capacitorCharge  = 0;
+    _perkState._capacitorReady   = false;
+    if (_perkState.snapCharge) _perkState._snapChargeReady = true;
+    if (_perkState.jumpCharges > 1) _perkState._jumpChargesLeft = _perkState.jumpCharges;
+    if (_perkState.autonomousUnit) { _perkState._autoDroneActive = false; }
     _roundTotal = roundNum + 2;   // round 1=3, round 2=4, etc.
     _roundActive = true;
     updateRoundHUD();
@@ -2694,10 +2829,26 @@ function startRound(roundNum) {
     if (spawnCmd) {
         setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, normalCount * 400 + 600);
     }
+    // Autonomous Unit: auto-deploy drone at round start (after short delay)
+    if (_perkState.autonomousUnit && loadout.mod === 'atk_drone' && !_perkState._autoDroneActive) {
+        setTimeout(() => { if (isDeployed && _roundActive) activateAutoDrone(scene); }, 600);
+    }
 }
 
 function onEnemyKilled() {
     _roundKills++;
+    // Swarm Logic: kills while drone active reduce drone cooldown
+    if (_perkState.swarmLogic > 0 && (_perkState._droneActive || _perkState._autoDroneActive)) {
+        lastModTime -= _perkState.swarmLogic;
+    }
+    // Overwatch: kills increase drone damage for this round
+    if (_perkState.overwatchStacks > 0) {
+        _perkState.overwatchKills = (_perkState.overwatchKills || 0) + 1;
+    }
+    // Autonomous Unit: kills while drone is down reduce respawn timer
+    if (_perkState.autonomousUnit && !_perkState._autoDroneActive && _perkState._autoDroneRespawnTimer) {
+        _perkState._autoDroneRespawnTimer.delay = Math.max(1000, (_perkState._autoDroneRespawnTimer.delay || 12000) - 1000);
+    }
     _totalKills++;
     updateRoundHUD();
     // Kill Streak: count kills without taking damage
@@ -3097,18 +3248,22 @@ function applyAugment() {
             // 12% reduction on all reloads and cooldowns — baked into multipliers
             _perkState.reloadMult = (_perkState.reloadMult||1) * 0.88;
             break;
-        case 'target_painter':
-            _perkState.targetPainter = true;
-            break;
-        case 'threat_analyzer':
-            _perkState.threatAnalyzer = true;
-            break;
-        case 'reactive_plating':
-            _perkState.reactivePlating = true;
-            break;
-        case 'scrap_cannon':
-            _perkState.scrapCannon = true;
-            break;
+        case 'target_painter':    _perkState.targetPainter = true; break;
+        case 'threat_analyzer':   _perkState.threatAnalyzer = true; break;
+        case 'reactive_plating':  _perkState.reactivePlating = true; break;
+        case 'scrap_cannon':      _perkState.scrapCannon = true; break;
+        // ── Drone Commander augments ──
+        case 'drone_relay':       _perkState.droneRelay = true; break;
+        case 'combat_ai':         _perkState.combatAI = true; break;
+        case 'multi_drone':       _perkState.multiDrone = true; break;
+        // ── Ghost Assassin augments ──
+        case 'targeting_scope':   _perkState.targetingScope = true; break;
+        case 'ballistic_weave':   _perkState.ballisticWeave = true; break;
+        case 'neural_accel':      _perkState.neuralAccel = true; break;
+        // ── Inferno Wall augments ──
+        case 'fuel_injector':     _perkState.fuelInjector = true; break;
+        case 'thermal_core':      _perkState.thermalCore = true; break;
+        case 'pyromaniac_chip':   _perkState.pyromaniacChip = true; break;
     }
 }
 
@@ -3224,61 +3379,127 @@ function _buildDroneGraphic(scene, x, y, color) {
     return g;
 }
 
-function activateDrone(scene, time) {
-    if (_perkState._droneActive) return;
-    _perkState._droneActive = true;
+function _spawnDrone(scene, offsetX, offsetY, isAuto) {
     const mod = WEAPONS.atk_drone;
+    // Drone Relay: fires 40% faster, +60 HP (tracked as _droneHP)
+    const fireDelay  = _perkState.droneRelay ? Math.round(mod.droneReload * 0.60) : mod.droneReload;
+    const droneHP    = _perkState.droneRelay ? 60 : 0; // 0 = invincible timer-based (original)
+    const droneColor = isAuto ? 0x00ffcc : 0xffaa00;
 
-    // Drone starts above player
-    let droneX = player.x;
-    let droneY = player.y - 60;
-    const drone = _buildDroneGraphic(scene, droneX, droneY, 0xffaa00);
+    let droneX = (player?.x || 400) + (offsetX || 0);
+    let droneY = (player?.y || 300) + (offsetY || -60);
+    const drone = _buildDroneGraphic(scene, droneX, droneY, droneColor);
+    drone._hp = droneHP > 0 ? droneHP : 9999;
+    // Hardened Frame: drone takes less damage
+    drone._armorMult = 1 - Math.min(0.80, _perkState.droneArmor || 0);
+    // Mark so enemy bullets can damage it (for Autonomous Unit)
+    if (isAuto) drone._isAutoDrone = true;
 
-    // Smooth follow via scene update event
     const followEvent = scene.time.addEvent({ delay: 16, loop: true, callback: () => {
         if (!drone.active || !player?.active) return;
-        const targetX = player.x + Math.sin(scene.time.now * 0.002) * 25;
+        const side = (offsetX > 0) ? 1 : -1;
+        const targetX = player.x + Math.sin(scene.time.now * 0.002) * 25 + side * Math.abs(offsetX || 0) * 0.5;
         const targetY = player.y - 55 + Math.cos(scene.time.now * 0.003) * 10;
         droneX += (targetX - droneX) * 0.08;
         droneY += (targetY - droneY) * 0.08;
         drone._drawDrone(droneX, droneY);
+        // Shield indicator if low HP
+        if (isAuto && drone._hp < 20) drone._drawDrone(droneX, droneY, 0xff4400);
     }});
 
-    // Attack ticker
-    const droneTicker = scene.time.addEvent({
-        delay: mod.droneReload,
-        repeat: Math.floor(mod.droneDuration / mod.droneReload),
-        callback: () => {
-            if (!drone.active || !enemies) return;
-            let nearest = null, nearDist = Infinity;
+    const droneTicker = scene.time.addEvent({ delay: fireDelay, loop: true, callback: () => {
+        if (!drone.active || !enemies || !player?.active) return;
+        // Combat AI: prefer target you're shooting (painted/attacked)
+        let target = null;
+        if (_perkState.combatAI && _perkState._paintedEnemy?.active) {
+            target = _perkState._paintedEnemy;
+        } else {
+            let nearDist = Infinity;
             enemies.getChildren().forEach(e => {
                 if (!e.active) return;
                 const d = Phaser.Math.Distance.Between(droneX, droneY, e.x, e.y);
-                if (d < nearDist) { nearDist = d; nearest = e; }
+                if (d < nearDist) { nearDist = d; target = e; }
             });
-            if (nearest) {
-                damageEnemy(nearest, mod.droneDmg, 0);
-                showDamageText(scene, nearest.x, nearest.y, mod.droneDmg);
-                // Zap bolt
-                const zap = scene.add.graphics().setDepth(13);
-                zap.lineStyle(2, 0xffdd44, 0.9);
-                zap.lineBetween(droneX, droneY, nearest.x, nearest.y);
-                scene.tweens.add({ targets: zap, alpha: 0, duration: 100, onComplete: () => zap.destroy() });
-                // Rotor spin flash
-                drone._drawDrone(droneX, droneY, 0xffffff);
-                scene.time.delayedCall(80, () => { if (drone.active) drone._drawDrone(droneX, droneY); });
-            }
         }
-    });
+        if (target) {
+            const baseDmg = mod.droneDmg;
+            const uplink  = 1 + (_perkState.droneUplink || 0);
+            const overw   = 1 + (_perkState.overwatchStacks > 0 ? (_perkState.overwatchKills || 0) * 0.20 * _perkState.overwatchStacks : 0);
+            const dmg     = Math.round(baseDmg * uplink * overw * (_perkState.dmgMult || 1));
+            damageEnemy(target, dmg, 0);
+            showDamageText(scene, target.x, target.y, dmg);
+            const zap = scene.add.graphics().setDepth(13);
+            zap.lineStyle(2, droneColor, 0.9);
+            zap.lineBetween(droneX, droneY, target.x, target.y);
+            scene.tweens.add({ targets: zap, alpha: 0, duration: 100, onComplete: () => zap.destroy() });
+            drone._drawDrone(droneX, droneY, 0xffffff);
+            scene.time.delayedCall(80, () => { if (drone.active) drone._drawDrone(droneX, droneY); });
+        }
+    }});
 
-    scene.time.delayedCall(mod.droneDuration, () => {
-        drone.destroy();
-        droneTicker.remove();
-        followEvent.remove();
-        _perkState._droneActive = false;
-        lastModTime = scene.time.now;
-    });
-    lastModTime = time;
+    // Neural Link: reload boost while drone is active
+    if (_perkState.neuralLink > 0) {
+        _perkState.reloadMult = (_perkState.reloadMult || 1) * (1 - _perkState.neuralLink);
+    }
+
+    function destroyDrone() {
+        if (!drone.active) return;
+        drone.destroy(); droneTicker.remove(); followEvent.remove();
+        // Neural Link: remove reload boost
+        if (_perkState.neuralLink > 0) {
+            _perkState.reloadMult = (_perkState.reloadMult || 1) / (1 - _perkState.neuralLink);
+        }
+        if (isAuto) {
+            _perkState._autoDroneActive = false;
+            // Respawn after 12s (kills reduce timer via swarmLogic)
+            const respawnMs = 12000;
+            _perkState._autoDroneRespawnTimer = scene.time.delayedCall(respawnMs, () => {
+                if (isDeployed && _roundActive && !_perkState._autoDroneActive)
+                    activateAutoDrone(scene);
+            });
+            // Flash destroyed indicator
+            const flash = scene.add.circle(droneX, droneY, 20, 0xff0000, 0.6).setDepth(15);
+            scene.tweens.add({ targets: flash, alpha: 0, scale: 2, duration: 400, onComplete: () => flash.destroy() });
+        } else {
+            _perkState._droneActive = false;
+            lastModTime = scene.time.now;
+        }
+    }
+
+    // Duration-based destroy (non-auto) or HP-based (auto / drone_relay)
+    if (!isAuto) {
+        scene.time.delayedCall(mod.droneDuration, destroyDrone);
+    } else {
+        // Auto drone: destroyed by HP (bullet collisions tracked externally)
+        drone._destroyDrone = destroyDrone;
+    }
+
+    return drone;
+}
+
+function activateDrone(scene, time) {
+    if (_perkState._droneActive) return;
+    _perkState._droneActive = true;
+    if (_perkState.multiDrone) {
+        _spawnDrone(scene, -30, -55, false);
+        _spawnDrone(scene,  30, -55, false);
+    } else {
+        _spawnDrone(scene, 0, -60, false);
+    }
+    lastModTime = time || scene.time.now;
+    // Cooldown reduction from perks
+    if (_perkState.droneCdMult && _perkState.droneCdMult < 1) {
+        const base = WEAPONS.atk_drone.cooldown;
+        lastModTime -= base * (1 - _perkState.droneCdMult);
+    }
+}
+
+function activateAutoDrone(scene) {
+    if (_perkState._autoDroneActive || !isDeployed) return;
+    _perkState._autoDroneActive = true;
+    const drone = _spawnDrone(scene, 0, -60, true);
+    // Store reference so it can receive bullet damage
+    _perkState._autoDroneRef = drone;
 }
 
 function activateMissiles(scene, time) {
@@ -3436,6 +3657,24 @@ function activateJump(scene) {
             if (torso?.active) torso.setScale(_jumpBaseScale);
             isJumping = false;
             lastModTime = game.scene.scenes[0].time.now;
+            // Restore jump charges
+            if (_perkState.jumpCharges > 1) _perkState._jumpChargesLeft = _perkState.jumpCharges;
+            // Neural Accelerator: 3s 2× damage window after landing
+            if (_perkState.neuralAccel) {
+                _perkState._neuralAccelActive = true;
+                clearTimeout(_perkState._neuralAccelTimer);
+                _perkState._neuralAccelTimer = setTimeout(() => { _perkState._neuralAccelActive = false; }, 3000);
+            }
+            // Phantom Protocol: 3s window — next shot is 4× + pierce
+            if (_perkState.phantomProtocol) {
+                _perkState._phantomActive = true;
+                _perkState._phantomShotReady = true;
+                clearTimeout(_perkState._phantomTimer);
+                _perkState._phantomTimer = setTimeout(() => {
+                    _perkState._phantomActive = false;
+                    _perkState._phantomShotReady = false;
+                }, 3000);
+            }
             // ── SLAM LANDING DAMAGE ──────────────────────────────
             const slamDmg = (WEAPONS.jump.slamDmg || 40) + (_perkState.jumpSlam || 0);
             const slamR   = (loadout.leg === 'afterleg' && _perkState.legSystemActive)
@@ -3449,8 +3688,20 @@ function activateJump(scene) {
             enemies.getChildren().forEach(e => {
                 if (!e.active) return;
                 const dist = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
-                if (dist < slamR) damageEnemy(scene, e, slamDmg * (1 - dist/slamR));
+                if (dist < slamR) damageEnemy(e, slamDmg * (1 - dist/slamR));
             });
+            // Kinetic Landing: bonus damage to enemies within 80px
+            if (_perkState.kineticLanding > 0) {
+                enemies.getChildren().forEach(e => {
+                    if (!e.active) return;
+                    const kd = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+                    if (kd < 80) {
+                        const kDmg = Math.round((40 + Math.min(80, jumpSpd / 15)) * _perkState.kineticLanding);
+                        damageEnemy(e, kDmg);
+                        showDamageText(scene, e.x, e.y - 20, kDmg);
+                    }
+                });
+            }
         }
     });
 }
@@ -3458,6 +3709,21 @@ function activateJump(scene) {
 function activateShield(scene) {
     sndShieldActivate();
     isShieldActive = true;
+    // Meltdown Core: spike 60 AoE at 250px on activation
+    if (_perkState.meltdownCore) {
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            const _mds = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+            if (_mds < 250) {
+                damageEnemy(e, 60, 0, true);
+                showDamageText(scene, e.x, e.y, 60);
+            }
+        });
+        const ring = scene.add.circle(player.x, player.y, 10, 0xff4400, 0.3).setStrokeStyle(2, 0xff6600).setDepth(12);
+        scene.tweens.add({ targets: ring, radius: 250, alpha: 0, duration: 400, onComplete: () => ring.destroy() });
+    }
+    // Thorns Protocol: reflect damage to attackers while shield is up — handled in processPlayerDamage
+    // Capacitor Armor: tracked in processPlayerDamage
     scene.time.delayedCall(WEAPONS.shield.shieldTime, () => {
         isShieldActive = false;
         sndShieldDeactivate();
@@ -4712,8 +4978,41 @@ function fire(scene, side) {
         _perkState._mgShotCount = (_perkState._mgShotCount || 0) + 1;
         if (_perkState._mgShotCount % 5 === 0) _mgTracerBonus = 1.5;
     }
-    const _effectiveDmg = Math.round((weapon.dmg || 0) * (_perkState.dmgMult || 1) * _braceDmgMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus);
+    // Build-specific multipliers
+    const _neuralMult  = (_perkState._neuralAccelActive && _perkState.neuralAccel) ? 2.0 : 1.0;
+    const _phantomMult = _perkState._phantomShotReady ? 4.0 : 1.0;
+    // Targeting Scope: SR/RAIL +15% per 200px to cursor
+    let _scopeMult = 1.0;
+    if (_perkState.targetingScope && (wKey === 'sr' || wKey === 'rail')) {
+        const _tsDist = Phaser.Math.Distance.Between(torso.x, torso.y,
+            scene.input.activePointer.worldX, scene.input.activePointer.worldY);
+        _scopeMult = 1 + (_tsDist / 200) * 0.15;
+    }
+    // Penetrator: SR +20% per 200px
+    let _penetratorMult = 1.0;
+    if (_perkState.penetrator > 0 && wKey === 'sr') {
+        const _pDist = Phaser.Math.Distance.Between(torso.x, torso.y,
+            scene.input.activePointer.worldX, scene.input.activePointer.worldY);
+        _penetratorMult = 1 + (_pDist / 200) * _perkState.penetrator;
+    }
+    // Consume Phantom shot
+    if (_perkState._phantomShotReady) {
+        _perkState._phantomShotReady = false;
+        _perkState._phantomActive = false;
+        clearTimeout(_perkState._phantomTimer);
+    }
+    // Consume Snap Charge
+    if (wKey === 'rail' && _perkState._snapChargeReady) {
+        _perkState._snapChargeReady = false;
+    }
+    const _capBonus = (_perkState._capacitorReady) ? 1.25 : 1.0;
+    if (_perkState._capacitorReady) _perkState._capacitorReady = false;
+    const _effectiveDmg = Math.round((weapon.dmg || 0) * (_perkState.dmgMult || 1) * _braceDmgMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus);
     const _wEff = Object.assign({}, weapon, { dmg: _effectiveDmg });
+    // Phantom: mark all bullets from this shot as piercing
+    if (_phantomMult > 1) _wEff._phantomPierce = true;
+    // Ballistic Weave: bullets ignore 20% of shield
+    if (_perkState.ballisticWeave) _wEff._shieldPierce = 0.20;
     switch (wKey) {
         case 'gl':    fireGL(scene, _wEff, armOx, armOy, aimAngle);   break;
         case 'rl':    fireRL(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
@@ -4737,9 +5036,11 @@ function fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
         scene.input.activePointer.worldY - torso.y,
         scene.input.activePointer.worldX - torso.x
     );
-    const maxRange = weapon.range || 350;
+    const _fuelBoost = _perkState.fuelInjector ? 1.40 : 1.0;
+    const maxRange = (weapon.range || 350) * (1 + (_perkState.fthRange||0)) * _fuelBoost;
+    const coneSteps = _perkState.fuelInjector ? 4 : 2; // wider cone = more particles
     const dmg = Math.round(weapon.dmg * (_perkState.dmgMult||1));
-    for (let i = -2; i <= 2; i++) {
+    for (let i = -coneSteps; i <= coneSteps; i++) {
         const a = angle + i * 0.055 + (Math.random()-0.5)*0.06;
         const bx = armOx + Math.cos(a) * barrelDist;
         const by = armOy + Math.sin(a) * barrelDist;
@@ -4754,7 +5055,24 @@ function fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
         const startX = bx, startY = by;
         const lifeMs = (maxRange / weapon.speed) * 1000;
         scene.tweens.add({ targets: b, alpha: 0.3, duration: lifeMs });
-        scene.time.delayedCall(lifeMs, () => { if (b?.active) b.destroy(); });
+        scene.time.delayedCall(lifeMs, () => {
+            if (b?.active) {
+                // Napalm Strike: leave burning patch at final position
+                if (_perkState.napalmStrike && i === 0) {
+                    const patch = scene.add.circle(b.x, b.y, 22, 0xff4400, 0.35).setDepth(10);
+                    scene.tweens.add({ targets: patch, alpha: 0, duration: 3000, onComplete: () => patch.destroy() });
+                    const _patchTimer = scene.time.addEvent({ delay: 400, repeat: 7, callback: () => {
+                        if (!isDeployed) return;
+                        enemies.getChildren().forEach(e => {
+                            if (!e.active) return;
+                            const pd = Phaser.Math.Distance.Between(b.x, b.y, e.x, e.y);
+                            if (pd < 30) damageEnemy(e, 8, 0);
+                        });
+                    }});
+                }
+                b.destroy();
+            }
+        });
     }
     sndFire('fth');
     const reloadTime = Math.round(weapon.reload * (_perkState.reloadMult||1));
@@ -5001,7 +5319,35 @@ function fireStandard(scene, wKey, weapon, barrelDist, armOx, armOy, aimAngle) {
 // ================================================================
 
 function processPlayerDamage(amt, bulletAngle, explosive = false) {
-    if (!player?.active || isShieldActive || player.isProcessingDamage) return;
+    if (!player?.active || player.isProcessingDamage) return;
+    // Thorns Protocol: reflect damage to attacker while shield/barrier is active
+    if (isShieldActive) {
+        if (_perkState.thornsProtocol > 0) {
+            const scene = game.scene.scenes[0];
+            if (scene && enemies) {
+                // Reflect to nearest enemy (proxy for attacker)
+                let _thornTarget = null, _thornDist = Infinity;
+                enemies.getChildren().forEach(e => {
+                    if (!e.active) return;
+                    const d = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+                    if (d < _thornDist) { _thornDist = d; _thornTarget = e; }
+                });
+                if (_thornTarget) {
+                    damageEnemy(_thornTarget, _perkState.thornsProtocol, 0);
+                    showDamageText(scene, _thornTarget.x, _thornTarget.y, _perkState.thornsProtocol);
+                }
+            }
+        }
+        // Capacitor Armor: charge up absorbed shield damage
+        if (_perkState.capacitorArmor > 0) {
+            _perkState._capacitorCharge = (_perkState._capacitorCharge || 0) + amt;
+            if (_perkState._capacitorCharge >= _perkState.capacitorArmor) {
+                _perkState._capacitorCharge = 0;
+                _perkState._capacitorReady = true; // next shot +25% (applied in _effectiveDmg via flag)
+            }
+        }
+        return;
+    }
     // HEAVY passive: 15% damage reduction always active
     if (loadout.chassis === 'heavy') amt = amt * (1 - (CHASSIS.heavy.passiveDR || 0.15));
     // Scrap Shield: absorb incoming damage after limb destruction
@@ -5389,6 +5735,49 @@ function damageEnemy(e, amt, bulletAngle, explosive = false) {
             sndEnemyDeath(false);
             scene.cameras.main.shake(250, 0.008);
             createExplosion(scene, e.x, e.y, 60, 0);
+            // Pyromaniac Chip: spread fire to nearest non-burning enemy on death
+            if (_perkState.pyromaniacChip && e._burning) {
+                let _nearestUnburned = null, _nDist = Infinity;
+                enemies.getChildren().forEach(e2 => {
+                    if (!e2.active || e2 === e || e2._burning) return;
+                    const d2 = Phaser.Math.Distance.Between(e.x, e.y, e2.x, e2.y);
+                    if (d2 < 300 && d2 < _nDist) { _nDist = d2; _nearestUnburned = e2; }
+                });
+                if (_nearestUnburned) {
+                    _nearestUnburned._burning = true;
+                    let _fbt = 0;
+                    const _fbTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
+                        if (!_nearestUnburned.active || _fbt >= 5) { _nearestUnburned._burning = false; _fbTimer.remove(); return; }
+                        damageEnemy(_nearestUnburned, 5, 0);
+                        _fbt++;
+                        const fs = scene.add.circle(_nearestUnburned.x+(Math.random()-0.5)*16, _nearestUnburned.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
+                        scene.tweens.add({ targets: fs, alpha:0, y:fs.y-8, duration:300, onComplete:()=>fs.destroy() });
+                    }});
+                    // Draw fire arc between enemies
+                    const fireArc = scene.add.graphics().setDepth(12);
+                    fireArc.lineStyle(3, 0xff6600, 0.8);
+                    fireArc.lineBetween(e.x, e.y, _nearestUnburned.x, _nearestUnburned.y);
+                    scene.tweens.add({ targets: fireArc, alpha: 0, duration: 300, onComplete: () => fireArc.destroy() });
+                }
+            }
+            // Inferno perk: burning enemy spreads fire on death (same as above but from perk not augment)
+            if (_perkState.inferno && e._burning && !_perkState.pyromaniacChip) {
+                let _iTarget = null, _iDist = Infinity;
+                enemies.getChildren().forEach(e2 => {
+                    if (!e2.active || e2 === e || e2._burning) return;
+                    const id2 = Phaser.Math.Distance.Between(e.x, e.y, e2.x, e2.y);
+                    if (id2 < 300 && id2 < _iDist) { _iDist = id2; _iTarget = e2; }
+                });
+                if (_iTarget) {
+                    _iTarget._burning = true;
+                    let _ibt = 0;
+                    const _ibTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
+                        if (!_iTarget.active || _ibt >= 5) { _iTarget._burning = false; _ibTimer.remove(); return; }
+                        damageEnemy(_iTarget, 5, 0);
+                        _ibt++;
+                    }});
+                }
+            }
             // Reactor Core: GL/RL kills spawn secondary explosion
             if (_perkState.reactorCore && e.lastDamageWasExplosive) {
                 scene.time.delayedCall(150, () => createExplosion(scene, e.x + Phaser.Math.Between(-40,40), e.y + Phaser.Math.Between(-40,40), 45, 25));
@@ -5925,11 +6314,20 @@ const MOD_OPTIONS = [
 
 const AUG_OPTIONS = [
     { key:'none',             label:'NONE',             weight:0   },
-    { key:'target_painter',   label:'TARGET PAINTER',   weight:35  },
-    { key:'threat_analyzer',  label:'THREAT ANALYZER',  weight:35  },
-    { key:'overclock_cpu',    label:'OVERCLOCK CPU',    weight:50  },
-    { key:'reactive_plating', label:'REACTIVE PLATING', weight:50  },
-    { key:'scrap_cannon',     label:'SCRAP CANNON',     weight:65 },
+    { key:'target_painter',   label:'TARGET PAINTER',   weight:20  },
+    { key:'threat_analyzer',  label:'THREAT ANALYZER',  weight:20  },
+    { key:'ballistic_weave',  label:'BALLISTIC WEAVE',  weight:25  },
+    { key:'combat_ai',        label:'COMBAT AI',        weight:25  },
+    { key:'thermal_core',     label:'THERMAL CORE',     weight:25  },
+    { key:'overclock_cpu',    label:'OVERCLOCK CPU',    weight:30  },
+    { key:'drone_relay',      label:'DRONE RELAY',      weight:30  },
+    { key:'fuel_injector',    label:'FUEL INJECTOR',    weight:30  },
+    { key:'targeting_scope',  label:'TARGETING SCOPE',  weight:30  },
+    { key:'reactive_plating', label:'REACTIVE PLATING', weight:30  },
+    { key:'neural_accel',     label:'NEURAL ACCEL.',    weight:35  },
+    { key:'pyromaniac_chip',  label:'PYRO CHIP',        weight:35  },
+    { key:'scrap_cannon',     label:'SCRAP CANNON',     weight:40  },
+    { key:'multi_drone',      label:'MULTI-DRONE',      weight:50  },
 ];
 
 const LEG_OPTIONS = [
@@ -5979,6 +6377,15 @@ const SLOT_DESCS = {
     overclock_cpu:    { title:'OVERCLOCK CPU', desc:'Reduces all weapon reload times and mod cooldowns by 12%. Applied passively on deploy.' },
     reactive_plating: { title:'REACTIVE PLATING', desc:'Each hit you receive adds a 5% damage reduction stack, up to 5 stacks max. Resets at round start.' },
     scrap_cannon:     { title:'SCRAP CANNON', desc:'When an enemy part is destroyed, it explodes for 30 AoE damage to nearby enemies.' },
+    drone_relay:      { title:'DRONE RELAY',      desc:'Attack Drone fires 40% faster and has +60 bonus HP before being destroyed.' },
+    combat_ai:        { title:'COMBAT AI',         desc:'Drone focuses your current painted/attacked target for coordinated fire.' },
+    multi_drone:      { title:'MULTI-DRONE',       desc:'Deploy 2 attack drones simultaneously instead of 1. High weight cost.' },
+    targeting_scope:  { title:'TARGETING SCOPE',   desc:'SR and RAIL gain +15% damage per 200px distance to the target.' },
+    ballistic_weave:  { title:'BALLISTIC WEAVE',   desc:'All bullets travel 10% faster and ignore 20% of enemy shield absorption.' },
+    neural_accel:     { title:'NEURAL ACCEL.',     desc:'For 3 seconds after landing from JUMP, all weapons deal 2x damage.' },
+    fuel_injector:    { title:'FUEL INJECTOR',     desc:'FTH range +40%, flame cone width +30%. More particles per burst.' },
+    thermal_core:     { title:'THERMAL CORE',      desc:'FTH hits always ignite enemies (100% chance). Ignite duration +1s.' },
+    pyromaniac_chip:  { title:'PYROMANIAC CHIP',   desc:'Ignited enemies spread fire to nearest non-burning enemy within 300px on death.' },
     hydraulic_boost:  { title:'HYDRO BOOST', desc:'+20% movement speed. Legs take 15% less damage. Disabled if legs are destroyed.' },
     gyro_stabilizer:  { title:'GYRO STABILIZER', desc:'Eliminates the speed penalty from damaged legs. Improves aim stability. Disabled if legs destroyed.' },
     mag_anchors:      { title:'MAG ANCHORS', desc:'While stationary: take 20% less damage and deal 15% more damage. Rewards positional play.' },
@@ -6547,7 +6954,7 @@ function respawnMech() {
     if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
     _resetHUDState();
     _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
-    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false };
+    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false };
     _pickedPerks = [];
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     _roundClearing = false;
@@ -6854,7 +7261,7 @@ function goToMainMenu() {
     _cleanupGame();
     // Reset round state
     _round = 1; _roundKills = 0; _totalKills = 0; _roundActive = false;
-    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false };
+    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false };
     _pickedPerks = [];
     _lastOfferedPerks = [];
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
@@ -6917,7 +7324,52 @@ function returnToHangar() {
     startHangarGrid();
     // Reset HUD to clean state
     _resetHUDState();
-    // DO NOT reset loadout — player keeps their build when returning to hangar
+    // ── Full game reset — returning to hangar starts a new game ──
+    _round      = 1;
+    _roundKills = 0;
+    _roundTotal = 0;
+    _roundActive  = false;
+    _roundClearing = false;
+    _pickedPerks  = [];
+    _perksEarned  = 0;
+    _shotsFired   = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0;
+    _lastOfferedPerks = [];
+    // Full perk state reset (same object shape as deploy reset)
+    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1,
+        ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1,
+        armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0,
+        empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1,
+        flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false,
+        adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false,
+        reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false,
+        coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0,
+        rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1,
+        _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0,
+        _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false,
+        _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0,
+        targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false,
+        reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false,
+        railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0,
+        _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0,
+        hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0,
+        _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0,
+        _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0,
+        _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0,
+        titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0,
+        mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false,
+        groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false,
+        rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false,
+        anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false,
+        platingMaxStacks:5, scrapChain:false, gyroCounter:false,
+        droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0,
+        overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false,
+        _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1,
+        _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false,
+        piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false,
+        _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0,
+        pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0,
+        _capacitorCharge:0, meltdownCore:false, fthNapalm:false };
+    // Keep loadout — player keeps their build configuration
     // Ensure old map cover objects are cleared (they'll regenerate on next deploy)
     try { if (coverObjects) coverObjects.clear(true, true); } catch(e) {}
     refreshGarage();
