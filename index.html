@@ -1842,8 +1842,11 @@ function handleEnemyAI(scene, time) {
             }
 
             // Weapon-driven fire rate — weapon.reload scaled by behavior
-            const fireRange  = enemy.behavior === 'sniper' ? 1000 : 750;
-            const wepReload  = WEAPONS[enemy.loadout?.primary || 'smg']?.reload || 300;
+            const _pWep = enemy.loadout?.primary || 'smg';
+            // Close-range weapons need tighter engagement
+            const fireRange  = (_pWep === 'fth' || _pWep === 'sg') ? 320
+                             : enemy.behavior === 'sniper' ? 1000 : 750;
+            const wepReload  = WEAPONS[_pWep]?.reload || 300;
             const reloadMult = enemy.behavior === 'sniper' ? 1.4
                              : enemy.behavior === 'rusher' ? 0.85
                              : enemy.behavior === 'flanker' ? 1.0 : 1.1;
@@ -1858,9 +1861,12 @@ function handleEnemyAI(scene, time) {
                 const secW    = WEAPONS[secKey];
                 const secCd   = (secW?.reload || 3500) * 1.2;
                 // Per-weapon range gates: GL and EMP only fire when player is close enough
-                const secRange = secKey === 'emp' ? WEAPONS.emp.radius
-                               : secKey === 'gl'  ? 700
-                               : fireRange;
+                const secRange = secKey === 'emp'  ? WEAPONS.emp.radius
+                             : secKey === 'gl'   ? 700
+                             : secKey === 'fth'  ? 320
+                             : secKey === 'rail' ? 1200
+                             : secKey === 'sr'   ? 1000
+                             : fireRange;
                 if (dist < secRange && time > enemy.lastSecTime + secCd) {
                     enemyFireSecondary(scene, enemy, secKey, time);
                     enemy.lastSecTime = time;
@@ -3563,7 +3569,6 @@ function activateEnemyMod(scene, enemy, mod, time) {
         }
         case 'emp': {
             sndEMP();
-            // EMP blast centered on enemy — stuns the player briefly
             const ring = scene.add.circle(enemy.x, enemy.y, 10, 0xff6600, 0.2)
                 .setStrokeStyle(2, 0xff6600).setDepth(12);
             scene.tweens.add({ targets: ring, radius: WEAPONS.emp.radius, alpha: 0,
@@ -3571,12 +3576,71 @@ function activateEnemyMod(scene, enemy, mod, time) {
                 onComplete: () => { ring.destroy(); enemy.isModActive = false; }
             });
             if (player && Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y) < WEAPONS.emp.radius) {
-                // Slow player briefly
-                const origKeys = keys;
                 scene.cameras.main.shake(300, 0.005);
                 player.body.setVelocity(0, 0);
-                scene.time.delayedCall(WEAPONS.emp.stunTime * 0.5, () => { /* player recovers */ });
             }
+            enemy.lastModTime = scene.time.now;
+            break;
+        }
+        case 'repair': {
+            // Self-repair: heal most-damaged component
+            if (enemy.comp) {
+                let worst = null, worstPct = Infinity;
+                Object.entries(enemy.comp).forEach(([k,c]) => {
+                    const pct = c.hp / c.max;
+                    if (pct < worstPct) { worstPct = pct; worst = k; }
+                });
+                if (worst) {
+                    const heal = Math.round(enemy.comp[worst].max * 0.30);
+                    for (let t = 0; t < 4; t++) {
+                        scene.time.delayedCall(t * 400, () => {
+                            if (!enemy.active) return;
+                            enemy.comp[worst].hp = Math.min(enemy.comp[worst].max, enemy.comp[worst].hp + heal/4);
+                            enemy.health = Object.values(enemy.comp).reduce((s,c)=>s+c.hp, 0);
+                            const healTxt = scene.add.text(enemy.x, enemy.y - 28 - t*10, `+${Math.round(heal/4)}`, {
+                                font: 'bold 11px Courier New', fill: '#00ff88', stroke:'#000', strokeThickness:2
+                            }).setOrigin(0.5).setDepth(20);
+                            scene.tweens.add({ targets: healTxt, y: healTxt.y - 18, alpha: 0, duration: 600, onComplete: () => healTxt.destroy() });
+                        });
+                    }
+                }
+            }
+            scene.time.delayedCall(WEAPONS.repair.cooldown * 0.4, () => { enemy.isModActive = false; });
+            enemy.lastModTime = scene.time.now;
+            break;
+        }
+        case 'missile': case 'atk_drone': {
+            // Missile/drone: fire 3 fast projectiles at player
+            const mCount = mod === 'missile' ? 3 : 2;
+            for (let i = 0; i < mCount; i++) {
+                scene.time.delayedCall(i * 250, () => {
+                    if (!enemy.active || !player?.active) return;
+                    const mAng = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y) + (Math.random()-0.5)*0.3;
+                    const m = scene.add.circle(enemy.x, enemy.y, 5, 0xff4400).setDepth(14);
+                    scene.physics.add.existing(m);
+                    m.body.setAllowGravity(false);
+                    m.damageValue = WEAPONS.missile?.missileDmg || 55;
+                    enemyBullets.add(m);
+                    scene.physics.velocityFromRotation(mAng, 900, m.body.velocity);
+                    scene.time.delayedCall(1800, () => { if (m.active) m.destroy(); });
+                });
+            }
+            scene.time.delayedCall(1500, () => { enemy.isModActive = false; });
+            enemy.lastModTime = scene.time.now;
+            break;
+        }
+        case 'decoy': {
+            // Decoy: enemy briefly stands still with visual flash, then moves again
+            const origSpeed = enemy.speed;
+            enemy.speed = 0;
+            const flash = scene.add.circle(enemy.x, enemy.y, 40, 0x00ffff, 0.25).setDepth(9);
+            scene.tweens.add({ targets: flash, alpha: 0, scaleX: 2, scaleY: 2, duration: 600,
+                onComplete: () => flash.destroy() });
+            scene.time.delayedCall(WEAPONS.decoy.decoyDuration * 0.5, () => {
+                enemy.speed = origSpeed;
+                enemy.isModActive = false;
+            });
+            enemy.lastModTime = scene.time.now;
             break;
         }
     }
@@ -3962,57 +4026,99 @@ const ENEMY_COLORS = {
 const COMMANDER_COLORS = { body: 0x1a1000, head: 0xddaa00, eye: 0xff8800 };
 
 // Primary weapon keys available to enemies (excludes none)
-const ENEMY_PRIMARY   = ['smg', 'mg', 'br', 'sg', 'hr'];
-const ENEMY_SECONDARY = ['none', 'none', 'sr', 'gl', 'rl', 'plsm']; // weighted toward none
-const ENEMY_MODS      = ['none', 'none', 'none', 'shield', 'rage', 'emp'];
+const ENEMY_PRIMARY   = ['smg', 'mg', 'br', 'sg', 'hr', 'fth'];
+// All weapons that can go in either arm slot
+const ENEMY_ARM_WEAPONS = ['smg','mg','br','sg','hr','fth','sr','gl','rl','plsm','rail'];
+// Two-handed weapons (medium/heavy only)
+const ENEMY_2H_WEAPONS  = ['siege','chain'];
+// ENEMY_SECONDARY and ENEMY_MODS are now handled inline in randomEnemyLoadout (full parity with player)
 
 function randomEnemyLoadout() {
     const chassis   = Phaser.Math.RND.pick(['light', 'medium', 'heavy']);
     const maxWeight = CHASSIS[chassis].max;
+    const rnd = Phaser.Math.RND;
 
-    function weightedPick(keys, source) {
-        const pool = [];
-        keys.forEach(k => {
-            const w = source[k]?.weight || WEAPONS[k]?.weight || 1;
-            const tickets = Math.max(1, Math.round(w / 20));
-            for (let i = 0; i < tickets; i++) pool.push(k);
-        });
-        return Phaser.Math.RND.pick(pool);
+    // Weight budget consumed so far
+    let remain = maxWeight;
+
+    // ── Chassis identity restrictions ──
+    // Heavy: no JUMP mod, no AFTERLEG leg — same as player
+    // Light: no two-handed weapons
+    const canJump     = chassis !== 'heavy';
+    const can2H       = chassis !== 'light';
+
+    // ── Left arm (primary weapon) ──
+    // Chance to pick a two-handed weapon (medium/heavy only)
+    let L = 'none', R = 'none';
+    const use2H = can2H && Math.random() < 0.10; // 10% chance of two-handed
+    if (use2H) {
+        const twoHandOpts = ENEMY_2H_WEAPONS.filter(w => (WEAPONS[w]?.weight||999) <= remain);
+        if (twoHandOpts.length > 0) {
+            L = rnd.pick(twoHandOpts);
+            R = L; // two-handed locks both
+            remain -= WEAPONS[L].weight;
+        }
+    }
+    if (!use2H || L === 'none') {
+        // Pick L arm weapon from full arm weapon list
+        const lPool = ENEMY_ARM_WEAPONS.filter(w => (WEAPONS[w]?.weight||999) <= remain);
+        L = lPool.length > 0 ? rnd.pick(lPool) : 'none';
+        remain -= WEAPONS[L]?.weight || 0;
+
+        // ── Right arm ── (75% chance if budget allows)
+        if (Math.random() < 0.75 && !WEAPONS[L]?.twoHanded) {
+            // 20% chance to dual-wield same weapon (if budget allows)
+            const canDual = L !== 'none' && (WEAPONS[L]?.weight||0) <= remain;
+            if (canDual && Math.random() < 0.20) {
+                R = L;
+                remain -= WEAPONS[R].weight;
+            } else {
+                const rPool = ENEMY_ARM_WEAPONS.filter(w => (WEAPONS[w]?.weight||999) <= remain);
+                R = rPool.length > 0 ? rnd.pick(rPool) : 'none';
+                remain -= WEAPONS[R]?.weight || 0;
+            }
+        }
     }
 
-    const primaryOptions = ENEMY_PRIMARY.filter(w => WEAPONS[w].weight <= maxWeight);
-    const primary = weightedPick(primaryOptions, WEAPONS);
-    let remain = maxWeight - (WEAPONS[primary].weight || 0);
-
-    const secReal = ['sr','gl','rl','plsm','rail'].filter(w => (WEAPONS[w]?.weight||999) <= remain);
-    const secondary = (secReal.length > 0 && Math.random() < 0.70)
-        ? weightedPick(secReal, WEAPONS) : 'none';
-    remain -= WEAPONS[secondary]?.weight || 0;
-
-    const modReal = ['barrier','rage','emp','repair','atk_drone','missile','decoy','jump']
-        .filter(m => (WEAPONS[m]?.weight||999) <= remain);
-    const mod = (modReal.length > 0 && Math.random() < 0.65)
-        ? weightedPick(modReal, WEAPONS) : 'none';
+    // ── Mod (CORE slot) ──
+    const allMods = ['barrier','shield','rage','emp','repair','atk_drone','missile','decoy','jump'];
+    const modPool = allMods.filter(m => {
+        if (!canJump && m === 'jump') return false;
+        return (WEAPONS[m]?.weight||999) <= remain;
+    });
+    const mod = modPool.length > 0 && Math.random() < 0.70
+        ? rnd.pick(modPool) : 'none';
     remain -= WEAPONS[mod]?.weight || 0;
 
-    const shldReal = ['light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield']
-        .filter(s => (SHIELD_SYSTEMS[s]?.weight||999) <= remain);
-    const shld = (shldReal.length > 0 && Math.random() < 0.55)
-        ? Phaser.Math.RND.pick(shldReal) : 'none';
+    // ── Shield ──
+    const allShields = ['light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield'];
+    const shldPool = allShields.filter(s => (SHIELD_SYSTEMS[s]?.weight||999) <= remain);
+    const shld = shldPool.length > 0 && Math.random() < 0.55
+        ? rnd.pick(shldPool) : 'none';
     remain -= SHIELD_SYSTEMS[shld]?.weight || 0;
 
-    const legReal = ['hydraulic_boost','gyro_stabilizer','mine_layer','mag_anchors','afterleg']
-        .filter(l => (LEG_SYSTEMS[l]?.weight||999) <= remain);
-    const leg = (legReal.length > 0 && Math.random() < 0.50)
-        ? Phaser.Math.RND.pick(legReal) : 'none';
+    // ── Leg system ──
+    const allLegs = ['hydraulic_boost','gyro_stabilizer','mag_anchors','mine_layer','afterleg'];
+    const legPool = allLegs.filter(l => {
+        if (chassis === 'heavy' && l === 'afterleg') return false;
+        return (LEG_SYSTEMS[l]?.weight||999) <= remain;
+    });
+    const leg = legPool.length > 0 && Math.random() < 0.55
+        ? rnd.pick(legPool) : 'none';
     remain -= LEG_SYSTEMS[leg]?.weight || 0;
 
-    const augReal = ['target_painter','threat_analyzer','overclock_cpu','reactive_plating','scrap_cannon']
-        .filter(a => (AUGMENTS[a]?.weight||999) <= remain);
-    const aug = (augReal.length > 0 && Math.random() < 0.40)
-        ? Phaser.Math.RND.pick(augReal) : 'none';
+    // ── Augment ──
+    const allAugs = ['target_painter','threat_analyzer','overclock_cpu','reactive_plating','scrap_cannon'];
+    const augPool = allAugs.filter(a => (AUGMENTS[a]?.weight||999) <= remain);
+    const aug = augPool.length > 0 && Math.random() < 0.45
+        ? rnd.pick(augPool) : 'none';
 
-    return { chassis, primary, secondary, mod, shld, leg, aug };
+    // legacy fields — AI code still reads .primary and .secondary for firing
+    // Map: primary = L weapon (or R if L is none), secondary = R if different from L
+    const primary   = L !== 'none' ? L : R !== 'none' ? R : 'smg';
+    const secondary = (!WEAPONS[L]?.twoHanded && R !== 'none' && R !== L) ? R : 'none';
+
+    return { chassis, L, R, primary, secondary, mod, shld, leg, aug };
 }
 
 function spawnEnemy(scene) {
@@ -4081,16 +4187,23 @@ function spawnEnemy(scene) {
     e.shield    = _eShldSys.maxShield;
     e._shieldRegenRate  = _eShldSys.regenRate;
     e._shieldRegenDelay = _eShldSys.regenDelay;
-    e._shieldAbsorb     = (loadoutE.shld === 'reactive_shield') ? 0.65 : 0.50;
+    // Medium chassis: 60% shield absorb (same as player rule)
+    const _eBaseAbsorb = loadoutE.chassis === 'medium' ? (CHASSIS.medium.shieldAbsorb || 0.60) : 0.50;
+    e._shieldAbsorb     = (loadoutE.shld === 'reactive_shield') ? 0.65 : _eBaseAbsorb;
     e._lastDamageTime   = -99999;
     // Leg system
     e._legSystemActive = true;
     if (loadoutE.leg === 'hydraulic_boost') e.speed = Math.round((e.speed||chassisS.spd) * 1.20);
     if (loadoutE.leg === 'mine_layer') e._mineTimer = 0;
     if (loadoutE.leg === 'mag_anchors') e._magAnchorsActive = false;
+    // Chassis identity passives
+    // Heavy: 15% passive DR (applied in damageEnemy via e._passiveDR)
+    e._passiveDR = loadoutE.chassis === 'heavy' ? (CHASSIS.heavy.passiveDR || 0.15) : 0;
+    // Light: +20% reload speed (stored as multiplier < 1)
+    const _eChassisReload = loadoutE.chassis === 'light' ? (CHASSIS.light.passiveReloadBonus || 0.80) : 1.0;
     // Augment
     e._augState = {};
-    e._reloadMult = (loadoutE.aug === 'overclock_cpu') ? 0.88 : 1.0;
+    e._reloadMult = ((loadoutE.aug === 'overclock_cpu') ? 0.88 : 1.0) * _eChassisReload;
     if (loadoutE.aug === 'reactive_plating') e._augState.reactivePlatingStacks = 0;
     if (loadoutE.aug === 'scrap_cannon')     e._augState.scrapCannon = true;
 
@@ -4172,6 +4285,12 @@ function spawnCommander(scene) {
     e.lastModTime = -_mc * 0.1;
     e.isModActive = false;
 
+    // Commander is always heavy — apply chassis identity
+    e._passiveDR   = CHASSIS.heavy.passiveDR || 0.15;
+    e._reloadMult  = (loadoutE.aug === 'overclock_cpu') ? 0.88 : 1.0;
+    e._augState    = {};
+    if (loadoutE.aug === 'reactive_plating') e._augState.reactivePlatingStacks = 0;
+    if (loadoutE.aug === 'scrap_cannon')     e._augState.scrapCannon = true;
     e.fxFootTimer = 0; e.fxFootSide = 1;
     e.fxShockTimer = 0;
     e.fxLastX = x; e.fxLastY = y;
@@ -4189,23 +4308,21 @@ function enemyFire(scene, enemy, time) {
     const weapon = WEAPONS[wKey];
     if (!weapon) return;
 
-    // Reload timing handled by AI loop — no second gate needed
     sndEnemyFire(wKey);
     const _fireDecoy = enemy._decoyTarget?.active !== false && enemy._decoyTarget;
     const _ftx = _fireDecoy ? enemy._decoyTarget.x : player.x;
     const _fty = _fireDecoy ? enemy._decoyTarget.y : player.y;
     const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, _ftx, _fty);
-
-    // Bullet size and speed match weapon definition, same as player
+    const ex = enemy.x, ey = enemy.y;
     const bSize  = weapon.bulletSize || 6;
     const bSpeed = weapon.speed || 600;
     const dmg    = weapon.dmg || 15;
 
+    // Dispatch by weapon type — mirrors player fire functions
     if (wKey === 'sg') {
-        // Shotgun: spray pellets
         for (let i = 0; i < (weapon.pellets || 5); i++) {
             const spread = (Math.random() - 0.5) * 0.35;
-            const b = scene.add.circle(enemy.x, enemy.y, bSize, 0xff4400);
+            const b = scene.add.circle(ex, ey, bSize, 0xff4400);
             scene.physics.add.existing(b);
             b.body.setAllowGravity(false);
             b.damageValue = dmg;
@@ -4213,14 +4330,143 @@ function enemyFire(scene, enemy, time) {
             scene.physics.velocityFromRotation(angle + spread, bSpeed, b.body.velocity);
             scene.time.delayedCall(1500, () => { if (b.active) b.destroy(); });
         }
+    } else if (wKey === 'fth') {
+        // Flamethrower: short-range cone of flame particles
+        const coneCount = 6;
+        for (let i = 0; i < coneCount; i++) {
+            const spread = (Math.random() - 0.5) * 0.55;
+            const b = scene.add.circle(ex, ey, bSize, 0xff6600).setAlpha(0.85);
+            scene.physics.add.existing(b);
+            b.body.setAllowGravity(false);
+            b.damageValue = dmg;
+            enemyBullets.add(b);
+            scene.physics.velocityFromRotation(angle + spread, bSpeed * (0.8 + Math.random() * 0.4), b.body.velocity);
+            const ttl = 400 + Math.random() * 200;
+            scene.tweens.add({ targets: b, alpha: 0, scaleX: 1.8, scaleY: 1.8, duration: ttl,
+                onComplete: () => { if (b.active) b.destroy(); } });
+            scene.time.delayedCall(ttl, () => { if (b.active) b.destroy(); });
+        }
+    } else if (wKey === 'sr') {
+        // Sniper: fast pierce tracer
+        const b = scene.add.rectangle(ex, ey, 50, 6, 0xffffff)
+            .setRotation(angle).setStrokeStyle(1, 0xff6600).setDepth(14);
+        scene.physics.add.existing(b);
+        b.body.setAllowGravity(false);
+        b.damageValue = dmg;
+        b.piercing = true;
+        enemyBullets.add(b);
+        scene.physics.velocityFromRotation(angle, weapon.speed, b.body.velocity);
+        scene.time.delayedCall(2500, () => { if (b.active) b.destroy(); });
+    } else if (wKey === 'gl') {
+        // Grenade: lobs toward player, explodes on stop
+        const gDist = Phaser.Math.Distance.Between(ex, ey, player.x, player.y);
+        const ball = scene.add.circle(ex, ey, 10, 0xff8800).setStrokeStyle(2, 0xffcc00).setDepth(14);
+        scene.physics.add.existing(ball);
+        ball.body.setAllowGravity(false);
+        ball.body.setDrag(gDist * 1.8);
+        scene.physics.velocityFromRotation(angle, gDist * 1.8, ball.body.velocity);
+        let fuseStarted = false;
+        const timerEvent = scene.time.addEvent({ delay: 50, loop: true, callback: () => {
+            if (!ball.active) { timerEvent.remove(); return; }
+            if (!fuseStarted && ball.body.velocity.length() < 20) {
+                fuseStarted = true; timerEvent.remove();
+                scene.time.delayedCall(2000, () => {
+                    if (ball.active) { createExplosion(scene, ball.x, ball.y, 90, dmg); ball.destroy(); }
+                });
+            }
+        }});
+    } else if (wKey === 'rl') {
+        // Rocket
+        const rocket = scene.add.rectangle(ex, ey, 22, 9, 0xff4400).setRotation(angle).setDepth(14);
+        scene.physics.add.existing(rocket);
+        rocket.body.setAllowGravity(false);
+        scene.physics.velocityFromRotation(angle, bSpeed * 0.85, rocket.body.velocity);
+        scene.physics.add.overlap(rocket, player, () => {
+            if (!rocket.active) return;
+            createExplosion(scene, rocket.x, rocket.y, weapon.radius || 80, dmg);
+            rocket.destroy();
+        });
+        scene.time.delayedCall(2200, () => {
+            if (rocket.active) { createExplosion(scene, rocket.x, rocket.y, weapon.radius || 80, dmg); rocket.destroy(); }
+        });
+    } else if (wKey === 'plsm') {
+        // Plasma orb
+        const p = scene.add.circle(ex, ey, 22, 0xff6600).setAlpha(0.85).setDepth(14);
+        scene.physics.add.existing(p);
+        p.body.setAllowGravity(false);
+        p.damageValue = dmg;
+        enemyBullets.add(p);
+        scene.physics.velocityFromRotation(angle, 260, p.body.velocity);
+        scene.tweens.add({ targets: p, alpha: 0.4, duration: 120, yoyo: true, repeat: -1 });
+        scene.time.delayedCall(3500, () => { if (p.active) p.destroy(); });
+    } else if (wKey === 'rail') {
+        // Railgun: instant line, pierces player, bright flash
+        const dist = 2200;
+        const endX = ex + Math.cos(angle) * dist;
+        const endY = ey + Math.sin(angle) * dist;
+        // Check hit
+        if (player?.active) {
+            const dx = player.x - ex, dy = player.y - ey;
+            const dot = dx * Math.cos(angle) + dy * Math.sin(angle);
+            const perp = Math.abs(dx * Math.sin(angle) - dy * Math.cos(angle));
+            if (dot > 0 && perp < 30) processPlayerDamage(dmg, angle);
+        }
+        const beam = scene.add.graphics().setDepth(14);
+        beam.lineStyle(4, 0xffffff, 1.0);
+        beam.lineBetween(ex, ey, endX, endY);
+        scene.tweens.add({ targets: beam, alpha: 0, duration: 150, onComplete: () => beam.destroy() });
+    } else if (wKey === 'siege' || wKey === 'chain') {
+        // Two-handed: fire like normal bullet but with siege/chain stats
+        const b = scene.add.circle(ex, ey, bSize, 0xff2200);
+        scene.physics.add.existing(b);
+        b.body.setAllowGravity(false);
+        b.damageValue = dmg;
+        if (wKey === 'siege') {
+            scene.physics.add.overlap(b, player, () => {
+                if (!b.active) return;
+                createExplosion(scene, b.x, b.y, weapon.radius || 160, dmg);
+                b.destroy();
+            });
+        } else enemyBullets.add(b);
+        scene.physics.velocityFromRotation(angle, bSpeed, b.body.velocity);
+        scene.time.delayedCall(2500, () => { if (b.active) b.destroy(); });
+    } else if (wKey === 'br') {
+        // Burst rifle: 3 rapid shots
+        for (let i = 0; i < 3; i++) {
+            scene.time.delayedCall(i * 60, () => {
+                if (!enemy.active || !player?.active) return;
+                const ang2 = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+                const b = scene.add.circle(enemy.x, enemy.y, bSize, 0xff2200);
+                scene.physics.add.existing(b);
+                b.body.setAllowGravity(false);
+                b.damageValue = dmg;
+                enemyBullets.add(b);
+                scene.physics.velocityFromRotation(ang2, bSpeed, b.body.velocity);
+                scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
+            });
+        }
     } else {
-        const b = scene.add.circle(enemy.x, enemy.y, bSize, 0xff2200);
+        // Default: smg, mg, hr — straight bullet
+        const b = scene.add.circle(ex, ey, bSize, 0xff2200);
         scene.physics.add.existing(b);
         b.body.setAllowGravity(false);
         b.damageValue = dmg;
         enemyBullets.add(b);
         scene.physics.velocityFromRotation(angle, bSpeed, b.body.velocity);
         scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
+    }
+
+    // Dual-wield: if enemy has same weapon in both arms, also fire R arm
+    if (enemy.loadout?.L === enemy.loadout?.R && enemy.loadout?.R !== 'none' && enemy.loadout?.R === wKey) {
+        // Small offset to simulate second barrel
+        const ox = Math.cos(angle + Math.PI/2) * 8, oy = Math.sin(angle + Math.PI/2) * 8;
+        const b2 = scene.add.circle(ex + ox, ey + oy, bSize, 0xff2200);
+        scene.physics.add.existing(b2);
+        b2.body.setAllowGravity(false);
+        b2.damageValue = dmg;
+        enemyBullets.add(b2);
+        scene.physics.velocityFromRotation(angle, bSpeed, b2.body.velocity);
+        scene.time.delayedCall(2000, () => { if (b2.active) b2.destroy(); });
     }
 }
 
@@ -4312,7 +4558,6 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
             break;
         }
         case 'plsm': {
-            // Plasma — slow, large, pulsing ball
             const p = scene.add.circle(ex, ey, 22, 0xff6600).setAlpha(0.85).setDepth(14);
             scene.physics.add.existing(p);
             p.body.setAllowGravity(false);
@@ -4321,6 +4566,39 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
             scene.physics.velocityFromRotation(angle, 260, p.body.velocity);
             scene.tweens.add({ targets: p, alpha: 0.4, duration: 120, yoyo: true, repeat: -1 });
             scene.time.delayedCall(3500, () => { if (p.active) p.destroy(); });
+            break;
+        }
+        case 'rail': {
+            // Railgun secondary — same as primary rail
+            const dist = 2200;
+            const endX = ex + Math.cos(angle) * dist;
+            const endY = ey + Math.sin(angle) * dist;
+            if (player?.active) {
+                const dx = player.x - ex, dy = player.y - ey;
+                const dot = dx * Math.cos(angle) + dy * Math.sin(angle);
+                const perp = Math.abs(dx * Math.sin(angle) - dy * Math.cos(angle));
+                if (dot > 0 && perp < 30) processPlayerDamage(weapon.dmg, angle);
+            }
+            const beam = scene.add.graphics().setDepth(14);
+            beam.lineStyle(4, 0xffffff, 1.0);
+            beam.lineBetween(ex, ey, endX, endY);
+            scene.tweens.add({ targets: beam, alpha: 0, duration: 150, onComplete: () => beam.destroy() });
+            break;
+        }
+        case 'fth': {
+            // Flamethrower secondary
+            for (let i = 0; i < 5; i++) {
+                const spread = (Math.random() - 0.5) * 0.55;
+                const b = scene.add.circle(ex, ey, weapon.bulletSize || 8, 0xff6600).setAlpha(0.85);
+                scene.physics.add.existing(b);
+                b.body.setAllowGravity(false);
+                b.damageValue = weapon.dmg;
+                enemyBullets.add(b);
+                scene.physics.velocityFromRotation(angle + spread, (weapon.speed||420) * (0.8 + Math.random()*0.4), b.body.velocity);
+                const ttl = 400 + Math.random() * 200;
+                scene.tweens.add({ targets: b, alpha: 0, scaleX: 1.8, scaleY: 1.8, duration: ttl, onComplete: () => { if (b.active) b.destroy(); } });
+                scene.time.delayedCall(ttl, () => { if (b.active) b.destroy(); });
+            }
             break;
         }
     }
@@ -4969,6 +5247,8 @@ function damageEnemy(e, amt, bulletAngle, explosive = false) {
     if (_perkState.targetPainter && _perkState._paintedEnemy === e) amt *= 1.20;
     // Per-enemy damage multiplier (Threat Analyzer debuff)
     if (e._dmgMult) amt *= e._dmgMult;
+    // Enemy chassis passive DR (heavy: 15%)
+    if (e._passiveDR > 0) amt *= (1 - e._passiveDR);
     // Enemy Mag Anchors: 20% DR while stationary
     if (e._magAnchorsActive) amt *= 0.80;
     // Siege mode: +X% if player moving slowly
@@ -5019,6 +5299,22 @@ function damageEnemy(e, amt, bulletAngle, explosive = false) {
             e["_scrapFired_" + target] = true;
             const scene = game.scene.scenes[0];
             createExplosion(scene, e.x, e.y, 45, 30);
+        }
+        // Arm destroyed — disable that weapon slot so enemy stops firing from it
+        if (e.comp[target].hp <= 0) {
+            if (target === 'lArm' && e.loadout?.L && e.loadout.L !== 'none') {
+                const _wasL = e.loadout.L;
+                e.loadout.L = 'none';
+                // Update primary to R arm if primary was on L
+                if (e.loadout.primary === _wasL)
+                    e.loadout.primary = (e.loadout.R && e.loadout.R !== 'none') ? e.loadout.R : 'none';
+            } else if (target === 'rArm' && e.loadout?.R && e.loadout.R !== 'none') {
+                e.loadout.R = 'none';
+                e.loadout.secondary = 'none';
+            } else if (target === 'legs' && e._legSystemActive) {
+                e._legSystemActive = false;
+                e.speed = Math.round(e.speed * 0.50); // legs destroyed = half speed
+            }
         }
         // Salvage Protocol: limb destruction guarantees loot drop
         if (_perkState.salvageProtocol && e.comp[target].hp <= 0 && e.active) {
@@ -5638,11 +5934,11 @@ const AUG_OPTIONS = [
 
 const LEG_OPTIONS = [
     { key:'none',             label:'NONE',             weight:0   },
-    { key:'hydraulic_boost',  label:'HYDRO BOOST',      weight:40  },
-    { key:'gyro_stabilizer',  label:'GYRO STABILIZER',  weight:40  },
-    { key:'mine_layer',       label:'MINE LAYER',       weight:55  },
-    { key:'mag_anchors',      label:'MAG ANCHORS',      weight:50  },
-    { key:'afterleg',         label:'AFTERLEG',         weight:65 },
+    { key:'hydraulic_boost',  label:'HYDRO BOOST',      weight:25  },
+    { key:'gyro_stabilizer',  label:'GYRO STABILIZER',  weight:25  },
+    { key:'mag_anchors',      label:'MAG ANCHORS',      weight:30  },
+    { key:'mine_layer',       label:'MINE LAYER',       weight:35  },
+    { key:'afterleg',         label:'AFTERLEG',         weight:40  },
 ];
 
 const SHIELD_OPTIONS = [
@@ -5685,8 +5981,8 @@ const SLOT_DESCS = {
     scrap_cannon:     { title:'SCRAP CANNON', desc:'When an enemy part is destroyed, it explodes for 30 AoE damage to nearby enemies.' },
     hydraulic_boost:  { title:'HYDRO BOOST', desc:'+20% movement speed. Legs take 15% less damage. Disabled if legs are destroyed.' },
     gyro_stabilizer:  { title:'GYRO STABILIZER', desc:'Eliminates the speed penalty from damaged legs. Improves aim stability. Disabled if legs destroyed.' },
-    mine_layer:       { title:'MINE LAYER', desc:'Drops a proximity mine every 8 seconds while moving. Each mine deals 80 AoE damage on trigger.' },
     mag_anchors:      { title:'MAG ANCHORS', desc:'While stationary: take 20% less damage and deal 15% more damage. Rewards positional play.' },
+    mine_layer:       { title:'MINE LAYER', desc:'Drops a proximity mine every 8 seconds while moving. Each mine deals 80 AoE damage on trigger.' },
     afterleg:         { title:'AFTERLEG', desc:'JUMP mod travels 50% farther. Landing shockwave deals 60 dmg in 150px. Disabled if legs destroyed.' },
     light_shield:    { title:'LIGHT SHIELD',    desc:'60 HP energy shield. Absorbs 50% of incoming damage. Regenerates after 4s.' },
     standard_shield: { title:'STD. SHIELD',     desc:'100 HP standard shield. Absorbs 50% of damage. Regenerates after 5s.' },
@@ -6325,25 +6621,7 @@ function populateStats() {
     // ── CHASSIS & HP ──────────────────────────────────────────
     const baseShield = chassisData?.max || 75;
     let chassisHtml = '';
-    chassisHtml += _statRow('Chassis Type', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
-    // Chassis identity traits
-    const _cTraits = ch === 'light'
-        ? ['Dual-fire when matching weapons equipped', '+20% reload speed', 'Fragile arms']
-        : ch === 'medium'
-        ? ['Mod cooldowns −15%', 'Kills −0.5s mod cd', 'Shield absorbs 60%']
-        : ['Passive 15% damage reduction', 'No JUMP / AFTERLEG', 'Attrition tank'];
-    chassisHtml += `<div class="stats-row"><span class="stats-label">Traits</span><span class="stats-value ${ch==='light'?'green':ch==='medium'?'yellow':'orange'}" style="font-size:10px;">${_cTraits.join(' &middot; ')}</span></div>`;
-    // Arm mode row
-    const _sIs2H    = WEAPONS[loadout?.L]?.twoHanded;
-    const _sLEmpty  = !loadout?.L || loadout.L === 'none';
-    const _sREmpty  = !loadout?.R || loadout.R === 'none';
-    const _sBrace   = !_sIs2H && (_sLEmpty !== _sREmpty);
-    const _sDual    = !_sIs2H && !_sLEmpty && !_sREmpty;
-    const _armMode  = _sBrace ? 'BRACE · +25% damage · +15% reload' :
-                      _sIs2H  ? 'TWO-HANDED · both arms locked · weight ×1' :
-                      _sDual  ? 'DUAL WIELD · L-click left · R-click right' : null;
-    const _armColor = _sBrace ? 'green' : _sIs2H ? 'orange' : 'yellow';
-    if (_armMode) chassisHtml += `<div class="stats-row"><span class="stats-label">Arm Mode</span><span class="stats-value ${_armColor}" style="font-size:10px;">${_armMode}</span></div>`;
+    chassisHtml += _statRow('Chassis', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
     // Shield: show base vs current max
     const shieldBonus = Math.round((player?.maxShield||0) - baseShield);
     const shieldVal = shieldBonus > 0
@@ -6366,7 +6644,72 @@ function populateStats() {
             : `${Math.round(totalHp)} / ${Math.round(totalMax)}`;
         chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalLabel}</span></div></div>`;
     }
+    // ── Chassis traits & arm mode — rendered full-width below the grid ──
+    const _chColor = ch==='light'?'#88ff88':ch==='medium'?'#ffcc44':'#ff8844';
+    const _cTraits = ch === 'light'
+        ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped'],
+           ['Reload Speed','+20% passive reload speed on all weapons'],
+           ['Fragile Arms','Arms have 30% less base HP than Medium chassis']]
+        : ch === 'medium'
+        ? [['Mod Cooldowns','All mod cooldowns reduced by −15%'],
+           ['Kill Reduction','Each kill shaves 0.5s off active mod cooldowns'],
+           ['Shield Absorb','Shield absorbs 60% of incoming damage (vs 50%)']]
+        : [['Passive DR','15% damage reduction at all times'],
+           ['Restrictions','Cannot equip JUMP mod or AFTERLEG legs'],
+           ['Attrition','Built for sustained punishment — high HP across all parts']];
+
+    const _sIs2H   = WEAPONS[loadout?.L]?.twoHanded;
+    const _sLEmpty = !loadout?.L || loadout.L === 'none';
+    const _sREmpty = !loadout?.R || loadout.R === 'none';
+    const _sBrace  = !_sIs2H && (_sLEmpty !== _sREmpty);
+    const _sDualW  = !_sIs2H && loadout?.L !== 'none' && loadout?.R !== 'none' && loadout?.L === loadout?.R;
+    const _sBothDiff = !_sIs2H && !_sLEmpty && !_sREmpty && !_sDualW;
+    const _armMode = _sIs2H   ? ['TWO-HANDED',  'Both arms locked to same weapon. Weight counted once.', '#ff8844']
+                   : _sBrace  ? ['BRACE MODE',   '+25% damage and +15% reload when only one arm is equipped.', '#88ff88']
+                   : _sDualW  ? ['DUAL WIELD',   'Same weapon in both arms. Left-click fires both simultaneously.', '#ffcc44']
+                   : _sBothDiff ? ['INDEPENDENT', 'Different weapons in each arm. Left-click fires L arm, right-click fires R arm.', '#c0c8d0']
+                   : null;
+
+    // Build the full-width traits+armmode block separately
+    let traitHtml = '';
+    traitHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">`;
+    // Left col: chassis traits
+    traitHtml += `<div>`;
+    traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.45);margin-bottom:10px;border-bottom:1px solid rgba(0,255,255,0.10);padding-bottom:6px;">CHASSIS TRAITS</div>`;
+    _cTraits.forEach(([tLabel, tDesc]) => {
+        traitHtml += `<div style="margin-bottom:10px;">
+            <div style="font-size:11px;letter-spacing:1.5px;color:${_chColor};margin-bottom:3px;">${tLabel}</div>
+            <div style="font-size:12px;color:rgba(200,210,220,0.75);line-height:1.5;">${tDesc}</div>
+        </div>`;
+    });
+    traitHtml += `</div>`;
+    // Right col: arm mode + additional context
+    traitHtml += `<div>`;
+    traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.45);margin-bottom:10px;border-bottom:1px solid rgba(0,255,255,0.10);padding-bottom:6px;">ARM CONFIGURATION</div>`;
+    if (_armMode) {
+        traitHtml += `<div style="margin-bottom:10px;">
+            <div style="font-size:11px;letter-spacing:1.5px;color:${_armMode[2]};margin-bottom:3px;">${_armMode[0]}</div>
+            <div style="font-size:12px;color:rgba(200,210,220,0.75);line-height:1.5;">${_armMode[1]}</div>
+        </div>`;
+    }
+    // Show L and R arm weapon names for quick reference
+    const _lName = WEAPONS[loadout?.L]?.name || loadout?.L || '—';
+    const _rName = WEAPONS[loadout?.R]?.name || loadout?.R || '—';
+    traitHtml += `<div style="margin-top:6px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;">
+            <span style="color:rgba(200,210,220,0.5);letter-spacing:1px;">L ARM</span>
+            <span style="color:#c0c8d0;letter-spacing:1px;">${_lName !== 'none' && _lName !== '—' ? _lName : '—'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;">
+            <span style="color:rgba(200,210,220,0.5);letter-spacing:1px;">R ARM</span>
+            <span style="color:#c0c8d0;letter-spacing:1px;">${_rName !== 'none' && _rName !== '—' ? _rName : '—'}</span>
+        </div>
+    </div>`;
+    traitHtml += `</div>`;
+    traitHtml += `</div>`;
+
     document.getElementById('stat-chassis-info').innerHTML = chassisHtml;
+    document.getElementById('stat-traits-info').innerHTML  = traitHtml;
 
     // ── WEAPONS & DPS ────────────────────────────────────────
     let wHtml = '';
@@ -6744,6 +7087,11 @@ window.onload = () => {
         <div class="stats-panel-title">RUN STATISTICS</div>
         <div id="stat-run-info"></div>
       </div>
+    </div>
+    <!-- CHASSIS TRAITS & ARM CONFIG — full width -->
+    <div class="stats-panel" style="margin-bottom:20px;">
+      <div class="stats-panel-title">CHASSIS TRAITS &amp; ARM CONFIGURATION</div>
+      <div id="stat-traits-info"></div>
     </div>
     <!-- ACTIVE PERKS — full width -->
     <div class="stats-panel" style="margin-bottom:0;">
