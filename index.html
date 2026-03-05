@@ -4100,11 +4100,25 @@ function fire(scene, side) {
     if (now < lastFired) return;
     _shotsFired++; // only count shots that actually fire (after all guards)
 
-    // Barrel distance offset (chassis-dependent) — needed by all weapons
-    const barrelDist = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
+    // ── Arm-offset origin ────────────────────────────────────────────
+    // Bullets spawn from the arm that holds the weapon, not the torso center.
+    // torso.rotation faces the mouse cursor.
+    // Left arm: perpendicular left  (rotation - PI/2)
+    // Right arm: perpendicular right (rotation + PI/2)
+    const barrelDist    = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
+    const armSideOffset = loadout.chassis === 'light' ? 12 : loadout.chassis === 'medium' ? 18 : 24;
+    const perpSign      = side === 'L' ? -1 : 1;  // L = left of forward, R = right
+    // Shoulder position: offset perpendicular to facing direction
+    const perpAngle = torso.rotation + perpSign * Math.PI / 2;
+    const armOx = torso.x + Math.cos(perpAngle) * armSideOffset;
+    const armOy = torso.y + Math.sin(perpAngle) * armSideOffset;
+    // Aim angle FROM arm origin TOWARD mouse cursor (so shots converge on target)
+    const mx = scene.input.activePointer.worldX;
+    const my = scene.input.activePointer.worldY;
+    const aimAngle = Math.atan2(my - armOy, mx - armOx);
 
-    if (wKey === 'fth')  { fireFTH(scene, weapon, side, barrelDist);  return; }
-    if (wKey === 'rail') { fireRAIL(scene, weapon, side, barrelDist); return; }
+    if (wKey === 'fth')  { fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle);  return; }
+    if (wKey === 'rail') { fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle); return; }
 
     // Flash the weapon slot
     const slotEl = document.getElementById('slot-' + side);
@@ -4116,12 +4130,12 @@ function fire(scene, side) {
     // Dispatch to correct fire mode
     sndFire(wKey);
     switch (wKey) {
-        case 'gl':   fireGL(scene, weapon);   break;
-        case 'rl':   fireRL(scene, weapon, barrelDist); break;
-        case 'sg':   fireSG(scene, weapon, barrelDist); break;
-        case 'plsm': firePLSM(scene, weapon); break;
-        case 'sr':   fireSR(scene, weapon, barrelDist); break;
-        default:     fireStandard(scene, wKey, weapon, barrelDist); break;
+        case 'gl':   fireGL(scene, weapon, armOx, armOy, aimAngle);   break;
+        case 'rl':   fireRL(scene, weapon, barrelDist, armOx, armOy, aimAngle); break;
+        case 'sg':   fireSG(scene, weapon, barrelDist, armOx, armOy, aimAngle); break;
+        case 'plsm': firePLSM(scene, weapon, armOx, armOy, aimAngle); break;
+        case 'sr':   fireSR(scene, weapon, barrelDist, armOx, armOy, aimAngle); break;
+        default:     fireStandard(scene, wKey, weapon, barrelDist, armOx, armOy, aimAngle); break;
     }
 
     if (side === 'L') reloadL = now + reloadActual;
@@ -4130,18 +4144,18 @@ function fire(scene, side) {
 
 // --- Individual fire modes ---
 
-function fireFTH(scene, weapon, side, barrelDist) {
-    const angle = Math.atan2(
+function fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
+    armOx = armOx ?? torso.x; armOy = armOy ?? torso.y;
+    const angle = aimAngle ?? Math.atan2(
         scene.input.activePointer.worldY - torso.y,
         scene.input.activePointer.worldX - torso.x
     );
     const maxRange = weapon.range || 350;
     const dmg = Math.round(weapon.dmg * (_perkState.dmgMult||1));
-    // Fire 5 flame particles in a spread cone
     for (let i = -2; i <= 2; i++) {
         const a = angle + i * 0.055 + (Math.random()-0.5)*0.06;
-        const bx = torso.x + Math.cos(a) * barrelDist;
-        const by = torso.y + Math.sin(a) * barrelDist;
+        const bx = armOx + Math.cos(a) * barrelDist;
+        const by = armOy + Math.sin(a) * barrelDist;
         const b = scene.add.circle(bx, by, weapon.bulletSize, 0xff6600);
         scene.physics.add.existing(b);
         b.damageValue = dmg;
@@ -4161,14 +4175,15 @@ function fireFTH(scene, weapon, side, barrelDist) {
     else              reloadR = scene.time.now + reloadTime;
 }
 
-function fireRAIL(scene, weapon, side, barrelDist) {
+function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     // Railgun: instant hitscan beam piercing all enemies in line
-    const angle = Math.atan2(
+    armOx = armOx ?? torso.x; armOy = armOy ?? torso.y;
+    const angle = aimAngle ?? Math.atan2(
         scene.input.activePointer.worldY - torso.y,
         scene.input.activePointer.worldX - torso.x
     );
-    const ox = torso.x + Math.cos(angle) * barrelDist;
-    const oy = torso.y + Math.sin(angle) * barrelDist;
+    const ox = armOx + Math.cos(angle) * barrelDist;
+    const oy = armOy + Math.sin(angle) * barrelDist;
     const rayLen = 3200;
     const ex = ox + Math.cos(angle) * rayLen;
     const ey = oy + Math.sin(angle) * rayLen;
@@ -4212,16 +4227,17 @@ function fireRAIL(scene, weapon, side, barrelDist) {
     else              reloadR = scene.time.now + reloadTime;
 }
 
-function fireGL(scene, weapon) {
+function fireGL(scene, weapon, armOx, armOy, aimAngle) {
+    armOx = armOx ?? torso.x; armOy = armOy ?? torso.y; aimAngle = aimAngle ?? torso.rotation;
     const targetX = scene.input.activePointer.worldX;
     const targetY = scene.input.activePointer.worldY;
-    const distance = Phaser.Math.Distance.Between(torso.x, torso.y, targetX, targetY);
+    const distance = Phaser.Math.Distance.Between(armOx, armOy, targetX, targetY);
 
-    const ball = scene.add.circle(torso.x, torso.y, 10, 0xffaa00)
+    const ball = scene.add.circle(armOx, armOy, 10, 0xffaa00)
         .setStrokeStyle(2, 0xffffff)
         .setDepth(14);
     scene.physics.add.existing(ball);
-    scene.physics.velocityFromRotation(torso.rotation, distance * 2, ball.body.velocity);
+    scene.physics.velocityFromRotation(aimAngle, distance * 2, ball.body.velocity);
     ball.body.setDrag(distance * 2);
 
     const fuseTime  = 2000;
@@ -4257,12 +4273,13 @@ function fireGL(scene, weapon) {
     });
 }
 
-function fireRL(scene, weapon, barrelDist) {
-    createMuzzleFlash(scene, torso.x, torso.y, torso.rotation, barrelDist);
-    const rocket = scene.add.rectangle(torso.x, torso.y, 24, 10, 0xff4400).setDepth(14);
+function fireRL(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
+    armOx = armOx ?? torso.x; armOy = armOy ?? torso.y; aimAngle = aimAngle ?? torso.rotation;
+    createMuzzleFlash(scene, armOx, armOy, aimAngle, barrelDist);
+    const rocket = scene.add.rectangle(armOx, armOy, 24, 10, 0xff4400).setDepth(14);
     scene.physics.add.existing(rocket);
-    rocket.setRotation(torso.rotation);
-    scene.physics.velocityFromRotation(torso.rotation, weapon.speed, rocket.body.velocity);
+    rocket.setRotation(aimAngle);
+    scene.physics.velocityFromRotation(aimAngle, weapon.speed, rocket.body.velocity);
 
     const particles = scene.add.particles(0, 0, 'smoke', {
         speed: 20, scale: { start: 0.6, end: 0 }, alpha: { start: 0.5, end: 0 },
@@ -4281,48 +4298,51 @@ function fireRL(scene, weapon, barrelDist) {
     });
 }
 
-function fireSG(scene, weapon, barrelDist) {
+function fireSG(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
+    armOx = armOx ?? torso.x; armOy = armOy ?? torso.y; aimAngle = aimAngle ?? torso.rotation;
     const spread = 0.3;
     for (let i = 0; i < weapon.pellets; i++) {
         const offset = (Math.random() - 0.5) * spread;
-        const b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
-        createMuzzleFlash(scene, torso.x, torso.y, torso.rotation + offset, barrelDist);
+        const b = scene.add.circle(armOx, armOy, weapon.bulletSize, 0xffff00);
+        createMuzzleFlash(scene, armOx, armOy, aimAngle + offset, barrelDist);
         scene.physics.add.existing(b);
         b.damageValue = weapon.dmg;
         bullets.add(b);
-        scene.physics.velocityFromRotation(torso.rotation + offset, weapon.speed, b.body.velocity);
+        scene.physics.velocityFromRotation(aimAngle + offset, weapon.speed, b.body.velocity);
         scene.time.delayedCall(800, () => { if (b.active) b.destroy(); });
     }
 }
 
-function firePLSM(scene, weapon) {
-    const p = scene.add.circle(torso.x, torso.y, 25, 0x00ffff).setAlpha(0.8);
+function firePLSM(scene, weapon, armOx, armOy, aimAngle) {
+    armOx = armOx ?? torso.x; armOy = armOy ?? torso.y; aimAngle = aimAngle ?? torso.rotation;
+    const p = scene.add.circle(armOx, armOy, 25, 0x00ffff).setAlpha(0.8);
     scene.physics.add.existing(p);
     p.damageValue = weapon.dmg;
     bullets.add(p);
-    scene.physics.velocityFromRotation(torso.rotation, 300, p.body.velocity);
+    scene.physics.velocityFromRotation(aimAngle, 300, p.body.velocity);
     scene.tweens.add({ targets: p, alpha: 0.3, duration: 100, yoyo: true, repeat: -1 });
     scene.time.delayedCall(3000, () => { if (p.active) p.destroy(); });
 }
 
-function fireSR(scene, weapon, barrelDist) {
-    const b = scene.add.rectangle(torso.x, torso.y, 60, 8, 0xffffff)
+function fireSR(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
+    armOx = armOx ?? torso.x; armOy = armOy ?? torso.y; aimAngle = aimAngle ?? torso.rotation;
+    const b = scene.add.rectangle(armOx, armOy, 60, 8, 0xffffff)
         .setOrigin(0.5)
-        .setRotation(torso.rotation)
+        .setRotation(aimAngle)
         .setStrokeStyle(2, 0x00ffff);
     scene.physics.add.existing(b);
     b.damageValue = weapon.dmg;
     bullets.add(b);
-    scene.physics.velocityFromRotation(torso.rotation, weapon.speed, b.body.velocity);
+    scene.physics.velocityFromRotation(aimAngle, weapon.speed, b.body.velocity);
     scene.tweens.add({ targets: b, scaleY: 0.5, duration: 50, yoyo: true, repeat: -1 });
-    createMuzzleFlash(scene, torso.x, torso.y, torso.rotation, barrelDist, 0xffffff);
+    createMuzzleFlash(scene, armOx, armOy, aimAngle, barrelDist, 0xffffff);
 
     // Fading tracer line
-    const tracer = scene.add.line(0, 0, torso.x, torso.y, torso.x, torso.y, 0x00ffff)
+    const tracer = scene.add.line(0, 0, armOx, armOy, armOx, armOy, 0x00ffff)
         .setOrigin(0, 0).setLineWidth(2).setAlpha(0.6);
     scene.tweens.add({
         targets: tracer, alpha: 0, duration: 500,
-        onUpdate:   () => { if (b.active) tracer.setTo(torso.x, torso.y, b.x, b.y); },
+        onUpdate:   () => { if (b.active) tracer.setTo(armOx, armOy, b.x, b.y); },
         onComplete: () => tracer.destroy()
     });
 
@@ -4333,14 +4353,15 @@ function fireSR(scene, weapon, barrelDist) {
     scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
 }
 
-function fireStandard(scene, wKey, weapon, barrelDist) {
+function fireStandard(scene, wKey, weapon, barrelDist, armOx, armOy, aimAngle) {
+    armOx = armOx ?? torso.x; armOy = armOy ?? torso.y; aimAngle = aimAngle ?? torso.rotation;
     const fireRound = (offsetAngle = 0) => {
-        const b = scene.add.circle(torso.x, torso.y, weapon.bulletSize, 0xffff00);
+        const b = scene.add.circle(armOx, armOy, weapon.bulletSize, 0xffff00);
         scene.physics.add.existing(b);
         b.damageValue = weapon.dmg;
         bullets.add(b);
-        scene.physics.velocityFromRotation(torso.rotation + offsetAngle, weapon.speed, b.body.velocity);
-        createMuzzleFlash(scene, torso.x, torso.y, torso.rotation + offsetAngle, barrelDist);
+        scene.physics.velocityFromRotation(aimAngle + offsetAngle, weapon.speed, b.body.velocity);
+        createMuzzleFlash(scene, armOx, armOy, aimAngle + offsetAngle, barrelDist);
         scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
     };
 
