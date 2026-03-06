@@ -733,7 +733,7 @@ button.active {
         <div style="font-size:9px;letter-spacing:4px;color:rgba(0,210,255,0.5);margin-bottom:10px;">ENTER CALLSIGN</div>
         <input id="menu-callsign" type="text" maxlength="16" placeholder="_ _ _ _ _ _" autocomplete="off" spellcheck="false"
             style="background:rgba(0,0,0,0.6);border:none;border-bottom:2px solid rgba(0,210,255,0.6);color:#00e0ff;padding:10px 16px;font-family:'Courier New',monospace;font-size:20px;letter-spacing:5px;outline:none;text-align:center;text-transform:uppercase;width:260px;display:block;margin:0 auto 32px;"
-            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9 _\-\.]/g,'');_updateCallsignBtn()"
+            oninput="var p=this.selectionStart;this.value=this.value.toUpperCase().replace(/[^A-Z0-9 _.\-]/g,'');this.setSelectionRange(p,p);_updateCallsignBtn()"
             onkeydown="if(event.key==='Enter')proceedToMainMenu()" />
 
         <button id="callsign-proceed-btn" onclick="proceedToMainMenu()" disabled
@@ -751,11 +751,7 @@ button.active {
     <div class="menu-subtitle">Combat Simulation Alpha 3.0</div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
         <button class="menu-start-btn" onclick="startGame()">&#9654;&nbsp;&nbsp;DEPLOY TO BATTLEFIELD</button>
-        <button onclick="showLeaderboard()"
-            style="width:260px;padding:13px 24px;background:rgba(0,210,255,0.04);border:1px solid rgba(0,210,255,0.3);border-left:3px solid rgba(0,210,255,0.6);color:rgba(0,210,255,0.8);font-family:'Courier New',monospace;font-size:13px;letter-spacing:4px;cursor:pointer;text-transform:uppercase;transition:all 0.2s;"
-            onmouseover="this.style.background='rgba(0,210,255,0.1)';this.style.color='#00e0ff';this.style.boxShadow='0 0 16px rgba(0,210,255,0.2)'"
-            onmouseout="this.style.background='rgba(0,210,255,0.04)';this.style.color='rgba(0,210,255,0.8)';this.style.boxShadow='none'"
-            >&#9776;&nbsp; LEADERBOARD</button>
+        <button class="menu-start-btn" onclick="showLeaderboard()">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
     </div>
     <div class="menu-version">v3.0 // ALPHA BUILD</div>
 </div>
@@ -920,7 +916,7 @@ button.active {
 <!-- ============================================================
      LEADERBOARD OVERLAY
      ============================================================ -->
-<div id="leaderboard-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,5,15,0.96);z-index:3000;font-family:'Courier New',monospace;overflow-y:auto;">
+<div id="leaderboard-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,5,15,0.96);z-index:10001;font-family:'Courier New',monospace;overflow-y:auto;">
     <div style="max-width:700px;margin:0 auto;padding:40px 20px;">
 
         <!-- Header -->
