@@ -2664,10 +2664,10 @@ function handleEnemyAI(scene, time) {
         }
         // Sync shield ring to enemy position
         if (enemy.shieldRing?.active) enemy.shieldRing.setPosition(enemy.x, enemy.y);
-        // Sync commander label
-        if (enemy.cmdLabel?.active) {
-            enemy.cmdLabel.setPosition(enemy.x, enemy.y - 70);
-        }
+        // Sync commander/medic labels
+        if (enemy.cmdLabel?.active)   enemy.cmdLabel.setPosition(enemy.x, enemy.y - 70);
+        if (enemy.medicLabel?.active) enemy.medicLabel.setPosition(enemy.x, enemy.y - 52);
+        if (enemy.medicCross?.active) enemy.medicCross.setPosition(enemy.x, enemy.y - 64);
         // Commander buff aura — boost nearby standard enemies
         if (enemy.isCommander && player) {
             enemies.getChildren().forEach(other => {
@@ -3484,7 +3484,20 @@ function startRound(roundNum) {
     _perkState._capacitorReady   = false;
     if (_perkState.snapCharge) _perkState._snapChargeReady = true;
     if (_perkState.jumpCharges > 1) _perkState._jumpChargesLeft = _perkState.jumpCharges;
-    if (_perkState.autonomousUnit) { _perkState._autoDroneActive = false; }
+    if (_perkState.autonomousUnit) {
+        // Destroy existing auto-drone if still alive before resetting flag
+        try {
+            if (_perkState._autoDroneRef?.active) {
+                _perkState._autoDroneRef.destroy();
+            }
+        } catch(e) {}
+        _perkState._autoDroneActive = false;
+        _perkState._autoDroneRef = null;
+        if (_perkState._autoDroneRespawnTimer) {
+            _perkState._autoDroneRespawnTimer.remove?.();
+            _perkState._autoDroneRespawnTimer = null;
+        }
+    }
     _roundTotal = roundNum + 2;   // round 1=3, round 2=4, etc.
     _roundActive = true;
     updateRoundHUD();
@@ -3492,15 +3505,26 @@ function startRound(roundNum) {
     const scene = game.scene.scenes[0];
     // Round 2+: wipe map debris and reset player to center
     if (roundNum > 1) _clearMapForRound(scene);
-    // Spawn commander from round 4 onward (guaranteed from round 6)
-    const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
-    const normalCount = spawnCmd ? _roundTotal - 1 : _roundTotal;
-    // Stagger spawns slightly so they don't all arrive at once
-    for (let i = 0; i < normalCount; i++) {
-        setTimeout(() => { if (isDeployed && _roundActive) spawnEnemy(scene); }, i * 400);
-    }
-    if (spawnCmd) {
-        setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, normalCount * 400 + 600);
+    // Boss every 5th round; normal rounds otherwise
+    const isBossRound = roundNum > 0 && roundNum % 5 === 0;
+
+    if (isBossRound) {
+        // BOSS ROUND — only the boss spawns; it counts as 1 kill to end the round
+        _roundTotal = 1;
+        setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, roundNum); }, 800);
+    } else {
+        // Normal round — commanders from round 4+, medic from round 3+
+        const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
+        const normalCount = spawnCmd ? _roundTotal - 1 : _roundTotal;
+        for (let i = 0; i < normalCount; i++) {
+            setTimeout(() => { if (isDeployed && _roundActive) spawnEnemy(scene); }, i * 400);
+        }
+        if (spawnCmd) {
+            setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, normalCount * 400 + 600);
+        }
+        if (roundNum >= 3 && Math.random() < 0.40) {
+            setTimeout(() => { if (isDeployed && _roundActive) spawnMedic(scene); }, normalCount * 400 + 1000);
+        }
     }
     // Autonomous Unit: auto-deploy drone at round start (after short delay)
     if (_perkState.autonomousUnit && loadout.mod === 'atk_drone' && !_perkState._autoDroneActive) {
@@ -4289,7 +4313,11 @@ function activateMod(scene, time) {
         case 'rage':      activateRage(scene);           break;
         case 'emp':       activateEMP(scene, time);      break;
         case 'repair':    activateRepair(scene, time);   break;
-        case 'atk_drone': activateDrone(scene, time);    break;
+        case 'atk_drone':
+            // Block manual activation when Autonomous Unit legendary is active
+            if (_perkState.autonomousUnit) return;
+            activateDrone(scene, time);
+            break;
         case 'missile':   activateMissiles(scene, time); break;
         case 'decoy':     activateDecoy(scene, time);    break;
         case 'ghost_step':    activateGhostStep(scene, time);   break;
@@ -4351,25 +4379,49 @@ function activateRepair(scene, time) {
 }
 
 function _buildDroneGraphic(scene, x, y, color) {
-    // Mini robot: rectangular body, two side rotors, front eye
+    // Redesigned: angular square combat drone with sensor array and weapon pod
     const g = scene.add.graphics().setDepth(14);
     const drawDrone = (gx, gy, tint) => {
         g.clear();
         const c = tint || color;
-        // Body
-        g.fillStyle(c, 0.92);
-        g.fillRect(gx-7, gy-5, 14, 10);
-        g.lineStyle(1.5, 0xffffff, 0.7);
-        g.strokeRect(gx-7, gy-5, 14, 10);
-        // Rotors (horizontal bars left/right)
-        g.lineStyle(2, c, 0.85);
-        g.lineBetween(gx-12, gy-1, gx-7, gy-1);
-        g.lineBetween(gx+7,  gy-1, gx+12, gy-1);
-        // Eye
-        g.fillStyle(0xffffff, 1);
-        g.fillCircle(gx+3, gy, 2);
-        g.fillStyle(0x000000, 1);
-        g.fillCircle(gx+3, gy, 1);
+        const dark = 0x0a0a12;
+        // === Main body — square chassis ===
+        g.fillStyle(dark, 1);
+        g.fillRect(gx-9, gy-9, 18, 18);
+        g.fillStyle(c, 0.88);
+        g.fillRect(gx-8, gy-8, 16, 16);
+        // Inner panel detail
+        g.fillStyle(dark, 0.6);
+        g.fillRect(gx-5, gy-5, 10, 10);
+        // Corner cut detail (diagonal trim top-left and bottom-right)
+        g.fillStyle(dark, 1);
+        g.fillTriangle(gx-8, gy-8, gx-4, gy-8, gx-8, gy-4);
+        g.fillTriangle(gx+8, gy+8, gx+4, gy+8, gx+8, gy+4);
+        // === Sensor eye — front center ===
+        g.fillStyle(0xffffff, 0.95);
+        g.fillRect(gx+2, gy-2, 6, 4);
+        g.fillStyle(c, 1);
+        g.fillRect(gx+3, gy-1, 4, 2);
+        // === Weapon pod — bottom protrusion ===
+        g.fillStyle(dark, 1);
+        g.fillRect(gx-3, gy+8, 6, 5);
+        g.fillStyle(c, 0.7);
+        g.fillRect(gx-2, gy+9, 4, 3);
+        // === Rotor arms — four short diagonal struts ===
+        g.lineStyle(1.5, c, 0.7);
+        g.lineBetween(gx-8, gy-8,  gx-14, gy-14);
+        g.lineBetween(gx+8, gy-8,  gx+14, gy-14);
+        g.lineBetween(gx-8, gy+8,  gx-14, gy+14);
+        g.lineBetween(gx+8, gy+8,  gx+14, gy+14);
+        // Rotor hubs
+        g.fillStyle(c, 0.9);
+        g.fillCircle(gx-14, gy-14, 3);
+        g.fillCircle(gx+14, gy-14, 3);
+        g.fillCircle(gx-14, gy+14, 3);
+        g.fillCircle(gx+14, gy+14, 3);
+        // Glow halo (faint)
+        g.lineStyle(1, c, 0.18);
+        g.strokeRect(gx-11, gy-11, 22, 22);
     };
     drawDrone(x, y);
     g._drawDrone = drawDrone;
@@ -4411,7 +4463,8 @@ function _spawnDrone(scene, offsetX, offsetY, isAuto) {
         if (_perkState.combatAI && _perkState._paintedEnemy?.active) {
             target = _perkState._paintedEnemy;
         } else {
-            let nearDist = Infinity;
+            const DRONE_RANGE = 550;
+            let nearDist = DRONE_RANGE;
             enemies.getChildren().forEach(e => {
                 if (!e.active) return;
                 const d = Phaser.Math.Distance.Between(droneX, droneY, e.x, e.y);
@@ -4429,6 +4482,9 @@ function _spawnDrone(scene, offsetX, offsetY, isAuto) {
             zap.lineStyle(2, droneColor, 0.9);
             zap.lineBetween(droneX, droneY, target.x, target.y);
             scene.tweens.add({ targets: zap, alpha: 0, duration: 100, onComplete: () => zap.destroy() });
+            // Drone fire sound — quiet electric zap
+            _tone(1800, 'square', 0.04, 0.025, 900);
+            _noise(0.03, 0.04, 0, 1200, 0);
             drone._drawDrone(droneX, droneY, 0xffffff);
             scene.time.delayedCall(80, () => { if (drone.active) drone._drawDrone(droneX, droneY); });
         }
@@ -4478,10 +4534,10 @@ function activateDrone(scene, time) {
     if (_perkState._droneActive) return;
     _perkState._droneActive = true;
     if (_perkState.multiDrone) {
-        _spawnDrone(scene, -30, -55, false);
-        _spawnDrone(scene,  30, -55, false);
+        _spawnDrone(scene, -50, -52, false);
+        _spawnDrone(scene,  50, -52, false);
     } else {
-        _spawnDrone(scene, 0, -60, false);
+        _spawnDrone(scene, 0, -62, false);
     }
     lastModTime = time || scene.time.now;
     // Cooldown reduction from perks
@@ -4494,9 +4550,15 @@ function activateDrone(scene, time) {
 function activateAutoDrone(scene) {
     if (_perkState._autoDroneActive || !isDeployed) return;
     _perkState._autoDroneActive = true;
-    const drone = _spawnDrone(scene, 0, -60, true);
-    // Store reference so it can receive bullet damage
-    _perkState._autoDroneRef = drone;
+    if (_perkState.multiDrone) {
+        // Two auto-drones spread apart — left and right flanks
+        _spawnDrone(scene, -45, -55, true);
+        const drone = _spawnDrone(scene,  45, -55, true);
+        _perkState._autoDroneRef = drone; // track right one for HP-based destroy
+    } else {
+        const drone = _spawnDrone(scene, 0, -62, true);
+        _perkState._autoDroneRef = drone;
+    }
 }
 
 function activateMissiles(scene, time) {
@@ -5198,6 +5260,504 @@ function generateCover(scene) {
     // Player↔cover is added in deployMech(); Enemies↔cover per spawnEnemy()
 }
 
+function spawnMedic(scene) {
+    // MEDIC: medium chassis, green scheme, low HP but heals nearby allies every 3s
+    // Priority target — while alive, enemies in 280px radius regenerate 8 HP/s
+    let x, y, attempts = 0;
+    do {
+        x = Phaser.Math.Between(200, 3800);
+        y = Phaser.Math.Between(200, 3800);
+        attempts++;
+    } while (
+        player && isDeployed &&
+        Phaser.Math.Distance.Between(x, y, player.x, player.y) < 1000 &&
+        attempts < 20
+    );
+
+    const chassisS = CHASSIS.medium;
+    const e = scene.add.rectangle(x, y, 46, 46, 0x000000, 0);
+    scene.physics.add.existing(e);
+    e.body.setCircle(28);
+
+    e.visuals = buildEnemyMech(scene, 'medium', MEDIC_COLORS);
+    e.visuals.setPosition(x, y).setScale(1.0);
+    e.torso = buildEnemyTorso(scene, 'medium', MEDIC_COLORS);
+    e.torso.setPosition(x, y).setScale(1.0).setDepth(6);
+
+    // MEDIC label
+    e.medicLabel = scene.add.text(x, y - 52, '[ MEDIC ]', {
+        font: 'bold 9px monospace', fill: '#00ff88',
+        stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(10);
+    scene.tweens.add({ targets: e.medicLabel, alpha: 0.4, duration: 1000, yoyo: true, repeat: -1 });
+
+    // Cross symbol above label
+    e.medicCross = scene.add.text(x, y - 64, '+', {
+        font: 'bold 14px monospace', fill: '#00ffaa',
+        stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(10);
+
+    const _hm = 0.35 * (1 + Math.min(_round - 1, 30) * 0.05); // medics have less HP than normal
+    const loadoutE = {
+        chassis: 'medium', primary: 'smg', secondary: 'none', mod: 'repair',
+        shld: 'standard_shield', leg: 'none', aug: 'none'
+    };
+    e.loadout     = loadoutE;
+    e.isMedic     = true;
+    e.behavior    = 'defender'; // hangs back
+    e.speed       = chassisS.spd * 0.85;
+    e.comp = {
+        core: { hp: Math.round(chassisS.coreHP * _hm), max: Math.round(chassisS.coreHP * _hm) },
+        lArm: { hp: Math.round(chassisS.armHP  * _hm), max: Math.round(chassisS.armHP  * _hm) },
+        rArm: { hp: Math.round(chassisS.armHP  * _hm), max: Math.round(chassisS.armHP  * _hm) },
+        legs: { hp: Math.round(chassisS.legHP  * _hm), max: Math.round(chassisS.legHP  * _hm) },
+    };
+    e.health    = Object.values(e.comp).reduce((s,c) => s + c.hp, 0);
+    e.maxHealth = e.health;
+    e.reloadL = 0; e.reloadR = 0;
+    e.lastSecTime = -99999; e.lastModTime = -99999; e.isModActive = false;
+    e._passiveDR  = 0;
+    e._reloadMult = 1.0;
+    e._augState   = {};
+    e.fxFootTimer = 0; e.fxFootSide = 1; e.fxShockTimer = 0;
+    e.fxLastX = x; e.fxLastY = y; e.fxLastMX = x; e.fxLastMY = y;
+    e._fireGrace = true;
+    setTimeout(() => { if (e?.active) e._fireGrace = false; }, 2500);
+    e.lastFireTime = 0; e.lastSecTime = 0;
+    // Shield
+    e._shieldHP = 80; e._shieldMax = 80; e._shieldRegen = 4000; e._shieldLastBreak = -9999;
+    e._shieldAbsorb = 0.5;
+
+    // Heal aura — pulses every 2.5s, heals nearby enemies 10 HP
+    e._healTimer = scene.time.addEvent({ delay: 2500, loop: true, callback: () => {
+        if (!e?.active || !isDeployed) return;
+        enemies.getChildren().forEach(ally => {
+            if (!ally.active || ally === e) return;
+            const d = Phaser.Math.Distance.Between(e.x, e.y, ally.x, ally.y);
+            if (d > 300) return;
+            // Heal each component proportionally
+            const healAmt = 10;
+            Object.values(ally.comp).forEach(part => {
+                if (part.hp > 0 && part.hp < part.max) {
+                    part.hp = Math.min(part.max, part.hp + healAmt);
+                }
+            });
+            ally.health = Object.values(ally.comp).reduce((s,c) => s + c.hp, 0);
+            // Green heal pulse visual
+            const pulse = scene.add.circle(ally.x, ally.y, 18, 0x00ff88, 0.45).setDepth(12);
+            scene.tweens.add({ targets: pulse, alpha: 0, scale: 2.5, duration: 500, onComplete: () => pulse.destroy() });
+        });
+        // Green aura ring on medic itself
+        const ring = scene.add.circle(e.x, e.y, 300, 0x00ff88, 0.04).setDepth(4)
+            .setStrokeStyle(1, 0x00ff88, 0.3);
+        scene.tweens.add({ targets: ring, alpha: 0, duration: 600, onComplete: () => ring.destroy() });
+        // Sound — soft high tone
+        _tone(880, 'sine', 0.08, 0.06, 1100);
+    }});
+
+    e._visionConeGfx = scene.add.graphics().setDepth(3);
+    enemies.add(e);
+    if (coverObjects) scene.physics.add.collider(e, coverObjects);
+}
+
+// ================================================================
+// BOSS SPAWN SYSTEM
+// ================================================================
+
+function _bossSpawnPos() {
+    let x, y, att = 0;
+    do {
+        x = Phaser.Math.Between(300, 3700);
+        y = Phaser.Math.Between(300, 3700);
+        att++;
+    } while (player && Phaser.Math.Distance.Between(x, y, player.x, player.y) < 1100 && att < 25);
+    return { x, y };
+}
+
+function _showBossTitle(scene, name, subtitle, color) {
+    const tx = scene.add.text(window.innerWidth/2, window.innerHeight*0.18, name, {
+        font: 'bold 28px monospace', fill: '#' + color.toString(16).padStart(6,'0'),
+        stroke: '#000000', strokeThickness: 5
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(9000).setAlpha(0);
+    const sub = scene.add.text(window.innerWidth/2, window.innerHeight*0.18 + 38, subtitle, {
+        font: '13px monospace', fill: '#ffffff', stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(9000).setAlpha(0);
+    scene.tweens.add({ targets: [tx, sub], alpha: 1, duration: 400, hold: 2200,
+        onComplete: () => { scene.tweens.add({ targets:[tx,sub], alpha:0, duration:500, onComplete:()=>{ tx.destroy(); sub.destroy(); }}); }
+    });
+    _tone(60, 'sawtooth', 0.5, 0.4, 40);
+    _tone(90, 'square',   0.4, 0.25, 70, 0.1);
+    _noise(0.4, 0.35, 0.05, 0, 300);
+    _tone(220, 'sine', 0.15, 0.08, 180, 0.3);
+}
+
+function _buildBossEnemy(scene, x, y, chassisKey, colorSet, hpMult, speedMult) {
+    const chassisS = CHASSIS[chassisKey];
+    const sz = chassisKey === 'heavy' ? 60 : chassisKey === 'light' ? 38 : 50;
+    const e = scene.add.rectangle(x, y, sz, sz, 0x000000, 0);
+    scene.physics.add.existing(e);
+    e.body.setCircle(sz * 0.7);
+    const scl = chassisKey === 'heavy' ? 1.7 : chassisKey === 'light' ? 0.85 : 1.15;
+    e.visuals = buildEnemyMech(scene, chassisKey, colorSet);
+    e.visuals.setPosition(x, y).setScale(scl);
+    e.torso = buildEnemyTorso(scene, chassisKey, colorSet);
+    e.torso.setPosition(x, y).setScale(scl).setDepth(6);
+    e.speed = chassisS.spd * (speedMult || 1.0);
+    const bm = hpMult * (1 + Math.min(_round - 1, 40) * 0.07);
+    e.comp = {
+        core: { hp: Math.round(chassisS.coreHP * bm), max: Math.round(chassisS.coreHP * bm) },
+        lArm: { hp: Math.round(chassisS.armHP  * bm), max: Math.round(chassisS.armHP  * bm) },
+        rArm: { hp: Math.round(chassisS.armHP  * bm), max: Math.round(chassisS.armHP  * bm) },
+        legs: { hp: Math.round(chassisS.legHP  * bm), max: Math.round(chassisS.legHP  * bm) },
+    };
+    e.health    = Object.values(e.comp).reduce((s,c) => s+c.hp, 0);
+    e.maxHealth = e.health;
+    e.reloadL = 0; e.reloadR = 0;
+    e.lastSecTime = -99999; e.lastModTime = -99999; e.isModActive = false;
+    e._passiveDR  = chassisKey === 'heavy' ? 0.15 : 0;
+    e._reloadMult = 1.0; e._augState = {};
+    e.fxFootTimer = 0; e.fxFootSide = 1; e.fxShockTimer = 0;
+    e.fxLastX = x; e.fxLastY = y; e.fxLastMX = x; e.fxLastMY = y;
+    e._fireGrace = true;
+    setTimeout(() => { if (e && e.active) e._fireGrace = false; }, 2000);
+    e.lastFireTime = 0; e.lastSecTime = 0;
+    e._shieldHP = 0; e._shieldMax = 0; e._shieldAbsorb = 0;
+    e._visionConeGfx = scene.add.graphics().setDepth(3);
+    enemies.add(e);
+    if (coverObjects) scene.physics.add.collider(e, coverObjects);
+    return e;
+}
+
+function _addBossLabel(scene, e, text, color, yOff) {
+    e.bossLabel = scene.add.text(e.x, e.y - (yOff||75), text, {
+        font: 'bold 11px monospace', fill: '#' + color.toString(16).padStart(6,'0'),
+        stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(10);
+    scene.tweens.add({ targets: e.bossLabel, alpha: 0.45, duration: 600, yoyo: true, repeat: -1 });
+}
+
+function _addBossHPBar(scene, e, color) {
+    e._bossBarBg = scene.add.rectangle(e.x, e.y - 90, 80, 7, 0x111111).setDepth(11);
+    e._bossBarFg = scene.add.rectangle(e.x - 40, e.y - 90, 80, 5, color).setOrigin(0, 0.5).setDepth(12);
+    e._bossBarColor = color;
+}
+
+function _updateBossHPBar(e) {
+    if (!e._bossBarBg || !e._bossBarBg.active) return;
+    const pct = Math.max(0, e.health / e.maxHealth);
+    const yOff = e.bossLabel ? 90 : 75;
+    e._bossBarBg.setPosition(e.x, e.y - yOff);
+    e._bossBarFg.setPosition(e.x - 40, e.y - yOff);
+    e._bossBarFg.width = Math.round(80 * pct);
+}
+
+// BOSS 1: THE WARDEN (Round 5)
+function spawnWarden(scene) {
+    const p = _bossSpawnPos();
+    const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', BOSS_COLORS.warden, 2.2, 0.9);
+    e.loadout = { chassis:'heavy', primary:'mg', secondary:'barrier',
+                  mod:'rage', shld:'heavy_shield', leg:'mag_anchors', aug:'reactive_plating' };
+    e.behavior = 'circle'; e.isBoss = true; e.bossType = 'warden';
+    _addBossLabel(scene, e, '[ THE WARDEN ]', 0x8800ff, 75);
+    _addBossHPBar(scene, e, 0x8800ff);
+    _showBossTitle(scene, 'THE WARDEN', 'HIT THE BACK — FRONTAL IMMUNITY ACTIVE', 0xaa44ff);
+
+    e._wardenShieldAngle = 0;
+    e._wardenImmuneSweep = Math.PI * 1.1;
+    e._wardenShieldGfx = scene.add.graphics().setDepth(7);
+    e._wardenPhase = 0;
+
+    e._wardenUpdate = scene.time.addEvent({ delay: 16, loop: true, callback: () => {
+        if (!e || !e.active || !player || !player.active) return;
+        const toPlayer = Math.atan2(player.y - e.y, player.x - e.x);
+        e._wardenShieldAngle = toPlayer;
+        const g = e._wardenShieldGfx;
+        g.clear();
+        if (!isDeployed) return;
+        const arcStart = e._wardenShieldAngle - e._wardenImmuneSweep / 2;
+        const arcEnd   = e._wardenShieldAngle + e._wardenImmuneSweep / 2;
+        g.lineStyle(4, 0x8800ff, 0.55);
+        g.beginPath();
+        g.arc(e.x, e.y, 42, arcStart, arcEnd, false);
+        g.strokePath();
+        g.lineStyle(2, 0xcc66ff, 0.25);
+        g.beginPath();
+        g.arc(e.x, e.y, 48, arcStart, arcEnd, false);
+        g.strokePath();
+        _updateBossHPBar(e);
+        if (e.bossLabel && e.bossLabel.active) e.bossLabel.setPosition(e.x, e.y - 75);
+    }});
+
+    e._wardenPhaseCheck = scene.time.addEvent({ delay: 500, loop: true, callback: () => {
+        if (!e || !e.active) return;
+        const pct = e.health / e.maxHealth;
+        if (pct < 0.5 && e._wardenPhase === 0) {
+            e._wardenPhase = 1;
+            e._wardenImmuneSweep = Math.PI * 1.4;
+            e.speed *= 1.25;
+            const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+                'WARDEN ENRAGED', { font:'bold 18px monospace', fill:'#ff44ff', stroke:'#000', strokeThickness:4 })
+                .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+            scene.tweens.add({ targets: warn, alpha:0, duration:1800, onComplete:()=>warn.destroy() });
+            _tone(55,'sawtooth',0.4,0.3,35);
+            _tone(80,'square',0.3,0.2,60,0.1);
+        }
+    }});
+
+    e._onDestroy = function() {
+        if (e._wardenUpdate) e._wardenUpdate.remove();
+        if (e._wardenPhaseCheck) e._wardenPhaseCheck.remove();
+        if (e._wardenShieldGfx) e._wardenShieldGfx.destroy();
+        if (e.bossLabel) e.bossLabel.destroy();
+        if (e._bossBarBg) e._bossBarBg.destroy();
+        if (e._bossBarFg) e._bossBarFg.destroy();
+    };
+}
+
+// BOSS 2: TWIN RAZORS (Round 10)
+function spawnTwinRazors(scene) {
+    const p = _bossSpawnPos();
+    const x2 = p.x + (Math.random() > 0.5 ? 180 : -180);
+    const y2 = p.y + Phaser.Math.Between(-80, 80);
+
+    const eA = _buildBossEnemy(scene, p.x, p.y, 'light', BOSS_COLORS.razor, 1.8, 1.25);
+    const eB = _buildBossEnemy(scene, x2,  y2,  'light', BOSS_COLORS.razor, 1.8, 1.25);
+
+    const totalHP = eA.health + eB.health;
+    eA.maxHealth = eB.maxHealth = totalHP;
+    eA.health    = eB.health    = totalHP;
+    eA._razorPartner = eB; eB._razorPartner = eA;
+    eA._razorEnraged = false; eB._razorEnraged = false;
+
+    const razorLoadout = { chassis:'light', primary:'smg', secondary:'plsm',
+        mod:'atk_drone', shld:'flicker_shield', leg:'sprint_boosters', aug:'none' };
+
+    for (const e of [eA, eB]) {
+        e.loadout = razorLoadout;
+        e.behavior = 'flanker'; e.isBoss = true; e.bossType = 'razor';
+        _addBossLabel(scene, e, '[ TWIN RAZOR ]', 0xff0022, 58);
+        _addBossHPBar(scene, e, 0xff0022);
+    }
+    _showBossTitle(scene, 'TWIN RAZORS', 'SHARED HEALTH — KILLING ONE ENRAGES THE OTHER', 0xff4444);
+
+    const syncHP = scene.time.addEvent({ delay: 80, loop: true, callback: () => {
+        if (!eA.active && !eB.active) { syncHP.remove(); return; }
+        const minHP = Math.min(
+            eA.active ? eA.health : Infinity,
+            eB.active ? eB.health : Infinity
+        );
+        if (isFinite(minHP)) {
+            if (eA.active) eA.health = minHP;
+            if (eB.active) eB.health = minHP;
+        }
+        for (const e of [eA, eB]) {
+            if (!e.active) continue;
+            _updateBossHPBar(e);
+            if (e.bossLabel && e.bossLabel.active) e.bossLabel.setPosition(e.x, e.y - 58);
+            if (!e._razorEnraged && e._razorPartner && !e._razorPartner.active) {
+                e._razorEnraged = true;
+                e.speed *= 1.8;
+                const fl = scene.add.rectangle(e.x, e.y, 60, 60, 0xff0000, 0.5).setDepth(15);
+                scene.tweens.add({ targets: fl, alpha:0, scale:3, duration:500, onComplete:()=>fl.destroy() });
+                const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+                    'RAZOR ENRAGED!', { font:'bold 20px monospace', fill:'#ff4444', stroke:'#000', strokeThickness:4 })
+                    .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+                scene.tweens.add({ targets: warn, alpha:0, duration:1800, onComplete:()=>warn.destroy() });
+                _tone(110,'sawtooth',0.5,0.35,80);
+                _noise(0.3,0.3,0,0,400);
+            }
+        }
+    }});
+
+    const razorOnDestroy = function() {
+        if (e && e.bossLabel) e.bossLabel.destroy();
+        if (e && e._bossBarBg) e._bossBarBg.destroy();
+        if (e && e._bossBarFg) e._bossBarFg.destroy();
+    };
+    eA._onDestroy = function() {
+        if (eA.bossLabel) eA.bossLabel.destroy();
+        if (eA._bossBarBg) eA._bossBarBg.destroy();
+        if (eA._bossBarFg) eA._bossBarFg.destroy();
+    };
+    eB._onDestroy = function() {
+        if (eB.bossLabel) eB.bossLabel.destroy();
+        if (eB._bossBarBg) eB._bossBarBg.destroy();
+        if (eB._bossBarFg) eB._bossBarFg.destroy();
+        syncHP.remove();
+    };
+}
+
+// BOSS 3: THE ARCHITECT (Round 15)
+function spawnArchitect(scene) {
+    const p = _bossSpawnPos();
+    const e = _buildBossEnemy(scene, p.x, p.y, 'medium', BOSS_COLORS.architect, 2.6, 0.95);
+    e.loadout = { chassis:'medium', primary:'hr', secondary:'emp',
+                  mod:'barrier', shld:'adaptive_shield', leg:'stabilizer_gyros', aug:'targeting_scope' };
+    e.behavior = 'sniper'; e.isBoss = true; e.bossType = 'architect';
+    _addBossLabel(scene, e, '[ THE ARCHITECT ]', 0x00cccc, 68);
+    _addBossHPBar(scene, e, 0x00cccc);
+    _showBossTitle(scene, 'THE ARCHITECT', 'STAY AGGRESSIVE — IT BUILDS COVER MID-FIGHT', 0x00dddd);
+
+    let wallsPlaced = 0;
+    e._architectTimer = scene.time.addEvent({ delay: 7000, loop: true, callback: () => {
+        if (!e || !e.active || !isDeployed || wallsPlaced >= 8) return;
+        const angle = Math.atan2(player.y - e.y, player.x - e.x);
+        const perpAngle = angle + Math.PI / 2;
+        const wallX = e.x + Math.cos(perpAngle) * 80;
+        const wallY = e.y + Math.sin(perpAngle) * 80;
+        const w = 80, h = 18;
+        const wall = scene.add.rectangle(wallX - w/2, wallY - h/2, w, h, 0x00aa99)
+            .setOrigin(0, 0).setStrokeStyle(2, 0x00ffcc).setDepth(3);
+        wall.setAlpha(0);
+        scene.tweens.add({ targets: wall, alpha: 1, duration: 300 });
+        scene.physics.add.existing(wall, true);
+        wall.body.setSize(w, h);
+        wall.body.reset(wallX - w/2, wallY - h/2);
+        wall.coverType = 'wall'; wall.coverHp = 60; wall.coverMaxHp = 60;
+        coverObjects.add(wall, true);
+        coverObjects.refresh();
+        wallsPlaced++;
+        _tone(440, 'square', 0.06, 0.06, 220);
+        _noise(0.08, 0.08, 0, 600, 0);
+        const retreatAngle = angle + Math.PI;
+        if (e.body) {
+            e.body.setVelocity(Math.cos(retreatAngle) * e.speed * 1.4, Math.sin(retreatAngle) * e.speed * 1.4);
+            scene.time.delayedCall(600, () => { if (e && e.active && e.body) e.body.setVelocity(0, 0); });
+        }
+    }});
+
+    e._architectSync = scene.time.addEvent({ delay: 16, loop: true, callback: () => {
+        if (!e || !e.active) return;
+        _updateBossHPBar(e);
+        if (e.bossLabel && e.bossLabel.active) e.bossLabel.setPosition(e.x, e.y - 68);
+    }});
+
+    e._onDestroy = function() {
+        if (e._architectTimer) e._architectTimer.remove();
+        if (e._architectSync) e._architectSync.remove();
+        if (e.bossLabel) e.bossLabel.destroy();
+        if (e._bossBarBg) e._bossBarBg.destroy();
+        if (e._bossBarFg) e._bossBarFg.destroy();
+    };
+}
+
+// BOSS 4: JUGGERNAUT (Round 20+)
+function spawnJuggernaut(scene) {
+    const p = _bossSpawnPos();
+    const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', BOSS_COLORS.juggernaut, 3.2, 0.8);
+    e.loadout = { chassis:'heavy', primary:'chain', secondary:'rl',
+                  mod:'rage', shld:'titan_shield', leg:'siege_stance', aug:'reactive_plating' };
+    e.behavior = 'circle'; e.isBoss = true; e.bossType = 'juggernaut';
+    e._jugPhase = 1; e._jugCharging = false;
+    _addBossLabel(scene, e, '[ JUGGERNAUT ]', 0xff2200, 80);
+    _addBossHPBar(scene, e, 0xff2200);
+    _showBossTitle(scene, 'JUGGERNAUT', 'PHASE 1 — MAINTAIN DISTANCE', 0xff4400);
+
+    e._jugPhaseTimer = scene.time.addEvent({ delay: 300, loop: true, callback: () => {
+        if (!e || !e.active) return;
+        _updateBossHPBar(e);
+        if (e.bossLabel && e.bossLabel.active) e.bossLabel.setPosition(e.x, e.y - 80);
+        const pct = e.health / e.maxHealth;
+
+        if (pct < 0.66 && e._jugPhase === 1) {
+            e._jugPhase = 2;
+            e.speed *= 1.3;
+            const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+                'JUGGERNAUT — PHASE 2: CHARGING', { font:'bold 18px monospace', fill:'#ff6600', stroke:'#000', strokeThickness:4 })
+                .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+            scene.tweens.add({ targets: warn, alpha:0, duration:2000, onComplete:()=>warn.destroy() });
+            _tone(55,'sawtooth',0.55,0.4,35);
+            _noise(0.4,0.4,0,0,300);
+            e._chargeTimer = scene.time.addEvent({ delay: 5000, loop: true, callback: () => {
+                if (!e || !e.active || !player || !player.active || e._jugCharging) return;
+                e._jugCharging = true;
+                const windup = scene.add.circle(e.x, e.y, 30, 0xff4400, 0.6).setDepth(14);
+                scene.tweens.add({ targets: windup, scale: 2.5, alpha: 0, duration: 600, onComplete: () => {
+                    windup.destroy();
+                    if (!e || !e.active || !player || !player.active) { e._jugCharging = false; return; }
+                    const angle = Math.atan2(player.y - e.y, player.x - e.x);
+                    const chargeSpeed = e.speed * 4.5;
+                    if (e.body) e.body.setVelocity(Math.cos(angle)*chargeSpeed, Math.sin(angle)*chargeSpeed);
+                    _tone(80,'sawtooth',0.35,0.25,50);
+                    _noise(0.25,0.35,0,0,500);
+                    scene.time.delayedCall(700, () => {
+                        if (e && e.active) {
+                            if (e.body) e.body.setVelocity(0, 0);
+                            e._jugCharging = false;
+                            if (player && player.active && Phaser.Math.Distance.Between(e.x,e.y,player.x,player.y) < 80) {
+                                const impactDmg = Math.round(35 * (1 + Math.max(0,_round-20)*0.05));
+                                processPlayerDamage(impactDmg, null);
+                                _noise(0.2,0.4,0,0,600);
+                                const imp = scene.add.circle(e.x,e.y,60,0xff4400,0.5).setDepth(14);
+                                scene.tweens.add({ targets:imp, scale:2.5, alpha:0, duration:400, onComplete:()=>imp.destroy() });
+                            }
+                        }
+                    });
+                }});
+            }});
+        }
+
+        if (pct < 0.33 && e._jugPhase === 2) {
+            e._jugPhase = 3;
+            e.speed *= 1.2;
+            const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+                'JUGGERNAUT — FINAL STAND', { font:'bold 20px monospace', fill:'#ff0000', stroke:'#000', strokeThickness:5 })
+                .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+            scene.tweens.add({ targets: warn, alpha:0, duration:2500, onComplete:()=>warn.destroy() });
+            _tone(40,'sawtooth',0.7,0.45,30);
+            _noise(0.5,0.5,0,0,200);
+            e._mineDropTimer = scene.time.addEvent({ delay: 3000, loop: true, callback: () => {
+                if (!e || !e.active || !isDeployed) return;
+                const mx = e.x + Phaser.Math.Between(-30, 30);
+                const my = e.y + Phaser.Math.Between(-30, 30);
+                const mine = scene.add.circle(mx, my, 10, 0xff2200, 0.85)
+                    .setStrokeStyle(2, 0xff8800).setDepth(5);
+                scene.add.circle(mx, my, 5, 0xffaa00, 1).setDepth(6);
+                _tone(200,'square',0.05,0.04,150);
+                let exploded = false;
+                function doExplode() {
+                    if (exploded) return;
+                    exploded = true;
+                    if (mineTick) mineTick.remove();
+                    const exp = scene.add.circle(mine.x, mine.y, 55, 0xff4400, 0.65).setDepth(14);
+                    scene.tweens.add({ targets: exp, scale:2.5, alpha:0, duration:450, onComplete:()=>exp.destroy() });
+                    if (player && player.active && Phaser.Math.Distance.Between(mine.x, mine.y, player.x, player.y) < 60) {
+                        const mineDmg = Math.round(28 * (1 + Math.max(0,_round-20)*0.05));
+                        processPlayerDamage(mineDmg, null);
+                    }
+                    _noise(0.3,0.45,0,0,600);
+                    _tone(120,'sawtooth',0.3,0.2,60);
+                    if (mine.active) mine.destroy();
+                }
+                const mineTick = scene.time.addEvent({ delay: 50, loop: true, callback: () => {
+                    if (!mine.active) { mineTick.remove(); return; }
+                    if (player && player.active && Phaser.Math.Distance.Between(mine.x, mine.y, player.x, player.y) < 45)
+                        doExplode();
+                }});
+                scene.time.delayedCall(2500, doExplode);
+            }});
+        }
+    }});
+
+    e._onDestroy = function() {
+        if (e._jugPhaseTimer) e._jugPhaseTimer.remove();
+        if (e._chargeTimer) e._chargeTimer.remove();
+        if (e._mineDropTimer) e._mineDropTimer.remove();
+        if (e.bossLabel) e.bossLabel.destroy();
+        if (e._bossBarBg) e._bossBarBg.destroy();
+        if (e._bossBarFg) e._bossBarFg.destroy();
+    };
+}
+
+function spawnBoss(scene, roundNum) {
+    const bossCycle = (Math.floor((roundNum - 1) / 5) - 1) % 4;
+    if (bossCycle === 0) spawnWarden(scene);
+    else if (bossCycle === 1) spawnTwinRazors(scene);
+    else if (bossCycle === 2) spawnArchitect(scene);
+    else spawnJuggernaut(scene);
+}
+
+
 function damageCover(scene, cover, amt) {
     if (!cover?.active || cover.coverHp <= 0) return;
     cover.coverHp -= amt;
@@ -5349,6 +5909,13 @@ const ENEMY_COLORS = {
 };
 // Commander unit — dark armour with gold accent
 const COMMANDER_COLORS = { body: 0x1a1000, head: 0xddaa00, eye: 0xff8800 };
+const MEDIC_COLORS     = { body: 0x001a08, head: 0x00cc55, eye: 0x00ffaa };
+const BOSS_COLORS = {
+    warden:    { body: 0x0a001a, head: 0x8800ff, eye: 0xff00ff },
+    razor:     { body: 0x1a0000, head: 0xff0022, eye: 0xff8800 },
+    architect: { body: 0x001a1a, head: 0x00cccc, eye: 0xffffff },
+    juggernaut:{ body: 0x0f0f0f, head: 0x441100, eye: 0xff2200 },
+};
 
 // Primary weapon keys available to enemies (excludes none)
 const ENEMY_PRIMARY   = ['smg', 'mg', 'br', 'sg', 'hr', 'fth'];
@@ -5481,7 +6048,7 @@ function spawnEnemy(scene) {
                  ? 'sniper'
                  : Phaser.Math.RND.pick(_behaviorPool[loadoutE.chassis]);
     e.speed      = chassisS.spd;
-    const _hm = 0.50;
+    const _hm = 0.50 * (1 + Math.min(_round - 1, 30) * 0.05); // +5% HP per round, cap at round 30
     e.comp = {
         core: { hp: Math.round(chassisS.coreHP * _hm), max: Math.round(chassisS.coreHP * _hm) },
         lArm: { hp: Math.round(chassisS.armHP  * _hm), max: Math.round(chassisS.armHP  * _hm) },
@@ -5593,7 +6160,7 @@ function spawnCommander(scene) {
     e.isCommander = true;
     e.behavior   = 'circle';
     e.speed      = chassisS.spd * 1.2;
-    const _cm = 0.50 * 1.5;
+    const _cm = 0.50 * 1.5 * (1 + Math.min(_round - 1, 30) * 0.05);
     e.comp = {
         core: { hp: Math.round(chassisS.coreHP * _cm), max: Math.round(chassisS.coreHP * _cm) },
         lArm: { hp: Math.round(chassisS.armHP  * _cm), max: Math.round(chassisS.armHP  * _cm) },
@@ -7016,7 +7583,11 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         }
         if (e.visuals)  e.visuals.destroy();
         if (e.torso)    e.torso.destroy();
-        if (e.cmdLabel) e.cmdLabel.destroy();
+        if (e.cmdLabel)    e.cmdLabel.destroy();
+        if (e.medicLabel)  e.medicLabel.destroy();
+        if (e.medicCross)  e.medicCross.destroy();
+        if (e._healTimer)  e._healTimer.remove();
+        if (e._onDestroy)  { try { e._onDestroy(); } catch(ex){} }
         if (e.shieldRing?.active) e.shieldRing.destroy();
         if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
         e.destroy();
@@ -8314,9 +8885,13 @@ function _cleanupGame() {
     if (enemyBullets) enemyBullets.clear(true, true);
     if (enemies) {
         enemies.getChildren().forEach(e => {
-            if (e.cmdLabel) try { e.cmdLabel.destroy(); } catch(ex){}
+            if (e.cmdLabel)   try { e.cmdLabel.destroy();   } catch(ex){}
+            if (e.medicLabel) try { e.medicLabel.destroy(); } catch(ex){}
+            if (e.medicCross) try { e.medicCross.destroy(); } catch(ex){}
+            if (e._healTimer) try { e._healTimer.remove();  } catch(ex){}
             if (e.visuals)  try { e.visuals.destroy();  } catch(ex){}
             if (e.torso)    try { e.torso.destroy();    } catch(ex){}
+            if (e._onDestroy) try { e._onDestroy(); } catch(ex){}
         });
         enemies.clear(true, true);
     }
