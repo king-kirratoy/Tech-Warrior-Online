@@ -201,22 +201,7 @@ button.active {
     vertical-align: middle;
 }
 
-/* --- Weight Bar --- */
-#weight-bar-bg {
-    width: 100%;
-    height: 8px;
-    background: rgba(255,170,0,0.05);
-    border: 1px solid rgba(255,170,0,0.2);
-    margin-bottom: 10px;
-    overflow: hidden;
-}
 
-#weight-bar-fill {
-    height: 100%;
-    background: #ffaa00;
-    transition: width 0.3s ease;
-    box-shadow: 0 0 10px rgba(255,170,0,0.4);
-}
 
 /* ============================================================
    IN-GAME HUD
@@ -290,15 +275,16 @@ button.active {
 #weapon-slots {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    min-width: 210px;
+    gap: 6px;
+    min-width: 340px;
+    height: 98px;
 }
 
 .weapon-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    height: 26px;
+    gap: 0;
+    flex: 1;
 }
 
 .weapon-row.arm-destroyed .wr-bar-bg {
@@ -308,71 +294,108 @@ button.active {
 .weapon-row.arm-destroyed .wr-name { color: #ff4444 !important; }
 .weapon-row.arm-destroyed .wr-fill { background: rgba(180,0,0,0.4) !important; box-shadow: none !important; }
 
-.wr-key {
-    font-size: 8px;
-    letter-spacing: 1px;
-    color: rgba(200,210,217,0.45);
-    text-transform: uppercase;
-    width: 30px;
-    text-align: right;
-    flex-shrink: 0;
-    font-family: 'Courier New', monospace;
+/* Active-firing / powerup: glow on the BAR only */
+.weapon-row.active-firing .wr-bar-bg {
+    box-shadow: 0 0 8px rgba(0,230,255,0.75), 0 0 3px rgba(0,230,255,0.5);
+    border-color: rgba(0,230,255,0.65) !important;
 }
 
-.wr-bar-bg {
-    flex: 1;
-    height: 100%;
-    background: rgba(0,0,0,0.45);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 3px;
-    position: relative;
-    overflow: hidden;
+/* Left label column */
+/* wr-left removed — slot and name are now separate columns */
+.wr-left { display: contents; } /* passthrough — children lay out directly in weapon-row */
+
+/* wr-key, wr-label: hidden, kept so JS refs don't null-error */
+.wr-key   { display: none; }
+.wr-label { display: none; }
+
+/* Column 1: slot label — fixed width, right-aligned */
+.wr-slot-col {
+    width: 62px;
+    flex-shrink: 0;
+    text-align: right;
+    padding-right: 8px;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
 }
 
-.wr-fill {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 0%;
-    border-radius: 3px 0 0 3px;
-    pointer-events: none;
-    transition: width 0.05s linear;
-}
-
-.wr-name {
-    position: relative;
-    z-index: 1;
+/* Slot prefix: "L.ARM" / "R.ARM" / "CORE" / "DEFENSE" */
+.wr-prefix {
     font-size: 10px;
     font-weight: bold;
     font-family: 'Courier New', monospace;
     letter-spacing: 1px;
-    padding-left: 8px;
-    color: #c8d2d9;
+    color: rgba(0,210,255,0.65);
     text-transform: uppercase;
     white-space: nowrap;
 }
 
-.wr-label {
-    position: relative;
-    z-index: 1;
-    font-size: 8px;
-    letter-spacing: 2px;
-    color: rgba(200,210,217,0.35);
-    text-transform: uppercase;
-    font-family: 'Courier New', monospace;
-    margin-left: auto;
-    padding-right: 8px;
+/* Separator dash — hidden, kept for HTML compat */
+.wr-sep { display: none; }
+
+/* Column 2: weapon name — fixed width, right-aligned */
+.wr-name-col {
+    width: 150px;
     flex-shrink: 0;
+    text-align: left;
+    padding-left: 8px;
+    padding-right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
+}
+
+/* Weapon / item name — warm off-white contrasts cyan prefix */
+.wr-name {
+    font-size: 11px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    color: rgba(220,235,220,0.88);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+    text-align: left;
+    width: 100%;
+}
+
+/* Bar — height matches text: remove align-self so it stretches with the row */
+.wr-bar-bg {
+    flex: 1;
+    height: 13px;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(0,210,255,0.25);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    align-self: center;
+    transition: box-shadow 0.08s ease, border-color 0.08s ease;
+}
+
+/* Fill — no border-radius avoids pixel artifact at width:0% */
+.wr-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0%;
+    border-radius: 0;
+    pointer-events: none;
+    transition: width 0.05s linear;
+    background: rgba(0,225,255,0.88);
+    box-shadow: inset 0 0 5px rgba(255,255,255,0.2);
 }
 
 .wr-status {
-    font-size: 9px;
+    font-size: 10px;
     font-family: 'Courier New', monospace;
     letter-spacing: 0.5px;
     text-align: right;
     width: 36px;
     flex-shrink: 0;
+    padding-left: 6px;
+    color: rgba(0,210,255,0.7);
 }
 
 /* legacy stubs — kept so old JS .weapon-box refs don't throw */
@@ -569,7 +592,7 @@ button.active {
     color: #fff;
 }
 .dd-selected .dd-name { flex: 1; letter-spacing: 2px; }
-.dd-selected .dd-wt   { font-size: 10px; color: rgba(0,255,255,0.5); margin-right: 10px; letter-spacing: 1px; }
+.dd-selected .dd-wt   { display: none; }
 .dd-selected .dd-arrow { font-size: 9px; color: rgba(0,255,255,0.6); transition: transform 0.15s; }
 .dd-selected.dd-open .dd-arrow { transform: rotate(180deg); }
 
@@ -611,7 +634,7 @@ button.active {
     width: 100%;
 }
 .dd-option .do-name { flex: 1; letter-spacing: 1px; font-size: 12px; }
-.dd-option .do-wt   { font-size: 10px; color: rgba(0,255,255,0.45); min-width: 44px; text-align: right; letter-spacing: 1px; }
+.dd-option .do-wt   { display: none; }
 .dd-option.do-warn .do-wt { color: rgba(255,170,0,0.6); }
 .dd-option .do-desc {
     font-size: 10px;
@@ -699,13 +722,65 @@ button.active {
 <!-- ============================================================
      MAIN MENU
      ============================================================ -->
-<div id="main-menu">
+<!-- CALLSIGN ENTRY SCREEN (shown first) -->
+<div id="callsign-screen" style="position:fixed;inset:0;background:#0c1014;z-index:10000;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;">
+    <canvas id="callsign-canvas" style="position:absolute;inset:0;pointer-events:none;"></canvas>
+    <div style="position:relative;z-index:1;text-align:center;">
+        <div style="font-size:11px;letter-spacing:6px;color:rgba(0,210,255,0.4);margin-bottom:12px;">TECH WARRIOR ONLINE</div>
+        <div style="font-size:28px;letter-spacing:8px;color:#00e0ff;font-weight:bold;text-shadow:0 0 24px rgba(0,210,255,0.7);margin-bottom:6px;">IDENTIFY YOURSELF</div>
+        <div style="font-size:10px;letter-spacing:3px;color:rgba(0,210,255,0.35);margin-bottom:40px;">COMBAT SIMULATION ALPHA 3.0</div>
+
+        <div style="font-size:9px;letter-spacing:4px;color:rgba(0,210,255,0.5);margin-bottom:10px;">ENTER CALLSIGN</div>
+        <input id="menu-callsign" type="text" maxlength="16" placeholder="_ _ _ _ _ _" autocomplete="off" spellcheck="false"
+            style="background:rgba(0,0,0,0.6);border:none;border-bottom:2px solid rgba(0,210,255,0.6);color:#00e0ff;padding:10px 16px;font-family:'Courier New',monospace;font-size:20px;letter-spacing:5px;outline:none;text-align:center;text-transform:uppercase;width:260px;display:block;margin:0 auto 32px;"
+            oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9 _\-\.]/g,'');_updateCallsignBtn()"
+            onkeydown="if(event.key==='Enter')proceedToMainMenu()" />
+
+        <button id="callsign-proceed-btn" onclick="proceedToMainMenu()" disabled
+            style="padding:14px 48px;background:rgba(0,210,255,0.04);border:1px solid rgba(0,210,255,0.2);color:rgba(0,210,255,0.3);font-family:'Courier New',monospace;font-size:13px;letter-spacing:4px;cursor:not-allowed;text-transform:uppercase;transition:all 0.2s;opacity:0.4;"
+            >&#9654;&nbsp; PROCEED</button>
+
+        <div style="margin-top:16px;font-size:9px;letter-spacing:2px;color:rgba(0,210,255,0.25);">CALLSIGN REQUIRED TO CONTINUE</div>
+    </div>
+</div>
+
+<!-- MAIN MENU (shown after callsign) -->
+<div id="main-menu" style="display:none;">
     <canvas id="menu-canvas"></canvas>
     <div class="menu-title">TECH WARRIOR ONLINE</div>
     <div class="menu-subtitle">Combat Simulation Alpha 3.0</div>
-    <button class="menu-start-btn" onclick="startGame()">&#9654;&nbsp;&nbsp;DEPLOY TO BATTLEFIELD</button>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
+        <button class="menu-start-btn" onclick="startGame()">&#9654;&nbsp;&nbsp;DEPLOY TO BATTLEFIELD</button>
+        <button onclick="showLeaderboard()"
+            style="width:260px;padding:13px 24px;background:rgba(0,210,255,0.04);border:1px solid rgba(0,210,255,0.3);border-left:3px solid rgba(0,210,255,0.6);color:rgba(0,210,255,0.8);font-family:'Courier New',monospace;font-size:13px;letter-spacing:4px;cursor:pointer;text-transform:uppercase;transition:all 0.2s;"
+            onmouseover="this.style.background='rgba(0,210,255,0.1)';this.style.color='#00e0ff';this.style.boxShadow='0 0 16px rgba(0,210,255,0.2)'"
+            onmouseout="this.style.background='rgba(0,210,255,0.04)';this.style.color='rgba(0,210,255,0.8)';this.style.boxShadow='none'"
+            >&#9776;&nbsp; LEADERBOARD</button>
+    </div>
     <div class="menu-version">v3.0 // ALPHA BUILD</div>
 </div>
+<script>
+// Pre-fill callsign and update button state on page load
+(function() {
+    try {
+        const saved = localStorage.getItem('tw_callsign');
+        const el = document.getElementById('menu-callsign');
+        if (saved && el) {
+            el.value = saved;
+            const btn = document.getElementById('callsign-proceed-btn');
+            if (btn) {
+                btn.disabled = false;
+                btn.style.background    = 'rgba(0,210,255,0.08)';
+                btn.style.border        = '1px solid rgba(0,210,255,0.6)';
+                btn.style.borderLeft    = '3px solid #00e0ff';
+                btn.style.color         = '#00e0ff';
+                btn.style.cursor        = 'pointer';
+                btn.style.opacity       = '1';
+            }
+        }
+    } catch(e) {}
+})();
+</script>
 
 <!-- ============================================================
      HANGAR / GARAGE UI
@@ -830,21 +905,49 @@ button.active {
                     <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 8px rgba(0,255,255,0.6));">
                 </div>
 
-                <div style="width:100%;margin-top:20px;">
-                    <div id="weight-display" style="text-align:center;font-weight:bold;font-size:12px;font-family:'Courier New',monospace;margin-bottom:4px;">WEIGHT: 0 / 110</div>
-                    <div id="weight-bar-bg" style="width:100%;height:7px;background:rgba(255,255,255,0.08);border:1px solid #444;overflow:hidden;">
-                        <div id="weight-bar-fill" style="width:0%;height:100%;background:#ffaa00;transition:width 0.3s ease;"></div>
-                    </div>
-                </div>
 
-                <div style="width:100%;margin-top:auto;display:flex;justify-content:flex-end;">
-                    <button id="deploy-btn" onclick="deployMech()" style="width:100%;margin-top:12px;">DEPLOY MECH</button>
+
+                <div style="width:100%;margin-top:auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+                    <button onclick="returnToMainMenu()" style="width:100%;padding:8px 12px;background:transparent;border:1px solid rgba(255,100,100,0.2);border-left:3px solid rgba(255,100,100,0.5);color:rgba(255,120,120,0.7);font-family:'Courier New',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;text-transform:uppercase;transition:all 0.15s ease;text-align:left;" onmouseover="this.style.background='rgba(255,80,80,0.08)';this.style.color='rgba(255,140,140,1)'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,120,120,0.7)'">◀ MAIN MENU</button>
+                    <button id="deploy-btn" onclick="deployMech()" style="width:100%;margin-top:4px;">DEPLOY MECH</button>
                 </div>
 
             </div><!-- /right -->
         </div>
     </div>
 </div><!-- /ui-layer -->
+
+<!-- ============================================================
+     LEADERBOARD OVERLAY
+     ============================================================ -->
+<div id="leaderboard-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,5,15,0.96);z-index:3000;font-family:'Courier New',monospace;overflow-y:auto;">
+    <div style="max-width:700px;margin:0 auto;padding:40px 20px;">
+
+        <!-- Header -->
+        <div style="text-align:center;margin-bottom:32px;">
+            <div style="font-size:11px;letter-spacing:4px;color:rgba(0,210,255,0.5);margin-bottom:8px;">TECH WARRIOR</div>
+            <div style="font-size:22px;letter-spacing:6px;color:#00e0ff;font-weight:bold;text-shadow:0 0 20px rgba(0,210,255,0.6);">LEADERBOARD</div>
+            <div style="width:200px;height:1px;background:linear-gradient(90deg,transparent,rgba(0,210,255,0.6),transparent);margin:12px auto 0;"></div>
+        </div>
+
+        <!-- Last run auto-submitted notice -->
+        <div id="lb-submit-panel" style="display:none;background:rgba(0,210,255,0.05);border:1px solid rgba(0,210,255,0.2);border-left:3px solid rgba(0,210,255,0.5);padding:12px 20px;margin-bottom:20px;">
+            <div style="font-size:9px;letter-spacing:3px;color:rgba(0,210,255,0.5);margin-bottom:4px;">LAST RUN AUTO-SUBMITTED</div>
+            <div id="lb-run-preview" style="font-size:11px;color:rgba(0,210,255,0.8);letter-spacing:1px;"></div>
+        </div>
+
+        <!-- Scores table -->
+        <div id="lb-loading" style="text-align:center;color:rgba(0,210,255,0.4);font-size:11px;letter-spacing:3px;padding:40px 0;">LOADING SCORES...</div>
+        <div id="lb-table" style="display:none;"></div>
+        <div id="lb-empty" style="display:none;text-align:center;color:rgba(0,210,255,0.3);font-size:11px;letter-spacing:3px;padding:40px 0;">NO RUNS SUBMITTED YET.<br><br>BE THE FIRST.</div>
+
+        <!-- Footer -->
+        <div style="text-align:center;margin-top:32px;">
+            <button onclick="closeLeaderboard()" style="padding:10px 32px;background:transparent;border:1px solid rgba(0,210,255,0.35);border-left:3px solid rgba(0,210,255,0.7);color:rgba(0,210,255,0.75);font-family:'Courier New',monospace;font-size:11px;letter-spacing:3px;cursor:pointer;" onmouseover="this.style.background='rgba(0,210,255,0.08)'" onmouseout="this.style.background='transparent'">◀ BACK TO HANGAR</button>
+        </div>
+
+    </div>
+</div>
 
 <!-- ============================================================
      IN-GAME HUD
@@ -877,51 +980,63 @@ button.active {
                 </div>
             </div>
 
-            <!-- Vertical shield bar -->
-            <div id="sh-bar-vert" title="Shield">
-                <div id="sh-fill-vert" style="height:100%;"></div>
-            </div>
-
             <!-- Weapon Slots — horizontal bar rows -->
             <div id="weapon-slots">
                 <div class="weapon-row" id="slot-L">
-                    <span class="wr-key">M1</span>
-                    <div class="wr-bar-bg" style="border-color:rgba(0,200,255,0.2);">
-                        <div class="wr-fill" id="wr-fill-L" style="background:rgba(0,180,255,0.22);box-shadow:0 0 8px rgba(0,180,255,0.35);"></div>
-                        <span class="wr-name" id="txt-L">—</span>
-                        <span class="wr-label">PRIMARY</span>
+                    <div class="wr-slot-col">
+                        <span class="wr-prefix">L.ARM</span>
                     </div>
-                    <span class="wr-status" id="wr-st-L" style="color:#44ccff;"></span>
+                    <div class="wr-name-col">
+                        <span class="wr-name" id="txt-L">—</span>
+                    </div>
+                    <div class="wr-bar-bg" style="border-color:rgba(0,210,255,0.25);">
+                        <div class="wr-fill" id="wr-fill-L" ></div>
+                    </div>
+                    <span class="wr-status" id="wr-st-L" style="color:rgba(0,210,255,0.7);"></span>
                 </div>
                 <div class="weapon-row" id="slot-R">
-                    <span class="wr-key">M2</span>
-                    <div class="wr-bar-bg" style="border-color:rgba(255,140,0,0.2);">
-                        <div class="wr-fill" id="wr-fill-R" style="background:rgba(255,120,0,0.22);box-shadow:0 0 8px rgba(255,120,0,0.35);"></div>
-                        <span class="wr-name" id="txt-R">—</span>
-                        <span class="wr-label">SECONDARY</span>
+                    <div class="wr-slot-col">
+                        <span class="wr-prefix">R.ARM</span>
                     </div>
-                    <span class="wr-status" id="wr-st-R" style="color:#ffaa44;"></span>
+                    <div class="wr-name-col">
+                        <span class="wr-name" id="txt-R">—</span>
+                    </div>
+                    <div class="wr-bar-bg" style="border-color:rgba(0,210,255,0.25);">
+                        <div class="wr-fill" id="wr-fill-R" ></div>
+                    </div>
+                    <span class="wr-status" id="wr-st-R" style="color:rgba(0,210,255,0.7);"></span>
                 </div>
                 <div class="weapon-row" id="slot-M">
-                    <span class="wr-key">SPC</span>
-                    <div class="wr-bar-bg" style="border-color:rgba(180,80,255,0.2);">
-                        <div class="wr-fill" id="wr-fill-M" style="background:rgba(160,60,255,0.22);box-shadow:0 0 8px rgba(160,60,255,0.35);"></div>
+                    <div class="wr-slot-col">
+                        <span class="wr-prefix">CORE</span>
+                    </div>
+                    <div class="wr-name-col">
                         <span class="wr-name" id="txt-M">—</span>
-                        <span class="wr-label">CORE</span>
                     </div>
-                    <span class="wr-status" id="wr-st-M" style="color:#bb88ff;"></span>
-                </div>
-                <div class="weapon-row" id="slot-leg-wrap" style="display:none;">
-                    <span class="wr-key">LEG</span>
-                    <div class="wr-bar-bg" style="border-color:rgba(220,200,0,0.2);">
-                        <div class="wr-fill" id="wr-fill-G" style="background:rgba(200,180,0,0.18);width:100%;"></div>
-                        <span class="wr-name" id="txt-G">—</span>
-                        <span class="wr-label">LEGS</span>
+                    <div class="wr-bar-bg" style="border-color:rgba(0,210,255,0.25);">
+                        <div class="wr-fill" id="wr-fill-M" ></div>
                     </div>
-                    <span class="wr-status" id="wr-st-G" style="color:#ddcc44;"></span>
+                    <span class="wr-status" id="wr-st-M" style="color:rgba(0,210,255,0.7);"></span>
                 </div>
+
+                <!-- Defense / shield row -->
+                <div class="weapon-row" id="slot-S">
+                    <div class="wr-slot-col">
+                        <span class="wr-prefix">DEFENSE</span>
+                    </div>
+                    <div class="wr-name-col">
+                        <span class="wr-name" id="txt-S">—</span>
+                    </div>
+                    <div class="wr-bar-bg" style="border-color:rgba(0,210,255,0.25);">
+                        <div class="wr-fill" id="wr-fill-S"></div>
+                    </div>
+                    <span class="wr-status" id="wr-st-S" style="color:rgba(0,210,255,0.7);"></span>
+                </div>
+
                 <!-- compat stubs so old JS getElementById refs don't null-error -->
                 <div style="display:none;">
+                    <div id="sh-bar-vert"><div id="sh-fill-vert"></div></div>
+                    <div id="slot-leg-wrap"><span id="txt-G"></span><div id="wr-fill-G"></div><span id="wr-st-G"></span></div>
                     <div id="slot-L-box"><div id="cd-L"></div></div>
                     <div id="slot-R-box"><div id="cd-R"></div></div>
                     <div id="slot-M-box"><div id="cd-M"></div></div>
@@ -998,6 +1113,12 @@ button.active {
                 onmouseout="this.style.background='rgba(0,255,255,0.05)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
                 &#8962; MECH HANGAR
             </button>
+            <button onclick="returnToMainMenu()"
+                style="width:200px;padding:16px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);border-left:3px solid rgba(255,60,60,0.7);color:rgba(255,100,100,0.85);font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
+                onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.boxShadow='0 0 20px rgba(255,60,60,0.2)';this.style.letterSpacing='4px';"
+                onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
+                &#9632; MAIN MENU
+            </button>
         </div>
     </div>
 </div>
@@ -1025,13 +1146,92 @@ button.active {
 // ================================================================
 // AUGMENTS — passive system augmentation slot
 // ================================================================
+// ── CHASSIS WEAPON RESTRICTIONS ──────────────────────────────────
+const CHASSIS_WEAPONS = {
+    light:  new Set(['none','smg','br','fth','sg','sr']),
+    medium: new Set(['none','mg','br','hr','gl','plsm','sr','siege','chain']),
+    heavy:  new Set(['none','mg','hr','rl','plsm','siege','chain']),
+};
+// ── CHASSIS MOD RESTRICTIONS ──────────────────────────────────────
+const CHASSIS_MODS = {
+    // Each chassis gets exactly 5 unique options (plus none).
+    // 'jump' and 'decoy' appear on light only; 'rage' on heavy only; etc.
+    light:  new Set(['none','jump','decoy','barrier','emp','ghost_step']),
+    medium: new Set(['none','barrier','repair','missile','atk_drone','overclock_burst']),
+    heavy:  new Set(['none','rage','repair','atk_drone','missile','fortress_mode']),
+};
+// ── CHASSIS SHIELD RESTRICTIONS ───────────────────────────────────
+const CHASSIS_SHIELDS = {
+    // All chassis get the 5 universal shields + their 5 chassis-unique shields
+    light:  new Set(['none',
+        'light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield',
+        'micro_shield','flicker_shield','phase_shield','smoke_burst','mirror_shield']),
+    medium: new Set(['none',
+        'light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield',
+        'adaptive_shield','counter_shield','pulse_shield','layered_shield','overcharge_shld']),
+    heavy:  new Set(['none',
+        'light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield',
+        'siege_wall','bulwark_shield','retribution_shld','thermal_shield','titan_shield']),
+};
+// ── CHASSIS LEG RESTRICTIONS ──────────────────────────────────────
+const CHASSIS_LEGS = {
+    light:  new Set(['none','hydraulic_boost','gyro_stabilizer','sprint_boosters','featherweight','ghost_legs','silent_step','reactive_dash']),
+    medium: new Set(['none','gyro_stabilizer','mag_anchors','mine_layer','afterleg','stabilizer_gyros','jump_jets','adaptive_stride','seismic_dampener','reactor_legs']),
+    heavy:  new Set(['none','mag_anchors','mine_layer','tremor_legs','siege_stance','ironclad_legs','ground_slam','suppressor_legs']),
+};
+// ── CHASSIS AUG RESTRICTIONS ──────────────────────────────────────
+const CHASSIS_AUGS = {
+    light:  new Set(['none','target_painter','threat_analyzer','ballistic_weave','targeting_scope','neural_accel','ghost_circuit','reflex_amp','kill_sprint','predator_lens','shadow_core']),
+    medium: new Set(['none','target_painter','threat_analyzer','overclock_cpu','reactive_plating','combat_ai','drone_relay','multi_drone','tactical_uplink','field_processor','system_sync','adaptive_core','echo_targeting']),
+    heavy:  new Set(['none','reactive_plating','scrap_cannon','fuel_injector','thermal_core','pyromaniac_chip','war_machine','iron_fortress','suppressor_aura','colossus_frame','impact_core']),
+};
+
 const SHIELD_SYSTEMS = {
-    none:            { name: 'NONE',            weight: 0,   maxShield: 0,   regenRate: 0,   regenDelay: 0,  desc: 'No shield system. Mech has no energy shield.' },
-    light_shield:    { name: 'LIGHT SHIELD',    weight: 15,  maxShield: 60,  regenRate: 1.2, regenDelay: 4,  desc: 'Light energy shield. 60 HP, fast regen after 4s without damage.' },
-    standard_shield: { name: 'STD. SHIELD',     weight: 25,  maxShield: 100, regenRate: 1.0, regenDelay: 5,  desc: 'Standard shield module. 100 HP shield, regenerates after 5s.' },
-    heavy_shield:    { name: 'HEAVY SHIELD',    weight: 40,  maxShield: 160, regenRate: 0.8, regenDelay: 6,  desc: 'Heavy shield array. 160 HP, slower regen, longer lockout after damage.' },
-    reactive_shield: { name: 'REACTIVE SHIELD', weight: 45,  maxShield: 120, regenRate: 1.5, regenDelay: 3,  desc: 'Reactive matrix. 120 HP with fast 3s regen. Absorbs 65% of damage instead of 50%.' },
-    fortress_shield: { name: 'FORTRESS SHIELD', weight: 60,  maxShield: 220, regenRate: 0.5, regenDelay: 8,  desc: 'Maximum protection. 220 HP fortress shield. Very slow regen, 8s lockout.' },
+    none:            { name: 'NONE',            weight: 0,   maxShield: 0,   regenRate: 0,    regenDelay: 0,  absorb: 0.50, desc: 'No shield system.' },
+    // ── UNIVERSAL (all chassis) ───────────────────────────────────
+    // Fast Cycle: low HP, near-instant regen. Burn it freely — it comes right back.
+    light_shield:    { name: 'LIGHT SHIELD',    weight: 15,  maxShield: 60,  regenRate: 6.0,  regenDelay: 1,  absorb: 0.50, desc: 'Low HP (60) but regens in ~1s. Cycle it constantly. No downtime if you stay mobile.' },
+    // Balanced: nothing special, nothing lacking. The dependable baseline.
+    standard_shield: { name: 'STD. SHIELD',     weight: 25,  maxShield: 100, regenRate: 1.2,  regenDelay: 4,  absorb: 0.50, desc: 'Reliable 100 HP, standard 50% absorb, 4s regen delay. No gimmick — just solid.' },
+    // Absorb Quality: same HP as standard but 70% absorb. Regen is slower to compensate.
+    heavy_shield:    { name: 'HEAVY SHIELD',    weight: 40,  maxShield: 100, regenRate: 0.6,  regenDelay: 7,  absorb: 0.70, desc: '100 HP but absorbs 70% of each hit (vs. 50%). Regen is slow — protect the shield.' },
+    // Responsive: fast regen, invuln flash on break. Breaking it is part of the rhythm.
+    reactive_shield: { name: 'REACTIVE SHIELD', weight: 45,  maxShield: 80,  regenRate: 4.0,  regenDelay: 2,  absorb: 0.50, desc: '80 HP, 2s regen. On break: 0.3s invulnerability window. Designed to break and recover.' },
+    // Raw Mass: enormous HP but only absorbs 25% — most damage bleeds through.
+    fortress_shield: { name: 'FORTRESS SHIELD', weight: 60,  maxShield: 240, regenRate: 0.4,  regenDelay: 9,  absorb: 0.25, desc: '240 HP but only 25% absorb — damage bleeds through. A speed bump, not a wall.' },
+    // ── LIGHT CHASSIS UNIQUE ──────────────────────────────────────
+    // Pure cycle: 30 HP but regen starts after 1s. Almost always up.
+    micro_shield:    { name: 'MICRO SHIELD',    weight: 12,  maxShield: 30,  regenRate: 10.0, regenDelay: 1,  absorb: 0.50, desc: 'Paper thin (30 HP), instant 1s regen. Always cycling. Best with high mobility.' },
+    // Rhythm blocker: absorbs every other hit entirely, HP never depletes.
+    flicker_shield:  { name: 'FLICKER SHIELD',  weight: 22,  maxShield: 80,  regenRate: 0,    regenDelay: 0,  absorb: 0.50, flickerBlock: true, desc: 'Alternates active/inactive each hit. Blocks every second hit completely. No regen needed.' },
+    // Reactive hit window: brief invuln on every shield hit (not just break).
+    phase_shield:    { name: 'PHASE SHIELD',    weight: 20,  maxShield: 70,  regenRate: 1.5,  regenDelay: 3,  absorb: 0.50, phaseInvuln: 0.25, desc: '70 HP. Each hit triggers 0.25s invulnerability. Consistent hit mitigation.' },
+    // Break escape: on shield break, gain a speed burst to disengage.
+    smoke_burst:     { name: 'SMOKE BURST',     weight: 18,  maxShield: 60,  regenRate: 2.0,  regenDelay: 3,  absorb: 0.50, breakSpeedBurst: true, desc: '60 HP. On break: +70% speed for 2s. Converts being overwhelmed into an escape.' },
+    // Punish attacker: reflects 35% of absorbed damage back at the source.
+    mirror_shield:   { name: 'MIRROR SHIELD',   weight: 28,  maxShield: 70,  regenRate: 1.0,  regenDelay: 4,  absorb: 0.50, reflectPct: 0.35, desc: '70 HP. Reflects 35% of absorbed damage back at the attacker.' },
+    // ── MEDIUM CHASSIS UNIQUE ─────────────────────────────────────
+    // Sustained fighter: absorb scales 50→80% over 4 consecutive hits.
+    adaptive_shield: { name: 'ADAPTIVE SHIELD', weight: 30,  maxShield: 90,  regenRate: 1.0,  regenDelay: 5,  absorb: 0.50, adaptiveMax: 0.80, desc: '90 HP. Each consecutive hit increases absorb by 10% (max 80%). Rewards staying in the fight.' },
+    // Charge-and-release: stores energy from hits, discharge on mod for AoE burst.
+    counter_shield:  { name: 'COUNTER SHIELD',  weight: 35,  maxShield: 90,  regenRate: 1.1,  regenDelay: 4,  absorb: 0.50, counterCharge: 40, desc: '90 HP. Every 40 shield damage charges a counter-strike. Discharge on mod activation: 80 AoE dmg.' },
+    // Tactical reset: on break, EMP stuns all enemies within 250px for 1.8s.
+    pulse_shield:    { name: 'PULSE SHIELD',    weight: 28,  maxShield: 80,  regenRate: 3.0,  regenDelay: 2,  absorb: 0.50, breakEMP: true, desc: '80 HP, fast 2s regen. On break: EMP stuns enemies within 250px for 1.8s.' },
+    // Two lives: two independent 65 HP layers. Each regen separately.
+    layered_shield:  { name: 'LAYERED SHIELD',  weight: 38,  maxShield: 130, regenRate: 0.8,  regenDelay: 5,  absorb: 0.50, layered: true, layer1Max: 65, layer2Max: 65, desc: '130 HP across two 65 HP layers. Each layer regens independently once broken.' },
+    // Overflow: excess absorbed damage spills into temporary core HP.
+    overcharge_shld: { name: 'OVERCHARGE SHLD', weight: 32,  maxShield: 90,  regenRate: 1.2,  regenDelay: 3,  absorb: 0.50, overchargeSpill: true, desc: '90 HP. Damage absorbed beyond shield HP temporarily adds to core HP buffer.' },
+    // ── HEAVY CHASSIS UNIQUE ──────────────────────────────────────
+    // Fortress: massive HP + damage reduction while active. Slows you down.
+    siege_wall:      { name: 'SIEGE WALL',      weight: 70,  maxShield: 280, regenRate: 0.3,  regenDelay: 10, absorb: 0.50, activeDR: 0.20, activeSpeedPenalty: 0.20, desc: '280 HP. While shield is up: -20% incoming damage, -20% move speed. Hold the line.' },
+    // Passive armor: 12% DR persists even when shield is fully depleted.
+    bulwark_shield:  { name: 'BULWARK SHIELD',  weight: 55,  maxShield: 140, regenRate: 0.5,  regenDelay: 7,  absorb: 0.50, passiveDR: 0.12, desc: '140 HP. Passive 12% DR always active — even when shield is broken.' },
+    // Retribution: charges on absorbed hits; on shield break, explodes for AoE.
+    retribution_shld:{ name: 'RETRIBUTION',     weight: 50,  maxShield: 110, regenRate: 1.8,  regenDelay: 4,  absorb: 0.50, retributionBreak: true, desc: '110 HP. Absorbing hits charges retribution. On break: AoE explosion scaled to charge.' },
+    // Contact damage: enemies near you take burn damage while shield is up.
+    thermal_shield:  { name: 'THERMAL SHIELD',  weight: 45,  maxShield: 120, regenRate: 0.9,  regenDelay: 5,  absorb: 0.50, thermalAura: 8, thermalRange: 160, desc: '120 HP. Enemies within 160px take 8 dmg/s while your shield is active.' },
+    // Bulk + core bonus: very high HP and adds 20 bonus core HP while equipped.
+    titan_shield:    { name: 'TITAN SHIELD',    weight: 65,  maxShield: 200, regenRate: 0.3,  regenDelay: 9,  absorb: 0.60, coreBonus: 20, desc: '200 HP, 60% absorb, +20 core HP bonus. Slow regen. Pure staying power.' },
 };
 
 const AUGMENTS = {
@@ -1053,6 +1253,24 @@ const AUGMENTS = {
     fuel_injector:   { name: 'FUEL INJECTOR',  weight: 30,  desc: 'FTH range +40%, cone width +30%.' },
     thermal_core:    { name: 'THERMAL CORE',   weight: 25,  desc: 'FTH always ignites on hit. Ignite duration +1s.' },
     pyromaniac_chip: { name: 'PYRO CHIP',      weight: 35,  desc: 'Ignited enemies spread fire to one adjacent enemy on death.' },
+    // ── LIGHT CHASSIS UNIQUE ──────────────────────────────────────
+    ghost_circuit:   { name: 'GHOST CIRCUIT',  weight: 25,  desc: 'After a JUMP landing, you are invisible to enemies for 2s.' },
+    reflex_amp:      { name: 'REFLEX AMP',     weight: 20,  desc: 'First shot fired after a dodge or JUMP deals +40% damage.' },
+    kill_sprint:     { name: 'KILL SPRINT',    weight: 22,  desc: 'Each kill grants +8% move speed for 4s (stacks up to 3×).' },
+    predator_lens:   { name: 'PREDATOR LENS',  weight: 28,  desc: 'Enemies at >400px distance are highlighted. +10% damage vs highlighted targets.' },
+    shadow_core:     { name: 'SHADOW CORE',    weight: 30,  desc: 'While moving, all incoming damage reduced by 12%.' },
+    // ── MEDIUM CHASSIS UNIQUE ─────────────────────────────────────
+    tactical_uplink: { name: 'TACTICAL UPLINK',weight: 28,  desc: 'Mod cooldowns reduced by additional 10%. Stacks with Cooldown Mastery.' },
+    field_processor: { name: 'FIELD PROCESSOR',weight: 25,  desc: 'After 3 hits on the same enemy, deal +15% damage to that target permanently.' },
+    system_sync:     { name: 'SYSTEM SYNC',    weight: 30,  desc: 'Activating any mod heals 20 HP on your most-damaged limb.' },
+    adaptive_core:   { name: 'ADAPTIVE CORE',  weight: 32,  desc: 'Each round survived increases your base DR by 3% (max +15%).' },
+    echo_targeting:  { name: 'ECHO TARGETING', weight: 26,  desc: 'Hitting an enemy reveals all enemies within 300px for 3s.' },
+    // ── HEAVY CHASSIS UNIQUE ──────────────────────────────────────
+    war_machine:     { name: 'WAR MACHINE',    weight: 35,  desc: 'Passive core regeneration: 2 HP/s after 4s without taking damage.' },
+    iron_fortress:   { name: 'IRON FORTRESS',  weight: 40,  desc: 'When stationary 1.5s+: +15% DR and +10% damage bonus.' },
+    suppressor_aura: { name: 'SUPPRESSOR AURA',weight: 38,  desc: 'Enemies within 200px have -15% move speed. Passive intimidation field.' },
+    colossus_frame:  { name: 'COLOSSUS FRAME', weight: 45,  desc: 'Core HP +60. Arm and leg HP +40. Built to absorb punishment.' },
+    impact_core:     { name: 'IMPACT CORE',    weight: 32,  desc: 'Close-range kills (<200px) restore 15 core HP and stun nearby enemies for 0.5s.' },
 };
 
 // ── LEG SYSTEMS — equipped to legs, disabled when legs destroyed ──
@@ -1063,20 +1281,45 @@ const LEG_SYSTEMS = {
     mine_layer:     { name: 'MINE LAYER',    weight: 35,  desc: 'Drops a proximity mine every 8s while moving. Mines deal 80 AoE damage.' },
     mag_anchors:    { name: 'MAG ANCHORS',   weight: 30,  desc: 'While stationary: take 20% less damage and deal 15% more damage.' },
     afterleg:       { name: 'AFTERLEG',      weight: 40,  desc: 'JUMP mod launches farther (+50%). Landing creates a shockwave (60 dmg, 150px).' },
+    // ── LIGHT CHASSIS UNIQUE ──────────────────────────────────────
+    sprint_boosters: { name: 'SPRINT BOOST',  weight: 28,  desc: 'Double-tap W for a 0.8s speed burst (+80%). 4s cooldown.' },
+    featherweight:   { name: 'FEATHERWEIGHT', weight: 15,  desc: '+15% reload speed and +10% move speed. Light frame optimization — faster in every way.' },
+    ghost_legs:      { name: 'GHOST LEGS',    weight: 22,  desc: 'Taking damage while moving gives 0.2s speed burst. Hard to pin down.' },
+    silent_step:     { name: 'SILENT STEP',   weight: 20,  desc: 'Enemies lose vision of you 40% faster when moving. Flanking radius extended.' },
+    reactive_dash:   { name: 'REACTIVE DASH', weight: 30,  desc: 'When legs drop below 50% HP, automatically trigger a short dodge dash.' },
+    // ── MEDIUM CHASSIS UNIQUE ─────────────────────────────────────
+    stabilizer_gyros:{ name: 'STABILIZER GYR',weight: 28,  desc: 'While stationary: +15% accuracy and +8% damage. Encourages deliberate positioning.' },
+    jump_jets:       { name: 'JUMP JETS',     weight: 32,  desc: 'JUMP mod gains an additional charge (2 uses per cooldown).' },
+    adaptive_stride: { name: 'ADAPTIVE STRIDE',weight: 25, desc: 'Automatically adjust speed: +15% faster when retreating, better kiting.' },
+    seismic_dampener:{ name: 'SEISMIC DAMP.', weight: 30,  desc: 'Leg damage reduced by 25%. Stomps on landing deal +30% slam damage.' },
+    reactor_legs:    { name: 'REACTOR LEGS',  weight: 35,  desc: 'Mod cooldowns reduce by 1s each time you move 300px. Rewards mobility.' },
+    // ── HEAVY CHASSIS UNIQUE ──────────────────────────────────────
+    tremor_legs:     { name: 'TREMOR LEGS',   weight: 45,  desc: 'After standing still 2s, moving creates a tremor: 40 AoE dmg, 120px radius.' },
+    siege_stance:    { name: 'SIEGE STANCE',  weight: 40,  desc: 'While stationary: +25% damage, +20% DR. Plants you but makes you a fortress.' },
+    ironclad_legs:   { name: 'IRONCLAD LEGS', weight: 38,  desc: 'Leg HP +80. Legs take 30% less damage. Much harder to cripple.' },
+    ground_slam:     { name: 'GROUND SLAM',   weight: 42,  desc: 'JUMP landing AoE doubled in radius and damage. Turn landing into a weapon.' },
+    suppressor_legs: { name: 'SUPPRESSOR LEG',weight: 35,  desc: 'Enemies within 220px move 20% slower. Passive suppression aura from heavy frame.' },
 };
 const CHASSIS = {
-    // max = weight limit. Light: dual-fire + dodge-roll mod slot. Medium: cooldown mastery + kill reduction + 60% shield absorb. Heavy: +15% DR passive, no JUMP/Afterleg.
+    // max = weight limit.
+    // Light: dual-fire, fast, fragile. Unique: kill sprint, ghost dodge, shadow mobility.
+    // Medium: cooldown mastery, adaptive targeting, system sync.
+    // Heavy: passive regen, immovable fortress, suppression aura.
     light:  { max: 160, spd: 250, scale: 0.7, coreHP: 212, armHP: 120, legHP: 152,
               dualFire: true,
               passiveReloadBonus: 0.80,
-              identity: 'Dual-fire: both arms fire simultaneously when matching weapons equipped. +20% reload speed. Arms fragile.' },
-    medium: { max: 240, spd: 200, scale: 1.0, coreHP: 272, armHP: 180, legHP: 212,
+              killSpeedStacks: 0,            // kill_sprint aug state
+              shadowDRWhileMoving: 0.12,     // shadow_core aug: 12% DR while moving
+              identity: 'Dual-fire, fast mobility, fragile arms. Unique: kill sprint, shadow DR, ghost evasion.' },
+    medium: { max: 240, spd: 210, scale: 1.0, coreHP: 272, armHP: 180, legHP: 212,
               modCooldownMult: 0.85,
               killCooldownReduction: 500,
               shieldAbsorb: 0.60,
               identity: 'All mod cooldowns −15%. Kills shave 0.5s off active cooldown. Shield absorbs 60% of damage.' },
-    heavy:  { max: 340, spd: 150, scale: 1.4, coreHP: 332, armHP: 240, legHP: 272,
+    heavy:  { max: 340, spd: 185, scale: 1.4, coreHP: 332, armHP: 240, legHP: 272,
               passiveDR: 0.15,
+              passiveRegenRate: 2,           // HP/s after 4s no damage (war_machine aug or base trait)
+              passiveRegenDelay: 4000,       // ms since last damage before regen kicks in
               noJump: true,
               identity: 'Passive 15% damage reduction. Cannot equip JUMP mod or Afterleg. Built for attrition.' }
 };
@@ -1090,16 +1333,16 @@ const CHASSIS = {
  */
 const WEAPONS = {
     // ── PRIMARY WEAPONS ─────────────────────────────────────────────
-    // SMG: high fire rate, low dmg — identity: spray & suppression
-    smg:    { name: 'SMG',    reload: 55,   dmg: 6,   weight: 15,  bulletSize: 4,  speed: 950 },
+    // SMG: high fire rate, close range — identity: spray & suppression, damage falls off past 280px
+    smg:    { name: 'SMG',    reload: 55,   dmg: 6,   weight: 15,  bulletSize: 4,  speed: 950, rangeDropoff: 280 },
     // MG: solid sustained fire — identity: reliable workhorse
     mg:     { name: 'MG',     reload: 280,  dmg: 28,  weight: 25,  bulletSize: 6,  speed: 870 },
     // SG: close-range burst — identity: devastating at point blank, weak at range
     sg:     { name: 'SG',     reload: 700,  dmg: 18,  weight: 30,  bulletSize: 5,  speed: 580,  pellets: 6, range: 500 },
     // BR: burst precision — identity: mid-range burst, first shot accurate
     br:     { name: 'BR',     reload: 900,  dmg: 30,  weight: 30,  bulletSize: 5,  speed: 1150, burst: 3 },
-    // HR: anti-armor heavy — identity: bonus dmg vs shields/heavy chassis
-    hr:     { name: 'HR',     reload: 1600, dmg: 160, weight: 45,  bulletSize: 12, speed: 1100, armorBuster: true },
+    // HR: anti-armor heavy — identity: pierces shields entirely (shield absorb ignored), high single-shot damage
+    hr:     { name: 'HR',     reload: 1600, dmg: 160, weight: 45,  bulletSize: 12, speed: 1100, armorBuster: true, shieldPierce: true },
     // FTH: flamethrower — identity: short-range DoT cone, no bullet, spray fire
     fth:    { name: 'FTH',    reload: 80,   dmg: 8,   weight: 30,  bulletSize: 8,  speed: 420,  flame: true, range: 350 },
     // ── SECONDARY WEAPONS ───────────────────────────────────────────
@@ -1118,8 +1361,8 @@ const WEAPONS = {
     // JUMP: repositioning — deals slam AoE on land
     jump:   { name: 'JUMP',   weight: 15,  jumpSpeed: 950,  airTime: 220,   cooldown: 3500,  slamDmg: 40, slamRadius: 120 },
     // SHIELD: defensive — 4s active, 3s lockout after deactivation
-    shield:  { name: 'SHIELD',  weight: 20,  shieldTime: 4000, cooldown: 8000 },
-    barrier: { name: 'BARRIER', weight: 20,  shieldTime: 4000, cooldown: 8000 },
+    // BARRIER: 2s full invulnerability burst — shorter than old shield but true invincibility
+    barrier: { name: 'BARRIER', weight: 20,  shieldTime: 2000, cooldown: 7000, trueInvuln: true },
     // RAGE: offensive — brief invincibility on activation, boosted damage
     rage:   { name: 'RAGE',   weight: 30,  rageTime: 3500,                  cooldown: 10500, invincFrames: 500 },
     // EMP: crowd control
@@ -1132,6 +1375,16 @@ const WEAPONS = {
     missile: { name: 'MISSILES', weight: 35, missileDmg: 55, missileCount: 6, cooldown: 11000 },
     // DECOY: utility — hologram that draws enemy fire for 5s
     decoy:  { name: 'DECOY',  weight: 15,  decoyDuration: 5000, cooldown: 10000 },
+    // ── CHASSIS-UNIQUE CORE MODS ──────────────────────────────────
+    // GHOST STEP: brief cloaking dash — 1.5s invisibility, 3s cooldown
+    ghost_step: { name: 'GHOST STEP', weight: 20, cloakTime: 1500, cooldown: 7000,
+                  desc: 'Cloak for 1.5s. Enemies lose targeting. Ends if you fire.' },
+    // OVERCLOCK BURST: 3s +25% fire rate and +20% move speed, 12s cooldown
+    overclock_burst: { name: 'OVERCLOCK BURST', weight: 25, boostTime: 3000, cooldown: 12000,
+                       desc: '3s burst: +25% fire rate, +20% speed. High cooldown.' },
+    // FORTRESS MODE: 4s +30% DR and 5 HP/s regen, 14s cooldown
+    fortress_mode: { name: 'FORTRESS MODE', weight: 30, modeTime: 4000, cooldown: 14000,
+                     desc: '4s: +30% DR and 5 HP/s core regen. Immovable fortress.' },
     // ── TWO-HANDED WEAPONS ──────────────────────────────────────────
     // SIEGE CANNON: slow, devastating AoE — requires both arms, no secondary possible
     siege:  { name: 'SIEGE CANNON', reload: 4000, dmg: 380, weight: 90, twoHanded: true,
@@ -1184,6 +1437,7 @@ let _savedMod = null;
 let _savedAug = null;
 let _savedLeg = null;
 let _lArmDestroyed = false, _rArmDestroyed = false, _legsDestroyed = false;
+let _lastPlayerDamageTime = 0;
 // Round system
 let _round          = 1;
 let _bestRound      = 1;
@@ -1672,11 +1926,19 @@ function create() {
         if (bullet.isGLBall) return;
         // Capture angle and damage BEFORE destroying bullet (velocity zeroes on destroy)
         const _bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
-        const dmg = bullet.damageValue || 2;
+        let dmg = bullet.damageValue || 2;
+        // SMG range dropoff: calculate from origin if tracked
+        if (bullet.rangeDropoff && bullet._originX !== undefined) {
+            const _tDist = Phaser.Math.Distance.Between(bullet._originX, bullet._originY, bullet.x, bullet.y);
+            if (_tDist > bullet.rangeDropoff) {
+                dmg = Math.max(1, Math.round(dmg * Math.max(0.40, 1 - (_tDist - bullet.rangeDropoff) / 800)));
+            }
+        }
+        const _bPierce = bullet.shieldPierce || false;
         _shotsHit++; _damageDealt += dmg;
         const _bx2 = bullet.x, _by2 = bullet.y;
         bullet.destroy();
-        if (enemy.isShielded) {
+        if (enemy.isShielded && !_bPierce) {
             // Shield absorbs hit — sparks at bullet pos + BLOCK text
             const _sc = game.scene.scenes[0];
             const _bx = bullet.x !== undefined ? bullet.x : enemy.x;
@@ -1718,7 +1980,7 @@ function create() {
             _perkState._paintedEnemy = enemy;
             enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(2, 0xffaa00); });
         }
-        damageEnemy(enemy, dmg, _bAngle);
+        damageEnemy(enemy, dmg, _bAngle, false, _bPierce);
         // Chain Plasma: chain to nearest other enemy if this was a plasma-sized hit
         if (_perkState.plsmChain && dmg >= 200) {
             let _chainTarget = null, _chainDist = Infinity;
@@ -1788,7 +2050,7 @@ function create() {
     this.hangarOverlay = this.add.rectangle(
         window.innerWidth / 2, window.innerHeight / 2,
         window.innerWidth, window.innerHeight,
-        0x0c1014, 0.7
+        0x0c1014, 1.0
     ).setScrollFactor(0).setDepth(1000);
 
     // (in-game Phaser grid removed — HTML canvas overlay used instead)
@@ -1816,6 +2078,21 @@ function update(time) {
 /** Passive shield regeneration — kicks in 5 s after last hit. */
 function handleShieldRegen(time) {
     if (!player?.active || !isDeployed) return;
+    // ── Thermal Shield: burn enemies near player while shield is active ──
+    const _thermSys = SHIELD_SYSTEMS[loadout.shld];
+    if (_thermSys?.thermalAura && player.shield > 0 && enemies) {
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < (_thermSys.thermalRange || 160)) {
+                e._thermalTickTimer = (e._thermalTickTimer || 0) + (game.loop.delta || 16);
+                if (e._thermalTickTimer >= 500) {
+                    e._thermalTickTimer = 0;
+                    damageEnemy(e, Math.round(_thermSys.thermalAura * 0.5), 0);
+                }
+            } else { e._thermalTickTimer = 0; }
+        });
+    }
+
     // Barrier spike: damage aura while shield mod is active
     if (_perkState.barrierSpike && isShieldActive) {
         enemies.getChildren().forEach(e => {
@@ -1823,6 +2100,14 @@ function handleShieldRegen(time) {
             const _bsd = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
             if (_bsd < 140) damageEnemy(e, 15 * (game.loop.delta / 1000), 0);
         });
+    }
+    // Heavy chassis passive core regen: 2 HP/s after 4s without taking damage
+    if (loadout.chassis === 'heavy' && player?.comp?.core) {
+        const _timeSinceDmg = (game.loop.time - (_lastPlayerDamageTime || 0));
+        if (_timeSinceDmg > 4000 && player.comp.core.hp > 0 && player.comp.core.hp < player.comp.core.max) {
+            player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 2 * (game.loop.delta / 1000));
+            updateHUD();
+        }
     }
     // Meltdown Core: passive heat aura — 8 dmg/s within 180px
     if (_perkState.meltdownCore) {
@@ -1841,6 +2126,10 @@ function handleShieldRegen(time) {
     const regenRate  = player._shieldRegenRate  ?? 1.0;
     if (player.maxShield > 0 && lastDamageTime > 0 && secondsSinceHit >= regenDelay && player.shield < player.maxShield) {
         player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * immovableBonus);
+        if (player.shield >= player.maxShield) {
+            player._shieldAdaptStack = 0;  // adaptive_shield: reset on full regen
+            player._shieldRetribChg  = 0;  // retribution: reset charge on full regen
+        }
         updateBars();
     }
     // Auto-repair: regenerate core HP slowly
@@ -1884,13 +2173,215 @@ function handleEnemyAI(scene, time) {
         const _legsOk  = !enemy.comp || enemy.comp.legs.hp > 0;
         const speed    = _legsOk ? (enemy.speed || _baseSpd) : _baseSpd * 0.5;
 
+        // ── VISION CONE + STATE MACHINE ──────────────────────────────
+        if (!enemy._aiState)         enemy._aiState = 'patrol';
+        if (!enemy._patrolTarget)    enemy._patrolTarget = { x: Phaser.Math.Between(300, 3700), y: Phaser.Math.Between(300, 3700) };
+        if (!enemy._lastKnownPlayer) enemy._lastKnownPlayer = null;
+        if (!enemy._stateTimer)      enemy._stateTimer = 0;
+
+        // ── DETECTION RANGES ──────────────────────────────────────
+        // Patrol: narrow vision cone from torso facing direction
+        const _coneRange   = enemy.behavior === 'sniper' ? 900 : 680;
+        const _coneAngle   = 0.75; // ±43° half-angle
+        // Pursuit: once alerted, enemy tracks player in a huge radius (no cone needed)
+        const _pursuitRange = 1400;
+        // Break-off: enemy gives up only after being this far away for 3s continuously
+        const _breakRange   = 1400;
+
+        // Cone uses the TORSO facing direction (head/gun), not the legs
+        const _facingAngle = enemy.torso?.rotation ?? enemy.visuals?.rotation ?? 0;
+
+        // ── VISION CONE CHECK (only relevant in patrol/search) ──────
+        const _angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+        const _angleDiff     = Phaser.Math.Angle.Wrap(_angleToPlayer - _facingAngle);
+        const _inCone        = Math.abs(_angleDiff) < _coneAngle && dist < _coneRange;
+
+        // LOS raycast for cone detection
+        let _hasLOS = false;
+        if (_inCone && coverObjects) {
+            _hasLOS = true;
+            const _raySteps = 8;
+            for (let _rs = 1; _rs <= _raySteps; _rs++) {
+                const _rt = _rs / _raySteps;
+                const _rx = enemy.x + (player.x - enemy.x) * _rt;
+                const _ry = enemy.y + (player.y - enemy.y) * _rt;
+                const _hit = coverObjects.getChildren().some(c => {
+                    if (!c.active) return false;
+                    const hw = (c.width || 60) / 2, hh = (c.height || 60) / 2;
+                    return _rx > c.x - hw && _rx < c.x + hw && _ry > c.y - hh && _ry < c.y + hh;
+                });
+                if (_hit) { _hasLOS = false; break; }
+            }
+        }
+        const _canSeeViaConeCone = _inCone && _hasLOS;
+
+        // ── PURSUIT DETECTION (chase/combat only): wide radius, no cone needed ──
+        // Once chasing, enemy "knows" where player is within _pursuitRange
+        const _isAlerted   = enemy._aiState === 'chase' || enemy._aiState === 'combat';
+        const _canPursue   = _isAlerted && dist < _pursuitRange;
+
+        // Combined: can the enemy detect the player this frame?
+        const _canSeePlayer = _canSeeViaConeCone || _canPursue;
+
+        // ── DRAW VISION CONE — wall-occluded (patrol/search only) ───
+        if (enemy._visionConeGfx?.active) {
+            const _cg = enemy._visionConeGfx;
+            _cg.clear();
+            const _showCone = (enemy._aiState === 'patrol' || enemy._aiState === 'search');
+            if (_showCone) {
+                const _coneJustSpotted = _canSeeViaConeCone;
+                const _coneCol   = _coneJustSpotted ? 0xff2200
+                                 : enemy._aiState === 'search' ? 0xffcc00
+                                 : 0x4488ff;
+                const _coneAlpha = _coneJustSpotted ? 0.18 : 0.07;
+
+                // Cast individual rays — each stops at the first cover object hit
+                // This makes the cone visually respect walls and buildings
+                const _coneRays  = 18;  // number of rays (more = smoother but costs more)
+                const _coneCovers = coverObjects ? coverObjects.getChildren().filter(c => c.active) : [];
+                const _rayPoints = [];
+
+                for (let _ri = 0; _ri <= _coneRays; _ri++) {
+                    const _ra = _facingAngle - _coneAngle + (_ri / _coneRays) * _coneAngle * 2;
+                    let _rayLen = _coneRange;
+
+                    // Step along ray and find first cover intersection
+                    const _steps = 12;
+                    for (let _rs = 1; _rs <= _steps; _rs++) {
+                        const _t  = _rs / _steps;
+                        const _rx = enemy.x + Math.cos(_ra) * _coneRange * _t;
+                        const _ry = enemy.y + Math.sin(_ra) * _coneRange * _t;
+                        let _hit  = false;
+                        for (let _ci2 = 0; _ci2 < _coneCovers.length; _ci2++) {
+                            const _cv = _coneCovers[_ci2];
+                            const _hw = (_cv.width  || 60) * 0.5 + 2;
+                            const _hh = (_cv.height || 60) * 0.5 + 2;
+                            if (_rx > _cv.x - _hw && _rx < _cv.x + _hw &&
+                                _ry > _cv.y - _hh && _ry < _cv.y + _hh) {
+                                _hit = true; break;
+                            }
+                        }
+                        if (_hit) {
+                            _rayLen = _coneRange * (_t - 1/_steps); // stop just before obstacle
+                            break;
+                        }
+                    }
+                    _rayPoints.push({
+                        x: enemy.x + Math.cos(_ra) * Math.max(0, _rayLen),
+                        y: enemy.y + Math.sin(_ra) * Math.max(0, _rayLen)
+                    });
+                }
+
+                // Draw filled polygon from enemy origin through all ray endpoints
+                _cg.fillStyle(_coneCol, _coneAlpha);
+                _cg.beginPath();
+                _cg.moveTo(enemy.x, enemy.y);
+                for (const _rp of _rayPoints) _cg.lineTo(_rp.x, _rp.y);
+                _cg.closePath();
+                _cg.fillPath();
+
+                // Thin outer edge on first and last ray
+                _cg.lineStyle(1, _coneCol, _coneAlpha * 3.5);
+                _cg.beginPath();
+                _cg.moveTo(enemy.x, enemy.y);
+                _cg.lineTo(_rayPoints[0].x, _rayPoints[0].y);
+                _cg.strokePath();
+                _cg.beginPath();
+                _cg.moveTo(enemy.x, enemy.y);
+                _cg.lineTo(_rayPoints[_rayPoints.length-1].x, _rayPoints[_rayPoints.length-1].y);
+                _cg.strokePath();
+            }
+        }
+
+        // ── STATE TRANSITIONS ─────────────────────────────────────
+        if (_canSeePlayer) {
+            // Always update last known position
+            enemy._lastKnownPlayer = { x: player.x, y: player.y };
+
+            if (enemy._aiState === 'patrol' || enemy._aiState === 'search') {
+                // Just spotted — enter chase
+                enemy._aiState = 'chase';
+                enemy._breakOffTimer = 0;
+            } else if (enemy._aiState === 'chase' && dist < (enemy.behavior === 'sniper' ? 480 : 350)) {
+                enemy._aiState = 'combat';
+                enemy._breakOffTimer = 0;
+            } else if (enemy._aiState === 'combat' && dist > 500) {
+                enemy._aiState = 'chase';
+            }
+            enemy._breakOffTimer = 0; // reset break-off countdown whenever player is seen
+
+        } else {
+            // Player not detectable this frame
+            if (enemy._aiState === 'chase' || enemy._aiState === 'combat') {
+                // Start or continue break-off timer — only give up after 3s far away
+                enemy._breakOffTimer = (enemy._breakOffTimer || 0) + game.loop.delta;
+                if (enemy._breakOffTimer > 3000) {
+                    // Player has been out of range long enough — fall back to search
+                    enemy._aiState = 'search';
+                    enemy._stateTimer = time;
+                    enemy._breakOffTimer = 0;
+                }
+                // While timer is running: keep chasing last known position
+            }
+            if (enemy._aiState === 'search' && time - enemy._stateTimer > 5000) {
+                enemy._aiState = 'patrol';
+                enemy._lastKnownPlayer = null;
+                enemy._patrolTarget = { x: Phaser.Math.Between(300, 3700), y: Phaser.Math.Between(300, 3700) };
+            }
+        }
+
+        // If shot from outside vision cone, immediately alert regardless of cone
+        if (enemy._justHit) {
+            if (enemy._aiState === 'patrol' || enemy._aiState === 'search') {
+                enemy._aiState = 'chase';
+                enemy._lastKnownPlayer = { x: player.x, y: player.y };
+            }
+            enemy._justHit = false;
+            enemy._breakOffTimer = 0;
+        }
+
         if (!enemy.isStunned && !enemy.isJumping) {
             let vx = 0, vy = 0;
 
             // AI BEHAVIOR PATTERNS
             const beh = enemy.behavior || 'circle';
 
-            if (beh === 'circle') {
+            // Patrol: wander to random target — always moving, never spinning
+            if (enemy._aiState === 'patrol') {
+                const ptDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._patrolTarget.x, enemy._patrolTarget.y);
+                // Pick new target when close, or if target somehow ended up too near
+                if (ptDist < 120 || ptDist < 200 && !enemy._patrolSet) {
+                    // Bias new target away from current position so enemy keeps exploring
+                    const _awayAngle = Phaser.Math.Angle.Between(2000, 2000, enemy.x, enemy.y);
+                    const _spread    = (Math.random() - 0.5) * Math.PI * 1.2;
+                    const _dist      = 400 + Math.random() * 600;
+                    const _tx = Phaser.Math.Clamp(enemy.x + Math.cos(_awayAngle + _spread) * _dist, 200, 3800);
+                    const _ty = Phaser.Math.Clamp(enemy.y + Math.sin(_awayAngle + _spread) * _dist, 200, 3800);
+                    enemy._patrolTarget = { x: _tx, y: _ty };
+                    enemy._patrolSet = true;
+                } else {
+                    enemy._patrolSet = false;
+                }
+                const ptAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, enemy._patrolTarget.x, enemy._patrolTarget.y);
+                // Minimum 60% speed so patrol is always visible movement
+                const ptSpeed = Math.max(speed * 0.55, 60);
+                vx = Math.cos(ptAngle) * ptSpeed;
+                vy = Math.sin(ptAngle) * ptSpeed;
+            }
+            // Search: move to last known player position
+            else if (enemy._aiState === 'search') {
+                const lkp = enemy._lastKnownPlayer;
+                if (lkp) {
+                    const lkDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, lkp.x, lkp.y);
+                    if (lkDist > 60) {
+                        const lkAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, lkp.x, lkp.y);
+                        vx = Math.cos(lkAngle) * speed * 0.7;
+                        vy = Math.sin(lkAngle) * speed * 0.7;
+                    }
+                }
+            }
+            // Chase/Combat: use behavior patterns toward player
+            else if (beh === 'circle') {
                 // Original: advance, strafe, retreat
                 if (dist > 350) {
                     vx = Math.cos(angle) * speed;
@@ -1945,9 +2436,12 @@ function handleEnemyAI(scene, time) {
                 }
             }
 
-            // Weapon-driven fire rate — weapon.reload scaled by behavior
-            // Ghost Jump: while player is jumping, enemies won't fire at player
+            // Weapon-driven fire rate — only fire in combat state (has LOS on player)
             if (isJumping && _perkState.ghostJump) return; // Ghost Jump: enemies won't fire
+            if (_perkState._ghostStepActive) return; // Ghost Step: player is cloaked
+            if (enemy._aiState !== 'combat' && enemy._aiState !== 'chase') {
+                // In patrol/search — no shooting
+            } else {
             const _pWep = enemy.loadout?.primary || 'smg';
             // Close-range weapons need tighter engagement
             const fireRange  = (_pWep === 'fth' || _pWep === 'sg') ? 320
@@ -1979,6 +2473,8 @@ function handleEnemyAI(scene, time) {
                 }
             }
 
+            } // end combat/chase firing block
+
             // Enemy mod activation
             const eMod = enemy.loadout?.mod;
             if (eMod && eMod !== 'none' && !enemy.isModActive) {
@@ -1988,6 +2484,69 @@ function handleEnemyAI(scene, time) {
                 if (time > lastMT + cooldown) {
                     activateEnemyMod(scene, enemy, eMod, time);
                 }
+            }
+
+            // ── OBSTACLE AVOIDANCE STEERING ──────────────────────
+            // Cast feeler rays ahead of travel direction; steer away from nearby cover
+            if ((vx !== 0 || vy !== 0) && coverObjects) {
+                const _travelAngle = Math.atan2(vy, vx);
+                const _feelerDist  = 90;   // how far ahead to sense
+                const _avoidRadius = 70;   // cover objects within this dist trigger avoidance
+                let _avoidX = 0, _avoidY = 0;
+
+                // Three feelers: straight, left-20°, right-20°
+                const _feelers = [0, -0.35, 0.35];
+                for (const _fOffset of _feelers) {
+                    const _fa  = _travelAngle + _fOffset;
+                    const _ftx = enemy.x + Math.cos(_fa) * _feelerDist;
+                    const _fty = enemy.y + Math.sin(_fa) * _feelerDist;
+
+                    coverObjects.getChildren().forEach(c => {
+                        if (!c.active) return;
+                        const _cdist = Phaser.Math.Distance.Between(_ftx, _fty, c.x, c.y);
+                        if (_cdist < _avoidRadius + (c.width || 60) * 0.5) {
+                            // Push perpendicular to the obstacle-to-enemy direction
+                            const _pushAngle = Phaser.Math.Angle.Between(c.x, c.y, enemy.x, enemy.y);
+                            const _pushStr   = (_avoidRadius - Math.max(0, _cdist - (c.width||60)*0.5)) / _avoidRadius;
+                            _avoidX += Math.cos(_pushAngle) * _pushStr * speed * 1.2;
+                            _avoidY += Math.sin(_pushAngle) * _pushStr * speed * 1.2;
+                        }
+                    });
+                }
+
+                // Blend avoidance into desired velocity
+                if (_avoidX !== 0 || _avoidY !== 0) {
+                    vx += _avoidX * 0.6;
+                    vy += _avoidY * 0.6;
+                    // Re-normalise to original speed so avoidance doesn't slow/accelerate
+                    const _newSpd = Math.sqrt(vx*vx + vy*vy);
+                    if (_newSpd > 0) {
+                        const _origSpd = Math.sqrt((vx-_avoidX*0.6)**2 + (vy-_avoidY*0.6)**2) || speed;
+                        vx = (vx / _newSpd) * _origSpd;
+                        vy = (vy / _newSpd) * _origSpd;
+                    }
+                }
+            }
+
+            // Wall-stuck detection: if enemy has barely moved but has velocity, nudge them
+            const _curSpd = Math.sqrt(vx*vx + vy*vy);
+            if (_curSpd > 20) {
+                const _movedSince = enemy._lastPos ? Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._lastPos.x, enemy._lastPos.y) : 999;
+                if (!enemy._stuckCheckTime) enemy._stuckCheckTime = time;
+                if (time - enemy._stuckCheckTime > 800) {
+                    if (_movedSince < 15) {
+                        // Stuck — pick a new random patrol target and add a perpendicular nudge
+                        enemy._patrolTarget = { x: Phaser.Math.Between(300, 3700), y: Phaser.Math.Between(300, 3700) };
+                        if (enemy._aiState === 'combat' || enemy._aiState === 'chase') enemy._aiState = 'patrol';
+                        vx += (Math.random() - 0.5) * speed * 2;
+                        vy += (Math.random() - 0.5) * speed * 2;
+                    }
+                    enemy._stuckCheckTime = time;
+                    enemy._lastPos = { x: enemy.x, y: enemy.y };
+                }
+            } else {
+                enemy._stuckCheckTime = time;
+                enemy._lastPos = { x: enemy.x, y: enemy.y };
             }
 
             // Separation: push away from nearby enemies to prevent stacking
@@ -2050,13 +2609,21 @@ function handleEnemyAI(scene, time) {
         // Always sync visual container to physics body
         enemy.visuals.setPosition(enemy.x, enemy.y);
 
-        // Torso aims at player independently (not while stunned)
+        // Torso rotation: in combat/chase → aim at player. In patrol/search → follow body direction.
         if (enemy.torso && player && !enemy.isStunned) {
             enemy.torso.setPosition(enemy.x, enemy.y);
-            const aimAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
-            enemy.torso.rotation = Phaser.Math.Angle.RotateTo(enemy.torso.rotation, aimAngle, 0.1);
+            const _state = enemy._aiState || 'patrol';
+            if (_state === 'combat' || _state === 'chase') {
+                // Lock onto player
+                const aimAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+                enemy.torso.rotation = Phaser.Math.Angle.RotateTo(enemy.torso.rotation, aimAngle, 0.1);
+            } else {
+                // Follow legs direction — torso matches body facing
+                const bodyAngle = enemy.visuals?.rotation ?? enemy.torso.rotation;
+                enemy.torso.rotation = Phaser.Math.Angle.RotateTo(enemy.torso.rotation, bodyAngle, 0.06);
+            }
         } else if (enemy.torso) {
-            enemy.torso.setPosition(enemy.x, enemy.y); // keep position synced even when stunned
+            enemy.torso.setPosition(enemy.x, enemy.y);
         }
         // Sync shield ring to enemy position
         if (enemy.shieldRing?.active) enemy.shieldRing.setPosition(enemy.x, enemy.y);
@@ -2089,17 +2656,24 @@ function handleEnemyAI(scene, time) {
 /** WASD movement and SPACE mod activation. */
 function handlePlayerMovement(scene, time) {
     if (!player?.active || !isDeployed) return;
-    const legsHp = player?.comp?.legs?.hp;
-    const legsDestroyed = (legsHp !== undefined && legsHp !== null && legsHp <= 0);
     const _gyroOn = loadout.leg === 'gyro_stabilizer' && _perkState.legSystemActive;
     const _legHpPct = (player?.comp?.legs?.hp ?? 1) / (player?.comp?.legs?.max ?? 1);
+    // Use _legsDestroyed flag (set in processPlayerDamage) for consistent penalty timing
     const _legMult = _gyroOn ? 1.0
-        : legsDestroyed ? 0.5
+        : _legsDestroyed ? 0.5
         : _legHpPct < 0.5 ? (0.5 + _legHpPct) : 1.0;
+    const _shldSpdMult = (() => {
+        const _ss2 = SHIELD_SYSTEMS[loadout.shld];
+        if (!_ss2) return 1;
+        if (_ss2.breakSpeedBurst && player._smokeBurstActive) return 1.70;
+        if (_ss2.activeSpeedPenalty && player.shield > 0) return 1 - _ss2.activeSpeedPenalty;
+        return 1;
+    })();
     const speed = CHASSIS[loadout.chassis].spd
         * (isRageActive ? 1.75 : 1)
         * _legMult
-        * (_perkState.speedMult || 1);
+        * (_perkState.speedMult || 1)
+        * _shldSpdMult;
     const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod]?.cooldown || 0 : 0;
 
     // Mod activation (SPACE)
@@ -2135,6 +2709,18 @@ function handlePlayerMovement(scene, time) {
     // Mag Anchors: flag stationary state for use in damage calculations
     _perkState._magAnchorsActive = (loadout.leg === 'mag_anchors' && _perkState.legSystemActive &&
         Math.abs(player.body.velocity.x) + Math.abs(player.body.velocity.y) < 15);
+
+    // Iron Fortress aug: track stationary duration → grant DR+dmg bonus after 1.5s
+    if (_perkState.ironFortress) {
+        const _ifMoving = Math.abs(player.body.velocity.x) + Math.abs(player.body.velocity.y) > 15;
+        if (_ifMoving) {
+            _perkState._ironFortressTimer = 0;
+            _perkState._ironFortressActive = false;
+        } else {
+            _perkState._ironFortressTimer = (_perkState._ironFortressTimer || 0) + game.loop.delta;
+            _perkState._ironFortressActive = _perkState._ironFortressTimer > 1500;
+        }
+    }
 }
 
 /** Primary (M1) and secondary (F) weapon firing. */
@@ -2472,35 +3058,85 @@ function syncGlowWedge() {
     if (!glowWedge) return;
     glowWedge.clear();
 
-    const r      = player.rotation;
-    const spread = 0.55;                        // half-angle (~31°)
-    const scale  = CHASSIS[loadout.chassis].scale;
+    const r     = player.rotation;
+    const scale = CHASSIS[loadout.chassis].scale;
+    const col   = loadout.color;
 
-    // Push the wedge clear of the largest possible torso graphic.
-    // Base offset of 42px (clears heavy torso at scale 1.4 ≈ 58px wide)
-    // then add per-chassis padding so it visually hugs the hull edge.
-    const hullRadius = 42 * scale;              // inner edge — just past the hull
-    const wedgeDepth = 55 * scale;              // how far the cone projects forward
-    const inner      = hullRadius;
-    const outer      = hullRadius + wedgeDepth;
+    // Chevron arrow pointing in the direction legs face
+    // Per-chassis base offset to clear the hull at all rotation angles
+    // (hull radius is roughly scale * 36px, so offset must exceed that comfortably)
+    const _chassisOffset = loadout.chassis === 'heavy' ? 62
+                         : loadout.chassis === 'medium' ? 52
+                         : 38;   // light
+    const offset = _chassisOffset * scale;  // distance from mech center to chevron base
+    const aw = 18 * scale;                  // half-width of chevron base
+    const ad = 14 * scale;                  // depth (front-to-back) of chevron
+    const notch = 7 * scale;               // depth of the rear notch (makes it a chevron not a triangle)
 
-    const col = loadout.color;
+    // Tip point (forward)
+    const tx = player.x + Math.cos(r) * (offset + ad);
+    const ty = player.y + Math.sin(r) * (offset + ad);
+    // Left base
+    const lx = player.x + Math.cos(r) * offset + Math.cos(r + Math.PI/2) * aw;
+    const ly = player.y + Math.sin(r) * offset + Math.sin(r + Math.PI/2) * aw;
+    // Right base
+    const rx2 = player.x + Math.cos(r) * offset + Math.cos(r - Math.PI/2) * aw;
+    const ry2 = player.y + Math.sin(r) * offset + Math.sin(r - Math.PI/2) * aw;
+    // Centre-rear notch
+    const nx = player.x + Math.cos(r) * (offset + notch);
+    const ny = player.y + Math.sin(r) * (offset + notch);
 
-    // Three layers: wide soft halo → medium glow → tight bright core
-    const layers = [
-        { iR: inner,        oR: outer + 28 * scale, sp: 1.5,  alpha: 0.07 },
-        { iR: inner,        oR: outer + 10 * scale, sp: 1.2,  alpha: 0.14 },
-        { iR: inner,        oR: outer,               sp: 1.0,  alpha: 0.32 },
-    ];
+    // Outer glow layer
+    glowWedge.fillStyle(col, 0.10);
+    glowWedge.beginPath();
+    glowWedge.moveTo(tx, ty);
+    glowWedge.lineTo(lx, ly);
+    glowWedge.lineTo(nx, ny);
+    glowWedge.lineTo(rx2, ry2);
+    glowWedge.closePath();
+    glowWedge.fillPath();
 
-    layers.forEach(({ iR, oR, sp, alpha }) => {
-        glowWedge.fillStyle(col, alpha);
-        glowWedge.beginPath();
-        glowWedge.arc(player.x, player.y, oR, r - spread * sp, r + spread * sp, false);
-        glowWedge.arc(player.x, player.y, iR, r + spread * sp, r - spread * sp, true);
-        glowWedge.closePath();
-        glowWedge.fillPath();
-    });
+    // Mid glow
+    glowWedge.fillStyle(col, 0.22);
+    glowWedge.beginPath();
+    glowWedge.moveTo(tx, ty);
+    glowWedge.lineTo(lx, ly);
+    glowWedge.lineTo(nx, ny);
+    glowWedge.lineTo(rx2, ry2);
+    glowWedge.closePath();
+    glowWedge.fillPath();
+
+    // Bright core chevron (slightly smaller)
+    const s = 0.72;
+    const _cx = player.x + Math.cos(r) * offset;
+    const _cy = player.y + Math.sin(r) * offset;
+    const stx = _cx + Math.cos(r) * ad * s;
+    const sty = _cy + Math.sin(r) * ad * s;
+    const slx = _cx + Math.cos(r + Math.PI/2) * aw * s;
+    const sly = _cy + Math.sin(r + Math.PI/2) * aw * s;
+    const srx = _cx + Math.cos(r - Math.PI/2) * aw * s;
+    const sry = _cy + Math.sin(r - Math.PI/2) * aw * s;
+    const snx = _cx + Math.cos(r) * notch * s;
+    const sny = _cy + Math.sin(r) * notch * s;
+
+    glowWedge.fillStyle(col, 0.55);
+    glowWedge.beginPath();
+    glowWedge.moveTo(player.x + stx - _cx, player.y + sty - _cy);
+    glowWedge.lineTo(player.x + slx - _cx, player.y + sly - _cy);
+    glowWedge.lineTo(player.x + snx - _cx, player.y + sny - _cy);
+    glowWedge.lineTo(player.x + srx - _cx, player.y + sry - _cy);
+    glowWedge.closePath();
+    glowWedge.fillPath();
+
+    // Crisp outline stroke
+    glowWedge.lineStyle(1.5, col, 0.75);
+    glowWedge.beginPath();
+    glowWedge.moveTo(tx, ty);
+    glowWedge.lineTo(lx, ly);
+    glowWedge.lineTo(nx, ny);
+    glowWedge.lineTo(rx2, ry2);
+    glowWedge.closePath();
+    glowWedge.strokePath();
 }
 
 /**
@@ -2835,6 +3471,243 @@ function startRound(roundNum) {
     }
 }
 
+// ================================================================
+// LEADERBOARD — shared persistent storage across all players
+// ================================================================
+
+// ── Leaderboard backend ────────────────────────────────────────────
+// Uses Supabase when configured (works on GitHub Pages + any web host).
+// Falls back to localStorage for solo/local play when no backend is set.
+//
+// TO ENABLE SHARED LEADERBOARD:
+//   1. Create a free account at https://supabase.com
+//   2. New project → Table Editor → New Table named: tw_scores
+//      Columns: id (int8, PK, auto), name (text), round (int4),
+//               kills (int4), accuracy (int4), damage (int8),
+//               chassis (text), ts (int8)
+//   3. Set table to "Public" read access (RLS policy: allow select for all)
+//   4. Paste your project URL and anon key below:
+const SUPABASE_URL  = 'https://sqkqczkxjeutxcirbsgv.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_OKjtHa6csB206hHGBaNa1g_LZrYXtvo';
+const SUPABASE_TABLE = 'tw_scores';
+
+const LB_KEY    = 'tw_leaderboard_v1';
+const LB_MAX    = 20;
+
+let _pendingRun     = null;
+let _playerCallsign = 'ANONYMOUS';
+
+function _supabaseEnabled() {
+    return SUPABASE_URL.length > 0 && SUPABASE_KEY.length > 0;
+}
+
+function _capturePendingRun() {
+    const acc = _shotsFired > 0 ? Math.round((_shotsHit / _shotsFired) * 100) : 0;
+    _pendingRun = {
+        name:     _playerCallsign || 'ANONYMOUS',
+        round:    _round,
+        kills:    _totalKills,
+        accuracy: acc,
+        damage:   _damageDealt,
+        chassis:  loadout.chassis || 'unknown',
+        ts:       Date.now(),
+    };
+    // Auto-submit immediately — no manual step needed
+    _autoSubmitRun(_pendingRun);
+}
+
+async function _autoSubmitRun(entry) {
+    try {
+        await _insertScore(entry);
+        _pendingRun = null;
+    } catch(e) { console.error('Auto-submit failed', e); }
+}
+
+async function _loadScores() {
+    if (_supabaseEnabled()) {
+        try {
+            const res = await fetch(
+                `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&order=round.desc,kills.desc,accuracy.desc&limit=${LB_MAX}`,
+                { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+            );
+            if (res.ok) return await res.json();
+        } catch(e) { console.warn('Supabase load failed, using local', e); }
+    }
+    // Fallback: localStorage
+    try {
+        const raw = localStorage.getItem(LB_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch(e) { return []; }
+}
+
+async function _saveScores(scores) {
+    // localStorage always kept as local backup
+    try { localStorage.setItem(LB_KEY, JSON.stringify(scores)); } catch(e) {}
+}
+
+async function _insertScore(entry) {
+    if (_supabaseEnabled()) {
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    name:     entry.name,
+                    round:    entry.round,
+                    kills:    entry.kills,
+                    accuracy: entry.accuracy,
+                    damage:   entry.damage,
+                    chassis:  entry.chassis,
+                    ts:       entry.ts
+                })
+            });
+            return; // Supabase handles its own sorting/limiting
+        } catch(e) { console.warn('Supabase insert failed, saving locally', e); }
+    }
+    // Fallback: localStorage
+    const scores = await _loadScores();
+    scores.push(entry);
+    _sortScores(scores);
+    await _saveScores(scores.slice(0, LB_MAX));
+}
+
+function _sortScores(scores) {
+    return scores.sort((a, b) => {
+        if (b.round !== a.round) return b.round - a.round;
+        if (b.kills !== a.kills) return b.kills - a.kills;
+        return b.accuracy - a.accuracy;
+    });
+}
+
+async function showLeaderboard() {
+    const overlay = document.getElementById('leaderboard-overlay');
+    overlay.style.display = 'block';
+
+    // Show loading spinner while fetching
+    document.getElementById('lb-loading').style.display = 'block';
+    document.getElementById('lb-table').style.display   = 'none';
+    document.getElementById('lb-empty').style.display   = 'none';
+
+    // Load once, use for both the notice and the table
+    const scores = await _loadScores();
+
+    // Show last-run notice if a run was just submitted
+    const submitPanel = document.getElementById('lb-submit-panel');
+    const lastMine = scores.filter(s => s.name === _playerCallsign).sort((a,b) => b.ts - a.ts)[0];
+    if (lastMine && Date.now() - lastMine.ts < 60000) {
+        submitPanel.style.display = 'block';
+        const prev = document.getElementById('lb-run-preview');
+        const ch = (lastMine.chassis || '?').toUpperCase();
+        prev.textContent = `${lastMine.name}  ·  ${ch}  ·  ROUND ${lastMine.round}  ·  ${lastMine.kills} KILLS  ·  ${lastMine.accuracy}% ACC  ·  ${(lastMine.damage||0).toLocaleString()} DMG`;
+    } else {
+        submitPanel.style.display = 'none';
+    }
+
+    _renderScores(scores);
+}
+
+function _renderScores(scores) {
+    const loading = document.getElementById('lb-loading');
+    const table   = document.getElementById('lb-table');
+    const empty   = document.getElementById('lb-empty');
+
+    loading.style.display = 'none';
+    table.style.display   = 'none';
+    empty.style.display   = 'none';
+
+    if (!scores || scores.length === 0) {
+        empty.style.display = 'block';
+        return;
+    }
+
+    const sorted = _sortScores([...scores]);
+    const chassisColor = { light: '#88ff88', medium: '#ffcc44', heavy: '#ff8844' };
+
+    const rows = sorted.map((e, i) => {
+        const rank    = i + 1;
+        const medal   = rank === 1 ? '◈' : rank === 2 ? '◇' : rank === 3 ? '◆' : `${rank}.`;
+        const rankCol = rank === 1 ? '#ffd700' : rank === 2 ? '#c0c0c0' : rank === 3 ? '#cd7f32' : 'rgba(0,210,255,0.4)';
+        const cc      = chassisColor[e.chassis] || '#aaa';
+        const date    = new Date(e.ts).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        const name    = (e.name || 'UNKNOWN').toUpperCase().slice(0, 16);
+        const bg      = rank <= 3 ? 'rgba(0,210,255,0.04)' : 'transparent';
+        return `
+        <div style="display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:9px 12px;border-bottom:1px solid rgba(0,210,255,0.08);background:${bg};gap:0 6px;">
+            <span style="color:${rankCol};font-size:12px;font-weight:bold;">${medal}</span>
+            <span style="color:#e8f0e8;font-size:12px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span>
+            <span style="color:#00e0ff;font-size:11px;text-align:right;">R${e.round}</span>
+            <span style="color:rgba(0,210,255,0.75);font-size:11px;text-align:right;">${e.kills}K</span>
+            <span style="color:rgba(0,210,255,0.6);font-size:11px;text-align:right;">${e.accuracy}%</span>
+            <span style="color:rgba(0,210,255,0.55);font-size:10px;text-align:right;">${e.damage.toLocaleString()}</span>
+            <span style="color:${cc};font-size:9px;text-align:right;letter-spacing:1px;opacity:0.8;">${(e.chassis||'?').toUpperCase()}</span>
+        </div>`;
+    }).join('');
+
+    const header = `
+        <div style="display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:6px 12px 10px;gap:0 6px;border-bottom:1px solid rgba(0,210,255,0.25);margin-bottom:4px;">
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;">#</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;letter-spacing:2px;">CALLSIGN</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">ROUND</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">KILLS</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">ACC</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">DAMAGE</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">CHASSIS</span>
+        </div>`;
+
+    table.innerHTML = header + rows;
+    table.style.display = 'block';
+}
+
+async function submitLeaderboardEntry() {
+    if (!_pendingRun) return;
+    const nameEl = document.getElementById('lb-name-input');
+    const name   = (nameEl?.value || '').trim().toUpperCase().replace(/[^A-Z0-9 _\-\.]/g, '') || 'ANONYMOUS';
+
+    // Remember callsign
+    try { localStorage.setItem('tw_callsign', name); } catch(e) {}
+
+    const entry = { ...(_pendingRun), name };
+    const scores = await _loadScores();
+    scores.push(entry);
+    _sortScores(scores);
+    const trimmed = scores.slice(0, LB_MAX);
+    await _saveScores(trimmed);
+
+    _pendingRun = null;
+    document.getElementById('lb-submit-panel').style.display = 'none';
+    await _renderScores();
+}
+
+function skipLeaderboardSubmit() {
+    _pendingRun = null;
+    document.getElementById('lb-submit-panel').style.display = 'none';
+}
+
+function closeLeaderboard() {
+    document.getElementById('leaderboard-overlay').style.display = 'none';
+}
+
+function returnToMainMenu() {
+    // Full cleanup same as returnToHangar
+    returnToHangar();
+    // Hide the hangar ui-layer (returnToHangar shows it — hide it again)
+    document.getElementById('ui-layer').style.display = 'none';
+    // Show main menu directly (skip callsign screen — callsign already known)
+    document.getElementById('callsign-screen').style.display = 'none';
+    const menu = document.getElementById('main-menu');
+    if (menu) {
+        menu.style.display = 'flex';
+        menu.style.opacity = '0';
+        menu.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => { menu.style.opacity = '1'; }, 20);
+    }
+}
+
 function onEnemyKilled() {
     _roundKills++;
     // Swarm Logic: kills while drone active reduce drone cooldown
@@ -3081,9 +3954,10 @@ function deployMech() {
         }
 
         createImpactSparks(scene, p.x, p.y);
-        showDamageText(scene, p.x, p.y, 15, player.shield > 0);
+        const _hitDmg = bullet.damageValue || 15;
+        showDamageText(scene, p.x, p.y, _hitDmg, player.shield > 0);
         bullet.destroy();
-        processPlayerDamage(15, bulletAngle);
+        processPlayerDamage(_hitDmg, bulletAngle);
     });
 
     // Component HP — initialize first, then immediately reset doll so it always shows green
@@ -3105,9 +3979,24 @@ function deployMech() {
     player.shield    = _shldSys.maxShield;
     player._shieldRegenRate  = _shldSys.regenRate;
     player._shieldRegenDelay = _shldSys.regenDelay;
-    // Medium chassis: shield absorbs 60% instead of 50% (base). Reactive shield still 65%.
-    const _baseAbsorb = loadout.chassis === 'medium' ? (CHASSIS.medium.shieldAbsorb || 0.60) : 0.50;
-    player._shieldAbsorb     = (loadout.shld === 'reactive_shield') ? 0.65 : _baseAbsorb;
+    // Absorb from shield definition; medium chassis gets +10% absorb bonus on top
+    const _shldAbsorbBase = _shldSys.absorb ?? 0.50;
+    const _chassisBonus   = loadout.chassis === 'medium' ? 0.10 : 0;
+    player._shieldAbsorb  = Math.min(0.90, _shldAbsorbBase + _chassisBonus);
+    // Per-shield state
+    player._shieldFlickerHit  = false;  // flicker_shield: tracks odd/even hits
+    player._shieldAdaptStack  = 0;      // adaptive_shield: consecutive hit count
+    player._shieldCounterChg  = 0;      // counter_shield: stored charge
+    player._shieldRetribChg   = 0;      // retribution: stored charge
+    player._shieldLayerHP     = [       // layered_shield: [layer1, layer2]
+        _shldSys.layer1Max || 0, _shldSys.layer2Max || 0
+    ];
+    // Titan shield: add core HP bonus
+    if (loadout.shld === 'titan_shield' && _shldSys.coreBonus) {
+        player.maxHp  += _shldSys.coreBonus;
+        player.hp     += _shldSys.coreBonus;
+        if (player.comp?.core) { player.comp.core.max += _shldSys.coreBonus; player.comp.core.hp += _shldSys.coreBonus; }
+    }
 
     refreshMechColor();
     scene.time.delayedCall(10, () => refreshMechColor()); // One-frame safety flush
@@ -3267,6 +4156,37 @@ function applyAugment() {
         case 'fuel_injector':     _perkState.fuelInjector = true; break;
         case 'thermal_core':      _perkState.thermalCore = true; break;
         case 'pyromaniac_chip':   _perkState.pyromaniacChip = true; break;
+        // ── LIGHT CHASSIS UNIQUE ───────────────────────────────────
+        case 'ghost_circuit':     _perkState.ghostCircuit   = true; break;
+        case 'reflex_amp':        _perkState.reflexAmp      = true; break;
+        case 'kill_sprint':       _perkState.killSprint     = true; break;
+        case 'predator_lens':     _perkState.predatorLens   = true; break;
+        case 'shadow_core':       _perkState.shadowCore     = true; break;
+        // ── MEDIUM CHASSIS UNIQUE ──────────────────────────────────
+        case 'tactical_uplink':
+            CHASSIS.medium.modCooldownMult = Math.max(0.60, (CHASSIS.medium.modCooldownMult||0.85) * 0.90);
+            break;
+        case 'field_processor':   _perkState.fieldProcessor = true; break;
+        case 'system_sync':       _perkState.systemSync     = true; break;
+        case 'adaptive_core':     _perkState.adaptiveCoreAug = true; break;
+        case 'echo_targeting':    _perkState.echoTargeting  = true; break;
+        // ── HEAVY CHASSIS UNIQUE ───────────────────────────────────
+        case 'war_machine':       _perkState.warMachine     = true; break;
+        case 'iron_fortress':     _perkState.ironFortress   = true; break;
+        case 'suppressor_aura':   _perkState.suppressorAura = true; break;
+        case 'colossus_frame':
+            if (player?.comp) {
+                player.comp.core.hp  = Math.min(player.comp.core.max + 60, player.comp.core.hp + 60);
+                player.comp.core.max += 60;
+                player.comp.lArm.hp  = Math.min(player.comp.lArm.max + 40, player.comp.lArm.hp + 40);
+                player.comp.lArm.max += 40;
+                player.comp.rArm.hp  = Math.min(player.comp.rArm.max + 40, player.comp.rArm.hp + 40);
+                player.comp.rArm.max += 40;
+                player.comp.legs.hp  = Math.min(player.comp.legs.max + 40, player.comp.legs.hp + 40);
+                player.comp.legs.max += 40;
+            }
+            break;
+        case 'impact_core':       _perkState.impactCore     = true; break;
     }
 }
 
@@ -3289,6 +4209,40 @@ function applyLegSystem() {
         case 'mine_layer':
             _perkState.mineLayerTimer = 0;
             break;
+        case 'featherweight':
+            // +15% reload speed (via reloadMult) + +10% speed (via speedMult)
+            _perkState.reloadMult = (_perkState.reloadMult || 1) * 0.85;
+            _perkState.speedMult  = (_perkState.speedMult  || 1) * 1.10;
+            break;
+        case 'ghost_legs':
+            // Passive: speed burst on taking damage — handled in processPlayerDamage
+            break;
+        case 'silent_step':
+            // Passive: handled in enemy vision detection — no apply needed
+            break;
+        case 'sprint_boosters':
+            // Double-tap handled in input detection
+            break;
+        case 'reactive_dash':
+            // Threshold trigger — handled in processPlayerDamage leg check
+            break;
+        case 'stabilizer_gyros':
+            // Stationary bonus — handled in update loop like mag_anchors
+            break;
+        case 'jump_jets':
+            _perkState.jumpCharges = (_perkState.jumpCharges || 1) + 1;
+            _perkState._jumpChargesLeft = _perkState.jumpCharges;
+            break;
+        case 'adaptive_stride':
+        case 'seismic_dampener':
+        case 'reactor_legs':
+        case 'tremor_legs':
+        case 'siege_stance':
+        case 'ironclad_legs':
+        case 'ground_slam':
+        case 'suppressor_legs':
+            // Handled in update loop
+            break;
     }
 }
 function activateMod(scene, time) {
@@ -3301,6 +4255,9 @@ function activateMod(scene, time) {
         case 'atk_drone': activateDrone(scene, time);    break;
         case 'missile':   activateMissiles(scene, time); break;
         case 'decoy':     activateDecoy(scene, time);    break;
+        case 'ghost_step':    activateGhostStep(scene, time);   break;
+        case 'overclock_burst': activateOverclockBurst(scene, time); break;
+        case 'fortress_mode': activateFortressMode(scene, time); break;
     }
 }
 
@@ -3727,7 +4684,7 @@ function activateShield(scene) {
     }
     // Thorns Protocol: reflect damage to attackers while shield is up — handled in processPlayerDamage
     // Capacitor Armor: tracked in processPlayerDamage
-    scene.time.delayedCall(WEAPONS.shield.shieldTime, () => {
+    scene.time.delayedCall(WEAPONS.barrier.shieldTime, () => {
         isShieldActive = false;
         sndShieldDeactivate();
         lastModTime = game.scene.scenes[0].time.now;
@@ -3779,6 +4736,54 @@ function activateEMP(scene, time) {
 }
 
 
+function activateGhostStep(scene, time) {
+    if (!player?.active) return;
+    _perkState._ghostStepActive = true;
+    // Make player sprite semi-transparent
+    if (player.torso) player.torso.setAlpha(0.15);
+    if (player.visuals) player.visuals.setAlpha(0.15);
+    const _gTimer = scene.time.delayedCall(WEAPONS.ghost_step.cloakTime, () => {
+        _perkState._ghostStepActive = false;
+        if (player?.torso) player.torso.setAlpha(1);
+        if (player?.visuals) player.visuals.setAlpha(1);
+    });
+    // End early if player fires (checked in handlePlayerFiring)
+    lastModTime = time;
+    sndEMP?.();
+}
+
+function activateOverclockBurst(scene, time) {
+    if (!player?.active) return;
+    _perkState._overclockBurst = true;
+    _perkState.speedMult = (_perkState.speedMult || 1) * 1.20;
+    _perkState._overclockReloadMult = 0.75; // 25% faster fire rate
+    scene.time.delayedCall(WEAPONS.overclock_burst.boostTime, () => {
+        _perkState._overclockBurst = false;
+        _perkState.speedMult = (_perkState.speedMult || 1.20) / 1.20;
+        _perkState._overclockReloadMult = 1.0;
+    });
+    lastModTime = time;
+    sndRage?.();
+}
+
+function activateFortressMode(scene, time) {
+    if (!player?.active) return;
+    _perkState._fortressMode = true;
+    _perkState._fortressDR = 0.30; // 30% DR
+    const _fTick = scene.time.addEvent({ delay: 200, loop: true, callback: () => {
+        if (!_perkState._fortressMode || !player?.comp?.core) { _fTick.remove(); return; }
+        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 1); // 5 HP/s at 200ms ticks
+        updateHUD();
+    }});
+    scene.time.delayedCall(WEAPONS.fortress_mode.modeTime, () => {
+        _perkState._fortressMode = false;
+        _perkState._fortressDR = 0;
+        _fTick.remove();
+    });
+    lastModTime = time;
+    sndBarrier?.();
+}
+
 function activateEnemyMod(scene, enemy, mod, time) {
     enemy.isModActive = true;
     enemy.lastModTime = time;
@@ -3807,14 +4812,14 @@ function activateEnemyMod(scene, enemy, mod, time) {
             });
             break;
         }
-        case 'barrier': case 'shield': {
+        case 'barrier': {
             // Temporarily immune to damage — mirrors player shield exactly
             enemy.isShielded = true;
             const shieldRadius = 72 * (CHASSIS[enemy.loadout.chassis]?.scale || 1);
             const sr = scene.add.circle(enemy.x, enemy.y, shieldRadius, 0x00ffff, 0.15)
                 .setStrokeStyle(2, 0x00ffff).setDepth(7);
             enemy.shieldRing = sr;
-            scene.time.delayedCall(WEAPONS.shield.shieldTime, () => {
+            scene.time.delayedCall(WEAPONS.barrier.shieldTime, () => {
                 if (sr?.active) sr.destroy();
                 enemy.shieldRing = null;
                 enemy.isShielded = false;
@@ -4026,6 +5031,9 @@ function placeBuilding(scene, x, y, def) {
     // ── Physics body (static rectangle matching footprint) ───────
     const body = scene.add.rectangle(x, y, w, h, 0x000000, 0).setDepth(3);
     scene.physics.add.existing(body, true);
+    // Force static body to match its game object's position and size exactly
+    body.body.setSize(w, h);
+    body.body.updateFromGameObject();
     body.coverType  = 'building';
     body.coverHp    = 0;
     body.coverMaxHp = 0;
@@ -4059,6 +5067,8 @@ function generateCover(scene) {
                 const rect = scene.add.rectangle(x, y, def.w, def.h, def.color)
                     .setStrokeStyle(2, def.stroke).setDepth(3);
                 scene.physics.add.existing(rect, true);
+                rect.body.setSize(def.w, def.h);
+                rect.body.updateFromGameObject();
                 rect.coverType = def.type; rect.coverHp = def.hp;
                 rect.coverMaxHp = def.hp; rect.coverDef = def;
                 coverObjects.add(rect);
@@ -4116,6 +5126,8 @@ function generateCover(scene) {
             const rect = scene.add.rectangle(x,y,def.w,def.h,def.color)
                 .setStrokeStyle(2,def.stroke).setDepth(3);
             scene.physics.add.existing(rect,true);
+            rect.body.setSize(def.w, def.h);
+            rect.body.updateFromGameObject();
             rect.coverType=def.type; rect.coverHp=def.hp;
             rect.coverMaxHp=def.hp; rect.coverDef=def;
             coverObjects.add(rect);
@@ -4128,8 +5140,13 @@ function generateCover(scene) {
     tryPlace(COVER_DEFS[11], ...Q.tr);
     tryPlace(COVER_DEFS[11], ...Q.br);
 
-    // Bullet ↔ cover collisions (player bullets)
-    // Sync static physics bodies after all objects placed
+    // Force-sync ALL static bodies (belt-and-suspenders)
+    coverObjects.getChildren().forEach(c => {
+        if (c.body) {
+            c.body.setSize(c.width || 60, c.height || 60);
+            c.body.updateFromGameObject();
+        }
+    });
     coverObjects.refresh();
 
     scene.physics.add.collider(bullets, coverObjects, (bullet, cover) => {
@@ -4258,13 +5275,15 @@ function applyLoot(scene, type) {
             _applyFieldEngineer();
             ['slot-L','slot-R'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.style.boxShadow = '0 0 20px #ffdd00';
+                const bar = el?.querySelector('.wr-bar-bg');
+                if (bar) { bar.style.boxShadow = '0 0 12px #ffdd00, 0 0 4px #ffaa00'; bar.style.borderColor = 'rgba(255,210,0,0.7)'; }
             });
             scene.time.delayedCall(8000, () => {
                 isAmmoActive = false;
                 ['slot-L','slot-R'].forEach(id => {
                     const el = document.getElementById(id);
-                    if (el) el.style.boxShadow = '';
+                    const bar = el?.querySelector('.wr-bar-bg');
+                    if (bar) { bar.style.boxShadow = ''; bar.style.borderColor = ''; }
                 });
             });
             break;
@@ -4273,10 +5292,11 @@ function applyLoot(scene, type) {
             // 50% reduced mod cooldown for 10s
             isChargeActive = true;
             const el = document.getElementById('slot-M');
-            if (el) el.style.boxShadow = '0 0 20px #00ffff';
+            const bar = el?.querySelector('.wr-bar-bg');
+            if (bar) { bar.style.boxShadow = '0 0 12px #00ffff, 0 0 4px #00ddff'; bar.style.borderColor = 'rgba(0,220,255,0.8)'; }
             scene.time.delayedCall(10000, () => {
                 isChargeActive = false;
-                if (el) el.style.boxShadow = '';
+                if (bar) { bar.style.boxShadow = ''; bar.style.borderColor = ''; }
             });
             break;
         }
@@ -4300,99 +5320,89 @@ const COMMANDER_COLORS = { body: 0x1a1000, head: 0xddaa00, eye: 0xff8800 };
 // Primary weapon keys available to enemies (excludes none)
 const ENEMY_PRIMARY   = ['smg', 'mg', 'br', 'sg', 'hr', 'fth'];
 // All weapons that can go in either arm slot
-const ENEMY_ARM_WEAPONS = ['smg','mg','br','sg','hr','fth','sr','gl','rl','plsm','rail'];
+const ENEMY_ARM_WEAPONS = ['smg','mg','br','sg','hr','fth','sr','gl','rl','plsm']; // rail excluded: too accurate + hitscan
 // Two-handed weapons (medium/heavy only)
 const ENEMY_2H_WEAPONS  = ['siege','chain'];
 // ENEMY_SECONDARY and ENEMY_MODS are now handled inline in randomEnemyLoadout (full parity with player)
 
 function randomEnemyLoadout() {
-    const chassis   = Phaser.Math.RND.pick(['light', 'medium', 'heavy']);
-    const maxWeight = CHASSIS[chassis].max;
     const rnd = Phaser.Math.RND;
+    const chassis = rnd.pick(['light', 'medium', 'heavy']);
 
-    // Weight budget consumed so far
-    let remain = maxWeight;
+    // ── Chassis-locked weapon pools (mirrors player restrictions) ──
+    const LIGHT_WEAPONS  = ['smg','mg','sg','br','fth','plsm'];
+    const MEDIUM_WEAPONS = ['mg','sg','br','hr','fth','sr','gl','plsm','siege','chain'];
+    const HEAVY_WEAPONS  = ['hr','sg','gl','rl','fth','plsm','siege','chain','rail'];
 
-    // ── Chassis identity restrictions ──
-    // Heavy: no JUMP mod, no AFTERLEG leg — same as player
-    // Light: no two-handed weapons
-    const canJump     = chassis !== 'heavy';
-    const can2H       = chassis !== 'light';
+    const weaponPool = chassis === 'light' ? LIGHT_WEAPONS
+                     : chassis === 'medium' ? MEDIUM_WEAPONS
+                     : HEAVY_WEAPONS;
 
-    // ── Left arm (primary weapon) ──
-    // Chance to pick a two-handed weapon (medium/heavy only)
+    // Two-handed only for medium/heavy
+    const twoHandPool = chassis !== 'light' ? ['siege','chain'] : [];
+    const use2H = twoHandPool.length > 0 && Math.random() < 0.10;
+
     let L = 'none', R = 'none';
-    const use2H = can2H && Math.random() < 0.10; // 10% chance of two-handed
     if (use2H) {
-        const twoHandOpts = ENEMY_2H_WEAPONS.filter(w => (WEAPONS[w]?.weight||999) <= remain);
-        if (twoHandOpts.length > 0) {
-            L = rnd.pick(twoHandOpts);
-            R = L; // two-handed locks both
-            remain -= WEAPONS[L].weight;
-        }
-    }
-    if (!use2H || L === 'none') {
-        // Pick L arm weapon from full arm weapon list
-        const lPool = ENEMY_ARM_WEAPONS.filter(w => (WEAPONS[w]?.weight||999) <= remain);
-        L = lPool.length > 0 ? rnd.pick(lPool) : 'none';
-        remain -= WEAPONS[L]?.weight || 0;
-
-        // ── Right arm ── (75% chance if budget allows)
-        if (Math.random() < 0.75 && !WEAPONS[L]?.twoHanded) {
-            // 20% chance to dual-wield same weapon (if budget allows)
-            const canDual = L !== 'none' && (WEAPONS[L]?.weight||0) <= remain;
-            if (canDual && Math.random() < 0.20) {
-                R = L;
-                remain -= WEAPONS[R].weight;
+        L = R = rnd.pick(twoHandPool);
+    } else {
+        L = rnd.pick(weaponPool);
+        if (Math.random() < 0.75) {
+            if (Math.random() < 0.20) {
+                R = L; // dual wield same
             } else {
-                const rPool = ENEMY_ARM_WEAPONS.filter(w => (WEAPONS[w]?.weight||999) <= remain);
-                R = rPool.length > 0 ? rnd.pick(rPool) : 'none';
-                remain -= WEAPONS[R]?.weight || 0;
+                R = rnd.pick(weaponPool);
             }
         }
+        // Light: no dual wield (mirror player restriction)
+        if (chassis === 'light' && L === R) R = 'none';
     }
 
-    // ── Mod (CORE slot) ──
-    const allMods = ['barrier','shield','rage','emp','repair','atk_drone','missile','decoy','jump'];
-    const modPool = allMods.filter(m => {
-        if (!canJump && m === 'jump') return false;
-        return (WEAPONS[m]?.weight||999) <= remain;
-    });
-    const mod = modPool.length > 0 && Math.random() < 0.70
-        ? rnd.pick(modPool) : 'none';
-    remain -= WEAPONS[mod]?.weight || 0;
+    // ── Chassis-locked mod pools ──
+    const LIGHT_MODS  = ['jump','decoy','barrier','emp','ghost_step'];
+    const MEDIUM_MODS = ['barrier','repair','missile','atk_drone','overclock_burst'];
+    const HEAVY_MODS  = ['rage','repair','atk_drone','missile','fortress_mode'];
 
-    // ── Shield ──
-    const allShields = ['light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield'];
-    const shldPool = allShields.filter(s => (SHIELD_SYSTEMS[s]?.weight||999) <= remain);
-    const shld = shldPool.length > 0 && Math.random() < 0.55
-        ? rnd.pick(shldPool) : 'none';
-    remain -= SHIELD_SYSTEMS[shld]?.weight || 0;
+    const modPool = chassis === 'light' ? LIGHT_MODS
+                  : chassis === 'medium' ? MEDIUM_MODS
+                  : HEAVY_MODS;
+    const mod = Math.random() < 0.75 ? rnd.pick(modPool) : 'none';
 
-    // ── Leg system ──
-    const allLegs = ['hydraulic_boost','gyro_stabilizer','mag_anchors','mine_layer','afterleg'];
-    const legPool = allLegs.filter(l => {
-        if (chassis === 'heavy' && l === 'afterleg') return false;
-        return (LEG_SYSTEMS[l]?.weight||999) <= remain;
-    });
-    const leg = legPool.length > 0 && Math.random() < 0.55
-        ? rnd.pick(legPool) : 'none';
-    remain -= LEG_SYSTEMS[leg]?.weight || 0;
+    // ── Chassis-locked shield pools ──
+    const LIGHT_SHIELDS  = ['micro_shield','flicker_shield','light_shield','phase_shield','smoke_burst'];
+    const MEDIUM_SHIELDS = ['standard_shield','reactive_shield','mirror_shield','adaptive_shield','counter_shield'];
+    const HEAVY_SHIELDS  = ['heavy_shield','fortress_shield','pulse_shield','layered_shield','overcharge_shld'];
 
-    // ── Augment ──
-    const allAugs = ['target_painter','threat_analyzer','overclock_cpu','reactive_plating','scrap_cannon'];
-    const augPool = allAugs.filter(a => (AUGMENTS[a]?.weight||999) <= remain);
-    const aug = augPool.length > 0 && Math.random() < 0.45
-        ? rnd.pick(augPool) : 'none';
+    const shieldPool = chassis === 'light' ? LIGHT_SHIELDS
+                     : chassis === 'medium' ? MEDIUM_SHIELDS
+                     : HEAVY_SHIELDS;
+    const shld = Math.random() < 0.60 ? rnd.pick(shieldPool) : 'none';
 
-    // legacy fields — AI code still reads .primary and .secondary for firing
-    // Map: primary = L weapon (or R if L is none), secondary = R if different from L
-    const primary   = L !== 'none' ? L : R !== 'none' ? R : 'smg';
-    const secondary = (!WEAPONS[L]?.twoHanded && R !== 'none' && R !== L) ? R : 'none';
+    // ── Chassis-locked leg pools ──
+    const LIGHT_LEGS  = ['hydraulic_boost','gyro_stabilizer','afterleg','sprint_coils','stealth_treads'];
+    const MEDIUM_LEGS = ['hydraulic_boost','gyro_stabilizer','mag_anchors','mine_layer','assault_stride'];
+    const HEAVY_LEGS  = ['gyro_stabilizer','mag_anchors','mine_layer','fortress_treads','siege_stance'];
 
-    return { chassis, L, R, primary, secondary, mod, shld, leg, aug };
+    const legPool = chassis === 'light' ? LIGHT_LEGS
+                  : chassis === 'medium' ? MEDIUM_LEGS
+                  : HEAVY_LEGS;
+    // Filter to only actually defined leg systems
+    const validLegs = legPool.filter(l => LEG_SYSTEMS[l]);
+    const leg = validLegs.length > 0 && Math.random() < 0.65 ? rnd.pick(validLegs) : 'none';
+
+    // ── Chassis-locked aug pools ──
+    const LIGHT_AUGS  = ['reflex_booster','overclock_cpu','threat_scanner','stealth_coating','burst_capacitor'];
+    const MEDIUM_AUGS = ['target_painter','threat_analyzer','overclock_cpu','reactive_plating','scrap_cannon'];
+    const HEAVY_AUGS  = ['reactive_plating','scrap_cannon','threat_analyzer','ironclad_core','colossus_plating'];
+
+    const augPool = chassis === 'light' ? LIGHT_AUGS
+                  : chassis === 'medium' ? MEDIUM_AUGS
+                  : HEAVY_AUGS;
+    const validAugs = augPool.filter(a => CHASSIS_AUGS[chassis]?.has(a));
+    const aug = validAugs.length > 0 && Math.random() < 0.55 ? rnd.pick(validAugs) : 'none';
+
+    return { chassis, L, R, mod, shld, leg, aug };
 }
-
 function spawnEnemy(scene) {
     // Spawn away from the player if deployed, otherwise random
     let x, y, attempts = 0;
@@ -4401,9 +5411,10 @@ function spawnEnemy(scene) {
         y = Phaser.Math.Between(100, 3900);
         attempts++;
     } while (
-        player && isDeployed &&
-        Phaser.Math.Distance.Between(x, y, player.x, player.y) < 800 &&
-        attempts < 20
+        attempts < 30 && (
+            Phaser.Math.Distance.Between(x, y, 2000, 2000) < 1200 ||
+            (player && isDeployed && Phaser.Math.Distance.Between(x, y, player.x, player.y) < 900)
+        )
     );
 
     const loadoutE  = randomEnemyLoadout();
@@ -4488,6 +5499,9 @@ function spawnEnemy(scene) {
     e.fxLastMX     = x;
     e.fxLastMY     = y;
 
+    // Vision cone graphics object — drawn each frame in handleEnemyAI
+    e._visionConeGfx = scene.add.graphics().setDepth(3);
+
     enemies.add(e);
     // Collide new enemy with all existing cover objects
     if (coverObjects) scene.physics.add.collider(e, coverObjects);
@@ -4568,6 +5582,7 @@ function spawnCommander(scene) {
     e.fxLastX = x; e.fxLastY = y;
     e.fxLastMX = x; e.fxLastMY = y;
 
+    e._visionConeGfx = game.scene.scenes[0]?.add?.graphics()?.setDepth(3);
     enemies.add(e);
     if (coverObjects) scene.physics.add.collider(e, coverObjects);
     sndCommanderSpawn();
@@ -4584,7 +5599,15 @@ function enemyFire(scene, enemy, time) {
     const _fireDecoy = enemy._decoyTarget?.active !== false && enemy._decoyTarget;
     const _ftx = _fireDecoy ? enemy._decoyTarget.x : player.x;
     const _fty = _fireDecoy ? enemy._decoyTarget.y : player.y;
-    const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, _ftx, _fty);
+    // Base angle toward target
+    const _rawAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, _ftx, _fty);
+    // Accuracy spread per weapon type (radians). Larger = less accurate.
+    // Also increases while enemy is moving (momentum penalty)
+    const _spreadMap = { smg:0.28, mg:0.18, br:0.14, sg:0.22, hr:0.10, fth:0, sr:0.06, gl:0, rl:0, plsm:0.10, chain:0.22, siege:0.06 };
+    const _baseSpread = _spreadMap[wKey] ?? 0.15;
+    const _moving = Math.abs(enemy.body?.velocity?.x || 0) + Math.abs(enemy.body?.velocity?.y || 0) > 30;
+    const _totalSpread = _baseSpread * (_moving ? 1.6 : 1.0);
+    const angle = _rawAngle + (Math.random() - 0.5) * _totalSpread;
     const ex = enemy.x, ey = enemy.y;
     const bSize  = weapon.bulletSize || 6;
     const bSpeed = weapon.speed || 600;
@@ -4764,6 +5787,9 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
     const _fty = _fireDecoy ? enemy._decoyTarget.y : player.y;
     const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, _ftx, _fty);
     const ex = enemy.x, ey = enemy.y;
+    // Scaled damage — same table as enemyFire primary
+    const _secScale = { rail:0.30, sr:0.40, plsm:0.40, siege:0.35, gl:0.55, rl:0.55, hr:0.65, br:0.75 };
+    const _sDmg = Math.round((weapon.dmg || 15) * (_secScale[wKey] || 1.0));
 
     switch (wKey) {
         case 'sr': {
@@ -4772,7 +5798,7 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
                 .setRotation(angle).setStrokeStyle(1, 0xff6600).setDepth(14);
             scene.physics.add.existing(b);
             b.body.setAllowGravity(false);
-            b.damageValue = weapon.dmg;
+            b.damageValue = _sDmg;
             enemyBullets.add(b);
             scene.physics.velocityFromRotation(angle, weapon.speed, b.body.velocity);
             scene.time.delayedCall(2500, () => { if (b.active) b.destroy(); });
@@ -4805,7 +5831,7 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
                         timerText.setVisible(true);
                         scene.time.delayedCall(fuseTime, () => {
                             if (ball.active) {
-                                createExplosion(scene, ball.x, ball.y, 90, weapon.dmg);
+                                createExplosion(scene, ball.x, ball.y, 90, _sDmg);
                                 ball.destroy(); timerText.destroy();
                             }
                         });
@@ -4829,12 +5855,12 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
             // Overlap with player for direct hit
             scene.physics.add.overlap(rocket, player, () => {
                 if (!rocket.active) return;
-                createExplosion(scene, rocket.x, rocket.y, 80, weapon.dmg);
+                createExplosion(scene, rocket.x, rocket.y, 80, _sDmg);
                 rocket.destroy();
             });
             scene.time.delayedCall(2200, () => {
                 if (rocket.active) {
-                    createExplosion(scene, rocket.x, rocket.y, 80, weapon.dmg);
+                    createExplosion(scene, rocket.x, rocket.y, 80, _sDmg);
                     rocket.destroy();
                 }
             });
@@ -4844,7 +5870,7 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
             const p = scene.add.circle(ex, ey, 22, 0xff6600).setAlpha(0.85).setDepth(14);
             scene.physics.add.existing(p);
             p.body.setAllowGravity(false);
-            p.damageValue = weapon.dmg;
+            p.damageValue = _sDmg;
             enemyBullets.add(p);
             scene.physics.velocityFromRotation(angle, 260, p.body.velocity);
             scene.tweens.add({ targets: p, alpha: 0.4, duration: 120, yoyo: true, repeat: -1 });
@@ -4860,7 +5886,7 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
                 const dx = player.x - ex, dy = player.y - ey;
                 const dot = dx * Math.cos(angle) + dy * Math.sin(angle);
                 const perp = Math.abs(dx * Math.sin(angle) - dy * Math.cos(angle));
-                if (dot > 0 && perp < 30) processPlayerDamage(weapon.dmg, angle);
+                if (dot > 0 && perp < 30) processPlayerDamage(_sDmg, angle);
             }
             const beam = scene.add.graphics().setDepth(14);
             beam.lineStyle(4, 0xffffff, 1.0);
@@ -4875,7 +5901,7 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
                 const b = scene.add.circle(ex, ey, weapon.bulletSize || 8, 0xff6600).setAlpha(0.85);
                 scene.physics.add.existing(b);
                 b.body.setAllowGravity(false);
-                b.damageValue = weapon.dmg;
+                b.damageValue = _sDmg;
                 enemyBullets.add(b);
                 scene.physics.velocityFromRotation(angle + spread, (weapon.speed||420) * (0.8 + Math.random()*0.4), b.body.velocity);
                 const ttl = 400 + Math.random() * 200;
@@ -4907,7 +5933,8 @@ function fire(scene, side) {
     const _otherArm = side === 'L' ? loadout.R : loadout.L;
     const _braceMult = (!_otherArm || _otherArm === 'none') && !WEAPONS[loadout.L]?.twoHanded ? 0.85 : 1.0;
     const reloadActual = ((isRageActive || isAmmoActive) ? weapon.reload * 0.5 : weapon.reload)
-        * (_perkState.reloadMult || 1) * _lightReloadMult * _braceMult;
+        * (_perkState.reloadMult || 1) * _lightReloadMult * _braceMult
+        * (_perkState._overclockBurst ? 0.75 : 1.0);
     const lastFired    = side === 'L' ? reloadL : reloadR;
     if (now < lastFired) return;
 
@@ -5308,7 +6335,12 @@ function fireStandard(scene, wKey, weapon, barrelDist, armOx, armOy, aimAngle) {
     const fireRound = (offsetAngle = 0) => {
         const b = scene.add.circle(armOx, armOy, weapon.bulletSize, 0xffff00);
         scene.physics.add.existing(b);
-        b.damageValue = weapon.dmg;
+        b.damageValue    = weapon.dmg;
+        b.shieldPierce   = weapon.shieldPierce || false;
+        b.rangeDropoff   = weapon.rangeDropoff || 0;
+        b.travelDist     = 0;
+        b._originX       = armOx;
+        b._originY       = armOy;
         bullets.add(b);
         scene.physics.velocityFromRotation(aimAngle + offsetAngle, weapon.speed, b.body.velocity);
         createMuzzleFlash(scene, armOx, armOy, aimAngle + offsetAngle, barrelDist);
@@ -5337,6 +6369,7 @@ function fireStandard(scene, wKey, weapon, barrelDist, armOx, armOy, aimAngle) {
 
 function processPlayerDamage(amt, bulletAngle, explosive = false) {
     if (!player?.active || player.isProcessingDamage) return;
+    _lastPlayerDamageTime = game?.loop?.time || 0;
     // Thorns Protocol: reflect damage to attacker while shield/barrier is active
     if (isShieldActive) {
         if (_perkState.thornsProtocol > 0) {
@@ -5365,8 +6398,20 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         }
         return;
     }
+    // Fortress Mode (Heavy mod): 30% DR while active
+    if (_perkState._fortressDR > 0) amt = Math.round(amt * (1 - _perkState._fortressDR));
+    // Shadow Core aug: 12% DR while moving
+    if (_perkState.shadowCore && player?.body) {
+        const _spd = Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2);
+        if (_spd > 20) amt = Math.round(amt * 0.88);
+    }
     // HEAVY passive: 15% damage reduction always active
     if (loadout.chassis === 'heavy') amt = amt * (1 - (CHASSIS.heavy.passiveDR || 0.15));
+    // Bulwark Shield: 12% DR always active (even when shield depleted)
+    const _bwSys2 = SHIELD_SYSTEMS[loadout.shld];
+    if (_bwSys2?.passiveDR) amt = Math.round(amt * (1 - _bwSys2.passiveDR));
+    // Siege Wall: -20% damage while shield is up
+    if (_bwSys2?.activeDR && player.shield > 0) amt = Math.round(amt * (1 - _bwSys2.activeDR));
     // Scrap Shield: absorb incoming damage after limb destruction
     if (_perkState._scrapAbsorb > 0) {
         const _absorbed = Math.min(_perkState._scrapAbsorb, amt);
@@ -5439,6 +6484,8 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     if (_perkState.fortress > 0) amt = amt * (1 - Math.min(0.75, _perkState.fortress));
     // Mag Anchors: -20% incoming damage while stationary
     if (_perkState._magAnchorsActive) amt *= 0.80;
+    // Iron Fortress: +15% DR while stationary 1.5s+
+    if (_perkState._ironFortressActive) amt = Math.round(amt * 0.85);
     // Reactive Plating: each hit adds 5% DR, max 5 stacks
     if (_perkState.reactivePlating) {
         _perkState._reactivePlatingStacks = Math.min(5, (_perkState._reactivePlatingStacks||0) + 1);
@@ -5477,7 +6524,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         }
         if (loadout.leg === 'hydraulic_boost' && _perkState.legSystemActive && player.comp.legs.hp > 0)
             player.comp.legs.hp = Math.min(player.comp.legs.max, player.comp.legs.hp + share * 0.15);
-        if (player.comp.legs.hp <= 0 && !_legsDestroyed) { _legsDestroyed = true; _perkState.legSystemActive = false; updateHUD(); }
+        if (player.comp.legs.hp <= 0 && !_legsDestroyed) { _legsDestroyed = true; player.comp.legs.hp = 0; _perkState.legSystemActive = false; updateHUD(); }
         // Iron Will: survive to 1 HP once per round
         if (player.comp.core.hp <= 0 && _perkState.ironWill && !_perkState._ironWillUsed) {
             player.comp.core.hp = 1;
@@ -5505,11 +6552,110 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     // Redirect to core if limb is already destroyed
     if (component.hp <= 0 && target !== 'core') component = player.comp.core;
 
-    // Passive shield absorbs a portion of damage (fraction depends on shield system)
+    // Passive shield absorbs a portion of damage (mechanics vary by shield type)
     if (player.maxShield > 0 && player.shield > 0) {
-        const absorb = player._shieldAbsorb ?? 0.50;
+        const _ss = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
+        let absorb = player._shieldAbsorb ?? 0.50;
+
+        // ── Flicker Shield: block every other hit entirely ──
+        if (_ss.flickerBlock) {
+            player._shieldFlickerHit = !player._shieldFlickerHit;
+            if (player._shieldFlickerHit) { return; } // blocked hit — no damage at all
+        }
+
+        // ── Phase Shield: brief invuln on each hit ──
+        if (_ss.phaseInvuln && !player._phaseInvulnActive) {
+            player._phaseInvulnActive = true;
+            const _sc = game.scene.scenes[0];
+            _sc?.time.delayedCall(_ss.phaseInvuln * 1000, () => { player._phaseInvulnActive = false; });
+        }
+        if (player._phaseInvulnActive) { return; }
+
+        // ── Adaptive Shield: scale absorb with consecutive hits (reset on regen) ──
+        if (_ss.adaptiveMax) {
+            player._shieldAdaptStack = Math.min(6, (player._shieldAdaptStack || 0) + 1);
+            absorb = Math.min(_ss.adaptiveMax, 0.50 + player._shieldAdaptStack * 0.05);
+        }
+
+        // ── Mirror Shield: reflect 35% of absorbed damage back ──
+        if (_ss.reflectPct && enemies) {
+            const _reflected = amt * absorb * _ss.reflectPct;
+            let _nearest = null, _nd = Infinity;
+            enemies.getChildren().forEach(e => {
+                if (!e.active) return;
+                const _d = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+                if (_d < _nd) { _nd = _d; _nearest = e; }
+            });
+            if (_nearest) {
+                const _sc = game.scene.scenes[0];
+                damageEnemy(_nearest, Math.round(_reflected), 0);
+                if (_sc) showDamageText(_sc, _nearest.x, _nearest.y, Math.round(_reflected));
+            }
+        }
+
+        // ── Counter Shield: charge on every hit ──
+        if (_ss.counterCharge) {
+            player._shieldCounterChg = (player._shieldCounterChg || 0) + amt * absorb;
+        }
+
+        // ── Retribution: charge on absorbed hits ──
+        if (_ss.retributionBreak) {
+            player._shieldRetribChg = (player._shieldRetribChg || 0) + amt * absorb;
+        }
+
+        const _prevShield = player.shield;
         player.shield = Math.max(0, player.shield - amt * absorb);
         amt *= (1 - absorb);
+
+        // ── On-break effects ──
+        if (_prevShield > 0 && player.shield <= 0) {
+            const _sc = game.scene.scenes[0];
+
+            // Reactive Shield: invuln window on break
+            if (loadout.shld === 'reactive_shield' && !player._reactInvulnActive) {
+                player._reactInvulnActive = true;
+                _sc?.time.delayedCall(300, () => { player._reactInvulnActive = false; });
+            }
+
+            // Smoke Burst: speed burst on break
+            if (_ss.breakSpeedBurst && player.body) {
+                player._smokeBurstActive = true;
+                player.body.maxVelocity = new Phaser.Math.Vector2(9999, 9999);
+                _sc?.time.delayedCall(2000, () => { player._smokeBurstActive = false; });
+            }
+
+            // Pulse Shield: EMP on break
+            if (_ss.breakEMP && enemies) {
+                enemies.getChildren().forEach(e => {
+                    if (!e.active) return;
+                    if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < 250) {
+                        e.isStunned = true;
+                        e.body?.setVelocity(0, 0);
+                        _sc?.time.delayedCall(1800, () => { if (e.active) e.isStunned = false; });
+                    }
+                });
+                if (_sc) createExplosion(_sc, player.x, player.y, 0, 0); // visual only
+            }
+
+            // Retribution: AoE on break scaled to charge
+            if (_ss.retributionBreak && player._shieldRetribChg > 0 && enemies) {
+                const _rdmg = Math.min(Math.round(player._shieldRetribChg * 0.6), 120);
+                enemies.getChildren().forEach(e => {
+                    if (!e.active) return;
+                    if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < 200) {
+                        damageEnemy(e, _rdmg, 0);
+                    }
+                });
+                if (_sc) createExplosion(_sc, player.x, player.y, 200, 0);
+                player._shieldRetribChg = 0;
+            }
+        }
+
+        // ── Reactive invuln window blocks further damage ──
+        if (player._reactInvulnActive) { amt = 0; }
+
+        // ── Smoke burst: speed multiplier applied in movement section ──
+        // (handled in update loop via player._smokeBurstActive flag)
     }
 
     component.hp = Math.max(0, component.hp - amt);
@@ -5545,8 +6691,9 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     }
 }
 
-function damageEnemy(e, amt, bulletAngle, explosive = false) {
+function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce = false) {
     if (!e.active || e.health <= 0) return;
+    e._justHit = true; // alert AI — player may be behind vision cone
     // Active barrier mod (full block)
     if (e.isShielded) {
         if (_perkState.armorPierce > 0) {
@@ -5554,10 +6701,12 @@ function damageEnemy(e, amt, bulletAngle, explosive = false) {
         } else { return; }
     }
     // Passive energy shield absorption
-    if ((e.maxShield||0) > 0 && (e.shield||0) > 0) {
+    if ((e.maxShield||0) > 0 && (e.shield||0) > 0 && !bulletShieldPierce) {
         const absorb = e._shieldAbsorb ?? 0.50;
         e.shield = Math.max(0, e.shield - amt * absorb);
         amt *= (1 - absorb);
+        e._lastDamageTime = game.scene.scenes[0].time.now;
+    } else if ((e.shield||0) > 0 && bulletShieldPierce) {
         e._lastDamageTime = game.scene.scenes[0].time.now;
     }
     // Enemy Reactive Plating: stacking DR
@@ -5808,10 +6957,30 @@ function damageEnemy(e, amt, bulletAngle, explosive = false) {
         spawnLoot(scene, e.x, e.y, false);  // 30% chance
         }
         // bars removed
+        // All enemies move toward ally death location
+        const _diedX = e.x, _diedY = e.y;
+        if (enemies) {
+            enemies.getChildren().forEach(nearby => {
+                if (!nearby.active || nearby === e) return;
+                const _nd = Phaser.Math.Distance.Between(nearby.x, nearby.y, _diedX, _diedY);
+                if (_nd < 400 && (nearby._aiState === 'patrol' || nearby._aiState === 'search')) {
+                    // Close enemies: switch to search at the exact death spot
+                    nearby._aiState = 'search';
+                    nearby._lastKnownPlayer = { x: _diedX, y: _diedY };
+                    nearby._stateTimer = game?.loop?.time || 0;
+                } else if (nearby._aiState === 'patrol') {
+                    // All other patrolling enemies: redirect patrol target toward death spot
+                    // They keep patrol state (vision cone active) but converge on the location
+                    nearby._patrolTarget = { x: _diedX + (Math.random()-0.5)*80, y: _diedY + (Math.random()-0.5)*80 };
+                    nearby._patrolSet = false;
+                }
+            });
+        }
         if (e.visuals)  e.visuals.destroy();
         if (e.torso)    e.torso.destroy();
         if (e.cmdLabel) e.cmdLabel.destroy();
         if (e.shieldRing?.active) e.shieldRing.destroy();
+        if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
         e.destroy();
         onEnemyKilled();
     }
@@ -5871,19 +7040,47 @@ function dropEnemyMine(scene, enemy) {
     if (!enemy?.active) return;
     const mx = enemy.x + (Math.random()-0.5)*8;
     const my = enemy.y + (Math.random()-0.5)*8;
-    const vis = scene.add.circle(mx, my, 6, 0xff4400).setDepth(8).setStrokeStyle(2, 0xaa2200);
-    scene.tweens.add({ targets:vis, scaleX:1.3, scaleY:1.3, yoyo:true, repeat:-1, duration:500 });
+
+    // Mine visual: identical to player mine (flat disc + crosshair + pulsing ring)
+    const g = scene.add.graphics().setDepth(8);
+    let _glowAlpha = 1.0;
+    const drawMine = () => {
+        g.clear();
+        g.lineStyle(2, 0xff2200, 0.45 * _glowAlpha);
+        g.strokeCircle(mx, my, 18);
+        g.fillStyle(0x222222, 1);
+        g.fillCircle(mx, my, 8);
+        g.lineStyle(2, 0xcc2200, 1);
+        g.strokeCircle(mx, my, 8);
+        g.lineStyle(2, 0xff3300, 1);
+        g.lineBetween(mx-8, my, mx+8, my);
+        g.lineBetween(mx, my-8, mx, my+8);
+        g.fillStyle(0xff4400, 1);
+        g.fillCircle(mx, my, 2.5);
+    };
+    drawMine();
+    let _pulseUp = false;
+    const _pulseTick = scene.time.addEvent({ delay: 500, loop: true, callback: () => {
+        _glowAlpha = _pulseUp ? 1.0 : 0.4;
+        _pulseUp = !_pulseUp;
+        drawMine();
+    }});
+
     let armed = false;
-    const tick = scene.time.addEvent({ delay:200, loop:true, callback:() => {
-        if (!vis.active || armed) return;
+    const tick = scene.time.addEvent({ delay:150, loop:true, callback:() => {
+        if (!g.active || armed) return;
         if (player?.active && Phaser.Math.Distance.Between(player.x, player.y, mx, my) < 55) {
-            armed = true; vis.destroy(); tick.remove();
+            armed = true;
+            _pulseTick.remove();
+            g.destroy(); tick.remove();
             processPlayerDamage(70, 0, true);
             const scene2 = game.scene.scenes[0];
             createExplosion(scene2, mx, my, 70, 0);
         }
     }});
-    scene.time.delayedCall(25000, () => { if (!armed && vis.active) { vis.destroy(); tick.remove(); } });
+    scene.time.delayedCall(25000, () => {
+        if (!armed && g.active) { _pulseTick.remove(); g.destroy(); tick.remove(); }
+    });
 }
 
 let _eDollTarget   = null;
@@ -6221,33 +7418,67 @@ function darkenColor(hex, amount = 0.4) {
 // HUD & GARAGE UI UPDATES
 // ================================================================
 
+// Full display names for HUD (longer than the short WEAPONS.name)
+const HUD_NAMES = {
+    smg:'SUBMACHINE GUN', mg:'MACHINE GUN', sg:'SHOTGUN', br:'BATTLE RIFLE',
+    hr:'HEAVY RIFLE', fth:'FLAMETHROWER', sr:'SNIPER RIFLE', gl:'GRENADE LAUNCHER',
+    rl:'ROCKET LAUNCHER', plsm:'PLASMA CANNON', rail:'RAILGUN',
+    siege:'SIEGE CANNON', chain:'CHAINGUN',
+    jump:'JUMP JETS', barrier:'BARRIER', rage:'RAGE MODE', emp:'EMP BURST',
+    repair:'REPAIR DRONE', atk_drone:'ATTACK DRONE', missile:'MISSILE POD',
+    decoy:'DECOY', ghost_step:'GHOST STEP', overclock_burst:'OVERCLOCK BURST',
+    fortress_mode:'FORTRESS MODE',
+    light_shield:'LIGHT SHIELD', standard_shield:'STD. SHIELD',
+    heavy_shield:'HEAVY SHIELD', reactive_shield:'REACTIVE SHIELD',
+    fortress_shield:'FORTRESS SHIELD', phase_shield:'PHASE SHIELD',
+    smoke_burst:'SMOKE BURST', micro_shield:'MICRO SHIELD',
+    flicker_shield:'FLICKER SHIELD', mirror_shield:'MIRROR SHIELD',
+    adaptive_shield:'ADAPTIVE SHIELD', counter_shield:'COUNTER SHIELD',
+    pulse_shield:'PULSE SHIELD', layered_shield:'LAYERED SHIELD',
+    overcharge_shld:'OVERCHARGE SHLD', siege_wall:'SIEGE WALL',
+    bulwark_shield:'BULWARK SHIELD', retribution_shld:'RETRIBUTION',
+    thermal_shield:'THERMAL SHIELD', titan_shield:'TITAN SHIELD',
+};
+function _hudName(key) {
+    if (!key || key === 'none') return '—';
+    return HUD_NAMES[key] || WEAPONS[key]?.name || key.toUpperCase();
+}
+
 function updateHUD() {
     // ── Left arm ──
     const _lRow = document.getElementById('slot-L');
     const _lTxt = document.getElementById('txt-L');
-    const _lName = (loadout.L && loadout.L !== 'none') ? (WEAPONS[loadout.L]?.name || loadout.L.toUpperCase()) : '—';
+    const _lName = (loadout.L && loadout.L !== 'none') ? _hudName(loadout.L) : '—';
     if (_lTxt) _lTxt.innerText = _lArmDestroyed ? 'DESTROYED' : _lName;
     if (_lRow) { _lRow.classList.toggle('arm-destroyed', _lArmDestroyed); _lRow.style.opacity = (loadout.L && loadout.L !== 'none') ? '1' : '0.3'; }
 
     // ── Right arm ──
     const _rRow = document.getElementById('slot-R');
     const _rTxt = document.getElementById('txt-R');
-    const _rName = (loadout.R && loadout.R !== 'none') ? (WEAPONS[loadout.R]?.name || loadout.R.toUpperCase()) : '—';
+    const _rName = (loadout.R && loadout.R !== 'none') ? _hudName(loadout.R) : '—';
     if (_rTxt) _rTxt.innerText = _rArmDestroyed ? 'DESTROYED' : _rName;
     if (_rRow) { _rRow.classList.toggle('arm-destroyed', _rArmDestroyed); _rRow.style.opacity = (loadout.R && loadout.R !== 'none') ? '1' : '0.3'; }
 
     // ── System mod ──
     const _mRow = document.getElementById('slot-M');
     const _mTxt = document.getElementById('txt-M');
-    const _mName = (loadout.mod && loadout.mod !== 'none') ? (WEAPONS[loadout.mod]?.name || loadout.mod.toUpperCase()) : '—';
+    const _mName = (loadout.mod && loadout.mod !== 'none') ? _hudName(loadout.mod) : '—';
     if (_mTxt) _mTxt.innerText = _mName;
     if (_mRow) _mRow.style.opacity = (loadout.mod && loadout.mod !== 'none') ? '1' : '0.3';
+
+    // ── Shield / defense ──
+    const _sRow = document.getElementById('slot-S');
+    const _sTxt = document.getElementById('txt-S');
+    const _sHas  = loadout.shld && loadout.shld !== 'none';
+    const _sName = _sHas ? (_hudName(loadout.shld) || loadout.shld.toUpperCase()) : 'NONE';
+    if (_sTxt) _sTxt.innerText = _sName;
+    if (_sRow) _sRow.style.opacity = _sHas ? '1' : '0.4';
 
     // ── Leg system ──
     const legWrap = document.getElementById('slot-leg-wrap');
     const _gTxt   = document.getElementById('txt-G');
     const legHas  = loadout.leg && loadout.leg !== 'none';
-    const legName = legHas ? (LEG_SYSTEMS[loadout.leg]?.name || loadout.leg.toUpperCase()) : '—';
+    const legName = legHas ? _hudName(loadout.leg) || (LEG_SYSTEMS[loadout.leg]?.name || loadout.leg.toUpperCase()) : '—';
     if (_gTxt) _gTxt.innerText = _legsDestroyed ? 'OFFLINE' : legName;
     if (legWrap) {
         legWrap.classList.toggle('arm-destroyed', _legsDestroyed);
@@ -6257,9 +7488,26 @@ function updateHUD() {
 
 function updateBars() {
     if (!player) return;
-    const shFillV  = document.getElementById('sh-fill-vert');
-    const shPct    = player.shield != null ? Math.max(0, player.shield / player.maxShield) : 1;
-    if (shFillV)   shFillV.style.height = (shPct * 100) + '%';
+    // Legacy vertical bar (now a hidden stub — kept for compat)
+    const shFillV = document.getElementById('sh-fill-vert');
+    if (shFillV) shFillV.style.height = '100%';
+
+    // Horizontal defense row
+    const shFillH = document.getElementById('wr-fill-S');
+    const shSt    = document.getElementById('wr-st-S');
+    const _hasShield = player.maxShield > 0;
+    if (_hasShield) {
+        const shPct = Math.max(0, player.shield / player.maxShield) * 100;
+        if (shFillH) shFillH.style.width = shPct + '%';
+        if (shSt) {
+            const _shHp = Math.ceil(player.shield || 0);
+            shSt.innerText = _shHp > 0 ? _shHp : 'DOWN';
+        }
+    } else {
+        // No shield equipped — empty bar
+        if (shFillH) shFillH.style.width = '0%';
+        if (shSt) shSt.innerText = '—';
+    }
 }
 
 function updatePaperDoll() {
@@ -6327,42 +7575,103 @@ const MOD_OPTIONS = [
     { key:'rage',      label:'RAGE',         weight:30 },
     { key:'atk_drone', label:'ATTACK DRONE', weight:35 },
     { key:'missile',   label:'MISSILE POD',  weight:35 },
+    // Chassis unique
+    { key:'ghost_step',       label:'GHOST STEP',       weight:20 },
+    { key:'overclock_burst',  label:'OVERCLOCK BURST',  weight:25 },
+    { key:'fortress_mode',    label:'FORTRESS MODE',    weight:30 },
 ];
 
 const AUG_OPTIONS = [
-    { key:'none',             label:'NONE',             weight:0   },
-    { key:'target_painter',   label:'TARGET PAINTER',   weight:20  },
-    { key:'threat_analyzer',  label:'THREAT ANALYZER',  weight:20  },
-    { key:'ballistic_weave',  label:'BALLISTIC WEAVE',  weight:25  },
-    { key:'combat_ai',        label:'COMBAT AI',        weight:25  },
-    { key:'thermal_core',     label:'THERMAL CORE',     weight:25  },
-    { key:'overclock_cpu',    label:'OVERCLOCK CPU',    weight:30  },
-    { key:'drone_relay',      label:'DRONE RELAY',      weight:30  },
-    { key:'fuel_injector',    label:'FUEL INJECTOR',    weight:30  },
-    { key:'targeting_scope',  label:'TARGETING SCOPE',  weight:30  },
-    { key:'reactive_plating', label:'REACTIVE PLATING', weight:30  },
-    { key:'neural_accel',     label:'NEURAL ACCEL.',    weight:35  },
-    { key:'pyromaniac_chip',  label:'PYRO CHIP',        weight:35  },
-    { key:'scrap_cannon',     label:'SCRAP CANNON',     weight:40  },
-    { key:'multi_drone',      label:'MULTI-DRONE',      weight:50  },
+    { key:'none',              label:'NONE',              weight:0   },
+    // Universal
+    { key:'target_painter',    label:'TARGET PAINTER',    weight:20  },
+    { key:'threat_analyzer',   label:'THREAT ANALYZER',   weight:20  },
+    { key:'ballistic_weave',   label:'BALLISTIC WEAVE',   weight:25  },
+    { key:'combat_ai',         label:'COMBAT AI',         weight:25  },
+    { key:'thermal_core',      label:'THERMAL CORE',      weight:25  },
+    { key:'overclock_cpu',     label:'OVERCLOCK CPU',     weight:30  },
+    { key:'drone_relay',       label:'DRONE RELAY',       weight:30  },
+    { key:'fuel_injector',     label:'FUEL INJECTOR',     weight:30  },
+    { key:'targeting_scope',   label:'TARGETING SCOPE',   weight:30  },
+    { key:'reactive_plating',  label:'REACTIVE PLATING',  weight:30  },
+    { key:'neural_accel',      label:'NEURAL ACCEL.',     weight:35  },
+    { key:'pyromaniac_chip',   label:'PYRO CHIP',         weight:35  },
+    { key:'scrap_cannon',      label:'SCRAP CANNON',      weight:40  },
+    { key:'multi_drone',       label:'MULTI-DRONE',       weight:50  },
+    // Light unique
+    { key:'ghost_circuit',     label:'GHOST CIRCUIT',     weight:25  },
+    { key:'reflex_amp',        label:'REFLEX AMP',        weight:20  },
+    { key:'kill_sprint',       label:'KILL SPRINT',       weight:22  },
+    { key:'predator_lens',     label:'PREDATOR LENS',     weight:28  },
+    { key:'shadow_core',       label:'SHADOW CORE',       weight:30  },
+    // Medium unique
+    { key:'tactical_uplink',   label:'TACTICAL UPLINK',   weight:28  },
+    { key:'field_processor',   label:'FIELD PROCESSOR',   weight:25  },
+    { key:'system_sync',       label:'SYSTEM SYNC',       weight:30  },
+    { key:'adaptive_core',     label:'ADAPTIVE CORE',     weight:32  },
+    { key:'echo_targeting',    label:'ECHO TARGETING',    weight:26  },
+    // Heavy unique
+    { key:'war_machine',       label:'WAR MACHINE',       weight:35  },
+    { key:'iron_fortress',     label:'IRON FORTRESS',     weight:40  },
+    { key:'suppressor_aura',   label:'SUPPRESSOR AURA',   weight:38  },
+    { key:'colossus_frame',    label:'COLOSSUS FRAME',    weight:45  },
+    { key:'impact_core',       label:'IMPACT CORE',       weight:32  },
 ];
 
 const LEG_OPTIONS = [
-    { key:'none',             label:'NONE',             weight:0   },
-    { key:'hydraulic_boost',  label:'HYDRO BOOST',      weight:25  },
-    { key:'gyro_stabilizer',  label:'GYRO STABILIZER',  weight:25  },
-    { key:'mag_anchors',      label:'MAG ANCHORS',      weight:30  },
-    { key:'mine_layer',       label:'MINE LAYER',       weight:35  },
-    { key:'afterleg',         label:'AFTERLEG',         weight:40  },
+    { key:'none',              label:'NONE',              weight:0   },
+    // Universal
+    { key:'hydraulic_boost',   label:'HYDRO BOOST',       weight:25  },
+    { key:'gyro_stabilizer',   label:'GYRO STABILIZER',   weight:25  },
+    { key:'mag_anchors',       label:'MAG ANCHORS',       weight:30  },
+    { key:'mine_layer',        label:'MINE LAYER',        weight:35  },
+    { key:'afterleg',          label:'AFTERLEG',          weight:40  },
+    // Light unique
+    { key:'sprint_boosters',   label:'SPRINT BOOSTERS',   weight:28  },
+    { key:'featherweight',     label:'FEATHERWEIGHT',     weight:15  },
+    { key:'ghost_legs',        label:'GHOST LEGS',        weight:22  },
+    { key:'silent_step',       label:'SILENT STEP',       weight:20  },
+    { key:'reactive_dash',     label:'REACTIVE DASH',     weight:30  },
+    // Medium unique
+    { key:'stabilizer_gyros',  label:'STABILIZER GYROS',  weight:28  },
+    { key:'jump_jets',         label:'JUMP JETS',         weight:32  },
+    { key:'adaptive_stride',   label:'ADAPTIVE STRIDE',   weight:25  },
+    { key:'seismic_dampener',  label:'SEISMIC DAMPENER',  weight:30  },
+    { key:'reactor_legs',      label:'REACTOR LEGS',      weight:35  },
+    // Heavy unique
+    { key:'tremor_legs',       label:'TREMOR LEGS',       weight:45  },
+    { key:'siege_stance',      label:'SIEGE STANCE',      weight:40  },
+    { key:'ironclad_legs',     label:'IRONCLAD LEGS',     weight:38  },
+    { key:'ground_slam',       label:'GROUND SLAM',       weight:42  },
+    { key:'suppressor_legs',   label:'SUPPRESSOR LEGS',   weight:35  },
 ];
 
 const SHIELD_OPTIONS = [
-    { key:'none',            label:'NONE',             weight:0   },
-    { key:'light_shield',    label:'LIGHT SHIELD',     weight:20  },
-    { key:'standard_shield', label:'STD. SHIELD',      weight:40  },
-    { key:'heavy_shield',    label:'HEAVY SHIELD',     weight:60  },
-    { key:'reactive_shield', label:'REACTIVE SHIELD',  weight:75 },
-    { key:'fortress_shield', label:'FORTRESS SHIELD',  weight:90 },
+    { key:'none',             label:'NONE',             weight:0   },
+    // Universal
+    { key:'light_shield',     label:'LIGHT SHIELD',     weight:15  },
+    { key:'standard_shield',  label:'STD. SHIELD',      weight:25  },
+    { key:'heavy_shield',     label:'HEAVY SHIELD',     weight:40  },
+    { key:'reactive_shield',  label:'REACTIVE SHIELD',  weight:45  },
+    { key:'fortress_shield',  label:'FORTRESS SHIELD',  weight:60  },
+    // Light unique
+    { key:'phase_shield',     label:'PHASE SHIELD',     weight:20  },
+    { key:'smoke_burst',      label:'SMOKE BURST',      weight:18  },
+    { key:'micro_shield',     label:'MICRO SHIELD',     weight:12  },
+    { key:'flicker_shield',   label:'FLICKER SHIELD',   weight:22  },
+    { key:'mirror_shield',    label:'MIRROR SHIELD',    weight:28  },
+    // Medium unique
+    { key:'adaptive_shield',  label:'ADAPTIVE SHIELD',  weight:30  },
+    { key:'counter_shield',   label:'COUNTER SHIELD',   weight:35  },
+    { key:'pulse_shield',     label:'PULSE SHIELD',     weight:28  },
+    { key:'layered_shield',   label:'LAYERED SHIELD',   weight:38  },
+    { key:'overcharge_shld',  label:'OVERCHARGE SHLD',  weight:32  },
+    // Heavy unique
+    { key:'siege_wall',       label:'SIEGE WALL',       weight:70  },
+    { key:'bulwark_shield',   label:'BULWARK SHIELD',   weight:55  },
+    { key:'retribution_shld', label:'RETRIBUTION',      weight:50  },
+    { key:'thermal_shield',   label:'THERMAL SHIELD',   weight:45  },
+    { key:'titan_shield',     label:'TITAN SHIELD',     weight:65  },
 ];
 
 // Descriptions for every key
@@ -6389,6 +7698,9 @@ const SLOT_DESCS = {
     atk_drone:        { title:'ATTACK DRONE', desc:'Deploys an auto-turret that fires 20 dmg bolts at the nearest enemy every 0.6s for 8 seconds.' },
     missile:          { title:'MISSILE POD', desc:'Launches 6 homing micro-missiles split across up to 3 nearest enemies. 55 dmg per hit.' },
     decoy:            { title:'DECOY', desc:'Deploys a hologram at your position. Nearby enemies redirect targeting to the decoy for 5 seconds.' },
+    ghost_step:       { title:'GHOST STEP', desc:'Cloak for 1.5s — enemies lose targeting lock and will not fire. Deactivates if you fire a weapon.' },
+    overclock_burst:  { title:'OVERCLOCK BURST', desc:'3-second burst: +25% fire rate and +20% movement speed. Long 12s cooldown.' },
+    fortress_mode:    { title:'FORTRESS MODE', desc:'4 seconds: +30% damage reduction and 5 HP/s core regeneration. Stand your ground.' },
     target_painter:   { title:'TARGET PAINTER', desc:'Hitting an enemy marks them. Marked enemies take +20% damage from all sources until they die or the mark expires.' },
     threat_analyzer:  { title:'THREAT ANALYZER', desc:'Damaging an enemy reduces their resistance by 15% for 3 seconds. Rewards continuous aggression.' },
     overclock_cpu:    { title:'OVERCLOCK CPU', desc:'Reduces all weapon reload times and mod cooldowns by 12%. Applied passively on deploy.' },
@@ -6408,11 +7720,11 @@ const SLOT_DESCS = {
     mag_anchors:      { title:'MAG ANCHORS', desc:'While stationary: take 20% less damage and deal 15% more damage. Rewards positional play.' },
     mine_layer:       { title:'MINE LAYER', desc:'Drops a proximity mine every 8 seconds while moving. Each mine deals 80 AoE damage on trigger.' },
     afterleg:         { title:'AFTERLEG', desc:'JUMP mod travels 50% farther. Landing shockwave deals 60 dmg in 150px. Disabled if legs destroyed.' },
-    light_shield:    { title:'LIGHT SHIELD',    desc:'60 HP energy shield. Absorbs 50% of incoming damage. Regenerates after 4s.' },
-    standard_shield: { title:'STD. SHIELD',     desc:'100 HP standard shield. Absorbs 50% of damage. Regenerates after 5s.' },
-    heavy_shield:    { title:'HEAVY SHIELD',    desc:'160 HP heavy array. Absorbs 50% of damage. Slower regen with 6s lockout.' },
-    reactive_shield: { title:'REACTIVE SHIELD', desc:'120 HP reactive matrix. Absorbs 65% of damage instead of 50%. Fast 3s regen.' },
-    fortress_shield: { title:'FORTRESS SHIELD', desc:'220 HP maximum-protection shield. Very slow regen, 8s lockout. Built for Heavy chassis.' },
+    light_shield:    { title:'LIGHT SHIELD',    desc:'60 HP / 50% absorb. Regens in ~1s. Burn it freely — it comes right back. Best for aggressive play.' },
+    standard_shield: { title:'STD. SHIELD',     desc:'100 HP / 50% absorb / 4s regen. No gimmick, no weakness. The dependable baseline.' },
+    heavy_shield:    { title:'HEAVY SHIELD',    desc:'100 HP but 70% absorb — each hit does 30% less. Slow 7s regen is the tradeoff.' },
+    reactive_shield: { title:'REACTIVE SHIELD', desc:'80 HP, 2s regen. On break: 0.3s invulnerability window. Designed to break and recover fast.' },
+    fortress_shield: { title:'FORTRESS SHIELD', desc:'240 HP but only 25% absorb — most damage bleeds through. A speed bump, not a wall.' },
     col_00ff00: { title:'GREEN',         desc:'Head: bright green. Torso and shoulders: dark green.' },
     col_00ccff: { title:'ELECTRIC BLUE', desc:'Head: electric cyan-blue. Torso and shoulders: deep navy.' },
     col_ff3300: { title:'RED',           desc:'Head: bright red. Torso and shoulders: dark crimson.' },
@@ -6423,6 +7735,57 @@ const SLOT_DESCS = {
     col_00ffcc: { title:'TEAL',          desc:'Head: bright teal. Torso and shoulders: deep seafoam.' },
     col_ff44cc: { title:'PINK',          desc:'Head: hot pink. Torso and shoulders: dark magenta.' },
     col_ffcc00: { title:'GOLD',          desc:'Head: bright gold. Torso and shoulders: dark bronze.' },
+    // ── CHASSIS-UNIQUE SHIELD SLOT DESCS ─────────────────────────
+    // Light unique
+    micro_shield:     { title:'MICRO SHIELD',     desc:'30 HP / instant 1s regen. Paper thin but always cycling. Best with max mobility.' },
+    flicker_shield:   { title:'FLICKER SHIELD',   desc:'80 HP. Blocks every other hit completely — HP never changes. Beats rapid-fire enemies.' },
+    phase_shield:     { title:'PHASE SHIELD',     desc:'70 HP. Each hit that lands gives 0.25s invulnerability. Consistent hit mitigation.' },
+    smoke_burst:      { title:'SMOKE BURST',      desc:'60 HP. Shield break triggers +70% speed for 2s. Converts being overwhelmed into escape.' },
+    mirror_shield:    { title:'MIRROR SHIELD',    desc:'70 HP. Reflects 35% of absorbed damage back at the attacker.' },
+    // Medium unique
+    adaptive_shield:  { title:'ADAPTIVE SHIELD',  desc:'90 HP. Each consecutive hit raises absorb by 10% (cap 80%). Rewards staying in the fight.' },
+    counter_shield:   { title:'COUNTER SHIELD',   desc:'90 HP. Every 40 shield damage charges a counter. On mod activation: 80 AoE damage.' },
+    pulse_shield:     { title:'PULSE SHIELD',     desc:'80 HP / 2s regen. On break: EMP stuns all enemies within 250px for 1.8s.' },
+    layered_shield:   { title:'LAYERED SHIELD',   desc:'130 HP in two 65 HP layers. Each regen independently — you always have at least one up.' },
+    overcharge_shld:  { title:'OVERCHARGE SHLD',  desc:'90 HP. Damage absorbed beyond shield HP temporarily adds as core HP buffer.' },
+    // Heavy unique
+    siege_wall:       { title:'SIEGE WALL',        desc:'280 HP. While active: -20% incoming damage, -20% speed. Plant yourself and hold the line.' },
+    bulwark_shield:   { title:'BULWARK SHIELD',    desc:'140 HP. Passive 12% DR always active — even when shield is fully depleted.' },
+    retribution_shld: { title:'RETRIBUTION',       desc:'110 HP. Absorbed hits charge retribution. On break: AoE explosion scaled to charge.' },
+    thermal_shield:   { title:'THERMAL SHIELD',    desc:'120 HP. Enemies within 160px take 8 dmg/s while your shield is active.' },
+    titan_shield:     { title:'TITAN SHIELD',      desc:'200 HP / 60% absorb / +20 core HP bonus. Very slow regen. Pure staying power.' },
+    // ── NEW LEG SLOT DESCS ────────────────────────────────────────
+    sprint_boosters:  { title:'SPRINT BOOSTERS',  desc:'Double-tap W for 0.8s speed burst (+80%). 4s cooldown.' },
+    featherweight:    { title:'FEATHERWEIGHT',    desc:'All weapon weights reduced 20%. Fit more into your weight budget.' },
+    ghost_legs:       { title:'GHOST LEGS',       desc:'Taking damage while moving triggers a 0.2s speed burst. Hard to pin down.' },
+    silent_step:      { title:'SILENT STEP',      desc:'Enemies lose vision 40% faster when you are moving. Wider flanking window.' },
+    reactive_dash:    { title:'REACTIVE DASH',    desc:'Auto-dash when legs drop below 50% HP. Survive the first hit.' },
+    stabilizer_gyros: { title:'STABILIZER GYROS',   desc:'While stationary: +15% accuracy and +8% damage. Reward holding position.' },
+    jump_jets:        { title:'JUMP JETS',       desc:'JUMP mod gains a second charge. Two repositions per cooldown.' },
+    adaptive_stride:  { title:'ADAPTIVE STRIDE',    desc:'+15% speed when retreating. Better kiting tool for medium builds.' },
+    seismic_dampener: { title:'SEISMIC DAMPENER',   desc:'Legs take 25% less damage. Landing slams deal +30% more.' },
+    reactor_legs:     { title:'REACTOR LEGS',    desc:'Mod cooldowns reduce 1s per 300px moved. Rewards constant movement.' },
+    tremor_legs:      { title:'TREMOR LEGS',      desc:'After 2s stationary, next movement creates 40 AoE dmg tremor at 120px.' },
+    siege_stance:     { title:'SIEGE STANCE',     desc:'While stationary: +25% damage, +20% DR. A true fortress build.' },
+    ironclad_legs:    { title:'IRONCLAD LEGS',    desc:'Leg HP +80. Legs take 30% less damage. Near-impossible to cripple.' },
+    ground_slam:      { title:'GROUND SLAM',      desc:'JUMP landing AoE doubled in radius and damage. Use landing as a weapon.' },
+    suppressor_legs:  { title:'SUPPRESSOR LEGS',  desc:'Enemies within 220px move 20% slower. Passive suppression from heavy frame.' },
+    // ── NEW AUG SLOT DESCS ────────────────────────────────────────
+    ghost_circuit:    { title:'GHOST CIRCUIT',    desc:'After JUMP landing: invisible to enemies for 2s.' },
+    reflex_amp:       { title:'REFLEX AMP',       desc:'First shot after a dodge or JUMP landing deals +40% damage.' },
+    kill_sprint:      { title:'KILL SPRINT',      desc:'Each kill: +8% speed for 4s, stacks up to 3×.' },
+    predator_lens:    { title:'PREDATOR LENS',    desc:'Enemies >400px away are highlighted. +10% damage vs highlighted.' },
+    shadow_core:      { title:'SHADOW CORE',      desc:'While moving: all incoming damage reduced by 12%.' },
+    tactical_uplink:  { title:'TACTICAL UPLINK',    desc:'Mod cooldowns reduced additional 10%. Stacks with Cooldown Mastery.' },
+    field_processor:  { title:'FIELD PROCESSOR',    desc:'3 hits on same enemy: +15% damage to that target permanently.' },
+    system_sync:      { title:'SYSTEM SYNC',     desc:'Activating any mod heals 20 HP to most-damaged limb.' },
+    adaptive_core:    { title:'ADAPTIVE CORE',   desc:'Each round survived: +3% base DR (max +15%).' },
+    echo_targeting:   { title:'ECHO TARGETING',  desc:'Hitting an enemy reveals all enemies within 300px for 3s.' },
+    war_machine:      { title:'WAR MACHINE',      desc:'Passive core regen 2 HP/s after 4s without taking damage.' },
+    iron_fortress:    { title:'IRON FORTRESS',    desc:'Stationary 1.5s+: +15% DR and +10% damage bonus.' },
+    suppressor_aura:  { title:'SUPPRESSOR AURA',  desc:'Enemies within 200px move 15% slower. Passive intimidation field.' },
+    colossus_frame:   { title:'COLOSSUS FRAME',   desc:'Core HP +60. Arm HP +40. Leg HP +40. Massive HP boost.' },
+    impact_core:      { title:'IMPACT CORE',      desc:'Close kills (<200px): restore 15 core HP and stun nearby enemies 0.5s.' },
 };
 
 // Colour options — head gets the selected colour, torso/body gets darkenColor(colour, 0.4)
@@ -6451,10 +7814,24 @@ function buildDD(slotId, options) {
     const cap = CHASSIS[loadout.chassis]?.max || 999;
     const currentTotal = _calcWeight(loadout);
 
-    options.forEach(opt => {
-        // HEAVY chassis: cannot equip JUMP mod or AFTERLEG leg system
-        if (loadout.chassis === 'heavy') {
-            if (opt.key === 'jump' || opt.key === 'afterleg') return;
+    // Sort options by weight (ascending) so they display lowest→highest
+    const _sorted = [...options].sort((a, b) => (a.weight || 0) - (b.weight || 0));
+    _sorted.forEach(opt => {
+        // Chassis-based slot restrictions
+        if (slotId === 'L' || slotId === 'R') {
+            if (CHASSIS_WEAPONS[loadout.chassis] && !CHASSIS_WEAPONS[loadout.chassis].has(opt.key)) return;
+        }
+        if (slotId === 'M') {
+            if (CHASSIS_MODS[loadout.chassis] && !CHASSIS_MODS[loadout.chassis].has(opt.key)) return;
+        }
+        if (slotId === 'S') {
+            if (CHASSIS_SHIELDS[loadout.chassis] && !CHASSIS_SHIELDS[loadout.chassis].has(opt.key)) return;
+        }
+        if (slotId === 'G') {
+            if (CHASSIS_LEGS[loadout.chassis] && !CHASSIS_LEGS[loadout.chassis].has(opt.key)) return;
+        }
+        if (slotId === 'A') {
+            if (CHASSIS_AUGS[loadout.chassis] && !CHASSIS_AUGS[loadout.chassis].has(opt.key)) return;
         }
         // LIGHT chassis: cannot equip two-handed weapons
         if (loadout.chassis === 'light' && opt.twoHanded) return;
@@ -6464,10 +7841,11 @@ function buildDD(slotId, options) {
         const slotKey = slotId === 'L' ? loadout.L : slotId === 'R' ? loadout.R
                       : slotId === 'M' ? loadout.mod : slotId === 'A' ? loadout.aug
                       : slotId === 'S' ? loadout.shld : loadout.leg;
-        const currentSlotW = WEAPONS[slotKey]?.weight ?? AUGMENTS[slotKey]?.weight
-                          ?? LEG_SYSTEMS[slotKey]?.weight ?? SHIELD_SYSTEMS[slotKey]?.weight ?? 0;
-        const wouldBe = currentTotal - currentSlotW + opt.weight;
-        const over = wouldBe > cap;
+        // Weight cap only applies to weapon arm slots
+        const _isWeaponSlot = (slotId === 'L' || slotId === 'R');
+        const currentSlotW = _isWeaponSlot ? (WEAPONS[slotKey]?.weight ?? 0) : 0;
+        const wouldBe = _isWeaponSlot ? (currentTotal - currentSlotW + opt.weight) : 0;
+        const over = false; // weight system removed
         const desc = SLOT_DESCS[opt.key];
         const descText = (desc && opt.key !== 'none') ? desc.desc : '';
 
@@ -6485,7 +7863,7 @@ function buildDD(slotId, options) {
         div.innerHTML = `
             <div class="do-header">
                 <span class="do-name">${opt.label}${isDual ? ' <span style="font-size:9px;letter-spacing:1px;color:#00ffcc;background:rgba(0,255,204,0.12);padding:1px 5px;border:1px solid rgba(0,255,204,0.3);border-radius:2px;vertical-align:middle;">DUAL</span>' : ''}${isBlocked ? ' <span style="font-size:9px;letter-spacing:1px;color:rgba(255,100,100,0.7);background:rgba(255,60,60,0.08);padding:1px 5px;border:1px solid rgba(255,60,60,0.25);border-radius:2px;vertical-align:middle;">IN USE</span>' : ''}</span>
-                <span class="do-wt">${opt.weight > 0 ? opt.weight + ' WT' : '—'}</span>
+
             </div>
             ${descText ? `<div class="do-desc">${descText}</div>` : ''}`;
         if (!isBlocked) div.onclick = () => { selectSlot(slotId, opt.key); closeAllDD(); };
@@ -6515,14 +7893,10 @@ function buildColorDD() {
 
 function _calcWeight(lo) {
     const w = (obj, key) => (key && key !== 'none') ? (obj[key]?.weight || 0) : 0;
-    // Two-handed weapons occupy both arm slots but only count weight once
+    // Weight cap applies to weapons only — mod/aug/leg/shield no longer count toward cap
     const lW = w(WEAPONS, lo.L);
     const rW = (WEAPONS[lo.R]?.twoHanded || WEAPONS[lo.L]?.twoHanded) ? 0 : w(WEAPONS, lo.R);
-    return lW + rW
-         + w(WEAPONS, lo.mod)
-         + w(AUGMENTS, lo.aug)
-         + w(LEG_SYSTEMS, lo.leg)
-         + w(SHIELD_SYSTEMS, lo.shld);
+    return lW + rW;
 }
 
 function toggleDD(slotId) {
@@ -6619,7 +7993,7 @@ function refreshGarage() {
         const nameEl = document.getElementById('ddn-' + id);
         const wtEl   = document.getElementById('ddwt-' + id);
         if (nameEl) nameEl.textContent = opt.label;
-        if (wtEl)   wtEl.textContent   = opt.weight > 0 ? opt.weight + ' WT' : '—';
+        // weight display removed — wtEl intentionally not updated
     });
 
     // Colour dropdown header
@@ -6641,30 +8015,11 @@ function refreshGarage() {
 
     // Weight
     const total  = _calcWeight(loadout);
-    const max    = CHASSIS[loadout.chassis].max;
-    const isOver = total > max;
-    const pct    = Math.min(100, (total / max) * 100);
-
-    const weightDisplay = document.getElementById('weight-display');
-    const barFill       = document.getElementById('weight-bar-fill');
-    const deployBtn     = document.getElementById('deploy-btn');
-
-    if (weightDisplay) {
-        weightDisplay.innerText   = `WEIGHT: ${total} / ${max}`;
-        weightDisplay.style.color = isOver ? '#ff3300' : '#c8d2d9';
-    }
-    if (barFill) {
-        barFill.style.width      = pct + '%';
-        barFill.style.background = isOver ? '#ff3300' : '#ffaa00';
-        barFill.style.boxShadow  = isOver ? '0 0 10px #ff3300' : '0 0 10px rgba(255,170,0,0.4)';
-    }
+    const deployBtn = document.getElementById('deploy-btn');
     const noWeapon = loadout.L === 'none' && loadout.R === 'none';
     if (deployBtn) {
-        deployBtn.disabled = isOver || noWeapon;
-        if (isOver) {
-            deployBtn.innerHTML = '<span>&#9888;</span>&nbsp; OVERWEIGHT &nbsp;<span>&#9888;</span>';
-            deployBtn.classList.add('overweight');
-        } else if (noWeapon) {
+        deployBtn.disabled = noWeapon;
+        if (noWeapon) {
             deployBtn.innerHTML = '<span>&#9888;</span>&nbsp; EQUIP WEAPON &nbsp;<span>&#9888;</span>';
             deployBtn.classList.add('overweight');
         } else {
@@ -6976,6 +8331,7 @@ function respawnMech() {
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     _roundClearing = false;
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
+    CHASSIS.medium.modCooldownMult = 0.85;
     const scene = game.scene.scenes[0];
     deployMech();
 }
@@ -7342,7 +8698,10 @@ function returnToHangar() {
     // Reset HUD to clean state
     _resetHUDState();
     // ── Full game reset — returning to hangar starts a new game ──
+    // Capture run for leaderboard BEFORE stats are reset
+    if (_round > 1 || _totalKills > 0) _capturePendingRun();
     _round      = 1;
+    CHASSIS.medium.modCooldownMult = 0.85; // restore from tactical_uplink modification
     _roundKills = 0;
     _roundTotal = 0;
     _roundActive  = false;
@@ -7398,30 +8757,25 @@ function returnToHangar() {
 // ================================================================
 
 // Animated grid drawn on the menu canvas
-function startMenuGrid() {
-    const canvas = document.getElementById('menu-canvas');
+function _startGridCanvas(canvasId) {
+    const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
     const ctx = canvas.getContext('2d');
     let offset = 0;
-
     function draw() {
+        if (!document.getElementById(canvasId)) return; // stop if removed
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const spacing = 48;
         ctx.strokeStyle = 'rgba(0,255,255,0.06)';
         ctx.lineWidth   = 1;
-
-        // Scrolling horizontal lines
         for (let y = (offset % spacing); y < canvas.height; y += spacing) {
             ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
         }
-        // Vertical lines (static)
         for (let x = 0; x < canvas.width; x += spacing) {
             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
         }
-
-        // Faint horizon glow at center
         const grad = ctx.createRadialGradient(
             canvas.width/2, canvas.height/2, 0,
             canvas.width/2, canvas.height/2, canvas.width * 0.6
@@ -7431,17 +8785,74 @@ function startMenuGrid() {
         grad.addColorStop(1,   'transparent');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         offset += 0.4;
         requestAnimationFrame(draw);
     }
-    // Small delay ensures canvas is correctly sized in iframe before first draw
     setTimeout(draw, 50);
+}
+
+function startMenuGrid() {
+    _startGridCanvas('menu-canvas');
+    _startGridCanvas('callsign-canvas');
+}
+
+function _updateCallsignBtn() {
+    const val = (document.getElementById('menu-callsign')?.value || '').trim();
+    const btn = document.getElementById('callsign-proceed-btn');
+    if (!btn) return;
+    if (val.length > 0) {
+        btn.disabled            = false;
+        btn.style.background    = 'rgba(0,210,255,0.08)';
+        btn.style.border        = '1px solid rgba(0,210,255,0.6)';
+        btn.style.borderLeft    = '3px solid #00e0ff';
+        btn.style.color         = '#00e0ff';
+        btn.style.cursor        = 'pointer';
+        btn.style.opacity       = '1';
+        btn.style.boxShadow     = '0 0 12px rgba(0,210,255,0.15)';
+    } else {
+        btn.disabled            = true;
+        btn.style.background    = 'rgba(0,210,255,0.04)';
+        btn.style.border        = '1px solid rgba(0,210,255,0.2)';
+        btn.style.borderLeft    = '1px solid rgba(0,210,255,0.2)';
+        btn.style.color         = 'rgba(0,210,255,0.3)';
+        btn.style.cursor        = 'not-allowed';
+        btn.style.opacity       = '0.4';
+        btn.style.boxShadow     = 'none';
+    }
+}
+
+function proceedToMainMenu() {
+    const csInput = document.getElementById('menu-callsign');
+    const val = (csInput?.value || '').trim().toUpperCase();
+    if (!val) return; // guard: should not be reachable with disabled btn
+    _playerCallsign = val;
+    try { localStorage.setItem('tw_callsign', val); } catch(e) {}
+
+    // Fade out callsign screen, fade in main menu
+    const cs = document.getElementById('callsign-screen');
+    const mm = document.getElementById('main-menu');
+    cs.style.transition = 'opacity 0.5s ease';
+    cs.style.opacity = '0';
+    setTimeout(() => {
+        cs.style.display = 'none';
+        mm.style.display = 'flex';
+        mm.style.opacity = '0';
+        mm.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => { mm.style.opacity = '1'; }, 20);
+    }, 500);
 }
 
 function startGame() {
     const menu = document.getElementById('main-menu');
     if (!menu) return;
+    // Callsign was already captured in proceedToMainMenu
+    // If somehow arriving here without callsign (e.g. direct call), fall back
+    if (!_playerCallsign || _playerCallsign === 'ANONYMOUS') {
+        const _csInput = document.getElementById('menu-callsign');
+        const _csVal   = (_csInput?.value || '').trim().toUpperCase();
+        _playerCallsign = _csVal || (localStorage.getItem ? (localStorage.getItem('tw_callsign') || 'ANONYMOUS') : 'ANONYMOUS');
+        if (_playerCallsign && localStorage.setItem) localStorage.setItem('tw_callsign', _playerCallsign);
+    }
     menu.style.transition = 'opacity 0.6s ease';
     menu.style.opacity = '0';
     setTimeout(() => {
@@ -7642,7 +9053,7 @@ window.onload = () => {
     color: #fff;
 }
 .dd-selected .dd-name { flex: 1; letter-spacing: 2px; }
-.dd-selected .dd-wt   { font-size: 10px; color: rgba(0,255,255,0.5); margin-right: 10px; letter-spacing: 1px; }
+.dd-selected .dd-wt   { display: none; }
 .dd-selected .dd-arrow { font-size: 9px; color: rgba(0,255,255,0.6); transition: transform 0.15s; }
 .dd-selected.dd-open .dd-arrow { transform: rotate(180deg); }
 
@@ -7682,7 +9093,7 @@ window.onload = () => {
     width: 100%;
 }
 .dd-option .do-name { flex: 1; letter-spacing: 1px; font-size: 12px; }
-.dd-option .do-wt   { font-size: 10px; color: rgba(0,255,255,0.45); min-width: 44px; text-align: right; letter-spacing: 1px; }
+.dd-option .do-wt   { display: none; }
 .dd-option.do-warn .do-wt { color: rgba(255,170,0,0.6); }
 .dd-option .do-desc {
     font-size: 10px;
@@ -7789,7 +9200,7 @@ window.onload = () => {
     color: #fff;
 }
 .dd-selected .dd-name { flex: 1; letter-spacing: 2px; }
-.dd-selected .dd-wt   { font-size: 10px; color: rgba(0,255,255,0.5); margin-right: 10px; letter-spacing: 1px; }
+.dd-selected .dd-wt   { display: none; }
 .dd-selected .dd-arrow { font-size: 9px; color: rgba(0,255,255,0.6); transition: transform 0.15s; }
 .dd-selected.dd-open .dd-arrow { transform: rotate(180deg); }
 
@@ -7829,7 +9240,7 @@ window.onload = () => {
     width: 100%;
 }
 .dd-option .do-name { flex: 1; letter-spacing: 1px; font-size: 12px; }
-.dd-option .do-wt   { font-size: 10px; color: rgba(0,255,255,0.45); min-width: 44px; text-align: right; letter-spacing: 1px; }
+.dd-option .do-wt   { display: none; }
 .dd-option.do-warn .do-wt { color: rgba(255,170,0,0.6); }
 .dd-option .do-desc {
     font-size: 10px;
