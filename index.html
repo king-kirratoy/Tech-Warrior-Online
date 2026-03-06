@@ -112,7 +112,6 @@ button.active {
     width: 100%;
     box-sizing: border-box;
     font-size: 13px;
-    margin-top: 15px;
     padding: 12px;
     display: flex;
     justify-content: center;
@@ -137,6 +136,35 @@ button.active {
     border-color: rgba(0,255,255,0.9);
     color: #fff;
     box-shadow: 0 0 24px rgba(0,255,255,0.2);
+    letter-spacing: 6px;
+}
+
+#hangar-mm-btn {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 13px;
+    padding: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    background: transparent;
+    border: 1px solid rgba(255,80,80,0.35);
+    border-top: 2px solid rgba(255,80,80,0.7);
+    border-bottom: 2px solid rgba(255,80,80,0.7);
+    color: rgba(255,100,100,0.9);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    font-family: 'Courier New', monospace;
+    transition: background 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255,80,80,0.06);
+}
+#hangar-mm-btn:hover {
+    background: rgba(255,80,80,0.08);
+    border-color: rgba(255,80,80,0.9);
+    color: #fff;
+    box-shadow: 0 0 24px rgba(255,80,80,0.2);
     letter-spacing: 6px;
 }
 
@@ -732,9 +760,8 @@ button.active {
 
         <div style="font-size:9px;letter-spacing:4px;color:rgba(0,210,255,0.5);margin-bottom:10px;">ENTER CALLSIGN</div>
         <input id="menu-callsign" type="text" maxlength="16" placeholder="_ _ _ _ _ _" autocomplete="off" spellcheck="false"
-            style="background:rgba(0,0,0,0.6);border:none;border-bottom:2px solid rgba(0,210,255,0.6);color:#00e0ff;padding:10px 16px;font-family:'Courier New',monospace;font-size:20px;letter-spacing:5px;outline:none;text-align:center;text-transform:uppercase;width:260px;display:block;margin:0 auto 32px;"
-            oninput="var p=this.selectionStart;this.value=this.value.toUpperCase().replace(/[^A-Z0-9 _.\-]/g,'');this.setSelectionRange(p,p);_updateCallsignBtn()"
-            onkeydown="if(event.key==='Enter')proceedToMainMenu()" />
+            style="background:rgba(0,0,0,0.6);border:none;border-bottom:2px solid rgba(0,210,255,0.6);color:#00e0ff;padding:10px 16px;font-family:'Courier New',monospace;font-size:20px;letter-spacing:5px;outline:none;text-align:center;width:260px;display:block;margin:0 auto 32px;"
+            onkeydown="_csKeyDown(event,this)" />
 
         <button id="callsign-proceed-btn" onclick="proceedToMainMenu()" disabled
             style="padding:14px 48px;background:rgba(0,210,255,0.04);border:1px solid rgba(0,210,255,0.2);color:rgba(0,210,255,0.3);font-family:'Courier New',monospace;font-size:13px;letter-spacing:4px;cursor:not-allowed;text-transform:uppercase;transition:all 0.2s;opacity:0.4;"
@@ -787,7 +814,7 @@ button.active {
     <div class="stat-readout" id="garage-menu">
         <h2 style="text-align:center;margin:0 0 20px;letter-spacing:8px;color:#00ffff;font-family:'Courier New',monospace;font-size:26px;text-shadow:0 0 18px rgba(0,255,255,0.7),0 0 40px rgba(0,255,255,0.2);font-weight:normal;">MECH HANGAR</h2>
 
-        <div style="display:flex;gap:28px;align-items:flex-start;">
+        <div style="display:flex;gap:28px;align-items:stretch;">
 
             <!-- LEFT: BUILD OPTIONS -->
             <div style="flex:1;min-width:0;">
@@ -895,7 +922,7 @@ button.active {
             </div><!-- /left -->
 
             <!-- RIGHT: PREVIEW + WEIGHT + DEPLOY -->
-            <div style="width:210px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0;">
+            <div style="width:210px;flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;gap:0;">
 
                 <div id="preview-container" style="width:200px;height:140px;border:1px solid rgba(0,255,255,0.4);background:rgba(0,10,20,0.6);box-shadow:0 0 14px rgba(0,255,255,0.12);display:flex;justify-content:center;align-items:center;">
                     <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 8px rgba(0,255,255,0.6));">
@@ -903,9 +930,9 @@ button.active {
 
 
 
-                <div style="width:100%;margin-top:auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-                    <button onclick="returnToMainMenu()" style="width:100%;padding:8px 12px;background:transparent;border:1px solid rgba(255,100,100,0.2);border-left:3px solid rgba(255,100,100,0.5);color:rgba(255,120,120,0.7);font-family:'Courier New',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;text-transform:uppercase;transition:all 0.15s ease;text-align:left;" onmouseover="this.style.background='rgba(255,80,80,0.08)';this.style.color='rgba(255,140,140,1)'" onmouseout="this.style.background='transparent';this.style.color='rgba(255,120,120,0.7)'">◀ MAIN MENU</button>
-                    <button id="deploy-btn" onclick="deployMech()" style="width:100%;margin-top:4px;">DEPLOY MECH</button>
+                <div style="width:100%;margin-top:auto;display:flex;flex-direction:column;gap:8px;">
+                    <button id="hangar-mm-btn" onclick="returnToMainMenu()">MAIN MENU</button>
+                    <button id="deploy-btn" onclick="deployMech()">DEPLOY MECH</button>
                 </div>
 
             </div><!-- /right -->
@@ -939,7 +966,7 @@ button.active {
 
         <!-- Footer -->
         <div style="text-align:center;margin-top:32px;">
-            <button onclick="closeLeaderboard()" style="padding:10px 32px;background:transparent;border:1px solid rgba(0,210,255,0.35);border-left:3px solid rgba(0,210,255,0.7);color:rgba(0,210,255,0.75);font-family:'Courier New',monospace;font-size:11px;letter-spacing:3px;cursor:pointer;" onmouseover="this.style.background='rgba(0,210,255,0.08)'" onmouseout="this.style.background='transparent'">◀ BACK TO HANGAR</button>
+            <button onclick="closeLeaderboard()" class="menu-start-btn">MAIN MENU</button>
         </div>
 
     </div>
@@ -1917,6 +1944,20 @@ function create() {
     coverObjects = this.physics.add.staticGroup();
     generateCover(this);
 
+    // Bullet ↔ cover — registered ONCE against the group reference (generateCover regenerates
+    // the group's children on each deploy but these colliders stay valid)
+    this.physics.add.collider(bullets, coverObjects, (bullet, cover) => {
+        if (!bullet?.active) return;
+        createImpactSparks(this, bullet.x, bullet.y);
+        bullet.destroy();
+        if (cover.coverHp > 0) damageCover(this, cover, bullet.damageValue || 10);
+    });
+    this.physics.add.collider(enemyBullets, coverObjects, (bullet, cover) => {
+        if (!bullet?.active) return;
+        bullet.destroy();
+        if (cover.coverHp > 0) damageCover(this, cover, bullet.damageValue || 10);
+    });
+
     // Player bullet ↔ enemy overlap
     this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
         if (bullet.isGLBall) return;
@@ -2446,7 +2487,7 @@ function handleEnemyAI(scene, time) {
             const reloadMult = enemy.behavior === 'sniper' ? 1.4
                              : enemy.behavior === 'rusher' ? 0.85
                              : enemy.behavior === 'flanker' ? 1.0 : 1.1;
-            if (dist < fireRange && time > (enemy.lastFireTime || 0) + wepReload * reloadMult) {
+            if (!enemy._fireGrace && dist < fireRange && time > (enemy.lastFireTime || 0) + wepReload * reloadMult) {
                 enemyFire(scene, enemy, time);
                 enemy.lastFireTime = time;
             }
@@ -2463,7 +2504,7 @@ function handleEnemyAI(scene, time) {
                              : secKey === 'rail' ? 1200
                              : secKey === 'sr'   ? 1000
                              : fireRange;
-                if (dist < secRange && time > enemy.lastSecTime + secCd) {
+                if (!enemy._fireGrace && dist < secRange && time > enemy.lastSecTime + secCd) {
                     enemyFireSecondary(scene, enemy, secKey, time);
                     enemy.lastSecTime = time;
                 }
@@ -5025,16 +5066,19 @@ function placeBuilding(scene, x, y, def) {
     }
 
     // ── Physics body (static rectangle matching footprint) ───────
-    const body = scene.add.rectangle(x, y, w, h, 0x000000, 0).setDepth(3);
-    scene.physics.add.existing(body, true);
-    // Force static body to match its game object's position and size exactly
+    // Use top-left origin so static body position maps correctly (Phaser static bodies
+    // use top-left coordinate internally — center-origin objects cause offset collisions)
+    // Create invisible static body for collision — top-left origin for correct static body mapping
+    const body = scene.add.rectangle(x - w/2, y - h/2, w, h, 0x000000, 0)
+        .setOrigin(0, 0).setDepth(3);
+    // Add to group FIRST so the group manages the static body, then configure
+    coverObjects.add(body, true);          // true = add physics body via group
     body.body.setSize(w, h);
-    body.body.updateFromGameObject();
+    body.body.reset(x - w/2, y - h/2);    // anchor to top-left
     body.coverType  = 'building';
     body.coverHp    = 0;
     body.coverMaxHp = 0;
     body.coverDef   = def;
-    coverObjects.add(body);
 }
 
 function generateCover(scene) {
@@ -5060,14 +5104,14 @@ function generateCover(scene) {
             if (def.type === 'building') {
                 placeBuilding(scene, x, y, def);
             } else {
-                const rect = scene.add.rectangle(x, y, def.w, def.h, def.color)
-                    .setStrokeStyle(2, def.stroke).setDepth(3);
-                scene.physics.add.existing(rect, true);
+                const rect = scene.add.rectangle(x - def.w/2, y - def.h/2, def.w, def.h, def.color)
+                    .setOrigin(0, 0).setStrokeStyle(2, def.stroke).setDepth(3);
+                // Add to group FIRST (group creates & manages static body)
+                coverObjects.add(rect, true);
                 rect.body.setSize(def.w, def.h);
-                rect.body.updateFromGameObject();
+                rect.body.reset(x - def.w/2, y - def.h/2);
                 rect.coverType = def.type; rect.coverHp = def.hp;
                 rect.coverMaxHp = def.hp; rect.coverDef = def;
-                coverObjects.add(rect);
             }
             return true;
         }
@@ -5140,25 +5184,18 @@ function generateCover(scene) {
     coverObjects.getChildren().forEach(c => {
         if (c.body) {
             c.body.setSize(c.width || 60, c.height || 60);
-            c.body.updateFromGameObject();
+            // origin is (0,0) so c.x/c.y is already top-left — reset anchors body there
+            c.body.reset(c.x, c.y);
         }
     });
     coverObjects.refresh();
-
-    scene.physics.add.collider(bullets, coverObjects, (bullet, cover) => {
-        createImpactSparks(scene, bullet.x, bullet.y);
-        bullet.destroy();
-        if (cover.coverHp > 0) damageCover(scene, cover, bullet.damageValue || 10);
-    });
-
-    // Enemy bullets ↔ cover
-    scene.physics.add.collider(enemyBullets, coverObjects, (bullet, cover) => {
-        bullet.destroy();
-        if (cover.coverHp > 0) damageCover(scene, cover, bullet.damageValue || 10);
-    });
-
-    // Player ↔ cover is added in deployMech() once player exists
-    // Enemies ↔ cover (set up each time an enemy spawns — see spawnEnemy)
+    // Refresh again after a short delay to catch deferred body registration
+    try {
+        const _sc = game?.scene?.scenes[0];
+        if (_sc?.time) _sc.time.delayedCall(120, () => { try { coverObjects?.refresh(); } catch(e){} });
+    } catch(e) {}
+    // NOTE: bullet↔cover and enemyBullet↔cover colliders are registered ONCE in create()
+    // Player↔cover is added in deployMech(); Enemies↔cover per spawnEnemy()
 }
 
 function damageCover(scene, cover, amt) {
@@ -5470,6 +5507,11 @@ function spawnEnemy(scene) {
     const _eBaseAbsorb = loadoutE.chassis === 'medium' ? (CHASSIS.medium.shieldAbsorb || 0.60) : 0.50;
     e._shieldAbsorb     = (loadoutE.shld === 'reactive_shield') ? 0.65 : _eBaseAbsorb;
     e._lastDamageTime   = -99999;
+    // Fire grace: block shooting for 2s after spawn regardless of clock state
+    e._fireGrace = true;
+    setTimeout(() => { if (e?.active) e._fireGrace = false; }, 2000);
+    e.lastFireTime  = 0;
+    e.lastSecTime   = 0;
     // Leg system
     e._legSystemActive = true;
     if (loadoutE.leg === 'hydraulic_boost') e.speed = Math.round((e.speed||chassisS.spd) * 1.20);
@@ -8790,6 +8832,29 @@ function _startGridCanvas(canvasId) {
 function startMenuGrid() {
     _startGridCanvas('menu-canvas');
     _startGridCanvas('callsign-canvas');
+}
+
+function _csKeyDown(e, el) {
+    if (e.key === 'Enter') { proceedToMainMenu(); return; }
+    // Let through: Backspace, Delete, Arrow keys, Tab, Home, End
+    if (['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown',
+         'Home','End','Tab'].indexOf(e.key) !== -1) {
+        setTimeout(function(){ _updateCallsignBtn(); }, 0);
+        return;
+    }
+    // Let through ctrl/meta combos (copy/paste/select-all)
+    if (e.ctrlKey || e.metaKey) return;
+    // For all other keys: prevent browser default, handle manually
+    e.preventDefault();
+    var ch = e.key.length === 1 ? e.key.toUpperCase() : '';
+    if (!ch || !/^[A-Z0-9 _.\-]$/.test(ch)) return;  // discard invalid chars
+    // Insert at cursor position
+    var start = el.selectionStart, end = el.selectionEnd;
+    var val = el.value;
+    if (val.length >= el.maxLength && start === end) return; // at max length
+    el.value = val.slice(0, start) + ch + val.slice(end);
+    el.setSelectionRange(start + 1, start + 1);
+    _updateCallsignBtn();
 }
 
 function _updateCallsignBtn() {
