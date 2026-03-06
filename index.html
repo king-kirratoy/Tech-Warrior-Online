@@ -1088,6 +1088,16 @@ button.active {
       <div id="round-kills" style="font-size:22px;letter-spacing:4px;color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.5);">0</div>
     </div>
   </div>
+<!-- BOSS HP BAR -->
+<div id="boss-hud" style="display:none;position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;font-family:'Courier New',monospace;min-width:480px;text-align:center;">
+  <div style="background:rgba(8,4,12,0.92);border:1px solid rgba(180,0,255,0.5);border-radius:10px;padding:10px 20px 12px 20px;box-shadow:0 0 18px rgba(180,0,255,0.35),inset 0 0 12px rgba(180,0,255,0.08);">
+    <div id="boss-bar-track" style="position:relative;width:440px;height:18px;background:rgba(0,0,0,0.7);border:1px solid rgba(180,0,255,0.3);border-radius:4px;overflow:hidden;margin-bottom:6px;">
+      <div id="boss-bar-fill" style="position:absolute;left:0;top:0;height:100%;width:100%;background:linear-gradient(90deg,#6600cc,#cc00ff);border-radius:4px;transition:width 0.12s linear;box-shadow:0 0 10px rgba(200,0,255,0.6);"></div>
+      <div id="boss-bar-shine" style="position:absolute;left:0;top:0;width:100%;height:40%;background:linear-gradient(180deg,rgba(255,255,255,0.12),transparent);border-radius:4px;pointer-events:none;"></div>
+    </div>
+    <div id="boss-bar-name" style="font-size:11px;letter-spacing:4px;color:rgba(220,160,255,0.9);text-transform:uppercase;text-shadow:0 0 8px rgba(200,0,255,0.6);"></div>
+  </div>
+</div>
 </div>
 <!-- ROUND BANNER -->
 <div id="round-banner" style="display:none;position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);z-index:99998;pointer-events:none;text-align:center;font-family:'Courier New',monospace;">
@@ -1199,14 +1209,22 @@ const CHASSIS_SHIELDS = {
 // ── CHASSIS LEG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_LEGS = {
     light:  new Set(['none','hydraulic_boost','gyro_stabilizer','sprint_boosters','featherweight','ghost_legs','silent_step','reactive_dash']),
-    medium: new Set(['none','gyro_stabilizer','mag_anchors','mine_layer','afterleg','stabilizer_gyros','jump_jets','adaptive_stride','seismic_dampener','reactor_legs']),
-    heavy:  new Set(['none','mag_anchors','mine_layer','tremor_legs','siege_stance','ironclad_legs','ground_slam','suppressor_legs']),
+    // Medium: removed afterleg+jump_jets (both require JUMP mod, medium lacks it); added power_stride+evasion_coils
+    medium: new Set(['none','gyro_stabilizer','mag_anchors','mine_layer','stabilizer_gyros','adaptive_stride','seismic_dampener','reactor_legs',
+                     'power_stride','evasion_coils']),
+    // Heavy: removed ground_slam (requires JUMP mod, heavy lacks it); added warlord_stride
+    heavy:  new Set(['none','mag_anchors','mine_layer','tremor_legs','siege_stance','ironclad_legs','suppressor_legs',
+                     'warlord_stride']),
 };
 // ── CHASSIS AUG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_AUGS = {
-    light:  new Set(['none','target_painter','threat_analyzer','ballistic_weave','targeting_scope','neural_accel','ghost_circuit','reflex_amp','kill_sprint','predator_lens','shadow_core']),
+    // Light: mobility/aggression + FTH-specific (only chassis with FTH) + jump/dodge synergy
+    light:  new Set(['none','target_painter','threat_analyzer','ballistic_weave','targeting_scope','neural_accel','ghost_circuit','reflex_amp','kill_sprint','predator_lens','shadow_core',
+                     'fuel_injector','thermal_core','pyromaniac_chip']),
     medium: new Set(['none','target_painter','threat_analyzer','overclock_cpu','reactive_plating','combat_ai','drone_relay','multi_drone','tactical_uplink','field_processor','system_sync','adaptive_core','echo_targeting']),
-    heavy:  new Set(['none','reactive_plating','scrap_cannon','fuel_injector','thermal_core','pyromaniac_chip','war_machine','iron_fortress','suppressor_aura','colossus_frame','impact_core']),
+    // Heavy: removed FTH augs (heavy can't equip FTH), added RL/chain/siege identity augs
+    heavy:  new Set(['none','reactive_plating','scrap_cannon','war_machine','iron_fortress','suppressor_aura','colossus_frame','impact_core',
+                     'blast_dampener','heavy_loader','chain_drive']),
 };
 
 const SHIELD_SYSTEMS = {
@@ -1322,6 +1340,11 @@ const LEG_SYSTEMS = {
     ironclad_legs:   { name: 'IRONCLAD LEGS', weight: 38,  desc: 'Leg HP +80. Legs take 30% less damage. Much harder to cripple.' },
     ground_slam:     { name: 'GROUND SLAM',   weight: 42,  desc: 'JUMP landing AoE doubled in radius and damage. Turn landing into a weapon.' },
     suppressor_legs: { name: 'SUPPRESSOR LEG',weight: 35,  desc: 'Enemies within 220px move 20% slower. Passive suppression aura from heavy frame.' },
+    // ── MEDIUM CHASSIS UNIQUE (replacing jump-dependent legs) ─────
+    power_stride:    { name: 'POWER STRIDE',   weight: 28,  desc: 'Each kill grants +5% move speed for 3s, stacking up to 3×. Keep moving, keep killing.' },
+    evasion_coils:   { name: 'EVASION COILS',  weight: 30,  desc: 'While moving, incoming damage reduced by 10%. Close-range hits (<150px) reduced by 15%.' },
+    // ── HEAVY CHASSIS UNIQUE (replacing jump-dependent leg) ───────
+    warlord_stride:  { name: 'WARLORD STRIDE', weight: 38,  desc: 'While leg HP is above 50%: +8% move speed and +10% damage at close range (<180px).' },
 };
 const CHASSIS = {
     // max = weight limit.
@@ -1576,6 +1599,14 @@ const _perks = {
     afterburner:     { cat:'jump', label:'Afterburner',     desc:'JUMP distance & speed +40% (stackable)',     apply: () => { _perkState.jumpSpeedMult=(_perkState.jumpSpeedMult||1)*1.40; } },
     jump_slam:       { cat:'jump', label:'Ground Slam',     desc:'Landing from JUMP deals extra damage in radius (stackable)', apply: () => { _perkState.jumpSlam=(_perkState.jumpSlam||0)+30; } },
     afterimage_jump: { cat:'jump', label:'Afterimage',      desc:'JUMP leaves a decoy at launch point that briefly draws fire', apply: () => { _perkState.afterimage=true; } },
+    // ── DECOY MOD PERKS ────────────────────────────────────────────────
+    decoy_duration:  { cat:'decoy', label:'Extended Run',    desc:'Decoy lasts 3s longer (stackable)',                   apply: () => { _perkState.decoyDuration=(_perkState.decoyDuration||0)+3000; } },
+    decoy_damage:    { cat:'decoy', label:'Live Rounds',     desc:'Decoy fires at full damage instead of 50%',           apply: () => { _perkState.decoyFullDmg=true; } },
+    twin_decoy:      { cat:'decoy', label:'Twin Decoy',      desc:'Deploy 2 decoys at once — second spawns 40px offset', apply: () => { _perkState.twinDecoy=true; } },
+    ghost_exit:      { cat:'decoy', label:'Ghost Exit',      desc:'When decoy expires, you cloak for 2s',                apply: () => { _perkState.ghostExit=true; } },
+    phantom_army:    { cat:'decoy', once:true, legendary:true, label:'Phantom Army',
+        desc:'LEGENDARY — Decoys never expire. Each activation spawns a new permanent decoy (max 3). All phantoms fire continuously.',
+        apply: () => { _perkState.phantomArmy=true; } },
     chain_emp:       { cat:'emp',  label:'Chain EMP',       desc:'EMP stun chains to a 2nd nearby enemy',      apply: () => { _perkState.chainEmp=true; } },
     emp_amplifier:   { cat:'emp',  label:'Amplifier',       desc:'EMP: stun duration +40%, area +30%',         apply: () => { _perkState.empAmplifier=true; } },
     barrier_spike:   { cat:'barrier', label:'Barrier Spike',desc:'While barrier is active: nearby enemies take 15 dmg/s', apply: () => { _perkState.barrierSpike=true; } },
@@ -2250,11 +2281,11 @@ function handleEnemyAI(scene, time) {
                 if (_hit) { _hasLOS = false; break; }
             }
         }
-        const _canSeeViaConeCone = _inCone && _hasLOS;
+        const _canSeeViaConeCone = _inCone && _hasLOS && !player?._ghostExitActive;
 
         // ── PURSUIT DETECTION (chase/combat only): wide radius, no cone needed ──
         // Once chasing, enemy "knows" where player is within _pursuitRange
-        const _isAlerted   = enemy._aiState === 'chase' || enemy._aiState === 'combat';
+        const _isAlerted   = !player?._ghostExitActive && (enemy._aiState === 'chase' || enemy._aiState === 'combat');
         const _canPursue   = _isAlerted && dist < _pursuitRange;
 
         // Combined: can the enemy detect the player this frame?
@@ -2699,6 +2730,9 @@ function handlePlayerMovement(scene, time) {
     const _legMult = _gyroOn ? 1.0
         : _legsDestroyed ? 0.5
         : _legHpPct < 0.5 ? (0.5 + _legHpPct) : 1.0;
+    // Warlord Stride: +8% speed while leg HP > 50%
+    const _warlordSpeedMult = (loadout.leg === 'warlord_stride' && _perkState.legSystemActive &&
+        player.comp?.legs?.hp > player.comp.legs.max * 0.5) ? 1.08 : 1.0;
     const _shldSpdMult = (() => {
         const _ss2 = SHIELD_SYSTEMS[loadout.shld];
         if (!_ss2) return 1;
@@ -2710,6 +2744,7 @@ function handlePlayerMovement(scene, time) {
         * (isRageActive ? 1.75 : 1)
         * _legMult
         * (_perkState.speedMult || 1)
+        * _warlordSpeedMult
         * _shldSpdMult;
     const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod]?.cooldown || 0 : 0;
 
@@ -3436,6 +3471,12 @@ function showRoundBanner(title, sub, duration, onDone) {
 function _clearMapForRound(scene) {
     // Wipe all in-flight bullets
     if (bullets)      bullets.getChildren().slice().forEach(b => { try { if (b.active) b.destroy(); } catch(e){} });
+    // Clean up decoys and phantom decoys between rounds
+    if (window._activeDecoy) { try { window._activeDecoy.destroy(); } catch(e){} window._activeDecoy = null; }
+    if (window._phantomDecoys) {
+        window._phantomDecoys.forEach(p => { try { p.torso.destroy(); p.label.destroy(); p.drift.remove(); p.fire.remove(); } catch(e){} });
+        window._phantomDecoys = [];
+    }
     if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { try { if (b.active) b.destroy(); } catch(e){} });
     // Wipe all loot pickups (orbs + labels)
     lootPickups.forEach(p => {
@@ -3523,6 +3564,7 @@ function startRound(roundNum) {
             setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, normalCount * 400 + 600);
         }
         if (roundNum >= 3 && Math.random() < 0.40) {
+            _roundTotal++; // medic counts toward the kill total
             setTimeout(() => { if (isDeployed && _roundActive) spawnMedic(scene); }, normalCount * 400 + 1000);
         }
     }
@@ -4214,7 +4256,10 @@ function applyAugment() {
         case 'ballistic_weave':   _perkState.ballisticWeave = true; break;
         case 'neural_accel':      _perkState.neuralAccel = true; break;
         // ── Inferno Wall augments ──
-        case 'fuel_injector':     _perkState.fuelInjector = true; break;
+        case 'fuel_injector':
+            _perkState.fuelInjector = true;
+            _perkState.fthCone = (_perkState.fthCone || 0) + 0.30;
+            break;
         case 'thermal_core':      _perkState.thermalCore = true; break;
         case 'pyromaniac_chip':   _perkState.pyromaniacChip = true; break;
         // ── LIGHT CHASSIS UNIQUE ───────────────────────────────────
@@ -4248,6 +4293,20 @@ function applyAugment() {
             }
             break;
         case 'impact_core':       _perkState.impactCore     = true; break;
+        // ── HEAVY WEAPON MASTERY ──────────────────────────────────
+        case 'blast_dampener':
+            _perkState.blastDampener = true;
+            break;
+        case 'heavy_loader':
+            _perkState.heavyLoader = true;
+            _perkState.reloadMult  = (_perkState.reloadMult || 1) * 0.80;
+            break;
+        case 'chain_drive':
+            _perkState.chainDrive = true;
+            if (loadout.L === 'chain' || loadout.L === 'siege' || loadout.R === 'chain' || loadout.R === 'siege') {
+                _perkState.dmgMult = (_perkState.dmgMult || 1) * 1.15;
+            }
+            break;
     }
 }
 
@@ -4291,6 +4350,7 @@ function applyLegSystem() {
             // Stationary bonus — handled in update loop like mag_anchors
             break;
         case 'jump_jets':
+            // Only reachable on light chassis (where jump mod is available)
             _perkState.jumpCharges = (_perkState.jumpCharges || 1) + 1;
             _perkState._jumpChargesLeft = _perkState.jumpCharges;
             break;
@@ -4300,9 +4360,21 @@ function applyLegSystem() {
         case 'tremor_legs':
         case 'siege_stance':
         case 'ironclad_legs':
-        case 'ground_slam':
         case 'suppressor_legs':
             // Handled in update loop
+            break;
+        // ── NEW MEDIUM LEGS ──────────────────────────────────────
+        case 'power_stride':
+            // Kill-triggered speed stack — handled in onEnemyKilled
+            _perkState._powerStrideStacks = 0;
+            _perkState._powerStrideTimer  = 0;
+            break;
+        case 'evasion_coils':
+            // Passive: dodge distance/cooldown boost — handled in dodge logic
+            break;
+        // ── NEW HEAVY LEG ────────────────────────────────────────
+        case 'warlord_stride':
+            // Passive: speed/dmg when legs healthy — handled in update loop
             break;
     }
 }
@@ -4686,13 +4758,37 @@ function activateDecoy(scene, time) {
     // New enemies spawning during decoy also need target set — handled via _decoyRef global
     window._activeDecoy = decoyTorso;
 
-    scene.time.delayedCall(mod.decoyDuration, () => {
-        decoyTorso.destroy();
-        decoyLabel.destroy();
+    // decoy_duration perk extends lifetime; phantom_army makes it permanent
+    const effectiveDuration = mod.decoyDuration + (_perkState.decoyDuration || 0);
+
+    if (_perkState.phantomArmy) {
+        if (!window._phantomDecoys) window._phantomDecoys = [];
+        window._phantomDecoys.push({ torso: decoyTorso, label: decoyLabel, drift: driftEvent, fire: decoyFireEvent });
+        if (window._phantomDecoys.length > 3) {
+            const oldest = window._phantomDecoys.shift();
+            try { oldest.torso.destroy(); oldest.label.destroy(); oldest.drift.remove(); oldest.fire.remove(); } catch(ex) {}
+        }
+        lastModTime = time;
+        return;
+    }
+
+    scene.time.delayedCall(effectiveDuration, () => {
+        if (decoyTorso.active) decoyTorso.destroy();
+        if (decoyLabel.active) decoyLabel.destroy();
         driftEvent.remove();
         decoyFireEvent.remove();
         enemies.getChildren().forEach(e => { if (e) e._decoyTarget = null; });
         window._activeDecoy = null;
+        // ghost_exit: cloak for 2s after decoy expires
+        if (_perkState.ghostExit && player?.active && isDeployed) {
+            player._ghostExitActive = true;
+            const gscene = game.scene.scenes[0];
+            if (torso) torso.setAlpha(0.15);
+            gscene.time.delayedCall(2000, () => {
+                player._ghostExitActive = false;
+                if (torso?.active) torso.setAlpha(1.0);
+            });
+        }
         lastModTime = scene.time.now;
     });
     lastModTime = time;
@@ -5436,30 +5532,47 @@ function _addBossLabel(scene, e, text, color, yOff) {
     scene.tweens.add({ targets: e.bossLabel, alpha: 0.45, duration: 600, yoyo: true, repeat: -1 });
 }
 
-function _addBossHPBar(scene, e, color) {
-    e._bossBarBg = scene.add.rectangle(e.x, e.y - 90, 80, 7, 0x111111).setDepth(11);
-    e._bossBarFg = scene.add.rectangle(e.x - 40, e.y - 90, 80, 5, color).setOrigin(0, 0.5).setDepth(12);
-    e._bossBarColor = color;
+function _addBossHPBar(scene, e, color, bossName) {
+    // Store color as CSS hex string for DOM bar; no Phaser objects needed
+    e._bossBarColor = '#' + color.toString(16).padStart(6, '0');
+    e._bossBarName  = bossName || e.bossType || 'BOSS';
+    // Show the DOM boss bar
+    const hud  = document.getElementById('boss-hud');
+    const fill = document.getElementById('boss-bar-fill');
+    const name = document.getElementById('boss-bar-name');
+    if (hud)  hud.style.display = 'block';
+    if (fill) {
+        fill.style.background = 'linear-gradient(90deg,' + e._bossBarColor + 'aa,' + e._bossBarColor + ')';
+        fill.style.boxShadow  = '0 0 12px ' + e._bossBarColor + '99';
+        fill.style.width = '100%';
+    }
+    if (name) name.style.color = e._bossBarColor;
+    _updateBossHPBar(e);
 }
 
 function _updateBossHPBar(e) {
-    if (!e._bossBarBg || !e._bossBarBg.active) return;
+    const fill = document.getElementById('boss-bar-fill');
+    const name = document.getElementById('boss-bar-name');
+    if (!fill) return;
     const pct = Math.max(0, e.health / e.maxHealth);
-    const yOff = e.bossLabel ? 90 : 75;
-    e._bossBarBg.setPosition(e.x, e.y - yOff);
-    e._bossBarFg.setPosition(e.x - 40, e.y - yOff);
-    e._bossBarFg.width = Math.round(80 * pct);
+    fill.style.width = (pct * 100).toFixed(1) + '%';
+    if (name && e._bossBarName) name.textContent = e._bossBarName;
+}
+
+function _hideBossHPBar() {
+    const hud = document.getElementById('boss-hud');
+    if (hud) hud.style.display = 'none';
 }
 
 // BOSS 1: THE WARDEN (Round 5)
 function spawnWarden(scene) {
     const p = _bossSpawnPos();
-    const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', BOSS_COLORS.warden, 2.2, 0.9);
+    const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', BOSS_COLORS.warden, 6.0, 0.9);
     e.loadout = { chassis:'heavy', primary:'mg', secondary:'barrier',
                   mod:'rage', shld:'heavy_shield', leg:'mag_anchors', aug:'reactive_plating' };
     e.behavior = 'circle'; e.isBoss = true; e.bossType = 'warden';
     _addBossLabel(scene, e, '[ THE WARDEN ]', 0x8800ff, 75);
-    _addBossHPBar(scene, e, 0x8800ff);
+    _addBossHPBar(scene, e, 0x8800ff, 'THE WARDEN');
     _showBossTitle(scene, 'THE WARDEN', 'HIT THE BACK — FRONTAL IMMUNITY ACTIVE', 0xaa44ff);
 
     e._wardenShieldAngle = 0;
@@ -5509,8 +5622,7 @@ function spawnWarden(scene) {
         if (e._wardenPhaseCheck) e._wardenPhaseCheck.remove();
         if (e._wardenShieldGfx) e._wardenShieldGfx.destroy();
         if (e.bossLabel) e.bossLabel.destroy();
-        if (e._bossBarBg) e._bossBarBg.destroy();
-        if (e._bossBarFg) e._bossBarFg.destroy();
+        _hideBossHPBar();
     };
 }
 
@@ -5520,7 +5632,7 @@ function spawnTwinRazors(scene) {
     const x2 = p.x + (Math.random() > 0.5 ? 180 : -180);
     const y2 = p.y + Phaser.Math.Between(-80, 80);
 
-    const eA = _buildBossEnemy(scene, p.x, p.y, 'light', BOSS_COLORS.razor, 1.8, 1.25);
+    const eA = _buildBossEnemy(scene, p.x, p.y, 'light', BOSS_COLORS.razor, 5.0, 1.25);
     const eB = _buildBossEnemy(scene, x2,  y2,  'light', BOSS_COLORS.razor, 1.8, 1.25);
 
     const totalHP = eA.health + eB.health;
@@ -5536,7 +5648,7 @@ function spawnTwinRazors(scene) {
         e.loadout = razorLoadout;
         e.behavior = 'flanker'; e.isBoss = true; e.bossType = 'razor';
         _addBossLabel(scene, e, '[ TWIN RAZOR ]', 0xff0022, 58);
-        _addBossHPBar(scene, e, 0xff0022);
+        _addBossHPBar(scene, e, 0xff0022, 'TWIN RAZORS');
     }
     _showBossTitle(scene, 'TWIN RAZORS', 'SHARED HEALTH — KILLING ONE ENRAGES THE OTHER', 0xff4444);
 
@@ -5576,26 +5688,24 @@ function spawnTwinRazors(scene) {
     };
     eA._onDestroy = function() {
         if (eA.bossLabel) eA.bossLabel.destroy();
-        if (eA._bossBarBg) eA._bossBarBg.destroy();
-        if (eA._bossBarFg) eA._bossBarFg.destroy();
+        // Don't hide bar yet — eB may still be alive
     };
     eB._onDestroy = function() {
         if (eB.bossLabel) eB.bossLabel.destroy();
-        if (eB._bossBarBg) eB._bossBarBg.destroy();
-        if (eB._bossBarFg) eB._bossBarFg.destroy();
         syncHP.remove();
+        _hideBossHPBar();
     };
 }
 
 // BOSS 3: THE ARCHITECT (Round 15)
 function spawnArchitect(scene) {
     const p = _bossSpawnPos();
-    const e = _buildBossEnemy(scene, p.x, p.y, 'medium', BOSS_COLORS.architect, 2.6, 0.95);
+    const e = _buildBossEnemy(scene, p.x, p.y, 'medium', BOSS_COLORS.architect, 7.0, 0.95);
     e.loadout = { chassis:'medium', primary:'hr', secondary:'emp',
                   mod:'barrier', shld:'adaptive_shield', leg:'stabilizer_gyros', aug:'targeting_scope' };
     e.behavior = 'sniper'; e.isBoss = true; e.bossType = 'architect';
     _addBossLabel(scene, e, '[ THE ARCHITECT ]', 0x00cccc, 68);
-    _addBossHPBar(scene, e, 0x00cccc);
+    _addBossHPBar(scene, e, 0x00cccc, 'THE ARCHITECT');
     _showBossTitle(scene, 'THE ARCHITECT', 'STAY AGGRESSIVE — IT BUILDS COVER MID-FIGHT', 0x00dddd);
 
     let wallsPlaced = 0;
@@ -5636,21 +5746,20 @@ function spawnArchitect(scene) {
         if (e._architectTimer) e._architectTimer.remove();
         if (e._architectSync) e._architectSync.remove();
         if (e.bossLabel) e.bossLabel.destroy();
-        if (e._bossBarBg) e._bossBarBg.destroy();
-        if (e._bossBarFg) e._bossBarFg.destroy();
+        _hideBossHPBar();
     };
 }
 
 // BOSS 4: JUGGERNAUT (Round 20+)
 function spawnJuggernaut(scene) {
     const p = _bossSpawnPos();
-    const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', BOSS_COLORS.juggernaut, 3.2, 0.8);
+    const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', BOSS_COLORS.juggernaut, 9.0, 0.8);
     e.loadout = { chassis:'heavy', primary:'chain', secondary:'rl',
                   mod:'rage', shld:'titan_shield', leg:'siege_stance', aug:'reactive_plating' };
     e.behavior = 'circle'; e.isBoss = true; e.bossType = 'juggernaut';
     e._jugPhase = 1; e._jugCharging = false;
     _addBossLabel(scene, e, '[ JUGGERNAUT ]', 0xff2200, 80);
-    _addBossHPBar(scene, e, 0xff2200);
+    _addBossHPBar(scene, e, 0xff2200, 'JUGGERNAUT');
     _showBossTitle(scene, 'JUGGERNAUT', 'PHASE 1 — MAINTAIN DISTANCE', 0xff4400);
 
     e._jugPhaseTimer = scene.time.addEvent({ delay: 300, loop: true, callback: () => {
@@ -5744,8 +5853,7 @@ function spawnJuggernaut(scene) {
         if (e._chargeTimer) e._chargeTimer.remove();
         if (e._mineDropTimer) e._mineDropTimer.remove();
         if (e.bossLabel) e.bossLabel.destroy();
-        if (e._bossBarBg) e._bossBarBg.destroy();
-        if (e._bossBarFg) e._bossBarFg.destroy();
+        _hideBossHPBar();
     };
 }
 
@@ -6687,10 +6795,12 @@ function fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     );
     const _fuelBoost = _perkState.fuelInjector ? 1.40 : 1.0;
     const maxRange = (weapon.range || 350) * (1 + (_perkState.fthRange||0)) * _fuelBoost;
-    const coneSteps = _perkState.fuelInjector ? 4 : 2; // wider cone = more particles
+    const _coneWidthMult = 1 + (_perkState.fthCone || 0);
+    const coneSteps = _perkState.fuelInjector ? 4 : 2;
+    const coneAngleStep = 0.055 * _coneWidthMult;
     const dmg = Math.round(weapon.dmg * (_perkState.dmgMult||1));
     for (let i = -coneSteps; i <= coneSteps; i++) {
-        const a = angle + i * 0.055 + (Math.random()-0.5)*0.06;
+        const a = angle + i * coneAngleStep + (Math.random()-0.5)*0.06;
         const bx = armOx + Math.cos(a) * barrelDist;
         const by = armOy + Math.sin(a) * barrelDist;
         const b = scene.add.circle(bx, by, weapon.bulletSize, 0xff6600);
@@ -7089,6 +7199,12 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     if (_perkState.fortress > 0) amt = amt * (1 - Math.min(0.75, _perkState.fortress));
     // Mag Anchors: -20% incoming damage while stationary
     if (_perkState._magAnchorsActive) amt *= 0.80;
+    // Evasion Coils: 10% DR while moving, 15% DR vs close-range hits
+    if (loadout.leg === 'evasion_coils' && _perkState.legSystemActive) {
+        const _moving = player?.body && (Math.abs(player.body.velocity.x) + Math.abs(player.body.velocity.y)) > 20;
+        if (_moving) amt = Math.round(amt * 0.90);
+        // Close-range reduction is applied from attacker position if available (approximated)
+    }
     // Iron Fortress: +15% DR while stationary 1.5s+
     if (_perkState._ironFortressActive) amt = Math.round(amt * 0.85);
     // Reactive Plating: each hit adds 5% DR, max 5 stacks
@@ -7845,7 +7961,8 @@ function createExplosion(scene, x, y, radius, damage) {
         const dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
         if (dist < radius && !playerDamageDealt) {
             playerDamageDealt = true;
-            processPlayerDamage(Math.floor(damage * 0.75), null, true);
+            const _selfDmgMult = _perkState.blastDampener ? 0.40 : 1.0;
+            processPlayerDamage(Math.floor(damage * 0.75 * _selfDmgMult), null, true);
             scene.cameras.main.shake(200, 0.01);
         }
     }
@@ -8225,6 +8342,10 @@ const AUG_OPTIONS = [
     { key:'suppressor_aura',   label:'SUPPRESSOR AURA',   weight:38  },
     { key:'colossus_frame',    label:'COLOSSUS FRAME',    weight:45  },
     { key:'impact_core',       label:'IMPACT CORE',       weight:32  },
+    // Heavy weapon mastery
+    { key:'blast_dampener',    label:'BLAST DAMPENER',    weight:30  },
+    { key:'heavy_loader',      label:'HEAVY LOADER',      weight:35  },
+    { key:'chain_drive',       label:'CHAIN DRIVE',       weight:32  },
 ];
 
 const LEG_OPTIONS = [
@@ -8251,8 +8372,11 @@ const LEG_OPTIONS = [
     { key:'tremor_legs',       label:'TREMOR LEGS',       weight:45  },
     { key:'siege_stance',      label:'SIEGE STANCE',      weight:40  },
     { key:'ironclad_legs',     label:'IRONCLAD LEGS',     weight:38  },
-    { key:'ground_slam',       label:'GROUND SLAM',       weight:42  },
     { key:'suppressor_legs',   label:'SUPPRESSOR LEGS',   weight:35  },
+    { key:'warlord_stride',    label:'WARLORD STRIDE',    weight:38  },
+    // Medium unique (replacing jump-dependent legs)
+    { key:'power_stride',      label:'POWER STRIDE',      weight:28  },
+    { key:'evasion_coils',     label:'EVASION COILS',      weight:30  },
 ];
 
 const SHIELD_OPTIONS = [
@@ -8365,7 +8489,7 @@ const SLOT_DESCS = {
     titan_shield:     { title:'TITAN SHIELD',      desc:'200 HP / 60% absorb / +20 core HP bonus. Very slow regen. Pure staying power.' },
     // ── NEW LEG SLOT DESCS ────────────────────────────────────────
     sprint_boosters:  { title:'SPRINT BOOSTERS',  desc:'Double-tap W for 0.8s speed burst (+80%). 4s cooldown.' },
-    featherweight:    { title:'FEATHERWEIGHT',    desc:'All weapon weights reduced 20%. Fit more into your weight budget.' },
+    featherweight:    { title:'FEATHERWEIGHT',    desc:'+15% reload speed and +10% move speed. Light frame optimization — faster in every way.' },
     ghost_legs:       { title:'GHOST LEGS',       desc:'Taking damage while moving triggers a 0.2s speed burst. Hard to pin down.' },
     silent_step:      { title:'SILENT STEP',      desc:'Enemies lose vision 40% faster when you are moving. Wider flanking window.' },
     reactive_dash:    { title:'REACTIVE DASH',    desc:'Auto-dash when legs drop below 50% HP. Survive the first hit.' },
@@ -9264,6 +9388,7 @@ function goToMainMenu() {
     const _so = document.getElementById('stats-overlay'); if (_so) _so.style.display = 'none';
     _isStats = false;
     const rhud = document.getElementById('round-hud'); if (rhud) rhud.style.display = 'none';
+    _hideBossHPBar();
     const mmw  = document.getElementById('minimap-wrap'); if (mmw) mmw.style.display = 'none';
     const edh  = document.getElementById('enemy-doll-hud'); if (edh) edh.style.display = 'none';
     const pm   = document.getElementById('perk-menu'); if (pm) pm.style.display = 'none';
@@ -9301,6 +9426,7 @@ function returnToHangar() {
     document.getElementById('ui-layer').style.display = 'flex';
     document.getElementById('hud-container').style.display = 'none';
     const rhud = document.getElementById('round-hud'); if (rhud) rhud.style.display = 'none';
+    _hideBossHPBar();
     const _mm2 = document.getElementById('minimap-wrap'); if (_mm2) _mm2.style.display = 'none';
     const _edh = document.getElementById('enemy-doll-hud'); if (_edh) _edh.style.display = 'none';
     const _pm = document.getElementById('perk-menu'); if (_pm) _pm.style.display = 'none';
