@@ -229,8 +229,6 @@ button.active {
     vertical-align: middle;
 }
 
-
-
 /* ============================================================
    IN-GAME HUD
    ============================================================ */
@@ -266,37 +264,12 @@ button.active {
                 inset 0 0 10px rgba(0,255,255,0.1);
 }
 
-/* Health bar removed — paper-doll serves as health indicator */
-
 .hud-label {
     font-weight: bold;
     font-size: 11px;
     color: #0f0;
     opacity: 0.8;
     text-transform: uppercase;
-}
-
-/* Vertical shield bar — sits right of paper-doll */
-#sh-bar-vert {
-    width: 8px;
-    height: 90px;
-    background: rgba(0,20,40,0.4);
-    border: 1px solid rgba(0,255,255,0.3);
-    border-radius: 2px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    box-shadow: 0 0 6px rgba(0,255,255,0.15);
-    align-self: center;
-}
-
-#sh-fill-vert {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to top, #00ffff, rgba(0,200,255,0.6));
-    box-shadow: 0 0 8px #00ffff;
-    transition: height 0.3s;
 }
 
 /* --- Weapon Slots --- */
@@ -329,12 +302,8 @@ button.active {
 }
 
 /* Left label column */
-/* wr-left removed — slot and name are now separate columns */
-.wr-left { display: contents; } /* passthrough — children lay out directly in weapon-row */
+.wr-left { display: contents; }
 
-/* wr-key, wr-label: hidden, kept so JS refs don't null-error */
-.wr-key   { display: none; }
-.wr-label { display: none; }
 
 /* Column 1: slot label — fixed width, right-aligned */
 .wr-slot-col {
@@ -358,8 +327,6 @@ button.active {
     white-space: nowrap;
 }
 
-/* Separator dash — hidden, kept for HTML compat */
-.wr-sep { display: none; }
 
 /* Column 2: weapon name — fixed width, right-aligned */
 .wr-name-col {
@@ -426,8 +393,6 @@ button.active {
     color: rgba(0,210,255,0.7);
 }
 
-/* legacy stubs — kept so old JS .weapon-box refs don't throw */
-.weapon-box, .weapon-container, .key-hint, .arm-label, .weap-name, .cd-overlay { display: none !important; }
 
 /* ============================================================
    PAPER DOLL
@@ -620,7 +585,6 @@ button.active {
     color: #fff;
 }
 .dd-selected .dd-name { flex: 1; letter-spacing: 2px; }
-.dd-selected .dd-wt   { display: none; }
 .dd-selected .dd-arrow { font-size: 9px; color: rgba(0,255,255,0.6); transition: transform 0.15s; }
 .dd-selected.dd-open .dd-arrow { transform: rotate(180deg); }
 
@@ -662,8 +626,6 @@ button.active {
     width: 100%;
 }
 .dd-option .do-name { flex: 1; letter-spacing: 1px; font-size: 12px; }
-.dd-option .do-wt   { display: none; }
-.dd-option.do-warn .do-wt { color: rgba(255,170,0,0.6); }
 .dd-option .do-desc {
     font-size: 10px;
     color: rgba(200,210,217,0.5);
@@ -693,9 +655,6 @@ button.active {
     margin-right: 8px;
     vertical-align: middle;
 }
-
-/* #garage-desc removed — descriptions now inline in dropdown rows */
-
 
 /* Garage stats panel */
 #garage-stats-panel {
@@ -833,7 +792,7 @@ button.active {
                     <div class="dd-wrap" id="ddw-A">
                         <div class="dd-selected" id="dds-A" onclick="toggleDD('A')">
                             <span class="dd-name" id="ddn-A">NONE</span>
-                            <span class="dd-wt"   id="ddwt-A">—</span>
+
                             <span class="dd-arrow">▼</span>
                         </div>
                         <div class="dd-list" id="ddl-A"></div>
@@ -845,7 +804,7 @@ button.active {
                     <div class="dd-wrap" id="ddw-L">
                         <div class="dd-selected" id="dds-L" onclick="toggleDD('L')">
                             <span class="dd-name" id="ddn-L">NONE</span>
-                            <span class="dd-wt"   id="ddwt-L">—</span>
+
                             <span class="dd-arrow">▼</span>
                         </div>
                         <div class="dd-list" id="ddl-L"></div>
@@ -857,7 +816,7 @@ button.active {
                     <div class="dd-wrap" id="ddw-R">
                         <div class="dd-selected" id="dds-R" onclick="toggleDD('R')">
                             <span class="dd-name" id="ddn-R">NONE</span>
-                            <span class="dd-wt"   id="ddwt-R">—</span>
+
                             <span class="dd-arrow">▼</span>
                         </div>
                         <div class="dd-list" id="ddl-R"></div>
@@ -869,7 +828,7 @@ button.active {
                     <div class="dd-wrap" id="ddw-M">
                         <div class="dd-selected" id="dds-M" onclick="toggleDD('M')">
                             <span class="dd-name" id="ddn-M">NONE</span>
-                            <span class="dd-wt"   id="ddwt-M">—</span>
+
                             <span class="dd-arrow">▼</span>
                         </div>
                         <div class="dd-list" id="ddl-M"></div>
@@ -881,7 +840,7 @@ button.active {
                     <div class="dd-wrap" id="ddw-G">
                         <div class="dd-selected" id="dds-G" onclick="toggleDD('G')">
                             <span class="dd-name" id="ddn-G">NONE</span>
-                            <span class="dd-wt"   id="ddwt-G">—</span>
+
                             <span class="dd-arrow">▼</span>
                         </div>
                         <div class="dd-list" id="ddl-G"></div>
@@ -893,7 +852,7 @@ button.active {
                     <div class="dd-wrap" id="ddw-S">
                         <div class="dd-selected" id="dds-S" onclick="toggleDD('S')">
                             <span class="dd-name" id="ddn-S">NONE</span>
-                            <span class="dd-wt"   id="ddwt-S">—</span>
+
                             <span class="dd-arrow">▼</span>
                         </div>
                         <div class="dd-list" id="ddl-S"></div>
@@ -927,8 +886,6 @@ button.active {
                 <div id="preview-container" style="width:200px;height:140px;border:1px solid rgba(0,255,255,0.4);background:rgba(0,10,20,0.6);box-shadow:0 0 14px rgba(0,255,255,0.12);display:flex;justify-content:center;align-items:center;">
                     <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 8px rgba(0,255,255,0.6));">
                 </div>
-
-
 
                 <div style="width:100%;margin-top:auto;display:flex;flex-direction:column;gap:8px;">
                     <button id="hangar-mm-btn" onclick="returnToMainMenu()">MAIN MENU</button>
@@ -1056,15 +1013,6 @@ button.active {
                     <span class="wr-status" id="wr-st-S" style="color:rgba(0,210,255,0.7);"></span>
                 </div>
 
-                <!-- compat stubs so old JS getElementById refs don't null-error -->
-                <div style="display:none;">
-                    <div id="sh-bar-vert"><div id="sh-fill-vert"></div></div>
-                    <div id="slot-leg-wrap"><span id="txt-G"></span><div id="wr-fill-G"></div><span id="wr-st-G"></span></div>
-                    <div id="slot-L-box"><div id="cd-L"></div></div>
-                    <div id="slot-R-box"><div id="cd-R"></div></div>
-                    <div id="slot-M-box"><div id="cd-M"></div></div>
-                    <div id="slot-G"></div>
-                </div>
             </div>
 
         </div><!-- /console-frame -->
@@ -1174,12 +1122,7 @@ button.active {
 // CONSTANTS & DATA TABLES
 // ================================================================
 
-/** Chassis definitions: max weapon weight, movement speed, visual scale, component HP */
-
-// ================================================================
-// AUGMENTS — passive system augmentation slot
-// ================================================================
-// ── CHASSIS WEAPON RESTRICTIONS ──────────────────────────────────
+// ── CHASSIS RESTRICTIONS ─────────────────────────────────────────
 const CHASSIS_WEAPONS = {
     light:  new Set(['none','smg','br','fth','sg','sr']),
     medium: new Set(['none','mg','br','hr','gl','plsm','sr','siege','chain']),
@@ -1209,10 +1152,8 @@ const CHASSIS_SHIELDS = {
 // ── CHASSIS LEG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_LEGS = {
     light:  new Set(['none','hydraulic_boost','gyro_stabilizer','sprint_boosters','featherweight','ghost_legs','silent_step','reactive_dash']),
-    // Medium: removed afterleg+jump_jets (both require JUMP mod, medium lacks it); added power_stride+evasion_coils
     medium: new Set(['none','gyro_stabilizer','mag_anchors','mine_layer','stabilizer_gyros','adaptive_stride','seismic_dampener','reactor_legs',
                      'power_stride','evasion_coils']),
-    // Heavy: removed ground_slam (requires JUMP mod, heavy lacks it); added warlord_stride
     heavy:  new Set(['none','mag_anchors','mine_layer','tremor_legs','siege_stance','ironclad_legs','suppressor_legs',
                      'warlord_stride']),
 };
@@ -1222,7 +1163,6 @@ const CHASSIS_AUGS = {
     light:  new Set(['none','target_painter','threat_analyzer','ballistic_weave','targeting_scope','neural_accel','ghost_circuit','reflex_amp','kill_sprint','predator_lens','shadow_core',
                      'fuel_injector','thermal_core','pyromaniac_chip']),
     medium: new Set(['none','target_painter','threat_analyzer','overclock_cpu','reactive_plating','combat_ai','drone_relay','multi_drone','tactical_uplink','field_processor','system_sync','adaptive_core','echo_targeting']),
-    // Heavy: removed FTH augs (heavy can't equip FTH), added RL/chain/siege identity augs
     heavy:  new Set(['none','reactive_plating','scrap_cannon','war_machine','iron_fortress','suppressor_aura','colossus_frame','impact_core',
                      'blast_dampener','heavy_loader','chain_drive']),
 };
@@ -2414,7 +2354,6 @@ const _perks = {
 let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false };
 let _pickedPerks = [];
 let _lastOfferedPerks = [];
-// _savedLoadoutL / _savedLoadoutR removed — replaced by _savedL / _savedR
 let reloadL         = 0;
 let reloadR         = 0;
 let _chaingunSpinStart = 0;   // when chaingun started spinning up
@@ -2428,11 +2367,6 @@ let isShieldActive  = false;
 let isRageActive    = false;
 let isAmmoActive    = false;  // loot: 50% reload reduction for 8s
 let isChargeActive  = false;  // loot: 50% mod cooldown reduction for 10s
-
-
-
-
-// ================================================================
 
 // ================================================================
 // SYNTHESIZED SOUND ENGINE  (Web Audio API — no asset files needed)
@@ -2694,13 +2628,6 @@ function preload() {
     }
     tg.generateTexture('thrust', 32, 32);
 
-    // Audio assets (uncomment paths when files are available)
-    // this.load.audio('snd-smg',          'assets/smg_fire.wav');
-    // this.load.audio('snd-mg',           'assets/smg_fire.wav');
-    // this.load.audio('snd-sg',           'assets/shotgun_fire.mp3');
-    // this.load.audio('snd-explosion',    'assets/explosion.mp3');
-    // this.load.audio('snd-impact-metal', 'assets/impact_metal.mp3');
-    // this.load.audio('snd-shield-hit',   'assets/shield_ping.wav');
 }
 
 function create() {
@@ -2871,7 +2798,6 @@ function create() {
         0x0c1014, 1.0
     ).setScrollFactor(0).setDepth(1000);
 
-    // (in-game Phaser grid removed — HTML canvas overlay used instead)
 }
 
 function update(time) {
@@ -3464,8 +3390,6 @@ function handleEnemyAI(scene, time) {
             });
         }
 
-        // Health bar removed — paper doll HUD used instead
-
         // Chassis movement FX
         syncEnemyChassisEffect(scene, time, enemy);
     });
@@ -4034,12 +3958,6 @@ function updateCooldownOverlays(time) {
             else { st.innerText = 'RDY'; }
         }
     }
-}
-
-/** Legacy compat shim — used in a few places by old element IDs. */
-function updateSlotCooldown(elementId, weaponKey, reloadTimestamp, time) {
-    const slotId = elementId.replace('cd-', '');
-    _updateBarRow(slotId, weaponKey, reloadTimestamp, time);
 }
 
 function _updateBarRow(slotId, weaponKey, reloadTimestamp, time) {
@@ -6634,8 +6552,6 @@ function damageCover(scene, cover, amt) {
     }
 }
 
-
-
 // ================================================================
 // LOOT DROP SYSTEM
 // ================================================================
@@ -8427,7 +8343,6 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         }
         spawnLoot(scene, e.x, e.y, false);  // 30% chance
         }
-        // bars removed
         // All enemies move toward ally death location
         const _diedX = e.x, _diedY = e.y;
         if (enemies) {
@@ -8460,8 +8375,6 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         onEnemyKilled();
     }
 }
-
-
 
 function dropMine(scene) {
     if (!player?.active) return;
@@ -8964,9 +8877,6 @@ function updateHUD() {
 
 function updateBars() {
     if (!player) return;
-    // Legacy vertical bar (now a hidden stub — kept for compat)
-    const shFillV = document.getElementById('sh-fill-vert');
-    if (shFillV) shFillV.style.height = '100%';
 
     // Horizontal defense row
     const shFillH = document.getElementById('wr-fill-S');
@@ -9328,7 +9238,7 @@ function buildDD(slotId, options) {
         const _isWeaponSlot = (slotId === 'L' || slotId === 'R');
         const currentSlotW = _isWeaponSlot ? (WEAPONS[slotKey]?.weight ?? 0) : 0;
         const wouldBe = _isWeaponSlot ? (currentTotal - currentSlotW + opt.weight) : 0;
-        const over = false; // weight system removed
+        const over = false;
         const desc = SLOT_DESCS[opt.key];
         const descText = (desc && opt.key !== 'none') ? desc.desc : '';
 
@@ -9397,7 +9307,6 @@ function toggleDD(slotId) {
     }
     document.getElementById('dds-' + slotId)?.classList.add('dd-open');
     document.getElementById('ddl-' + slotId)?.classList.add('dd-list-open');
-    // descriptions live inline in each dd-option row
 }
 
 function closeAllDD() {
@@ -9405,8 +9314,6 @@ function closeAllDD() {
     document.querySelectorAll('.dd-list').forEach(el => el.classList.remove('dd-list-open'));
     _openDD = null;
 }
-
-// showDesc removed — descriptions now live inline in dropdown rows
 
 function selectSlot(slotId, key) {
     // LIGHT chassis: cannot equip two-handed weapons
@@ -9474,9 +9381,7 @@ function refreshGarage() {
     slots.forEach(({ id, opts, key }) => {
         const opt = opts.find(o => o.key === key) || opts[0];
         const nameEl = document.getElementById('ddn-' + id);
-        const wtEl   = document.getElementById('ddwt-' + id);
         if (nameEl) nameEl.textContent = opt.label;
-        // weight display removed — wtEl intentionally not updated
     });
 
     // Colour dropdown header
@@ -9639,17 +9544,6 @@ function setChassis(t) {
     if (t === 'light' && WEAPONS[loadout.L]?.twoHanded) { loadout.L = 'none'; loadout.R = 'none'; }
     refreshGarage();
 }
-function setWeapon(side, type) {
-    if (side === 'L') loadout.L = type;
-    else              loadout.R = type;
-    refreshGarage();
-}
-function setMod(type)   { loadout.mod = type; refreshGarage(); }
-function setAug(type)   { loadout.aug = type; refreshGarage(); }
-function setLeg(type)   { loadout.leg = type; refreshGarage(); }
-function setColor(c)    { loadout.color = c;  refreshGarage(); }
-
-// (intro removed)
 
 
 // ================================================================
@@ -9664,16 +9558,9 @@ function _resetHUDState() {
         const el = document.getElementById(id);
         if (el) el.style.background = '#00ff00';
     });
-    // Reset vertical shield bar
-    const hudAcc   = document.getElementById('hud-accent');
-    const shFillV2 = document.getElementById('sh-fill-vert');
-    if (shFillV2) shFillV2.style.height = '100%';
+    // Reset HUD accent border
+    const hudAcc = document.getElementById('hud-accent');
     if (hudAcc) hudAcc.style.borderColor = '';
-    // Cooldown overlays
-    ['cd-L','cd-R','cd-M','cd-G'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.height = '0%';
-    });
     // Weapon slot opacity + clear destroyed state
     _lArmDestroyed = false; _rArmDestroyed = false; _legsDestroyed = false;
     ['slot-L','slot-R','slot-M'].forEach(id => {
@@ -9681,10 +9568,10 @@ function _resetHUDState() {
         if (el) { el.style.opacity = '1'; el.style.borderColor = '#00ffff'; el.classList.remove('arm-destroyed'); }
     });
     // Reset weapon name text
-    const txtL = document.getElementById('txt-L'); if (txtL) txtL.innerText = (loadout.L || 'none').toUpperCase();
-    const txtR = document.getElementById('txt-R'); if (txtR) txtR.innerText = (loadout.R || 'none').toUpperCase();
-    const txtLEl = document.getElementById('txt-L'); if (txtLEl) txtLEl.style.fontSize = '';
-    const txtREl = document.getElementById('txt-R'); if (txtREl) txtREl.style.fontSize = '';
+    const txtL = document.getElementById('txt-L');
+    const txtR = document.getElementById('txt-R');
+    if (txtL) { txtL.innerText = (loadout.L || 'none').toUpperCase(); txtL.style.fontSize = ''; }
+    if (txtR) { txtR.innerText = (loadout.R || 'none').toUpperCase(); txtR.style.fontSize = ''; }
 }
 
 function showDeathScreen() {
@@ -9881,11 +9768,6 @@ function _perkBonus(value, base) {
     const diff = Math.round(value - base);
     if (diff <= 0) return String(Math.round(value));
     return `${Math.round(base)}<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${diff}</span>`;
-}
-function _perkBonusPct(mult, label) {
-    // Shows e.g.  "75"  or  "75  +15 from perks"
-    const base = Math.round(mult === 1 ? 0 : 0); // unused — see callers
-    return label;
 }
 function _perkReduction(value, base) {
     // For reload: lower is better — show reduction in green
@@ -10297,11 +10179,10 @@ function _csKeyDown(e, el) {
     if (e.ctrlKey || e.metaKey) return;
     // For all other keys: prevent browser default, handle manually
     e.preventDefault();
-    var ch = e.key.length === 1 ? e.key.toUpperCase() : '';
-    if (!ch || !/^[A-Z0-9 _.\-]$/.test(ch)) return;  // discard invalid chars
-    // Insert at cursor position
-    var start = el.selectionStart, end = el.selectionEnd;
-    var val = el.value;
+    const ch = e.key.length === 1 ? e.key.toUpperCase() : '';
+    if (!ch || !/^[A-Z0-9 _.\-]$/.test(ch)) return;
+    const start = el.selectionStart, end = el.selectionEnd;
+    const val = el.value;
     if (val.length >= el.maxLength && start === end) return; // at max length
     el.value = val.slice(0, start) + ch + val.slice(end);
     el.setSelectionRange(start + 1, start + 1);
@@ -10514,292 +10395,11 @@ window.onload = () => {
   0%,100% { opacity:1; text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4); }
   50%      { opacity:0.4; text-shadow:0 0 10px rgba(0,255,255,0.3); }
 }
-
-/* ============================================================
-   GARAGE DROPDOWN SYSTEM
-   ============================================================ */
-.dd-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 11px;
-}
-.dd-label {
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: rgba(0,255,255,0.7);
-    text-transform: uppercase;
-    font-family: 'Courier New', monospace;
-    width: 96px;
-    min-width: 96px;
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-.dd-wrap {
-    position: relative;
-    flex: 1;
-}
-.dd-selected {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(0,255,255,0.25);
-    border-left: 3px solid rgba(0,255,255,0.5);
-    cursor: pointer;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: #c8d2d9;
-    transition: all 0.15s ease;
-    user-select: none;
-}
-.dd-selected:hover {
-    background: rgba(0,255,255,0.07);
-    border-color: rgba(0,255,255,0.5);
-    color: #fff;
-}
-.dd-selected.dd-open {
-    background: rgba(0,255,255,0.1);
-    border-color: rgba(0,255,255,0.7);
-    color: #fff;
-}
-.dd-selected .dd-name { flex: 1; letter-spacing: 2px; }
-.dd-selected .dd-wt   { display: none; }
-.dd-selected .dd-arrow { font-size: 9px; color: rgba(0,255,255,0.6); transition: transform 0.15s; }
-.dd-selected.dd-open .dd-arrow { transform: rotate(180deg); }
-
-.dd-list {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0; right: 0;
-    z-index: 9000;
-    background: rgba(10,14,20,0.98);
-    border: 1px solid rgba(0,255,255,0.4);
-    border-top: none;
-    max-height: 340px;
-    overflow-y: auto;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-}
-.dd-list.dd-list-open { display: block; }
-.dd-option {
-    display: flex;
-    flex-direction: column;
-    padding: 9px 12px 8px;
-    cursor: pointer;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: #c8d2d9;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    transition: background 0.1s;
-    gap: 3px;
-}
-.dd-option:hover     { background: rgba(0,255,255,0.09); color: #fff; }
-.dd-option.dd-active { background: rgba(0,255,255,0.13); color: #00ffff; }
-.dd-option.do-warn   { color: #ffaa00; }
-.dd-option .do-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-.dd-option .do-name { flex: 1; letter-spacing: 1px; font-size: 12px; }
-.dd-option .do-wt   { display: none; }
-.dd-option.do-warn .do-wt { color: rgba(255,170,0,0.6); }
-.dd-option .do-desc {
-    font-size: 10px;
-    color: rgba(200,210,217,0.5);
-    letter-spacing: 0.3px;
-    line-height: 1.5;
-    padding-left: 2px;
-}
-.dd-option.dd-active .do-desc { color: rgba(0,255,255,0.6); }
-.dd-option:hover .do-desc     { color: rgba(255,255,255,0.65); }
-.dd-option.do-warn .do-desc   { color: rgba(255,170,0,0.55); }
-/* Colour-specific option row */
-.dd-color-opt .do-header { gap: 10px; }
-.do-color-swatch {
-    width: 14px; height: 14px;
-    border-radius: 2px;
-    border: 1px solid rgba(255,255,255,0.25);
-    flex-shrink: 0;
-    display: inline-block;
-}
-/* Colour swatch in the closed header */
-.dd-color-swatch-header {
-    width: 14px; height: 14px;
-    border-radius: 2px;
-    border: 1px solid rgba(255,255,255,0.3);
-    flex-shrink: 0;
-    display: inline-block;
-    margin-right: 8px;
-    vertical-align: middle;
-}
-
-/* #garage-desc removed — descriptions now inline in dropdown rows */
-
-/* Dual-explosive warning */
-#dual-explosive-warn {
-    display: none;
-    margin-top: 6px;
-    padding: 6px 10px;
-    background: rgba(255,170,0,0.08);
-    border: 1px solid rgba(255,170,0,0.4);
-    border-left: 3px solid #ffaa00;
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    color: #ffaa00;
-    letter-spacing: 1px;
-}
-
-</style>
-
-<style>
 #top-left-btns button:focus,
 #top-left-btns button:focus-visible {
     outline: none !important;
     box-shadow: 0 0 10px rgba(0,255,255,0.15) !important;
 }
-
-/* ============================================================
-   GARAGE DROPDOWN SYSTEM
-   ============================================================ */
-.dd-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 11px;
-}
-.dd-label {
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: rgba(0,255,255,0.7);
-    text-transform: uppercase;
-    font-family: 'Courier New', monospace;
-    width: 96px;
-    min-width: 96px;
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-.dd-wrap {
-    position: relative;
-    flex: 1;
-}
-.dd-selected {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(0,255,255,0.25);
-    border-left: 3px solid rgba(0,255,255,0.5);
-    cursor: pointer;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: #c8d2d9;
-    transition: all 0.15s ease;
-    user-select: none;
-}
-.dd-selected:hover {
-    background: rgba(0,255,255,0.07);
-    border-color: rgba(0,255,255,0.5);
-    color: #fff;
-}
-.dd-selected.dd-open {
-    background: rgba(0,255,255,0.1);
-    border-color: rgba(0,255,255,0.7);
-    color: #fff;
-}
-.dd-selected .dd-name { flex: 1; letter-spacing: 2px; }
-.dd-selected .dd-wt   { display: none; }
-.dd-selected .dd-arrow { font-size: 9px; color: rgba(0,255,255,0.6); transition: transform 0.15s; }
-.dd-selected.dd-open .dd-arrow { transform: rotate(180deg); }
-
-.dd-list {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0; right: 0;
-    z-index: 9000;
-    background: rgba(10,14,20,0.98);
-    border: 1px solid rgba(0,255,255,0.4);
-    border-top: none;
-    max-height: 340px;
-    overflow-y: auto;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-}
-.dd-list.dd-list-open { display: block; }
-.dd-option {
-    display: flex;
-    flex-direction: column;
-    padding: 9px 12px 8px;
-    cursor: pointer;
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    color: #c8d2d9;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    transition: background 0.1s;
-    gap: 3px;
-}
-.dd-option:hover     { background: rgba(0,255,255,0.09); color: #fff; }
-.dd-option.dd-active { background: rgba(0,255,255,0.13); color: #00ffff; }
-.dd-option.do-warn   { color: #ffaa00; }
-.dd-option .do-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-.dd-option .do-name { flex: 1; letter-spacing: 1px; font-size: 12px; }
-.dd-option .do-wt   { display: none; }
-.dd-option.do-warn .do-wt { color: rgba(255,170,0,0.6); }
-.dd-option .do-desc {
-    font-size: 10px;
-    color: rgba(200,210,217,0.5);
-    letter-spacing: 0.3px;
-    line-height: 1.5;
-    padding-left: 2px;
-}
-.dd-option.dd-active .do-desc { color: rgba(0,255,255,0.6); }
-.dd-option:hover .do-desc     { color: rgba(255,255,255,0.65); }
-.dd-option.do-warn .do-desc   { color: rgba(255,170,0,0.55); }
-/* Colour-specific option row */
-.dd-color-opt .do-header { gap: 10px; }
-.do-color-swatch {
-    width: 14px; height: 14px;
-    border-radius: 2px;
-    border: 1px solid rgba(255,255,255,0.25);
-    flex-shrink: 0;
-    display: inline-block;
-}
-/* Colour swatch in the closed header */
-.dd-color-swatch-header {
-    width: 14px; height: 14px;
-    border-radius: 2px;
-    border: 1px solid rgba(255,255,255,0.3);
-    flex-shrink: 0;
-    display: inline-block;
-    margin-right: 8px;
-    vertical-align: middle;
-}
-
-/* #garage-desc removed — descriptions now inline in dropdown rows */
-
-/* Dual-explosive warning */
-#dual-explosive-warn {
-    display: none;
-    margin-top: 6px;
-    padding: 6px 10px;
-    background: rgba(255,170,0,0.08);
-    border: 1px solid rgba(255,170,0,0.4);
-    border-left: 3px solid #ffaa00;
-    font-family: 'Courier New', monospace;
-    font-size: 10px;
-    color: #ffaa00;
-    letter-spacing: 1px;
-}
-
 </style>
 </body>
 </html>
