@@ -10712,7 +10712,7 @@ function populateStats() {
     const gearShieldHP = (_gearState?.shieldHP || 0);
     const shieldBonus = Math.round((player?.maxShield||0) - baseShield);
     const perkShieldBonus = shieldBonus - gearShieldHP;
-    const gearShieldTag = gearShieldHP > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">+${gearShieldHP}g</span>` : '';
+    const gearShieldTag = gearShieldHP > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${gearShieldHP}</span>` : '';
     const perkShieldTag = perkShieldBonus > 0 ? `<span style="color:#cc88ff;font-size:0.85em;margin-right:6px;">+${perkShieldBonus}</span>` : '';
     const shieldVal = shieldBonus > 0
         ? `${gearShieldTag}${perkShieldTag}${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}`
@@ -10824,8 +10824,8 @@ function populateStats() {
             const effDps   = effRld  > 0 ? Math.round(effDmg  / effRld  * 1000) : 0;
             const dmgSuffix = w.pellets ? ` × ${w.pellets} pellets` : '';
             // Show perk bonus (green) + gear bonus (gold) separately
-            const _gearTag = (gearVal, perkVal) => { const d = Math.round(gearVal - perkVal); return d > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">+${d}g</span>` : ''; };
-            const _gearTagNeg = (gearVal, perkVal) => { const d = Math.round(perkVal - gearVal); return d > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">−${d}g</span>` : ''; };
+            const _gearTag = (gearVal, perkVal) => { const d = Math.round(gearVal - perkVal); return d > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${d}</span>` : ''; };
+            const _gearTagNeg = (gearVal, perkVal) => { const d = Math.round(perkVal - gearVal); return d > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙−${d}</span>` : ''; };
             wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value">${_gearTag(effDmg,perkDmg)}${_perkBonus(perkDmg, baseDmg)}${dmgSuffix}</span></div>`;
             wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}">${_gearTagNeg(effRld,perkRld)}${_perkReduction(perkRld, baseRld)}</span></div>`;
             wHtml += `<div class="stats-row"><span class="stats-label">DPS (est.)</span><span class="stats-value ${effDps>200?'green':effDps>80?'yellow':'orange'}">${_perkBonus(effDps, baseDps)}</span></div>`;
@@ -10847,8 +10847,8 @@ function populateStats() {
     const gearSpdBonus = (_gearState?.speedPct || 0);
     const effSpd  = Math.round(perkSpd * (1 + gearSpdBonus/100));
     const legsOk  = player?.comp?.legs?.hp > 0;
-    const _gTag = (v) => v > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">+${v}g</span>` : '';
-    const spdGearTag = gearSpdBonus > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">+${Math.round(effSpd - perkSpd)}g</span>` : '';
+    const _gTag = (v) => v > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${v}</span>` : '';
+    const spdGearTag = gearSpdBonus > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${Math.round(effSpd - perkSpd)}</span>` : '';
     const spdLabel = `<div class="stats-row"><span class="stats-label">Speed</span><span class="stats-value ${effSpd>baseSpd?'green':''}">${spdGearTag}${_perkBonus(perkSpd, baseSpd)}</span></div>`;
     mobHtml += spdLabel;
     mobHtml += _statRow('Legs Status', legsOk ? 'OPERATIONAL' : 'DESTROYED', legsOk ? 'green' : 'red');
@@ -10858,7 +10858,7 @@ function populateStats() {
     const perkRegenRate = baseRegenRate * (_perkState.shieldRegenMult||1);
     const gearRegenBonus = (_gearState?.shieldRegen || 0);
     const effRegenRate   = perkRegenRate * (1 + gearRegenBonus/100);
-    const regenGearTag = gearRegenBonus > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">+${Math.round((effRegenRate - perkRegenRate)*10)/10}g</span>` : '';
+    const regenGearTag = gearRegenBonus > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${Math.round((effRegenRate - perkRegenRate)*10)/10}</span>` : '';
     mobHtml += `<div class="stats-row"><span class="stats-label">Shield Regen</span><span class="stats-value purple">${regenGearTag}${_perkBonus(parseFloat(perkRegenRate.toFixed(1)), parseFloat(baseRegenRate.toFixed(1)))}/frame</span></div>`;
     if (_perkState.noShieldRegen) mobHtml += _statRow('Regen Active', 'DISABLED', 'red');
     if (_perkState.immovable) mobHtml += _statRow('Immovable', '3× regen while still', 'purple');
@@ -10884,9 +10884,9 @@ function populateStats() {
     if (totalCrit > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Crit Chance</span><span class="stats-value green">${_gTag(gearCrit)}${perkCrit > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkCrit}%</span>` : ''}${totalCrit}%</span></div>`;
     // Gear-only stats that don't come from perks
     const gearModCd = (_gearState?.modCdPct || 0);
-    if (gearModCd > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Mod Cooldown</span><span class="stats-value"><span style="color:#ffd700;font-size:0.85em;margin-right:6px;">−${gearModCd}%g</span>−${gearModCd}%</span></div>`;
+    if (gearModCd > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Mod Cooldown</span><span class="stats-value"><span style="color:#ffd700;font-size:0.85em;margin-right:6px;">⚙−${gearModCd}%</span>−${gearModCd}%</span></div>`;
     const gearLoot = (_gearState?.lootMult || 0);
-    if (gearLoot > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Loot Quality</span><span class="stats-value"><span style="color:#ffd700;font-size:0.85em;margin-right:6px;">+${gearLoot}%g</span>+${gearLoot}%</span></div>`;
+    if (gearLoot > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Loot Quality</span><span class="stats-value"><span style="color:#ffd700;font-size:0.85em;margin-right:6px;">⚙+${gearLoot}%</span>+${gearLoot}%</span></div>`;
     document.getElementById('stat-mobility-info').innerHTML = mobHtml;
 
     // ── RUN STATS ─────────────────────────────────────────────
@@ -10939,6 +10939,61 @@ function populateStats() {
             chip.addEventListener('mouseleave', () => tip.style.display = 'none');
             perksEl.appendChild(chip);
         });
+    }
+
+    // ── GEAR BONUSES SUMMARY ──────────────────────────────────
+    const gearPanel = document.getElementById('stat-gear-panel');
+    const gearInfo  = document.getElementById('stat-gear-info');
+    if (gearPanel && gearInfo) {
+        const gs = typeof _gearState !== 'undefined' ? _gearState : {};
+        const hasAnyGear = Object.values(gs).some(v => v > 0);
+        if (!hasAnyGear) {
+            gearPanel.style.display = 'none';
+        } else {
+            gearPanel.style.display = 'block';
+            const _gsLabels = {
+                dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
+                reloadPct:'Reload Speed %', pellets:'Bonus Pellets', splashRadius:'Blast Radius %',
+                coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All Part HP',
+                dr:'Damage Reduction %', shieldHP:'Shield Capacity', shieldRegen:'Shield Regen %',
+                dodgePct:'Dodge Chance %', speedPct:'Move Speed %', modCdPct:'Mod Cooldown %',
+                modEffPct:'Mod Effectiveness %', lootMult:'Loot Quality %', autoRepair:'HP/sec Regen',
+                absorbPct:'Shield Absorb %'
+            };
+            // Group into offensive / defensive / utility
+            const offKeys = ['dmgFlat','dmgPct','critChance','critDmg','reloadPct','pellets','splashRadius'];
+            const defKeys = ['coreHP','armHP','legHP','allHP','dr','shieldHP','shieldRegen','dodgePct','absorbPct'];
+            const utilKeys = ['speedPct','modCdPct','modEffPct','lootMult','autoRepair'];
+            const _renderGroup = (title, keys) => {
+                const active = keys.filter(k => (gs[k] || 0) > 0);
+                if (active.length === 0) return '';
+                let h = `<div style="font-size:10px;letter-spacing:2px;color:rgba(255,215,0,0.4);margin-top:10px;margin-bottom:6px;">${title}</div>`;
+                active.forEach(k => {
+                    const v = gs[k];
+                    const prefix = ['reloadPct','modCdPct'].includes(k) ? '−' : '+';
+                    h += `<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px;">
+                        <span style="color:rgba(200,210,220,0.6);">⚙ ${_gsLabels[k] || k}</span>
+                        <span style="color:#ffd700;letter-spacing:1px;">${prefix}${v}</span>
+                    </div>`;
+                });
+                return h;
+            };
+            // Show equipped item names at the top
+            const slotLabels = [['L','L Arm'],['R','R Arm'],['chest','Chest'],['arms','Arms'],['legs','Legs'],['shield','Shield'],['mod','Mod'],['augment','Augment']];
+            let gHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
+            slotLabels.forEach(([sk, sl]) => {
+                const it = typeof _equipped !== 'undefined' ? _equipped[sk] : null;
+                if (!it) return;
+                const rd = typeof RARITY_DEFS !== 'undefined' ? RARITY_DEFS[it.rarity] : null;
+                const c = rd ? rd.colorStr : '#888';
+                gHtml += `<span style="padding:3px 8px;border:1px solid ${c}44;border-radius:3px;font-size:10px;letter-spacing:1px;color:${c};background:rgba(0,0,0,0.3);">${sl}: ${it.shortName || it.name}</span>`;
+            });
+            gHtml += '</div>';
+            gHtml += _renderGroup('OFFENSIVE', offKeys);
+            gHtml += _renderGroup('DEFENSIVE', defKeys);
+            gHtml += _renderGroup('UTILITY', utilKeys);
+            gearInfo.innerHTML = gHtml;
+        }
     }
 }
 
@@ -11355,6 +11410,11 @@ window.onload = () => {
     <div class="stats-panel" style="margin-bottom:20px;">
       <div class="stats-panel-title">CHASSIS TRAITS &amp; ARM CONFIGURATION</div>
       <div id="stat-traits-info"></div>
+    </div>
+    <!-- GEAR BONUSES — full width -->
+    <div id="stat-gear-panel" class="stats-panel" style="margin-bottom:20px;border-color:rgba(255,215,0,0.2);display:none;">
+      <div class="stats-panel-title" style="color:rgba(255,215,0,0.6);">⚙ EQUIPPED GEAR BONUSES</div>
+      <div id="stat-gear-info"></div>
     </div>
     <!-- ACTIVE PERKS — full width -->
     <div class="stats-panel" style="margin-bottom:0;">
