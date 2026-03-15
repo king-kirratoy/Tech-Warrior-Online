@@ -1954,7 +1954,7 @@ const _perks = {
     shield_speed:    { cat:'shield', label:'Agile Shell',   desc:'Having shield above 50% grants +8% move speed',           apply: () => { _perkState.shieldSpeed=true; } },
     shield_legendary:{ cat:'shield', once:true, legendary:true, label:'Indestructible',
         desc:'LEGENDARY — Shield cannot be fully broken. Minimum 1 HP remains. Full regen activates after 2s without damage. +50% max shield HP.',
-        apply: () => { _perkState.shieldIndestructible=true; } },
+        apply: () => { _perkState.shieldIndestructible=true; player.maxShield=Math.round(player.maxShield*1.50); player.shield=player.maxShield; player._shieldRegenDelay=2; } },
 
     // ══════════════════════════════════════════════════════════════
     // CHASSIS: LIGHT (need 2 reg + 1 leg)
@@ -8413,7 +8413,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         // ── Flicker Shield: block every other hit entirely ──
         if (_ss.flickerBlock) {
             player._shieldFlickerHit = !player._shieldFlickerHit;
-            if (player._shieldFlickerHit) { return; } // blocked hit — no damage at all
+            if (player._shieldFlickerHit) { player.isProcessingDamage = false; return; } // blocked hit — no damage at all
         }
 
         // ── Phase Shield: brief invuln on each hit ──
@@ -8422,7 +8422,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
             const _sc = game.scene.scenes[0];
             _sc?.time.delayedCall(_ss.phaseInvuln * 1000, () => { player._phaseInvulnActive = false; });
         }
-        if (player._phaseInvulnActive) { return; }
+        if (player._phaseInvulnActive) { player.isProcessingDamage = false; return; }
 
         // ── Adaptive Shield: scale absorb with consecutive hits (reset on regen) ──
         if (_ss.adaptiveMax) {
@@ -8457,7 +8457,8 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         }
 
         const _prevShield = player.shield;
-        player.shield = Math.max(0, player.shield - amt * absorb);
+        const _shieldFloor = _perkState.shieldIndestructible ? 1 : 0;
+        player.shield = Math.max(_shieldFloor, player.shield - amt * absorb);
         amt *= (1 - absorb);
 
         // ── On-break effects ──
