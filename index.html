@@ -2349,6 +2349,173 @@ const _perks = {
         desc:'LEGENDARY — Every kill triggers Scrap Cannon (not just limb kills). Explosion damage 200, radius 200px. Chains infinitely.',
         apply: () => { _perkState.scLegendary=true; } },
 
+    // ══════════════════════════════════════════════════════════════
+    // NEW PERKS — 100 additional perks for variety
+    // ══════════════════════════════════════════════════════════════
+
+    // ── UNIVERSAL OFFENSE (10 new) ───────────────────────────────
+    armor_piercing:      { cat:'universal', label:'Armor Piercing',    desc:'Bullets ignore 10% of enemy damage reduction (stackable)',            apply: () => { _perkState.armorPierce=(_perkState.armorPierce||0)+0.10; } },
+    double_tap:          { cat:'universal', label:'Double Tap',        desc:'10% chance to fire an extra bullet per shot (stackable)',              apply: () => { _perkState.doubleTap=(_perkState.doubleTap||0)+0.10; } },
+    precision_strike:    { cat:'universal', label:'Precision Strike',  desc:'+25% damage to enemies above 80% HP (stackable)',                     apply: () => { _perkState.precisionStrike=(_perkState.precisionStrike||0)+0.25; } },
+    momentum_kill:       { cat:'universal', label:'Momentum',          desc:'Each kill this round grants +3% damage (max +30%, resets each round)', apply: () => { _perkState.momentumKill=(_perkState.momentumKill||0)+1; } },
+    ricochet_rounds:     { cat:'universal', label:'Ricochet Rounds',   desc:'Bullets that miss have 15% chance to ricochet toward nearest enemy',  apply: () => { _perkState.ricochetRounds=(_perkState.ricochetRounds||0)+0.15; } },
+    vulnerability:       { cat:'universal', label:'Vulnerability',     desc:'Enemies hit 3 times in 2s take +20% damage for 4s',                   apply: () => { _perkState.vulnerability=true; } },
+    finishing_blow:      { cat:'universal', label:'Finishing Blow',     desc:'+50% damage to enemies below 20% HP (stackable)',                     apply: () => { _perkState.finishingBlow=(_perkState.finishingBlow||0)+0.50; } },
+    focus_fire:          { cat:'universal', label:'Focus Fire',        desc:'Hitting the same enemy 5 times in a row: next hit deals 2× damage',   apply: () => { _perkState.focusFire=true; } },
+    combat_stim:         { cat:'universal', label:'Combat Stim',       desc:'After taking damage: +15% fire rate for 3s (stackable)',               apply: () => { _perkState.combatStim=(_perkState.combatStim||0)+0.15; } },
+    executioner:         { cat:'universal', label:'Executioner',       desc:'Kills grant +5% crit chance for 5s (stacks up to 4×)',                apply: () => { _perkState.executioner=true; } },
+
+    // ── UNIVERSAL SURVIVABILITY (8 new) ──────────────────────────
+    nano_repair:         { cat:'universal', label:'Nano Repair',       desc:'Regenerate 2 HP/s to your most-damaged limb (stackable)',              apply: () => { _perkState.nanoRepair=(_perkState.nanoRepair||0)+2; } },
+    emergency_shield:    { cat:'universal', label:'Emergency Shield',  desc:'Below 15% core HP: shield instantly restores to 50% (once per round)', apply: () => { _perkState.emergencyShield=true; } },
+    damage_cap:          { cat:'universal', label:'Damage Cap',        desc:'No single hit can deal more than 40% of your max core HP',             apply: () => { _perkState.damageCap=true; } },
+    reactive_hull:       { cat:'universal', label:'Reactive Hull',     desc:'After being hit 3 times in 2s: gain 20% DR for 3s',                   apply: () => { _perkState.reactiveHull=true; } },
+    second_wind:         { cat:'universal', label:'Second Wind',       desc:'Surviving a lethal hit restores 25% core HP (once per round)',          apply: () => { _perkState.secondWind=true; } },
+    hardened_systems:    { cat:'universal', label:'Hardened Systems',   desc:'Limbs take 10% less damage (stackable)',                              apply: () => { _perkState.hardenedSystems=(_perkState.hardenedSystems||0)+0.10; } },
+    vital_strike:        { cat:'universal', label:'Vital Strike',      desc:'Crits restore 5 HP (stackable)',                                      apply: () => { _perkState.vitalStrike=(_perkState.vitalStrike||0)+5; } },
+    energy_converter:    { cat:'universal', label:'Energy Converter',  desc:'10% of damage dealt is converted to shield HP (stackable)',            apply: () => { _perkState.energyConverter=(_perkState.energyConverter||0)+0.10; } },
+
+    // ── UNIVERSAL UTILITY (7 new) ────────────────────────────────
+    quick_swap:          { cat:'universal', label:'Quick Swap',        desc:'Switching weapons is instant and grants +20% damage for 1s',           apply: () => { _perkState.quickSwap=true; } },
+    tactical_reload:     { cat:'universal', label:'Tactical Reload',   desc:'Kills during reload complete the reload instantly',                    apply: () => { _perkState.tacticalReload=true; } },
+    combat_awareness:    { cat:'universal', label:'Combat Awareness',  desc:'Enemies within 200px are highlighted through cover',                   apply: () => { _perkState.combatAwareness=true; } },
+    scrap_collector:     { cat:'universal', label:'Scrap Collector',   desc:'Every 10 kills: gain a random temporary buff for 15s',                 apply: () => { _perkState.scrapCollector=true; } },
+    resource_recycler:   { cat:'universal', label:'Resource Recycler', desc:'Loot orbs grant 50% more benefit (stackable)',                         apply: () => { _perkState.resourceRecycler=(_perkState.resourceRecycler||0)+0.50; } },
+    field_medic_univ:    { cat:'universal', label:'Field Medic',       desc:'Loot health orbs restore 50% more HP (stackable)',                     apply: () => { _perkState.fieldMedic=(_perkState.fieldMedic||0)+0.50; } },
+    munitions_expert:    { cat:'universal', label:'Munitions Expert',  desc:'Explosive damage +15% (GL, RL, Siege) (stackable)',                    apply: () => { _perkState.munitionsExpert=(_perkState.munitionsExpert||0)+0.15; } },
+
+    // ── UNIVERSAL TRADEOFFS (5 new) ──────────────────────────────
+    reckless_charge:     { cat:'universal', once:true, label:'Reckless Charge',  desc:'+20% speed, +15% damage, but shield max HP halved',          apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.20; _perkState.dmgMult=(_perkState.dmgMult||1)*1.15; player.maxShield=Math.round(player.maxShield*0.50); player.shield=Math.min(player.shield,player.maxShield); } },
+    blood_pact:          { cat:'universal', once:true, label:'Blood Pact',       desc:'Kills restore 10 HP, but you lose 2 HP/s passively',         apply: () => { _perkState.bloodPact=true; } },
+    overdrive_protocol:  { cat:'universal', once:true, label:'Overdrive Protocol',desc:'+50% fire rate, but reload times doubled',                  apply: () => { _perkState.overdriveProtocol=true; } },
+    vampiric_rounds:     { cat:'universal', once:true, label:'Vampiric Rounds',  desc:'All damage dealt restores 3% as HP, but -15% max HP',        apply: () => { _perkState.vampiricRounds=true; Object.values(player.comp).forEach(c=>{c.max=Math.round(c.max*0.85);c.hp=Math.min(c.hp,c.max);}); } },
+    kamikaze_protocol:   { cat:'universal', once:true, label:'Kamikaze Protocol',desc:'+60% explosion damage, but all explosions also damage you',  apply: () => { _perkState.kamikazeProtocol=true; _perkState.blastMult=(_perkState.blastMult||1)*1.60; } },
+
+    // ── LIGHT CHASSIS (5 new) ────────────────────────────────────
+    light_evasion_master:{ cat:'light', label:'Evasion Master',   desc:'Light: dodge chance +8% (stackable)',                                       apply: () => { _perkState.dodgeChance=(_perkState.dodgeChance||0)+0.08; } },
+    light_blade_dancer:  { cat:'light', label:'Blade Dancer',     desc:'Light: moving at full speed grants +12% damage (stackable)',                 apply: () => { _perkState.lightBladeDancer=(_perkState.lightBladeDancer||0)+0.12; } },
+    light_nimble:        { cat:'light', label:'Nimble',            desc:'Light: turn rate +30%, acceleration +25%',                                  apply: () => { _perkState.lightNimble=true; } },
+    light_quick_draw:    { cat:'light', label:'Quick Draw',        desc:'Light: first shot after idle deals +40% damage',                            apply: () => { _perkState.lightQuickDraw=true; } },
+    light_shadow_dance:  { cat:'light', label:'Shadow Dance',      desc:'Light: kills while moving grant 1s invisibility',                          apply: () => { _perkState.lightShadowDance=true; } },
+
+    // ── MEDIUM CHASSIS (5 new) ───────────────────────────────────
+    medium_versatile:    { cat:'medium', label:'Versatile',       desc:'Medium: all mod effects are 15% stronger (stackable)',                       apply: () => { _perkState.mediumVersatile=(_perkState.mediumVersatile||0)+0.15; } },
+    medium_iron_resolve: { cat:'medium', label:'Iron Resolve',    desc:'Medium: taking lethal arm damage triggers 2s of +30% DR',                    apply: () => { _perkState.mediumIronResolve=true; } },
+    medium_tactician:    { cat:'medium', label:'Tactician',        desc:'Medium: each different enemy type killed grants +5% damage (round)',         apply: () => { _perkState.mediumTactician=true; } },
+    medium_steady_hand:  { cat:'medium', label:'Steady Hand',     desc:'Medium: accuracy improves 10% for each second you hold fire (max +30%)',     apply: () => { _perkState.mediumSteadyHand=true; } },
+    medium_mod_synergy:  { cat:'medium', label:'Mod Synergy',      desc:'Medium: activating a mod grants +10% damage for 5s',                        apply: () => { _perkState.mediumModSynergy=true; } },
+
+    // ── HEAVY CHASSIS (5 new) ────────────────────────────────────
+    heavy_juggernaut:    { cat:'heavy', label:'Juggernaut',       desc:'Heavy: immune to all slow and stagger effects',                              apply: () => { _perkState.heavyJuggernaut=true; } },
+    heavy_wrecking_ball: { cat:'heavy', label:'Wrecking Ball',    desc:'Heavy: contact with enemies deals 15 damage (stackable)',                     apply: () => { _perkState.groundPound=(_perkState.groundPound||0)+15; } },
+    heavy_endurance:     { cat:'heavy', label:'Endurance',         desc:'Heavy: passive core regen +3 HP/s (stackable)',                              apply: () => { _perkState.autoRepair=(_perkState.autoRepair||0)+3; } },
+    heavy_bunker_down:   { cat:'heavy', label:'Bunker Down',      desc:'Heavy: while standing still 2s+, take 25% less damage',                      apply: () => { _perkState.heavyBunkerDown=true; } },
+    heavy_intimidate:    { cat:'heavy', label:'Intimidate',        desc:'Heavy: enemies within 250px deal 10% less damage',                           apply: () => { _perkState.heavyIntimidate=true; } },
+
+    // ── SMG (5 new) ─────────────────────────────────────────────
+    smg_dual_mags:       { cat:'smg', label:'Dual Magazines',    desc:'SMG: alternate between two mags — reloading one while firing the other',      apply: () => { _perkState.smgDualMags=true; } },
+    smg_ricochet:        { cat:'smg', label:'Ricochet',           desc:'SMG bullets that hit cover bounce toward nearest enemy (15% chance)',         apply: () => { _perkState.smgRicochet=true; } },
+    smg_adrenaline:      { cat:'smg', label:'Adrenaline Rush',   desc:'SMG: kills at close range (<120px) grant +20% speed for 2s',                 apply: () => { _perkState.smgAdrenaline=true; } },
+    smg_armor_shred:     { cat:'smg', label:'Armor Shred',        desc:'SMG: sustained fire reduces enemy DR by 3% per hit (max 15%)',               apply: () => { _perkState.smgArmorShred=true; } },
+    smg_overdose:        { cat:'smg', label:'Overdose',           desc:'SMG: when enemy is below 30% HP, fire rate doubles against them',            apply: () => { _perkState.smgOverdose=true; } },
+
+    // ── MG (5 new) ──────────────────────────────────────────────
+    mg_suppression:      { cat:'mg', label:'Suppression Fire',    desc:'MG: hits reduce enemy accuracy by 20% for 2s (stackable)',                   apply: () => { _perkState.mgSuppression=true; } },
+    mg_bipod:            { cat:'mg', label:'Bipod',               desc:'MG: +20% damage and -30% spread while standing still',                       apply: () => { _perkState.mgBipod=true; } },
+    mg_belt_feed:        { cat:'mg', label:'Extended Belt',       desc:'MG: magazine size doubled (fires twice as long before reload)',               apply: () => { _perkState.mgBeltFeed=true; } },
+    mg_chain_fire:       { cat:'mg', label:'Chain Fire',           desc:'MG: each consecutive hit increases fire rate by 2% (max +20%)',              apply: () => { _perkState.mgChainFire=true; } },
+    mg_explosive_tips:   { cat:'mg', label:'Explosive Tips',      desc:'MG: every 10th bullet creates a small explosion (40 dmg, 50px)',             apply: () => { _perkState.mgExplosiveTips=true; } },
+
+    // ── SG (5 new) ──────────────────────────────────────────────
+    sg_double_barrel:    { cat:'sg', label:'Double Barrel',       desc:'SG: fire two shots at once (uses 2 ammo), doubled pellets per trigger',      apply: () => { _perkState.sgDoubleBarrel=true; } },
+    sg_incendiary:       { cat:'sg', label:'Incendiary Shell',    desc:'SG: every 3rd shot fires incendiary pellets that ignite on hit',             apply: () => { _perkState.sgIncendiary=true; } },
+    sg_stun_round:       { cat:'sg', label:'Stun Round',          desc:'SG: first pellet of each shot stuns enemy for 0.5s',                        apply: () => { _perkState.sgStunRound=true; } },
+    sg_combat_roll:      { cat:'sg', label:'Combat Roll',         desc:'SG: kills grant +30% move speed for 1.5s',                                  apply: () => { _perkState.sgCombatRoll=true; } },
+    sg_shrapnel:         { cat:'sg', label:'Shrapnel Shell',      desc:'SG: pellets fragment on hit, dealing 40% splash to nearby enemies (80px)',   apply: () => { _perkState.sgShrapnel=true; } },
+
+    // ── BR (5 new) ──────────────────────────────────────────────
+    br_armor_crack:      { cat:'br', label:'Armor Crack',        desc:'BR: full burst on same target reduces their DR by 15% for 4s',               apply: () => { _perkState.brArmorCrack=true; } },
+    br_recoil_comp:      { cat:'br', label:'Recoil Comp',        desc:'BR: burst spread reduced by 40%, tighter grouping',                          apply: () => { _perkState.brRecoilComp=true; } },
+    br_kill_feed:        { cat:'br', label:'Kill Feed',           desc:'BR: kills instantly reload and grant +20% damage for next burst',            apply: () => { _perkState.brKillFeed=true; } },
+    br_double_burst:     { cat:'br', label:'Double Burst',        desc:'BR: fires 2 bursts per trigger pull (second at -25% damage)',                apply: () => { _perkState.brDoubleBurst=true; } },
+    br_crit_burst:       { cat:'br', label:'Critical Burst',      desc:'BR: if all bullets of a burst hit, the last deals 3× damage',               apply: () => { _perkState.brCritBurst=true; } },
+
+    // ── HR (5 new) ──────────────────────────────────────────────
+    hr_ricochet:         { cat:'hr', label:'Ricochet Round',     desc:'HR: bullets bounce to nearest enemy at 50% damage on kill',                   apply: () => { _perkState.hrRicochet=true; } },
+    hr_piercing:         { cat:'hr', label:'Full Bore',          desc:'HR: bullets pierce through 1 additional enemy (stackable)',                    apply: () => { _perkState.hrPiercing=(_perkState.hrPiercing||0)+1; } },
+    hr_concussive:       { cat:'hr', label:'Concussive Round',   desc:'HR: hits stun target for 0.8s',                                              apply: () => { _perkState.hrConcussive=true; } },
+    hr_mark_target:      { cat:'hr', label:'Mark on Hit',        desc:'HR: hit targets take +20% damage from all sources for 3s',                    apply: () => { _perkState.hrMarkTarget=true; } },
+    hr_quick_scope:      { cat:'hr', label:'Quick Scope',        desc:'HR: standing still 1s+ grants +30% damage (stackable)',                       apply: () => { _perkState.hrQuickScope=(_perkState.hrQuickScope||0)+0.30; } },
+
+    // ── SR (4 new) ──────────────────────────────────────────────
+    sr_piercing_rounds:  { cat:'sr', label:'Armor Piercer',      desc:'SR: ignores all enemy damage reduction',                                      apply: () => { _perkState.srArmorPiercer=true; } },
+    sr_double_shot:      { cat:'sr', label:'Double Shot',        desc:'SR: 20% chance to fire a second bullet immediately (stackable)',               apply: () => { _perkState.srDoubleShot=(_perkState.srDoubleShot||0)+0.20; } },
+    sr_tracer:           { cat:'sr', label:'Tracer Round',       desc:'SR: hit enemies are visible through cover for 5s',                            apply: () => { _perkState.srTracer=true; } },
+    sr_killstreak:       { cat:'sr', label:'Headhunter',         desc:'SR: consecutive kills without missing: +25% damage per streak',               apply: () => { _perkState.srKillstreak=true; } },
+
+    // ── GL (4 new) ──────────────────────────────────────────────
+    gl_bouncing:         { cat:'gl', label:'Bouncing Grenade',   desc:'GL: grenades bounce once before detonating, extending range',                  apply: () => { _perkState.glBouncing=true; } },
+    gl_toxic:            { cat:'gl', label:'Toxic Cloud',        desc:'GL: explosions leave a toxic cloud for 3s (5 dmg/tick)',                       apply: () => { _perkState.glToxic=true; } },
+    gl_impact:           { cat:'gl', label:'Impact Fuse',        desc:'GL: grenades explode on first contact (no fuse timer)',                        apply: () => { _perkState.glImpact=true; } },
+    gl_mag_grenade:      { cat:'gl', label:'Mag Grenade',        desc:'GL: grenades are magnetic and home toward nearby enemies',                     apply: () => { _perkState.glMagGrenade=true; } },
+
+    // ── RL (3 new) ──────────────────────────────────────────────
+    rl_guided:           { cat:'rl', label:'Guided Missile',     desc:'RL: rockets curve toward your crosshair after launch',                        apply: () => { _perkState.rlGuided=true; } },
+    rl_split:            { cat:'rl', label:'Split Warhead',      desc:'RL: rocket splits into 3 smaller rockets at 50% travel distance',             apply: () => { _perkState.rlSplit=true; } },
+    rl_napalm:           { cat:'rl', label:'Napalm Warhead',     desc:'RL: explosion leaves a burning ground patch for 4s (8 dmg/tick)',             apply: () => { _perkState.rlNapalm=true; } },
+
+    // ── PLSM (3 new) ───────────────────────────────────────────
+    plsm_gravity:        { cat:'plsm', label:'Gravity Well',    desc:'PLSM: on impact, pulls enemies inward 100px before exploding',                 apply: () => { _perkState.plsmGravity=true; } },
+    plsm_split:          { cat:'plsm', label:'Split Orb',       desc:'PLSM: orb splits into 3 smaller orbs at 60% travel distance',                 apply: () => { _perkState.plsmSplit=true; } },
+    plsm_drain:          { cat:'plsm', label:'Energy Drain',    desc:'PLSM: enemies hit lose 30% movement speed for 3s',                            apply: () => { _perkState.plsmDrain=true; } },
+
+    // ── RAIL (3 new) ────────────────────────────────────────────
+    rail_double:         { cat:'rail', label:'Double Beam',      desc:'RAIL: fires 2 beams in a narrow spread',                                      apply: () => { _perkState.railDouble=true; } },
+    rail_chain_lightning:{ cat:'rail', label:'Chain Lightning',   desc:'RAIL: beam chains to 2 additional enemies near hit point (60% dmg)',          apply: () => { _perkState.railChainLightning=true; } },
+    rail_charge_bonus:   { cat:'rail', label:'Deep Charge',      desc:'RAIL: waiting full charge time grants +40% damage',                           apply: () => { _perkState.railChargeBonus=true; } },
+
+    // ── SIEGE (3 new) ───────────────────────────────────────────
+    siege_frag:          { cat:'siege', label:'Frag Shell',      desc:'Siege: shells spawn 6 shrapnel fragments on impact (15 dmg each)',             apply: () => { _perkState.siegeFrag=true; } },
+    siege_earthquake:    { cat:'siege', label:'Earthquake',      desc:'Siege: explosions stagger all enemies in 300px for 1.5s',                     apply: () => { _perkState.siegeEarthquake=true; } },
+    siege_bunker_buster: { cat:'siege', label:'Bunker Buster',   desc:'Siege: shells ignore all enemy DR and shields',                               apply: () => { _perkState.siegeBunkerBuster=true; } },
+
+    // ── CHAINGUN (3 new) ────────────────────────────────────────
+    chain_overheat:      { cat:'chain', label:'Overheat Mode',   desc:'Chaingun: after 3s continuous fire, bullets ignite enemies',                   apply: () => { _perkState.chainOverheat=true; } },
+    chain_armor_melt:    { cat:'chain', label:'Armor Melt',      desc:'Chaingun: sustained fire reduces enemy DR by 2% per hit (max 30%)',           apply: () => { _perkState.chainArmorMelt=true; } },
+    chain_reaper:        { cat:'chain', label:'Reaper',           desc:'Chaingun: kills extend spin-up state by 2s (no re-spin needed)',              apply: () => { _perkState.chainReaper=true; } },
+
+    // ── UNIVERSAL LEGENDARY (5 new) ──────────────────────────────
+    universal_phoenix:   { cat:'universal', once:true, legendary:true, label:'Phoenix Protocol',
+        desc:'LEGENDARY — On death, revive once per run at 50% HP with 3s invincibility. All enemies take 200 AoE damage on revival.',
+        apply: () => { _perkState.phoenixProtocol=true; } },
+    universal_overload:  { cat:'universal', once:true, legendary:true, label:'System Overload',
+        desc:'LEGENDARY — Every 30s, your next shot deals 5× damage. Timer visible on HUD. Kills reduce timer by 3s.',
+        apply: () => { _perkState.systemOverload=true; } },
+    universal_nullifier: { cat:'universal', once:true, legendary:true, label:'Nullifier Field',
+        desc:'LEGENDARY — Enemies within 300px have all buffs removed. Their fire rate, speed, and damage are reduced by 25%.',
+        apply: () => { _perkState.nullifierField=true; } },
+    universal_warlord:   { cat:'universal', once:true, legendary:true, label:'Warlord Ascendant',
+        desc:'LEGENDARY — Every 5 kills grants a permanent +5% damage and +3% speed boost for the rest of the run (no cap).',
+        apply: () => { _perkState.warlordAscendant=true; } },
+    universal_adaptive:  { cat:'universal', once:true, legendary:true, label:'Adaptive Evolution',
+        desc:'LEGENDARY — Each round survived permanently grants: +5% damage, +5% speed, +10 max core HP, +5% DR.',
+        apply: () => { _perkState.adaptiveEvolution=true; } },
+
+    // ── LIGHT LEGENDARY (1 new) ──────────────────────────────────
+    light_spectre:       { cat:'light', once:true, legendary:true, label:'Spectre',
+        desc:'LEGENDARY — Light: every kill creates a shadow clone that fights for 4s. Max 2 clones. Clones deal 50% of your damage.',
+        apply: () => { _perkState.lightSpectre=true; } },
+
+    // ── MEDIUM LEGENDARY (1 new) ─────────────────────────────────
+    medium_apex_system:  { cat:'medium', once:true, legendary:true, label:'Apex System',
+        desc:'LEGENDARY — Medium: mod cooldowns tick down 3× faster. Activating any mod triggers all other mods at 50% effectiveness.',
+        apply: () => { _perkState.mediumApexSystem=true; } },
+
+    // ── HEAVY LEGENDARY (1 new) ──────────────────────────────────
+    heavy_titan:         { cat:'heavy', once:true, legendary:true, label:'Titan Protocol',
+        desc:'LEGENDARY — Heavy: +200 core HP. All incoming damage reduced by 30%. You cannot be pushed, stunned, or slowed by any source.',
+        apply: () => { _perkState.heavyTitan=true; } },
+
 };
 
 let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false };
@@ -2944,15 +3111,18 @@ function handleEnemyAI(scene, time) {
         let _hasLOS = false;
         if (_inCone && coverObjects) {
             _hasLOS = true;
-            const _raySteps = 8;
+            const _raySteps = 12;
             for (let _rs = 1; _rs <= _raySteps; _rs++) {
                 const _rt = _rs / _raySteps;
                 const _rx = enemy.x + (player.x - enemy.x) * _rt;
                 const _ry = enemy.y + (player.y - enemy.y) * _rt;
                 const _hit = coverObjects.getChildren().some(c => {
                     if (!c.active) return false;
+                    // Use stored center coords (coverCX/CY) — c.x/c.y is top-left (origin 0,0)
+                    const cx = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
+                    const cy = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
                     const hw = (c.width || 60) / 2, hh = (c.height || 60) / 2;
-                    return _rx > c.x - hw && _rx < c.x + hw && _ry > c.y - hh && _ry < c.y + hh;
+                    return _rx > cx - hw && _rx < cx + hw && _ry > cy - hh && _ry < cy + hh;
                 });
                 if (_hit) { _hasLOS = false; break; }
             }
@@ -2960,9 +3130,27 @@ function handleEnemyAI(scene, time) {
         const _canSeeViaConeCone = _inCone && _hasLOS && !player?._ghostExitActive;
 
         // ── PURSUIT DETECTION (chase/combat only): wide radius, no cone needed ──
-        // Once chasing, enemy "knows" where player is within _pursuitRange
+        // Once alerted, enemy tracks player within pursuit range BUT still needs LOS
         const _isAlerted   = !player?._ghostExitActive && (enemy._aiState === 'chase' || enemy._aiState === 'combat');
-        const _canPursue   = _isAlerted && dist < _pursuitRange;
+        let _pursueLOS = false;
+        if (_isAlerted && dist < _pursuitRange && coverObjects) {
+            _pursueLOS = true;
+            const _pRaySteps = 8;
+            for (let _prs = 1; _prs <= _pRaySteps; _prs++) {
+                const _prt = _prs / _pRaySteps;
+                const _prx = enemy.x + (player.x - enemy.x) * _prt;
+                const _pry = enemy.y + (player.y - enemy.y) * _prt;
+                const _phit = coverObjects.getChildren().some(c => {
+                    if (!c.active) return false;
+                    const cx = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
+                    const cy = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
+                    const hw = (c.width || 60) / 2, hh = (c.height || 60) / 2;
+                    return _prx > cx - hw && _prx < cx + hw && _pry > cy - hh && _pry < cy + hh;
+                });
+                if (_phit) { _pursueLOS = false; break; }
+            }
+        }
+        const _canPursue   = _isAlerted && dist < _pursuitRange && _pursueLOS;
 
         // Combined: can the enemy detect the player this frame?
         const _canSeePlayer = _canSeeViaConeCone || _canPursue;
@@ -2998,10 +3186,13 @@ function handleEnemyAI(scene, time) {
                         let _hit  = false;
                         for (let _ci2 = 0; _ci2 < _coneCovers.length; _ci2++) {
                             const _cv = _coneCovers[_ci2];
+                            // Use stored center coords — c.x/c.y is top-left (origin 0,0)
+                            const _cvCX = _cv.coverCX !== undefined ? _cv.coverCX : _cv.x + (_cv.width||60)/2;
+                            const _cvCY = _cv.coverCY !== undefined ? _cv.coverCY : _cv.y + (_cv.height||60)/2;
                             const _hw = (_cv.width  || 60) * 0.5 + 2;
                             const _hh = (_cv.height || 60) * 0.5 + 2;
-                            if (_rx > _cv.x - _hw && _rx < _cv.x + _hw &&
-                                _ry > _cv.y - _hh && _ry < _cv.y + _hh) {
+                            if (_rx > _cvCX - _hw && _rx < _cvCX + _hw &&
+                                _ry > _cvCY - _hh && _ry < _cvCY + _hh) {
                                 _hit = true; break;
                             }
                         }
@@ -3247,10 +3438,12 @@ function handleEnemyAI(scene, time) {
 
                     coverObjects.getChildren().forEach(c => {
                         if (!c.active) return;
-                        const _cdist = Phaser.Math.Distance.Between(_ftx, _fty, c.x, c.y);
+                        // Use stored center coords (coverCX/CY) for correct distance checks
+                        const _cCX = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
+                        const _cCY = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
+                        const _cdist = Phaser.Math.Distance.Between(_ftx, _fty, _cCX, _cCY);
                         if (_cdist < _avoidRadius + (c.width || 60) * 0.5) {
-                            // Push perpendicular to the obstacle-to-enemy direction
-                            const _pushAngle = Phaser.Math.Angle.Between(c.x, c.y, enemy.x, enemy.y);
+                            const _pushAngle = Phaser.Math.Angle.Between(_cCX, _cCY, enemy.x, enemy.y);
                             const _pushStr   = (_avoidRadius - Math.max(0, _cdist - (c.width||60)*0.5)) / _avoidRadius;
                             _avoidX += Math.cos(_pushAngle) * _pushStr * speed * 1.2;
                             _avoidY += Math.sin(_pushAngle) * _pushStr * speed * 1.2;
@@ -5892,136 +6085,251 @@ function placeBuilding(scene, x, y, def) {
     }
 
     // ── Physics body (static rectangle matching footprint) ───────
-    // Use top-left origin so static body position maps correctly (Phaser static bodies
-    // use top-left coordinate internally — center-origin objects cause offset collisions)
-    // Create invisible static body for collision — top-left origin for correct static body mapping
+    // Create invisible static body for collision — use origin(0,0) with top-left coords
     const body = scene.add.rectangle(x - w/2, y - h/2, w, h, 0x000000, 0)
         .setOrigin(0, 0).setDepth(3);
-    // Add to group FIRST so the group manages the static body, then configure
-    coverObjects.add(body, true);          // true = add physics body via group
+    coverObjects.add(body, true);
     body.body.setSize(w, h);
-    body.body.reset(x - w/2, y - h/2);    // anchor to top-left
+    body.body.reset(x - w/2, y - h/2);
+    body.body.immovable = true;
     body.coverType  = 'building';
     body.coverHp    = 0;
     body.coverMaxHp = 0;
     body.coverDef   = def;
+    // Store TRUE center for LOS/vision-cone raycasting (origin is 0,0 so c.x is top-left)
+    body.coverCX = x;
+    body.coverCY = y;
 }
 
 function generateCover(scene) {
     if (!coverObjects) return;
     coverObjects.clear(true, true);
 
-    // Layout: scatter objects across the 4000x4000 world in a loose grid
-    // Avoid the center 400px radius (player spawn) and world edges (<150px)
     const MARGIN    = 150;
     const SAFE_DIST = 420;   // min dist from world center (2000,2000)
-    const MIN_SEP   = 160;   // min separation between cover objects
     const placed    = [];
 
-    // Helper: try to place at a random position within bounds
+    // Helper: place a cover object at exact (x, y) center position
+    const placeAt = (def, x, y) => {
+        placed.push({ x, y });
+        if (def.type === 'building') {
+            placeBuilding(scene, x, y, def);
+        } else {
+            const rect = scene.add.rectangle(x - def.w/2, y - def.h/2, def.w, def.h, def.color)
+                .setOrigin(0, 0).setStrokeStyle(2, def.stroke).setDepth(3);
+            coverObjects.add(rect, true);
+            rect.body.setSize(def.w, def.h);
+            rect.body.reset(x - def.w/2, y - def.h/2);
+            rect.body.immovable = true;
+            rect.coverType = def.type; rect.coverHp = def.hp;
+            rect.coverMaxHp = def.hp; rect.coverDef = def;
+            rect.coverCX = x;
+            rect.coverCY = y;
+        }
+    };
+
+    // Helper: try random placement within bounds, respecting safe zone + min separation
     const tryPlace = (def, xMin, xMax, yMin, yMax, minSep) => {
-        const sep = minSep || MIN_SEP;
-        for (let attempt = 0; attempt < 50; attempt++) {
+        const sep = minSep || 160;
+        for (let attempt = 0; attempt < 60; attempt++) {
             const x = Phaser.Math.Between(xMin, xMax);
             const y = Phaser.Math.Between(yMin, yMax);
             if (Phaser.Math.Distance.Between(x, y, 2000, 2000) < SAFE_DIST) continue;
             if (placed.some(p => Phaser.Math.Distance.Between(x, y, p.x, p.y) < sep)) continue;
-            placed.push({ x, y });
-            if (def.type === 'building') {
-                placeBuilding(scene, x, y, def);
-            } else {
-                const rect = scene.add.rectangle(x - def.w/2, y - def.h/2, def.w, def.h, def.color)
-                    .setOrigin(0, 0).setStrokeStyle(2, def.stroke).setDepth(3);
-                // Add to group FIRST (group creates & manages static body)
-                coverObjects.add(rect, true);
-                rect.body.setSize(def.w, def.h);
-                rect.body.reset(x - def.w/2, y - def.h/2);
-                rect.coverType = def.type; rect.coverHp = def.hp;
-                rect.coverMaxHp = def.hp; rect.coverDef = def;
-            }
+            placeAt(def, x, y);
             return true;
         }
         return false;
     };
 
-    const M = MARGIN;
-    const Q = { // quadrant shorthands
-        full:  [M, 4000-M, M, 4000-M],
-        tl:    [M, 1800, M, 1800],
-        tr:    [2200, 4000-M, M, 1800],
-        bl:    [M, 1800, 2200, 4000-M],
-        br:    [2200, 4000-M, 2200, 4000-M],
-        mid:   [1400, 2600, 1400, 2600],
-    };
-
-    // ── Global scatter ───────────────────────────────────────────
-    for (let i=0;i<10;i++) tryPlace(COVER_DEFS[0], ...Q.full);   // large rocks
-    for (let i=0;i<8;i++)  tryPlace(COVER_DEFS[1], ...Q.full);   // medium rocks
-    for (let i=0;i<6;i++)  tryPlace(COVER_DEFS[2], ...Q.full);   // large rocks v2
-    for (let i=0;i<7;i++)  tryPlace(COVER_DEFS[3], ...Q.full);   // h-walls
-    for (let i=0;i<7;i++)  tryPlace(COVER_DEFS[4], ...Q.full);   // v-walls
-    for (let i=0;i<5;i++)  tryPlace(COVER_DEFS[5], ...Q.full);   // short h-walls
-    for (let i=0;i<8;i++)  tryPlace(COVER_DEFS[6], ...Q.full);   // crates
-    for (let i=0;i<6;i++)  tryPlace(COVER_DEFS[7], ...Q.full);   // small crates
-
-    // ── Buildings — spread across all quadrants ──────────────────
-    tryPlace(COVER_DEFS[10], ...Q.tl);    // medium building top-left
-    tryPlace(COVER_DEFS[11], ...Q.tl);    // large building top-left
-    tryPlace(COVER_DEFS[8],  ...Q.tr);    // small building top-right
-    tryPlace(COVER_DEFS[10], ...Q.tr);    // medium building top-right
-    tryPlace(COVER_DEFS[9],  ...Q.bl);    // medium building bottom-left
-    tryPlace(COVER_DEFS[11], ...Q.bl);    // large building bottom-left
-    tryPlace(COVER_DEFS[8],  ...Q.br);    // small building bottom-right
-    tryPlace(COVER_DEFS[9],  ...Q.br);    // medium building bottom-right
-    tryPlace(COVER_DEFS[11], ...Q.br);    // large building bottom-right
-    tryPlace(COVER_DEFS[8],  ...Q.br);    // another small building bottom-right
-    tryPlace(COVER_DEFS[11], ...Q.br);    // extra large building bottom-right
-
-    // ── Extra density: center (mid-ring around spawn) ─────────────
-    // Use a mid-ring: 500-900px from center
-    for (let i=0;i<6;i++) {
-        for (let attempt=0;attempt<60;attempt++) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist  = Phaser.Math.Between(520, 950);
-            const x = Math.round(2000 + Math.cos(angle) * dist);
-            const y = Math.round(2000 + Math.sin(angle) * dist);
-            if (x < M || x > 4000-M || y < M || y > 4000-M) continue;
-            if (placed.some(p => Phaser.Math.Distance.Between(x,y,p.x,p.y) < MIN_SEP)) continue;
-            placed.push({x,y});
-            const def = [COVER_DEFS[0],COVER_DEFS[3],COVER_DEFS[4],COVER_DEFS[6]][i%4];
-            const rect = scene.add.rectangle(x,y,def.w,def.h,def.color)
-                .setStrokeStyle(2,def.stroke).setDepth(3);
-            scene.physics.add.existing(rect,true);
-            rect.body.setSize(def.w, def.h);
-            rect.body.updateFromGameObject();
-            rect.coverType=def.type; rect.coverHp=def.hp;
-            rect.coverMaxHp=def.hp; rect.coverDef=def;
-            coverObjects.add(rect);
-            break;
+    // ══════════════════════════════════════════════════════════════
+    // CITY LAYOUT — 4000×4000 map divided into city blocks with streets
+    // ══════════════════════════════════════════════════════════════
+    // Grid: 5×5 city blocks with streets between them
+    // Each block ~600×600, streets ~200 wide
+    // Block centers at: 500, 1300, 2100, 2900, 3700 → but shifted for border
+    // Actual grid: starts at 300, each block 600px, street 160px gap
+    const BLOCK_SIZE   = 600;
+    const STREET_WIDTH = 160;
+    const GRID_START   = 250;
+    const blockCenters = [];
+    for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+            const bx = GRID_START + col * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
+            const by = GRID_START + row * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
+            if (bx > 3850 || by > 3850) continue;
+            blockCenters.push({ x: bx, y: by, row, col });
         }
     }
 
-    // ── Ruin buildings sprinkled globally ────────────────────────
-    tryPlace(COVER_DEFS[11], ...Q.tl);
-    tryPlace(COVER_DEFS[11], ...Q.tr);
-    tryPlace(COVER_DEFS[11], ...Q.br);
+    // Draw street markings (decorative — thin dashed lines down street centers)
+    const streetGfx = scene.add.graphics().setDepth(2);
+    streetGfx.lineStyle(1, 0x334433, 0.25);
+    // Horizontal streets
+    for (let row = 0; row < 4; row++) {
+        const sy = GRID_START + (row + 1) * BLOCK_SIZE + row * STREET_WIDTH + STREET_WIDTH / 2;
+        for (let dx = MARGIN; dx < 3850; dx += 40) {
+            streetGfx.beginPath();
+            streetGfx.moveTo(dx, sy);
+            streetGfx.lineTo(dx + 20, sy);
+            streetGfx.strokePath();
+        }
+    }
+    // Vertical streets
+    for (let col = 0; col < 4; col++) {
+        const sx = GRID_START + (col + 1) * BLOCK_SIZE + col * STREET_WIDTH + STREET_WIDTH / 2;
+        for (let dy = MARGIN; dy < 3850; dy += 40) {
+            streetGfx.beginPath();
+            streetGfx.moveTo(sx, dy);
+            streetGfx.lineTo(sx, dy + 20);
+            streetGfx.strokePath();
+        }
+    }
 
-    // Force-sync ALL static bodies (belt-and-suspenders)
+    // ── Fill each city block with buildings ──────────────────────
+    const _buildingVariants = [
+        COVER_DEFS[8],  // small building
+        COVER_DEFS[9],  // medium building
+        COVER_DEFS[10], // large building
+        COVER_DEFS[11], // ruin building
+    ];
+
+    // Seeded pseudo-random for consistent but varied city feel
+    let _seed = 42;
+    const _srand = () => { _seed = (_seed * 16807 + 0) % 2147483647; return (_seed & 0x7fffffff) / 0x7fffffff; };
+
+    blockCenters.forEach(block => {
+        const bLeft = block.x - BLOCK_SIZE / 2;
+        const bTop  = block.y - BLOCK_SIZE / 2;
+
+        // Skip blocks that overlap the center spawn safe zone
+        if (Phaser.Math.Distance.Between(block.x, block.y, 2000, 2000) < SAFE_DIST + 200) {
+            // Center block: place only a few small obstacles (crates, walls) around edges
+            for (let i = 0; i < 3; i++) {
+                const angle = _srand() * Math.PI * 2;
+                const dist  = 320 + _srand() * 200;
+                const ox = Math.round(2000 + Math.cos(angle) * dist);
+                const oy = Math.round(2000 + Math.sin(angle) * dist);
+                if (placed.some(p => Phaser.Math.Distance.Between(ox, oy, p.x, p.y) < 120)) continue;
+                placeAt(COVER_DEFS[6], ox, oy); // crate
+            }
+            return;
+        }
+
+        // Determine block composition based on position
+        const isEdge = block.row === 0 || block.row === 4 || block.col === 0 || block.col === 4;
+        const isCorner = (block.row === 0 || block.row === 4) && (block.col === 0 || block.col === 4);
+
+        if (isCorner) {
+            // Corner blocks: 1 large building + 1 small + scattered debris
+            placeAt(COVER_DEFS[10], bLeft + 180, bTop + 180);  // large building
+            placeAt(COVER_DEFS[8],  bLeft + 450, bTop + 420);  // small building
+            placeAt(COVER_DEFS[11], bLeft + 380, bTop + 150);  // ruin
+            // Crates and walls
+            placeAt(COVER_DEFS[6], bLeft + 100, bTop + 420);
+            placeAt(COVER_DEFS[7], bLeft + 500, bTop + 200);
+            placeAt(COVER_DEFS[3], bLeft + 300, bTop + 520);   // h-wall (street barricade)
+        } else if (isEdge) {
+            // Edge blocks: 2 medium buildings + walls
+            placeAt(COVER_DEFS[9],  bLeft + 160, bTop + 160);  // medium building
+            placeAt(COVER_DEFS[9],  bLeft + 420, bTop + 400);  // medium building
+            placeAt(COVER_DEFS[8],  bLeft + 400, bTop + 140);  // small building
+            // Street-side walls and barriers
+            placeAt(COVER_DEFS[4], bLeft + 40,  bTop + 300);   // v-wall (left edge)
+            placeAt(COVER_DEFS[5], bLeft + 300, bTop + 560);   // short h-wall
+            placeAt(COVER_DEFS[6], bLeft + 200, bTop + 450);   // crate
+        } else {
+            // Inner blocks: denser, more variety — 2-3 buildings + urban clutter
+            const variant = Math.floor(_srand() * 4);
+            if (variant === 0) {
+                // Dense commercial block: 1 large + 2 small
+                placeAt(COVER_DEFS[10], bLeft + 300, bTop + 280);
+                placeAt(COVER_DEFS[8],  bLeft + 100, bTop + 140);
+                placeAt(COVER_DEFS[8],  bLeft + 480, bTop + 480);
+                placeAt(COVER_DEFS[3], bLeft + 300, bTop + 530); // h-wall
+            } else if (variant === 1) {
+                // Warehouse block: medium buildings in a row
+                placeAt(COVER_DEFS[9],  bLeft + 150, bTop + 200);
+                placeAt(COVER_DEFS[9],  bLeft + 420, bTop + 200);
+                placeAt(COVER_DEFS[11], bLeft + 280, bTop + 450); // ruin
+                placeAt(COVER_DEFS[7], bLeft + 100, bTop + 450);  // small crate
+            } else if (variant === 2) {
+                // Mixed: 1 large + debris
+                placeAt(COVER_DEFS[10], bLeft + 200, bTop + 250);
+                placeAt(COVER_DEFS[8],  bLeft + 470, bTop + 150);
+                placeAt(COVER_DEFS[11], bLeft + 440, bTop + 450);
+                placeAt(COVER_DEFS[6], bLeft + 120, bTop + 500);
+                placeAt(COVER_DEFS[4], bLeft + 550, bTop + 320); // v-wall
+            } else {
+                // Residential: 3 small buildings clustered
+                placeAt(COVER_DEFS[8],  bLeft + 120, bTop + 140);
+                placeAt(COVER_DEFS[8],  bLeft + 350, bTop + 160);
+                placeAt(COVER_DEFS[8],  bLeft + 240, bTop + 420);
+                placeAt(COVER_DEFS[9],  bLeft + 480, bTop + 440);
+                placeAt(COVER_DEFS[5], bLeft + 450, bTop + 280); // short h-wall
+            }
+        }
+
+        // Random urban clutter per block: rocks as rubble, extra walls as barriers
+        const clutterCount = isEdge ? 2 : 3;
+        for (let c = 0; c < clutterCount; c++) {
+            const cx = bLeft + 60 + _srand() * (BLOCK_SIZE - 120);
+            const cy = bTop  + 60 + _srand() * (BLOCK_SIZE - 120);
+            if (placed.some(p => Phaser.Math.Distance.Between(cx, cy, p.x, p.y) < 100)) continue;
+            const clutterDef = [COVER_DEFS[0], COVER_DEFS[1], COVER_DEFS[6], COVER_DEFS[7]][c % 4];
+            placeAt(clutterDef, Math.round(cx), Math.round(cy));
+        }
+    });
+
+    // ── Street obstacles: barricades, abandoned vehicles (walls/crates in streets) ──
+    // Place some obstacles in the streets for cover during firefights
+    for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 5; col++) {
+            if (_srand() < 0.4) continue; // ~60% of intersections get something
+            const sx = GRID_START + col * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
+            const sy = GRID_START + (row + 1) * BLOCK_SIZE + row * STREET_WIDTH + STREET_WIDTH / 2;
+            if (Phaser.Math.Distance.Between(sx, sy, 2000, 2000) < SAFE_DIST) continue;
+            if (placed.some(p => Phaser.Math.Distance.Between(sx, sy, p.x, p.y) < 100)) continue;
+            const streetDef = _srand() < 0.5 ? COVER_DEFS[3] : COVER_DEFS[6]; // h-wall or crate
+            placeAt(streetDef, Math.round(sx), Math.round(sy));
+        }
+    }
+    for (let col = 0; col < 4; col++) {
+        for (let row = 0; row < 5; row++) {
+            if (_srand() < 0.4) continue;
+            const sx = GRID_START + (col + 1) * BLOCK_SIZE + col * STREET_WIDTH + STREET_WIDTH / 2;
+            const sy = GRID_START + row * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
+            if (Phaser.Math.Distance.Between(sx, sy, 2000, 2000) < SAFE_DIST) continue;
+            if (placed.some(p => Phaser.Math.Distance.Between(sx, sy, p.x, p.y) < 100)) continue;
+            const streetDef = _srand() < 0.5 ? COVER_DEFS[4] : COVER_DEFS[7]; // v-wall or small crate
+            placeAt(streetDef, Math.round(sx), Math.round(sy));
+        }
+    }
+
+    // ── Extra rocks/rubble scattered across streets for additional cover ──
+    for (let i = 0; i < 12; i++) {
+        const rx = MARGIN + _srand() * (4000 - 2 * MARGIN);
+        const ry = MARGIN + _srand() * (4000 - 2 * MARGIN);
+        if (Phaser.Math.Distance.Between(rx, ry, 2000, 2000) < SAFE_DIST) continue;
+        if (placed.some(p => Phaser.Math.Distance.Between(rx, ry, p.x, p.y) < 130)) continue;
+        placeAt(COVER_DEFS[Math.floor(_srand() * 3)], Math.round(rx), Math.round(ry)); // random rock variant
+    }
+
+    // Force-sync ALL static bodies
     coverObjects.getChildren().forEach(c => {
         if (c.body) {
-            c.body.setSize(c.width || 60, c.height || 60);
-            // origin is (0,0) so c.x/c.y is already top-left — reset anchors body there
+            const w = c.width || 60, h = c.height || 60;
+            c.body.setSize(w, h);
             c.body.reset(c.x, c.y);
+            c.body.immovable = true;
+            if (c.coverCX === undefined) { c.coverCX = c.x + w / 2; c.coverCY = c.y + h / 2; }
         }
     });
     coverObjects.refresh();
-    // Refresh again after a short delay to catch deferred body registration
     try {
         const _sc = game?.scene?.scenes[0];
         if (_sc?.time) _sc.time.delayedCall(120, () => { try { coverObjects?.refresh(); } catch(e){} });
     } catch(e) {}
-    // NOTE: bullet↔cover and enemyBullet↔cover colliders are registered ONCE in create()
-    // Player↔cover is added in deployMech(); Enemies↔cover per spawnEnemy()
 }
 
 function spawnMedic(scene) {
@@ -7519,7 +7827,27 @@ function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     );
     const ox = armOx + Math.cos(angle) * barrelDist;
     const oy = armOy + Math.sin(angle) * barrelDist;
-    const rayLen = 900;
+    let rayLen = 900;
+
+    // Shorten rail beam at first building/cover obstruction
+    if (coverObjects) {
+        const _railSteps = 20;
+        for (let _rsi = 1; _rsi <= _railSteps; _rsi++) {
+            const _rst = _rsi / _railSteps;
+            const _rsx = ox + Math.cos(angle) * rayLen * _rst;
+            const _rsy = oy + Math.sin(angle) * rayLen * _rst;
+            let _blocked = false;
+            coverObjects.getChildren().forEach(c => {
+                if (!c.active || _blocked) return;
+                const cx = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
+                const cy = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
+                const hw = (c.width||60)/2, hh = (c.height||60)/2;
+                if (_rsx > cx - hw && _rsx < cx + hw && _rsy > cy - hh && _rsy < cy + hh) _blocked = true;
+            });
+            if (_blocked) { rayLen = rayLen * (_rst - 1/_railSteps); break; }
+        }
+    }
+
     const ex = ox + Math.cos(angle) * rayLen;
     const ey = oy + Math.sin(angle) * rayLen;
 
@@ -7531,12 +7859,11 @@ function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     beam.lineBetween(ox, oy, ex, ey);
     scene.tweens.add({ targets: beam, alpha: 0, duration: 220, onComplete: () => beam.destroy() });
 
-    // Hitscan: check each enemy using point-to-line distance (no bad Phaser API)
+    // Hitscan: check each enemy using point-to-line distance
     const dmg = Math.round(weapon.dmg * (_perkState.dmgMult||1));
     let hitCount = 0;
     enemies.getChildren().forEach(e => {
         if (!e.active) return;
-        // Point-to-segment distance
         const dx = ex - ox, dy = ey - oy;
         const lenSq = dx*dx + dy*dy;
         let t = ((e.x - ox)*dx + (e.y - oy)*dy) / lenSq;
@@ -7548,7 +7875,6 @@ function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
             damageEnemy(e, dmg, angle);
             showDamageText(scene, e.x, e.y, dmg);
             hitCount++;
-            // Impact flash at hit point
             const flash = scene.add.circle(e.x, e.y, 12, 0x00ffff, 0.8).setDepth(15);
             scene.tweens.add({ targets: flash, alpha: 0, radius: 28, duration: 150, onComplete: () => flash.destroy() });
         }
