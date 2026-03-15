@@ -272,6 +272,8 @@ function _getEquipDropChance(enemyData) {
     const round = (typeof _round !== 'undefined') ? _round : 1;
     if (enemyData?.isBoss) return 1.0;
     if (enemyData?.isCommander) return 0.40;
+    if (enemyData?.isElite) return 0.30;         // Elite enemies: 30% drop chance
+    if (enemyData?.enemyType) return 0.20;       // Special enemy types: 20% base
     if (enemyData?.isMedic) return 0.15;
     return Math.min(0.08 + round * 0.005, 0.20);
 }

@@ -5,6 +5,7 @@
 <title>Tech Warrior: Alpha 3.0</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <script src="js/loot-system.js"></script>
+<script src="js/enemy-types.js"></script>
 <style>
 
 /* ============================================================
@@ -2987,6 +2988,7 @@ function update(time) {
     drawMinimap();
     checkLootPickups(this);
     checkEquipmentPickups(this);
+    if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time);
 }
 
 
@@ -3477,9 +3479,12 @@ function handleEnemyAI(scene, time) {
             const reloadMult = enemy.behavior === 'sniper' ? 1.4
                              : enemy.behavior === 'rusher' ? 0.85
                              : enemy.behavior === 'flanker' ? 1.0 : 1.1;
-            if (!enemy._fireGrace && dist < fireRange && time > (enemy.lastFireTime || 0) + wepReload * reloadMult) {
+            const _eliteFireMult = (enemy._swiftFireRateMult || 1);
+            if (!enemy._fireGrace && dist < fireRange && time > (enemy.lastFireTime || 0) + wepReload * reloadMult * _eliteFireMult) {
                 enemyFire(scene, enemy, time);
                 enemy.lastFireTime = time;
+                // Sniper Elite: cloak after firing
+                if (enemy.enemyType === 'sniperElite' && enemy._onFire) enemy._onFire();
             }
 
             // Secondary weapon — fires less frequently, with per-weapon range gates
@@ -4592,17 +4597,82 @@ function startRound(roundNum) {
         setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, roundNum); }, 800);
     } else {
         // Normal round — commanders from round 4+, medic from round 3+
+        // Phase 4: special enemy types and elite modifiers
         const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
-        const normalCount = spawnCmd ? _roundTotal - 1 : _roundTotal;
-        for (let i = 0; i < normalCount; i++) {
-            setTimeout(() => { if (isDeployed && _roundActive) spawnEnemy(scene); }, i * 400);
+        const _spawnCfg = (typeof _getEnemySpawnConfig === 'function') ? _getEnemySpawnConfig(roundNum) : { specialTypes:[], eliteChance:0, maxElites:0 };
+
+        // Determine how many specials to spawn (replace some normal enemies)
+        let specialCount = 0;
+        if (_spawnCfg.specialTypes.length > 0 && roundNum > 5) {
+            // 1 special per 4 normal enemies, minimum 1 if types are available
+            specialCount = Math.min(Math.floor(_roundTotal / 4) + 1, _spawnCfg.specialTypes.length, Math.floor(_roundTotal * 0.4));
+            specialCount = Math.max(1, specialCount);
         }
+
+        const normalCount = Math.max(1, (spawnCmd ? _roundTotal - 1 : _roundTotal) - specialCount);
+        let spawnIdx = 0;
+
+        // Spawn normal enemies
+        for (let i = 0; i < normalCount; i++) {
+            const delay = spawnIdx * 400;
+            setTimeout(() => { if (isDeployed && _roundActive) spawnEnemy(scene); }, delay);
+            spawnIdx++;
+        }
+
+        // Spawn special enemy types
+        let _elitesApplied = 0;
+        for (let i = 0; i < specialCount; i++) {
+            const typeKey = Phaser.Math.RND.pick(_spawnCfg.specialTypes);
+            const delay = spawnIdx * 400;
+            setTimeout(() => {
+                if (!isDeployed || !_roundActive) return;
+                const se = spawnSpecialEnemy(scene, typeKey);
+                // Possibly apply elite modifier
+                if (se && _elitesApplied < _spawnCfg.maxElites && Math.random() < _spawnCfg.eliteChance) {
+                    const mod1 = _rollEliteModifier([]);
+                    if (mod1) {
+                        applyEliteModifier(scene, se, mod1);
+                        _elitesApplied++;
+                        // Double modifier chance (round 20+)
+                        if ((_spawnCfg.doubleModChance || 0) > 0 && Math.random() < _spawnCfg.doubleModChance) {
+                            const mod2 = _rollEliteModifier([mod1]);
+                            if (mod2) applyEliteModifier(scene, se, mod2);
+                        }
+                    }
+                }
+            }, delay);
+            spawnIdx++;
+        }
+
+        // Also apply elite modifiers to some normal enemies (round 11+)
+        if (roundNum >= 11 && _spawnCfg.maxElites > 0) {
+            // Pick random normal enemies to make elite after they spawn
+            const normalEliteCount = Math.min(_spawnCfg.maxElites - specialCount, Math.floor(normalCount * 0.3));
+            if (normalEliteCount > 0) {
+                setTimeout(() => {
+                    if (!isDeployed || !_roundActive || !enemies) return;
+                    const normals = enemies.getChildren().filter(en =>
+                        en.active && !en.isElite && !en.isCommander && !en.isMedic && !en.isBoss && !en.enemyType
+                    );
+                    const toElite = Phaser.Utils.Array.Shuffle(normals).slice(0, normalEliteCount);
+                    toElite.forEach(en => {
+                        if (_elitesApplied >= _spawnCfg.maxElites) return;
+                        const mod1 = _rollEliteModifier([]);
+                        if (mod1) {
+                            applyEliteModifier(scene, en, mod1);
+                            _elitesApplied++;
+                        }
+                    });
+                }, spawnIdx * 400 + 200);
+            }
+        }
+
         if (spawnCmd) {
-            setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, normalCount * 400 + 600);
+            setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 600);
         }
         if (roundNum >= 3 && Math.random() < 0.40) {
             _roundTotal++; // medic counts toward the kill total
-            setTimeout(() => { if (isDeployed && _roundActive) spawnMedic(scene); }, normalCount * 400 + 1000);
+            setTimeout(() => { if (isDeployed && _roundActive) spawnMedic(scene); }, spawnIdx * 400 + 1000);
         }
     }
     // Autonomous Unit: auto-deploy drone at round start (after short delay)
@@ -5197,6 +5267,10 @@ function deployMech() {
         createImpactSparks(scene, p.x, p.y);
         const _hitDmg = bullet.damageValue || 15;
         showDamageText(scene, p.x, p.y, _hitDmg, player.shield > 0);
+        // Vampiric elite: heal shooter on hit
+        if (bullet._shooter && typeof handleVampiricHeal === 'function') {
+            handleVampiricHeal(bullet._shooter, _hitDmg);
+        }
         bullet.destroy();
         processPlayerDamage(_hitDmg, bulletAngle);
     });
@@ -7619,7 +7693,11 @@ function enemyFire(scene, enemy, time) {
         hr:    0.65,   // 160 → 104
         br:    0.75,   // 30  → 22
     };
-    const dmg    = Math.round((weapon.dmg || 15) * (_enemyDmgScale[wKey] || 1.0));
+    let dmg    = Math.round((weapon.dmg || 15) * (_enemyDmgScale[wKey] || 1.0));
+    // Berserker enrage: 1.5x damage
+    if (enemy._enrageDmgMult) dmg = Math.round(dmg * enemy._enrageDmgMult);
+    // Helper: tag bullets with shooter ref for vampiric healing
+    const _tagBullet = (b) => { b._shooter = enemy; return b; };
 
     // Dispatch by weapon type — mirrors player fire functions
     if (wKey === 'sg') {
@@ -7628,7 +7706,7 @@ function enemyFire(scene, enemy, time) {
             const b = scene.add.circle(ex, ey, bSize, 0xff4400);
             scene.physics.add.existing(b);
             b.body.setAllowGravity(false);
-            b.damageValue = dmg;
+            b.damageValue = dmg; _tagBullet(b);
             enemyBullets.add(b);
             scene.physics.velocityFromRotation(angle + spread, bSpeed, b.body.velocity);
             scene.time.delayedCall(1500, () => { if (b.active) b.destroy(); });
@@ -7641,7 +7719,7 @@ function enemyFire(scene, enemy, time) {
             const b = scene.add.circle(ex, ey, bSize, 0xff6600).setAlpha(0.85);
             scene.physics.add.existing(b);
             b.body.setAllowGravity(false);
-            b.damageValue = dmg;
+            b.damageValue = dmg; _tagBullet(b);
             enemyBullets.add(b);
             scene.physics.velocityFromRotation(angle + spread, bSpeed * (0.8 + Math.random() * 0.4), b.body.velocity);
             const ttl = 400 + Math.random() * 200;
@@ -7655,7 +7733,7 @@ function enemyFire(scene, enemy, time) {
             .setRotation(angle).setStrokeStyle(1, 0xff6600).setDepth(14);
         scene.physics.add.existing(b);
         b.body.setAllowGravity(false);
-        b.damageValue = dmg;
+        b.damageValue = dmg; _tagBullet(b);
         b.piercing = true;
         enemyBullets.add(b);
         scene.physics.velocityFromRotation(angle, weapon.speed, b.body.velocity);
@@ -7697,7 +7775,7 @@ function enemyFire(scene, enemy, time) {
         const p = scene.add.circle(ex, ey, 22, 0xff6600).setAlpha(0.85).setDepth(14);
         scene.physics.add.existing(p);
         p.body.setAllowGravity(false);
-        p.damageValue = dmg;
+        p.damageValue = dmg; _tagBullet(p);
         enemyBullets.add(p);
         scene.physics.velocityFromRotation(angle, 260, p.body.velocity);
         scene.tweens.add({ targets: p, alpha: 0.4, duration: 120, yoyo: true, repeat: -1 });
@@ -7723,7 +7801,7 @@ function enemyFire(scene, enemy, time) {
         const b = scene.add.circle(ex, ey, bSize, 0xff2200);
         scene.physics.add.existing(b);
         b.body.setAllowGravity(false);
-        b.damageValue = dmg;
+        b.damageValue = dmg; _tagBullet(b);
         if (wKey === 'siege') {
             scene.physics.add.overlap(b, player, () => {
                 if (!b.active) return;
@@ -7742,7 +7820,7 @@ function enemyFire(scene, enemy, time) {
                 const b = scene.add.circle(enemy.x, enemy.y, bSize, 0xff2200);
                 scene.physics.add.existing(b);
                 b.body.setAllowGravity(false);
-                b.damageValue = dmg;
+                b.damageValue = dmg; _tagBullet(b);
                 enemyBullets.add(b);
                 scene.physics.velocityFromRotation(ang2, bSpeed, b.body.velocity);
                 scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
@@ -7753,7 +7831,7 @@ function enemyFire(scene, enemy, time) {
         const b = scene.add.circle(ex, ey, bSize, 0xff2200);
         scene.physics.add.existing(b);
         b.body.setAllowGravity(false);
-        b.damageValue = dmg;
+        b.damageValue = dmg; _tagBullet(b);
         enemyBullets.add(b);
         scene.physics.velocityFromRotation(angle, bSpeed, b.body.velocity);
         scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
@@ -8793,6 +8871,11 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     if (_perkState.targetPainter && _perkState._paintedEnemy === e) amt *= 1.20;
     // Per-enemy damage multiplier (Threat Analyzer debuff)
     if (e._dmgMult) amt *= e._dmgMult;
+    // Elite modifier damage handling (enforcer shield gate, shielded overshield, cloak DR)
+    if (typeof handleEliteDamage === 'function' && (e.isElite || e.enemyType)) {
+        amt = handleEliteDamage(e, amt);
+        if (amt <= 0) return;
+    }
     // Enemy chassis passive DR (heavy: 15%)
     if (e._passiveDR > 0) amt *= (1 - e._passiveDR);
     // Enemy Mag Anchors: 20% DR while stationary
@@ -8991,7 +9074,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             scene.time.delayedCall(80, () => createExplosion(scene, e.x, e.y, 50, 20));
         }
         spawnLoot(scene, e.x, e.y, false);  // 30% chance
-        spawnEquipmentLoot(scene, e.x, e.y, { isMedic: !!e.isMedic, isBoss: !!e.isBoss });
+        spawnEquipmentLoot(scene, e.x, e.y, { isMedic: !!e.isMedic, isBoss: !!e.isBoss, isElite: !!e.isElite, enemyType: e.enemyType || null });
         }
         // All enemies move toward ally death location
         const _diedX = e.x, _diedY = e.y;
@@ -9012,6 +9095,10 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
                 }
             });
         }
+        // Phase 4: elite death effects (explosive, splitting, cleanup)
+        if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) {
+            handleEliteDeath(scene, e);
+        }
         if (e.visuals)  e.visuals.destroy();
         if (e.torso)    e.torso.destroy();
         if (e.cmdLabel)    e.cmdLabel.destroy();
@@ -9021,6 +9108,8 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         if (e._onDestroy)  { try { e._onDestroy(); } catch(ex){} }
         if (e.shieldRing?.active) e.shieldRing.destroy();
         if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
+        // Cleanup split minion labels
+        if (e._splitLabel?.active) e._splitLabel.destroy();
         e.destroy();
         onEnemyKilled();
     }
@@ -9136,9 +9225,15 @@ function updateEnemyDoll(e) {
     }, 3000);
     const label = document.getElementById('edoll-label');
     if (label) {
+        const _typeDef = e.enemyType && typeof ENEMY_TYPE_DEFS !== 'undefined' ? ENEMY_TYPE_DEFS[e.enemyType] : null;
+        const _elitePrefix = e._eliteMods?.length ? e._eliteMods.map(k => (typeof ELITE_MODIFIERS !== 'undefined' ? ELITE_MODIFIERS[k]?.label : k)).join(' ') + ' ' : '';
         label.innerText = e.isCommander ? '[ COMMANDER ]'
+            : _typeDef ? `[ ${_elitePrefix}${_typeDef.label} ]`
+            : e.isMedic ? '[ MEDIC ]'
+            : _elitePrefix ? `[ ${_elitePrefix.trim()} ${(e.loadout?.chassis?.toUpperCase() || 'TARGET')} ]`
             : (e.loadout?.chassis?.toUpperCase() || 'TARGET');
-        label.style.color   = e.isCommander ? '#ddaa00' : '#c8d2d9';
+        const _labelCol = e.isCommander ? '#ddaa00' : _typeDef ? _typeDef.labelColor : e.isMedic ? '#00ff88' : e.isElite ? (typeof ELITE_MODIFIERS !== 'undefined' && e._eliteMods?.[0] ? ELITE_MODIFIERS[e._eliteMods[0]].color : '#ff8800') : '#c8d2d9';
+        label.style.color = _labelCol;
         label.style.opacity = '0.8';
     }
     const getCol = (hp, max) => {
@@ -9147,7 +9242,7 @@ function updateEnemyDoll(e) {
         if (pct <= 0.25) return '#ff0000';
         if (pct <= 0.50) return '#ffaa00';
         if (pct <= 0.75) return '#ffff00';
-        return e.isCommander ? '#ddaa00' : '#00ff00';
+        return e.isCommander ? '#ddaa00' : _typeDef ? _typeDef.labelColor : e.isElite ? '#ff8800' : '#00ff00';
     };
     const glow = (hp, max) => {
         const pct = hp / max;
