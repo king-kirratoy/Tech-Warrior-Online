@@ -6,6 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <script src="js/loot-system.js"></script>
 <script src="js/enemy-types.js"></script>
+<script src="js/arena-objectives.js"></script>
 <style>
 
 /* ============================================================
@@ -1055,6 +1056,24 @@ button.active {
   <div id="round-banner-sub"  style="font-size:13px;letter-spacing:5px;color:rgba(0,255,255,0.6);margin-top:8px;"></div>
 </div>
 
+<!-- OBJECTIVE HUD -->
+<div id="objective-hud" style="display:none;position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:9998;pointer-events:none;font-family:'Courier New',monospace;">
+  <div style="display:flex;gap:12px;align-items:center;padding:8px 18px;background:rgba(12,16,20,0.88);border:1px solid rgba(255,200,0,0.3);border-radius:8px;box-shadow:0 0 10px rgba(255,200,0,0.15),inset 0 0 8px rgba(255,200,0,0.05);">
+    <span id="obj-icon" style="font-size:18px;"></span>
+    <div>
+      <div id="obj-label" style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#ffcc00;text-shadow:0 0 6px rgba(255,200,0,0.5);"></div>
+      <div id="obj-detail" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;"></div>
+    </div>
+    <div style="width:80px;height:6px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,200,0,0.2);border-radius:3px;overflow:hidden;">
+      <div id="obj-bar-fill" style="height:100%;width:0%;background:#ffcc00;border-radius:3px;transition:width 0.2s linear;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ARENA LABEL (shown briefly at round start) -->
+<div id="arena-label" style="display:none;position:fixed;top:55%;left:50%;transform:translate(-50%,-50%);z-index:99997;pointer-events:none;text-align:center;font-family:'Courier New',monospace;">
+  <div id="arena-label-text" style="font-size:16px;letter-spacing:6px;text-transform:uppercase;text-shadow:0 0 12px rgba(255,255,255,0.3);"></div>
+</div>
 
 <!-- DEATH SCREEN -->
 <div id="death-screen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:99999;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;">
@@ -2989,6 +3008,7 @@ function update(time) {
     checkLootPickups(this);
     checkEquipmentPickups(this);
     if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time);
+    if (typeof updateObjectives === 'function') updateObjectives(this, time);
 }
 
 
@@ -4512,6 +4532,24 @@ function showRoundBanner(title, sub, duration, onDone) {
     }, duration);
 }
 
+function _showArenaLabel(scene, arenaLabel, objLabel) {
+    const el = document.getElementById('arena-label');
+    const txt = document.getElementById('arena-label-text');
+    if (!el || !txt) return;
+    const arenaDef = typeof ARENA_DEFS !== 'undefined' ? ARENA_DEFS[_arenaState?.currentArena] : null;
+    const color = arenaDef?.color || '#88aacc';
+    txt.innerHTML = `<span style="color:${color}">${arenaLabel}</span>` +
+        (objLabel ? `<br><span style="font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:3px;">${objLabel}</span>` : '');
+    el.style.display = 'block';
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.4s ease';
+    setTimeout(() => { el.style.opacity = '1'; }, 30);
+    setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => { el.style.display = 'none'; }, 400);
+    }, 3000);
+}
+
 function _clearMapForRound(scene) {
     // Wipe all in-flight bullets
     if (bullets)      bullets.getChildren().slice().forEach(b => { try { if (b.active) b.destroy(); } catch(e){} });
@@ -4590,6 +4628,27 @@ function startRound(roundNum) {
     const scene = game.scene.scenes[0];
     // Round 2+: wipe map debris and reset player to center
     if (roundNum > 1) _clearMapForRound(scene);
+
+    // ── Phase 6: Arena & Objective selection ──
+    if (typeof selectArena === 'function') {
+        const arenaKey = selectArena(roundNum);
+        const objKey = selectObjective(roundNum, arenaKey);
+        _arenaState.currentArena = arenaKey;
+        _arenaState.currentObjective = objKey;
+        // Cleanup previous objective state
+        if (typeof cleanupObjective === 'function') cleanupObjective(scene);
+        // Regenerate cover for new arena layout (only on round 2+)
+        if (roundNum > 1) generateCover(scene, arenaKey);
+        // Init pit zone if pit arena
+        if (arenaKey === 'pit' && typeof _initPitZone === 'function') _initPitZone(scene);
+        // Init objective
+        if (typeof initObjective === 'function') initObjective(scene, roundNum, objKey);
+        // Show arena + objective banner
+        const aLabel = typeof getArenaLabel === 'function' ? getArenaLabel() : '';
+        const oLabel = typeof getObjectiveLabel === 'function' ? getObjectiveLabel() : '';
+        _showArenaLabel(scene, aLabel, oLabel);
+    }
+
     // Boss every 5th round; normal rounds otherwise
     const isBossRound = roundNum > 0 && roundNum % 5 === 0;
 
@@ -5093,19 +5152,32 @@ function onEnemyKilled() {
         _perkState._predatorCharged = true;
     }
 
-    if (_roundKills >= _roundTotal) {
+    // Phase 6: check objective-based round end (survival complete, assassination done, etc.)
+    const _objEnd = typeof shouldEndRound === 'function' && shouldEndRound();
+    if (_roundKills >= _roundTotal || _objEnd) {
         _roundActive = false;
         _roundClearing = true;
         // Stop player momentum so camera doesn't drift
         if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
         // Destroy any in-flight enemy bullets so they don't hit the player during perk screen
         if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+        // Destroy remaining enemies if objective ended the round early
+        if (_objEnd && _roundKills < _roundTotal) {
+            enemies?.getChildren().slice().forEach(e => { try { if (e.active) e.destroy(); } catch(ex){} });
+            _roundKills = _roundTotal;
+        }
+        // Determine banner sub-text from objective
+        const _objFailed = typeof _arenaState !== 'undefined' && _arenaState.objectiveFailed;
+        const _bannerSub = _objFailed ? '✖ OBJECTIVE FAILED' :
+            (typeof _arenaState !== 'undefined' && _arenaState.currentObjective !== 'elimination' && _arenaState.objectiveComplete ? '★ OBJECTIVE COMPLETE' : '');
         sndRoundClear();
         _healPlayerFull();
+        // Cleanup objective state
+        if (typeof cleanupObjective === 'function') cleanupObjective(game.scene.scenes[0]);
         const nextRound = _round + 1;
         showRoundBanner(
             'ROUND ' + _round + ' CLEARED',
-            '',
+            _bannerSub,
             2200,
             () => showPerkMenu(nextRound)
         );
@@ -6468,9 +6540,50 @@ function placeBuilding(scene, x, y, def) {
     body.coverCY = y;
 }
 
-function generateCover(scene) {
+function generateCover(scene, arenaKey) {
     if (!coverObjects) return;
     coverObjects.clear(true, true);
+
+    // If a custom arena generator exists, use it instead of default city layout
+    if (arenaKey && arenaKey !== 'warehouse' && typeof ARENA_DEFS !== 'undefined') {
+        const arenaDef = ARENA_DEFS[arenaKey];
+        if (arenaDef?.generator) {
+            const genFn = window[arenaDef.generator] || eval(arenaDef.generator);
+            if (typeof genFn === 'function') {
+                const _placed = [];
+                const _placeAt = (def, x, y) => {
+                    _placed.push({ x, y });
+                    if (def.type === 'building') {
+                        placeBuilding(scene, x, y, def);
+                    } else {
+                        const rect = scene.add.rectangle(x - def.w/2, y - def.h/2, def.w, def.h, def.color)
+                            .setOrigin(0, 0).setStrokeStyle(2, def.stroke).setDepth(3);
+                        coverObjects.add(rect, true);
+                        rect.body.setSize(def.w, def.h);
+                        rect.body.reset(x - def.w/2, y - def.h/2);
+                        rect.body.immovable = true;
+                        rect.coverType = def.type; rect.coverHp = def.hp;
+                        rect.coverMaxHp = def.hp; rect.coverDef = def;
+                        rect.coverCX = x; rect.coverCY = y;
+                    }
+                };
+                genFn(scene, coverObjects, _placeAt, COVER_DEFS);
+                // Force-sync all static bodies
+                coverObjects.getChildren().forEach(c => {
+                    if (c.body) {
+                        const w = c.width || 60, h = c.height || 60;
+                        c.body.setSize(w, h);
+                        c.body.reset(c.x, c.y);
+                        c.body.immovable = true;
+                        if (c.coverCX === undefined) { c.coverCX = c.x + w / 2; c.coverCY = c.y + h / 2; }
+                    }
+                });
+                coverObjects.refresh();
+                try { scene.time.delayedCall(120, () => { try { coverObjects?.refresh(); } catch(e){} }); } catch(e) {}
+                return;
+            }
+        }
+    }
 
     const MARGIN    = 150;
     const SAFE_DIST = 420;   // min dist from world center (2000,2000)

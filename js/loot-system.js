@@ -347,6 +347,11 @@ function rollRarity(round, isCommander, isBoss) {
 
     // Gear affix luck from equipped items
     luck += (_gearState.lootMult || 0) * 0.5;
+    // Phase 6: objective completion bonus to loot quality
+    if (typeof getObjectiveLootBonus === 'function') {
+        const bonus = getObjectiveLootBonus();
+        if (bonus > 1) luck += (bonus - 1) * 30; // e.g. 1.5x = +15 luck
+    }
 
     const roll = Math.random() * 100;
     const thresholds = {
