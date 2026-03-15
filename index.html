@@ -3275,6 +3275,21 @@ function handleEnemyAI(scene, time) {
             enemy._breakOffTimer = 0;
         }
 
+        // Squad alert: when one member detects the player, alert nearby squad mates
+        if (_canSeePlayer && enemy._squadId != null) {
+            enemies.getChildren().forEach(mate => {
+                if (!mate.active || mate === enemy || mate._squadId !== enemy._squadId) return;
+                if (mate._aiState === 'patrol' || mate._aiState === 'search') {
+                    const _mateDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, mate.x, mate.y);
+                    if (_mateDist < 800) {
+                        mate._aiState = 'chase';
+                        mate._lastKnownPlayer = { x: player.x, y: player.y };
+                        mate._breakOffTimer = 0;
+                    }
+                }
+            });
+        }
+
         if (!enemy.isStunned && !enemy.isJumping) {
             let vx = 0, vy = 0;
 
@@ -3284,18 +3299,26 @@ function handleEnemyAI(scene, time) {
             // Patrol: wander to random target — always moving, never spinning
             if (enemy._aiState === 'patrol') {
                 const ptDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._patrolTarget.x, enemy._patrolTarget.y);
-                // Pick new target when close, or if target somehow ended up too near
-                if (ptDist < 120 || ptDist < 200 && !enemy._patrolSet) {
-                    // Bias new target away from current position so enemy keeps exploring
-                    const _awayAngle = Phaser.Math.Angle.Between(2000, 2000, enemy.x, enemy.y);
-                    const _spread    = (Math.random() - 0.5) * Math.PI * 1.2;
-                    const _dist      = 400 + Math.random() * 600;
-                    const _tx = Phaser.Math.Clamp(enemy.x + Math.cos(_awayAngle + _spread) * _dist, 200, 3800);
-                    const _ty = Phaser.Math.Clamp(enemy.y + Math.sin(_awayAngle + _spread) * _dist, 200, 3800);
-                    enemy._patrolTarget = { x: _tx, y: _ty };
-                    enemy._patrolSet = true;
-                } else {
-                    enemy._patrolSet = false;
+                // Pick new target when close enough to current one
+                if (ptDist < 120) {
+                    // If in a squad, follow squad leader's general area
+                    if (enemy._squadLeader && enemy._squadLeader.active && enemy._squadLeader !== enemy) {
+                        const leader = enemy._squadLeader;
+                        const _offX = (Math.random() - 0.5) * 300;
+                        const _offY = (Math.random() - 0.5) * 300;
+                        const _tx = Phaser.Math.Clamp(leader._patrolTarget.x + _offX, 200, 3800);
+                        const _ty = Phaser.Math.Clamp(leader._patrolTarget.y + _offY, 200, 3800);
+                        enemy._patrolTarget = { x: _tx, y: _ty };
+                    } else {
+                        // Pick a random point across the map — bias toward center to keep enemies roaming
+                        const _angle = Math.random() * Math.PI * 2;
+                        const _dist  = 400 + Math.random() * 800;
+                        const _cx = 2000 + (Math.random() - 0.5) * 1200; // center-biased origin
+                        const _cy = 2000 + (Math.random() - 0.5) * 1200;
+                        const _tx = Phaser.Math.Clamp(_cx + Math.cos(_angle) * _dist, 200, 3800);
+                        const _ty = Phaser.Math.Clamp(_cy + Math.sin(_angle) * _dist, 200, 3800);
+                        enemy._patrolTarget = { x: _tx, y: _ty };
+                    }
                 }
                 const ptAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, enemy._patrolTarget.x, enemy._patrolTarget.y);
                 // Minimum 60% speed so patrol is always visible movement
@@ -3316,8 +3339,14 @@ function handleEnemyAI(scene, time) {
                 }
             }
             // Chase/Combat: use behavior patterns toward player
+            // Strafe direction: periodically reverse to prevent perpetual orbits
             else if (beh === 'circle') {
-                // Original: advance, strafe, retreat
+                if (!enemy._strafeDir) enemy._strafeDir = Phaser.Math.RND.pick([-1, 1]);
+                if (!enemy._strafeFlipTime) enemy._strafeFlipTime = time + 2000 + Math.random() * 3000;
+                if (time > enemy._strafeFlipTime) {
+                    enemy._strafeDir *= -1;
+                    enemy._strafeFlipTime = time + 2000 + Math.random() * 3000;
+                }
                 if (dist > 350) {
                     vx = Math.cos(angle) * speed;
                     vy = Math.sin(angle) * speed;
@@ -3325,13 +3354,20 @@ function handleEnemyAI(scene, time) {
                     vx = -Math.cos(angle) * speed;
                     vy = -Math.sin(angle) * speed;
                 } else {
-                    const strafe = angle + Math.PI / 2;
-                    vx = Math.cos(strafe) * speed;
-                    vy = Math.sin(strafe) * speed;
+                    // Strafe with a forward/backward bias to create spiraling, not pure circles
+                    const strafe = angle + (Math.PI / 2) * enemy._strafeDir;
+                    const fwdBias = dist > 280 ? 0.3 : -0.2; // push in or out to avoid stable orbit
+                    vx = Math.cos(strafe) * speed * 0.8 + Math.cos(angle) * speed * fwdBias;
+                    vy = Math.sin(strafe) * speed * 0.8 + Math.sin(angle) * speed * fwdBias;
                 }
             }
             else if (beh === 'rusher') {
-                // Close in at base speed — no faster than the player
+                if (!enemy._strafeDir) enemy._strafeDir = Phaser.Math.RND.pick([-1, 1]);
+                if (!enemy._strafeFlipTime) enemy._strafeFlipTime = time + 1500 + Math.random() * 2000;
+                if (time > enemy._strafeFlipTime) {
+                    enemy._strafeDir *= -1;
+                    enemy._strafeFlipTime = time + 1500 + Math.random() * 2000;
+                }
                 if (dist > 260) {
                     vx = Math.cos(angle) * speed;
                     vy = Math.sin(angle) * speed;
@@ -3339,13 +3375,19 @@ function handleEnemyAI(scene, time) {
                     vx = -Math.cos(angle) * speed * 0.8;
                     vy = -Math.sin(angle) * speed * 0.8;
                 } else {
-                    const strafe = angle + Math.PI / 2;
-                    vx = Math.cos(strafe) * speed;
-                    vy = Math.sin(strafe) * speed;
+                    const strafe = angle + (Math.PI / 2) * enemy._strafeDir;
+                    // Rushers add forward bias to keep closing in
+                    vx = Math.cos(strafe) * speed * 0.6 + Math.cos(angle) * speed * 0.4;
+                    vy = Math.sin(strafe) * speed * 0.6 + Math.sin(angle) * speed * 0.4;
                 }
             }
             else if (beh === 'sniper') {
-                // Stays at long range, barely moves
+                if (!enemy._strafeDir) enemy._strafeDir = Phaser.Math.RND.pick([-1, 1]);
+                if (!enemy._strafeFlipTime) enemy._strafeFlipTime = time + 3000 + Math.random() * 4000;
+                if (time > enemy._strafeFlipTime) {
+                    enemy._strafeDir *= -1;
+                    enemy._strafeFlipTime = time + 3000 + Math.random() * 4000;
+                }
                 if (dist > 480) {
                     vx = Math.cos(angle) * speed * 0.5;
                     vy = Math.sin(angle) * speed * 0.5;
@@ -3353,7 +3395,7 @@ function handleEnemyAI(scene, time) {
                     vx = -Math.cos(angle) * speed * 0.6;
                     vy = -Math.sin(angle) * speed * 0.6;
                 } else {
-                    const strafe = angle + Math.PI / 2;
+                    const strafe = angle + (Math.PI / 2) * enemy._strafeDir;
                     vx = Math.cos(strafe) * speed * 0.3;
                     vy = Math.sin(strafe) * speed * 0.3;
                 }
@@ -3368,6 +3410,47 @@ function handleEnemyAI(scene, time) {
                     const fa = angle + (Math.PI / 2) * enemy.flankDir;
                     vx = Math.cos(fa) * speed * 0.75 + Math.cos(angle) * speed * 0.25;
                     vy = Math.sin(fa) * speed * 0.75 + Math.sin(angle) * speed * 0.25;
+                }
+            }
+            else if (beh === 'ambusher') {
+                // Stays still or creeps slowly until player is close, then rushes in
+                if (dist > 350) {
+                    // Creep toward player slowly — ambush positioning
+                    vx = Math.cos(angle) * speed * 0.2;
+                    vy = Math.sin(angle) * speed * 0.2;
+                } else if (dist > 150) {
+                    // Close enough — spring the ambush, rush in fast
+                    vx = Math.cos(angle) * speed * 1.1;
+                    vy = Math.sin(angle) * speed * 1.1;
+                } else {
+                    // Point-blank — strafe to avoid return fire
+                    const strafe = angle + Math.PI / 2 * (enemy.flankDir || 1);
+                    vx = Math.cos(strafe) * speed * 0.9;
+                    vy = Math.sin(strafe) * speed * 0.9;
+                }
+            }
+            else if (beh === 'guardian') {
+                // Holds ground — only moves to maintain optimal range, prioritizes staying near spawn
+                if (!enemy._guardPos) enemy._guardPos = { x: enemy.x, y: enemy.y };
+                const guardDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._guardPos.x, enemy._guardPos.y);
+                if (dist < 250) {
+                    // Player too close — back away
+                    vx = -Math.cos(angle) * speed * 0.7;
+                    vy = -Math.sin(angle) * speed * 0.7;
+                } else if (guardDist > 300) {
+                    // Drifted too far from guard position — return
+                    const gAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, enemy._guardPos.x, enemy._guardPos.y);
+                    vx = Math.cos(gAngle) * speed * 0.6;
+                    vy = Math.sin(gAngle) * speed * 0.6;
+                } else if (dist > 500) {
+                    // Player far away — slowly advance
+                    vx = Math.cos(angle) * speed * 0.3;
+                    vy = Math.sin(angle) * speed * 0.3;
+                } else {
+                    // Optimal range — strafe slowly
+                    const strafe = angle + Math.PI / 2;
+                    vx = Math.cos(strafe) * speed * 0.25;
+                    vy = Math.sin(strafe) * speed * 0.25;
                 }
             }
 
@@ -3472,7 +3555,7 @@ function handleEnemyAI(scene, time) {
                 if (!enemy._stuckCheckTime) enemy._stuckCheckTime = time;
                 if (time - enemy._stuckCheckTime > 800) {
                     if (_movedSince < 15) {
-                        // Stuck — pick a new random patrol target and add a perpendicular nudge
+                        // Stuck against wall — pick a new random patrol target and add a perpendicular nudge
                         enemy._patrolTarget = { x: Phaser.Math.Between(300, 3700), y: Phaser.Math.Between(300, 3700) };
                         if (enemy._aiState === 'combat' || enemy._aiState === 'chase') enemy._aiState = 'patrol';
                         vx += (Math.random() - 0.5) * speed * 2;
@@ -3484,6 +3567,23 @@ function handleEnemyAI(scene, time) {
             } else {
                 enemy._stuckCheckTime = time;
                 enemy._lastPos = { x: enemy.x, y: enemy.y };
+            }
+
+            // Circular orbit detection: track displacement from a reference point over 3s
+            // If enemy moves a lot per-frame but stays near same spot, it's orbiting
+            if (!enemy._orbitRefPos) enemy._orbitRefPos = { x: enemy.x, y: enemy.y };
+            if (!enemy._orbitCheckTime) enemy._orbitCheckTime = time;
+            if (time - enemy._orbitCheckTime > 3000) {
+                const _orbitDisp = Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._orbitRefPos.x, enemy._orbitRefPos.y);
+                if (_orbitDisp < 80 && (enemy._aiState === 'combat' || enemy._aiState === 'chase')) {
+                    // Orbiting in combat — force strafe direction flip and nudge inward/outward
+                    if (enemy._strafeDir) enemy._strafeDir *= -1;
+                    const _nudgeAngle = angle + (Math.random() > 0.5 ? 0 : Math.PI); // toward or away from player
+                    vx += Math.cos(_nudgeAngle) * speed * 0.5;
+                    vy += Math.sin(_nudgeAngle) * speed * 0.5;
+                }
+                enemy._orbitRefPos = { x: enemy.x, y: enemy.y };
+                enemy._orbitCheckTime = time;
             }
 
             // Separation: push away from nearby enemies to prevent stacking
@@ -3504,10 +3604,15 @@ function handleEnemyAI(scene, time) {
                 ? Math.atan2(vy, vx)
                 : enemy.visuals.rotation;
             // Smoothly rotate the visual body toward desired angle
+            // Faster rotation in patrol so enemies don't circle around obstacles
+            const _turnRate = (enemy._aiState === 'patrol' || enemy._aiState === 'search') ? 0.14 : 0.08;
             enemy.visuals.rotation = Phaser.Math.Angle.RotateTo(
-                enemy.visuals.rotation, desiredAngle, 0.08);
+                enemy.visuals.rotation, desiredAngle, _turnRate);
+            // Slow down when turning sharply to prevent circular drift
+            const _angleMismatch = Math.abs(Phaser.Math.Angle.Wrap(desiredAngle - enemy.visuals.rotation));
+            const _turnBrake = _angleMismatch > 1.2 ? 0.25 : _angleMismatch > 0.6 ? 0.55 : 1.0;
             // Drive physics body along the visual facing direction only
-            const spd = Math.sqrt(vx*vx + vy*vy);
+            const spd = Math.sqrt(vx*vx + vy*vy) * _turnBrake;
             enemy.body.setVelocity(
                 Math.cos(enemy.visuals.rotation) * spd,
                 Math.sin(enemy.visuals.rotation) * spd
@@ -4231,7 +4336,10 @@ function showPerkMenu(nextRound) {
     const universalPool = Object.keys(_perks).filter(k => _perks[k].cat === 'universal');
     const chassisPool   = Object.keys(_perks).filter(k => _perks[k].cat === ch);
     // Slot 4: weapon/mod/aug/leg specific — combine all equipped categories
+    const shld = loadout.shld || 'none';
     const specCats = [wL, wR, mod, aug, leg].filter(c => c && c !== 'none');
+    // Shield perks use cat:'shield' but loadout.shld is e.g. 'light_shield' — map it
+    if (shld && shld !== 'none') specCats.push('shield');
     const weaponPool    = Object.keys(_perks).filter(k => specCats.includes(_perks[k].cat));
 
     const chosen = [];
@@ -4249,7 +4357,7 @@ function showPerkMenu(nextRound) {
         const catCount = _pickedPerks.filter(pk => _perks[pk]?.cat === cat).length;
         return catCount >= 2 && _round >= 5;
     });
-    const _offerLegendary = _eligibleLeg.length > 0 && Math.random() < 0.35 && !chosen.includes(_eligibleLeg[0]);
+    const _offerLegendary = _eligibleLeg.length > 0 && Math.random() < 0.10 && !chosen.includes(_eligibleLeg[0]);
 
     // Slot 4 — legendary (if eligible) or weapon/mod/aug/leg specific
     let w;
@@ -7122,9 +7230,9 @@ function spawnEnemy(scene) {
     // Stats — use the same component HP as the chassis defines
     e.loadout    = loadoutE;
     const _behaviorPool = {
-        light:  ['rusher', 'rusher', 'flanker'],
-        medium: ['circle', 'flanker', 'circle'],
-        heavy:  ['circle', 'sniper',  'circle']
+        light:  ['rusher', 'rusher', 'flanker', 'ambusher', 'flanker'],
+        medium: ['circle', 'flanker', 'circle', 'guardian', 'ambusher'],
+        heavy:  ['circle', 'sniper',  'circle', 'guardian', 'guardian']
     };
     e.behavior   = (loadoutE.primary === 'hr' || loadoutE.primary === 'sr')
                  ? 'sniper'
@@ -7188,6 +7296,33 @@ function spawnEnemy(scene) {
 
     // Vision cone graphics object — drawn each frame in handleEnemyAI
     e._visionConeGfx = scene.add.graphics().setDepth(3);
+
+    // Squad system: assign to an existing squad or start a new one
+    e._squadLeader = null;
+    e._squadId = null;
+    const _activeEnemies = enemies ? enemies.getChildren().filter(en => en.active && en !== e) : [];
+    // Try to join a squad that has <3 members and is the same chassis
+    const _squads = {};
+    _activeEnemies.forEach(en => {
+        if (en._squadId != null) {
+            if (!_squads[en._squadId]) _squads[en._squadId] = [];
+            _squads[en._squadId].push(en);
+        }
+    });
+    let _joined = false;
+    for (const [sid, members] of Object.entries(_squads)) {
+        if (members.length < 3 && members[0].loadout?.chassis === loadoutE.chassis) {
+            e._squadId = parseInt(sid);
+            e._squadLeader = members.find(m => m._squadLeader === m) || members[0];
+            _joined = true;
+            break;
+        }
+    }
+    if (!_joined) {
+        // Start a new squad — this enemy is the leader
+        e._squadId = Math.floor(Math.random() * 100000);
+        e._squadLeader = e; // leader references itself
+    }
 
     enemies.add(e);
     // Collide new enemy with all existing cover objects
