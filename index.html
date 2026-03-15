@@ -1324,20 +1324,20 @@ const WEAPONS = {
     // MG: solid sustained fire — identity: reliable workhorse
     mg:     { name: 'MG',     reload: 280,  dmg: 28,  weight: 25,  bulletSize: 6,  speed: 870 },
     // SG: close-range burst — identity: devastating at point blank, weak at range
-    sg:     { name: 'SG',     reload: 700,  dmg: 18,  weight: 30,  bulletSize: 5,  speed: 580,  pellets: 6, range: 500 },
+    sg:     { name: 'SG',     reload: 700,  dmg: 16,  weight: 30,  bulletSize: 5,  speed: 580,  pellets: 6, range: 500 },
     // BR: burst precision — identity: mid-range burst, first shot accurate
     br:     { name: 'BR',     reload: 900,  dmg: 30,  weight: 30,  bulletSize: 5,  speed: 1150, burst: 3 },
     // HR: anti-armor heavy — identity: pierces shields entirely (shield absorb ignored), high single-shot damage
     hr:     { name: 'HR',     reload: 1600, dmg: 160, weight: 45,  bulletSize: 12, speed: 1100, armorBuster: true, shieldPierce: true },
     // FTH: flamethrower — identity: short-range DoT cone, no bullet, spray fire
-    fth:    { name: 'FTH',    reload: 80,   dmg: 8,   weight: 30,  bulletSize: 8,  speed: 420,  flame: true, range: 350 },
+    fth:    { name: 'FTH',    reload: 90,   dmg: 7,   weight: 30,  bulletSize: 8,  speed: 420,  flame: true, range: 350 },
     // ── SECONDARY WEAPONS ───────────────────────────────────────────
     // SR: precision eliminator — identity: pierce through all enemies in line
     sr:     { name: 'SR',     reload: 2200, dmg: 240, weight: 50,  bulletSize: 6,  speed: 2200, pierce: true },
     // GL: area denial — identity: short arm distance, big AOE
-    gl:     { name: 'GL',     reload: 3200, dmg: 200, weight: 55,  explosive: true, armDist: 80 },
+    gl:     { name: 'GL',     reload: 2800, dmg: 220, weight: 55,  explosive: true, armDist: 80 },
     // RL: high-risk heavy — identity: massive dmg+radius, can self-damage
-    rl:     { name: 'RL',     reload: 3200, dmg: 220, weight: 65,  explosive: true, bulletSize: 12, speed: 820, selfDamage: true, radius: 120 },
+    rl:     { name: 'RL',     reload: 3200, dmg: 250, weight: 65,  explosive: true, bulletSize: 12, speed: 820, selfDamage: true, radius: 120 },
     // PLSM: channeled beam — identity: continuous growing orb
     plsm:   { name: 'PLSM',   reload: 3200, dmg: 300, weight: 60,  size: 32 },
     // RAIL: railgun — identity: long charge, extreme single-target damage, pierces all
@@ -1348,19 +1348,19 @@ const WEAPONS = {
     jump:   { name: 'JUMP',   weight: 15,  jumpSpeed: 950,  airTime: 220,   cooldown: 3500,  slamDmg: 40, slamRadius: 120 },
     // SHIELD: defensive — 4s active, 3s lockout after deactivation
     // BARRIER: 2s full invulnerability burst — shorter than old shield but true invincibility
-    barrier: { name: 'BARRIER', weight: 20,  shieldTime: 2000, cooldown: 7000, trueInvuln: true },
+    barrier: { name: 'BARRIER', weight: 20,  shieldTime: 2000, cooldown: 9000, trueInvuln: true },
     // RAGE: offensive — brief invincibility on activation, boosted damage
     rage:   { name: 'RAGE',   weight: 30,  rageTime: 3500,                  cooldown: 10500, invincFrames: 500 },
     // EMP: crowd control
-    emp:    { name: 'EMP',    weight: 30,  radius: 380, empSpeed: 380, stunTime: 3200, cooldown: 9000 },
+    emp:    { name: 'EMP',    weight: 30,  radius: 380, empSpeed: 380, stunTime: 2400, cooldown: 9000 },
     // REPAIR DRONE: sustain — repairs most-damaged limb over time
     repair: { name: 'REPAIR', weight: 20,  healAmount: 40, healTicks: 5, tickDelay: 500, cooldown: 12000 },
     // ATTACK DRONE: offensive — deploys a turret that auto-fires at nearest enemy
-    atk_drone: { name: 'DRONE', weight: 35, droneDmg: 20, droneReload: 600, droneDuration: 8000, cooldown: 14000 },
+    atk_drone: { name: 'DRONE', weight: 35, droneDmg: 24, droneReload: 600, droneDuration: 8000, cooldown: 12000 },
     // MISSILE POD: burst — fires 6 homing micro-missiles at up to 3 enemies
     missile: { name: 'MISSILES', weight: 35, missileDmg: 55, missileCount: 6, cooldown: 11000 },
-    // DECOY: utility — hologram that draws enemy fire for 5s
-    decoy:  { name: 'DECOY',  weight: 15,  decoyDuration: 5000, cooldown: 10000 },
+    // DECOY: utility — hologram that draws enemy fire for 6s
+    decoy:  { name: 'DECOY',  weight: 15,  decoyDuration: 6000, cooldown: 8500 },
     // ── CHASSIS-UNIQUE CORE MODS ──────────────────────────────────
     // GHOST STEP: brief cloaking dash — 1.5s invisibility, 3s cooldown
     ghost_step: { name: 'GHOST STEP', weight: 20, cloakTime: 1500, cooldown: 7000,
@@ -7351,6 +7351,11 @@ function fire(scene, side) {
     const _braceOther = side === 'L' ? loadout.R : loadout.L;
     const _braceDmgMult = (!_braceOther || _braceOther === 'none') && !WEAPONS[loadout.L]?.twoHanded ? 1.25 : 1.0;
 
+    // ── Dual-fire damage penalty ─────────────────────────────────────
+    // When same weapon in both arms (dual-wield), each arm deals 15% less damage
+    const _isDualWield = loadout.L === loadout.R && loadout.L !== 'none' && !WEAPONS[loadout.L]?.twoHanded;
+    const _dualWieldMult = _isDualWield ? 0.85 : 1.0;
+
     // ── Arm-offset origin ────────────────────────────────────────────
     // Bullets spawn from the arm that holds the weapon, not the torso center.
     // torso.rotation faces the mouse cursor.
@@ -7430,7 +7435,7 @@ function fire(scene, side) {
     }
     const _capBonus = (_perkState._capacitorReady) ? 1.25 : 1.0;
     if (_perkState._capacitorReady) _perkState._capacitorReady = false;
-    const _effectiveDmg = Math.round((weapon.dmg || 0) * (_perkState.dmgMult || 1) * _braceDmgMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus);
+    const _effectiveDmg = Math.round((weapon.dmg || 0) * (_perkState.dmgMult || 1) * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus);
     const _wEff = Object.assign({}, weapon, { dmg: _effectiveDmg });
     // Phantom: mark all bullets from this shot as piercing
     if (_phantomMult > 1) _wEff._phantomPierce = true;
@@ -9086,11 +9091,11 @@ const SLOT_DESCS = {
     jump:             { title:'JUMP JETS', desc:'Dash forward at high speed. Deals slam AoE damage (40 dmg, 120px) on landing. Afterleg boosts both.' },
     barrier:          { title:'BARRIER', desc:'4 seconds of full damage immunity. Energy barrier absorbs all incoming fire. 3-second lockout after deactivation.' },
     rage:             { title:'RAGE', desc:'3.5s damage boost + brief invincibility frames on activation. Higher cooldown.' },
-    emp:              { title:'EMP BURST', desc:'Expanding ring stuns all enemies within 380px for 3.2 seconds. Great vs groups.' },
+    emp:              { title:'EMP BURST', desc:'Expanding ring stuns all enemies within 380px for 2.4 seconds. Great vs groups.' },
     repair:           { title:'REPAIR DRONE', desc:'Heals your most-damaged limb for 40 HP delivered over 5 ticks. Pulse visual confirms activation.' },
-    atk_drone:        { title:'ATTACK DRONE', desc:'Deploys an auto-turret that fires 20 dmg bolts at the nearest enemy every 0.6s for 8 seconds.' },
+    atk_drone:        { title:'ATTACK DRONE', desc:'Deploys an auto-turret that fires 24 dmg bolts at the nearest enemy every 0.6s for 8 seconds.' },
     missile:          { title:'MISSILE POD', desc:'Launches 6 homing micro-missiles split across up to 3 nearest enemies. 55 dmg per hit.' },
-    decoy:            { title:'DECOY', desc:'Deploys a hologram at your position. Nearby enemies redirect targeting to the decoy for 5 seconds.' },
+    decoy:            { title:'DECOY', desc:'Deploys a hologram at your position. Nearby enemies redirect targeting to the decoy for 6 seconds.' },
     ghost_step:       { title:'GHOST STEP', desc:'Cloak for 1.5s — enemies lose targeting lock and will not fire. Deactivates if you fire a weapon.' },
     overclock_burst:  { title:'OVERCLOCK BURST', desc:'3-second burst: +25% fire rate and +20% movement speed. Long 12s cooldown.' },
     fortress_mode:    { title:'FORTRESS MODE', desc:'4 seconds: +30% damage reduction and 5 HP/s core regeneration. Stand your ground.' },
@@ -9809,7 +9814,7 @@ function populateStats() {
     // ── Chassis traits & arm mode — rendered full-width below the grid ──
     const _chColor = ch==='light'?'#88ff88':ch==='medium'?'#ffcc44':'#ff8844';
     const _cTraits = ch === 'light'
-        ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped'],
+        ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped (−15% dmg per arm)'],
            ['Reload Speed','+20% passive reload speed on all weapons'],
            ['Fragile Arms','Arms have 30% less base HP than Medium chassis']]
         : ch === 'medium'
