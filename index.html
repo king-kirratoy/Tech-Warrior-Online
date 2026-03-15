@@ -3044,7 +3044,8 @@ function handleShieldRegen(time) {
     const regenDelay = player._shieldRegenDelay ?? 5;
     const regenRate  = player._shieldRegenRate  ?? 1.0;
     if (player.maxShield > 0 && lastDamageTime > 0 && secondsSinceHit >= regenDelay && player.shield < player.maxShield) {
-        player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * immovableBonus);
+        const _gearRegenMult = 1 + ((_gearState?.shieldRegen || 0) / 100);
+        player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult * immovableBonus);
         if (player.shield >= player.maxShield) {
             player._shieldAdaptStack = 0;  // adaptive_shield: reset on full regen
             player._shieldRetribChg  = 0;  // retribution: reset charge on full regen
@@ -3720,17 +3721,21 @@ function handlePlayerMovement(scene, time) {
         if (_ss2.activeSpeedPenalty && player.shield > 0) return 1 - _ss2.activeSpeedPenalty;
         return 1;
     })();
+    const _gearSpdMult = 1 + ((_gearState?.speedPct || 0) / 100);
     const speed = CHASSIS[loadout.chassis].spd
         * (isRageActive ? 1.75 : 1)
         * _legMult
         * (_perkState.speedMult || 1)
+        * _gearSpdMult
         * _warlordSpeedMult
         * _shldSpdMult;
     const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod]?.cooldown || 0 : 0;
 
     // Mod activation (SPACE)
-    const effectiveModCooldown = isChargeActive ? modCooldown * 0.5
-        : (loadout.chassis === 'medium' ? modCooldown * (CHASSIS.medium.modCooldownMult || 0.85) : modCooldown);
+    const _gearModCdMult = 1 - ((_gearState?.modCdPct || 0) / 100);
+    const effectiveModCooldown = (isChargeActive ? modCooldown * 0.5
+        : (loadout.chassis === 'medium' ? modCooldown * (CHASSIS.medium.modCooldownMult || 0.85) : modCooldown))
+        * _gearModCdMult;
     if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + effectiveModCooldown) {
         activateMod(scene, time);
     }
@@ -4418,11 +4423,66 @@ function pickPerk(key, nextRound) {
     const menu = document.getElementById('perk-menu');
     if (menu) menu.style.display = 'none';
     _roundClearing = false;
+
+    // If player has unequipped loot, show brief equip prompt before next round
+    if (_inventory.length > 0) {
+        _showEquipPrompt(nextRound);
+        return;
+    }
+
     const _rsc = game?.scene?.scenes[0];
     if (_rsc) { try { _rsc.input.setDefaultCursor('none'); } catch(e){} }
     document.body.style.cursor = 'none';
     sndRoundStart();
     startRound(nextRound);
+}
+
+function _showEquipPrompt(nextRound) {
+    let overlay = document.getElementById('equip-prompt-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'equip-prompt-overlay';
+        overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:10000;background:rgba(3,6,10,0.92);font-family:"Courier New",monospace;flex-direction:column;align-items:center;justify-content:center;';
+        overlay.innerHTML = `
+            <div style="text-align:center;">
+                <div style="font-size:14px;letter-spacing:4px;color:#ffd700;margin-bottom:8px;text-shadow:0 0 12px rgba(255,215,0,0.4);">LOOT AVAILABLE</div>
+                <div id="equip-prompt-count" style="font-size:12px;letter-spacing:2px;color:rgba(200,210,220,0.6);margin-bottom:28px;"></div>
+                <div style="display:flex;gap:16px;justify-content:center;">
+                    <button id="equip-prompt-open" style="padding:12px 28px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.4);border-left:3px solid #ffd700;border-radius:6px;color:#ffd700;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;">OPEN INVENTORY</button>
+                    <button id="equip-prompt-skip" style="padding:12px 28px;background:rgba(200,210,220,0.06);border:1px solid rgba(200,210,220,0.2);border-radius:6px;color:rgba(200,210,220,0.6);font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;">CONTINUE →</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    }
+
+    document.getElementById('equip-prompt-count').textContent = `${_inventory.length} item${_inventory.length > 1 ? 's' : ''} in backpack`;
+    overlay.style.display = 'flex';
+
+    const openBtn = document.getElementById('equip-prompt-open');
+    const skipBtn = document.getElementById('equip-prompt-skip');
+
+    const _dismissAndStart = () => {
+        overlay.style.display = 'none';
+        const _rsc = game?.scene?.scenes[0];
+        if (_rsc) { try { _rsc.input.setDefaultCursor('none'); } catch(e){} }
+        document.body.style.cursor = 'none';
+        sndRoundStart();
+        startRound(nextRound);
+    };
+
+    // Clone buttons to remove old listeners
+    const newOpen = openBtn.cloneNode(true);
+    const newSkip = skipBtn.cloneNode(true);
+    openBtn.parentNode.replaceChild(newOpen, openBtn);
+    skipBtn.parentNode.replaceChild(newSkip, skipBtn);
+
+    newOpen.addEventListener('click', () => {
+        overlay.style.display = 'none';
+        // Store callback so inventory close triggers round start
+        window._equipPromptCallback = _dismissAndStart;
+        toggleInventory();
+    });
+    newSkip.addEventListener('click', _dismissAndStart);
 }
 
 function showRoundBanner(title, sub, duration, onDone) {
@@ -5142,11 +5202,16 @@ function deployMech() {
     });
 
     // Component HP — initialize first, then immediately reset doll so it always shows green
+    // Apply gear HP bonuses from equipped items
+    recalcGearStats();
+    const _gCoreHP = (_gearState?.coreHP || 0) + (_gearState?.allHP || 0);
+    const _gArmHP  = (_gearState?.armHP  || 0) + (_gearState?.allHP || 0);
+    const _gLegHP  = (_gearState?.legHP  || 0) + (_gearState?.allHP || 0);
     player.comp = {
-        core: { hp: s.coreHP, max: s.coreHP },
-        lArm: { hp: s.armHP,  max: s.armHP  },
-        rArm: { hp: s.armHP,  max: s.armHP  },
-        legs: { hp: s.legHP,  max: s.legHP  }
+        core: { hp: s.coreHP + _gCoreHP, max: s.coreHP + _gCoreHP },
+        lArm: { hp: s.armHP  + _gArmHP,  max: s.armHP  + _gArmHP  },
+        rArm: { hp: s.armHP  + _gArmHP,  max: s.armHP  + _gArmHP  },
+        legs: { hp: s.legHP  + _gLegHP,  max: s.legHP  + _gLegHP  }
     };
     // Force doll to green now — updatePaperDoll() won't run until isDeployed=true
     // (set inside the drop-in tween), so we reset directly here to avoid showing
@@ -5156,8 +5221,9 @@ function deployMech() {
     player.hp        = player.maxHp;
     // Shield comes from equipped shield system — 0 if none
     const _shldSys = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
-    player.maxShield = _shldSys.maxShield;
-    player.shield    = _shldSys.maxShield;
+    const _gShieldHP = (_gearState?.shieldHP || 0);
+    player.maxShield = _shldSys.maxShield + _gShieldHP;
+    player.shield    = _shldSys.maxShield + _gShieldHP;
     player._shieldRegenRate  = _shldSys.regenRate;
     player._shieldRegenDelay = _shldSys.regenDelay;
     // Absorb from shield definition; medium chassis gets +10% absorb bonus on top
@@ -7863,8 +7929,9 @@ function fire(scene, side) {
     // Single-arm brace bonus: when the other arm is empty, this arm gets +15% reload speed
     const _otherArm = side === 'L' ? loadout.R : loadout.L;
     const _braceMult = (!_otherArm || _otherArm === 'none') && !WEAPONS[loadout.L]?.twoHanded ? 0.85 : 1.0;
+    const _gearReloadMult = 1 - ((_gearState?.reloadPct || 0) / 100);
     const reloadActual = ((isRageActive || isAmmoActive) ? weapon.reload * 0.5 : weapon.reload)
-        * (_perkState.reloadMult || 1) * _lightReloadMult * _braceMult
+        * (_perkState.reloadMult || 1) * _gearReloadMult * _lightReloadMult * _braceMult
         * (_perkState._overclockBurst ? 0.75 : 1.0);
     const lastFired    = side === 'L' ? reloadL : reloadR;
     if (now < lastFired) return;
@@ -7987,7 +8054,9 @@ function fire(scene, side) {
     }
     const _capBonus = (_perkState._capacitorReady) ? 1.25 : 1.0;
     if (_perkState._capacitorReady) _perkState._capacitorReady = false;
-    const _effectiveDmg = Math.round((weapon.dmg || 0) * (_perkState.dmgMult || 1) * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus);
+    const _gearDmgFlat = (_gearState?.dmgFlat || 0);
+    const _gearDmgPct  = 1 + ((_gearState?.dmgPct || 0) / 100);
+    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * (_perkState.dmgMult || 1) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus);
     const _wEff = Object.assign({}, weapon, { dmg: _effectiveDmg });
     // Phantom: mark all bullets from this shot as piercing
     if (_phantomMult > 1) _wEff._phantomPierce = true;
@@ -8401,7 +8470,8 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         if (amt > cap) amt = cap;
     }
     // Phantom dodge chance
-    if (_perkState.dodgeChance > 0 && Math.random() < _perkState.dodgeChance) {
+    const _totalDodge = (_perkState.dodgeChance || 0) + ((_gearState?.dodgePct || 0) / 100);
+    if (_totalDodge > 0 && Math.random() < _totalDodge) {
         const scene = game.scene.scenes[0];
         const dodgeTxt = scene.add.text(player.x, player.y - 30, 'DODGE!', {
             font:'bold 18px monospace', fill:'#88ff88', stroke:'#000', strokeThickness:3
@@ -8436,8 +8506,9 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     player.lastHitTime = now;
 
     _damageTaken += amt;
-    // Fortress perk: flat damage reduction
-    if (_perkState.fortress > 0) amt = amt * (1 - Math.min(0.75, _perkState.fortress));
+    // Fortress perk + gear DR: flat damage reduction
+    const _totalDR = (_perkState.fortress || 0) + ((_gearState?.dr || 0));
+    if (_totalDR > 0) amt = amt * (1 - Math.min(0.75, _totalDR));
     // Mag Anchors: -20% incoming damage while stationary
     if (_perkState._magAnchorsActive) amt *= 0.80;
     // Evasion Coils: 10% DR while moving, 15% DR vs close-range hits
@@ -8741,7 +8812,8 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         _perkState._predatorCharged = false;
     }
     // Critical hit
-    if (!explosive && _perkState.critChance > 0 && Math.random() < _perkState.critChance) {
+    const _totalCrit = (_perkState.critChance || 0) + ((_gearState?.critChance || 0) / 100);
+    if (!explosive && _totalCrit > 0 && Math.random() < _totalCrit) {
         amt *= 2;
         const scene = game.scene.scenes[0];
         const critTxt = scene.add.text(e.x, e.y - 25, 'CRIT!', {
@@ -10339,6 +10411,12 @@ function toggleInventory() {
         if (scene && isDeployed) { try { scene.physics.resume(); scene.time.paused = false; scene.input.setDefaultCursor('none'); } catch(e){} }
         document.body.style.cursor = isDeployed ? 'none' : 'default';
         if (btn) { btn.innerHTML = `LOOT <span id="inv-count" style="opacity:0.6;">${_inventory.length}/${INVENTORY_MAX}</span>`; btn.blur(); }
+        // If inventory was opened from equip prompt, fire the callback to start next round
+        if (window._equipPromptCallback) {
+            const cb = window._equipPromptCallback;
+            window._equipPromptCallback = null;
+            cb();
+        }
     }
 }
 
@@ -10451,6 +10529,57 @@ function _showItemDetail(source, key) {
             html += `<div style="font-size:12px;color:#44ff88;margin-bottom:3px;letter-spacing:1px;">● ${a.label}</div>`;
         });
         html += `</div>`;
+    }
+
+    // ── Item Comparison (backpack item vs equipped) ──
+    if (source === 'backpack') {
+        let compareSlot = _getSlotForItem(item);
+        if (item.baseType === 'weapon') compareSlot = _equipped.L ? 'L' : _equipped.R ? 'R' : 'L';
+        const equipped = compareSlot ? _equipped[compareSlot] : null;
+        if (equipped) {
+            const eqRd = RARITY_DEFS[equipped.rarity];
+            html += `<div style="border-top:2px solid rgba(255,215,0,0.15);margin-top:14px;padding-top:12px;">`;
+            html += `<div style="font-size:10px;letter-spacing:3px;color:rgba(255,215,0,0.45);margin-bottom:10px;">CURRENTLY EQUIPPED (${compareSlot.toUpperCase()})</div>`;
+            html += `<div style="font-size:13px;letter-spacing:1px;color:${eqRd.colorStr};margin-bottom:8px;text-shadow:0 0 8px ${eqRd.colorStr}33;">${equipped.name} <span style="font-size:10px;color:rgba(200,210,220,0.4);">iLvl ${equipped.level}</span></div>`;
+
+            // Collect all stat keys from both items for diff
+            const _cmpNames = { dmg:'Damage', reload:'Reload (ms)', pellets:'Pellets', speed:'Proj Speed',
+                coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', dr:'Dmg Reduction', shieldHP:'Shield HP',
+                shieldRegen:'Shield Regen %', speedPct:'Move Speed %', reloadPct:'Reload Speed %',
+                dmgPct:'Damage %', modCdPct:'Mod CD %', modEffPct:'Mod Eff %', dodgePct:'Dodge %',
+                accuracy:'Accuracy', lootMult:'Loot Quality %', absorbPct:'Shield Absorb %',
+                critChance:'Crit Chance %', critDmg:'Crit Damage %', splashRadius:'Blast Radius %',
+                allHP:'All Part HP', autoRepair:'HP/sec Regen' };
+            // Build stat totals for each item (baseStats + affixes)
+            const _itemTotal = (it) => {
+                const t = {};
+                if (it.baseStats) Object.entries(it.baseStats).forEach(([k,v]) => { if (typeof v === 'number') t[k] = (t[k]||0) + v; });
+                if (it.affixes) it.affixes.forEach(a => { t[a.stat] = (t[a.stat]||0) + a.value; });
+                return t;
+            };
+            const newStats = _itemTotal(item);
+            const oldStats = _itemTotal(equipped);
+            const allKeys = new Set([...Object.keys(newStats), ...Object.keys(oldStats)]);
+
+            html += `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:2px 10px;font-size:11px;">`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;">STAT</div>`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">EQUIPPED</div>`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">NEW</div>`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">DIFF</div>`;
+            allKeys.forEach(k => {
+                const o = oldStats[k] || 0;
+                const n = newStats[k] || 0;
+                const diff = n - o;
+                if (o === 0 && n === 0) return;
+                const diffColor = diff > 0 ? '#44ff88' : diff < 0 ? '#ff5050' : 'rgba(200,210,220,0.5)';
+                const diffStr = diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : '—';
+                html += `<div style="color:rgba(200,210,220,0.6);">${_cmpNames[k] || k}</div>`;
+                html += `<div style="text-align:right;color:rgba(200,210,220,0.5);">${o}</div>`;
+                html += `<div style="text-align:right;color:rgba(200,210,220,0.9);">${n}</div>`;
+                html += `<div style="text-align:right;color:${diffColor};font-weight:bold;">${diffStr}</div>`;
+            });
+            html += `</div></div>`;
+        }
     }
 
     dc.innerHTML = html;
@@ -10579,10 +10708,14 @@ function populateStats() {
     const baseShield = chassisData?.max || 75;
     let chassisHtml = '';
     chassisHtml += _statRow('Chassis', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
-    // Shield: show base vs current max
+    // Shield: show base vs current max, with gear contribution in gold
+    const gearShieldHP = (_gearState?.shieldHP || 0);
     const shieldBonus = Math.round((player?.maxShield||0) - baseShield);
+    const perkShieldBonus = shieldBonus - gearShieldHP;
+    const gearShieldTag = gearShieldHP > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">+${gearShieldHP}g</span>` : '';
+    const perkShieldTag = perkShieldBonus > 0 ? `<span style="color:#cc88ff;font-size:0.85em;margin-right:6px;">+${perkShieldBonus}</span>` : '';
     const shieldVal = shieldBonus > 0
-        ? `<span style="color:#cc88ff;font-size:0.85em;margin-right:6px;">+${shieldBonus}</span>${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}`
+        ? `${gearShieldTag}${perkShieldTag}${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}`
         : `${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}`;
     chassisHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple">${shieldVal}</span></div>`;
     chassisHtml += '<div style="margin-top:12px;margin-bottom:6px;font-size:12px;letter-spacing:2px;color:rgba(0,255,255,0.35);">HULL INTEGRITY</div>';
@@ -10671,6 +10804,9 @@ function populateStats() {
     // ── WEAPONS & DPS ────────────────────────────────────────
     let wHtml = '';
     const sides = [['L', loadout.L], ['R', loadout.R], ['CORE', loadout.mod]];
+    const _gDmgFlat = (_gearState?.dmgFlat || 0);
+    const _gDmgPct  = (_gearState?.dmgPct || 0);
+    const _gReloadPct = (_gearState?.reloadPct || 0);
     sides.forEach(([side, key]) => {
         if (!key || key === 'none') return;
         const w = WEAPONS[key];
@@ -10679,14 +10815,19 @@ function populateStats() {
         wHtml += `<div style="font-size:13px;letter-spacing:2px;color:rgba(0,255,255,0.7);margin-bottom:8px;">${side}: ${w.name}</div>`;
         if (w.dmg) {
             const baseDmg  = w.dmg;
-            const effDmg   = Math.round(baseDmg * (_perkState.dmgMult||1));
+            const perkDmg  = Math.round(baseDmg * (_perkState.dmgMult||1));
+            const effDmg   = Math.round((baseDmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100));
             const baseRld  = w.reload || 0;
-            const effRld   = Math.round(baseRld * (_perkState.reloadMult||1));
+            const perkRld  = Math.round(baseRld * (_perkState.reloadMult||1));
+            const effRld   = Math.round(baseRld * (_perkState.reloadMult||1) * (1 - _gReloadPct/100));
             const baseDps  = baseRld > 0 ? Math.round(baseDmg / baseRld * 1000) : 0;
             const effDps   = effRld  > 0 ? Math.round(effDmg  / effRld  * 1000) : 0;
             const dmgSuffix = w.pellets ? ` × ${w.pellets} pellets` : '';
-            wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value">${_perkBonus(effDmg, baseDmg)}${dmgSuffix}</span></div>`;
-            wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}">${_perkReduction(effRld, baseRld)}</span></div>`;
+            // Show perk bonus (green) + gear bonus (gold) separately
+            const _gearTag = (gearVal, perkVal) => { const d = Math.round(gearVal - perkVal); return d > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">+${d}g</span>` : ''; };
+            const _gearTagNeg = (gearVal, perkVal) => { const d = Math.round(perkVal - gearVal); return d > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">−${d}g</span>` : ''; };
+            wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value">${_gearTag(effDmg,perkDmg)}${_perkBonus(perkDmg, baseDmg)}${dmgSuffix}</span></div>`;
+            wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}">${_gearTagNeg(effRld,perkRld)}${_perkReduction(perkRld, baseRld)}</span></div>`;
             wHtml += `<div class="stats-row"><span class="stats-label">DPS (est.)</span><span class="stats-value ${effDps>200?'green':effDps>80?'yellow':'orange'}">${_perkBonus(effDps, baseDps)}</span></div>`;
         }
         if (w.radius) {
@@ -10702,22 +10843,50 @@ function populateStats() {
     // ── MOBILITY & SHIELD ─────────────────────────────────────
     let mobHtml = '';
     const baseSpd = chassisData?.spd || 200;
-    const effSpd  = Math.round(baseSpd * (_perkState.speedMult||1));
+    const perkSpd = Math.round(baseSpd * (_perkState.speedMult||1));
+    const gearSpdBonus = (_gearState?.speedPct || 0);
+    const effSpd  = Math.round(perkSpd * (1 + gearSpdBonus/100));
     const legsOk  = player?.comp?.legs?.hp > 0;
-    const spdLabel = `<div class="stats-row"><span class="stats-label">Speed</span><span class="stats-value ${effSpd>baseSpd?'green':''}">${_perkBonus(effSpd, baseSpd)}</span></div>`;
+    const _gTag = (v) => v > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">+${v}g</span>` : '';
+    const spdGearTag = gearSpdBonus > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">+${Math.round(effSpd - perkSpd)}g</span>` : '';
+    const spdLabel = `<div class="stats-row"><span class="stats-label">Speed</span><span class="stats-value ${effSpd>baseSpd?'green':''}">${spdGearTag}${_perkBonus(perkSpd, baseSpd)}</span></div>`;
     mobHtml += spdLabel;
     mobHtml += _statRow('Legs Status', legsOk ? 'OPERATIONAL' : 'DESTROYED', legsOk ? 'green' : 'red');
     if (!legsOk) mobHtml += _statRow('Speed Penalty', '−50%', 'red');
     mobHtml += '<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:10px;padding-top:10px;"></div>';
     const baseRegenRate = 1.0;
-    const effRegenRate  = baseRegenRate * (_perkState.shieldRegenMult||1);
-    mobHtml += `<div class="stats-row"><span class="stats-label">Shield Regen</span><span class="stats-value purple">${_perkBonus(parseFloat(effRegenRate.toFixed(1)), parseFloat(baseRegenRate.toFixed(1)))}/frame</span></div>`;
+    const perkRegenRate = baseRegenRate * (_perkState.shieldRegenMult||1);
+    const gearRegenBonus = (_gearState?.shieldRegen || 0);
+    const effRegenRate   = perkRegenRate * (1 + gearRegenBonus/100);
+    const regenGearTag = gearRegenBonus > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">+${Math.round((effRegenRate - perkRegenRate)*10)/10}g</span>` : '';
+    mobHtml += `<div class="stats-row"><span class="stats-label">Shield Regen</span><span class="stats-value purple">${regenGearTag}${_perkBonus(parseFloat(perkRegenRate.toFixed(1)), parseFloat(baseRegenRate.toFixed(1)))}/frame</span></div>`;
     if (_perkState.noShieldRegen) mobHtml += _statRow('Regen Active', 'DISABLED', 'red');
     if (_perkState.immovable) mobHtml += _statRow('Immovable', '3× regen while still', 'purple');
-    if (_perkState.dodgeChance > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dodge Chance</span><span class="stats-value green"><span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${Math.round(_perkState.dodgeChance*100)}%</span>${Math.round(_perkState.dodgeChance*100)}%</span></div>`;
-    if (_perkState.fortress > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dmg Reduction</span><span class="stats-value green"><span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${Math.round(Math.min(75,_perkState.fortress*100))}%</span>${Math.round(Math.min(75,_perkState.fortress*100))}%</span></div>`;
-    if (_perkState.autoRepair > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Auto-Repair</span><span class="stats-value green"><span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${_perkState.autoRepair}</span>${_perkState.autoRepair} HP/sec</span></div>`;
-    if (_perkState.critChance > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Crit Chance</span><span class="stats-value green"><span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${Math.round(_perkState.critChance*100)}%</span>${Math.round(_perkState.critChance*100)}%</span></div>`;
+    // Dodge: perk + gear
+    const perkDodgePct = Math.round((_perkState.dodgeChance||0) * 100);
+    const gearDodgePct = (_gearState?.dodgePct || 0);
+    const totalDodge = perkDodgePct + gearDodgePct;
+    if (totalDodge > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dodge Chance</span><span class="stats-value green">${_gTag(gearDodgePct)}${perkDodgePct > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkDodgePct}%</span>` : ''}${totalDodge}%</span></div>`;
+    // DR: perk + gear
+    const perkDR = Math.round(Math.min(75, (_perkState.fortress||0) * 100));
+    const gearDR = (_gearState?.dr || 0);
+    const totalDR = Math.min(75, perkDR + gearDR);
+    if (totalDR > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dmg Reduction</span><span class="stats-value green">${_gTag(gearDR)}${perkDR > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkDR}%</span>` : ''}${totalDR}%</span></div>`;
+    // Auto-repair: perk + gear
+    const perkRepair = _perkState.autoRepair || 0;
+    const gearRepair = (_gearState?.autoRepair || 0);
+    const totalRepair = perkRepair + gearRepair;
+    if (totalRepair > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Auto-Repair</span><span class="stats-value green">${_gTag(gearRepair)}${perkRepair > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkRepair}</span>` : ''}${totalRepair} HP/sec</span></div>`;
+    // Crit: perk + gear
+    const perkCrit = Math.round((_perkState.critChance||0) * 100);
+    const gearCrit = (_gearState?.critChance || 0);
+    const totalCrit = perkCrit + gearCrit;
+    if (totalCrit > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Crit Chance</span><span class="stats-value green">${_gTag(gearCrit)}${perkCrit > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkCrit}%</span>` : ''}${totalCrit}%</span></div>`;
+    // Gear-only stats that don't come from perks
+    const gearModCd = (_gearState?.modCdPct || 0);
+    if (gearModCd > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Mod Cooldown</span><span class="stats-value"><span style="color:#ffd700;font-size:0.85em;margin-right:6px;">−${gearModCd}%g</span>−${gearModCd}%</span></div>`;
+    const gearLoot = (_gearState?.lootMult || 0);
+    if (gearLoot > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Loot Quality</span><span class="stats-value"><span style="color:#ffd700;font-size:0.85em;margin-right:6px;">+${gearLoot}%g</span>+${gearLoot}%</span></div>`;
     document.getElementById('stat-mobility-info').innerHTML = mobHtml;
 
     // ── RUN STATS ─────────────────────────────────────────────
