@@ -3727,13 +3727,15 @@ function handlePlayerMovement(scene, time) {
         return 1;
     })();
     const _gearSpdMult = 1 + ((_gearState?.speedPct || 0) / 100);
+    const _unstoppableSpdMult = 1 + (typeof getUnstoppableSpeedBonus === 'function' ? getUnstoppableSpeedBonus() : 0);
     const speed = CHASSIS[loadout.chassis].spd
         * (isRageActive ? 1.75 : 1)
         * _legMult
         * (_perkState.speedMult || 1)
         * _gearSpdMult
         * _warlordSpeedMult
-        * _shldSpdMult;
+        * _shldSpdMult
+        * _unstoppableSpdMult;
     const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod]?.cooldown || 0 : 0;
 
     // Mod activation (SPACE)
@@ -5597,6 +5599,8 @@ function applyLegSystem() {
     }
 }
 function activateMod(scene, time) {
+    // Blueprint Core: spawn temporary cover wall on any mod activation
+    if (typeof spawnModCover === 'function') spawnModCover(scene);
     switch (loadout.mod) {
         case 'jump':      activateJump(scene);           break;
         case 'barrier':   activateShield(scene);         break;
@@ -6097,7 +6101,8 @@ function activateShield(scene) {
     }
     // Thorns Protocol: reflect damage to attackers while shield is up — handled in processPlayerDamage
     // Capacitor Armor: tracked in processPlayerDamage
-    scene.time.delayedCall(WEAPONS.barrier.shieldTime, () => {
+    const _barrierDur = WEAPONS.barrier.shieldTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    scene.time.delayedCall(_barrierDur, () => {
         isShieldActive = false;
         sndShieldDeactivate();
         lastModTime = game.scene.scenes[0].time.now;
@@ -6108,7 +6113,8 @@ function activateRage(scene) {
     sndRage();
     isRageActive = true;
     refreshMechColor();
-    scene.time.delayedCall(WEAPONS.rage.rageTime, () => {
+    const _rageDur = WEAPONS.rage.rageTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    scene.time.delayedCall(_rageDur, () => {
         isRageActive = false;
         refreshMechColor();
         lastModTime = game.scene.scenes[0].time.now;
@@ -6132,7 +6138,8 @@ function activateEMP(scene, time) {
     // Stun nearby enemies
     enemies.getChildren().forEach(enemy => {
         const _empRad  = WEAPONS.emp.radius  * (_perkState.empAmplifier ? 1.30 : 1.0);
-    const _empStun = WEAPONS.emp.stunTime * (_perkState.empAmplifier ? 1.40 : 1.0);
+    const _empAmpMult = (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify')) ? 1.5 : 1;
+    const _empStun = WEAPONS.emp.stunTime * (_perkState.empAmplifier ? 1.40 : 1.0) * _empAmpMult;
     if (Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y) < _empRad) {
             enemy.isStunned = true;
             if (enemy.visuals?.setStrokeStyle) enemy.visuals.setStrokeStyle(4, 0x00ffff);
@@ -6155,7 +6162,8 @@ function activateGhostStep(scene, time) {
     // Make player sprite semi-transparent
     if (player.torso) player.torso.setAlpha(0.15);
     if (player.visuals) player.visuals.setAlpha(0.15);
-    const _gTimer = scene.time.delayedCall(WEAPONS.ghost_step.cloakTime, () => {
+    const _gsCloakDur = WEAPONS.ghost_step.cloakTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    const _gTimer = scene.time.delayedCall(_gsCloakDur, () => {
         _perkState._ghostStepActive = false;
         if (player?.torso) player.torso.setAlpha(1);
         if (player?.visuals) player.visuals.setAlpha(1);
@@ -6170,7 +6178,8 @@ function activateOverclockBurst(scene, time) {
     _perkState._overclockBurst = true;
     _perkState.speedMult = (_perkState.speedMult || 1) * 1.20;
     _perkState._overclockReloadMult = 0.75; // 25% faster fire rate
-    scene.time.delayedCall(WEAPONS.overclock_burst.boostTime, () => {
+    const _obDur = WEAPONS.overclock_burst.boostTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    scene.time.delayedCall(_obDur, () => {
         _perkState._overclockBurst = false;
         _perkState.speedMult = (_perkState.speedMult || 1.20) / 1.20;
         _perkState._overclockReloadMult = 1.0;
@@ -6188,7 +6197,8 @@ function activateFortressMode(scene, time) {
         player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 1); // 5 HP/s at 200ms ticks
         updateHUD();
     }});
-    scene.time.delayedCall(WEAPONS.fortress_mode.modeTime, () => {
+    const _fmDur = WEAPONS.fortress_mode.modeTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    scene.time.delayedCall(_fmDur, () => {
         _perkState._fortressMode = false;
         _perkState._fortressDR = 0;
         _fTick.remove();
@@ -8008,8 +8018,9 @@ function fire(scene, side) {
     const _otherArm = side === 'L' ? loadout.R : loadout.L;
     const _braceMult = (!_otherArm || _otherArm === 'none') && !WEAPONS[loadout.L]?.twoHanded ? 0.85 : 1.0;
     const _gearReloadMult = 1 - ((_gearState?.reloadPct || 0) / 100);
+    const _dualReloadMult = 1 - (typeof getDualReloadBonus === 'function' ? getDualReloadBonus() : 0);
     const reloadActual = ((isRageActive || isAmmoActive) ? weapon.reload * 0.5 : weapon.reload)
-        * (_perkState.reloadMult || 1) * _gearReloadMult * _lightReloadMult * _braceMult
+        * (_perkState.reloadMult || 1) * _gearReloadMult * _dualReloadMult * _lightReloadMult * _braceMult
         * (_perkState._overclockBurst ? 0.75 : 1.0);
     const lastFired    = side === 'L' ? reloadL : reloadR;
     if (now < lastFired) return;
@@ -8140,15 +8151,22 @@ function fire(scene, side) {
     if (_phantomMult > 1) _wEff._phantomPierce = true;
     // Ballistic Weave: bullets ignore 20% of shield
     if (_perkState.ballisticWeave) _wEff._shieldPierce = 0.20;
-    switch (wKey) {
-        case 'gl':    fireGL(scene, _wEff, armOx, armOy, aimAngle);   break;
-        case 'rl':    fireRL(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-        case 'siege': fireSIEGE(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-        case 'chain': fireStandard(scene, wKey, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-        case 'sg':    fireSG(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-        case 'plsm':  firePLSM(scene, _wEff, armOx, armOy, aimAngle); break;
-        case 'sr':    fireSR(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-        default:      fireStandard(scene, wKey, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+    const _fireOnce = () => {
+        switch (wKey) {
+            case 'gl':    fireGL(scene, _wEff, armOx, armOy, aimAngle);   break;
+            case 'rl':    fireRL(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+            case 'siege': fireSIEGE(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+            case 'chain': fireStandard(scene, wKey, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+            case 'sg':    fireSG(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+            case 'plsm':  firePLSM(scene, _wEff, armOx, armOy, aimAngle); break;
+            case 'sr':    fireSR(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+            default:      fireStandard(scene, wKey, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+        }
+    };
+    _fireOnce();
+    // Razor Edge: every 3rd shot fires a bonus duplicate
+    if (typeof checkDoubleStrike === 'function' && checkDoubleStrike()) {
+        scene.time.delayedCall(50, _fireOnce);
     }
 
     if (side === 'L') reloadL = now + reloadActual;
@@ -8547,6 +8565,17 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         const cap = player.comp.core.max * 0.30;
         if (amt > cap) amt = cap;
     }
+    // ── Unique item effects (damage reduction) ──
+    // Frontal Aegis: attacks from front deal 40% less damage
+    if (typeof applyFrontalAbsorb === 'function') amt = applyFrontalAbsorb(amt, bulletAngle);
+    // Sentinel's Plating: +12% DR while shield is full
+    if (typeof getShieldDRBonus === 'function') { const sdr = getShieldDRBonus(); if (sdr > 0) amt = Math.round(amt * (1 - sdr)); }
+    // Impact Armor: +15% DR for 3s after heavy hit
+    if (typeof getImpactArmorDR === 'function') { const iadr = getImpactArmorDR(); if (iadr > 0) amt = Math.round(amt * (1 - iadr)); }
+    if (typeof checkImpactArmor === 'function') checkImpactArmor(amt);
+    // Gear total DR
+    const _totalDR = (_perkState.fortress || 0) + ((_gearState?.dr || 0) / 100);
+    if (_totalDR > 0) amt = Math.round(amt * (1 - Math.min(0.75, _totalDR)));
     // Phantom dodge chance
     const _totalDodge = (_perkState.dodgeChance || 0) + ((_gearState?.dodgePct || 0) / 100);
     if (_totalDodge > 0 && Math.random() < _totalDodge) {
@@ -8584,9 +8613,6 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     player.lastHitTime = now;
 
     _damageTaken += amt;
-    // Fortress perk + gear DR: flat damage reduction
-    const _totalDR = (_perkState.fortress || 0) + ((_gearState?.dr || 0));
-    if (_totalDR > 0) amt = amt * (1 - Math.min(0.75, _totalDR));
     // Mag Anchors: -20% incoming damage while stationary
     if (_perkState._magAnchorsActive) amt *= 0.80;
     // Evasion Coils: 10% DR while moving, 15% DR vs close-range hits
@@ -9074,7 +9100,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             scene.time.delayedCall(80, () => createExplosion(scene, e.x, e.y, 50, 20));
         }
         spawnLoot(scene, e.x, e.y, false);  // 30% chance
-        spawnEquipmentLoot(scene, e.x, e.y, { isMedic: !!e.isMedic, isBoss: !!e.isBoss, isElite: !!e.isElite, enemyType: e.enemyType || null });
+        spawnEquipmentLoot(scene, e.x, e.y, { isMedic: !!e.isMedic, isBoss: !!e.isBoss, bossType: e.bossType || null, isElite: !!e.isElite, enemyType: e.enemyType || null });
         }
         // All enemies move toward ally death location
         const _diedX = e.x, _diedY = e.y;
@@ -10533,7 +10559,7 @@ function populateInventory() {
         slotLabels.forEach(([key, label]) => {
             const item = _equipped[key];
             const rarityDef = item ? RARITY_DEFS[item.rarity] : null;
-            const itemName = item ? item.name : '— empty —';
+            const itemName = item ? (item.isUnique ? '★ ' + item.name : item.name) : '— empty —';
             const nameColor = rarityDef ? rarityDef.colorStr : 'rgba(200,210,220,0.35)';
             eqHtml += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 8px;border:1px solid ${rarityDef ? rarityDef.colorStr + '33' : 'rgba(255,255,255,0.08)'};border-radius:4px;background:rgba(0,0,0,0.2);cursor:${item ? 'pointer' : 'default'};" ${item ? `onclick="_showItemDetail('equipped','${key}')" onmouseover="this.style.borderColor='${nameColor}66'" onmouseout="this.style.borderColor='${nameColor}33'"` : ''}>
                 <span style="font-size:9px;letter-spacing:1px;color:rgba(200,210,220,0.45);min-width:80px;">${label}</span>
@@ -10553,9 +10579,11 @@ function populateInventory() {
             _inventory.forEach((item, idx) => {
                 const rd = RARITY_DEFS[item.rarity];
                 const cell = document.createElement('div');
-                cell.style.cssText = `width:54px;height:54px;border:1px solid ${rd.colorStr}44;border-radius:4px;background:rgba(0,0,0,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;position:relative;`;
-                cell.title = `${item.name}\n${item.affixes.map(a => a.label).join('\n')}`;
-                cell.innerHTML = `<div style="font-size:7px;letter-spacing:1px;color:${rd.colorStr};text-align:center;line-height:1.2;overflow:hidden;max-width:50px;">${item.shortName}</div>
+                const _uBorder = item.isUnique ? `border:2px solid ${rd.colorStr};box-shadow:0 0 6px ${rd.colorStr}44;` : `border:1px solid ${rd.colorStr}44;`;
+                cell.style.cssText = `width:54px;height:54px;${_uBorder}border-radius:4px;background:rgba(0,0,0,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;position:relative;`;
+                cell.title = `${item.name}\n${item.affixes.map(a => a.label).join('\n')}${item.uniqueLabel ? '\n★ ' + item.uniqueLabel : ''}`;
+                const _starBadge = item.isUnique ? '<div style="position:absolute;top:1px;right:2px;font-size:8px;color:#ffd700;">★</div>' : '';
+                cell.innerHTML = `${_starBadge}<div style="font-size:7px;letter-spacing:1px;color:${rd.colorStr};text-align:center;line-height:1.2;overflow:hidden;max-width:50px;">${item.shortName}</div>
                     <div style="width:6px;height:6px;border-radius:50%;background:${rd.colorStr};margin-top:3px;opacity:0.7;"></div>`;
                 cell.addEventListener('mouseover', () => { cell.style.borderColor = rd.colorStr + 'aa'; cell.style.boxShadow = `0 0 8px ${rd.colorStr}33`; });
                 cell.addEventListener('mouseout', () => { cell.style.borderColor = rd.colorStr + '44'; cell.style.boxShadow = 'none'; });
@@ -10579,9 +10607,10 @@ function _showItemDetail(source, key) {
     if (!item) return;
 
     const rd = RARITY_DEFS[item.rarity];
+    const _uniqueBadge = item.isUnique ? '<span style="font-size:9px;letter-spacing:2px;color:#ffd700;margin-left:10px;background:rgba(255,215,0,0.12);padding:2px 6px;border:1px solid rgba(255,215,0,0.3);border-radius:3px;">★ UNIQUE</span>' : '';
     let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`;
     html += `<div>
-        <span style="font-size:16px;letter-spacing:2px;color:${rd.colorStr};text-shadow:0 0 10px ${rd.colorStr}44;">${item.name}</span>
+        <span style="font-size:16px;letter-spacing:2px;color:${rd.colorStr};text-shadow:0 0 10px ${rd.colorStr}44;">${item.name}</span>${_uniqueBadge}
         <span style="font-size:10px;letter-spacing:1px;color:rgba(200,210,220,0.4);margin-left:12px;">iLvl ${item.level}</span>
     </div>`;
 
@@ -10623,6 +10652,17 @@ function _showItemDetail(source, key) {
         item.affixes.forEach(a => {
             html += `<div style="font-size:12px;color:#44ff88;margin-bottom:3px;letter-spacing:1px;">● ${a.label}</div>`;
         });
+        html += `</div>`;
+    }
+
+    // Unique effect (boss items)
+    if (item.isUnique && item.uniqueLabel) {
+        html += `<div style="border-top:2px solid rgba(255,215,0,0.3);margin-top:10px;padding-top:10px;background:rgba(255,215,0,0.04);border-radius:4px;padding:10px;">`;
+        html += `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,215,0,0.5);margin-bottom:6px;">★ UNIQUE EFFECT</div>`;
+        html += `<div style="font-size:12px;color:#ffd700;letter-spacing:1px;margin-bottom:4px;text-shadow:0 0 8px rgba(255,215,0,0.3);">${item.uniqueLabel}</div>`;
+        if (item.uniqueDesc) {
+            html += `<div style="font-size:11px;color:rgba(200,210,220,0.65);line-height:1.4;">${item.uniqueDesc}</div>`;
+        }
         html += `</div>`;
     }
 

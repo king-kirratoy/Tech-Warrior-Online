@@ -51,6 +51,247 @@ const ITEM_BASES = {
 // Which weapon keys from WEAPONS are droppable as loot items
 const WEAPON_LOOT_KEYS = ['smg','mg','sg','br','hr','fth','sr','gl','rl','plsm','rail','siege','chain'];
 
+// ── UNIQUE BOSS ITEMS ────────────────────────────────────────────
+// Each boss has 1 Legendary + 1 Epic unique drop. Unique items have
+// special passive/proc effects beyond standard stat bonuses.
+const UNIQUE_ITEMS = {
+    // ── THE WARDEN (Round 5, 25, 45...) ──────────────────────
+    wardens_aegis: {
+        name: "Warden's Aegis",
+        shortName: 'Aegis',
+        baseType: 'shield',
+        icon: 'shield_core',
+        rarity: 'legendary',
+        isUnique: true,
+        boss: 'warden',
+        baseStats: { shieldHP: 45, shieldRegen: 12, absorbPct: 10 },
+        affixes: [
+            { key:'shieldHP', stat:'shieldHP', value:25, label:'+25 Shield Capacity' },
+            { key:'dr', stat:'dr', value:5, label:'+5% Damage Reduction' }
+        ],
+        uniqueEffect: 'frontalAbsorb',
+        uniqueLabel: 'FRONTAL AEGIS: Attacks from the front deal 40% less damage',
+        uniqueDesc: 'While shield is active, frontal hits (±60°) take 40% reduced damage.'
+    },
+    sentinels_plating: {
+        name: "Sentinel's Plating",
+        shortName: 'Sentinel',
+        baseType: 'armor',
+        icon: 'armor_heavy',
+        rarity: 'epic',
+        isUnique: true,
+        boss: 'warden',
+        baseStats: { coreHP: 55, dr: 0.06 },
+        affixes: [
+            { key:'coreHP', stat:'coreHP', value:30, label:'+30 Core HP' },
+            { key:'dr', stat:'dr', value:4, label:'+4% Damage Reduction' }
+        ],
+        uniqueEffect: 'shieldDR',
+        uniqueLabel: 'SENTINEL STANCE: +12% DR while shield is full',
+        uniqueDesc: 'While shield is at maximum, gain 12% additional damage reduction.'
+    },
+
+    // ── TWIN RAZORS (Round 10, 30, 50...) ────────────────────
+    razor_edge: {
+        name: "Razor Edge",
+        shortName: 'Razor',
+        baseType: 'weapon',
+        subType: 'smg',
+        icon: 'smg',
+        rarity: 'legendary',
+        isUnique: true,
+        boss: 'razor',
+        baseStats: { dmg: 18, reload: 180, speed: 700 },
+        affixes: [
+            { key:'dmgPct', stat:'dmgPct', value:15, label:'+15% Damage' },
+            { key:'critChance', stat:'critChance', value:8, label:'+8% Crit Chance' },
+            { key:'reloadPct', stat:'reloadPct', value:10, label:'-10% Reload Time' }
+        ],
+        uniqueEffect: 'doubleStrike',
+        uniqueLabel: 'TWIN FANGS: Every 3rd shot fires twice',
+        uniqueDesc: 'Every 3rd bullet is duplicated, hitting with two projectiles.'
+    },
+    twinned_servo: {
+        name: "Twinned Servo",
+        shortName: 'T.Servo',
+        baseType: 'arms',
+        icon: 'arm_servo',
+        rarity: 'epic',
+        isUnique: true,
+        boss: 'razor',
+        baseStats: { armHP: 25, reloadPct: -8 },
+        affixes: [
+            { key:'reloadPct', stat:'reloadPct', value:12, label:'-12% Reload Time' },
+            { key:'dmgPct', stat:'dmgPct', value:5, label:'+5% Damage' }
+        ],
+        uniqueEffect: 'dualReload',
+        uniqueLabel: 'SYNC SERVOS: Dual-wield weapons reload 30% faster',
+        uniqueDesc: 'When both arms have weapons equipped, reload speed is boosted by 30%.'
+    },
+
+    // ── THE ARCHITECT (Round 15, 35, 55...) ──────────────────
+    blueprint_core: {
+        name: "Blueprint Core",
+        shortName: 'B.Core',
+        baseType: 'mod',
+        icon: 'mod_oc',
+        rarity: 'legendary',
+        isUnique: true,
+        boss: 'architect',
+        baseStats: { modCdPct: -12, modEffPct: 15 },
+        affixes: [
+            { key:'modCdPct', stat:'modCdPct', value:10, label:'-10% Mod Cooldown' },
+            { key:'modEffPct', stat:'modEffPct', value:15, label:'+15% Mod Effectiveness' }
+        ],
+        uniqueEffect: 'modCover',
+        uniqueLabel: 'FABRICATOR: Mod activation spawns a temporary cover wall',
+        uniqueDesc: 'Each time you activate your mod, a destructible cover wall spawns at your position.'
+    },
+    architects_array: {
+        name: "Architect's Array",
+        shortName: 'A.Array',
+        baseType: 'augment',
+        icon: 'aug_combat',
+        rarity: 'epic',
+        isUnique: true,
+        boss: 'architect',
+        baseStats: { modEffPct: 20 },
+        affixes: [
+            { key:'modCdPct', stat:'modCdPct', value:8, label:'-8% Mod Cooldown' },
+            { key:'modEffPct', stat:'modEffPct', value:25, label:'+25% Mod Effectiveness' }
+        ],
+        uniqueEffect: 'modAmplify',
+        uniqueLabel: 'OVERCLOCK: Mod effects last 50% longer',
+        uniqueDesc: 'All mod durations and effects are extended by 50%.'
+    },
+
+    // ── JUGGERNAUT (Round 20, 40, 60...) ─────────────────────
+    juggernaut_engine: {
+        name: "Juggernaut Engine",
+        shortName: 'J.Engine',
+        baseType: 'legs',
+        icon: 'leg_booster',
+        rarity: 'legendary',
+        isUnique: true,
+        boss: 'juggernaut',
+        baseStats: { legHP: 40, speedPct: 8 },
+        affixes: [
+            { key:'speedPct', stat:'speedPct', value:12, label:'+12% Move Speed' },
+            { key:'dodgePct', stat:'dodgePct', value:5, label:'+5% Dodge Chance' },
+            { key:'legHP', stat:'legHP', value:20, label:'+20 Leg HP' }
+        ],
+        uniqueEffect: 'unstoppable',
+        uniqueLabel: 'UNSTOPPABLE: Immune to slow effects, +20% speed',
+        uniqueDesc: 'Cannot be slowed. Movement speed bonus increased by 20%.'
+    },
+    unstoppable_core: {
+        name: "Unstoppable Core",
+        shortName: 'U.Core',
+        baseType: 'armor',
+        icon: 'armor_react',
+        rarity: 'epic',
+        isUnique: true,
+        boss: 'juggernaut',
+        baseStats: { coreHP: 70, dr: 0.05 },
+        affixes: [
+            { key:'allHP', stat:'allHP', value:15, label:'+15 All Part HP' },
+            { key:'dr', stat:'dr', value:6, label:'+6% Damage Reduction' }
+        ],
+        uniqueEffect: 'impactArmor',
+        uniqueLabel: 'IMPACT ARMOR: Taking heavy hits (>25 dmg) grants 3s of +15% DR',
+        uniqueDesc: 'When hit for more than 25 damage in one hit, gain 15% bonus DR for 3 seconds.'
+    }
+};
+
+// Boss drop table: which unique items each boss can drop
+const BOSS_DROP_TABLE = {
+    warden:     { legendary: 'wardens_aegis',     epic: 'sentinels_plating' },
+    razor:      { legendary: 'razor_edge',        epic: 'twinned_servo' },
+    architect:  { legendary: 'blueprint_core',    epic: 'architects_array' },
+    juggernaut: { legendary: 'juggernaut_engine', epic: 'unstoppable_core' }
+};
+
+// Generate a unique boss item from a template
+function generateUniqueItem(uniqueKey, round) {
+    const template = UNIQUE_ITEMS[uniqueKey];
+    if (!template) return null;
+
+    const level = round || 1;
+    const levelMult = 1 + (level - 1) * 0.03;
+    const rarityDef = RARITY_DEFS[template.rarity];
+
+    // Scale base stats
+    const scaledStats = {};
+    for (const [k, v] of Object.entries(template.baseStats)) {
+        if (typeof v === 'number') {
+            scaledStats[k] = Math.round(v * levelMult * rarityDef.statMult);
+        } else {
+            scaledStats[k] = v;
+        }
+    }
+
+    // Copy affixes (scale values by level)
+    const affixes = template.affixes.map(a => ({
+        ...a,
+        value: Math.round(a.value * levelMult)
+    }));
+    // Update labels with scaled values
+    affixes.forEach(a => {
+        const prefix = ['reloadPct','modCdPct'].includes(a.stat) ? '-' : '+';
+        a.label = a.label.replace(/[+-]?\d+/, prefix + a.value);
+    });
+
+    const item = {
+        id: 'item_' + (++_lootItemIdCounter),
+        baseType: template.baseType,
+        subType: template.subType || uniqueKey,
+        baseKey: uniqueKey,
+        name: template.name,
+        shortName: template.shortName,
+        icon: template.icon,
+        rarity: template.rarity,
+        level,
+        baseStats: scaledStats,
+        affixes,
+        computedStats: {},
+        isUnique: true,
+        uniqueEffect: template.uniqueEffect,
+        uniqueLabel: template.uniqueLabel,
+        uniqueDesc: template.uniqueDesc,
+        boss: template.boss
+    };
+
+    // Compute final stats
+    item.computedStats = { ...scaledStats };
+    affixes.forEach(a => {
+        item.computedStats[a.stat] = (item.computedStats[a.stat] || 0) + a.value;
+    });
+
+    return item;
+}
+
+// Roll boss-specific drops: 1 guaranteed unique + regular drops
+function rollBossDrops(bossType, round) {
+    const table = BOSS_DROP_TABLE[bossType];
+    if (!table) return [];
+
+    const drops = [];
+
+    // Guaranteed unique drop: 25% legendary, 75% epic
+    const uniqueKey = Math.random() < 0.25 ? table.legendary : table.epic;
+    const uniqueItem = generateUniqueItem(uniqueKey, round);
+    if (uniqueItem) drops.push(uniqueItem);
+
+    // Additional regular drops (1-2)
+    const extraCount = Phaser.Math.Between(1, 2);
+    for (let i = 0; i < extraCount; i++) {
+        const item = generateItem(round, { isBoss: true });
+        if (item) drops.push(item);
+    }
+
+    return drops;
+}
+
 // ── AFFIX POOL ─────────────────────────────────────────────────
 const AFFIX_POOL = {
     // Offensive
@@ -682,17 +923,25 @@ function spawnEquipmentLoot(scene, x, y, enemyData) {
 
     const round = (typeof _round !== 'undefined') ? _round : 1;
 
-    // Boss can drop 1-3 items
+    // Boss can drop unique items + regular drops
     if (enemyData?.isBoss) {
-        const dropCount = Phaser.Math.Between(1, 3);
-        for (let i = 0; i < dropCount; i++) {
-            const item = generateItem(round, enemyData);
-            if (item) {
-                const ox = x + Phaser.Math.Between(-40, 40);
-                const oy = y + Phaser.Math.Between(-40, 40);
-                spawnEquipmentDrop(scene, ox, oy, item);
+        const bossType = enemyData.bossType || null;
+        let drops = [];
+        if (bossType && typeof rollBossDrops === 'function') {
+            drops = rollBossDrops(bossType, round);
+        } else {
+            // Fallback: generate 1-3 regular items
+            const dropCount = Phaser.Math.Between(1, 3);
+            for (let i = 0; i < dropCount; i++) {
+                const item = generateItem(round, enemyData);
+                if (item) drops.push(item);
             }
         }
+        drops.forEach((item, i) => {
+            const ox = x + Phaser.Math.Between(-50, 50);
+            const oy = y + Phaser.Math.Between(-50, 50);
+            spawnEquipmentDrop(scene, ox, oy, item);
+        });
     } else {
         const item = generateItem(round, enemyData);
         if (item) {
@@ -731,6 +980,111 @@ function recalcGearStats() {
                     _gearState[affix.stat] += affix.value;
                 }
             });
+        }
+    });
+
+    // ── Unique effect tracking ───────────────────────────────
+    // Reset active unique effects
+    _gearState._uniqueEffects = {};
+    slots.forEach(item => {
+        if (!item?.isUnique || !item.uniqueEffect) return;
+        _gearState._uniqueEffects[item.uniqueEffect] = true;
+    });
+}
+
+// ── UNIQUE EFFECT HELPERS (called from game combat code) ─────────
+// Check if a unique effect is currently active
+function hasUniqueEffect(effectKey) {
+    return !!(_gearState?._uniqueEffects?.[effectKey]);
+}
+
+// Frontal Aegis: reduce frontal damage by 40%
+function applyFrontalAbsorb(amt, bulletAngle) {
+    if (!hasUniqueEffect('frontalAbsorb')) return amt;
+    if (typeof player === 'undefined' || !player?.active) return amt;
+    // Check if bullet is coming from the front (±60° of player facing)
+    const playerAngle = player.rotation || (typeof torso !== 'undefined' ? torso?.rotation || 0 : 0);
+    const incomingAngle = bulletAngle != null ? bulletAngle : 0;
+    // "Front" = direction the player/torso is facing
+    const diff = Math.abs(Phaser.Math.Angle.Wrap(incomingAngle - playerAngle - Math.PI));
+    if (diff < Math.PI / 3) { // ±60°
+        return amt * 0.60; // 40% reduction
+    }
+    return amt;
+}
+
+// Sentinel's Plating: +12% DR while shield is full
+function getShieldDRBonus() {
+    if (!hasUniqueEffect('shieldDR')) return 0;
+    if (typeof player === 'undefined' || !player?.active) return 0;
+    if ((player.shield || 0) >= (player.maxShield || 1) && player.maxShield > 0) {
+        return 0.12;
+    }
+    return 0;
+}
+
+// Unstoppable: immune to slow, +20% speed
+function getUnstoppableSpeedBonus() {
+    return hasUniqueEffect('unstoppable') ? 0.20 : 0;
+}
+
+// Impact Armor: heavy hit triggers temp DR
+let _impactArmorActive = false;
+let _impactArmorTimer = null;
+function checkImpactArmor(dmg) {
+    if (!hasUniqueEffect('impactArmor') || _impactArmorActive) return;
+    if (dmg > 25) {
+        _impactArmorActive = true;
+        _impactArmorTimer = setTimeout(() => { _impactArmorActive = false; }, 3000);
+    }
+}
+function getImpactArmorDR() {
+    return _impactArmorActive ? 0.15 : 0;
+}
+
+// Dual Reload: 30% faster reload when both arms have weapons
+function getDualReloadBonus() {
+    if (!hasUniqueEffect('dualReload')) return 0;
+    if (typeof loadout === 'undefined') return 0;
+    if (loadout.L && loadout.L !== 'none' && loadout.R && loadout.R !== 'none') {
+        return 0.30; // 30% faster
+    }
+    return 0;
+}
+
+// Double Strike: every 3rd shot fires twice (tracked per weapon cycle)
+let _doubleStrikeCounter = 0;
+function checkDoubleStrike() {
+    if (!hasUniqueEffect('doubleStrike')) return false;
+    _doubleStrikeCounter++;
+    if (_doubleStrikeCounter >= 3) {
+        _doubleStrikeCounter = 0;
+        return true; // fire extra bullet
+    }
+    return false;
+}
+
+// Mod Cover: spawn cover wall on mod activation
+function spawnModCover(scene) {
+    if (!hasUniqueEffect('modCover') || !scene || !player?.active) return;
+    const x = player.x;
+    const y = player.y + 30;
+    const w = 60, h = 16;
+    const wall = scene.add.rectangle(x - w/2, y - h/2, w, h, 0xffd700)
+        .setOrigin(0, 0).setStrokeStyle(2, 0xffee88).setDepth(3).setAlpha(0);
+    scene.tweens.add({ targets: wall, alpha: 0.8, duration: 200 });
+    scene.physics.add.existing(wall, true);
+    wall.body.setSize(w, h);
+    wall.body.reset(x - w/2, y - h/2);
+    wall.coverType = 'wall'; wall.coverHp = 40; wall.coverMaxHp = 40;
+    if (typeof coverObjects !== 'undefined') {
+        coverObjects.add(wall, true);
+        coverObjects.refresh();
+    }
+    // Auto-destroy after 8 seconds
+    scene.time.delayedCall(8000, () => {
+        if (wall.active) {
+            scene.tweens.add({ targets: wall, alpha: 0, duration: 400, onComplete: () => wall.destroy() });
         }
     });
 }
