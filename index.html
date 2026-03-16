@@ -1466,6 +1466,10 @@ let _damageTaken    = 0;   // total damage taken by player this run
 let _perksEarned    = 0;   // perks picked this run
 let _roundActive    = false;
 let _roundClearing  = false; // freeze movement during round-clear banner + perk menu
+let _extractionActive = false;  // true after all enemies killed, waiting for player to extract
+let _extractionPoint  = null;   // { x, y } world coords of extraction zone
+let _extractionVisuals = null;  // scene objects for the extraction zone
+let _extractionPromptShown = false; // whether "PRESS E" prompt is visible
 
 // Chassis-specific movement effect state
 let _footstepTimer  = 0;
@@ -2888,7 +2892,7 @@ function create() {
     this._bfGrid = _bfGrid;
 
     // Input
-    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
+    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,E');
 
     // Prevent right-click context menu on the game canvas so RMB can fire R arm
     const _canvas = this.sys.canvas;
@@ -3068,6 +3072,34 @@ function update(time) {
     drawMinimap();
     checkLootPickups(this);
     checkEquipmentPickups(this);                                                   // → js/loot-system.js
+    if (_extractionActive) _updateExtraction(this);                                // extraction point check
+    // Check for objective-based round end between kills (e.g., survival timer expires)
+    if (!_extractionActive && _roundActive && typeof shouldEndRound === 'function' && shouldEndRound()) {
+        const _scene = this;
+        _roundActive = false;
+        if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+        // Destroy remaining enemies with full visual cleanup
+        enemies?.getChildren().slice().forEach(e => {
+            try {
+                if (!e.active) return;
+                if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) handleEliteDeath(_scene, e);
+                if (e.visuals?.active) e.visuals.destroy();
+                if (e.torso?.active) e.torso.destroy();
+                if (e.cmdLabel?.active) e.cmdLabel.destroy();
+                if (e.medicLabel?.active) e.medicLabel.destroy();
+                if (e.medicCross?.active) e.medicCross.destroy();
+                if (e._healTimer) e._healTimer.remove();
+                if (e.shieldRing?.active) e.shieldRing.destroy();
+                if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
+                if (e._splitLabel?.active) e._splitLabel.destroy();
+                if (e._onDestroy) e._onDestroy();
+                e.destroy();
+            } catch(ex){}
+        });
+        _roundKills = _roundTotal;
+        _spawnExtractionPoint(_scene);
+        showRoundBanner('OBJECTIVE COMPLETE', 'REACH EXTRACTION POINT', 2500, null);
+    }
     if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
     if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
     if (typeof updateColossusStand === 'function') updateColossusStand(time);         // → js/loot-system.js (Colossus Frame unique)
@@ -4391,7 +4423,7 @@ function updateRoundHUD() {
     const rr = document.getElementById('round-remaining');
     const rk = document.getElementById('round-kills');
     if (rn) rn.innerText = _round;
-    if (rr) rr.innerText = Math.max(0, _roundTotal - _roundKills);
+    if (rr) rr.innerText = _extractionActive ? 'EXTRACT' : Math.max(0, _roundTotal - _roundKills);
     if (rk) rk.innerText = _totalKills;
 }
 
@@ -4614,6 +4646,8 @@ function _showArenaLabel(scene, arenaLabel, objLabel) {
 }
 
 function _clearMapForRound(scene) {
+    // Clean up extraction point visuals from previous round
+    _cleanupExtraction(scene);
     // Wipe all in-flight bullets
     if (bullets)      bullets.getChildren().slice().forEach(b => { try { if (b.active) b.destroy(); } catch(e){} });
     // Clean up decoys and phantom decoys between rounds
@@ -5221,23 +5255,18 @@ function onEnemyKilled(deadEnemy) {
 
     // Phase 6: check objective-based round end (survival complete, assassination done, etc.)
     const _objEnd = typeof shouldEndRound === 'function' && shouldEndRound();
-    if (_roundKills >= _roundTotal || _objEnd) {
+    if ((_roundKills >= _roundTotal || _objEnd) && !_extractionActive) {
         _roundActive = false;
-        _roundClearing = true;
-        // Stop player momentum so camera doesn't drift
-        if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
-        // Destroy any in-flight enemy bullets so they don't hit the player during perk screen
+        // Destroy any in-flight enemy bullets
         if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
         // Destroy remaining enemies if objective ended the round early
         if (_objEnd && _roundKills < _roundTotal) {
             enemies?.getChildren().slice().forEach(e => {
                 try {
                     if (!e.active) return;
-                    // Clean up elite/special enemy visuals (must happen before destroy)
                     if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) {
                         handleEliteDeath(scene, e);
                     }
-                    // Clean up standard visual components
                     if (e.visuals?.active)      e.visuals.destroy();
                     if (e.torso?.active)         e.torso.destroy();
                     if (e.cmdLabel?.active)       e.cmdLabel.destroy();
@@ -5253,21 +5282,9 @@ function onEnemyKilled(deadEnemy) {
             });
             _roundKills = _roundTotal;
         }
-        // Determine banner sub-text from objective
-        const _objFailed = typeof _arenaState !== 'undefined' && _arenaState.objectiveFailed;
-        const _bannerSub = _objFailed ? '✖ OBJECTIVE FAILED' :
-            (typeof _arenaState !== 'undefined' && _arenaState.currentObjective !== 'elimination' && _arenaState.objectiveComplete ? '★ OBJECTIVE COMPLETE' : '');
-        sndRoundClear();
-        _healPlayerFull();
-        // Cleanup objective state
-        if (typeof cleanupObjective === 'function') cleanupObjective(game.scene.scenes[0]);
-        const nextRound = _round + 1;
-        showRoundBanner(
-            'ROUND ' + _round + ' CLEARED',
-            _bannerSub,
-            2200,
-            () => showPerkMenu(nextRound)
-        );
+        // Spawn extraction point — player must go there to end the round
+        _spawnExtractionPoint(scene);
+        showRoundBanner('ALL HOSTILES ELIMINATED', 'REACH EXTRACTION POINT', 2500, null);
     }
 }
 
@@ -5320,6 +5337,60 @@ function drawMinimap() {
         });
     }
 
+    // Loot pickups (repair/ammo/charge orbs)
+    if (lootPickups) {
+        lootPickups.forEach(p => {
+            if (!p.orb?.active) return;
+            const lx = p.x * scale;
+            const ly = p.y * scale;
+            const lootDef = LOOT_TYPES[p.type];
+            ctx.beginPath();
+            ctx.arc(lx, ly, 2, 0, Math.PI * 2);
+            ctx.fillStyle = p.type === 'repair' ? '#00ff44' : p.type === 'ammo' ? '#ffdd00' : '#00ffff';
+            ctx.fill();
+        });
+    }
+
+    // Equipment drops (gear items on ground)
+    if (typeof _equipmentDrops !== 'undefined') {
+        _equipmentDrops.forEach(d => {
+            if (!d.active) return;
+            const dx = d.x * scale;
+            const dy = d.y * scale;
+            const rDef = typeof RARITY_DEFS !== 'undefined' ? RARITY_DEFS[d.item?.rarity] : null;
+            ctx.beginPath();
+            ctx.arc(dx, dy, 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = rDef ? rDef.colorStr : '#ffd700';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 0.6;
+            ctx.fill();
+            ctx.stroke();
+        });
+    }
+
+    // Extraction point
+    if (_extractionActive && _extractionPoint) {
+        const epx = _extractionPoint.x * scale;
+        const epy = _extractionPoint.y * scale;
+        const epR = 5;
+        // Pulsing glow
+        const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.004);
+        ctx.beginPath();
+        ctx.arc(epx, epy, epR + 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0,255,100,${0.1 + pulse * 0.15})`;
+        ctx.fill();
+        // Core diamond
+        ctx.save();
+        ctx.translate(epx, epy);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = `rgba(0,255,100,${0.6 + pulse * 0.4})`;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.fillRect(-epR/2, -epR/2, epR, epR);
+        ctx.strokeRect(-epR/2, -epR/2, epR, epR);
+        ctx.restore();
+    }
+
     // Player
     if (player?.active) {
         const px = player.x * scale;
@@ -5343,6 +5414,124 @@ function drawMinimap() {
     }
 }
 
+
+// ================================================================
+// EXTRACTION POINT SYSTEM
+// ================================================================
+
+function _spawnExtractionPoint(scene) {
+    // Pick a random spot away from player, within map bounds
+    let ex, ey, attempts = 0;
+    do {
+        ex = Phaser.Math.Between(300, 3700);
+        ey = Phaser.Math.Between(300, 3700);
+        attempts++;
+    } while (
+        attempts < 40 && player?.active &&
+        Phaser.Math.Distance.Between(ex, ey, player.x, player.y) < 600
+    );
+    _extractionPoint = { x: ex, y: ey };
+    _extractionActive = true;
+    _extractionPromptShown = false;
+    updateRoundHUD();
+
+    const zoneR = 60; // extraction zone radius
+
+    // Visual: pulsing green circle on the ground
+    const glow = scene.add.circle(ex, ey, zoneR, 0x00ff66, 0.08).setDepth(2);
+    const ring = scene.add.circle(ex, ey, zoneR, 0x000000, 0).setDepth(2);
+    ring.setStrokeStyle(3, 0x00ff66, 0.7);
+    const innerRing = scene.add.circle(ex, ey, zoneR * 0.5, 0x000000, 0).setDepth(2);
+    innerRing.setStrokeStyle(2, 0x00ff66, 0.35);
+
+    // Diamond icon at center
+    const diamond = scene.add.polygon(ex, ey,
+        [0, -12, 10, 0, 0, 12, -10, 0], 0x00ff66, 0.6).setDepth(3);
+    diamond.setStrokeStyle(2, 0xffffff, 0.8);
+
+    // Label
+    const label = scene.add.text(ex, ey - zoneR - 14, 'EXTRACTION POINT', {
+        font: 'bold 11px monospace', fill: '#00ff66',
+        stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(10);
+
+    // Prompt (hidden initially, shown when player is close)
+    const prompt = scene.add.text(ex, ey + zoneR + 14, '[ PRESS  E  TO EXTRACT ]', {
+        font: 'bold 10px monospace', fill: '#ffffff',
+        stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(10).setAlpha(0);
+
+    // Pulse animations
+    scene.tweens.add({ targets: glow, alpha: 0.18, duration: 1000, yoyo: true, repeat: -1 });
+    scene.tweens.add({ targets: ring, scaleX: 1.08, scaleY: 1.08, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    scene.tweens.add({ targets: diamond, angle: 360, duration: 4000, repeat: -1 });
+    scene.tweens.add({ targets: label, alpha: 0.5, duration: 800, yoyo: true, repeat: -1 });
+
+    _extractionVisuals = { glow, ring, innerRing, diamond, label, prompt, zoneR };
+}
+
+function _updateExtraction(scene) {
+    if (!_extractionActive || !_extractionPoint || !player?.active) return;
+    const dist = Phaser.Math.Distance.Between(player.x, player.y, _extractionPoint.x, _extractionPoint.y);
+    const inZone = dist < (_extractionVisuals?.zoneR || 60);
+
+    // Show/hide prompt
+    if (_extractionVisuals?.prompt) {
+        if (inZone && !_extractionPromptShown) {
+            _extractionPromptShown = true;
+            _extractionVisuals.prompt.setAlpha(1);
+            scene.tweens.add({ targets: _extractionVisuals.prompt, alpha: 0.5, duration: 600, yoyo: true, repeat: -1 });
+        } else if (!inZone && _extractionPromptShown) {
+            _extractionPromptShown = false;
+            scene.tweens.killTweensOf(_extractionVisuals.prompt);
+            _extractionVisuals.prompt.setAlpha(0);
+        }
+    }
+
+    // Check for E key press while in zone
+    if (inZone && keys.E.isDown) {
+        _triggerExtraction(scene);
+    }
+}
+
+function _triggerExtraction(scene) {
+    _extractionActive = false;
+    _cleanupExtraction(scene);
+
+    // Now run the normal round-end flow
+    _roundActive = false;
+    _roundClearing = true;
+    if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
+    if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+
+    const _objFailed = typeof _arenaState !== 'undefined' && _arenaState.objectiveFailed;
+    const _bannerSub = _objFailed ? '✖ OBJECTIVE FAILED' :
+        (typeof _arenaState !== 'undefined' && _arenaState.currentObjective !== 'elimination' && _arenaState.objectiveComplete ? '★ OBJECTIVE COMPLETE' : '');
+    sndRoundClear();
+    _healPlayerFull();
+    if (typeof cleanupObjective === 'function') cleanupObjective(scene);
+    const nextRound = _round + 1;
+    showRoundBanner(
+        'ROUND ' + _round + ' CLEARED',
+        _bannerSub,
+        2200,
+        () => showPerkMenu(nextRound)
+    );
+}
+
+function _cleanupExtraction(scene) {
+    if (_extractionVisuals) {
+        const objs = [_extractionVisuals.glow, _extractionVisuals.ring, _extractionVisuals.innerRing,
+                      _extractionVisuals.diamond, _extractionVisuals.label, _extractionVisuals.prompt];
+        objs.forEach(o => {
+            try { if (o) { scene.tweens.killTweensOf(o); if (o.active !== false) o.destroy(); } } catch(e) {}
+        });
+        _extractionVisuals = null;
+    }
+    _extractionPoint = null;
+    _extractionActive = false;
+    _extractionPromptShown = false;
+}
 
 // ================================================================
 // DEPLOY
@@ -11113,6 +11302,7 @@ function showDeathScreen() {
     isDeployed = false;
     _roundActive   = false;
     _roundClearing = false;   // prevent update() from being permanently gated
+    _cleanupExtraction(game?.scene?.scenes[0]);
     // Close stats overlay if open
     _isStats = false;
     _isPaused = false;
@@ -11239,6 +11429,7 @@ function respawnMech() {
     _pickedPerks = [];
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     _roundClearing = false;
+    _extractionActive = false; _extractionPoint = null; _extractionVisuals = null; _extractionPromptShown = false;
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     CHASSIS.medium.modCooldownMult = 0.85;
     const scene = game.scene.scenes[0];
@@ -12000,6 +12191,7 @@ function returnToHangar() {
     _roundTotal = 0;
     _roundActive  = false;
     _roundClearing = false;
+    _extractionActive = false; _extractionPoint = null; _extractionVisuals = null; _extractionPromptShown = false;
     _pickedPerks  = [];
     _perksEarned  = 0;
     _shotsFired   = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0;
