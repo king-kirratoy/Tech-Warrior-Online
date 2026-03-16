@@ -7887,7 +7887,7 @@ function spawnCore(scene) {
 // Updated boss cycle: 8 bosses across rounds
 function spawnBoss(scene, roundNum) {
     if (typeof sndBossSpawn === 'function') sndBossSpawn();
-    const bossCycle = (Math.floor((roundNum - 1) / 5) - 1) % 8;
+    const bossCycle = (Math.floor(roundNum / 5) - 1) % 8;
     if (bossCycle === 0) spawnWarden(scene);
     else if (bossCycle === 1) spawnTwinRazors(scene);
     else if (bossCycle === 2) spawnArchitect(scene);
@@ -9610,16 +9610,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     if (_perkState.resonance > 0 && player?.maxShield > 0) {
         player.shield = Math.min(player.maxShield, (player.shield||0) + _perkState.resonance);
     }
-    // Hollow Point: bonus damage to enemies below 50% HP
-    if (_perkState.hollowPoint > 0) {
-        const _eHpRatio = e.comp ? (Object.values(e.comp).reduce((s,c)=>s+c.hp,0) / Object.values(e.comp).reduce((s,c)=>s+c.max,0)) : (e.health / (e.maxHealth||e.health||1));
-        if (_eHpRatio < 0.5) amt *= (1 + _perkState.hollowPoint);
-    }
-    // Threat Scanner: enemies within 300px take extra damage
-    if (_perkState.threatScanner > 0 && player) {
-        const _tsDist = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
-        if (_tsDist < 300) amt *= (1 + _perkState.threatScanner);
-    }
+    // (Hollow Point and Threat Scanner already applied above — removed duplicate)
     // Fire Discipline: +dmg while not moving
     if (_perkState.fireDiscipline > 0 && player?.body) {
         const _fdSpeed = Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2);

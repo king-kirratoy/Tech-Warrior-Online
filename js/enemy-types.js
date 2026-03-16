@@ -808,12 +808,17 @@ function handleEliteDeath(scene, e) {
         }
     }
 
+    // Kill infinite tweens before destroying objects to prevent memory leaks
+    const _tweenTargets = [e._eliteLabel, e._eliteGlow, e._eliteShieldRing, e._enforcerRing, e.typeLabel].filter(Boolean);
+    _tweenTargets.forEach(t => { try { scene.tweens.killTweensOf(t); } catch(ex) {} });
+
     // Cleanup elite visuals
     if (e._eliteLabel?.active) e._eliteLabel.destroy();
     if (e._eliteGlow?.active) e._eliteGlow.destroy();
     if (e._eliteShieldRing?.active) e._eliteShieldRing.destroy();
     if (e._enforcerRing?.active) e._enforcerRing.destroy();
     if (e._laserGfx?.active) e._laserGfx.destroy();
+    if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
 
     // Cleanup type label
     if (e.typeLabel?.active) e.typeLabel.destroy();

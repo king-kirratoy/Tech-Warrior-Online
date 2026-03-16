@@ -346,6 +346,7 @@ function generateTowerDefense(scene, coverObjects, placeAt, COVER_DEFS) {
 // ══════════════════════════════════════════════════════════════════
 function initObjective(scene, roundNum, objectiveKey) {
     const def = OBJECTIVE_DEFS[objectiveKey];
+    if (!def) return;
     _arenaState.currentObjective = objectiveKey;
     _arenaState.objectiveActive = true;
     _arenaState.objectiveComplete = false;
@@ -374,7 +375,7 @@ function initObjective(scene, roundNum, objectiveKey) {
         }
 
         case 'defense': {
-            _arenaState.generatorHP = def.generatorHP + roundNum * 20;
+            _arenaState.generatorHP = def.generatorHP + Math.min(roundNum * 20, 600);
             _arenaState.generatorMaxHP = _arenaState.generatorHP;
             _spawnGenerator(scene);
             break;
@@ -533,10 +534,10 @@ function _spawnGenerator(scene) {
     _arenaState.generator = { gfx, hpBg, hpFill, label };
 
     // Add physics body for enemy targeting
-    const genBody = scene.add.rectangle(1975, 1975, 50, 50, 0, 0).setOrigin(0, 0).setDepth(1).setAlpha(0.01);
+    const genBody = scene.add.rectangle(2000, 2000, 50, 50, 0, 0).setOrigin(0.5, 0.5).setDepth(1).setAlpha(0.01);
     scene.physics.add.existing(genBody, true);
     genBody.body.setSize(50, 50);
-    genBody.body.reset(1975, 1975);
+    genBody.body.reset(1975, 1975); // body offset to align with origin(0.5)
     _arenaState.generator.body = genBody;
 }
 

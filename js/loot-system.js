@@ -229,7 +229,7 @@ const UNIQUE_ITEMS = {
         rarity: 'epic',
         isUnique: true,
         boss: 'swarm',
-        baseStats: { coreHP: 60, dr: 4 },
+        baseStats: { coreHP: 60, dr: 0.04 },
         affixes: [
             { key:'allHP', stat:'allHP', value:20, label:'+20 All Part HP' },
             { key:'dr', stat:'dr', value:5, label:'+5% Damage Reduction' }
@@ -810,6 +810,7 @@ function _drawLootIcon(scene, x, y, iconKey, rarityColor) {
         case 'leg_actuator':
         case 'leg_booster':
         case 'leg_dampener':
+        case 'leg_heavy':
             g.fillStyle(c, 0.9);
             g.fillRect(x-5, y-8, 4, 16);   // left leg
             g.fillRect(x+1, y-8, 4, 16);   // right leg
@@ -832,6 +833,7 @@ function _drawLootIcon(scene, x, y, iconKey, rarityColor) {
         case 'mod_cd':
         case 'mod_amp':
         case 'mod_oc':
+        case 'mod_chip':
             g.fillStyle(c, 0.9);
             // Chip/circuit board shape
             g.fillRect(x-6, y-6, 12, 12);
@@ -849,6 +851,7 @@ function _drawLootIcon(scene, x, y, iconKey, rarityColor) {
         case 'aug_target':
         case 'aug_neural':
         case 'aug_combat':
+        case 'aug_core':
             g.fillStyle(c, 0.9);
             // Diamond/crystal shape
             g.fillTriangle(x, y-8, x-6, y, x+6, y);
