@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <title>Tech Warrior: Alpha 3.0</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<!-- LOAD ORDER MATTERS: each file depends on the ones above it.
+     loot-system.js  — items, rarity, affixes, inventory, unique effects (Phases 1-3, 5, 7-8)
+     enemy-types.js  — enemy variants, elite modifiers (Phase 4, balanced in Phase 8)
+     arena-objectives.js — arena layouts, objectives (Phase 6, tuned in Phase 8)
+     All three files share globals with index.html. See each file's header for dependency details. -->
+<script src="js/loot-system.js"></script>
+<script src="js/enemy-types.js"></script>
+<script src="js/arena-objectives.js"></script>
 <style>
 
 /* ============================================================
@@ -1053,6 +1061,24 @@ button.active {
   <div id="round-banner-sub"  style="font-size:13px;letter-spacing:5px;color:rgba(0,255,255,0.6);margin-top:8px;"></div>
 </div>
 
+<!-- OBJECTIVE HUD -->
+<div id="objective-hud" style="display:none;position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:9998;pointer-events:none;font-family:'Courier New',monospace;">
+  <div style="display:flex;gap:12px;align-items:center;padding:8px 18px;background:rgba(12,16,20,0.88);border:1px solid rgba(255,200,0,0.3);border-radius:8px;box-shadow:0 0 10px rgba(255,200,0,0.15),inset 0 0 8px rgba(255,200,0,0.05);">
+    <span id="obj-icon" style="font-size:18px;"></span>
+    <div>
+      <div id="obj-label" style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#ffcc00;text-shadow:0 0 6px rgba(255,200,0,0.5);"></div>
+      <div id="obj-detail" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;"></div>
+    </div>
+    <div style="width:80px;height:6px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,200,0,0.2);border-radius:3px;overflow:hidden;">
+      <div id="obj-bar-fill" style="height:100%;width:0%;background:#ffcc00;border-radius:3px;transition:width 0.2s linear;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ARENA LABEL (shown briefly at round start) -->
+<div id="arena-label" style="display:none;position:fixed;top:55%;left:50%;transform:translate(-50%,-50%);z-index:99997;pointer-events:none;text-align:center;font-family:'Courier New',monospace;">
+  <div id="arena-label-text" style="font-size:16px;letter-spacing:6px;text-transform:uppercase;text-shadow:0 0 12px rgba(255,255,255,0.3);"></div>
+</div>
 
 <!-- DEATH SCREEN -->
 <div id="death-screen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:99999;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;">
@@ -1110,6 +1136,9 @@ button.active {
     </div>
     <div id="stats-btn-wrap">
         <button id="stats-btn" onclick="toggleStats()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">STATS</button>
+    </div>
+    <div id="inv-btn-wrap">
+        <button id="inv-btn" onclick="toggleInventory()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #ffd700;border-radius:6px;color:#ffd700;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(255,215,0,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(255,215,0,0.10)';this.style.boxShadow='0 0 20px rgba(255,215,0,0.30)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(255,215,0,0.15)';this.style.letterSpacing='2px';">LOOT <span id="inv-count" style="opacity:0.6;">0/30</span></button>
     </div>
 
 </div>
@@ -2518,7 +2547,8 @@ const _perks = {
 
 };
 
-let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false };
+let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
+window._spectreClones = [];
 let _pickedPerks = [];
 let _lastOfferedPerks = [];
 let reloadL         = 0;
@@ -2754,6 +2784,58 @@ function sndRoundStart() {
     _tone(220,'square',0.11,0.22,330); _tone(330,'square',0.11,0.18,440,0.11);
 }
 
+// ── Phase 8: Equipment & Loot Sounds ────────────────────────────
+function sndEquipDrop(rarity) {
+    if (!_canPlay('eqdrop', 120)) return;
+    switch(rarity) {
+        case 'common':    _tone(300,'sine',0.08,0.12,400); break;
+        case 'uncommon':  _tone(400,'sine',0.09,0.16,550); _tone(550,'sine',0.07,0.10,700,0.08); break;
+        case 'rare':      _tone(500,'sine',0.10,0.20,700); _tone(700,'triangle',0.10,0.14,900,0.09); break;
+        case 'epic':      _tone(550,'sine',0.12,0.25,800); _tone(800,'sine',0.10,0.18,1100,0.10); _tone(1100,'sine',0.08,0.12,1400,0.18); break;
+        case 'legendary': _tone(440,'sine',0.14,0.30,660); _tone(660,'sine',0.12,0.24,880,0.12); _tone(880,'sine',0.10,0.18,1200,0.22); _tone(1200,'sine',0.16,0.14,1600,0.30); break;
+    }
+}
+
+function sndEquipPickup(rarity) {
+    if (!_canPlay('eqpick', 150)) return;
+    const isHigh = rarity === 'epic' || rarity === 'legendary';
+    _tone(isHigh ? 600 : 440, 'sine', 0.06, isHigh ? 0.28 : 0.18, isHigh ? 900 : 660);
+    _tone(isHigh ? 900 : 660, 'sine', 0.06, isHigh ? 0.22 : 0.14, isHigh ? 1200 : 880, 0.06);
+    if (isHigh) { _tone(1200,'sine',0.08,0.16,1600,0.12); _noise(0.05,0.08,0.12,2000); }
+}
+
+function sndObjectiveStart() {
+    if (!_canPlay('objst', 500)) return;
+    _tone(330,'square',0.08,0.20,440); _tone(440,'square',0.08,0.16,550,0.08); _tone(550,'sine',0.10,0.14,660,0.16);
+}
+
+function sndObjectiveComplete() {
+    if (!_canPlay('objcmp', 500)) return;
+    _tone(440,'sine',0.10,0.28,660); _tone(660,'sine',0.10,0.22,880,0.10); _tone(880,'sine',0.12,0.18,1100,0.20); _tone(1100,'sine',0.14,0.14,1400,0.32);
+}
+
+function sndObjectiveFail() {
+    if (!_canPlay('objfail', 500)) return;
+    _tone(330,'sawtooth',0.15,0.25,180); _tone(220,'sawtooth',0.18,0.20,110,0.12); _noise(0.15,0.12,0.20,0,400);
+}
+
+function sndArenaTransition() {
+    if (!_canPlay('arena', 800)) return;
+    _noise(0.20,0.15,0,0,600); _tone(110,'sawtooth',0.30,0.18,80); _tone(220,'square',0.12,0.14,330,0.25);
+}
+
+function sndBossSpawn() {
+    if (!_canPlay('boss', 1000)) return;
+    _tone(55,'sawtooth',0.50,0.40,35); _tone(80,'square',0.40,0.25,55,0.12);
+    _noise(0.35,0.25,0.20,0,500); _tone(110,'sawtooth',0.30,0.20,70,0.40);
+}
+
+function sndBossDefeat() {
+    if (!_canPlay('bossd', 1000)) return;
+    _noise(0.40,0.35,0,0,600); _tone(55,'sawtooth',0.50,0.35,20);
+    _tone(440,'sine',0.12,0.25,660,0.45); _tone(660,'sine',0.12,0.20,880,0.55); _tone(880,'sine',0.14,0.16,1200,0.65);
+}
+
 // PHASER GAME CONFIG
 // ================================================================
 
@@ -2773,6 +2855,8 @@ const config = {
 
 const game = new Phaser.Game(config);
 
+// Load saved inventory on startup
+loadInventory();
 
 // ================================================================
 // PHASER LIFECYCLE
@@ -2893,6 +2977,10 @@ function create() {
             enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(2, 0xffaa00); });
         }
         damageEnemy(enemy, dmg, _bAngle, false, _bPierce);
+        // Titan Smash: every 5th shot AoE shockwave
+        if (typeof checkTitanSmash === 'function' && checkTitanSmash()) {
+            triggerTitanSmash(this, _bx2, _by2, dmg);
+        }
         // Chain Plasma: chain to nearest other enemy if this was a plasma-sized hit
         if (_perkState.plsmChain && dmg >= 200) {
             let _chainTarget = null, _chainDist = Infinity;
@@ -2979,6 +3067,10 @@ function update(time) {
     updateCooldownOverlays(time);
     drawMinimap();
     checkLootPickups(this);
+    checkEquipmentPickups(this);                                                   // → js/loot-system.js
+    if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
+    if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
+    if (typeof updateColossusStand === 'function') updateColossusStand(time);         // → js/loot-system.js (Colossus Frame unique)
 }
 
 
@@ -3036,7 +3128,8 @@ function handleShieldRegen(time) {
     const regenDelay = player._shieldRegenDelay ?? 5;
     const regenRate  = player._shieldRegenRate  ?? 1.0;
     if (player.maxShield > 0 && lastDamageTime > 0 && secondsSinceHit >= regenDelay && player.shield < player.maxShield) {
-        player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * immovableBonus);
+        const _gearRegenMult = 1 + ((_gearState?.shieldRegen || 0) / 100);
+        player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult * immovableBonus);
         if (player.shield >= player.maxShield) {
             player._shieldAdaptStack = 0;  // adaptive_shield: reset on full regen
             player._shieldRetribChg  = 0;  // retribution: reset charge on full regen
@@ -3468,9 +3561,12 @@ function handleEnemyAI(scene, time) {
             const reloadMult = enemy.behavior === 'sniper' ? 1.4
                              : enemy.behavior === 'rusher' ? 0.85
                              : enemy.behavior === 'flanker' ? 1.0 : 1.1;
-            if (!enemy._fireGrace && dist < fireRange && time > (enemy.lastFireTime || 0) + wepReload * reloadMult) {
+            const _eliteFireMult = (enemy._swiftFireRateMult || 1);
+            if (!enemy._fireGrace && dist < fireRange && time > (enemy.lastFireTime || 0) + wepReload * reloadMult * _eliteFireMult) {
                 enemyFire(scene, enemy, time);
                 enemy.lastFireTime = time;
+                // Sniper Elite: cloak after firing
+                if (enemy.enemyType === 'sniperElite' && enemy._onFire) enemy._onFire();
             }
 
             // Secondary weapon — fires less frequently, with per-weapon range gates
@@ -3712,17 +3808,23 @@ function handlePlayerMovement(scene, time) {
         if (_ss2.activeSpeedPenalty && player.shield > 0) return 1 - _ss2.activeSpeedPenalty;
         return 1;
     })();
+    const _gearSpdMult = 1 + ((_gearState?.speedPct || 0) / 100);
+    const _unstoppableSpdMult = 1 + (typeof getUnstoppableSpeedBonus === 'function' ? getUnstoppableSpeedBonus() : 0);
     const speed = CHASSIS[loadout.chassis].spd
         * (isRageActive ? 1.75 : 1)
         * _legMult
         * (_perkState.speedMult || 1)
+        * _gearSpdMult
         * _warlordSpeedMult
-        * _shldSpdMult;
+        * _shldSpdMult
+        * _unstoppableSpdMult;
     const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod]?.cooldown || 0 : 0;
 
     // Mod activation (SPACE)
-    const effectiveModCooldown = isChargeActive ? modCooldown * 0.5
-        : (loadout.chassis === 'medium' ? modCooldown * (CHASSIS.medium.modCooldownMult || 0.85) : modCooldown);
+    const _gearModCdMult = 1 - ((_gearState?.modCdPct || 0) / 100);
+    const effectiveModCooldown = (isChargeActive ? modCooldown * 0.5
+        : (loadout.chassis === 'medium' ? modCooldown * (CHASSIS.medium.modCooldownMult || 0.85) : modCooldown))
+        * _gearModCdMult;
     if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + effectiveModCooldown) {
         activateMod(scene, time);
     }
@@ -4410,11 +4512,66 @@ function pickPerk(key, nextRound) {
     const menu = document.getElementById('perk-menu');
     if (menu) menu.style.display = 'none';
     _roundClearing = false;
+
+    // If player has unequipped loot, show brief equip prompt before next round
+    if (_inventory.length > 0) {
+        _showEquipPrompt(nextRound);
+        return;
+    }
+
     const _rsc = game?.scene?.scenes[0];
     if (_rsc) { try { _rsc.input.setDefaultCursor('none'); } catch(e){} }
     document.body.style.cursor = 'none';
     sndRoundStart();
     startRound(nextRound);
+}
+
+function _showEquipPrompt(nextRound) {
+    let overlay = document.getElementById('equip-prompt-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'equip-prompt-overlay';
+        overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:10000;background:rgba(3,6,10,0.92);font-family:"Courier New",monospace;flex-direction:column;align-items:center;justify-content:center;';
+        overlay.innerHTML = `
+            <div style="text-align:center;">
+                <div style="font-size:14px;letter-spacing:4px;color:#ffd700;margin-bottom:8px;text-shadow:0 0 12px rgba(255,215,0,0.4);">LOOT AVAILABLE</div>
+                <div id="equip-prompt-count" style="font-size:12px;letter-spacing:2px;color:rgba(200,210,220,0.6);margin-bottom:28px;"></div>
+                <div style="display:flex;gap:16px;justify-content:center;">
+                    <button id="equip-prompt-open" style="padding:12px 28px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.4);border-left:3px solid #ffd700;border-radius:6px;color:#ffd700;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;">OPEN INVENTORY</button>
+                    <button id="equip-prompt-skip" style="padding:12px 28px;background:rgba(200,210,220,0.06);border:1px solid rgba(200,210,220,0.2);border-radius:6px;color:rgba(200,210,220,0.6);font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;">CONTINUE →</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    }
+
+    document.getElementById('equip-prompt-count').textContent = `${_inventory.length} item${_inventory.length > 1 ? 's' : ''} in backpack`;
+    overlay.style.display = 'flex';
+
+    const openBtn = document.getElementById('equip-prompt-open');
+    const skipBtn = document.getElementById('equip-prompt-skip');
+
+    const _dismissAndStart = () => {
+        overlay.style.display = 'none';
+        const _rsc = game?.scene?.scenes[0];
+        if (_rsc) { try { _rsc.input.setDefaultCursor('none'); } catch(e){} }
+        document.body.style.cursor = 'none';
+        sndRoundStart();
+        startRound(nextRound);
+    };
+
+    // Clone buttons to remove old listeners
+    const newOpen = openBtn.cloneNode(true);
+    const newSkip = skipBtn.cloneNode(true);
+    openBtn.parentNode.replaceChild(newOpen, openBtn);
+    skipBtn.parentNode.replaceChild(newSkip, skipBtn);
+
+    newOpen.addEventListener('click', () => {
+        overlay.style.display = 'none';
+        // Store callback so inventory close triggers round start
+        window._equipPromptCallback = _dismissAndStart;
+        toggleInventory();
+    });
+    newSkip.addEventListener('click', _dismissAndStart);
 }
 
 function showRoundBanner(title, sub, duration, onDone) {
@@ -4435,6 +4592,25 @@ function showRoundBanner(title, sub, duration, onDone) {
             if (onDone) onDone();
         }, 350);
     }, duration);
+}
+
+function _showArenaLabel(scene, arenaLabel, objLabel) {
+    const el = document.getElementById('arena-label');
+    const txt = document.getElementById('arena-label-text');
+    if (!el || !txt) return;
+    const arenaDef = typeof ARENA_DEFS !== 'undefined' ? ARENA_DEFS[_arenaState?.currentArena] : null;
+    const color = arenaDef?.color || '#88aacc';
+    txt.innerHTML = `<span style="color:${color}">${arenaLabel}</span>` +
+        (objLabel ? `<br><span style="font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:3px;">${objLabel}</span>` : '');
+    el.style.display = 'block';
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.4s ease';
+    if (typeof sndArenaTransition === 'function') sndArenaTransition();
+    setTimeout(() => { el.style.opacity = '1'; }, 30);
+    setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => { el.style.display = 'none'; }, 400);
+    }, 3000);
 }
 
 function _clearMapForRound(scene) {
@@ -4515,6 +4691,27 @@ function startRound(roundNum) {
     const scene = game.scene.scenes[0];
     // Round 2+: wipe map debris and reset player to center
     if (roundNum > 1) _clearMapForRound(scene);
+
+    // ── Phase 6: Arena & Objective selection ──
+    if (typeof selectArena === 'function') {
+        const arenaKey = selectArena(roundNum);
+        const objKey = selectObjective(roundNum, arenaKey);
+        _arenaState.currentArena = arenaKey;
+        _arenaState.currentObjective = objKey;
+        // Cleanup previous objective state
+        if (typeof cleanupObjective === 'function') cleanupObjective(scene);
+        // Regenerate cover for new arena layout (only on round 2+)
+        if (roundNum > 1) generateCover(scene, arenaKey);
+        // Init pit zone if pit arena
+        if (arenaKey === 'pit' && typeof _initPitZone === 'function') _initPitZone(scene);
+        // Init objective
+        if (typeof initObjective === 'function') initObjective(scene, roundNum, objKey);
+        // Show arena + objective banner
+        const aLabel = typeof getArenaLabel === 'function' ? getArenaLabel() : '';
+        const oLabel = typeof getObjectiveLabel === 'function' ? getObjectiveLabel() : '';
+        _showArenaLabel(scene, aLabel, oLabel);
+    }
+
     // Boss every 5th round; normal rounds otherwise
     const isBossRound = roundNum > 0 && roundNum % 5 === 0;
 
@@ -4524,17 +4721,82 @@ function startRound(roundNum) {
         setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, roundNum); }, 800);
     } else {
         // Normal round — commanders from round 4+, medic from round 3+
+        // Phase 4: special enemy types and elite modifiers
         const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
-        const normalCount = spawnCmd ? _roundTotal - 1 : _roundTotal;
-        for (let i = 0; i < normalCount; i++) {
-            setTimeout(() => { if (isDeployed && _roundActive) spawnEnemy(scene); }, i * 400);
+        const _spawnCfg = (typeof _getEnemySpawnConfig === 'function') ? _getEnemySpawnConfig(roundNum) : { specialTypes:[], eliteChance:0, maxElites:0 };
+
+        // Determine how many specials to spawn (replace some normal enemies)
+        let specialCount = 0;
+        if (_spawnCfg.specialTypes.length > 0 && roundNum > 5) {
+            // 1 special per 4 normal enemies, minimum 1 if types are available
+            specialCount = Math.min(Math.floor(_roundTotal / 4) + 1, _spawnCfg.specialTypes.length, Math.floor(_roundTotal * 0.4));
+            specialCount = Math.max(1, specialCount);
         }
+
+        const normalCount = Math.max(1, (spawnCmd ? _roundTotal - 1 : _roundTotal) - specialCount);
+        let spawnIdx = 0;
+
+        // Spawn normal enemies
+        for (let i = 0; i < normalCount; i++) {
+            const delay = spawnIdx * 400;
+            setTimeout(() => { if (isDeployed && _roundActive) spawnEnemy(scene); }, delay);
+            spawnIdx++;
+        }
+
+        // Spawn special enemy types
+        let _elitesApplied = 0;
+        for (let i = 0; i < specialCount; i++) {
+            const typeKey = Phaser.Math.RND.pick(_spawnCfg.specialTypes);
+            const delay = spawnIdx * 400;
+            setTimeout(() => {
+                if (!isDeployed || !_roundActive) return;
+                const se = spawnSpecialEnemy(scene, typeKey);
+                // Possibly apply elite modifier
+                if (se && _elitesApplied < _spawnCfg.maxElites && Math.random() < _spawnCfg.eliteChance) {
+                    const mod1 = _rollEliteModifier([]);
+                    if (mod1) {
+                        applyEliteModifier(scene, se, mod1);
+                        _elitesApplied++;
+                        // Double modifier chance (round 20+)
+                        if ((_spawnCfg.doubleModChance || 0) > 0 && Math.random() < _spawnCfg.doubleModChance) {
+                            const mod2 = _rollEliteModifier([mod1]);
+                            if (mod2) applyEliteModifier(scene, se, mod2);
+                        }
+                    }
+                }
+            }, delay);
+            spawnIdx++;
+        }
+
+        // Also apply elite modifiers to some normal enemies (round 11+)
+        if (roundNum >= 11 && _spawnCfg.maxElites > 0) {
+            // Pick random normal enemies to make elite after they spawn
+            const normalEliteCount = Math.min(_spawnCfg.maxElites - specialCount, Math.floor(normalCount * 0.3));
+            if (normalEliteCount > 0) {
+                setTimeout(() => {
+                    if (!isDeployed || !_roundActive || !enemies) return;
+                    const normals = enemies.getChildren().filter(en =>
+                        en.active && !en.isElite && !en.isCommander && !en.isMedic && !en.isBoss && !en.enemyType
+                    );
+                    const toElite = Phaser.Utils.Array.Shuffle(normals).slice(0, normalEliteCount);
+                    toElite.forEach(en => {
+                        if (_elitesApplied >= _spawnCfg.maxElites) return;
+                        const mod1 = _rollEliteModifier([]);
+                        if (mod1) {
+                            applyEliteModifier(scene, en, mod1);
+                            _elitesApplied++;
+                        }
+                    });
+                }, spawnIdx * 400 + 200);
+            }
+        }
+
         if (spawnCmd) {
-            setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, normalCount * 400 + 600);
+            setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 600);
         }
         if (roundNum >= 3 && Math.random() < 0.40) {
             _roundTotal++; // medic counts toward the kill total
-            setTimeout(() => { if (isDeployed && _roundActive) spawnMedic(scene); }, normalCount * 400 + 1000);
+            setTimeout(() => { if (isDeployed && _roundActive) spawnMedic(scene); }, spawnIdx * 400 + 1000);
         }
     }
     // Autonomous Unit: auto-deploy drone at round start (after short delay)
@@ -4780,8 +5042,108 @@ function returnToMainMenu() {
     }
 }
 
-function onEnemyKilled() {
+// ── SPECTRE CLONE (Light Legendary) ─────────────────────────────────
+function _spawnSpectreClone() {
+    const scene = game?.scene?.scenes[0];
+    if (!scene || !player?.active) return;
+    if (!window._spectreClones) window._spectreClones = [];
+
+    // Remove expired/destroyed clones from tracking
+    window._spectreClones = window._spectreClones.filter(c => c.torso?.active);
+
+    // Max 2 clones at a time
+    if (window._spectreClones.length >= 2) {
+        // Destroy oldest to make room
+        const oldest = window._spectreClones.shift();
+        try { oldest.torso.destroy(); oldest.label.destroy(); oldest.fire.remove(); oldest.drift.remove(); } catch(ex) {}
+    }
+
+    const spawnX = player.x + Phaser.Math.Between(-60, 60);
+    const spawnY = player.y + Phaser.Math.Between(-60, 60);
+
+    // Build a shadow clone — semi-transparent purple-tinted mech
+    const cloneTorso = buildPlayerMech(scene, loadout.chassis, loadout.color);
+    cloneTorso.setPosition(spawnX, spawnY);
+    cloneTorso.setAlpha(0.35);
+    cloneTorso.setDepth(9);
+    cloneTorso.setTint(0x8844ff);
+    cloneTorso.setRotation(torso?.rotation || 0);
+
+    const cloneLabel = scene.add.text(spawnX, spawnY - 36, 'SPECTRE', {
+        font: 'bold 10px Courier New', fill: '#aa66ff'
+    }).setAlpha(0.7).setDepth(15).setOrigin(0.5);
+
+    // Spawn flash effect
+    const flash = scene.add.circle(spawnX, spawnY, 30, 0x8844ff, 0.5).setDepth(20);
+    scene.tweens.add({ targets: flash, alpha: 0, scaleX: 2, scaleY: 2, duration: 400, onComplete: () => flash.destroy() });
+
+    // Clone drifts toward nearest enemies
+    let cloneAngle = torso?.rotation || 0;
+    const driftEvent = scene.time.addEvent({ delay: 16, loop: true, callback: () => {
+        if (!cloneTorso.active) return;
+        const nearest = enemies?.getChildren()?.filter(e => e.active)
+            .sort((a, b) => Phaser.Math.Distance.Between(cloneTorso.x, cloneTorso.y, a.x, a.y) -
+                            Phaser.Math.Distance.Between(cloneTorso.x, cloneTorso.y, b.x, b.y))[0];
+        if (nearest) {
+            const targetAngle = Math.atan2(nearest.y - cloneTorso.y, nearest.x - cloneTorso.x);
+            cloneAngle = Phaser.Math.Angle.RotateTo(cloneAngle, targetAngle, 0.05);
+            cloneTorso.x += Math.cos(cloneAngle) * 1.2;
+            cloneTorso.y += Math.sin(cloneAngle) * 0.8;
+        } else {
+            cloneAngle += 0.008;
+            cloneTorso.x += Math.cos(cloneAngle) * 0.4;
+            cloneTorso.y += Math.sin(cloneAngle) * 0.2;
+        }
+        cloneTorso.setRotation(cloneAngle);
+        cloneLabel.setPosition(cloneTorso.x, cloneTorso.y - 36);
+    }});
+
+    // Clone fires at enemies every 1s, dealing 50% of player damage
+    const cloneFireEvent = scene.time.addEvent({ delay: 1000, loop: true, callback: () => {
+        if (!cloneTorso.active) return;
+        const nearest = enemies?.getChildren()?.filter(e => e.active)
+            .sort((a, b) => Phaser.Math.Distance.Between(cloneTorso.x, cloneTorso.y, a.x, a.y) -
+                            Phaser.Math.Distance.Between(cloneTorso.x, cloneTorso.y, b.x, b.y))[0];
+        if (!nearest) return;
+        const ang = Math.atan2(nearest.y - cloneTorso.y, nearest.x - cloneTorso.x);
+        const wKey = loadout.L !== 'none' ? loadout.L : loadout.R;
+        const weapon = WEAPONS[wKey];
+        if (!weapon || weapon.explosive) return;
+        const b = scene.add.circle(cloneTorso.x, cloneTorso.y, (weapon.bulletSize || 4), 0x8844ff, 0.7).setDepth(11);
+        scene.physics.add.existing(b);
+        b.body.setAllowGravity(false);
+        b.damageValue = Math.round((weapon.dmg || 10) * (_perkState.dmgMult || 1) * 0.5);
+        bullets.add(b);
+        scene.physics.velocityFromRotation(ang, (weapon.speed || 800) * 0.9, b.body.velocity);
+        scene.time.delayedCall(1500, () => { if (b.active) b.destroy(); });
+    }});
+
+    // Track the clone
+    window._spectreClones.push({ torso: cloneTorso, label: cloneLabel, fire: cloneFireEvent, drift: driftEvent });
+
+    // Clone expires after 4s
+    scene.time.delayedCall(4000, () => {
+        if (cloneTorso.active) {
+            // Fade out
+            scene.tweens.add({ targets: [cloneTorso, cloneLabel], alpha: 0, duration: 300, onComplete: () => {
+                cloneTorso.destroy();
+                cloneLabel.destroy();
+                cloneFireEvent.remove();
+                driftEvent.remove();
+            }});
+        } else {
+            try { cloneLabel.destroy(); cloneFireEvent.remove(); driftEvent.remove(); } catch(ex) {}
+        }
+        window._spectreClones = window._spectreClones.filter(c => c.torso?.active);
+    });
+}
+
+function onEnemyKilled(deadEnemy) {
     _roundKills++;
+    // Swarm Burst unique: kills spawn homing micro-drones
+    if (typeof triggerSwarmBurst === 'function' && deadEnemy?.x != null) {
+        triggerSwarmBurst(game.scene.scenes[0], deadEnemy.x, deadEnemy.y);
+    }
     // Swarm Logic: kills while drone active reduce drone cooldown
     if (_perkState.swarmLogic > 0 && (_perkState._droneActive || _perkState._autoDroneActive)) {
         lastModTime -= _perkState.swarmLogic;
@@ -4842,6 +5204,11 @@ function onEnemyKilled() {
         _perkState._hitRunActive = true;
         _perkState._hitRunTimer = scene.time.now + 3000;
     }
+    // Spectre: every kill spawns a shadow clone (max 2, lasts 4s, deals 50% dmg)
+    if (_perkState.lightSpectre && player?.active && isDeployed) {
+        _spawnSpectreClone();
+    }
+
     // Predator: long-range kill charges next shot
     if (_perkState.predatorStacks > 0 && player) {
         const nearestEnemy = enemies?.getChildren()?.reduce((closest, e) => {
@@ -4852,19 +5219,32 @@ function onEnemyKilled() {
         _perkState._predatorCharged = true;
     }
 
-    if (_roundKills >= _roundTotal) {
+    // Phase 6: check objective-based round end (survival complete, assassination done, etc.)
+    const _objEnd = typeof shouldEndRound === 'function' && shouldEndRound();
+    if (_roundKills >= _roundTotal || _objEnd) {
         _roundActive = false;
         _roundClearing = true;
         // Stop player momentum so camera doesn't drift
         if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
         // Destroy any in-flight enemy bullets so they don't hit the player during perk screen
         if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+        // Destroy remaining enemies if objective ended the round early
+        if (_objEnd && _roundKills < _roundTotal) {
+            enemies?.getChildren().slice().forEach(e => { try { if (e.active) e.destroy(); } catch(ex){} });
+            _roundKills = _roundTotal;
+        }
+        // Determine banner sub-text from objective
+        const _objFailed = typeof _arenaState !== 'undefined' && _arenaState.objectiveFailed;
+        const _bannerSub = _objFailed ? '✖ OBJECTIVE FAILED' :
+            (typeof _arenaState !== 'undefined' && _arenaState.currentObjective !== 'elimination' && _arenaState.objectiveComplete ? '★ OBJECTIVE COMPLETE' : '');
         sndRoundClear();
         _healPlayerFull();
+        // Cleanup objective state
+        if (typeof cleanupObjective === 'function') cleanupObjective(game.scene.scenes[0]);
         const nextRound = _round + 1;
         showRoundBanner(
             'ROUND ' + _round + ' CLEARED',
-            '',
+            _bannerSub,
             2200,
             () => showPerkMenu(nextRound)
         );
@@ -5028,16 +5408,25 @@ function deployMech() {
         createImpactSparks(scene, p.x, p.y);
         const _hitDmg = bullet.damageValue || 15;
         showDamageText(scene, p.x, p.y, _hitDmg, player.shield > 0);
+        // Vampiric elite: heal shooter on hit
+        if (bullet._shooter && typeof handleVampiricHeal === 'function') {
+            handleVampiricHeal(bullet._shooter, _hitDmg);
+        }
         bullet.destroy();
         processPlayerDamage(_hitDmg, bulletAngle);
     });
 
     // Component HP — initialize first, then immediately reset doll so it always shows green
+    // Apply gear HP bonuses from equipped items
+    recalcGearStats();
+    const _gCoreHP = (_gearState?.coreHP || 0) + (_gearState?.allHP || 0);
+    const _gArmHP  = (_gearState?.armHP  || 0) + (_gearState?.allHP || 0);
+    const _gLegHP  = (_gearState?.legHP  || 0) + (_gearState?.allHP || 0);
     player.comp = {
-        core: { hp: s.coreHP, max: s.coreHP },
-        lArm: { hp: s.armHP,  max: s.armHP  },
-        rArm: { hp: s.armHP,  max: s.armHP  },
-        legs: { hp: s.legHP,  max: s.legHP  }
+        core: { hp: s.coreHP + _gCoreHP, max: s.coreHP + _gCoreHP },
+        lArm: { hp: s.armHP  + _gArmHP,  max: s.armHP  + _gArmHP  },
+        rArm: { hp: s.armHP  + _gArmHP,  max: s.armHP  + _gArmHP  },
+        legs: { hp: s.legHP  + _gLegHP,  max: s.legHP  + _gLegHP  }
     };
     // Force doll to green now — updatePaperDoll() won't run until isDeployed=true
     // (set inside the drop-in tween), so we reset directly here to avoid showing
@@ -5047,8 +5436,9 @@ function deployMech() {
     player.hp        = player.maxHp;
     // Shield comes from equipped shield system — 0 if none
     const _shldSys = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
-    player.maxShield = _shldSys.maxShield;
-    player.shield    = _shldSys.maxShield;
+    const _gShieldHP = (_gearState?.shieldHP || 0);
+    player.maxShield = _shldSys.maxShield + _gShieldHP;
+    player.shield    = _shldSys.maxShield + _gShieldHP;
     player._shieldRegenRate  = _shldSys.regenRate;
     player._shieldRegenDelay = _shldSys.regenDelay;
     // Absorb from shield definition; medium chassis gets +10% absorb bonus on top
@@ -5348,6 +5738,10 @@ function applyLegSystem() {
     }
 }
 function activateMod(scene, time) {
+    // Blueprint Core: spawn temporary cover wall on any mod activation
+    if (typeof spawnModCover === 'function') spawnModCover(scene);
+    // Core Reactor: mod activation damage pulse
+    if (typeof triggerCoreOverload === 'function') triggerCoreOverload(scene);
     switch (loadout.mod) {
         case 'jump':      activateJump(scene);           break;
         case 'barrier':   activateShield(scene);         break;
@@ -5848,7 +6242,8 @@ function activateShield(scene) {
     }
     // Thorns Protocol: reflect damage to attackers while shield is up — handled in processPlayerDamage
     // Capacitor Armor: tracked in processPlayerDamage
-    scene.time.delayedCall(WEAPONS.barrier.shieldTime, () => {
+    const _barrierDur = WEAPONS.barrier.shieldTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    scene.time.delayedCall(_barrierDur, () => {
         isShieldActive = false;
         sndShieldDeactivate();
         lastModTime = game.scene.scenes[0].time.now;
@@ -5859,7 +6254,8 @@ function activateRage(scene) {
     sndRage();
     isRageActive = true;
     refreshMechColor();
-    scene.time.delayedCall(WEAPONS.rage.rageTime, () => {
+    const _rageDur = WEAPONS.rage.rageTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    scene.time.delayedCall(_rageDur, () => {
         isRageActive = false;
         refreshMechColor();
         lastModTime = game.scene.scenes[0].time.now;
@@ -5883,7 +6279,8 @@ function activateEMP(scene, time) {
     // Stun nearby enemies
     enemies.getChildren().forEach(enemy => {
         const _empRad  = WEAPONS.emp.radius  * (_perkState.empAmplifier ? 1.30 : 1.0);
-    const _empStun = WEAPONS.emp.stunTime * (_perkState.empAmplifier ? 1.40 : 1.0);
+    const _empAmpMult = (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify')) ? 1.5 : 1;
+    const _empStun = WEAPONS.emp.stunTime * (_perkState.empAmplifier ? 1.40 : 1.0) * _empAmpMult;
     if (Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y) < _empRad) {
             enemy.isStunned = true;
             if (enemy.visuals?.setStrokeStyle) enemy.visuals.setStrokeStyle(4, 0x00ffff);
@@ -5906,7 +6303,8 @@ function activateGhostStep(scene, time) {
     // Make player sprite semi-transparent
     if (player.torso) player.torso.setAlpha(0.15);
     if (player.visuals) player.visuals.setAlpha(0.15);
-    const _gTimer = scene.time.delayedCall(WEAPONS.ghost_step.cloakTime, () => {
+    const _gsCloakDur = WEAPONS.ghost_step.cloakTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    const _gTimer = scene.time.delayedCall(_gsCloakDur, () => {
         _perkState._ghostStepActive = false;
         if (player?.torso) player.torso.setAlpha(1);
         if (player?.visuals) player.visuals.setAlpha(1);
@@ -5921,7 +6319,8 @@ function activateOverclockBurst(scene, time) {
     _perkState._overclockBurst = true;
     _perkState.speedMult = (_perkState.speedMult || 1) * 1.20;
     _perkState._overclockReloadMult = 0.75; // 25% faster fire rate
-    scene.time.delayedCall(WEAPONS.overclock_burst.boostTime, () => {
+    const _obDur = WEAPONS.overclock_burst.boostTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    scene.time.delayedCall(_obDur, () => {
         _perkState._overclockBurst = false;
         _perkState.speedMult = (_perkState.speedMult || 1.20) / 1.20;
         _perkState._overclockReloadMult = 1.0;
@@ -5939,7 +6338,8 @@ function activateFortressMode(scene, time) {
         player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 1); // 5 HP/s at 200ms ticks
         updateHUD();
     }});
-    scene.time.delayedCall(WEAPONS.fortress_mode.modeTime, () => {
+    const _fmDur = WEAPONS.fortress_mode.modeTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    scene.time.delayedCall(_fmDur, () => {
         _perkState._fortressMode = false;
         _perkState._fortressDR = 0;
         _fTick.remove();
@@ -6209,9 +6609,50 @@ function placeBuilding(scene, x, y, def) {
     body.coverCY = y;
 }
 
-function generateCover(scene) {
+function generateCover(scene, arenaKey) {
     if (!coverObjects) return;
     coverObjects.clear(true, true);
+
+    // If a custom arena generator exists, use it instead of default city layout
+    if (arenaKey && arenaKey !== 'warehouse' && typeof ARENA_DEFS !== 'undefined') {
+        const arenaDef = ARENA_DEFS[arenaKey];
+        if (arenaDef?.generator) {
+            const genFn = window[arenaDef.generator] || eval(arenaDef.generator);
+            if (typeof genFn === 'function') {
+                const _placed = [];
+                const _placeAt = (def, x, y) => {
+                    _placed.push({ x, y });
+                    if (def.type === 'building') {
+                        placeBuilding(scene, x, y, def);
+                    } else {
+                        const rect = scene.add.rectangle(x - def.w/2, y - def.h/2, def.w, def.h, def.color)
+                            .setOrigin(0, 0).setStrokeStyle(2, def.stroke).setDepth(3);
+                        coverObjects.add(rect, true);
+                        rect.body.setSize(def.w, def.h);
+                        rect.body.reset(x - def.w/2, y - def.h/2);
+                        rect.body.immovable = true;
+                        rect.coverType = def.type; rect.coverHp = def.hp;
+                        rect.coverMaxHp = def.hp; rect.coverDef = def;
+                        rect.coverCX = x; rect.coverCY = y;
+                    }
+                };
+                genFn(scene, coverObjects, _placeAt, COVER_DEFS);
+                // Force-sync all static bodies
+                coverObjects.getChildren().forEach(c => {
+                    if (c.body) {
+                        const w = c.width || 60, h = c.height || 60;
+                        c.body.setSize(w, h);
+                        c.body.reset(c.x, c.y);
+                        c.body.immovable = true;
+                        if (c.coverCX === undefined) { c.coverCX = c.x + w / 2; c.coverCY = c.y + h / 2; }
+                    }
+                });
+                coverObjects.refresh();
+                try { scene.time.delayedCall(120, () => { try { coverObjects?.refresh(); } catch(e){} }); } catch(e) {}
+                return;
+            }
+        }
+    }
 
     const MARGIN    = 150;
     const SAFE_DIST = 420;   // min dist from world center (2000,2000)
@@ -6941,12 +7382,528 @@ function spawnJuggernaut(scene) {
     };
 }
 
+// ================================================================
+// BOSS 5: THE SWARM (Round 25+)
+// 20 mini-enemies sharing one large HP pool. Killed units reform.
+// ================================================================
+function spawnSwarm(scene) {
+    const SWARM_COUNT = 20;
+    const swarmHP = Math.round(800 * (1 + Math.min(_round - 1, 40) * 0.07));
+    const _swarmState = { hp: swarmHP, maxHp: swarmHP, units: [], respawnQueue: [] };
+
+    _addBossHPBar(scene, null, 0x88ff00, 'THE SWARM');
+
+    // Override boss HP bar to use swarm state
+    const bossBarFill = document.getElementById('boss-bar-fill');
+
+    _showBossTitle(scene, 'THE SWARM', 'DESTROY THE HIVE MIND', 0x88ff00);
+
+    function spawnSwarmUnit(x, y) {
+        const sz = 18;
+        const e = scene.add.rectangle(x, y, sz, sz, 0x000000, 0);
+        scene.physics.add.existing(e);
+        e.body.setCircle(sz * 0.6);
+        e.body.setBounce(0.5);
+        e.visuals = scene.add.circle(x, y, sz/2, 0x66cc00).setStrokeStyle(1, 0x88ff00).setDepth(5);
+        // Small eye
+        const eyeOx = Math.cos(0) * 4, eyeOy = Math.sin(0) * 4;
+        e.torso = scene.add.circle(x + eyeOx, y + eyeOy, 3, 0xffffff).setDepth(6);
+        e.speed = 120 + Math.random() * 80;
+        const unitHP = 30;
+        e.comp = {
+            core: { hp: unitHP, max: unitHP },
+            lArm: { hp: 10, max: 10 }, rArm: { hp: 10, max: 10 },
+            legs: { hp: 10, max: 10 }
+        };
+        e.health = unitHP; e.maxHealth = unitHP;
+        e.behavior = 'rush'; e.isBoss = false; e._isSwarmUnit = true;
+        e._swarmState = _swarmState;
+        e._passiveDR = 0; e._reloadMult = 1; e._augState = {};
+        e.reloadL = 0; e.reloadR = 0; e.lastFireTime = 0; e.lastSecTime = 0;
+        e.lastModTime = -99999; e.isModActive = false;
+        e.fxFootTimer = 0; e.fxFootSide = 1; e.fxShockTimer = 0;
+        e.fxLastX = x; e.fxLastY = y; e.fxLastMX = x; e.fxLastMY = y;
+        e._fireGrace = true;
+        setTimeout(() => { if (e?.active) e._fireGrace = false; }, 1500);
+        e._visionConeGfx = scene.add.graphics().setDepth(3);
+        e.loadout = { chassis:'light', primary:'smg', secondary:'none', mod:'none', shld:'none', leg:'none', aug:'none' };
+        enemies.add(e);
+        if (coverObjects) scene.physics.add.collider(e, coverObjects);
+        _swarmState.units.push(e);
+        return e;
+    }
+
+    // Spawn swarm units in a cluster
+    for (let i = 0; i < SWARM_COUNT; i++) {
+        const angle = (i / SWARM_COUNT) * Math.PI * 2;
+        const r = 150 + Math.random() * 200;
+        const sx = 2000 + Math.cos(angle) * (800 + r);
+        const sy = 2000 + Math.sin(angle) * (800 + r);
+        spawnSwarmUnit(Phaser.Math.Clamp(sx, 300, 3700), Phaser.Math.Clamp(sy, 300, 3700));
+    }
+
+    // Swarm update loop — shared HP, respawn dead units
+    const swarmTick = scene.time.addEvent({ delay: 200, loop: true, callback: () => {
+        if (_swarmState.hp <= 0) { swarmTick.remove(); return; }
+        // Update boss HP bar
+        if (bossBarFill) bossBarFill.style.width = Math.max(0, _swarmState.hp / _swarmState.maxHp * 100) + '%';
+        // Respawn dead units (max 2 per tick)
+        let respawned = 0;
+        for (let i = _swarmState.units.length - 1; i >= 0; i--) {
+            const u = _swarmState.units[i];
+            if (!u.active && respawned < 2 && _swarmState.hp > 0) {
+                // Respawn near a living unit
+                const living = _swarmState.units.filter(u2 => u2.active);
+                if (living.length > 0) {
+                    const ref = living[Math.floor(Math.random() * living.length)];
+                    const nu = spawnSwarmUnit(ref.x + Phaser.Math.Between(-60, 60), ref.y + Phaser.Math.Between(-60, 60));
+                    _swarmState.units[i] = nu;
+                    // Green flash on respawn
+                    const flash = scene.add.circle(nu.x, nu.y, 15, 0x88ff00, 0.6).setDepth(14);
+                    scene.tweens.add({ targets: flash, alpha: 0, scale: 2, duration: 300, onComplete: () => flash.destroy() });
+                }
+                respawned++;
+            }
+        }
+        // Sync visuals for living units
+        _swarmState.units.forEach(u => {
+            if (!u.active) return;
+            if (u.visuals?.active) u.visuals.setPosition(u.x, u.y);
+            if (u.torso?.active) u.torso.setPosition(u.x + 4, u.y);
+        });
+    }});
+
+    // Swarm boss is defeated when shared HP reaches 0
+    // This is tracked via a custom damage hook — swarm units redirect damage to pool
+    _swarmState._tick = swarmTick;
+    _swarmState._onDefeat = function() {
+        swarmTick.remove();
+        _hideBossHPBar();
+        _swarmState.units.forEach(u => {
+            if (u.active) {
+                const exp = scene.add.circle(u.x, u.y, 8, 0x88ff00, 0.7).setDepth(14);
+                scene.tweens.add({ targets: exp, scale: 3, alpha: 0, duration: 400, onComplete: () => exp.destroy() });
+                try { u.visuals?.destroy(); u.torso?.destroy(); u._visionConeGfx?.destroy(); } catch(ex) {}
+                u.destroy();
+            }
+        });
+    };
+
+    // Store swarm state globally for damage hook
+    window._activeSwarm = _swarmState;
+}
+
+// ================================================================
+// BOSS 6: THE MIRROR (Round 30+)
+// Copies player loadout, AI-controlled mirror match
+// ================================================================
+function spawnMirror(scene) {
+    const p = _bossSpawnPos();
+    const mirrorColors = { body: 0x111122, head: 0x4488ff, eye: 0x00ffff };
+    const e = _buildBossEnemy(scene, p.x, p.y, loadout.chassis || 'medium', mirrorColors, 3.5, 1.0);
+    // Copy player loadout
+    e.loadout = {
+        chassis: loadout.chassis || 'medium',
+        primary: loadout.L || 'smg', secondary: loadout.R || 'none',
+        mod: loadout.mod || 'none', shld: loadout.shld || 'none',
+        leg: loadout.leg || 'none', aug: loadout.aug || 'none'
+    };
+    e.behavior = 'mirror'; e.isBoss = true; e.bossType = 'mirror';
+    e._mirrorPhase = 1;
+    _addBossLabel(scene, e, '[ THE MIRROR ]', 0x4488ff, 80);
+    _addBossHPBar(scene, e, 0x4488ff, 'THE MIRROR');
+    _showBossTitle(scene, 'THE MIRROR', 'IT KNOWS YOUR MOVES', 0x4488ff);
+
+    // Mirror copies player speed
+    e.speed = CHASSIS[loadout.chassis || 'medium'].spd * 1.05;
+
+    // Mirror AI: strafe, dodge, use mods — update loop
+    const mirrorTick = scene.time.addEvent({ delay: 250, loop: true, callback: () => {
+        if (!e || !e.active) { mirrorTick.remove(); return; }
+        _updateBossHPBar(e);
+        if (e.bossLabel?.active) e.bossLabel.setPosition(e.x, e.y - 80);
+        const pct = e.health / e.maxHealth;
+
+        // Phase transitions: at 50% mirror copies player perks partially
+        if (pct < 0.50 && e._mirrorPhase === 1) {
+            e._mirrorPhase = 2;
+            e.speed *= 1.2;
+            e._passiveDR = 0.15;
+            const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+                'THE MIRROR — PHASE 2: ADAPTATION', { font:'bold 18px monospace', fill:'#4488ff', stroke:'#000', strokeThickness:4 })
+                .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+            scene.tweens.add({ targets: warn, alpha:0, duration:2000, onComplete:()=>warn.destroy() });
+            _tone(180, 'sine', 0.3, 0.15, 120);
+        }
+
+        // Mirror dodge: teleport-dash when player fires nearby
+        if (player?.active && e._mirrorPhase >= 2 && Math.random() < 0.08) {
+            const dist = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+            if (dist < 400) {
+                const dashAngle = Math.atan2(player.y - e.y, player.x - e.x) + (Math.random() < 0.5 ? Math.PI/2 : -Math.PI/2);
+                const dashDist = 120;
+                const nx = Phaser.Math.Clamp(e.x + Math.cos(dashAngle) * dashDist, 200, 3800);
+                const ny = Phaser.Math.Clamp(e.y + Math.sin(dashAngle) * dashDist, 200, 3800);
+                // Ghost trail
+                const ghost = scene.add.circle(e.x, e.y, 20, 0x4488ff, 0.4).setDepth(12);
+                scene.tweens.add({ targets: ghost, alpha: 0, scale: 0.3, duration: 400, onComplete: () => ghost.destroy() });
+                e.x = nx; e.y = ny;
+                if (e.body) e.body.reset(nx, ny);
+            }
+        }
+    }});
+
+    // Mirror uses EMP periodically
+    let lastMirrorMod = 0;
+    const mirrorModTick = scene.time.addEvent({ delay: 100, loop: true, callback: () => {
+        if (!e || !e.active) { mirrorModTick.remove(); return; }
+        const now = scene.time.now;
+        if (now - lastMirrorMod > 8000 && e._mirrorPhase >= 2) {
+            lastMirrorMod = now;
+            // Mirror EMP: stuns player briefly
+            const dist = Phaser.Math.Distance.Between(e.x, e.y, player?.x || 2000, player?.y || 2000);
+            if (dist < 350) {
+                const ring = scene.add.circle(e.x, e.y, 10, 0x4488ff, 0.3).setStrokeStyle(2, 0x4488ff).setDepth(12);
+                scene.tweens.add({ targets: ring, radius: 250, alpha: 0, duration: 400, onComplete: () => ring.destroy() });
+                _tone(400, 'sine', 0.15, 0.1, 200);
+            }
+        }
+    }});
+
+    e._onDestroy = function() {
+        mirrorTick.remove();
+        mirrorModTick.remove();
+        if (e.bossLabel) e.bossLabel.destroy();
+        _hideBossHPBar();
+    };
+}
+
+// ================================================================
+// BOSS 7: THE TITAN (Round 35+)
+// 3-phase mega-heavy boss with different attack patterns each phase
+// ================================================================
+function spawnTitan(scene) {
+    const p = _bossSpawnPos();
+    const titanColors = { body: 0x1a1000, head: 0xff8800, eye: 0xffcc00 };
+    const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', titanColors, 8.0, 0.55);
+    e.loadout = { chassis:'heavy', primary:'siege', secondary:'chain',
+                  mod:'fortress_mode', shld:'titan_shield', leg:'siege_stance', aug:'reactive_plating' };
+    e.behavior = 'patrol'; e.isBoss = true; e.bossType = 'titan';
+    e._titanPhase = 1;
+    e._passiveDR = 0.25;
+    // Titan is visually larger
+    if (e.visuals) e.visuals.setScale(2.2);
+    if (e.torso) e.torso.setScale(2.2);
+    e.body.setCircle(80);
+    _addBossLabel(scene, e, '[ THE TITAN ]', 0xff8800, 100);
+    _addBossHPBar(scene, e, 0xff8800, 'THE TITAN');
+    _showBossTitle(scene, 'THE TITAN', 'PHASE 1 — ARTILLERY BARRAGE', 0xff8800);
+
+    // Phase 1: Artillery — fires explosive projectiles at player position
+    let artilleryTimer = null;
+    function startPhase1() {
+        artilleryTimer = scene.time.addEvent({ delay: 2000, loop: true, callback: () => {
+            if (!e || !e.active || !player?.active) return;
+            // Fire 3 mortar rounds at player location with spread
+            for (let i = 0; i < 3; i++) {
+                const tx = player.x + Phaser.Math.Between(-80, 80);
+                const ty = player.y + Phaser.Math.Between(-80, 80);
+                // Warning indicator
+                const warn = scene.add.circle(tx, ty, 40, 0xff4400, 0.15).setStrokeStyle(2, 0xff8800, 0.4).setDepth(3);
+                scene.tweens.add({ targets: warn, alpha: 0.5, duration: 800, onComplete: () => {
+                    warn.destroy();
+                    if (!e?.active) return;
+                    // Explosion
+                    const exp = scene.add.circle(tx, ty, 15, 0xff6600, 0.7).setDepth(14);
+                    scene.tweens.add({ targets: exp, radius: 60, alpha: 0, duration: 350, onComplete: () => exp.destroy() });
+                    if (player?.active && Phaser.Math.Distance.Between(tx, ty, player.x, player.y) < 60) {
+                        const artDmg = Math.round(25 * (1 + Math.max(0, _round - 35) * 0.04));
+                        processPlayerDamage(artDmg, null);
+                    }
+                    _tone(100, 'sawtooth', 0.2, 0.15, 50);
+                }});
+            }
+        }});
+    }
+
+    // Phase 2: Melee — charges at player with ground slam
+    let slamTimer = null;
+    function startPhase2() {
+        if (artilleryTimer) artilleryTimer.remove();
+        e.speed *= 2.0;
+        const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+            'THE TITAN — PHASE 2: GROUND ASSAULT', { font:'bold 18px monospace', fill:'#ff8800', stroke:'#000', strokeThickness:4 })
+            .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+        scene.tweens.add({ targets: warn, alpha:0, duration:2000, onComplete:()=>warn.destroy() });
+        _tone(40, 'sawtooth', 0.6, 0.4, 25);
+
+        slamTimer = scene.time.addEvent({ delay: 4000, loop: true, callback: () => {
+            if (!e || !e.active || !player?.active) return;
+            // Charge toward player
+            const angle = Math.atan2(player.y - e.y, player.x - e.x);
+            if (e.body) e.body.setVelocity(Math.cos(angle) * 400, Math.sin(angle) * 400);
+            scene.time.delayedCall(600, () => {
+                if (!e?.active) return;
+                if (e.body) e.body.setVelocity(0, 0);
+                // Ground slam
+                const slam = scene.add.circle(e.x, e.y, 20, 0xff8800, 0.6).setDepth(14);
+                scene.tweens.add({ targets: slam, radius: 150, alpha: 0, duration: 500, onComplete: () => slam.destroy() });
+                if (player?.active && Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y) < 150) {
+                    const slamDmg = Math.round(40 * (1 + Math.max(0, _round - 35) * 0.04));
+                    processPlayerDamage(slamDmg, null);
+                }
+                _noise(0.3, 0.4, 0, 0, 400);
+            });
+        }});
+    }
+
+    // Phase 3: Desperation — combines artillery + melee + enrage
+    let desperationTimer = null;
+    function startPhase3() {
+        if (slamTimer) slamTimer.remove();
+        e.speed *= 1.3;
+        e._passiveDR = 0.10; // DR drops in desperation
+        const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+            'THE TITAN — FINAL PHASE: DESPERATION', { font:'bold 20px monospace', fill:'#ff0000', stroke:'#000', strokeThickness:5 })
+            .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+        scene.tweens.add({ targets: warn, alpha:0, duration:2500, onComplete:()=>warn.destroy() });
+        _tone(30, 'sawtooth', 0.8, 0.5, 20);
+
+        desperationTimer = scene.time.addEvent({ delay: 2500, loop: true, callback: () => {
+            if (!e || !e.active || !player?.active) return;
+            // Alternating attacks
+            if (Math.random() < 0.5) {
+                // Mortar
+                const tx = player.x + Phaser.Math.Between(-60, 60);
+                const ty = player.y + Phaser.Math.Between(-60, 60);
+                const warn2 = scene.add.circle(tx, ty, 50, 0xff2200, 0.2).setDepth(3);
+                scene.tweens.add({ targets: warn2, alpha: 0.6, duration: 600, onComplete: () => {
+                    warn2.destroy();
+                    if (!e?.active) return;
+                    const exp = scene.add.circle(tx, ty, 20, 0xff4400, 0.8).setDepth(14);
+                    scene.tweens.add({ targets: exp, radius: 80, alpha: 0, duration: 400, onComplete: () => exp.destroy() });
+                    if (player?.active && Phaser.Math.Distance.Between(tx, ty, player.x, player.y) < 80) {
+                        processPlayerDamage(Math.round(30 * (1 + Math.max(0, _round - 35) * 0.04)), null);
+                    }
+                }});
+            } else {
+                // Shockwave
+                const sw = scene.add.circle(e.x, e.y, 10, 0xff6600, 0.5).setDepth(14);
+                scene.tweens.add({ targets: sw, radius: 200, alpha: 0, duration: 500, onComplete: () => sw.destroy() });
+                if (player?.active && Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y) < 200) {
+                    processPlayerDamage(Math.round(20 * (1 + Math.max(0, _round - 35) * 0.04)), null);
+                }
+            }
+        }});
+    }
+
+    startPhase1();
+
+    // Phase tracking
+    const titanTick = scene.time.addEvent({ delay: 300, loop: true, callback: () => {
+        if (!e || !e.active) { titanTick.remove(); return; }
+        _updateBossHPBar(e);
+        if (e.bossLabel?.active) e.bossLabel.setPosition(e.x, e.y - 100);
+        const pct = e.health / e.maxHealth;
+        if (pct < 0.66 && e._titanPhase === 1) { e._titanPhase = 2; startPhase2(); }
+        if (pct < 0.33 && e._titanPhase === 2) { e._titanPhase = 3; startPhase3(); }
+    }});
+
+    e._onDestroy = function() {
+        titanTick.remove();
+        if (artilleryTimer) artilleryTimer.remove();
+        if (slamTimer) slamTimer.remove();
+        if (desperationTimer) desperationTimer.remove();
+        if (e.bossLabel) e.bossLabel.destroy();
+        _hideBossHPBar();
+    };
+}
+
+// ================================================================
+// BOSS 8: THE CORE (Round 40+)
+// Stationary core with 4 rotating turrets — must destroy turrets first
+// ================================================================
+function spawnCore(scene) {
+    // Central core — stationary
+    const coreHP = Math.round(600 * (1 + Math.min(_round - 1, 40) * 0.07));
+    const coreE = scene.add.rectangle(2000, 1200, 80, 80, 0x000000, 0);
+    scene.physics.add.existing(coreE);
+    coreE.body.setCircle(50);
+    coreE.body.setImmovable(true);
+
+    // Core visual
+    const coreGfx = scene.add.graphics().setDepth(5);
+    coreGfx.fillStyle(0x001133, 0.9);
+    coreGfx.fillCircle(0, 0, 40);
+    coreGfx.lineStyle(3, 0x00ccff);
+    coreGfx.strokeCircle(0, 0, 40);
+    coreGfx.fillStyle(0x00ffff, 0.6);
+    coreGfx.fillCircle(0, 0, 15);
+    coreGfx.setPosition(2000, 1200);
+    coreE.visuals = coreGfx;
+    coreE.torso = scene.add.circle(2000, 1200, 5, 0xffffff).setDepth(6);
+
+    coreE.speed = 0;
+    coreE.comp = {
+        core: { hp: coreHP, max: coreHP },
+        lArm: { hp: 1, max: 1 }, rArm: { hp: 1, max: 1 },
+        legs: { hp: 1, max: 1 }
+    };
+    coreE.health = coreHP; coreE.maxHealth = coreHP;
+    coreE.behavior = 'stationary'; coreE.isBoss = true; coreE.bossType = 'core';
+    coreE._passiveDR = 0.50; // 50% DR while turrets alive
+    coreE._reloadMult = 1; coreE._augState = {};
+    coreE.reloadL = 0; coreE.reloadR = 0;
+    coreE.lastFireTime = 0; coreE.lastSecTime = 0;
+    coreE.lastModTime = -99999; coreE.isModActive = false;
+    coreE.fxFootTimer = 0; coreE.fxFootSide = 1; coreE.fxShockTimer = 0;
+    coreE.fxLastX = 2000; coreE.fxLastY = 1200; coreE.fxLastMX = 2000; coreE.fxLastMY = 1200;
+    coreE._fireGrace = true;
+    setTimeout(() => { if (coreE?.active) coreE._fireGrace = false; }, 3000);
+    coreE._visionConeGfx = scene.add.graphics().setDepth(3);
+    coreE.loadout = { chassis:'heavy', primary:'plsm', secondary:'none', mod:'none', shld:'none', leg:'none', aug:'none' };
+    enemies.add(coreE);
+    if (coverObjects) scene.physics.add.collider(coreE, coverObjects);
+
+    _addBossLabel(scene, coreE, '[ THE CORE ]', 0x00ccff, 70);
+    _addBossHPBar(scene, coreE, 0x00ccff, 'THE CORE');
+    _showBossTitle(scene, 'THE CORE', 'DESTROY THE TURRETS FIRST', 0x00ccff);
+
+    // Spawn 4 turrets orbiting the core
+    const turrets = [];
+    const TURRET_COUNT = 4;
+    const orbitRadius = 180;
+    let orbitAngle = 0;
+
+    for (let i = 0; i < TURRET_COUNT; i++) {
+        const ta = (i / TURRET_COUNT) * Math.PI * 2;
+        const tx = 2000 + Math.cos(ta) * orbitRadius;
+        const ty = 1200 + Math.sin(ta) * orbitRadius;
+        const turretHP = Math.round(200 * (1 + Math.min(_round - 1, 40) * 0.07));
+
+        const t = scene.add.rectangle(tx, ty, 30, 30, 0x000000, 0);
+        scene.physics.add.existing(t);
+        t.body.setCircle(18);
+        t.visuals = scene.add.circle(tx, ty, 14, 0x003366).setStrokeStyle(2, 0x00ccff).setDepth(5);
+        // Turret barrel
+        t.torso = scene.add.rectangle(tx, ty - 14, 4, 16, 0x00ccff).setOrigin(0.5, 1).setDepth(6);
+        t.speed = 0;
+        t.comp = {
+            core: { hp: turretHP, max: turretHP },
+            lArm: { hp: 1, max: 1 }, rArm: { hp: 1, max: 1 },
+            legs: { hp: 1, max: 1 }
+        };
+        t.health = turretHP; t.maxHealth = turretHP;
+        t.behavior = 'turret'; t.isBoss = false; t._isCoreTurret = true;
+        t._passiveDR = 0; t._reloadMult = 1; t._augState = {};
+        t.reloadL = 0; t.reloadR = 0; t.lastFireTime = 0; t.lastSecTime = 0;
+        t.lastModTime = -99999; t.isModActive = false;
+        t.fxFootTimer = 0; t.fxFootSide = 1; t.fxShockTimer = 0;
+        t.fxLastX = tx; t.fxLastY = ty; t.fxLastMX = tx; t.fxLastMY = ty;
+        t._fireGrace = true;
+        setTimeout(() => { if (t?.active) t._fireGrace = false; }, 2500);
+        t._visionConeGfx = scene.add.graphics().setDepth(3);
+        t.loadout = { chassis:'medium', primary:'plsm', secondary:'none', mod:'none', shld:'none', leg:'none', aug:'none' };
+        enemies.add(t);
+        turrets.push(t);
+        t._orbitIndex = i;
+    }
+
+    // Core update loop: rotate turrets, check turret status
+    const coreTick = scene.time.addEvent({ delay: 50, loop: true, callback: () => {
+        if (!coreE || !coreE.active) { coreTick.remove(); return; }
+        _updateBossHPBar(coreE);
+        if (coreE.bossLabel?.active) coreE.bossLabel.setPosition(coreE.x, coreE.y - 70);
+        if (coreE.visuals?.active) coreE.visuals.setPosition(coreE.x, coreE.y);
+        if (coreE.torso?.active) coreE.torso.setPosition(coreE.x, coreE.y);
+
+        // Rotate turrets
+        orbitAngle += 0.008;
+        let aliveTurrets = 0;
+        turrets.forEach((t, i) => {
+            if (!t.active) return;
+            aliveTurrets++;
+            const a = orbitAngle + (i / TURRET_COUNT) * Math.PI * 2;
+            const nx = coreE.x + Math.cos(a) * orbitRadius;
+            const ny = coreE.y + Math.sin(a) * orbitRadius;
+            t.x = nx; t.y = ny;
+            if (t.body) t.body.reset(nx - 15, ny - 15);
+            if (t.visuals?.active) t.visuals.setPosition(nx, ny);
+            if (t.torso?.active) {
+                // Point barrel at player
+                if (player?.active) {
+                    const aim = Math.atan2(player.y - ny, player.x - nx);
+                    t.torso.setPosition(nx, ny).setRotation(aim + Math.PI/2);
+                }
+            }
+        });
+
+        // When all turrets dead, core loses DR and enters vulnerable phase
+        if (aliveTurrets === 0 && coreE._passiveDR > 0) {
+            coreE._passiveDR = 0;
+            const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+                'CORE EXPOSED — SHIELDS DOWN', { font:'bold 20px monospace', fill:'#00ffff', stroke:'#000', strokeThickness:5 })
+                .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+            scene.tweens.add({ targets: warn, alpha:0, duration:2500, onComplete:()=>warn.destroy() });
+            _tone(600, 'sine', 0.2, 0.1, 300);
+            // Core starts firing faster in desperation
+            coreE.loadout.primary = 'chain';
+        }
+
+        // Core laser beam at player every 3s
+        if (coreE._fireGrace) return;
+        coreE._coreBeamTick = (coreE._coreBeamTick || 0) + 50;
+        if (coreE._coreBeamTick >= 3000 && player?.active) {
+            coreE._coreBeamTick = 0;
+            const angle = Math.atan2(player.y - coreE.y, player.x - coreE.x);
+            const beamLen = 600;
+            const bx = coreE.x + Math.cos(angle) * beamLen;
+            const by = coreE.y + Math.sin(angle) * beamLen;
+            const beam = scene.add.line(0, 0, coreE.x, coreE.y, bx, by, 0x00ccff, 0.7)
+                .setLineWidth(3).setDepth(14);
+            scene.tweens.add({ targets: beam, alpha: 0, duration: 400, onComplete: () => beam.destroy() });
+            // Damage along beam
+            if (player?.active) {
+                const dist = Phaser.Math.Distance.Between(coreE.x, coreE.y, player.x, player.y);
+                // Check if player is roughly in beam path
+                const pAngle = Math.atan2(player.y - coreE.y, player.x - coreE.x);
+                if (Math.abs(Phaser.Math.Angle.Wrap(pAngle - angle)) < 0.15 && dist < beamLen) {
+                    const beamDmg = Math.round(20 * (1 + Math.max(0, _round - 40) * 0.04));
+                    processPlayerDamage(beamDmg, null);
+                }
+            }
+            _tone(800, 'sine', 0.15, 0.08, 400);
+        }
+    }});
+
+    // Track total kills needed (core + turrets)
+    _roundTotal = 1 + TURRET_COUNT; // Kill turrets + core
+
+    coreE._onDestroy = function() {
+        coreTick.remove();
+        turrets.forEach(t => {
+            try { t.visuals?.destroy(); t.torso?.destroy(); t._visionConeGfx?.destroy(); } catch(ex) {}
+        });
+        if (coreE.bossLabel) coreE.bossLabel.destroy();
+        _hideBossHPBar();
+    };
+}
+
+// Boss cycle: 8 bosses, one every 5 rounds starting at R5, cycling after R40.
+// R5=Warden, R10=Razors, R15=Architect, R20=Juggernaut,
+// R25=Swarm, R30=Mirror, R35=Titan, R40=Core, R45=Warden again...
+// Boss definitions are in this file. Boss LOOT is in js/loot-system.js (BOSS_DROP_TABLE).
 function spawnBoss(scene, roundNum) {
-    const bossCycle = (Math.floor((roundNum - 1) / 5) - 1) % 4;
+    if (typeof sndBossSpawn === 'function') sndBossSpawn(); // → Phase 8 sound (defined above)
+    const bossCycle = (Math.floor(roundNum / 5) - 1) % 8;
     if (bossCycle === 0) spawnWarden(scene);
     else if (bossCycle === 1) spawnTwinRazors(scene);
     else if (bossCycle === 2) spawnArchitect(scene);
-    else spawnJuggernaut(scene);
+    else if (bossCycle === 3) spawnJuggernaut(scene);
+    else if (bossCycle === 4) spawnSwarm(scene);
+    else if (bossCycle === 5) spawnMirror(scene);
+    else if (bossCycle === 6) spawnTitan(scene);
+    else spawnCore(scene);
 }
 
 
@@ -7105,6 +8062,10 @@ const BOSS_COLORS = {
     razor:     { body: 0x1a0000, head: 0xff0022, eye: 0xff8800 },
     architect: { body: 0x001a1a, head: 0x00cccc, eye: 0xffffff },
     juggernaut:{ body: 0x0f0f0f, head: 0x441100, eye: 0xff2200 },
+    swarm:     { body: 0x0a1a00, head: 0x66cc00, eye: 0x88ff00 },
+    mirror:    { body: 0x111122, head: 0x4488ff, eye: 0x00ffff },
+    titan:     { body: 0x1a1000, head: 0xff8800, eye: 0xffcc00 },
+    core:      { body: 0x001133, head: 0x00ccff, eye: 0x00ffff },
 };
 
 // Primary weapon keys available to enemies (excludes none)
@@ -7444,7 +8405,11 @@ function enemyFire(scene, enemy, time) {
         hr:    0.65,   // 160 → 104
         br:    0.75,   // 30  → 22
     };
-    const dmg    = Math.round((weapon.dmg || 15) * (_enemyDmgScale[wKey] || 1.0));
+    let dmg    = Math.round((weapon.dmg || 15) * (_enemyDmgScale[wKey] || 1.0));
+    // Berserker enrage: 1.5x damage
+    if (enemy._enrageDmgMult) dmg = Math.round(dmg * enemy._enrageDmgMult);
+    // Helper: tag bullets with shooter ref for vampiric healing
+    const _tagBullet = (b) => { b._shooter = enemy; return b; };
 
     // Dispatch by weapon type — mirrors player fire functions
     if (wKey === 'sg') {
@@ -7453,7 +8418,7 @@ function enemyFire(scene, enemy, time) {
             const b = scene.add.circle(ex, ey, bSize, 0xff4400);
             scene.physics.add.existing(b);
             b.body.setAllowGravity(false);
-            b.damageValue = dmg;
+            b.damageValue = dmg; _tagBullet(b);
             enemyBullets.add(b);
             scene.physics.velocityFromRotation(angle + spread, bSpeed, b.body.velocity);
             scene.time.delayedCall(1500, () => { if (b.active) b.destroy(); });
@@ -7466,7 +8431,7 @@ function enemyFire(scene, enemy, time) {
             const b = scene.add.circle(ex, ey, bSize, 0xff6600).setAlpha(0.85);
             scene.physics.add.existing(b);
             b.body.setAllowGravity(false);
-            b.damageValue = dmg;
+            b.damageValue = dmg; _tagBullet(b);
             enemyBullets.add(b);
             scene.physics.velocityFromRotation(angle + spread, bSpeed * (0.8 + Math.random() * 0.4), b.body.velocity);
             const ttl = 400 + Math.random() * 200;
@@ -7480,7 +8445,7 @@ function enemyFire(scene, enemy, time) {
             .setRotation(angle).setStrokeStyle(1, 0xff6600).setDepth(14);
         scene.physics.add.existing(b);
         b.body.setAllowGravity(false);
-        b.damageValue = dmg;
+        b.damageValue = dmg; _tagBullet(b);
         b.piercing = true;
         enemyBullets.add(b);
         scene.physics.velocityFromRotation(angle, weapon.speed, b.body.velocity);
@@ -7522,7 +8487,7 @@ function enemyFire(scene, enemy, time) {
         const p = scene.add.circle(ex, ey, 22, 0xff6600).setAlpha(0.85).setDepth(14);
         scene.physics.add.existing(p);
         p.body.setAllowGravity(false);
-        p.damageValue = dmg;
+        p.damageValue = dmg; _tagBullet(p);
         enemyBullets.add(p);
         scene.physics.velocityFromRotation(angle, 260, p.body.velocity);
         scene.tweens.add({ targets: p, alpha: 0.4, duration: 120, yoyo: true, repeat: -1 });
@@ -7548,7 +8513,7 @@ function enemyFire(scene, enemy, time) {
         const b = scene.add.circle(ex, ey, bSize, 0xff2200);
         scene.physics.add.existing(b);
         b.body.setAllowGravity(false);
-        b.damageValue = dmg;
+        b.damageValue = dmg; _tagBullet(b);
         if (wKey === 'siege') {
             scene.physics.add.overlap(b, player, () => {
                 if (!b.active) return;
@@ -7567,7 +8532,7 @@ function enemyFire(scene, enemy, time) {
                 const b = scene.add.circle(enemy.x, enemy.y, bSize, 0xff2200);
                 scene.physics.add.existing(b);
                 b.body.setAllowGravity(false);
-                b.damageValue = dmg;
+                b.damageValue = dmg; _tagBullet(b);
                 enemyBullets.add(b);
                 scene.physics.velocityFromRotation(ang2, bSpeed, b.body.velocity);
                 scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
@@ -7578,7 +8543,7 @@ function enemyFire(scene, enemy, time) {
         const b = scene.add.circle(ex, ey, bSize, 0xff2200);
         scene.physics.add.existing(b);
         b.body.setAllowGravity(false);
-        b.damageValue = dmg;
+        b.damageValue = dmg; _tagBullet(b);
         enemyBullets.add(b);
         scene.physics.velocityFromRotation(angle, bSpeed, b.body.velocity);
         scene.time.delayedCall(2000, () => { if (b.active) b.destroy(); });
@@ -7754,8 +8719,10 @@ function fire(scene, side) {
     // Single-arm brace bonus: when the other arm is empty, this arm gets +15% reload speed
     const _otherArm = side === 'L' ? loadout.R : loadout.L;
     const _braceMult = (!_otherArm || _otherArm === 'none') && !WEAPONS[loadout.L]?.twoHanded ? 0.85 : 1.0;
+    const _gearReloadMult = 1 - ((_gearState?.reloadPct || 0) / 100);
+    const _dualReloadMult = 1 - (typeof getDualReloadBonus === 'function' ? getDualReloadBonus() : 0);
     const reloadActual = ((isRageActive || isAmmoActive) ? weapon.reload * 0.5 : weapon.reload)
-        * (_perkState.reloadMult || 1) * _lightReloadMult * _braceMult
+        * (_perkState.reloadMult || 1) * _gearReloadMult * _dualReloadMult * _lightReloadMult * _braceMult
         * (_perkState._overclockBurst ? 0.75 : 1.0);
     const lastFired    = side === 'L' ? reloadL : reloadR;
     if (now < lastFired) return;
@@ -7878,21 +8845,31 @@ function fire(scene, side) {
     }
     const _capBonus = (_perkState._capacitorReady) ? 1.25 : 1.0;
     if (_perkState._capacitorReady) _perkState._capacitorReady = false;
-    const _effectiveDmg = Math.round((weapon.dmg || 0) * (_perkState.dmgMult || 1) * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus);
+    const _gearDmgFlat = (_gearState?.dmgFlat || 0);
+    const _gearDmgPct  = 1 + ((_gearState?.dmgPct || 0) / 100);
+    const _colossusMult = (typeof getColossusDmgMult === 'function') ? getColossusDmgMult() : 1.0;
+    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * (_perkState.dmgMult || 1) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult);
     const _wEff = Object.assign({}, weapon, { dmg: _effectiveDmg });
     // Phantom: mark all bullets from this shot as piercing
     if (_phantomMult > 1) _wEff._phantomPierce = true;
     // Ballistic Weave: bullets ignore 20% of shield
     if (_perkState.ballisticWeave) _wEff._shieldPierce = 0.20;
-    switch (wKey) {
-        case 'gl':    fireGL(scene, _wEff, armOx, armOy, aimAngle);   break;
-        case 'rl':    fireRL(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-        case 'siege': fireSIEGE(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-        case 'chain': fireStandard(scene, wKey, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-        case 'sg':    fireSG(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-        case 'plsm':  firePLSM(scene, _wEff, armOx, armOy, aimAngle); break;
-        case 'sr':    fireSR(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-        default:      fireStandard(scene, wKey, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+    const _fireOnce = () => {
+        switch (wKey) {
+            case 'gl':    fireGL(scene, _wEff, armOx, armOy, aimAngle);   break;
+            case 'rl':    fireRL(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+            case 'siege': fireSIEGE(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+            case 'chain': fireStandard(scene, wKey, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+            case 'sg':    fireSG(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+            case 'plsm':  firePLSM(scene, _wEff, armOx, armOy, aimAngle); break;
+            case 'sr':    fireSR(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+            default:      fireStandard(scene, wKey, _wEff, barrelDist, armOx, armOy, aimAngle); break;
+        }
+    };
+    _fireOnce();
+    // Razor Edge: every 3rd shot fires a bonus duplicate
+    if (typeof checkDoubleStrike === 'function' && checkDoubleStrike()) {
+        scene.time.delayedCall(50, _fireOnce);
     }
 
     if (side === 'L') reloadL = now + reloadActual;
@@ -8291,8 +9268,29 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         const cap = player.comp.core.max * 0.30;
         if (amt > cap) amt = cap;
     }
+    // ── Unique item effects (damage reduction) ──
+    // Frontal Aegis: attacks from front deal 40% less damage
+    if (typeof applyFrontalAbsorb === 'function') amt = applyFrontalAbsorb(amt, bulletAngle);
+    // Sentinel's Plating: +12% DR while shield is full
+    if (typeof getShieldDRBonus === 'function') { const sdr = getShieldDRBonus(); if (sdr > 0) amt = Math.round(amt * (1 - sdr)); }
+    // Impact Armor: +15% DR for 3s after heavy hit
+    if (typeof getImpactArmorDR === 'function') { const iadr = getImpactArmorDR(); if (iadr > 0) amt = Math.round(amt * (1 - iadr)); }
+    if (typeof checkImpactArmor === 'function') checkImpactArmor(amt);
+    // Adaptive Armor: consecutive hits from same source deal less
+    if (typeof getAdaptiveArmorDR === 'function') {
+        const aaDR = getAdaptiveArmorDR(bulletAngle != null ? Math.round(bulletAngle * 10) : null);
+        if (aaDR > 0) amt = Math.round(amt * (1 - aaDR));
+    }
+    // Colossus Stand: +10% DR while stationary
+    if (typeof getColossusDR === 'function') { const cdr = getColossusDR(); if (cdr > 0) amt = Math.round(amt * (1 - cdr)); }
+    // Matrix Barrier: invulnerability bubble
+    if (typeof isMatrixBarrierActive === 'function' && isMatrixBarrierActive()) return;
+    // Gear total DR
+    const _totalDR = (_perkState.fortress || 0) + ((_gearState?.dr || 0) / 100);
+    if (_totalDR > 0) amt = Math.round(amt * (1 - Math.min(0.75, _totalDR)));
     // Phantom dodge chance
-    if (_perkState.dodgeChance > 0 && Math.random() < _perkState.dodgeChance) {
+    const _totalDodge = (_perkState.dodgeChance || 0) + ((_gearState?.dodgePct || 0) / 100);
+    if (_totalDodge > 0 && Math.random() < _totalDodge) {
         const scene = game.scene.scenes[0];
         const dodgeTxt = scene.add.text(player.x, player.y - 30, 'DODGE!', {
             font:'bold 18px monospace', fill:'#88ff88', stroke:'#000', strokeThickness:3
@@ -8327,8 +9325,6 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     player.lastHitTime = now;
 
     _damageTaken += amt;
-    // Fortress perk: flat damage reduction
-    if (_perkState.fortress > 0) amt = amt * (1 - Math.min(0.75, _perkState.fortress));
     // Mag Anchors: -20% incoming damage while stationary
     if (_perkState._magAnchorsActive) amt *= 0.80;
     // Evasion Coils: 10% DR while moving, 15% DR vs close-range hits
@@ -8491,6 +9487,13 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
                 if (_sc) createExplosion(_sc, player.x, player.y, 0, 0); // visual only
             }
 
+            // Matrix Shield: invulnerability bubble on shield break
+            if (typeof triggerMatrixBarrier === 'function') {
+                if (triggerMatrixBarrier(_sc, _sc?.time?.now || Date.now())) {
+                    amt = 0; // remaining damage blocked by bubble
+                }
+            }
+
             // Retribution: AoE on break scaled to charge
             if (_ss.retributionBreak && player._shieldRetribChg > 0 && enemies) {
                 const _rdmg = Math.min(Math.round(player._shieldRetribChg * 0.6), 120);
@@ -8548,6 +9551,27 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
 function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce = false) {
     if (!e.active || e.health <= 0) return;
     e._justHit = true; // alert AI — player may be behind vision cone
+    // Swarm shared HP pool — damage goes to swarm state, not individual unit
+    if (e._isSwarmUnit && e._swarmState) {
+        const sw = e._swarmState;
+        sw.hp -= amt;
+        if (sw.hp <= 0) {
+            sw.hp = 0;
+            if (sw._onDefeat) sw._onDefeat();
+            if (typeof sndBossDefeat === 'function') sndBossDefeat();
+            window._activeSwarm = null;
+            // Count as boss kill
+            _roundKills = _roundTotal;
+            _totalKills++;
+            updateRoundHUD();
+            // Drop boss loot
+            const scene = game.scene.scenes[0];
+            if (typeof spawnEquipmentLoot === 'function') {
+                spawnEquipmentLoot(scene, e.x, e.y, { isBoss: true, bossType: 'swarm' });
+            }
+        }
+        return;
+    }
     // Active barrier mod (full block)
     if (e.isShielded) {
         if (_perkState.armorPierce > 0) {
@@ -8594,16 +9618,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     if (_perkState.resonance > 0 && player?.maxShield > 0) {
         player.shield = Math.min(player.maxShield, (player.shield||0) + _perkState.resonance);
     }
-    // Hollow Point: bonus damage to enemies below 50% HP
-    if (_perkState.hollowPoint > 0) {
-        const _eHpRatio = e.comp ? (Object.values(e.comp).reduce((s,c)=>s+c.hp,0) / Object.values(e.comp).reduce((s,c)=>s+c.max,0)) : (e.health / (e.maxHealth||e.health||1));
-        if (_eHpRatio < 0.5) amt *= (1 + _perkState.hollowPoint);
-    }
-    // Threat Scanner: enemies within 300px take extra damage
-    if (_perkState.threatScanner > 0 && player) {
-        const _tsDist = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
-        if (_tsDist < 300) amt *= (1 + _perkState.threatScanner);
-    }
+    // (Hollow Point and Threat Scanner already applied above — removed duplicate)
     // Fire Discipline: +dmg while not moving
     if (_perkState.fireDiscipline > 0 && player?.body) {
         const _fdSpeed = Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2);
@@ -8613,6 +9628,11 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     if (_perkState.targetPainter && _perkState._paintedEnemy === e) amt *= 1.20;
     // Per-enemy damage multiplier (Threat Analyzer debuff)
     if (e._dmgMult) amt *= e._dmgMult;
+    // Elite modifier damage handling (enforcer shield gate, shielded overshield, cloak DR)
+    if (typeof handleEliteDamage === 'function' && (e.isElite || e.enemyType)) {
+        amt = handleEliteDamage(e, amt);
+        if (amt <= 0) return;
+    }
     // Enemy chassis passive DR (heavy: 15%)
     if (e._passiveDR > 0) amt *= (1 - e._passiveDR);
     // Enemy Mag Anchors: 20% DR while stationary
@@ -8632,7 +9652,8 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         _perkState._predatorCharged = false;
     }
     // Critical hit
-    if (!explosive && _perkState.critChance > 0 && Math.random() < _perkState.critChance) {
+    const _totalCrit = (_perkState.critChance || 0) + ((_gearState?.critChance || 0) / 100);
+    if (!explosive && _totalCrit > 0 && Math.random() < _totalCrit) {
         amt *= 2;
         const scene = game.scene.scenes[0];
         const critTxt = scene.add.text(e.x, e.y - 25, 'CRIT!', {
@@ -8743,6 +9764,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             scene.time.delayedCall(150, () => createExplosion(scene, e.x + Phaser.Math.Between(-30,30), e.y + Phaser.Math.Between(-30,30), 80, 0));
             spawnDebris(scene, e.x, e.y, 0xddaa00);
             spawnLoot(scene, e.x, e.y, true);  // guaranteed drop
+            spawnEquipmentLoot(scene, e.x, e.y, { isCommander: true });
             // Show commander kill banner briefly
             showRoundBanner('COMMANDER DESTROYED', '', 1500, null);
             if (_perkState.commanderBounty && player) { player.shield = player.maxShield; updateBars(); }
@@ -8809,6 +9831,8 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             scene.time.delayedCall(80, () => createExplosion(scene, e.x, e.y, 50, 20));
         }
         spawnLoot(scene, e.x, e.y, false);  // 30% chance
+        if (e.isBoss && typeof sndBossDefeat === 'function') sndBossDefeat();
+        spawnEquipmentLoot(scene, e.x, e.y, { isMedic: !!e.isMedic, isBoss: !!e.isBoss, bossType: e.bossType || null, isElite: !!e.isElite, enemyType: e.enemyType || null });
         }
         // All enemies move toward ally death location
         const _diedX = e.x, _diedY = e.y;
@@ -8829,6 +9853,10 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
                 }
             });
         }
+        // Phase 4: elite death effects (explosive, splitting, cleanup)
+        if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) {
+            handleEliteDeath(scene, e);
+        }
         if (e.visuals)  e.visuals.destroy();
         if (e.torso)    e.torso.destroy();
         if (e.cmdLabel)    e.cmdLabel.destroy();
@@ -8838,8 +9866,11 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         if (e._onDestroy)  { try { e._onDestroy(); } catch(ex){} }
         if (e.shieldRing?.active) e.shieldRing.destroy();
         if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
+        // Cleanup split minion labels
+        if (e._splitLabel?.active) e._splitLabel.destroy();
+        const _deadRef = { x: e.x, y: e.y };
         e.destroy();
-        onEnemyKilled();
+        onEnemyKilled(_deadRef);
     }
 }
 
@@ -8953,9 +9984,15 @@ function updateEnemyDoll(e) {
     }, 3000);
     const label = document.getElementById('edoll-label');
     if (label) {
+        const _typeDef = e.enemyType && typeof ENEMY_TYPE_DEFS !== 'undefined' ? ENEMY_TYPE_DEFS[e.enemyType] : null;
+        const _elitePrefix = e._eliteMods?.length ? e._eliteMods.map(k => (typeof ELITE_MODIFIERS !== 'undefined' ? ELITE_MODIFIERS[k]?.label : k)).join(' ') + ' ' : '';
         label.innerText = e.isCommander ? '[ COMMANDER ]'
+            : _typeDef ? `[ ${_elitePrefix}${_typeDef.label} ]`
+            : e.isMedic ? '[ MEDIC ]'
+            : _elitePrefix ? `[ ${_elitePrefix.trim()} ${(e.loadout?.chassis?.toUpperCase() || 'TARGET')} ]`
             : (e.loadout?.chassis?.toUpperCase() || 'TARGET');
-        label.style.color   = e.isCommander ? '#ddaa00' : '#c8d2d9';
+        const _labelCol = e.isCommander ? '#ddaa00' : _typeDef ? _typeDef.labelColor : e.isMedic ? '#00ff88' : e.isElite ? (typeof ELITE_MODIFIERS !== 'undefined' && e._eliteMods?.[0] ? ELITE_MODIFIERS[e._eliteMods[0]].color : '#ff8800') : '#c8d2d9';
+        label.style.color = _labelCol;
         label.style.opacity = '0.8';
     }
     const getCol = (hp, max) => {
@@ -8964,7 +10001,7 @@ function updateEnemyDoll(e) {
         if (pct <= 0.25) return '#ff0000';
         if (pct <= 0.50) return '#ffaa00';
         if (pct <= 0.75) return '#ffff00';
-        return e.isCommander ? '#ddaa00' : '#00ff00';
+        return e.isCommander ? '#ddaa00' : _typeDef ? _typeDef.labelColor : e.isElite ? '#ff8800' : '#00ff00';
     };
     const glow = (hp, max) => {
         const pct = hp / max;
@@ -10092,6 +11129,7 @@ function _cleanupGame() {
     try { scene.tweens.killAll(); } catch(e) {}
     // Clear loot tracking array (objects destroyed below with scene wipe)
     lootPickups = [];
+    cleanupEquipmentDrops();
     // ── Nuclear scene wipe: destroy every display object EXCEPT persistent
     //    scene infrastructure: hangarOverlay, _bfGrid, and the physics groups
     //    (bullets, enemyBullets, enemies, coverObjects) which are registered once
@@ -10167,7 +11205,8 @@ function respawnMech() {
     if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
     _resetHUDState();
     _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
-    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false };
+    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
+    window._spectreClones = [];
     _pickedPerks = [];
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     _roundClearing = false;
@@ -10203,6 +11242,292 @@ function toggleStats() {
     }
 }
 
+// ── INVENTORY OVERLAY ──────────────────────────────────────────
+let _isInventory = false;
+
+function toggleInventory() {
+    const overlay = document.getElementById('inventory-overlay');
+    if (!overlay) return;
+    _isInventory = !_isInventory;
+    const btn = document.getElementById('inv-btn');
+    if (_isInventory) {
+        populateInventory();
+        overlay.style.display = 'flex';
+        _isPaused = true;
+        const scene = game?.scene?.scenes[0];
+        if (scene && isDeployed) { try { scene.physics.pause(); scene.time.paused = true; scene.input.setDefaultCursor('default'); } catch(e){} }
+        document.body.style.cursor = 'default';
+        if (btn) { btn.innerHTML = 'LOOT ✓'; btn.blur(); }
+    } else {
+        overlay.style.display = 'none';
+        _isPaused = false;
+        const scene = game?.scene?.scenes[0];
+        if (scene && isDeployed) { try { scene.physics.resume(); scene.time.paused = false; scene.input.setDefaultCursor('none'); } catch(e){} }
+        document.body.style.cursor = isDeployed ? 'none' : 'default';
+        if (btn) { btn.innerHTML = `LOOT <span id="inv-count" style="opacity:0.6;">${_inventory.length}/${INVENTORY_MAX}</span>`; btn.blur(); }
+        // If inventory was opened from equip prompt, fire the callback to start next round
+        if (window._equipPromptCallback) {
+            const cb = window._equipPromptCallback;
+            window._equipPromptCallback = null;
+            cb();
+        }
+    }
+}
+
+function populateInventory() {
+    // Update header count
+    const hdr = document.getElementById('inv-header-count');
+    if (hdr) hdr.textContent = `${_inventory.length} / ${INVENTORY_MAX} items  |  ${_scrap} scrap`;
+
+    // ── Equipped Gear Panel ──
+    const eqEl = document.getElementById('inv-equipped');
+    if (eqEl) {
+        let eqHtml = '';
+        const slotLabels = [
+            ['L', 'L ARM (Weapon)'], ['R', 'R ARM (Weapon)'],
+            ['chest', 'CHEST (Armor)'], ['arms', 'ARMS'],
+            ['legs', 'LEGS'], ['shield', 'SHIELD'],
+            ['mod', 'MOD CHIP'], ['augment', 'AUGMENT']
+        ];
+        slotLabels.forEach(([key, label]) => {
+            const item = _equipped[key];
+            const rarityDef = item ? RARITY_DEFS[item.rarity] : null;
+            const itemName = item ? (item.isUnique ? '★ ' + item.name : item.name) : '— empty —';
+            const nameColor = rarityDef ? rarityDef.colorStr : 'rgba(200,210,220,0.35)';
+            eqHtml += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 8px;border:1px solid ${rarityDef ? rarityDef.colorStr + '33' : 'rgba(255,255,255,0.08)'};border-radius:4px;background:rgba(0,0,0,0.2);cursor:${item ? 'pointer' : 'default'};" ${item ? `onclick="_showItemDetail('equipped','${key}')" onmouseover="this.style.borderColor='${nameColor}66'" onmouseout="this.style.borderColor='${nameColor}33'"` : ''}>
+                <span style="font-size:9px;letter-spacing:1px;color:rgba(200,210,220,0.45);min-width:80px;">${label}</span>
+                <span style="font-size:11px;color:${nameColor};letter-spacing:1px;text-align:right;">${itemName}</span>
+            </div>`;
+        });
+        eqEl.innerHTML = eqHtml;
+    }
+
+    // ── Backpack Grid ──
+    const bpEl = document.getElementById('inv-backpack');
+    if (bpEl) {
+        bpEl.innerHTML = '';
+        if (_inventory.length === 0) {
+            bpEl.innerHTML = '<span style="font-size:12px;color:rgba(200,210,220,0.35);letter-spacing:1px;">No items in backpack</span>';
+        } else {
+            _inventory.forEach((item, idx) => {
+                const rd = RARITY_DEFS[item.rarity];
+                const cell = document.createElement('div');
+                const _uBorder = item.isUnique ? `border:2px solid ${rd.colorStr};box-shadow:0 0 6px ${rd.colorStr}44;` : `border:1px solid ${rd.colorStr}44;`;
+                cell.style.cssText = `width:54px;height:54px;${_uBorder}border-radius:4px;background:rgba(0,0,0,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;position:relative;`;
+                cell.title = `${item.name}\n${item.affixes.map(a => a.label).join('\n')}${item.uniqueLabel ? '\n★ ' + item.uniqueLabel : ''}`;
+                const _starBadge = item.isUnique ? '<div style="position:absolute;top:1px;right:2px;font-size:8px;color:#ffd700;">★</div>' : '';
+                cell.innerHTML = `${_starBadge}<div style="font-size:7px;letter-spacing:1px;color:${rd.colorStr};text-align:center;line-height:1.2;overflow:hidden;max-width:50px;">${item.shortName}</div>
+                    <div style="width:6px;height:6px;border-radius:50%;background:${rd.colorStr};margin-top:3px;opacity:0.7;"></div>`;
+                cell.addEventListener('mouseover', () => { cell.style.borderColor = rd.colorStr + 'aa'; cell.style.boxShadow = `0 0 8px ${rd.colorStr}33`; });
+                cell.addEventListener('mouseout', () => { cell.style.borderColor = rd.colorStr + '44'; cell.style.boxShadow = 'none'; });
+                cell.addEventListener('click', () => _showItemDetail('backpack', idx));
+                bpEl.appendChild(cell);
+            });
+        }
+    }
+
+    // Hide detail panel initially
+    const dp = document.getElementById('inv-detail-panel');
+    if (dp) dp.style.display = 'none';
+}
+
+function _showItemDetail(source, key) {
+    const dp = document.getElementById('inv-detail-panel');
+    const dc = document.getElementById('inv-detail-content');
+    if (!dp || !dc) return;
+
+    const item = source === 'equipped' ? _equipped[key] : _inventory[key];
+    if (!item) return;
+
+    const rd = RARITY_DEFS[item.rarity];
+    const _uniqueBadge = item.isUnique ? '<span style="font-size:9px;letter-spacing:2px;color:#ffd700;margin-left:10px;background:rgba(255,215,0,0.12);padding:2px 6px;border:1px solid rgba(255,215,0,0.3);border-radius:3px;">★ UNIQUE</span>' : '';
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`;
+    html += `<div>
+        <span style="font-size:16px;letter-spacing:2px;color:${rd.colorStr};text-shadow:0 0 10px ${rd.colorStr}44;">${item.name}</span>${_uniqueBadge}
+        <span style="font-size:10px;letter-spacing:1px;color:rgba(200,210,220,0.4);margin-left:12px;">iLvl ${item.level}</span>
+    </div>`;
+
+    // Action buttons
+    html += `<div style="display:flex;gap:8px;">`;
+    if (source === 'backpack') {
+        const slotKey = _getSlotForItem(item);
+        if (slotKey) {
+            html += `<button onclick="_equipItem(${key})" style="padding:6px 14px;background:rgba(0,255,100,0.12);border:1px solid rgba(0,255,100,0.4);border-radius:4px;color:#00ff66;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;">EQUIP</button>`;
+        }
+        html += `<button onclick="_scrapItem(${key})" style="padding:6px 14px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.4);border-radius:4px;color:#ff5050;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;">SCRAP (+${rd.scrapValue})</button>`;
+    } else if (source === 'equipped') {
+        html += `<button onclick="_unequipItem('${key}')" style="padding:6px 14px;background:rgba(255,200,0,0.12);border:1px solid rgba(255,200,0,0.4);border-radius:4px;color:#ffc800;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;">UNEQUIP</button>`;
+    }
+    html += `</div></div>`;
+
+    // Base stats
+    html += `<div style="border-top:1px solid rgba(255,215,0,0.1);padding-top:10px;">`;
+    if (item.baseStats) {
+        const statNames = { dmg:'Damage', reload:'Reload (ms)', pellets:'Pellets', speed:'Projectile Speed',
+            range:'Range', radius:'Blast Radius', burst:'Burst Count', coreHP:'Core HP', armHP:'Arm HP',
+            legHP:'Leg HP', dr:'Damage Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %',
+            absorbPct:'Shield Absorb %', speedPct:'Move Speed %', reloadPct:'Reload Speed %',
+            dmgPct:'Damage %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Effectiveness %',
+            dodgePct:'Dodge %', accuracy:'Accuracy', lootMult:'Loot Quality %' };
+        Object.entries(item.baseStats).forEach(([k, v]) => {
+            const label = statNames[k] || k;
+            html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
+                <span style="color:rgba(200,210,220,0.6);">${label}</span>
+                <span style="color:rgba(200,210,220,0.9);">${typeof v === 'number' ? (v < 1 && v > 0 ? Math.round(v*100)+'%' : v) : v}</span>
+            </div>`;
+        });
+    }
+    html += `</div>`;
+
+    // Affixes
+    if (item.affixes.length > 0) {
+        html += `<div style="border-top:1px solid rgba(255,215,0,0.1);margin-top:8px;padding-top:8px;">`;
+        item.affixes.forEach(a => {
+            html += `<div style="font-size:12px;color:#44ff88;margin-bottom:3px;letter-spacing:1px;">● ${a.label}</div>`;
+        });
+        html += `</div>`;
+    }
+
+    // Unique effect (boss items)
+    if (item.isUnique && item.uniqueLabel) {
+        html += `<div style="border-top:2px solid rgba(255,215,0,0.3);margin-top:10px;padding-top:10px;background:rgba(255,215,0,0.04);border-radius:4px;padding:10px;">`;
+        html += `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,215,0,0.5);margin-bottom:6px;">★ UNIQUE EFFECT</div>`;
+        html += `<div style="font-size:12px;color:#ffd700;letter-spacing:1px;margin-bottom:4px;text-shadow:0 0 8px rgba(255,215,0,0.3);">${item.uniqueLabel}</div>`;
+        if (item.uniqueDesc) {
+            html += `<div style="font-size:11px;color:rgba(200,210,220,0.65);line-height:1.4;">${item.uniqueDesc}</div>`;
+        }
+        html += `</div>`;
+    }
+
+    // ── Item Comparison (backpack item vs equipped) ──
+    if (source === 'backpack') {
+        let compareSlot = _getSlotForItem(item);
+        if (item.baseType === 'weapon') compareSlot = _equipped.L ? 'L' : _equipped.R ? 'R' : 'L';
+        const equipped = compareSlot ? _equipped[compareSlot] : null;
+        if (equipped) {
+            const eqRd = RARITY_DEFS[equipped.rarity];
+            html += `<div style="border-top:2px solid rgba(255,215,0,0.15);margin-top:14px;padding-top:12px;">`;
+            html += `<div style="font-size:10px;letter-spacing:3px;color:rgba(255,215,0,0.45);margin-bottom:10px;">CURRENTLY EQUIPPED (${compareSlot.toUpperCase()})</div>`;
+            html += `<div style="font-size:13px;letter-spacing:1px;color:${eqRd.colorStr};margin-bottom:8px;text-shadow:0 0 8px ${eqRd.colorStr}33;">${equipped.name} <span style="font-size:10px;color:rgba(200,210,220,0.4);">iLvl ${equipped.level}</span></div>`;
+
+            // Collect all stat keys from both items for diff
+            const _cmpNames = { dmg:'Damage', reload:'Reload (ms)', pellets:'Pellets', speed:'Proj Speed',
+                coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', dr:'Dmg Reduction', shieldHP:'Shield HP',
+                shieldRegen:'Shield Regen %', speedPct:'Move Speed %', reloadPct:'Reload Speed %',
+                dmgPct:'Damage %', modCdPct:'Mod CD %', modEffPct:'Mod Eff %', dodgePct:'Dodge %',
+                accuracy:'Accuracy', lootMult:'Loot Quality %', absorbPct:'Shield Absorb %',
+                critChance:'Crit Chance %', critDmg:'Crit Damage %', splashRadius:'Blast Radius %',
+                allHP:'All Part HP', autoRepair:'HP/sec Regen' };
+            // Build stat totals for each item (baseStats + affixes)
+            const _itemTotal = (it) => {
+                const t = {};
+                if (it.baseStats) Object.entries(it.baseStats).forEach(([k,v]) => { if (typeof v === 'number') t[k] = (t[k]||0) + v; });
+                if (it.affixes) it.affixes.forEach(a => { t[a.stat] = (t[a.stat]||0) + a.value; });
+                return t;
+            };
+            const newStats = _itemTotal(item);
+            const oldStats = _itemTotal(equipped);
+            const allKeys = new Set([...Object.keys(newStats), ...Object.keys(oldStats)]);
+
+            html += `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:2px 10px;font-size:11px;">`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;">STAT</div>`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">EQUIPPED</div>`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">NEW</div>`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">DIFF</div>`;
+            allKeys.forEach(k => {
+                const o = oldStats[k] || 0;
+                const n = newStats[k] || 0;
+                const diff = n - o;
+                if (o === 0 && n === 0) return;
+                const diffColor = diff > 0 ? '#44ff88' : diff < 0 ? '#ff5050' : 'rgba(200,210,220,0.5)';
+                const diffStr = diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : '—';
+                html += `<div style="color:rgba(200,210,220,0.6);">${_cmpNames[k] || k}</div>`;
+                html += `<div style="text-align:right;color:rgba(200,210,220,0.5);">${o}</div>`;
+                html += `<div style="text-align:right;color:rgba(200,210,220,0.9);">${n}</div>`;
+                html += `<div style="text-align:right;color:${diffColor};font-weight:bold;">${diffStr}</div>`;
+            });
+            html += `</div></div>`;
+        }
+    }
+
+    dc.innerHTML = html;
+    dp.style.display = 'block';
+}
+
+function _getSlotForItem(item) {
+    if (item.baseType === 'weapon') return null; // weapon needs L or R choice
+    const map = { armor:'chest', arms:'arms', legs:'legs', shield:'shield', mod:'mod', augment:'augment' };
+    return map[item.baseType] || null;
+}
+
+function _equipItem(invIdx) {
+    const item = _inventory[invIdx];
+    if (!item) return;
+
+    let slotKey;
+    if (item.baseType === 'weapon') {
+        // Prefer empty slot, otherwise L
+        slotKey = !_equipped.L ? 'L' : !_equipped.R ? 'R' : 'L';
+    } else {
+        slotKey = _getSlotForItem(item);
+    }
+    if (!slotKey) return;
+
+    // Swap: if slot occupied, move old item to inventory
+    const old = _equipped[slotKey];
+    _equipped[slotKey] = item;
+    _inventory.splice(invIdx, 1);
+    if (old) _inventory.push(old);
+
+    // If weapon, update loadout for game system
+    if (item.baseType === 'weapon') {
+        if (typeof loadout !== 'undefined') {
+            loadout[slotKey] = item.subType;
+        }
+    }
+
+    recalcGearStats();
+    saveInventory();
+    populateInventory();
+    _updateInvCount();
+}
+
+function _unequipItem(slotKey) {
+    const item = _equipped[slotKey];
+    if (!item) return;
+    if (_inventory.length >= INVENTORY_MAX) {
+        return; // inventory full
+    }
+    _inventory.push(item);
+    _equipped[slotKey] = null;
+
+    // If weapon, clear from loadout
+    if (item.baseType === 'weapon' && typeof loadout !== 'undefined') {
+        loadout[slotKey] = 'none';
+    }
+
+    recalcGearStats();
+    saveInventory();
+    populateInventory();
+    _updateInvCount();
+}
+
+function _scrapItem(invIdx) {
+    const item = _inventory[invIdx];
+    if (!item) return;
+    const rd = RARITY_DEFS[item.rarity];
+    _scrap += rd.scrapValue;
+    _inventory.splice(invIdx, 1);
+    saveInventory();
+    populateInventory();
+    _updateInvCount();
+}
+
+function _updateInvCount() {
+    const el = document.getElementById('inv-count');
+    if (el) el.textContent = `${_inventory.length}/${INVENTORY_MAX}`;
+}
+
 function _statRow(label, value, colorClass='') {
     return `<div class="stats-row"><span class="stats-label">${label}</span><span class="stats-value ${colorClass}">${value}</span></div>`;
 }
@@ -10221,26 +11546,26 @@ function _hpBarBoosted(label, hp, max, baseMax) {
     const barColor = pct > 60 ? '#00ff88' : pct > 30 ? '#ffdd00' : '#ff4466';
     const bonus = Math.round(max - baseMax);
     const bonusHtml = bonus > 0
-        ? `<span style="color:#44ff88;font-size:0.8em;margin-left:5px;">+${bonus}</span>`
+        ? `<span style="color:#44ff88;font-size:0.8em;margin-right:5px;">+${bonus}</span>`
         : '';
     return `<div class="stats-hp-bar">
         <span class="stats-label" style="min-width:70px">${label}</span>
         <div class="stats-hp-track"><div class="stats-hp-fill" style="width:${pct}%;background:${barColor}"></div></div>
-        <span class="stats-value" style="font-size:13px;min-width:90px;text-align:right;color:${barColor}">${Math.round(hp)} / ${Math.round(baseMax)}${bonusHtml}</span>
+        <span class="stats-value" style="font-size:13px;min-width:90px;text-align:right;color:${barColor}">${bonusHtml}${Math.round(hp)} / ${Math.round(max)}</span>
     </div>`;
 }
 
 function _perkBonus(value, base) {
-    // Returns an HTML string: base value in normal colour, perk bonus in bright green
+    // Shows current value with perk bonus to the left: "+24 150"
     const diff = Math.round(value - base);
     if (diff <= 0) return String(Math.round(value));
-    return `${Math.round(base)}<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${diff}</span>`;
+    return `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${diff}</span>${Math.round(value)}`;
 }
 function _perkReduction(value, base) {
-    // For reload: lower is better — show reduction in green
+    // For reload: lower is better — show reduction to the left: "−50 450"
     const diff = Math.round(base - value);
     if (diff <= 0) return String(Math.round(value));
-    return `${Math.round(value)}<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">−${diff}</span>`;
+    return `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">−${diff}</span>${Math.round(value)}`;
 }
 
 function populateStats() {
@@ -10251,10 +11576,14 @@ function populateStats() {
     const baseShield = chassisData?.max || 75;
     let chassisHtml = '';
     chassisHtml += _statRow('Chassis', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
-    // Shield: show base vs current max
+    // Shield: show base vs current max, with gear contribution in gold
+    const gearShieldHP = (_gearState?.shieldHP || 0);
     const shieldBonus = Math.round((player?.maxShield||0) - baseShield);
+    const perkShieldBonus = shieldBonus - gearShieldHP;
+    const gearShieldTag = gearShieldHP > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${gearShieldHP}</span>` : '';
+    const perkShieldTag = perkShieldBonus > 0 ? `<span style="color:#cc88ff;font-size:0.85em;margin-right:6px;">+${perkShieldBonus}</span>` : '';
     const shieldVal = shieldBonus > 0
-        ? `${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}<span style="color:#cc88ff;font-size:0.85em;margin-left:6px;">(+${shieldBonus} from perks)</span>`
+        ? `${gearShieldTag}${perkShieldTag}${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}`
         : `${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}`;
     chassisHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple">${shieldVal}</span></div>`;
     chassisHtml += '<div style="margin-top:12px;margin-bottom:6px;font-size:12px;letter-spacing:2px;color:rgba(0,255,255,0.35);">HULL INTEGRITY</div>';
@@ -10269,7 +11598,7 @@ function populateStats() {
         const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
         const totalBonusHp = Math.round(totalMax - totalBase);
         const totalLabel = totalBonusHp > 0
-            ? `${Math.round(totalHp)} / ${Math.round(totalMax)}<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">(+${totalBonusHp} from perks)</span>`
+            ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${totalBonusHp}</span>${Math.round(totalHp)} / ${Math.round(totalMax)}`
             : `${Math.round(totalHp)} / ${Math.round(totalMax)}`;
         chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalLabel}</span></div></div>`;
     }
@@ -10343,6 +11672,9 @@ function populateStats() {
     // ── WEAPONS & DPS ────────────────────────────────────────
     let wHtml = '';
     const sides = [['L', loadout.L], ['R', loadout.R], ['CORE', loadout.mod]];
+    const _gDmgFlat = (_gearState?.dmgFlat || 0);
+    const _gDmgPct  = (_gearState?.dmgPct || 0);
+    const _gReloadPct = (_gearState?.reloadPct || 0);
     sides.forEach(([side, key]) => {
         if (!key || key === 'none') return;
         const w = WEAPONS[key];
@@ -10351,14 +11683,19 @@ function populateStats() {
         wHtml += `<div style="font-size:13px;letter-spacing:2px;color:rgba(0,255,255,0.7);margin-bottom:8px;">${side}: ${w.name}</div>`;
         if (w.dmg) {
             const baseDmg  = w.dmg;
-            const effDmg   = Math.round(baseDmg * (_perkState.dmgMult||1));
+            const perkDmg  = Math.round(baseDmg * (_perkState.dmgMult||1));
+            const effDmg   = Math.round((baseDmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100));
             const baseRld  = w.reload || 0;
-            const effRld   = Math.round(baseRld * (_perkState.reloadMult||1));
+            const perkRld  = Math.round(baseRld * (_perkState.reloadMult||1));
+            const effRld   = Math.round(baseRld * (_perkState.reloadMult||1) * (1 - _gReloadPct/100));
             const baseDps  = baseRld > 0 ? Math.round(baseDmg / baseRld * 1000) : 0;
             const effDps   = effRld  > 0 ? Math.round(effDmg  / effRld  * 1000) : 0;
             const dmgSuffix = w.pellets ? ` × ${w.pellets} pellets` : '';
-            wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value">${_perkBonus(effDmg, baseDmg)}${dmgSuffix}</span></div>`;
-            wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}">${_perkReduction(effRld, baseRld)}</span></div>`;
+            // Show perk bonus (green) + gear bonus (gold) separately
+            const _gearTag = (gearVal, perkVal) => { const d = Math.round(gearVal - perkVal); return d > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${d}</span>` : ''; };
+            const _gearTagNeg = (gearVal, perkVal) => { const d = Math.round(perkVal - gearVal); return d > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙−${d}</span>` : ''; };
+            wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value">${_gearTag(effDmg,perkDmg)}${_perkBonus(perkDmg, baseDmg)}${dmgSuffix}</span></div>`;
+            wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}">${_gearTagNeg(effRld,perkRld)}${_perkReduction(perkRld, baseRld)}</span></div>`;
             wHtml += `<div class="stats-row"><span class="stats-label">DPS (est.)</span><span class="stats-value ${effDps>200?'green':effDps>80?'yellow':'orange'}">${_perkBonus(effDps, baseDps)}</span></div>`;
         }
         if (w.radius) {
@@ -10374,22 +11711,50 @@ function populateStats() {
     // ── MOBILITY & SHIELD ─────────────────────────────────────
     let mobHtml = '';
     const baseSpd = chassisData?.spd || 200;
-    const effSpd  = Math.round(baseSpd * (_perkState.speedMult||1));
+    const perkSpd = Math.round(baseSpd * (_perkState.speedMult||1));
+    const gearSpdBonus = (_gearState?.speedPct || 0);
+    const effSpd  = Math.round(perkSpd * (1 + gearSpdBonus/100));
     const legsOk  = player?.comp?.legs?.hp > 0;
-    const spdLabel = `<div class="stats-row"><span class="stats-label">Speed</span><span class="stats-value ${effSpd>baseSpd?'green':''}">${_perkBonus(effSpd, baseSpd)}</span></div>`;
+    const _gTag = (v) => v > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${v}</span>` : '';
+    const spdGearTag = gearSpdBonus > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${Math.round(effSpd - perkSpd)}</span>` : '';
+    const spdLabel = `<div class="stats-row"><span class="stats-label">Speed</span><span class="stats-value ${effSpd>baseSpd?'green':''}">${spdGearTag}${_perkBonus(perkSpd, baseSpd)}</span></div>`;
     mobHtml += spdLabel;
     mobHtml += _statRow('Legs Status', legsOk ? 'OPERATIONAL' : 'DESTROYED', legsOk ? 'green' : 'red');
     if (!legsOk) mobHtml += _statRow('Speed Penalty', '−50%', 'red');
     mobHtml += '<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:10px;padding-top:10px;"></div>';
     const baseRegenRate = 1.0;
-    const effRegenRate  = baseRegenRate * (_perkState.shieldRegenMult||1);
-    mobHtml += `<div class="stats-row"><span class="stats-label">Shield Regen</span><span class="stats-value purple">${_perkBonus(effRegenRate.toFixed(1), baseRegenRate.toFixed(1))}/frame</span></div>`;
+    const perkRegenRate = baseRegenRate * (_perkState.shieldRegenMult||1);
+    const gearRegenBonus = (_gearState?.shieldRegen || 0);
+    const effRegenRate   = perkRegenRate * (1 + gearRegenBonus/100);
+    const regenGearTag = gearRegenBonus > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${Math.round((effRegenRate - perkRegenRate)*10)/10}</span>` : '';
+    mobHtml += `<div class="stats-row"><span class="stats-label">Shield Regen</span><span class="stats-value purple">${regenGearTag}${_perkBonus(parseFloat(perkRegenRate.toFixed(1)), parseFloat(baseRegenRate.toFixed(1)))}/frame</span></div>`;
     if (_perkState.noShieldRegen) mobHtml += _statRow('Regen Active', 'DISABLED', 'red');
     if (_perkState.immovable) mobHtml += _statRow('Immovable', '3× regen while still', 'purple');
-    if (_perkState.dodgeChance > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dodge Chance</span><span class="stats-value green">0%<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${Math.round(_perkState.dodgeChance*100)}% from perks</span></span></div>`;
-    if (_perkState.fortress > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dmg Reduction</span><span class="stats-value green">0%<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${Math.round(Math.min(75,_perkState.fortress*100))}% from perks</span></span></div>`;
-    if (_perkState.autoRepair > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Auto-Repair</span><span class="stats-value green">0<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${_perkState.autoRepair} HP/sec from perks</span></span></div>`;
-    if (_perkState.critChance > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Crit Chance</span><span class="stats-value green">0%<span style="color:#44ff88;font-size:0.85em;margin-left:6px;">+${Math.round(_perkState.critChance*100)}% from perks</span></span></div>`;
+    // Dodge: perk + gear
+    const perkDodgePct = Math.round((_perkState.dodgeChance||0) * 100);
+    const gearDodgePct = (_gearState?.dodgePct || 0);
+    const totalDodge = perkDodgePct + gearDodgePct;
+    if (totalDodge > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dodge Chance</span><span class="stats-value green">${_gTag(gearDodgePct)}${perkDodgePct > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkDodgePct}%</span>` : ''}${totalDodge}%</span></div>`;
+    // DR: perk + gear
+    const perkDR = Math.round(Math.min(75, (_perkState.fortress||0) * 100));
+    const gearDR = (_gearState?.dr || 0);
+    const totalDR = Math.min(75, perkDR + gearDR);
+    if (totalDR > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dmg Reduction</span><span class="stats-value green">${_gTag(gearDR)}${perkDR > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkDR}%</span>` : ''}${totalDR}%</span></div>`;
+    // Auto-repair: perk + gear
+    const perkRepair = _perkState.autoRepair || 0;
+    const gearRepair = (_gearState?.autoRepair || 0);
+    const totalRepair = perkRepair + gearRepair;
+    if (totalRepair > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Auto-Repair</span><span class="stats-value green">${_gTag(gearRepair)}${perkRepair > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkRepair}</span>` : ''}${totalRepair} HP/sec</span></div>`;
+    // Crit: perk + gear
+    const perkCrit = Math.round((_perkState.critChance||0) * 100);
+    const gearCrit = (_gearState?.critChance || 0);
+    const totalCrit = perkCrit + gearCrit;
+    if (totalCrit > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Crit Chance</span><span class="stats-value green">${_gTag(gearCrit)}${perkCrit > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkCrit}%</span>` : ''}${totalCrit}%</span></div>`;
+    // Gear-only stats that don't come from perks
+    const gearModCd = (_gearState?.modCdPct || 0);
+    if (gearModCd > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Mod Cooldown</span><span class="stats-value"><span style="color:#ffd700;font-size:0.85em;margin-right:6px;">⚙−${gearModCd}%</span>−${gearModCd}%</span></div>`;
+    const gearLoot = (_gearState?.lootMult || 0);
+    if (gearLoot > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Loot Quality</span><span class="stats-value"><span style="color:#ffd700;font-size:0.85em;margin-right:6px;">⚙+${gearLoot}%</span>+${gearLoot}%</span></div>`;
     document.getElementById('stat-mobility-info').innerHTML = mobHtml;
 
     // ── RUN STATS ─────────────────────────────────────────────
@@ -10424,8 +11789,15 @@ function populateStats() {
             const catColor = p.cat==='universal'?'#00ffff':p.cat==='light'?'#88ff88':p.cat==='medium'?'#ffcc00':p.cat==='heavy'?'#ff8844':'#cc88ff';
             chip.style.borderColor = catColor + '66';
             chip.style.color = catColor;
+            if (p.legendary) {
+                chip.style.borderColor = '#ffd700';
+                chip.style.background = 'rgba(255,215,0,0.10)';
+                chip.style.color = '#ffd700';
+                chip.style.boxShadow = '0 0 8px rgba(255,215,0,0.25)';
+            }
             chip.title = p.desc; // native tooltip fallback
-            chip.innerHTML = `${p.label}${n>1?` <span style="opacity:0.6">×${n}</span>`:''}`;
+            const legendBadge = p.legendary ? '<span style="font-size:9px;letter-spacing:1px;color:#ffd700;opacity:0.7;margin-left:6px;">★ LEGENDARY</span>' : '';
+            chip.innerHTML = `${p.label}${n>1?` <span style="opacity:0.6">×${n}</span>`:''}${legendBadge}`;
             // Custom tooltip
             const tip = document.createElement('div');
             tip.style.cssText = `display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:rgba(5,10,18,0.97);border:1px solid ${catColor}66;border-radius:6px;padding:8px 12px;font-size:11px;letter-spacing:1px;color:rgba(200,210,217,0.85);white-space:nowrap;z-index:20000;pointer-events:none;box-shadow:0 0 12px rgba(0,0,0,0.6);`;
@@ -10435,6 +11807,61 @@ function populateStats() {
             chip.addEventListener('mouseleave', () => tip.style.display = 'none');
             perksEl.appendChild(chip);
         });
+    }
+
+    // ── GEAR BONUSES SUMMARY ──────────────────────────────────
+    const gearPanel = document.getElementById('stat-gear-panel');
+    const gearInfo  = document.getElementById('stat-gear-info');
+    if (gearPanel && gearInfo) {
+        const gs = typeof _gearState !== 'undefined' ? _gearState : {};
+        const hasAnyGear = Object.values(gs).some(v => v > 0);
+        if (!hasAnyGear) {
+            gearPanel.style.display = 'none';
+        } else {
+            gearPanel.style.display = 'block';
+            const _gsLabels = {
+                dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
+                reloadPct:'Reload Speed %', pellets:'Bonus Pellets', splashRadius:'Blast Radius %',
+                coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All Part HP',
+                dr:'Damage Reduction %', shieldHP:'Shield Capacity', shieldRegen:'Shield Regen %',
+                dodgePct:'Dodge Chance %', speedPct:'Move Speed %', modCdPct:'Mod Cooldown %',
+                modEffPct:'Mod Effectiveness %', lootMult:'Loot Quality %', autoRepair:'HP/sec Regen',
+                absorbPct:'Shield Absorb %'
+            };
+            // Group into offensive / defensive / utility
+            const offKeys = ['dmgFlat','dmgPct','critChance','critDmg','reloadPct','pellets','splashRadius'];
+            const defKeys = ['coreHP','armHP','legHP','allHP','dr','shieldHP','shieldRegen','dodgePct','absorbPct'];
+            const utilKeys = ['speedPct','modCdPct','modEffPct','lootMult','autoRepair'];
+            const _renderGroup = (title, keys) => {
+                const active = keys.filter(k => (gs[k] || 0) > 0);
+                if (active.length === 0) return '';
+                let h = `<div style="font-size:10px;letter-spacing:2px;color:rgba(255,215,0,0.4);margin-top:10px;margin-bottom:6px;">${title}</div>`;
+                active.forEach(k => {
+                    const v = gs[k];
+                    const prefix = ['reloadPct','modCdPct'].includes(k) ? '−' : '+';
+                    h += `<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px;">
+                        <span style="color:rgba(200,210,220,0.6);">⚙ ${_gsLabels[k] || k}</span>
+                        <span style="color:#ffd700;letter-spacing:1px;">${prefix}${v}</span>
+                    </div>`;
+                });
+                return h;
+            };
+            // Show equipped item names at the top
+            const slotLabels = [['L','L Arm'],['R','R Arm'],['chest','Chest'],['arms','Arms'],['legs','Legs'],['shield','Shield'],['mod','Mod'],['augment','Augment']];
+            let gHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
+            slotLabels.forEach(([sk, sl]) => {
+                const it = typeof _equipped !== 'undefined' ? _equipped[sk] : null;
+                if (!it) return;
+                const rd = typeof RARITY_DEFS !== 'undefined' ? RARITY_DEFS[it.rarity] : null;
+                const c = rd ? rd.colorStr : '#888';
+                gHtml += `<span style="padding:3px 8px;border:1px solid ${c}44;border-radius:3px;font-size:10px;letter-spacing:1px;color:${c};background:rgba(0,0,0,0.3);">${sl}: ${it.shortName || it.name}</span>`;
+            });
+            gHtml += '</div>';
+            gHtml += _renderGroup('OFFENSIVE', offKeys);
+            gHtml += _renderGroup('DEFENSIVE', defKeys);
+            gHtml += _renderGroup('UTILITY', utilKeys);
+            gearInfo.innerHTML = gHtml;
+        }
     }
 }
 
@@ -10582,7 +12009,13 @@ function returnToHangar() {
         piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false,
         _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0,
         pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0,
-        _capacitorCharge:0, meltdownCore:false, fthNapalm:false };
+        _capacitorCharge:0, meltdownCore:false, fthNapalm:false,
+        lightSpectre:false, lightGhostMech:false, mediumCommand:false,
+        mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false,
+        adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false,
+        heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false,
+        apexPredator:false, _apexPredatorActive:false };
+    window._spectreClones = [];
     // Keep loadout — player keeps their build configuration
     // Ensure old map cover objects are cleared (they'll regenerate on next deploy)
     try { if (coverObjects) coverObjects.clear(true, true); } catch(e) {}
@@ -10811,7 +12244,7 @@ window.onload = () => {
   <div style="font-size:12px;letter-spacing:2px;color:rgba(0,255,255,0.3);margin-top:4px;">CHOOSE 1 — CHOICE IS PERMANENT</div>
 </div>
 
-<div id="stats-overlay" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(3,6,10,0.96);font-family:'Courier New',monospace;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto;padding:32px 24px;">
+<div id="stats-overlay" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(3,6,10,0.96);font-family:'Courier New',monospace;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:32px 24px;">
   <div style="width:100%;max-width:980px;">
     <!-- Header -->
     <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:24px;border-bottom:1px solid rgba(0,255,255,0.2);padding-bottom:16px;">
@@ -10846,10 +12279,42 @@ window.onload = () => {
       <div class="stats-panel-title">CHASSIS TRAITS &amp; ARM CONFIGURATION</div>
       <div id="stat-traits-info"></div>
     </div>
+    <!-- GEAR BONUSES — full width -->
+    <div id="stat-gear-panel" class="stats-panel" style="margin-bottom:20px;border-color:rgba(255,215,0,0.2);display:none;">
+      <div class="stats-panel-title" style="color:rgba(255,215,0,0.6);">⚙ EQUIPPED GEAR BONUSES</div>
+      <div id="stat-gear-info"></div>
+    </div>
     <!-- ACTIVE PERKS — full width -->
     <div class="stats-panel" style="margin-bottom:0;">
       <div class="stats-panel-title">ACTIVE PERKS</div>
       <div id="stat-perks-info" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="inventory-overlay" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(3,6,10,0.96);font-family:'Courier New',monospace;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:32px 24px;">
+  <div style="width:100%;max-width:1050px;">
+    <!-- Header -->
+    <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:24px;border-bottom:1px solid rgba(255,215,0,0.2);padding-bottom:16px;">
+      <div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);">INVENTORY</div>
+      <div id="inv-header-count" style="position:absolute;left:0;font-size:12px;letter-spacing:2px;color:rgba(255,215,0,0.5);"></div>
+      <button onclick="toggleInventory()" style="position:absolute;right:0;padding:10px 20px;min-width:120px;background:rgba(12,16,20,0.85);border:1px solid rgba(255,215,0,0.3);border-left:3px solid #ffd700;border-radius:6px;color:#ffd700;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(255,215,0,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(255,215,0,0.12)';this.style.boxShadow='0 0 20px rgba(255,215,0,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(255,215,0,0.15)';this.style.letterSpacing='2px';">CLOSE</button>
+    </div>
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:20px;">
+      <!-- LEFT: Equipped Gear -->
+      <div class="stats-panel" style="border-color:rgba(255,215,0,0.2);">
+        <div class="stats-panel-title" style="color:rgba(255,215,0,0.6);">EQUIPPED GEAR</div>
+        <div id="inv-equipped"></div>
+      </div>
+      <!-- RIGHT: Backpack Grid -->
+      <div class="stats-panel" style="border-color:rgba(255,215,0,0.2);">
+        <div class="stats-panel-title" style="color:rgba(255,215,0,0.6);">BACKPACK</div>
+        <div id="inv-backpack" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      </div>
+    </div>
+    <!-- BOTTOM: Item Detail -->
+    <div id="inv-detail-panel" class="stats-panel" style="margin-top:20px;border-color:rgba(255,215,0,0.2);display:none;">
+      <div id="inv-detail-content"></div>
     </div>
   </div>
 </div>
