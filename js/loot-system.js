@@ -912,14 +912,53 @@ function spawnEquipmentDrop(scene, x, y, item) {
         else break;
     }
     const rarityDef = RARITY_DEFS[item.rarity];
+    const rc = rarityDef.color;
 
-    // Background glow circle
-    const glow = scene.add.circle(x, y, 14, rarityDef.color, 0.20).setDepth(7);
+    // ── Beam height & intensity scale by rarity ──
+    const beamCfg = {
+        common:    { h: 60,  w: 3,  glowR: 10, coreW: 1,  baseR: 8,  glowA: 0.10, coreA: 0.30, pulseA: 0.04 },
+        uncommon:  { h: 80,  w: 4,  glowR: 12, coreW: 1.5,baseR: 10, glowA: 0.14, coreA: 0.40, pulseA: 0.06 },
+        rare:      { h: 110, w: 5,  glowR: 16, coreW: 2,  baseR: 14, glowA: 0.18, coreA: 0.50, pulseA: 0.08 },
+        epic:      { h: 140, w: 6,  glowR: 20, coreW: 2.5,baseR: 16, glowA: 0.22, coreA: 0.60, pulseA: 0.10 },
+        legendary: { h: 180, w: 8,  glowR: 26, coreW: 3,  baseR: 20, glowA: 0.28, coreA: 0.70, pulseA: 0.12 }
+    }[item.rarity] || beamCfg.common;
 
-    // Item icon
-    const icon = _drawLootIcon(scene, x, y, item.icon, rarityDef.color);
+    // ── Base glow on the ground ──
+    const baseGlow = scene.add.circle(x, y, beamCfg.baseR, rc, beamCfg.glowA + 0.10).setDepth(6);
+    scene.tweens.add({
+        targets: baseGlow, alpha: beamCfg.glowA,
+        yoyo: true, repeat: -1, duration: 800, ease: 'Sine.easeInOut'
+    });
 
-    // Item name tag
+    // ── Outer beam (wide, soft glow) ──
+    const beam = scene.add.rectangle(x, y - beamCfg.h / 2, beamCfg.w * 3, beamCfg.h, rc, beamCfg.glowA).setDepth(6);
+    beam.setOrigin(0.5, 1);
+    beam.setPosition(x, y);
+    scene.tweens.add({
+        targets: beam, alpha: beamCfg.pulseA,
+        yoyo: true, repeat: -1, duration: 900 + Math.random() * 300
+    });
+
+    // ── Inner beam core (bright, narrow) ──
+    const beamCore = scene.add.rectangle(x, y - beamCfg.h / 2, beamCfg.coreW * 2, beamCfg.h, 0xffffff, beamCfg.coreA).setDepth(7);
+    beamCore.setOrigin(0.5, 1);
+    beamCore.setPosition(x, y);
+    scene.tweens.add({
+        targets: beamCore, alpha: beamCfg.coreA * 0.4,
+        yoyo: true, repeat: -1, duration: 700 + Math.random() * 200
+    });
+
+    // ── Glow circle at beam top ──
+    const beamGlow = scene.add.circle(x, y - beamCfg.h, beamCfg.glowR * 0.6, rc, beamCfg.glowA * 0.5).setDepth(6);
+    scene.tweens.add({
+        targets: beamGlow, alpha: 0, scaleX: 1.3, scaleY: 1.3,
+        yoyo: true, repeat: -1, duration: 1200, ease: 'Sine.easeInOut'
+    });
+
+    // ── Item icon at the base ──
+    const icon = _drawLootIcon(scene, x, y, item.icon, rc);
+
+    // ── Item name tag ──
     const tag = scene.add.text(x, y + 16, item.shortName, {
         font: 'bold 8px Courier New',
         fill: rarityDef.colorStr,
@@ -927,33 +966,15 @@ function spawnEquipmentDrop(scene, x, y, item) {
         strokeThickness: 2
     }).setOrigin(0.5).setDepth(9).setAlpha(0.85);
 
-    // Rarity indicator dot
-    const rarityDot = scene.add.circle(x, y - 14, 3, rarityDef.color, 0.9).setDepth(9);
+    // ── Rarity indicator dot ──
+    const rarityDot = scene.add.circle(x, y - 14, 3, rc, 0.9).setDepth(9);
 
-    // Float animation
+    // Float animation for icon area
     scene.tweens.add({
-        targets: [glow, rarityDot],
-        y: '-=5',
-        yoyo: true, repeat: -1, duration: 900,
-        ease: 'Sine.easeInOut'
+        targets: [rarityDot, baseGlow],
+        y: '-=4', yoyo: true, repeat: -1, duration: 900, ease: 'Sine.easeInOut'
     });
 
-    // Glow pulse
-    scene.tweens.add({
-        targets: glow,
-        alpha: 0.35,
-        yoyo: true, repeat: -1, duration: 600
-    });
-
-    // Rarity-specific visual effects
-    let beam = null;
-    if (item.rarity === 'rare' || item.rarity === 'epic' || item.rarity === 'legendary') {
-        beam = scene.add.rectangle(x, y - 35, 2, 50, rarityDef.color, 0.25).setDepth(6);
-        scene.tweens.add({
-            targets: beam,
-            alpha: 0.08, yoyo: true, repeat: -1, duration: 700
-        });
-    }
     // Screen shake for epic/legendary drops
     if (item.rarity === 'epic') {
         scene.cameras.main.shake(120, 0.004);
@@ -961,19 +982,18 @@ function spawnEquipmentDrop(scene, x, y, item) {
     if (item.rarity === 'legendary') {
         scene.cameras.main.shake(200, 0.008);
         // Star burst particles
-        for (let i = 0; i < 4; i++) {
-            const star = scene.add.star(x, y, 4, 2, 5, rarityDef.color, 0.6)
+        for (let i = 0; i < 6; i++) {
+            const star = scene.add.star(x, y - 10, 4, 2, 5, rc, 0.7)
                 .setDepth(10).setScale(0.5);
             scene.tweens.add({
                 targets: star,
-                x: x + Phaser.Math.Between(-25, 25),
-                y: y + Phaser.Math.Between(-25, 25),
+                x: x + Phaser.Math.Between(-35, 35),
+                y: y + Phaser.Math.Between(-50, 10),
                 alpha: 0, scale: 0,
                 duration: 1200 + i * 200,
                 onComplete: () => star.destroy()
             });
         }
-        // Drop sound (rarity-aware)
         if (typeof sndEquipDrop === 'function') {
             sndEquipDrop(item.rarity);
         } else if (typeof _noise === 'function') {
@@ -983,7 +1003,7 @@ function spawnEquipmentDrop(scene, x, y, item) {
 
     const dropData = {
         item,
-        glow, icon, tag, rarityDot, beam,
+        glow: baseGlow, icon, tag, rarityDot, beam, beamGlow, beamCore, baseGlow,
         x, y,
         active: true
     };
@@ -1000,7 +1020,7 @@ function _removeEquipmentDrop(scene, drop, fade) {
     if (!drop.active) return;
     drop.active = false;
 
-    const objects = [drop.glow, drop.icon, drop.tag, drop.rarityDot, drop.beam].filter(Boolean);
+    const objects = [drop.glow, drop.icon, drop.tag, drop.rarityDot, drop.beam, drop.beamGlow, drop.beamCore, drop.baseGlow].filter(Boolean);
 
     if (fade && scene) {
         scene.tweens.add({
@@ -1488,12 +1508,22 @@ function isMatrixBarrierActive() { return _matrixBarrierActive; }
 // ── CLEANUP (called when returning to hangar/main menu) ────────
 function cleanupEquipmentDrops() {
     _equipmentDrops.forEach(drop => {
-        [drop.glow, drop.icon, drop.tag, drop.rarityDot, drop.beam]
+        [drop.glow, drop.icon, drop.tag, drop.rarityDot, drop.beam, drop.beamGlow, drop.beamCore, drop.baseGlow]
             .filter(Boolean)
             .forEach(o => { try { if (o.destroy) o.destroy(); } catch(e){} });
     });
     _equipmentDrops = [];
     _lootNotifications = [];
+}
+
+/** Reset all inventory/equipment state for a new run. */
+function resetInventory() {
+    _inventory = [];
+    _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
+    _scrap = 0;
+    _gearState = {};
+    saveInventory();
+    if (typeof _updateInvCount === 'function') _updateInvCount();
 }
 
 // ── SAVE/LOAD (localStorage) ───────────────────────────────────
