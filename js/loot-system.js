@@ -617,8 +617,13 @@ function _selectItemType(enemyData) {
 }
 
 function _selectBaseItem(baseType) {
+    // Filter drops to items the current chassis can equip
+    const ch = (typeof loadout !== 'undefined') ? loadout.chassis : 'medium';
     if (baseType === 'weapon') {
-        return WEAPON_LOOT_KEYS[Math.floor(Math.random() * WEAPON_LOOT_KEYS.length)];
+        const allowed = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[ch] : null;
+        const pool = allowed ? WEAPON_LOOT_KEYS.filter(k => k !== 'none' && allowed.has(k)) : WEAPON_LOOT_KEYS;
+        if (pool.length === 0) return WEAPON_LOOT_KEYS[Math.floor(Math.random() * WEAPON_LOOT_KEYS.length)];
+        return pool[Math.floor(Math.random() * pool.length)];
     }
     const candidates = Object.entries(ITEM_BASES).filter(([, def]) => def.baseType === baseType);
     if (candidates.length === 0) return null;
