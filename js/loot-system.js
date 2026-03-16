@@ -1604,12 +1604,83 @@ function cleanupEquipmentDrops() {
     _lootNotifications = [];
 }
 
+/** Create a basic common-rarity item for starter loadout. */
+function _createStarterItem(baseType, weaponKey) {
+    const rarity = 'common';
+    const rarityDef = RARITY_DEFS[rarity];
+    let name, icon, subType, baseStats, baseKey, systemKey = null;
+
+    if (baseType === 'weapon') {
+        const w = (typeof WEAPONS !== 'undefined') ? WEAPONS[weaponKey] : null;
+        if (!w) return null;
+        baseKey = weaponKey;
+        subType = weaponKey;
+        name = w.name;
+        icon = weaponKey;
+        baseStats = {};
+        if (w.dmg) baseStats.dmg = w.dmg;
+        if (w.reload) baseStats.reload = w.reload;
+        if (w.pellets) baseStats.pellets = w.pellets;
+        if (w.speed) baseStats.speed = w.speed;
+        if (w.range) baseStats.range = w.range;
+        if (w.radius) baseStats.radius = w.radius;
+        if (w.burst) baseStats.burst = w.burst;
+    } else {
+        // System item — find the matching ITEM_BASES entry by systemKey
+        const entry = Object.entries(ITEM_BASES).find(([, def]) => def.baseType === baseType && def.systemKey === weaponKey);
+        if (!entry) return null;
+        baseKey = entry[0];
+        const def = entry[1];
+        subType = baseKey;
+        name = def.name;
+        icon = def.icon;
+        baseStats = { ...def.baseStats };
+        systemKey = def.systemKey;
+    }
+
+    const item = {
+        id: 'item_' + (++_lootItemIdCounter),
+        baseType,
+        subType,
+        baseKey,
+        name,
+        shortName: name,
+        icon,
+        rarity,
+        level: 1,
+        baseStats,
+        affixes: [],
+        computedStats: { ...baseStats },
+        systemKey
+    };
+    return item;
+}
+
+/** Equip starter gear into _equipped based on the current chassis starter loadout. */
+function equipStarterGear() {
+    const ch = (typeof loadout !== 'undefined') ? loadout.chassis : 'medium';
+    const starter = (typeof STARTER_LOADOUTS !== 'undefined') ? STARTER_LOADOUTS[ch] : null;
+    if (!starter) return;
+
+    // Starter weapon in L ARM
+    if (starter.L && starter.L !== 'none') {
+        _equipped.L = _createStarterItem('weapon', starter.L);
+    }
+    // Starter shield
+    if (starter.shld && starter.shld !== 'none') {
+        _equipped.shield = _createStarterItem('shield_system', starter.shld);
+    }
+
+    recalcGearStats();
+}
+
 /** Reset all inventory/equipment state for a new run. */
 function resetInventory() {
     _inventory = [];
     _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
     _scrap = 0;
     _gearState = {};
+    equipStarterGear();
     saveInventory();
     if (typeof _updateInvCount === 'function') _updateInvCount();
 }
