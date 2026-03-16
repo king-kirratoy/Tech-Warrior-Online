@@ -2819,7 +2819,8 @@ const config = {
 const game = new Phaser.Game(config);
 
 // Load saved inventory on startup
-loadInventory();
+// Each run starts fresh — no carried-over gear
+resetInventory();
 
 // ================================================================
 // PHASER LIFECYCLE
@@ -11486,15 +11487,18 @@ function populateInventory() {
         // Slot positions: left column and right column flanking the mech
         // Left (top→bottom): CPU, ARMS, L ARM, SHIELD
         // Right (top→bottom): AUGMENT, ARMOR, R ARM, LEGS
+        // Positioned close to center using calc() — just outside the mech image
+        const _slotL = 'calc(50% - 200px)';   // right edge of left column
+        const _slotR = 'calc(50% + 105px)';   // left edge of right column
         const slotPositions = {
-            mod:     { top: '10px',  left: '10px',  label: 'CPU' },
-            arms:    { top: '105px', left: '10px',  label: 'ARMS' },
-            L:       { top: '200px', left: '10px',  label: 'L ARM' },
-            shield:  { top: '295px', left: '10px',  label: 'SHIELD' },
-            augment: { top: '10px',  right: '10px', label: 'AUGMENT' },
-            chest:   { top: '105px', right: '10px', label: 'ARMOR' },
-            R:       { top: '200px', right: '10px', label: 'R ARM' },
-            legs:    { top: '295px', right: '10px', label: 'LEGS' },
+            mod:     { top: '10px',  left: _slotL,  label: 'CPU' },
+            arms:    { top: '105px', left: _slotL,  label: 'ARMS' },
+            L:       { top: '200px', left: _slotL,  label: 'L ARM' },
+            shield:  { top: '295px', left: _slotL,  label: 'SHIELD' },
+            augment: { top: '10px',  left: _slotR,  label: 'AUGMENT' },
+            chest:   { top: '105px', left: _slotR,  label: 'ARMOR' },
+            R:       { top: '200px', left: _slotR,  label: 'R ARM' },
+            legs:    { top: '295px', left: _slotR,  label: 'LEGS' },
         };
 
         let html = '';
@@ -12282,18 +12286,20 @@ function togglePause() {
     _isPaused = !_isPaused;
     const btn = document.getElementById('pause-btn');
     const po  = document.getElementById('pause-overlay');
+    const topBtns = document.getElementById('top-left-btns');
     if (_isPaused) {
         scene.physics.pause();
         scene.time.paused = true;
         try { scene.input.setDefaultCursor('default'); } catch(e) {}
         document.body.style.cursor = 'default';
-        if (btn) { btn.innerHTML = 'RESUME'; btn.blur(); }
+        if (topBtns) topBtns.style.display = 'none';
         if (po)  po.style.display = 'flex';
     } else {
         scene.physics.resume();
         scene.time.paused = false;
         try { scene.input.setDefaultCursor('none'); } catch(e) {}
         document.body.style.cursor = 'none';
+        if (topBtns) topBtns.style.display = 'flex';
         if (btn) { btn.innerHTML = 'MENU'; btn.blur(); }
         if (po)  po.style.display = 'none';
     }
@@ -12382,6 +12388,9 @@ function returnToHangar() {
     // ── Full game reset — returning to hangar starts a new game ──
     // Capture run for leaderboard BEFORE stats are reset
     if (_round > 1 || _totalKills > 0) _capturePendingRun();
+    // Wipe all gear, inventory, and scrap — each run starts from scratch
+    resetInventory();
+    _applyStarterLoadout(loadout.chassis);
     _round      = 1;
     CHASSIS.medium.modCooldownMult = 0.85; // restore from tactical_uplink modification
     _roundKills = 0;
@@ -12738,8 +12747,7 @@ window.onload = () => {
   <div id="pause-text" style="font-family:'Courier New',monospace;font-size:36px;letter-spacing:12px;color:#00ffff;text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);animation:pausePulse 1.2s ease-in-out infinite;margin-bottom:40px;">PAUSED</div>
   <div style="display:flex;flex-direction:column;gap:14px;align-items:center;">
     <button onclick="togglePause();toggleStats();" class="pause-menu-btn">LOADOUT</button>
-    <button onclick="goToMainMenu();" class="pause-menu-btn" style="border-left-color:#ff4444;color:#ff4444;border-color:rgba(255,68,68,0.3);box-shadow:0 0 10px rgba(255,68,68,0.15);">MAIN MENU</button>
-    <button onclick="togglePause();" class="pause-menu-btn" style="margin-top:6px;">CLOSE</button>
+    <button onclick="goToMainMenu();" class="pause-menu-btn" style="border-left-color:#ff4444;color:#ff4444;border-color:rgba(255,68,68,0.3);box-shadow:0 0 10px rgba(255,68,68,0.15);">QUIT GAME</button>
   </div>
   <div style="margin-top:24px;font-family:'Courier New',monospace;font-size:11px;letter-spacing:2px;color:rgba(0,255,255,0.35);">PRESS ESC TO CLOSE</div>
 </div>
@@ -12773,12 +12781,12 @@ window.onload = () => {
 }
 /* Mech silhouette equip slot — square, like backpack cells */
 .mech-equip-slot {
-    position:absolute;width:76px;height:76px;padding:6px;background:rgba(0,0,0,0.55);border:1px solid rgba(255,215,0,0.2);border-radius:5px;cursor:pointer;transition:all 0.2s;text-align:center;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    position:absolute;width:88px;height:76px;padding:6px 4px;background:rgba(0,0,0,0.55);border:1px solid rgba(255,215,0,0.2);border-radius:5px;cursor:pointer;transition:all 0.2s;text-align:center;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;
 }
 .mech-equip-slot:hover { border-color:rgba(255,215,0,0.6);box-shadow:0 0 10px rgba(255,215,0,0.2); }
 .mech-equip-slot.drag-over { border-color:#00ff66;box-shadow:0 0 14px rgba(0,255,100,0.4);background:rgba(0,255,100,0.08); }
 .mech-equip-slot .slot-label { font-size:9px;letter-spacing:2px;color:rgba(255,215,0,0.45);text-transform:uppercase;margin-bottom:3px; }
-.mech-equip-slot .slot-item  { font-size:11px;letter-spacing:0.5px;color:rgba(200,210,220,0.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:68px; }
+.mech-equip-slot .slot-item  { font-size:10px;letter-spacing:0.3px;color:rgba(200,210,220,0.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:82px;line-height:1.3; }
 /* Backpack drag styling */
 .bp-cell { transition:all 0.15s; }
 .bp-cell.dragging { opacity:0.4;transform:scale(0.9); }
