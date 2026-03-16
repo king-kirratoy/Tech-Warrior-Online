@@ -2895,28 +2895,9 @@ function preload() {
     }
     tg.generateTexture('thrust', 32, 32);
 
-    // Mech sprite sheets — 4 columns × 2 rows = 8 walk frames each
-    this.load.spritesheet('light-mech-sprite', 'assets/light-mech-sprite.png', {
-        frameWidth: 169, frameHeight: 184
-    });
-    this.load.spritesheet('medium-mech-sprite', 'assets/medium-mech-sprite.png', {
-        frameWidth: 169, frameHeight: 184
-    });
 }
 
 function create() {
-    // Mech walk animations (8 frames each, looping)
-    this.anims.create({
-        key: 'light-walk',
-        frames: this.anims.generateFrameNumbers('light-mech-sprite', { start: 0, end: 7 }),
-        frameRate: 12, repeat: -1
-    });
-    this.anims.create({
-        key: 'medium-walk',
-        frames: this.anims.generateFrameNumbers('medium-mech-sprite', { start: 0, end: 7 }),
-        frameRate: 10, repeat: -1
-    });
-
     // Battlefield grid — hidden until deployed
     const _bfGrid = this.add.grid(2000, 2000, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
     _bfGrid.setVisible(false);
@@ -3972,7 +3953,17 @@ function handleRageGhosts(scene, time) {
     if (!player?.active || !isDeployed) return;
     if (!isRageActive || time % 150 >= 20) return;
 
-    _spawnMechGhost(scene, torso.x, torso.y, torso.rotation, 0xff0000, 0.4, 9, 400);
+    const ghost = buildPlayerMech(scene, loadout.chassis, 0xff0000);
+    ghost.setPosition(torso.x, torso.y).setRotation(torso.rotation);
+    ghost.list.forEach(shape => { if (shape.setTint) shape.setTint(0xff0000); });
+    ghost.setAlpha(0.4).setDepth(9);
+
+    scene.tweens.add({
+        targets: ghost,
+        alpha: 0, scale: 1.1,
+        duration: 400,
+        onComplete: () => ghost.destroy()
+    });
 }
 
 /** Sync torso/shield graphics to physics body, update turret aim, and run chassis effects. */
@@ -3987,28 +3978,6 @@ function syncVisuals(scene, time) {
         scene.input.activePointer.worldY
     );
     torso.rotation = Phaser.Math.Angle.RotateTo(torso.rotation, targetAngle, 0.1);
-
-    // Sprite walk animation: play when moving, idle when stationary
-    if (torso._isSprite) {
-        const mechSprite = torso.list.find(c => c.name === 'mechSprite');
-        if (mechSprite) {
-            const speed = player.body.velocity.length();
-            const walkKey = loadout.chassis === 'light' ? 'light-walk' : 'medium-walk';
-            if (speed > 15) {
-                if (!mechSprite.anims.isPlaying || mechSprite.anims.currentAnim?.key !== walkKey) {
-                    mechSprite.play(walkKey);
-                }
-                // Scale frame rate with movement speed
-                const baseRate = loadout.chassis === 'light' ? 12 : 10;
-                mechSprite.anims.msPerFrame = 1000 / Math.max(baseRate, baseRate * (speed / 200));
-            } else {
-                if (mechSprite.anims.isPlaying) {
-                    mechSprite.stop();
-                    mechSprite.setFrame(0);
-                }
-            }
-        }
-    }
 
     syncChassisEffect(scene, time);
     syncGlowWedge();
@@ -4153,26 +4122,6 @@ function syncEnemyChassisEffect(scene, time, enemy) {
  * Light mech: ghost torso trail + small quick-fading footprints.
  * Prints: 12×6, stance 8px, fast cadence, fade in 1200ms.
  */
-/** Create a ghost copy of the player mech for trail/rage effects. */
-function _spawnMechGhost(scene, x, y, rotation, tintColor, alpha, depth, fadeDuration) {
-    if (torso._isSprite) {
-        const mechSprite = torso.list.find(c => c.name === 'mechSprite');
-        if (!mechSprite) return;
-        const ghost = scene.add.sprite(x, y, mechSprite.texture.key, mechSprite.frame.name);
-        ghost.setRotation(rotation + Math.PI / 2);
-        ghost.setScale(mechSprite.scaleX * torso.scaleX);
-        ghost.setTint(tintColor);
-        ghost.setAlpha(alpha).setDepth(depth);
-        scene.tweens.add({ targets: ghost, alpha: 0, duration: fadeDuration, onComplete: () => ghost.destroy() });
-    } else {
-        const ghost = buildPlayerMech(scene, loadout.chassis, loadout.color);
-        ghost.setPosition(x, y).setRotation(rotation);
-        ghost.setAlpha(alpha).setDepth(depth);
-        ghost.list.forEach(s => { if (s?.setFillStyle) s.setFillStyle(tintColor); });
-        scene.tweens.add({ targets: ghost, alpha: 0, duration: fadeDuration, onComplete: () => ghost.destroy() });
-    }
-}
-
 function syncLightTrail(scene, time, moving) {
     if (!moving) return;
 
@@ -4181,7 +4130,12 @@ function syncLightTrail(scene, time, moving) {
     if (dist >= 10) {
         _lastTorsoX = torso.x;
         _lastTorsoY = torso.y;
-        _spawnMechGhost(scene, torso.x, torso.y, torso.rotation, darkenColor(loadout.color, 0.6), 0.35, 8, 220);
+
+        const ghost = buildPlayerMech(scene, loadout.chassis, loadout.color);
+        ghost.setPosition(torso.x, torso.y).setRotation(torso.rotation);
+        ghost.setAlpha(0.35).setDepth(8);
+        ghost.list.forEach(s => { if (s?.setFillStyle) s.setFillStyle(darkenColor(loadout.color, 0.6)); });
+        scene.tweens.add({ targets: ghost, alpha: 0, duration: 220, onComplete: () => ghost.destroy() });
     }
 
     // --- Footprints ---
@@ -4217,7 +4171,12 @@ function syncMediumFootsteps(scene, time, moving) {
         if (dist >= 14) {
             _lastTorsoMX = torso.x;
             _lastTorsoMY = torso.y;
-            _spawnMechGhost(scene, torso.x, torso.y, torso.rotation, darkenColor(loadout.color, 0.55), 0.28, 8, 200);
+
+            const ghost = buildPlayerMech(scene, loadout.chassis, loadout.color);
+            ghost.setPosition(torso.x, torso.y).setRotation(torso.rotation);
+            ghost.setAlpha(0.28).setDepth(8);
+            ghost.list.forEach(s => { if (s?.setFillStyle) s.setFillStyle(darkenColor(loadout.color, 0.55)); });
+            scene.tweens.add({ targets: ghost, alpha: 0, duration: 200, onComplete: () => ghost.destroy() });
         }
     }
 
@@ -10488,31 +10447,31 @@ function showDamageText(scene, x, y, amount, hasShield = false) {
 // MECH BUILDING
 // ================================================================
 
-// Base scale for mech sprites inside their container (tuned to match old rect sizes)
-const _MECH_SPRITE_SCALE = 0.40;
-
 function buildPlayerMech(scene, type, color) {
     const container = scene.add.container(0, 0);
     const s = CHASSIS[type].scale;
 
-    if (type === 'light' || type === 'medium') {
-        const spriteKey = type === 'light' ? 'light-mech-sprite' : 'medium-mech-sprite';
-        const sprite = scene.add.sprite(0, 0, spriteKey, 0);
-        // Sprites face up in the sheet; rotate +90° so rotation=0 faces right
-        sprite.setRotation(Math.PI / 2);
-        sprite.setScale(_MECH_SPRITE_SCALE);
-        sprite.setTint(color);
-        sprite.setName('mechSprite');
-        container.add(sprite);
-        container._isSprite = true;
-        container._spriteType = type;
-    } else { // heavy — keep rectangle rendering
-        const bodyCol = darkenColor(color, 0.4);
+    const bodyCol = darkenColor(color, 0.4);
+    if (type === 'heavy') {
         container.add([
             scene.add.rectangle(0, 0,  40, 100, bodyCol).setStrokeStyle(2, 0xffffff),
             scene.add.rectangle(0, 0,  60,  70, bodyCol).setStrokeStyle(2, 0xffffff),
             scene.add.rectangle(0, 0,  40,  30, color).setStrokeStyle(2, 0xffffff).setName('mechHead'),
             scene.add.rectangle(20, 0,  8,  30, 0x0F61A1).setStrokeStyle(1, 0xffffff)
+        ]);
+    } else if (type === 'light') {
+        container.add([
+            scene.add.rectangle(0, 0,  25,  60, bodyCol).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  40,  40, bodyCol).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  25,  20, color).setStrokeStyle(2, 0xffffff).setName('mechHead'),
+            scene.add.rectangle(10, 0, 10,  20, 0x0F61A1).setStrokeStyle(1, 0xffffff)
+        ]);
+    } else { // medium
+        container.add([
+            scene.add.rectangle(0, 0,  35,  80, bodyCol).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  50,  50, bodyCol).setStrokeStyle(2, 0xffffff),
+            scene.add.rectangle(0, 0,  35,  25, color).setStrokeStyle(2, 0xffffff).setName('mechHead'),
+            scene.add.rectangle(14, 0, 10,  25, 0x0F61A1).setStrokeStyle(1, 0xffffff)
         ]);
     }
 
@@ -10564,22 +10523,16 @@ function buildEnemyTorso(scene, type, colors) {
 
 function refreshMechColor() {
     if (!torso?.list || !isDeployed) return;
+    const headColor = isRageActive ? 0xff0000 : loadout.color;
+    const bodyColor = isRageActive ? 0x660000 : darkenColor(loadout.color, 0.4);
 
-    if (torso._isSprite) {
-        // Sprite-based mech: use tint
-        const tintColor = isRageActive ? 0xff0000 : loadout.color;
-        const sprite = torso.list.find(c => c.name === 'mechSprite');
-        if (sprite) sprite.setTint(tintColor);
-    } else {
-        // Rectangle-based mech (heavy): use fillStyle
-        const headColor = isRageActive ? 0xff0000 : loadout.color;
-        const bodyColor = isRageActive ? 0x660000 : darkenColor(loadout.color, 0.4);
-        torso.list.forEach(shape => {
-            if (!shape?.setFillStyle) return;
-            if (shape.name === 'mechHead') shape.setFillStyle(headColor);
-            else if (shape.width >= 25)   shape.setFillStyle(bodyColor);
-        });
-    }
+    // Reset footstep/shockwave timers so effects re-sync after color change
+
+    torso.list.forEach(shape => {
+        if (!shape?.setFillStyle) return;
+        if (shape.name === 'mechHead') shape.setFillStyle(headColor);
+        else if (shape.width >= 25)   shape.setFillStyle(bodyColor);
+    });
 }
 
 
