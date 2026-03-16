@@ -78,6 +78,64 @@ const ITEM_BASES = {
     targeting_array: { baseType:'augment', name:'Targeting Array', icon:'aug_target',   baseStats:{ critChance:3, accuracy:5 } },
     neural_link:     { baseType:'augment', name:'Neural Link',    icon:'aug_neural',   baseStats:{ lootMult:5 } },
     combat_matrix:   { baseType:'augment', name:'Combat Matrix',  icon:'aug_combat',   baseStats:{ dmgPct:3, speedPct:2 } },
+
+    // ══════════════════════════════════════════════════════════════
+    // HYBRID SYSTEM ITEMS — carry a real game system + stat affixes
+    // These replace the hangar equipment selection. Finding a "Jump Jets"
+    // drop gives you the jump mod ability AND rarity-scaled bonus stats.
+    // ══════════════════════════════════════════════════════════════
+
+    // ── SYSTEM SHIELDS (shield_system slot → sets loadout.shld) ──
+    sys_light_shield:    { baseType:'shield_system', systemKey:'light_shield',    name:'Light Shield',     icon:'shld_light',   baseStats:{ shieldHP:10, shieldRegen:3 } },
+    sys_standard_shield: { baseType:'shield_system', systemKey:'standard_shield', name:'Standard Shield',  icon:'shld_std',     baseStats:{ shieldHP:15, shieldRegen:2 } },
+    sys_heavy_shield:    { baseType:'shield_system', systemKey:'heavy_shield',    name:'Heavy Shield',     icon:'shld_heavy',   baseStats:{ shieldHP:20, dr:0.02 } },
+    sys_reactive_shield: { baseType:'shield_system', systemKey:'reactive_shield', name:'Reactive Shield',  icon:'shld_react',   baseStats:{ shieldHP:12, shieldRegen:5 } },
+    sys_fortress_shield: { baseType:'shield_system', systemKey:'fortress_shield', name:'Fortress Shield',  icon:'shld_fort',    baseStats:{ shieldHP:30, dr:0.03 } },
+    sys_micro_shield:    { baseType:'shield_system', systemKey:'micro_shield',    name:'Micro Shield',     icon:'shld_micro',   baseStats:{ shieldRegen:8, speedPct:2 } },
+    sys_flicker_shield:  { baseType:'shield_system', systemKey:'flicker_shield',  name:'Flicker Shield',   icon:'shld_flicker', baseStats:{ shieldHP:10, dodgePct:3 } },
+    sys_phase_shield:    { baseType:'shield_system', systemKey:'phase_shield',    name:'Phase Shield',     icon:'shld_phase',   baseStats:{ shieldHP:10, speedPct:2 } },
+    sys_adaptive_shield: { baseType:'shield_system', systemKey:'adaptive_shield', name:'Adaptive Shield',  icon:'shld_adapt',   baseStats:{ shieldHP:15, dr:0.02 } },
+    sys_counter_shield:  { baseType:'shield_system', systemKey:'counter_shield',  name:'Counter Shield',   icon:'shld_counter', baseStats:{ shieldHP:12, dmgPct:2 } },
+    sys_bulwark_shield:  { baseType:'shield_system', systemKey:'bulwark_shield',  name:'Bulwark Shield',   icon:'shld_bulwark', baseStats:{ shieldHP:25, dr:0.04 } },
+    sys_titan_shield:    { baseType:'shield_system', systemKey:'titan_shield',    name:'Titan Shield',     icon:'shld_titan',   baseStats:{ shieldHP:30, dr:0.05 } },
+
+    // ── SYSTEM MODS (mod_system slot → sets loadout.mod) ──
+    sys_jump:             { baseType:'mod_system', systemKey:'jump',             name:'Jump Jets',         icon:'mod_jump',     baseStats:{ speedPct:3 } },
+    sys_barrier:          { baseType:'mod_system', systemKey:'barrier',          name:'Barrier Module',    icon:'mod_barrier',  baseStats:{ shieldHP:10, dr:0.02 } },
+    sys_rage:             { baseType:'mod_system', systemKey:'rage',             name:'Rage Inducer',      icon:'mod_rage',     baseStats:{ dmgPct:4 } },
+    sys_emp:              { baseType:'mod_system', systemKey:'emp',              name:'EMP Burst',         icon:'mod_emp',      baseStats:{ modCdPct:-5 } },
+    sys_repair:           { baseType:'mod_system', systemKey:'repair',           name:'Repair Drone',      icon:'mod_repair',   baseStats:{ autoRepair:1 } },
+    sys_atk_drone:        { baseType:'mod_system', systemKey:'atk_drone',       name:'Attack Drone',      icon:'mod_drone',    baseStats:{ dmgPct:2 } },
+    sys_missile:          { baseType:'mod_system', systemKey:'missile',          name:'Missile Pod',       icon:'mod_missile',  baseStats:{ dmgPct:3 } },
+    sys_decoy:            { baseType:'mod_system', systemKey:'decoy',            name:'Decoy Projector',   icon:'mod_decoy',    baseStats:{ speedPct:2 } },
+    sys_ghost_step:       { baseType:'mod_system', systemKey:'ghost_step',       name:'Ghost Step',        icon:'mod_ghost',    baseStats:{ speedPct:3, dodgePct:2 } },
+    sys_overclock_burst:  { baseType:'mod_system', systemKey:'overclock_burst',  name:'Overclock Burst',   icon:'mod_oc',       baseStats:{ reloadPct:-3, speedPct:2 } },
+    sys_fortress_mode:    { baseType:'mod_system', systemKey:'fortress_mode',    name:'Fortress Mode',     icon:'mod_fortress', baseStats:{ dr:0.03, coreHP:15 } },
+
+    // ── SYSTEM LEGS (leg_system slot → sets loadout.leg) ──
+    sys_hydraulic_boost:  { baseType:'leg_system', systemKey:'hydraulic_boost',  name:'Hydraulic Boost',   icon:'leg_hydro',    baseStats:{ speedPct:5, legHP:10 } },
+    sys_gyro_stabilizer:  { baseType:'leg_system', systemKey:'gyro_stabilizer',  name:'Gyro Stabilizer',   icon:'leg_gyro',     baseStats:{ accuracy:5, legHP:10 } },
+    sys_mag_anchors:      { baseType:'leg_system', systemKey:'mag_anchors',      name:'Mag Anchors',       icon:'leg_mag',      baseStats:{ dr:0.03, legHP:15 } },
+    sys_mine_layer:       { baseType:'leg_system', systemKey:'mine_layer',       name:'Mine Layer',        icon:'leg_mine',     baseStats:{ dmgPct:2, legHP:10 } },
+    sys_sprint_boosters:  { baseType:'leg_system', systemKey:'sprint_boosters',  name:'Sprint Boosters',   icon:'leg_sprint',   baseStats:{ speedPct:8, dodgePct:2 } },
+    sys_featherweight:    { baseType:'leg_system', systemKey:'featherweight',    name:'Featherweight',     icon:'leg_feather',  baseStats:{ speedPct:6, dodgePct:3 } },
+    sys_tremor_legs:      { baseType:'leg_system', systemKey:'tremor_legs',      name:'Tremor Legs',       icon:'leg_tremor',   baseStats:{ dmgPct:3, legHP:20 } },
+    sys_siege_stance:     { baseType:'leg_system', systemKey:'siege_stance',     name:'Siege Stance',      icon:'leg_siege',    baseStats:{ dr:0.04, dmgPct:3 } },
+    sys_ironclad_legs:    { baseType:'leg_system', systemKey:'ironclad_legs',    name:'Ironclad Legs',     icon:'leg_iron',     baseStats:{ dr:0.03, legHP:25 } },
+    sys_adaptive_stride:  { baseType:'leg_system', systemKey:'adaptive_stride',  name:'Adaptive Stride',   icon:'leg_adapt',    baseStats:{ speedPct:4, dodgePct:2 } },
+
+    // ── SYSTEM AUGMENTS (aug_system slot → sets loadout.aug) ──
+    sys_target_painter:   { baseType:'aug_system', systemKey:'target_painter',   name:'Target Painter',    icon:'aug_painter',  baseStats:{ dmgPct:3, accuracy:3 } },
+    sys_threat_analyzer:  { baseType:'aug_system', systemKey:'threat_analyzer',  name:'Threat Analyzer',   icon:'aug_threat',   baseStats:{ critChance:2, accuracy:3 } },
+    sys_overclock_cpu:    { baseType:'aug_system', systemKey:'overclock_cpu',    name:'Overclock CPU',     icon:'aug_cpu',      baseStats:{ reloadPct:-5, modCdPct:-3 } },
+    sys_reactive_plating: { baseType:'aug_system', systemKey:'reactive_plating', name:'Reactive Plating',  icon:'aug_plating',  baseStats:{ dr:0.03, coreHP:10 } },
+    sys_scrap_cannon:     { baseType:'aug_system', systemKey:'scrap_cannon',     name:'Scrap Cannon',      icon:'aug_scrap',    baseStats:{ dmgPct:4 } },
+    sys_ghost_circuit:    { baseType:'aug_system', systemKey:'ghost_circuit',    name:'Ghost Circuit',     icon:'aug_ghost',    baseStats:{ dodgePct:3, speedPct:3 } },
+    sys_reflex_amp:       { baseType:'aug_system', systemKey:'reflex_amp',       name:'Reflex Amp',        icon:'aug_reflex',   baseStats:{ reloadPct:-4, dodgePct:2 } },
+    sys_combat_ai:        { baseType:'aug_system', systemKey:'combat_ai',        name:'Combat AI',         icon:'aug_ai',       baseStats:{ critChance:3, dmgPct:2 } },
+    sys_war_machine:      { baseType:'aug_system', systemKey:'war_machine',      name:'War Machine',       icon:'aug_war',      baseStats:{ dmgPct:5, dr:0.02 } },
+    sys_iron_fortress:    { baseType:'aug_system', systemKey:'iron_fortress',    name:'Iron Fortress',     icon:'aug_iron',     baseStats:{ dr:0.05, coreHP:15 } },
+    sys_drone_relay:      { baseType:'aug_system', systemKey:'drone_relay',      name:'Drone Relay',       icon:'aug_relay',    baseStats:{ dmgPct:2, modCdPct:-3 } },
 };
 
 // Which weapon keys from WEAPONS are droppable as loot items
@@ -601,11 +659,15 @@ function rollAffixes(baseType, subType, rarity) {
 // ── ITEM GENERATION ────────────────────────────────────────────
 function _selectItemType(enemyData) {
     const weights = {
-        weapon: 35, armor: 15, arms: 10, legs: 10,
-        shield: 10, mod: 10, augment: 10
+        weapon: 30, armor: 10, arms: 8, legs: 6,
+        shield: 6, mod: 6, augment: 6,
+        // System drops — the main way to get new equipment
+        shield_system: 8, mod_system: 7, leg_system: 7, aug_system: 6
     };
-    if (enemyData?.isMedic) { weights.shield *= 3; weights.armor *= 2; }
-    if (enemyData?.isCommander) { weights.weapon *= 2; }
+    if (enemyData?.isMedic) { weights.shield_system *= 2; weights.shield *= 2; weights.armor *= 2; }
+    if (enemyData?.isCommander) { weights.weapon *= 2; weights.mod_system *= 2; }
+    if (enemyData?.isBoss) { weights.mod_system *= 2; weights.aug_system *= 2; weights.shield_system *= 2; }
+    if (enemyData?.isElite) { weights.leg_system *= 2; weights.shield_system *= 1.5; }
 
     const total = Object.values(weights).reduce((s, v) => s + v, 0);
     let r = Math.random() * total;
@@ -625,7 +687,21 @@ function _selectBaseItem(baseType) {
         if (pool.length === 0) return WEAPON_LOOT_KEYS[Math.floor(Math.random() * WEAPON_LOOT_KEYS.length)];
         return pool[Math.floor(Math.random() * pool.length)];
     }
-    const candidates = Object.entries(ITEM_BASES).filter(([, def]) => def.baseType === baseType);
+    let candidates = Object.entries(ITEM_BASES).filter(([, def]) => def.baseType === baseType);
+    // For system items, filter by chassis restrictions
+    if (baseType === 'shield_system') {
+        const allowed = typeof CHASSIS_SHIELDS !== 'undefined' ? CHASSIS_SHIELDS[ch] : null;
+        if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
+    } else if (baseType === 'mod_system') {
+        const allowed = typeof CHASSIS_MODS !== 'undefined' ? CHASSIS_MODS[ch] : null;
+        if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
+    } else if (baseType === 'leg_system') {
+        const allowed = typeof CHASSIS_LEGS !== 'undefined' ? CHASSIS_LEGS[ch] : null;
+        if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
+    } else if (baseType === 'aug_system') {
+        const allowed = typeof CHASSIS_AUGS !== 'undefined' ? CHASSIS_AUGS[ch] : null;
+        if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
+    }
     if (candidates.length === 0) return null;
     return candidates[Math.floor(Math.random() * candidates.length)][0];
 }
@@ -675,11 +751,17 @@ function generateItem(round, enemyData) {
         }
     }
 
-    // Roll affixes
-    const affixes = rollAffixes(baseType, subType, rarity);
+    // Roll affixes — system items use their parent slot type for affix pool
+    const _affixTypeMap = { shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment' };
+    const affixType = _affixTypeMap[baseType] || baseType;
+    const affixes = rollAffixes(affixType, subType, rarity);
 
     // Generate rarity-colored name
     const fullName = rarity === 'common' ? name : `${rarityDef.label} ${name}`;
+
+    // For system items, carry the systemKey so equip logic can activate the game system
+    const _baseDef = ITEM_BASES[baseKey];
+    const systemKey = _baseDef?.systemKey || null;
 
     const item = {
         id: 'item_' + (++_lootItemIdCounter),
@@ -693,7 +775,8 @@ function generateItem(round, enemyData) {
         level,
         baseStats: scaledStats,
         affixes,
-        computedStats: {}
+        computedStats: {},
+        systemKey
     };
 
     // Compute final stats: base + affixes
