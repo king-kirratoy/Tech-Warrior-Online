@@ -200,6 +200,154 @@ const UNIQUE_ITEMS = {
         uniqueEffect: 'impactArmor',
         uniqueLabel: 'IMPACT ARMOR: Taking heavy hits (>25 dmg) grants 3s of +15% DR',
         uniqueDesc: 'When hit for more than 25 damage in one hit, gain 15% bonus DR for 3 seconds.'
+    },
+
+    // ── THE SWARM (Round 25, 65, 105...) ─────────────────────
+    hive_mind: {
+        name: "Hive Mind",
+        shortName: 'H.Mind',
+        baseType: 'augment',
+        icon: 'aug_core',
+        rarity: 'legendary',
+        isUnique: true,
+        boss: 'swarm',
+        baseStats: { dmgPct: 8, modEffPct: 10 },
+        affixes: [
+            { key:'dmgPct', stat:'dmgPct', value:10, label:'+10% Damage' },
+            { key:'critChance', stat:'critChance', value:8, label:'+8% Crit Chance' },
+            { key:'modCdPct', stat:'modCdPct', value:6, label:'+6% Mod Cooldown' }
+        ],
+        uniqueEffect: 'swarmBurst',
+        uniqueLabel: 'SWARM BURST: Kills release homing drones that seek nearby enemies',
+        uniqueDesc: 'Each kill spawns 2 micro-drones that home in on the nearest enemy, dealing 15 damage each.'
+    },
+    swarm_carapace: {
+        name: "Swarm Carapace",
+        shortName: 'S.Carapace',
+        baseType: 'armor',
+        icon: 'armor_heavy',
+        rarity: 'epic',
+        isUnique: true,
+        boss: 'swarm',
+        baseStats: { coreHP: 60, dr: 4 },
+        affixes: [
+            { key:'allHP', stat:'allHP', value:20, label:'+20 All Part HP' },
+            { key:'dr', stat:'dr', value:5, label:'+5% Damage Reduction' }
+        ],
+        uniqueEffect: 'adaptiveArmor',
+        uniqueLabel: 'ADAPTIVE: Each consecutive hit from same source deals 10% less',
+        uniqueDesc: 'Successive hits from the same enemy deal 10% less damage, stacking up to 40%.'
+    },
+
+    // ── THE MIRROR (Round 30, 70, 110...) ─────────────────────
+    mirror_shard: {
+        name: "Mirror Shard",
+        shortName: 'M.Shard',
+        baseType: 'weapon',
+        icon: 'weapon_plsm',
+        rarity: 'legendary',
+        isUnique: true,
+        boss: 'mirror',
+        baseStats: { dmgFlat: 12 },
+        affixes: [
+            { key:'dmgPct', stat:'dmgPct', value:12, label:'+12% Damage' },
+            { key:'critDmg', stat:'critDmg', value:15, label:'+15% Crit Damage' },
+            { key:'reloadPct', stat:'reloadPct', value:8, label:'+8% Reload Speed' }
+        ],
+        uniqueEffect: 'mirrorShot',
+        uniqueLabel: 'MIRROR SHOT: Bullets reflect off walls once, dealing 60% damage',
+        uniqueDesc: 'Your projectiles bounce off cover and walls once, dealing 60% of original damage on the ricochet.'
+    },
+    echo_frame: {
+        name: "Echo Frame",
+        shortName: 'E.Frame',
+        baseType: 'arms',
+        icon: 'arm_servo',
+        rarity: 'epic',
+        isUnique: true,
+        boss: 'mirror',
+        baseStats: { armHP: 35, reloadPct: 5 },
+        affixes: [
+            { key:'reloadPct', stat:'reloadPct', value:8, label:'+8% Reload Speed' },
+            { key:'accuracy', stat:'accuracy', value:6, label:'+6% Accuracy' }
+        ],
+        uniqueEffect: 'echoStrike',
+        uniqueLabel: 'ECHO: Mod activation fires a phantom copy of your last shot',
+        uniqueDesc: 'When you activate a mod, a ghost projectile mimicking your last weapon fires automatically.'
+    },
+
+    // ── THE TITAN (Round 35, 75, 115...) ─────────────────────
+    titan_fist: {
+        name: "Titan Fist",
+        shortName: 'T.Fist',
+        baseType: 'weapon',
+        icon: 'weapon_siege',
+        rarity: 'legendary',
+        isUnique: true,
+        boss: 'titan',
+        baseStats: { dmgFlat: 18 },
+        affixes: [
+            { key:'dmgPct', stat:'dmgPct', value:15, label:'+15% Damage' },
+            { key:'splashRadius', stat:'splashRadius', value:20, label:'+20% Splash Radius' },
+            { key:'critChance', stat:'critChance', value:5, label:'+5% Crit Chance' }
+        ],
+        uniqueEffect: 'titanSmash',
+        uniqueLabel: 'TITAN SMASH: Every 5th shot creates a shockwave dealing 50% AoE',
+        uniqueDesc: 'Every 5th shot fired triggers a shockwave around the impact point, dealing 50% of the shot damage in a 120px radius.'
+    },
+    colossus_frame: {
+        name: "Colossus Frame",
+        shortName: 'C.Frame',
+        baseType: 'legs',
+        icon: 'leg_heavy',
+        rarity: 'epic',
+        isUnique: true,
+        boss: 'titan',
+        baseStats: { legHP: 50, speedPct: 3 },
+        affixes: [
+            { key:'allHP', stat:'allHP', value:25, label:'+25 All Part HP' },
+            { key:'dr', stat:'dr', value:4, label:'+4% Damage Reduction' }
+        ],
+        uniqueEffect: 'colossusStand',
+        uniqueLabel: 'COLOSSUS: Standing still for 2s grants +25% damage and +10% DR',
+        uniqueDesc: 'After remaining stationary for 2 seconds, gain +25% damage and +10% DR until you move.'
+    },
+
+    // ── THE CORE (Round 40, 80, 120...) ─────────────────────
+    core_reactor: {
+        name: "Core Reactor",
+        shortName: 'C.Reactor',
+        baseType: 'mod',
+        icon: 'mod_chip',
+        rarity: 'legendary',
+        isUnique: true,
+        boss: 'core',
+        baseStats: { modCdPct: 12, modEffPct: 10 },
+        affixes: [
+            { key:'modCdPct', stat:'modCdPct', value:10, label:'+10% Mod Cooldown' },
+            { key:'modEffPct', stat:'modEffPct', value:12, label:'+12% Mod Effectiveness' },
+            { key:'dmgPct', stat:'dmgPct', value:5, label:'+5% Damage' }
+        ],
+        uniqueEffect: 'coreOverload',
+        uniqueLabel: 'CORE OVERLOAD: Mod activation emits a 200px damage pulse (80 dmg)',
+        uniqueDesc: 'Each mod activation releases an energy pulse dealing 80 damage to all enemies within 200px.'
+    },
+    matrix_shield: {
+        name: "Matrix Shield",
+        shortName: 'M.Shield',
+        baseType: 'shield',
+        icon: 'shield_regen',
+        rarity: 'epic',
+        isUnique: true,
+        boss: 'core',
+        baseStats: { shieldHP: 50, shieldRegen: 3 },
+        affixes: [
+            { key:'shieldHP', stat:'shieldHP', value:30, label:'+30 Shield HP' },
+            { key:'absorbPct', stat:'absorbPct', value:5, label:'+5% Shield Absorb' }
+        ],
+        uniqueEffect: 'matrixBarrier',
+        uniqueLabel: 'MATRIX: Shield break creates a 3s damage-immune bubble (60s CD)',
+        uniqueDesc: 'When your shield is broken, gain a 3-second invulnerability bubble. 60 second cooldown.'
     }
 };
 
@@ -208,7 +356,11 @@ const BOSS_DROP_TABLE = {
     warden:     { legendary: 'wardens_aegis',     epic: 'sentinels_plating' },
     razor:      { legendary: 'razor_edge',        epic: 'twinned_servo' },
     architect:  { legendary: 'blueprint_core',    epic: 'architects_array' },
-    juggernaut: { legendary: 'juggernaut_engine', epic: 'unstoppable_core' }
+    juggernaut: { legendary: 'juggernaut_engine', epic: 'unstoppable_core' },
+    swarm:      { legendary: 'hive_mind',         epic: 'swarm_carapace' },
+    mirror:     { legendary: 'mirror_shard',      epic: 'echo_frame' },
+    titan:      { legendary: 'titan_fist',        epic: 'colossus_frame' },
+    core:       { legendary: 'core_reactor',      epic: 'matrix_shield' }
 };
 
 // Generate a unique boss item from a template
@@ -1093,6 +1245,150 @@ function spawnModCover(scene) {
         }
     });
 }
+
+// ── Phase 7 UNIQUE EFFECT HELPERS ─────────────────────────────
+
+// Swarm Burst: kills spawn 2 homing micro-drones
+function triggerSwarmBurst(scene, x, y) {
+    if (!hasUniqueEffect('swarmBurst') || !scene) return;
+    for (let i = 0; i < 2; i++) {
+        const drone = scene.add.circle(x, y, 5, 0x88ff00, 0.9).setStrokeStyle(1, 0xccff44).setDepth(12);
+        scene.physics.add.existing(drone);
+        drone.body.setCircle(5);
+        const findTarget = () => {
+            if (typeof enemies === 'undefined') return null;
+            let closest = null, closestDist = 500;
+            enemies.getChildren().forEach(e => {
+                if (!e.active) return;
+                const d = Phaser.Math.Distance.Between(drone.x, drone.y, e.x, e.y);
+                if (d < closestDist) { closest = e; closestDist = d; }
+            });
+            return closest;
+        };
+        const tick = scene.time.addEvent({ delay: 50, loop: true, callback: () => {
+            if (!drone.active) { tick.remove(); return; }
+            const target = findTarget();
+            if (!target) { drone.destroy(); tick.remove(); return; }
+            const angle = Math.atan2(target.y - drone.y, target.x - drone.x);
+            drone.body.setVelocity(Math.cos(angle) * 350, Math.sin(angle) * 350);
+            if (Phaser.Math.Distance.Between(drone.x, drone.y, target.x, target.y) < 20) {
+                if (typeof damageEnemy === 'function') damageEnemy(target, 15, 0, true);
+                if (typeof showDamageText === 'function') showDamageText(scene, target.x, target.y, 15);
+                drone.destroy(); tick.remove();
+            }
+        }});
+        // Self-destruct after 3s
+        scene.time.delayedCall(3000, () => { if (drone.active) drone.destroy(); tick.remove(); });
+    }
+}
+
+// Adaptive Armor: consecutive hits from same source deal less
+let _adaptiveLastShooter = null;
+let _adaptiveStacks = 0;
+function getAdaptiveArmorDR(shooterId) {
+    if (!hasUniqueEffect('adaptiveArmor')) return 0;
+    if (shooterId && shooterId === _adaptiveLastShooter) {
+        _adaptiveStacks = Math.min(4, _adaptiveStacks + 1);
+    } else {
+        _adaptiveLastShooter = shooterId;
+        _adaptiveStacks = 0;
+    }
+    return _adaptiveStacks * 0.10; // 10% per stack, max 40%
+}
+
+// Titan Smash: every 5th shot creates shockwave
+let _titanSmashCounter = 0;
+function checkTitanSmash() {
+    if (!hasUniqueEffect('titanSmash')) return false;
+    _titanSmashCounter++;
+    if (_titanSmashCounter >= 5) {
+        _titanSmashCounter = 0;
+        return true;
+    }
+    return false;
+}
+
+function triggerTitanSmash(scene, x, y, baseDmg) {
+    if (!scene) return;
+    const aoeDmg = Math.round(baseDmg * 0.5);
+    const ring = scene.add.circle(x, y, 10, 0xff6600, 0.5).setStrokeStyle(3, 0xff8800).setDepth(14);
+    scene.tweens.add({ targets: ring, radius: 120, alpha: 0, duration: 400, onComplete: () => ring.destroy() });
+    if (typeof enemies !== 'undefined') {
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            if (Phaser.Math.Distance.Between(x, y, e.x, e.y) < 120) {
+                if (typeof damageEnemy === 'function') damageEnemy(e, aoeDmg, 0, true);
+                if (typeof showDamageText === 'function') showDamageText(scene, e.x, e.y, aoeDmg);
+            }
+        });
+    }
+}
+
+// Colossus Stand: stationary 2s grants +25% dmg, +10% DR
+let _colossusActive = false;
+let _colossusStillTime = 0;
+let _colossusLastX = 0;
+let _colossusLastY = 0;
+function updateColossusStand(time) {
+    if (!hasUniqueEffect('colossusStand')) { _colossusActive = false; return; }
+    if (typeof player === 'undefined' || !player?.active) return;
+    const moved = Math.abs(player.x - _colossusLastX) > 3 || Math.abs(player.y - _colossusLastY) > 3;
+    _colossusLastX = player.x;
+    _colossusLastY = player.y;
+    if (moved) {
+        _colossusStillTime = time;
+        _colossusActive = false;
+    } else if (time - _colossusStillTime > 2000) {
+        _colossusActive = true;
+    }
+}
+function getColossusDmgMult() { return _colossusActive ? 1.25 : 1.0; }
+function getColossusDR() { return _colossusActive ? 0.10 : 0; }
+
+// Core Overload: mod activation damage pulse
+function triggerCoreOverload(scene) {
+    if (!hasUniqueEffect('coreOverload') || !scene) return;
+    if (typeof player === 'undefined' || !player?.active) return;
+    const ring = scene.add.circle(player.x, player.y, 10, 0x00ffff, 0.5).setStrokeStyle(3, 0x44ffff).setDepth(14);
+    scene.tweens.add({ targets: ring, radius: 200, alpha: 0, duration: 500, onComplete: () => ring.destroy() });
+    if (typeof enemies !== 'undefined') {
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < 200) {
+                if (typeof damageEnemy === 'function') damageEnemy(e, 80, 0, true);
+                if (typeof showDamageText === 'function') showDamageText(scene, e.x, e.y, 80);
+            }
+        });
+    }
+}
+
+// Matrix Barrier: shield break invulnerability bubble
+let _matrixBarrierCooldown = 0;
+let _matrixBarrierActive = false;
+function triggerMatrixBarrier(scene, time) {
+    if (!hasUniqueEffect('matrixBarrier')) return false;
+    if (time < _matrixBarrierCooldown || _matrixBarrierActive) return false;
+    _matrixBarrierActive = true;
+    _matrixBarrierCooldown = time + 60000; // 60s CD
+    // Visual bubble
+    if (scene && typeof player !== 'undefined' && player?.active) {
+        const bubble = scene.add.circle(player.x, player.y, 50, 0x00ccff, 0.2)
+            .setStrokeStyle(3, 0x00ffff).setDepth(15);
+        const follow = scene.time.addEvent({ delay: 16, loop: true, callback: () => {
+            if (!bubble.active || !player?.active) return;
+            bubble.setPosition(player.x, player.y);
+        }});
+        scene.time.delayedCall(3000, () => {
+            _matrixBarrierActive = false;
+            follow.remove();
+            if (bubble.active) scene.tweens.add({ targets: bubble, alpha: 0, duration: 300, onComplete: () => bubble.destroy() });
+        });
+    } else {
+        setTimeout(() => { _matrixBarrierActive = false; }, 3000);
+    }
+    return true;
+}
+function isMatrixBarrierActive() { return _matrixBarrierActive; }
 
 // ── CLEANUP (called when returning to hangar/main menu) ────────
 function cleanupEquipmentDrops() {

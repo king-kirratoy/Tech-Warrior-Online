@@ -2920,6 +2920,10 @@ function create() {
             enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(2, 0xffaa00); });
         }
         damageEnemy(enemy, dmg, _bAngle, false, _bPierce);
+        // Titan Smash: every 5th shot AoE shockwave
+        if (typeof checkTitanSmash === 'function' && checkTitanSmash()) {
+            triggerTitanSmash(this, _bx2, _by2, dmg);
+        }
         // Chain Plasma: chain to nearest other enemy if this was a plasma-sized hit
         if (_perkState.plsmChain && dmg >= 200) {
             let _chainTarget = null, _chainDist = Infinity;
@@ -3009,6 +3013,7 @@ function update(time) {
     checkEquipmentPickups(this);
     if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time);
     if (typeof updateObjectives === 'function') updateObjectives(this, time);
+    if (typeof updateColossusStand === 'function') updateColossusStand(time);
 }
 
 
@@ -5075,8 +5080,12 @@ function _spawnSpectreClone() {
     });
 }
 
-function onEnemyKilled() {
+function onEnemyKilled(deadEnemy) {
     _roundKills++;
+    // Swarm Burst unique: kills spawn homing micro-drones
+    if (typeof triggerSwarmBurst === 'function' && deadEnemy?.x != null) {
+        triggerSwarmBurst(game.scene.scenes[0], deadEnemy.x, deadEnemy.y);
+    }
     // Swarm Logic: kills while drone active reduce drone cooldown
     if (_perkState.swarmLogic > 0 && (_perkState._droneActive || _perkState._autoDroneActive)) {
         lastModTime -= _perkState.swarmLogic;
@@ -5673,6 +5682,8 @@ function applyLegSystem() {
 function activateMod(scene, time) {
     // Blueprint Core: spawn temporary cover wall on any mod activation
     if (typeof spawnModCover === 'function') spawnModCover(scene);
+    // Core Reactor: mod activation damage pulse
+    if (typeof triggerCoreOverload === 'function') triggerCoreOverload(scene);
     switch (loadout.mod) {
         case 'jump':      activateJump(scene);           break;
         case 'barrier':   activateShield(scene);         break;
@@ -7313,12 +7324,524 @@ function spawnJuggernaut(scene) {
     };
 }
 
+// ================================================================
+// BOSS 5: THE SWARM (Round 25+)
+// 20 mini-enemies sharing one large HP pool. Killed units reform.
+// ================================================================
+function spawnSwarm(scene) {
+    const SWARM_COUNT = 20;
+    const swarmHP = Math.round(800 * (1 + Math.min(_round - 1, 40) * 0.07));
+    const _swarmState = { hp: swarmHP, maxHp: swarmHP, units: [], respawnQueue: [] };
+
+    _addBossHPBar(scene, null, 0x88ff00, 'THE SWARM');
+
+    // Override boss HP bar to use swarm state
+    const bossBarFill = document.getElementById('boss-bar-fill');
+
+    _showBossTitle(scene, 'THE SWARM', 'DESTROY THE HIVE MIND', 0x88ff00);
+
+    function spawnSwarmUnit(x, y) {
+        const sz = 18;
+        const e = scene.add.rectangle(x, y, sz, sz, 0x000000, 0);
+        scene.physics.add.existing(e);
+        e.body.setCircle(sz * 0.6);
+        e.body.setBounce(0.5);
+        e.visuals = scene.add.circle(x, y, sz/2, 0x66cc00).setStrokeStyle(1, 0x88ff00).setDepth(5);
+        // Small eye
+        const eyeOx = Math.cos(0) * 4, eyeOy = Math.sin(0) * 4;
+        e.torso = scene.add.circle(x + eyeOx, y + eyeOy, 3, 0xffffff).setDepth(6);
+        e.speed = 120 + Math.random() * 80;
+        const unitHP = 30;
+        e.comp = {
+            core: { hp: unitHP, max: unitHP },
+            lArm: { hp: 10, max: 10 }, rArm: { hp: 10, max: 10 },
+            legs: { hp: 10, max: 10 }
+        };
+        e.health = unitHP; e.maxHealth = unitHP;
+        e.behavior = 'rush'; e.isBoss = false; e._isSwarmUnit = true;
+        e._swarmState = _swarmState;
+        e._passiveDR = 0; e._reloadMult = 1; e._augState = {};
+        e.reloadL = 0; e.reloadR = 0; e.lastFireTime = 0; e.lastSecTime = 0;
+        e.lastModTime = -99999; e.isModActive = false;
+        e.fxFootTimer = 0; e.fxFootSide = 1; e.fxShockTimer = 0;
+        e.fxLastX = x; e.fxLastY = y; e.fxLastMX = x; e.fxLastMY = y;
+        e._fireGrace = true;
+        setTimeout(() => { if (e?.active) e._fireGrace = false; }, 1500);
+        e._visionConeGfx = scene.add.graphics().setDepth(3);
+        e.loadout = { chassis:'light', primary:'smg', secondary:'none', mod:'none', shld:'none', leg:'none', aug:'none' };
+        enemies.add(e);
+        if (coverObjects) scene.physics.add.collider(e, coverObjects);
+        _swarmState.units.push(e);
+        return e;
+    }
+
+    // Spawn swarm units in a cluster
+    for (let i = 0; i < SWARM_COUNT; i++) {
+        const angle = (i / SWARM_COUNT) * Math.PI * 2;
+        const r = 150 + Math.random() * 200;
+        const sx = 2000 + Math.cos(angle) * (800 + r);
+        const sy = 2000 + Math.sin(angle) * (800 + r);
+        spawnSwarmUnit(Phaser.Math.Clamp(sx, 300, 3700), Phaser.Math.Clamp(sy, 300, 3700));
+    }
+
+    // Swarm update loop — shared HP, respawn dead units
+    const swarmTick = scene.time.addEvent({ delay: 200, loop: true, callback: () => {
+        if (_swarmState.hp <= 0) { swarmTick.remove(); return; }
+        // Update boss HP bar
+        if (bossBarFill) bossBarFill.style.width = Math.max(0, _swarmState.hp / _swarmState.maxHp * 100) + '%';
+        // Respawn dead units (max 2 per tick)
+        let respawned = 0;
+        for (let i = _swarmState.units.length - 1; i >= 0; i--) {
+            const u = _swarmState.units[i];
+            if (!u.active && respawned < 2 && _swarmState.hp > 0) {
+                // Respawn near a living unit
+                const living = _swarmState.units.filter(u2 => u2.active);
+                if (living.length > 0) {
+                    const ref = living[Math.floor(Math.random() * living.length)];
+                    const nu = spawnSwarmUnit(ref.x + Phaser.Math.Between(-60, 60), ref.y + Phaser.Math.Between(-60, 60));
+                    _swarmState.units[i] = nu;
+                    // Green flash on respawn
+                    const flash = scene.add.circle(nu.x, nu.y, 15, 0x88ff00, 0.6).setDepth(14);
+                    scene.tweens.add({ targets: flash, alpha: 0, scale: 2, duration: 300, onComplete: () => flash.destroy() });
+                }
+                respawned++;
+            }
+        }
+        // Sync visuals for living units
+        _swarmState.units.forEach(u => {
+            if (!u.active) return;
+            if (u.visuals?.active) u.visuals.setPosition(u.x, u.y);
+            if (u.torso?.active) u.torso.setPosition(u.x + 4, u.y);
+        });
+    }});
+
+    // Swarm boss is defeated when shared HP reaches 0
+    // This is tracked via a custom damage hook — swarm units redirect damage to pool
+    _swarmState._tick = swarmTick;
+    _swarmState._onDefeat = function() {
+        swarmTick.remove();
+        _hideBossHPBar();
+        _swarmState.units.forEach(u => {
+            if (u.active) {
+                const exp = scene.add.circle(u.x, u.y, 8, 0x88ff00, 0.7).setDepth(14);
+                scene.tweens.add({ targets: exp, scale: 3, alpha: 0, duration: 400, onComplete: () => exp.destroy() });
+                try { u.visuals?.destroy(); u.torso?.destroy(); u._visionConeGfx?.destroy(); } catch(ex) {}
+                u.destroy();
+            }
+        });
+    };
+
+    // Store swarm state globally for damage hook
+    window._activeSwarm = _swarmState;
+}
+
+// ================================================================
+// BOSS 6: THE MIRROR (Round 30+)
+// Copies player loadout, AI-controlled mirror match
+// ================================================================
+function spawnMirror(scene) {
+    const p = _bossSpawnPos();
+    const mirrorColors = { body: 0x111122, head: 0x4488ff, eye: 0x00ffff };
+    const e = _buildBossEnemy(scene, p.x, p.y, loadout.chassis || 'medium', mirrorColors, 3.5, 1.0);
+    // Copy player loadout
+    e.loadout = {
+        chassis: loadout.chassis || 'medium',
+        primary: loadout.L || 'smg', secondary: loadout.R || 'none',
+        mod: loadout.mod || 'none', shld: loadout.shld || 'none',
+        leg: loadout.leg || 'none', aug: loadout.aug || 'none'
+    };
+    e.behavior = 'mirror'; e.isBoss = true; e.bossType = 'mirror';
+    e._mirrorPhase = 1;
+    _addBossLabel(scene, e, '[ THE MIRROR ]', 0x4488ff, 80);
+    _addBossHPBar(scene, e, 0x4488ff, 'THE MIRROR');
+    _showBossTitle(scene, 'THE MIRROR', 'IT KNOWS YOUR MOVES', 0x4488ff);
+
+    // Mirror copies player speed
+    e.speed = CHASSIS[loadout.chassis || 'medium'].spd * 1.05;
+
+    // Mirror AI: strafe, dodge, use mods — update loop
+    const mirrorTick = scene.time.addEvent({ delay: 250, loop: true, callback: () => {
+        if (!e || !e.active) { mirrorTick.remove(); return; }
+        _updateBossHPBar(e);
+        if (e.bossLabel?.active) e.bossLabel.setPosition(e.x, e.y - 80);
+        const pct = e.health / e.maxHealth;
+
+        // Phase transitions: at 50% mirror copies player perks partially
+        if (pct < 0.50 && e._mirrorPhase === 1) {
+            e._mirrorPhase = 2;
+            e.speed *= 1.2;
+            e._passiveDR = 0.15;
+            const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+                'THE MIRROR — PHASE 2: ADAPTATION', { font:'bold 18px monospace', fill:'#4488ff', stroke:'#000', strokeThickness:4 })
+                .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+            scene.tweens.add({ targets: warn, alpha:0, duration:2000, onComplete:()=>warn.destroy() });
+            _tone(180, 'sine', 0.3, 0.15, 120);
+        }
+
+        // Mirror dodge: teleport-dash when player fires nearby
+        if (player?.active && e._mirrorPhase >= 2 && Math.random() < 0.08) {
+            const dist = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+            if (dist < 400) {
+                const dashAngle = Math.atan2(player.y - e.y, player.x - e.x) + (Math.random() < 0.5 ? Math.PI/2 : -Math.PI/2);
+                const dashDist = 120;
+                const nx = Phaser.Math.Clamp(e.x + Math.cos(dashAngle) * dashDist, 200, 3800);
+                const ny = Phaser.Math.Clamp(e.y + Math.sin(dashAngle) * dashDist, 200, 3800);
+                // Ghost trail
+                const ghost = scene.add.circle(e.x, e.y, 20, 0x4488ff, 0.4).setDepth(12);
+                scene.tweens.add({ targets: ghost, alpha: 0, scale: 0.3, duration: 400, onComplete: () => ghost.destroy() });
+                e.x = nx; e.y = ny;
+                if (e.body) e.body.reset(nx, ny);
+            }
+        }
+    }});
+
+    // Mirror uses EMP periodically
+    let lastMirrorMod = 0;
+    const mirrorModTick = scene.time.addEvent({ delay: 100, loop: true, callback: () => {
+        if (!e || !e.active) { mirrorModTick.remove(); return; }
+        const now = scene.time.now;
+        if (now - lastMirrorMod > 8000 && e._mirrorPhase >= 2) {
+            lastMirrorMod = now;
+            // Mirror EMP: stuns player briefly
+            const dist = Phaser.Math.Distance.Between(e.x, e.y, player?.x || 2000, player?.y || 2000);
+            if (dist < 350) {
+                const ring = scene.add.circle(e.x, e.y, 10, 0x4488ff, 0.3).setStrokeStyle(2, 0x4488ff).setDepth(12);
+                scene.tweens.add({ targets: ring, radius: 250, alpha: 0, duration: 400, onComplete: () => ring.destroy() });
+                _tone(400, 'sine', 0.15, 0.1, 200);
+            }
+        }
+    }});
+
+    e._onDestroy = function() {
+        mirrorTick.remove();
+        mirrorModTick.remove();
+        if (e.bossLabel) e.bossLabel.destroy();
+        _hideBossHPBar();
+    };
+}
+
+// ================================================================
+// BOSS 7: THE TITAN (Round 35+)
+// 3-phase mega-heavy boss with different attack patterns each phase
+// ================================================================
+function spawnTitan(scene) {
+    const p = _bossSpawnPos();
+    const titanColors = { body: 0x1a1000, head: 0xff8800, eye: 0xffcc00 };
+    const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', titanColors, 8.0, 0.55);
+    e.loadout = { chassis:'heavy', primary:'siege', secondary:'chain',
+                  mod:'fortress_mode', shld:'titan_shield', leg:'siege_stance', aug:'reactive_plating' };
+    e.behavior = 'patrol'; e.isBoss = true; e.bossType = 'titan';
+    e._titanPhase = 1;
+    e._passiveDR = 0.25;
+    // Titan is visually larger
+    if (e.visuals) e.visuals.setScale(2.2);
+    if (e.torso) e.torso.setScale(2.2);
+    e.body.setCircle(80);
+    _addBossLabel(scene, e, '[ THE TITAN ]', 0xff8800, 100);
+    _addBossHPBar(scene, e, 0xff8800, 'THE TITAN');
+    _showBossTitle(scene, 'THE TITAN', 'PHASE 1 — ARTILLERY BARRAGE', 0xff8800);
+
+    // Phase 1: Artillery — fires explosive projectiles at player position
+    let artilleryTimer = null;
+    function startPhase1() {
+        artilleryTimer = scene.time.addEvent({ delay: 2000, loop: true, callback: () => {
+            if (!e || !e.active || !player?.active) return;
+            // Fire 3 mortar rounds at player location with spread
+            for (let i = 0; i < 3; i++) {
+                const tx = player.x + Phaser.Math.Between(-80, 80);
+                const ty = player.y + Phaser.Math.Between(-80, 80);
+                // Warning indicator
+                const warn = scene.add.circle(tx, ty, 40, 0xff4400, 0.15).setStrokeStyle(2, 0xff8800, 0.4).setDepth(3);
+                scene.tweens.add({ targets: warn, alpha: 0.5, duration: 800, onComplete: () => {
+                    warn.destroy();
+                    if (!e?.active) return;
+                    // Explosion
+                    const exp = scene.add.circle(tx, ty, 15, 0xff6600, 0.7).setDepth(14);
+                    scene.tweens.add({ targets: exp, radius: 60, alpha: 0, duration: 350, onComplete: () => exp.destroy() });
+                    if (player?.active && Phaser.Math.Distance.Between(tx, ty, player.x, player.y) < 60) {
+                        const artDmg = Math.round(25 * (1 + Math.max(0, _round - 35) * 0.04));
+                        processPlayerDamage(artDmg, null);
+                    }
+                    _tone(100, 'sawtooth', 0.2, 0.15, 50);
+                }});
+            }
+        }});
+    }
+
+    // Phase 2: Melee — charges at player with ground slam
+    let slamTimer = null;
+    function startPhase2() {
+        if (artilleryTimer) artilleryTimer.remove();
+        e.speed *= 2.0;
+        const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+            'THE TITAN — PHASE 2: GROUND ASSAULT', { font:'bold 18px monospace', fill:'#ff8800', stroke:'#000', strokeThickness:4 })
+            .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+        scene.tweens.add({ targets: warn, alpha:0, duration:2000, onComplete:()=>warn.destroy() });
+        _tone(40, 'sawtooth', 0.6, 0.4, 25);
+
+        slamTimer = scene.time.addEvent({ delay: 4000, loop: true, callback: () => {
+            if (!e || !e.active || !player?.active) return;
+            // Charge toward player
+            const angle = Math.atan2(player.y - e.y, player.x - e.x);
+            if (e.body) e.body.setVelocity(Math.cos(angle) * 400, Math.sin(angle) * 400);
+            scene.time.delayedCall(600, () => {
+                if (!e?.active) return;
+                if (e.body) e.body.setVelocity(0, 0);
+                // Ground slam
+                const slam = scene.add.circle(e.x, e.y, 20, 0xff8800, 0.6).setDepth(14);
+                scene.tweens.add({ targets: slam, radius: 150, alpha: 0, duration: 500, onComplete: () => slam.destroy() });
+                if (player?.active && Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y) < 150) {
+                    const slamDmg = Math.round(40 * (1 + Math.max(0, _round - 35) * 0.04));
+                    processPlayerDamage(slamDmg, null);
+                }
+                _noise(0.3, 0.4, 0, 0, 400);
+            });
+        }});
+    }
+
+    // Phase 3: Desperation — combines artillery + melee + enrage
+    let desperationTimer = null;
+    function startPhase3() {
+        if (slamTimer) slamTimer.remove();
+        e.speed *= 1.3;
+        e._passiveDR = 0.10; // DR drops in desperation
+        const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+            'THE TITAN — FINAL PHASE: DESPERATION', { font:'bold 20px monospace', fill:'#ff0000', stroke:'#000', strokeThickness:5 })
+            .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+        scene.tweens.add({ targets: warn, alpha:0, duration:2500, onComplete:()=>warn.destroy() });
+        _tone(30, 'sawtooth', 0.8, 0.5, 20);
+
+        desperationTimer = scene.time.addEvent({ delay: 2500, loop: true, callback: () => {
+            if (!e || !e.active || !player?.active) return;
+            // Alternating attacks
+            if (Math.random() < 0.5) {
+                // Mortar
+                const tx = player.x + Phaser.Math.Between(-60, 60);
+                const ty = player.y + Phaser.Math.Between(-60, 60);
+                const warn2 = scene.add.circle(tx, ty, 50, 0xff2200, 0.2).setDepth(3);
+                scene.tweens.add({ targets: warn2, alpha: 0.6, duration: 600, onComplete: () => {
+                    warn2.destroy();
+                    if (!e?.active) return;
+                    const exp = scene.add.circle(tx, ty, 20, 0xff4400, 0.8).setDepth(14);
+                    scene.tweens.add({ targets: exp, radius: 80, alpha: 0, duration: 400, onComplete: () => exp.destroy() });
+                    if (player?.active && Phaser.Math.Distance.Between(tx, ty, player.x, player.y) < 80) {
+                        processPlayerDamage(Math.round(30 * (1 + Math.max(0, _round - 35) * 0.04)), null);
+                    }
+                }});
+            } else {
+                // Shockwave
+                const sw = scene.add.circle(e.x, e.y, 10, 0xff6600, 0.5).setDepth(14);
+                scene.tweens.add({ targets: sw, radius: 200, alpha: 0, duration: 500, onComplete: () => sw.destroy() });
+                if (player?.active && Phaser.Math.Distance.Between(e.x, e.y, player.x, player.y) < 200) {
+                    processPlayerDamage(Math.round(20 * (1 + Math.max(0, _round - 35) * 0.04)), null);
+                }
+            }
+        }});
+    }
+
+    startPhase1();
+
+    // Phase tracking
+    const titanTick = scene.time.addEvent({ delay: 300, loop: true, callback: () => {
+        if (!e || !e.active) { titanTick.remove(); return; }
+        _updateBossHPBar(e);
+        if (e.bossLabel?.active) e.bossLabel.setPosition(e.x, e.y - 100);
+        const pct = e.health / e.maxHealth;
+        if (pct < 0.66 && e._titanPhase === 1) { e._titanPhase = 2; startPhase2(); }
+        if (pct < 0.33 && e._titanPhase === 2) { e._titanPhase = 3; startPhase3(); }
+    }});
+
+    e._onDestroy = function() {
+        titanTick.remove();
+        if (artilleryTimer) artilleryTimer.remove();
+        if (slamTimer) slamTimer.remove();
+        if (desperationTimer) desperationTimer.remove();
+        if (e.bossLabel) e.bossLabel.destroy();
+        _hideBossHPBar();
+    };
+}
+
+// ================================================================
+// BOSS 8: THE CORE (Round 40+)
+// Stationary core with 4 rotating turrets — must destroy turrets first
+// ================================================================
+function spawnCore(scene) {
+    // Central core — stationary
+    const coreHP = Math.round(600 * (1 + Math.min(_round - 1, 40) * 0.07));
+    const coreE = scene.add.rectangle(2000, 1200, 80, 80, 0x000000, 0);
+    scene.physics.add.existing(coreE);
+    coreE.body.setCircle(50);
+    coreE.body.setImmovable(true);
+
+    // Core visual
+    const coreGfx = scene.add.graphics().setDepth(5);
+    coreGfx.fillStyle(0x001133, 0.9);
+    coreGfx.fillCircle(0, 0, 40);
+    coreGfx.lineStyle(3, 0x00ccff);
+    coreGfx.strokeCircle(0, 0, 40);
+    coreGfx.fillStyle(0x00ffff, 0.6);
+    coreGfx.fillCircle(0, 0, 15);
+    coreGfx.setPosition(2000, 1200);
+    coreE.visuals = coreGfx;
+    coreE.torso = scene.add.circle(2000, 1200, 5, 0xffffff).setDepth(6);
+
+    coreE.speed = 0;
+    coreE.comp = {
+        core: { hp: coreHP, max: coreHP },
+        lArm: { hp: 1, max: 1 }, rArm: { hp: 1, max: 1 },
+        legs: { hp: 1, max: 1 }
+    };
+    coreE.health = coreHP; coreE.maxHealth = coreHP;
+    coreE.behavior = 'stationary'; coreE.isBoss = true; coreE.bossType = 'core';
+    coreE._passiveDR = 0.50; // 50% DR while turrets alive
+    coreE._reloadMult = 1; coreE._augState = {};
+    coreE.reloadL = 0; coreE.reloadR = 0;
+    coreE.lastFireTime = 0; coreE.lastSecTime = 0;
+    coreE.lastModTime = -99999; coreE.isModActive = false;
+    coreE.fxFootTimer = 0; coreE.fxFootSide = 1; coreE.fxShockTimer = 0;
+    coreE.fxLastX = 2000; coreE.fxLastY = 1200; coreE.fxLastMX = 2000; coreE.fxLastMY = 1200;
+    coreE._fireGrace = true;
+    setTimeout(() => { if (coreE?.active) coreE._fireGrace = false; }, 3000);
+    coreE._visionConeGfx = scene.add.graphics().setDepth(3);
+    coreE.loadout = { chassis:'heavy', primary:'plsm', secondary:'none', mod:'none', shld:'none', leg:'none', aug:'none' };
+    enemies.add(coreE);
+    if (coverObjects) scene.physics.add.collider(coreE, coverObjects);
+
+    _addBossLabel(scene, coreE, '[ THE CORE ]', 0x00ccff, 70);
+    _addBossHPBar(scene, coreE, 0x00ccff, 'THE CORE');
+    _showBossTitle(scene, 'THE CORE', 'DESTROY THE TURRETS FIRST', 0x00ccff);
+
+    // Spawn 4 turrets orbiting the core
+    const turrets = [];
+    const TURRET_COUNT = 4;
+    const orbitRadius = 180;
+    let orbitAngle = 0;
+
+    for (let i = 0; i < TURRET_COUNT; i++) {
+        const ta = (i / TURRET_COUNT) * Math.PI * 2;
+        const tx = 2000 + Math.cos(ta) * orbitRadius;
+        const ty = 1200 + Math.sin(ta) * orbitRadius;
+        const turretHP = Math.round(200 * (1 + Math.min(_round - 1, 40) * 0.07));
+
+        const t = scene.add.rectangle(tx, ty, 30, 30, 0x000000, 0);
+        scene.physics.add.existing(t);
+        t.body.setCircle(18);
+        t.visuals = scene.add.circle(tx, ty, 14, 0x003366).setStrokeStyle(2, 0x00ccff).setDepth(5);
+        // Turret barrel
+        t.torso = scene.add.rectangle(tx, ty - 14, 4, 16, 0x00ccff).setOrigin(0.5, 1).setDepth(6);
+        t.speed = 0;
+        t.comp = {
+            core: { hp: turretHP, max: turretHP },
+            lArm: { hp: 1, max: 1 }, rArm: { hp: 1, max: 1 },
+            legs: { hp: 1, max: 1 }
+        };
+        t.health = turretHP; t.maxHealth = turretHP;
+        t.behavior = 'turret'; t.isBoss = false; t._isCoreTurret = true;
+        t._passiveDR = 0; t._reloadMult = 1; t._augState = {};
+        t.reloadL = 0; t.reloadR = 0; t.lastFireTime = 0; t.lastSecTime = 0;
+        t.lastModTime = -99999; t.isModActive = false;
+        t.fxFootTimer = 0; t.fxFootSide = 1; t.fxShockTimer = 0;
+        t.fxLastX = tx; t.fxLastY = ty; t.fxLastMX = tx; t.fxLastMY = ty;
+        t._fireGrace = true;
+        setTimeout(() => { if (t?.active) t._fireGrace = false; }, 2500);
+        t._visionConeGfx = scene.add.graphics().setDepth(3);
+        t.loadout = { chassis:'medium', primary:'plsm', secondary:'none', mod:'none', shld:'none', leg:'none', aug:'none' };
+        enemies.add(t);
+        turrets.push(t);
+        t._orbitIndex = i;
+    }
+
+    // Core update loop: rotate turrets, check turret status
+    const coreTick = scene.time.addEvent({ delay: 50, loop: true, callback: () => {
+        if (!coreE || !coreE.active) { coreTick.remove(); return; }
+        _updateBossHPBar(coreE);
+        if (coreE.bossLabel?.active) coreE.bossLabel.setPosition(coreE.x, coreE.y - 70);
+        if (coreE.visuals?.active) coreE.visuals.setPosition(coreE.x, coreE.y);
+        if (coreE.torso?.active) coreE.torso.setPosition(coreE.x, coreE.y);
+
+        // Rotate turrets
+        orbitAngle += 0.008;
+        let aliveTurrets = 0;
+        turrets.forEach((t, i) => {
+            if (!t.active) return;
+            aliveTurrets++;
+            const a = orbitAngle + (i / TURRET_COUNT) * Math.PI * 2;
+            const nx = coreE.x + Math.cos(a) * orbitRadius;
+            const ny = coreE.y + Math.sin(a) * orbitRadius;
+            t.x = nx; t.y = ny;
+            if (t.body) t.body.reset(nx - 15, ny - 15);
+            if (t.visuals?.active) t.visuals.setPosition(nx, ny);
+            if (t.torso?.active) {
+                // Point barrel at player
+                if (player?.active) {
+                    const aim = Math.atan2(player.y - ny, player.x - nx);
+                    t.torso.setPosition(nx, ny).setRotation(aim + Math.PI/2);
+                }
+            }
+        });
+
+        // When all turrets dead, core loses DR and enters vulnerable phase
+        if (aliveTurrets === 0 && coreE._passiveDR > 0) {
+            coreE._passiveDR = 0;
+            const warn = scene.add.text(window.innerWidth/2, window.innerHeight*0.28,
+                'CORE EXPOSED — SHIELDS DOWN', { font:'bold 20px monospace', fill:'#00ffff', stroke:'#000', strokeThickness:5 })
+                .setScrollFactor(0).setDepth(9001).setOrigin(0.5);
+            scene.tweens.add({ targets: warn, alpha:0, duration:2500, onComplete:()=>warn.destroy() });
+            _tone(600, 'sine', 0.2, 0.1, 300);
+            // Core starts firing faster in desperation
+            coreE.loadout.primary = 'chain';
+        }
+
+        // Core laser beam at player every 3s
+        if (coreE._fireGrace) return;
+        coreE._coreBeamTick = (coreE._coreBeamTick || 0) + 50;
+        if (coreE._coreBeamTick >= 3000 && player?.active) {
+            coreE._coreBeamTick = 0;
+            const angle = Math.atan2(player.y - coreE.y, player.x - coreE.x);
+            const beamLen = 600;
+            const bx = coreE.x + Math.cos(angle) * beamLen;
+            const by = coreE.y + Math.sin(angle) * beamLen;
+            const beam = scene.add.line(0, 0, coreE.x, coreE.y, bx, by, 0x00ccff, 0.7)
+                .setLineWidth(3).setDepth(14);
+            scene.tweens.add({ targets: beam, alpha: 0, duration: 400, onComplete: () => beam.destroy() });
+            // Damage along beam
+            if (player?.active) {
+                const dist = Phaser.Math.Distance.Between(coreE.x, coreE.y, player.x, player.y);
+                // Check if player is roughly in beam path
+                const pAngle = Math.atan2(player.y - coreE.y, player.x - coreE.x);
+                if (Math.abs(Phaser.Math.Angle.Wrap(pAngle - angle)) < 0.15 && dist < beamLen) {
+                    const beamDmg = Math.round(20 * (1 + Math.max(0, _round - 40) * 0.04));
+                    processPlayerDamage(beamDmg, null);
+                }
+            }
+            _tone(800, 'sine', 0.15, 0.08, 400);
+        }
+    }});
+
+    // Track total kills needed (core + turrets)
+    _roundTotal = 1 + TURRET_COUNT; // Kill turrets + core
+
+    coreE._onDestroy = function() {
+        coreTick.remove();
+        turrets.forEach(t => {
+            try { t.visuals?.destroy(); t.torso?.destroy(); t._visionConeGfx?.destroy(); } catch(ex) {}
+        });
+        if (coreE.bossLabel) coreE.bossLabel.destroy();
+        _hideBossHPBar();
+    };
+}
+
+// Updated boss cycle: 8 bosses across rounds
 function spawnBoss(scene, roundNum) {
-    const bossCycle = (Math.floor((roundNum - 1) / 5) - 1) % 4;
+    const bossCycle = (Math.floor((roundNum - 1) / 5) - 1) % 8;
     if (bossCycle === 0) spawnWarden(scene);
     else if (bossCycle === 1) spawnTwinRazors(scene);
     else if (bossCycle === 2) spawnArchitect(scene);
-    else spawnJuggernaut(scene);
+    else if (bossCycle === 3) spawnJuggernaut(scene);
+    else if (bossCycle === 4) spawnSwarm(scene);
+    else if (bossCycle === 5) spawnMirror(scene);
+    else if (bossCycle === 6) spawnTitan(scene);
+    else spawnCore(scene);
 }
 
 
@@ -7477,6 +8000,10 @@ const BOSS_COLORS = {
     razor:     { body: 0x1a0000, head: 0xff0022, eye: 0xff8800 },
     architect: { body: 0x001a1a, head: 0x00cccc, eye: 0xffffff },
     juggernaut:{ body: 0x0f0f0f, head: 0x441100, eye: 0xff2200 },
+    swarm:     { body: 0x0a1a00, head: 0x66cc00, eye: 0x88ff00 },
+    mirror:    { body: 0x111122, head: 0x4488ff, eye: 0x00ffff },
+    titan:     { body: 0x1a1000, head: 0xff8800, eye: 0xffcc00 },
+    core:      { body: 0x001133, head: 0x00ccff, eye: 0x00ffff },
 };
 
 // Primary weapon keys available to enemies (excludes none)
@@ -8258,7 +8785,8 @@ function fire(scene, side) {
     if (_perkState._capacitorReady) _perkState._capacitorReady = false;
     const _gearDmgFlat = (_gearState?.dmgFlat || 0);
     const _gearDmgPct  = 1 + ((_gearState?.dmgPct || 0) / 100);
-    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * (_perkState.dmgMult || 1) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus);
+    const _colossusMult = (typeof getColossusDmgMult === 'function') ? getColossusDmgMult() : 1.0;
+    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * (_perkState.dmgMult || 1) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult);
     const _wEff = Object.assign({}, weapon, { dmg: _effectiveDmg });
     // Phantom: mark all bullets from this shot as piercing
     if (_phantomMult > 1) _wEff._phantomPierce = true;
@@ -8686,6 +9214,15 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     // Impact Armor: +15% DR for 3s after heavy hit
     if (typeof getImpactArmorDR === 'function') { const iadr = getImpactArmorDR(); if (iadr > 0) amt = Math.round(amt * (1 - iadr)); }
     if (typeof checkImpactArmor === 'function') checkImpactArmor(amt);
+    // Adaptive Armor: consecutive hits from same source deal less
+    if (typeof getAdaptiveArmorDR === 'function') {
+        const aaDR = getAdaptiveArmorDR(bulletAngle != null ? Math.round(bulletAngle * 10) : null);
+        if (aaDR > 0) amt = Math.round(amt * (1 - aaDR));
+    }
+    // Colossus Stand: +10% DR while stationary
+    if (typeof getColossusDR === 'function') { const cdr = getColossusDR(); if (cdr > 0) amt = Math.round(amt * (1 - cdr)); }
+    // Matrix Barrier: invulnerability bubble
+    if (typeof isMatrixBarrierActive === 'function' && isMatrixBarrierActive()) return;
     // Gear total DR
     const _totalDR = (_perkState.fortress || 0) + ((_gearState?.dr || 0) / 100);
     if (_totalDR > 0) amt = Math.round(amt * (1 - Math.min(0.75, _totalDR)));
@@ -8888,6 +9425,13 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
                 if (_sc) createExplosion(_sc, player.x, player.y, 0, 0); // visual only
             }
 
+            // Matrix Shield: invulnerability bubble on shield break
+            if (typeof triggerMatrixBarrier === 'function') {
+                if (triggerMatrixBarrier(_sc, _sc?.time?.now || Date.now())) {
+                    amt = 0; // remaining damage blocked by bubble
+                }
+            }
+
             // Retribution: AoE on break scaled to charge
             if (_ss.retributionBreak && player._shieldRetribChg > 0 && enemies) {
                 const _rdmg = Math.min(Math.round(player._shieldRetribChg * 0.6), 120);
@@ -8945,6 +9489,26 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
 function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce = false) {
     if (!e.active || e.health <= 0) return;
     e._justHit = true; // alert AI — player may be behind vision cone
+    // Swarm shared HP pool — damage goes to swarm state, not individual unit
+    if (e._isSwarmUnit && e._swarmState) {
+        const sw = e._swarmState;
+        sw.hp -= amt;
+        if (sw.hp <= 0) {
+            sw.hp = 0;
+            if (sw._onDefeat) sw._onDefeat();
+            window._activeSwarm = null;
+            // Count as boss kill
+            _roundKills = _roundTotal;
+            _totalKills++;
+            updateRoundHUD();
+            // Drop boss loot
+            const scene = game.scene.scenes[0];
+            if (typeof spawnEquipmentLoot === 'function') {
+                spawnEquipmentLoot(scene, e.x, e.y, { isBoss: true, bossType: 'swarm' });
+            }
+        }
+        return;
+    }
     // Active barrier mod (full block)
     if (e.isShielded) {
         if (_perkState.armorPierce > 0) {
@@ -9249,8 +9813,9 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
         // Cleanup split minion labels
         if (e._splitLabel?.active) e._splitLabel.destroy();
+        const _deadRef = { x: e.x, y: e.y };
         e.destroy();
-        onEnemyKilled();
+        onEnemyKilled(_deadRef);
     }
 }
 
