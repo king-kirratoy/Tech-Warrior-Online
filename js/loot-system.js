@@ -1614,17 +1614,11 @@ function resetInventory() {
     if (typeof _updateInvCount === 'function') _updateInvCount();
 }
 
-// ── SAVE/LOAD (localStorage) ───────────────────────────────────
-let _saveDebounceTimer = null;
+// ── SAVE/LOAD ──────────────────────────────────────────────────
+// Gear no longer persists across runs — each run starts fresh.
+// saveInventory is kept as a no-op so existing call sites don't break.
 function saveInventory() {
-    if (_saveDebounceTimer) clearTimeout(_saveDebounceTimer);
-    _saveDebounceTimer = setTimeout(() => {
-        try {
-            localStorage.setItem('tw_inventory', JSON.stringify(_inventory));
-            localStorage.setItem('tw_equipped', JSON.stringify(_equipped));
-            localStorage.setItem('tw_scrap', String(_scrap));
-        } catch(e) {}
-    }, 300);
+    // Intentionally empty — gear resets every run
 }
 
 function loadInventory() {
