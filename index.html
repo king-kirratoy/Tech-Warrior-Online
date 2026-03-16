@@ -5230,7 +5230,27 @@ function onEnemyKilled(deadEnemy) {
         if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
         // Destroy remaining enemies if objective ended the round early
         if (_objEnd && _roundKills < _roundTotal) {
-            enemies?.getChildren().slice().forEach(e => { try { if (e.active) e.destroy(); } catch(ex){} });
+            enemies?.getChildren().slice().forEach(e => {
+                try {
+                    if (!e.active) return;
+                    // Clean up elite/special enemy visuals (must happen before destroy)
+                    if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) {
+                        handleEliteDeath(scene, e);
+                    }
+                    // Clean up standard visual components
+                    if (e.visuals?.active)      e.visuals.destroy();
+                    if (e.torso?.active)         e.torso.destroy();
+                    if (e.cmdLabel?.active)       e.cmdLabel.destroy();
+                    if (e.medicLabel?.active)     e.medicLabel.destroy();
+                    if (e.medicCross?.active)     e.medicCross.destroy();
+                    if (e._healTimer)            e._healTimer.remove();
+                    if (e.shieldRing?.active)     e.shieldRing.destroy();
+                    if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
+                    if (e._splitLabel?.active)    e._splitLabel.destroy();
+                    if (e._onDestroy) e._onDestroy();
+                    e.destroy();
+                } catch(ex){}
+            });
             _roundKills = _roundTotal;
         }
         // Determine banner sub-text from objective
@@ -6488,6 +6508,9 @@ function activateEnemyMod(scene, enemy, mod, time) {
 // ================================================================
 // COVER / BATTLEFIELD OBJECTS
 // ================================================================
+// Track building graphics objects so they can be cleaned up between rounds
+let _buildingGraphics = [];
+
 const COVER_DEFS = [
     // { type, w, h, hp (0=indestructible), color, stroke }
     { type: 'rock',     w: 110, h:  90, hp: 0,   color: 0x445544, stroke: 0x88aa88 },
@@ -6592,6 +6615,9 @@ function placeBuilding(scene, x, y, def) {
         g.fillRect(x - 10,       y - h/2 + 5,  20,  8);
     }
 
+    // Track building graphics for cleanup between rounds
+    _buildingGraphics.push(g);
+
     // ── Physics body (static rectangle matching footprint) ───────
     // Create invisible static body for collision — use origin(0,0) with top-left coords
     const body = scene.add.rectangle(x - w/2, y - h/2, w, h, 0x000000, 0)
@@ -6611,6 +6637,9 @@ function placeBuilding(scene, x, y, def) {
 
 function generateCover(scene, arenaKey) {
     if (!coverObjects) return;
+    // Destroy orphaned building graphics from previous round
+    _buildingGraphics.forEach(g => { try { if (g?.active) g.destroy(); } catch(e){} });
+    _buildingGraphics = [];
     coverObjects.clear(true, true);
 
     // If a custom arena generator exists, use it instead of default city layout
@@ -11351,7 +11380,7 @@ function _showItemDetail(source, key) {
     html += `<div style="display:flex;gap:8px;">`;
     if (source === 'backpack') {
         const slotKey = _getSlotForItem(item);
-        if (slotKey) {
+        if (slotKey || item.baseType === 'weapon') {
             html += `<button onclick="_equipItem(${key})" style="padding:6px 14px;background:rgba(0,255,100,0.12);border:1px solid rgba(0,255,100,0.4);border-radius:4px;color:#00ff66;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;">EQUIP</button>`;
         }
         html += `<button onclick="_scrapItem(${key})" style="padding:6px 14px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.4);border-radius:4px;color:#ff5050;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;">SCRAP (+${rd.scrapValue})</button>`;
