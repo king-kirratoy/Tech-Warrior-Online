@@ -216,7 +216,7 @@ button.active {
 .stats-panel-title { font-size:12px; letter-spacing:4px; color:rgba(0,255,255,0.55); text-transform:uppercase; margin-bottom:14px; border-bottom:1px solid rgba(0,255,255,0.12); padding-bottom:8px; }
 .stats-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
 .stats-label { font-size:13px; letter-spacing:1px; color:rgba(200,210,217,0.55); }
-.stats-value { font-size:16px; letter-spacing:2px; color:#00ffff; text-shadow:0 0 8px rgba(0,255,255,0.4); }
+.stats-value { font-size:14px; letter-spacing:1.5px; color:#00ffff; text-shadow:0 0 8px rgba(0,255,255,0.4); }
 .stats-value.green  { color:#00ff88; text-shadow:0 0 8px rgba(0,255,136,0.4); }
 .stats-value.orange { color:#ff8844; text-shadow:0 0 8px rgba(255,136,68,0.4); }
 .stats-value.yellow { color:#ffdd00; text-shadow:0 0 8px rgba(255,221,0,0.4); }
@@ -226,6 +226,27 @@ button.active {
 .stats-hp-track { flex:1; height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; }
 .stats-hp-fill  { height:100%; border-radius:3px; transition:width 0.3s; }
 .stats-perk-chip { padding:5px 10px; border-radius:6px; font-size:12px; letter-spacing:1px; border:1px solid rgba(0,255,255,0.3); background:rgba(0,255,255,0.07); color:#00ffff; }
+/* Stat bonus hover tooltip */
+.stat-has-bonus { position:relative; cursor:default; border-bottom:1px dotted rgba(68,255,136,0.4); }
+.stat-has-bonus::after {
+    content: attr(data-bonus);
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0;
+    background: rgba(5,10,18,0.97);
+    border: 1px solid rgba(68,255,136,0.4);
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #44ff88;
+    white-space: nowrap;
+    z-index: 20000;
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(0,0,0,0.6);
+}
+.stat-has-bonus:hover::after { display: block; }
 
 /* --- Color Swatch --- */
 .color-preview {
@@ -1129,18 +1150,9 @@ button.active {
         </div>
     </div>
 </div>
-<!-- IN-GAME BUTTONS -->
+<!-- IN-GAME PAUSE BUTTON -->
 <div id="top-left-btns" style="display:none;position:fixed;top:20px;left:24px;z-index:9999;gap:10px;align-items:center;">
-    <div id="main-menu-btn-wrap">
-        <button onclick="goToMainMenu()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">MAIN MENU</button>
-    </div>
-    <div id="stats-btn-wrap">
-        <button id="stats-btn" onclick="toggleStats()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">STATS</button>
-    </div>
-    <div id="inv-btn-wrap">
-        <button id="inv-btn" onclick="toggleInventory()" style="padding:10px 20px;min-width:148px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #ffd700;border-radius:6px;color:#ffd700;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(255,215,0,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(255,215,0,0.10)';this.style.boxShadow='0 0 20px rgba(255,215,0,0.30)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(255,215,0,0.15)';this.style.letterSpacing='2px';">LOOT <span id="inv-count" style="opacity:0.6;">0/30</span></button>
-    </div>
-
+    <button id="pause-btn" onclick="togglePause()" style="padding:10px 20px;min-width:100px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">PAUSE</button>
 </div>
 <!-- ============================================================
      GAME SCRIPT
@@ -1466,6 +1478,10 @@ let _damageTaken    = 0;   // total damage taken by player this run
 let _perksEarned    = 0;   // perks picked this run
 let _roundActive    = false;
 let _roundClearing  = false; // freeze movement during round-clear banner + perk menu
+let _extractionActive = false;  // true after all enemies killed, waiting for player to extract
+let _extractionPoint  = null;   // { x, y } world coords of extraction zone
+let _extractionVisuals = null;  // scene objects for the extraction zone
+let _extractionPromptShown = false; // whether "PRESS E" prompt is visible
 
 // Chassis-specific movement effect state
 let _footstepTimer  = 0;
@@ -2888,7 +2904,7 @@ function create() {
     this._bfGrid = _bfGrid;
 
     // Input
-    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
+    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,E');
 
     // Prevent right-click context menu on the game canvas so RMB can fire R arm
     const _canvas = this.sys.canvas;
@@ -3068,6 +3084,36 @@ function update(time) {
     drawMinimap();
     checkLootPickups(this);
     checkEquipmentPickups(this);                                                   // → js/loot-system.js
+    if (_extractionActive) _updateExtraction(this);                                // extraction point check
+    // Check for objective-based round end between kills (e.g., survival timer expires)
+    // Skip on boss rounds — boss spawn has an 800ms delay and shouldn't be pre-empted
+    const _isBossRound = _round > 0 && _round % 5 === 0;
+    if (!_extractionActive && _roundActive && !_isBossRound && typeof shouldEndRound === 'function' && shouldEndRound()) {
+        const _scene = this;
+        _roundActive = false;
+        if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+        // Destroy remaining enemies with full visual cleanup
+        enemies?.getChildren().slice().forEach(e => {
+            try {
+                if (!e.active) return;
+                if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) handleEliteDeath(_scene, e);
+                if (e.visuals?.active) e.visuals.destroy();
+                if (e.torso?.active) e.torso.destroy();
+                if (e.cmdLabel?.active) e.cmdLabel.destroy();
+                if (e.medicLabel?.active) e.medicLabel.destroy();
+                if (e.medicCross?.active) e.medicCross.destroy();
+                if (e._healTimer) e._healTimer.remove();
+                if (e.shieldRing?.active) e.shieldRing.destroy();
+                if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
+                if (e._splitLabel?.active) e._splitLabel.destroy();
+                if (e._onDestroy) e._onDestroy();
+                e.destroy();
+            } catch(ex){}
+        });
+        _roundKills = _roundTotal;
+        _spawnExtractionPoint(_scene);
+        showRoundBanner('OBJECTIVE COMPLETE', 'REACH EXTRACTION POINT', 2500, null);
+    }
     if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
     if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
     if (typeof updateColossusStand === 'function') updateColossusStand(time);         // → js/loot-system.js (Colossus Frame unique)
@@ -4391,7 +4437,7 @@ function updateRoundHUD() {
     const rr = document.getElementById('round-remaining');
     const rk = document.getElementById('round-kills');
     if (rn) rn.innerText = _round;
-    if (rr) rr.innerText = Math.max(0, _roundTotal - _roundKills);
+    if (rr) rr.innerText = _extractionActive ? 'EXTRACT' : Math.max(0, _roundTotal - _roundKills);
     if (rk) rk.innerText = _totalKills;
 }
 
@@ -4614,6 +4660,8 @@ function _showArenaLabel(scene, arenaLabel, objLabel) {
 }
 
 function _clearMapForRound(scene) {
+    // Clean up extraction point visuals from previous round
+    _cleanupExtraction(scene);
     // Wipe all in-flight bullets
     if (bullets)      bullets.getChildren().slice().forEach(b => { try { if (b.active) b.destroy(); } catch(e){} });
     // Clean up decoys and phantom decoys between rounds
@@ -5221,33 +5269,36 @@ function onEnemyKilled(deadEnemy) {
 
     // Phase 6: check objective-based round end (survival complete, assassination done, etc.)
     const _objEnd = typeof shouldEndRound === 'function' && shouldEndRound();
-    if (_roundKills >= _roundTotal || _objEnd) {
+    if ((_roundKills >= _roundTotal || _objEnd) && !_extractionActive) {
         _roundActive = false;
-        _roundClearing = true;
-        // Stop player momentum so camera doesn't drift
-        if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
-        // Destroy any in-flight enemy bullets so they don't hit the player during perk screen
+        // Destroy any in-flight enemy bullets
         if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
         // Destroy remaining enemies if objective ended the round early
         if (_objEnd && _roundKills < _roundTotal) {
-            enemies?.getChildren().slice().forEach(e => { try { if (e.active) e.destroy(); } catch(ex){} });
+            enemies?.getChildren().slice().forEach(e => {
+                try {
+                    if (!e.active) return;
+                    if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) {
+                        handleEliteDeath(scene, e);
+                    }
+                    if (e.visuals?.active)      e.visuals.destroy();
+                    if (e.torso?.active)         e.torso.destroy();
+                    if (e.cmdLabel?.active)       e.cmdLabel.destroy();
+                    if (e.medicLabel?.active)     e.medicLabel.destroy();
+                    if (e.medicCross?.active)     e.medicCross.destroy();
+                    if (e._healTimer)            e._healTimer.remove();
+                    if (e.shieldRing?.active)     e.shieldRing.destroy();
+                    if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
+                    if (e._splitLabel?.active)    e._splitLabel.destroy();
+                    if (e._onDestroy) e._onDestroy();
+                    e.destroy();
+                } catch(ex){}
+            });
             _roundKills = _roundTotal;
         }
-        // Determine banner sub-text from objective
-        const _objFailed = typeof _arenaState !== 'undefined' && _arenaState.objectiveFailed;
-        const _bannerSub = _objFailed ? '✖ OBJECTIVE FAILED' :
-            (typeof _arenaState !== 'undefined' && _arenaState.currentObjective !== 'elimination' && _arenaState.objectiveComplete ? '★ OBJECTIVE COMPLETE' : '');
-        sndRoundClear();
-        _healPlayerFull();
-        // Cleanup objective state
-        if (typeof cleanupObjective === 'function') cleanupObjective(game.scene.scenes[0]);
-        const nextRound = _round + 1;
-        showRoundBanner(
-            'ROUND ' + _round + ' CLEARED',
-            _bannerSub,
-            2200,
-            () => showPerkMenu(nextRound)
-        );
+        // Spawn extraction point — player must go there to end the round
+        _spawnExtractionPoint(scene);
+        showRoundBanner('ALL HOSTILES ELIMINATED', 'REACH EXTRACTION POINT', 2500, null);
     }
 }
 
@@ -5300,6 +5351,60 @@ function drawMinimap() {
         });
     }
 
+    // Loot pickups (repair/ammo/charge orbs)
+    if (lootPickups) {
+        lootPickups.forEach(p => {
+            if (!p.orb?.active) return;
+            const lx = p.x * scale;
+            const ly = p.y * scale;
+            const lootDef = LOOT_TYPES[p.type];
+            ctx.beginPath();
+            ctx.arc(lx, ly, 2, 0, Math.PI * 2);
+            ctx.fillStyle = p.type === 'repair' ? '#00ff44' : p.type === 'ammo' ? '#ffdd00' : '#00ffff';
+            ctx.fill();
+        });
+    }
+
+    // Equipment drops (gear items on ground)
+    if (typeof _equipmentDrops !== 'undefined') {
+        _equipmentDrops.forEach(d => {
+            if (!d.active) return;
+            const dx = d.x * scale;
+            const dy = d.y * scale;
+            const rDef = typeof RARITY_DEFS !== 'undefined' ? RARITY_DEFS[d.item?.rarity] : null;
+            ctx.beginPath();
+            ctx.arc(dx, dy, 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = rDef ? rDef.colorStr : '#ffd700';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 0.6;
+            ctx.fill();
+            ctx.stroke();
+        });
+    }
+
+    // Extraction point
+    if (_extractionActive && _extractionPoint) {
+        const epx = _extractionPoint.x * scale;
+        const epy = _extractionPoint.y * scale;
+        const epR = 5;
+        // Pulsing glow
+        const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.004);
+        ctx.beginPath();
+        ctx.arc(epx, epy, epR + 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0,255,100,${0.1 + pulse * 0.15})`;
+        ctx.fill();
+        // Core diamond
+        ctx.save();
+        ctx.translate(epx, epy);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = `rgba(0,255,100,${0.6 + pulse * 0.4})`;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.fillRect(-epR/2, -epR/2, epR, epR);
+        ctx.strokeRect(-epR/2, -epR/2, epR, epR);
+        ctx.restore();
+    }
+
     // Player
     if (player?.active) {
         const px = player.x * scale;
@@ -5323,6 +5428,124 @@ function drawMinimap() {
     }
 }
 
+
+// ================================================================
+// EXTRACTION POINT SYSTEM
+// ================================================================
+
+function _spawnExtractionPoint(scene) {
+    // Pick a random spot away from player, within map bounds
+    let ex, ey, attempts = 0;
+    do {
+        ex = Phaser.Math.Between(300, 3700);
+        ey = Phaser.Math.Between(300, 3700);
+        attempts++;
+    } while (
+        attempts < 40 && player?.active &&
+        Phaser.Math.Distance.Between(ex, ey, player.x, player.y) < 600
+    );
+    _extractionPoint = { x: ex, y: ey };
+    _extractionActive = true;
+    _extractionPromptShown = false;
+    updateRoundHUD();
+
+    const zoneR = 60; // extraction zone radius
+
+    // Visual: pulsing green circle on the ground
+    const glow = scene.add.circle(ex, ey, zoneR, 0x00ff66, 0.08).setDepth(2);
+    const ring = scene.add.circle(ex, ey, zoneR, 0x000000, 0).setDepth(2);
+    ring.setStrokeStyle(3, 0x00ff66, 0.7);
+    const innerRing = scene.add.circle(ex, ey, zoneR * 0.5, 0x000000, 0).setDepth(2);
+    innerRing.setStrokeStyle(2, 0x00ff66, 0.35);
+
+    // Diamond icon at center
+    const diamond = scene.add.polygon(ex, ey,
+        [0, -12, 10, 0, 0, 12, -10, 0], 0x00ff66, 0.6).setDepth(3);
+    diamond.setStrokeStyle(2, 0xffffff, 0.8);
+
+    // Label
+    const label = scene.add.text(ex, ey - zoneR - 14, 'EXTRACTION POINT', {
+        font: 'bold 11px monospace', fill: '#00ff66',
+        stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(10);
+
+    // Prompt (hidden initially, shown when player is close)
+    const prompt = scene.add.text(ex, ey + zoneR + 14, '[ PRESS  E  TO EXTRACT ]', {
+        font: 'bold 10px monospace', fill: '#ffffff',
+        stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(10).setAlpha(0);
+
+    // Pulse animations
+    scene.tweens.add({ targets: glow, alpha: 0.18, duration: 1000, yoyo: true, repeat: -1 });
+    scene.tweens.add({ targets: ring, scaleX: 1.08, scaleY: 1.08, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    scene.tweens.add({ targets: diamond, angle: 360, duration: 4000, repeat: -1 });
+    scene.tweens.add({ targets: label, alpha: 0.5, duration: 800, yoyo: true, repeat: -1 });
+
+    _extractionVisuals = { glow, ring, innerRing, diamond, label, prompt, zoneR };
+}
+
+function _updateExtraction(scene) {
+    if (!_extractionActive || !_extractionPoint || !player?.active) return;
+    const dist = Phaser.Math.Distance.Between(player.x, player.y, _extractionPoint.x, _extractionPoint.y);
+    const inZone = dist < (_extractionVisuals?.zoneR || 60);
+
+    // Show/hide prompt
+    if (_extractionVisuals?.prompt) {
+        if (inZone && !_extractionPromptShown) {
+            _extractionPromptShown = true;
+            _extractionVisuals.prompt.setAlpha(1);
+            scene.tweens.add({ targets: _extractionVisuals.prompt, alpha: 0.5, duration: 600, yoyo: true, repeat: -1 });
+        } else if (!inZone && _extractionPromptShown) {
+            _extractionPromptShown = false;
+            scene.tweens.killTweensOf(_extractionVisuals.prompt);
+            _extractionVisuals.prompt.setAlpha(0);
+        }
+    }
+
+    // Check for E key press while in zone
+    if (inZone && keys.E.isDown) {
+        _triggerExtraction(scene);
+    }
+}
+
+function _triggerExtraction(scene) {
+    _extractionActive = false;
+    _cleanupExtraction(scene);
+
+    // Now run the normal round-end flow
+    _roundActive = false;
+    _roundClearing = true;
+    if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
+    if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+
+    const _objFailed = typeof _arenaState !== 'undefined' && _arenaState.objectiveFailed;
+    const _bannerSub = _objFailed ? '✖ OBJECTIVE FAILED' :
+        (typeof _arenaState !== 'undefined' && _arenaState.currentObjective !== 'elimination' && _arenaState.objectiveComplete ? '★ OBJECTIVE COMPLETE' : '');
+    sndRoundClear();
+    _healPlayerFull();
+    if (typeof cleanupObjective === 'function') cleanupObjective(scene);
+    const nextRound = _round + 1;
+    showRoundBanner(
+        'ROUND ' + _round + ' CLEARED',
+        _bannerSub,
+        2200,
+        () => showPerkMenu(nextRound)
+    );
+}
+
+function _cleanupExtraction(scene) {
+    if (_extractionVisuals) {
+        const objs = [_extractionVisuals.glow, _extractionVisuals.ring, _extractionVisuals.innerRing,
+                      _extractionVisuals.diamond, _extractionVisuals.label, _extractionVisuals.prompt];
+        objs.forEach(o => {
+            try { if (o) { scene.tweens.killTweensOf(o); if (o.active !== false) o.destroy(); } } catch(e) {}
+        });
+        _extractionVisuals = null;
+    }
+    _extractionPoint = null;
+    _extractionActive = false;
+    _extractionPromptShown = false;
+}
 
 // ================================================================
 // DEPLOY
@@ -6488,6 +6711,9 @@ function activateEnemyMod(scene, enemy, mod, time) {
 // ================================================================
 // COVER / BATTLEFIELD OBJECTS
 // ================================================================
+// Track building graphics objects so they can be cleaned up between rounds
+let _buildingGraphics = [];
+
 const COVER_DEFS = [
     // { type, w, h, hp (0=indestructible), color, stroke }
     { type: 'rock',     w: 110, h:  90, hp: 0,   color: 0x445544, stroke: 0x88aa88 },
@@ -6592,6 +6818,9 @@ function placeBuilding(scene, x, y, def) {
         g.fillRect(x - 10,       y - h/2 + 5,  20,  8);
     }
 
+    // Track building graphics for cleanup between rounds
+    _buildingGraphics.push(g);
+
     // ── Physics body (static rectangle matching footprint) ───────
     // Create invisible static body for collision — use origin(0,0) with top-left coords
     const body = scene.add.rectangle(x - w/2, y - h/2, w, h, 0x000000, 0)
@@ -6611,6 +6840,9 @@ function placeBuilding(scene, x, y, def) {
 
 function generateCover(scene, arenaKey) {
     if (!coverObjects) return;
+    // Destroy orphaned building graphics from previous round
+    _buildingGraphics.forEach(g => { try { if (g?.active) g.destroy(); } catch(e){} });
+    _buildingGraphics = [];
     coverObjects.clear(true, true);
 
     // If a custom arena generator exists, use it instead of default city layout
@@ -9569,6 +9801,22 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             if (typeof spawnEquipmentLoot === 'function') {
                 spawnEquipmentLoot(scene, e.x, e.y, { isBoss: true, bossType: 'swarm' });
             }
+            // Spawn extraction point — onEnemyKilled is never called for swarm units
+            _roundActive = false;
+            if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+            // Destroy remaining swarm units with visual cleanup
+            enemies?.getChildren().slice().forEach(u => {
+                try {
+                    if (!u.active) return;
+                    if (u.visuals?.active) u.visuals.destroy();
+                    if (u.torso?.active) u.torso.destroy();
+                    if (u._visionConeGfx?.active) u._visionConeGfx.destroy();
+                    if (u._onDestroy) u._onDestroy();
+                    u.destroy();
+                } catch(ex) {}
+            });
+            _spawnExtractionPoint(scene);
+            showRoundBanner('SWARM ELIMINATED', 'REACH EXTRACTION POINT', 2500, null);
         }
         return;
     }
@@ -11084,13 +11332,14 @@ function showDeathScreen() {
     isDeployed = false;
     _roundActive   = false;
     _roundClearing = false;   // prevent update() from being permanently gated
+    _cleanupExtraction(game?.scene?.scenes[0]);
     // Close stats overlay if open
     _isStats = false;
     _isPaused = false;
     const _statsOv = document.getElementById('stats-overlay');
     if (_statsOv) _statsOv.style.display = 'none';
-    const _statsBtn = document.getElementById('stats-btn');
-    if (_statsBtn) _statsBtn.innerHTML = 'STATS';
+    const _pauseBtn2 = document.getElementById('pause-btn');
+    if (_pauseBtn2) _pauseBtn2.innerHTML = 'PAUSE';
     // Pause the Phaser scene so the update loop stops running against destroyed objects
     const _dScene = game?.scene?.scenes[0];
     if (_dScene) {
@@ -11210,6 +11459,7 @@ function respawnMech() {
     _pickedPerks = [];
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     _roundClearing = false;
+    _extractionActive = false; _extractionPoint = null; _extractionVisuals = null; _extractionPromptShown = false;
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     CHASSIS.medium.modCooldownMult = 0.85;
     const scene = game.scene.scenes[0];
@@ -11223,7 +11473,6 @@ function toggleStats() {
     const overlay = document.getElementById('stats-overlay');
     if (!overlay) return;
     _isStats = !_isStats;
-    const btn = document.getElementById('stats-btn');
     if (_isStats) {
         populateStats();
         overlay.style.display = 'flex';
@@ -11231,14 +11480,14 @@ function toggleStats() {
         const scene = game?.scene?.scenes[0];
         if (scene) { try { scene.physics.pause(); scene.time.paused = true; scene.input.setDefaultCursor('default'); } catch(e){} }
         document.body.style.cursor = 'default';
-        if (btn) { btn.innerHTML = 'STATS ✓'; btn.blur(); }
     } else {
         overlay.style.display = 'none';
         _isPaused = false;
         const scene = game?.scene?.scenes[0];
         if (scene) { try { scene.physics.resume(); scene.time.paused = false; scene.input.setDefaultCursor('none'); } catch(e){} }
         document.body.style.cursor = 'none';
-        if (btn) { btn.innerHTML = 'STATS'; btn.blur(); }
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) pauseBtn.innerHTML = 'PAUSE';
     }
 }
 
@@ -11249,7 +11498,6 @@ function toggleInventory() {
     const overlay = document.getElementById('inventory-overlay');
     if (!overlay) return;
     _isInventory = !_isInventory;
-    const btn = document.getElementById('inv-btn');
     if (_isInventory) {
         populateInventory();
         overlay.style.display = 'flex';
@@ -11257,14 +11505,14 @@ function toggleInventory() {
         const scene = game?.scene?.scenes[0];
         if (scene && isDeployed) { try { scene.physics.pause(); scene.time.paused = true; scene.input.setDefaultCursor('default'); } catch(e){} }
         document.body.style.cursor = 'default';
-        if (btn) { btn.innerHTML = 'LOOT ✓'; btn.blur(); }
     } else {
         overlay.style.display = 'none';
         _isPaused = false;
         const scene = game?.scene?.scenes[0];
         if (scene && isDeployed) { try { scene.physics.resume(); scene.time.paused = false; scene.input.setDefaultCursor('none'); } catch(e){} }
         document.body.style.cursor = isDeployed ? 'none' : 'default';
-        if (btn) { btn.innerHTML = `LOOT <span id="inv-count" style="opacity:0.6;">${_inventory.length}/${INVENTORY_MAX}</span>`; btn.blur(); }
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) pauseBtn.innerHTML = 'PAUSE';
         // If inventory was opened from equip prompt, fire the callback to start next round
         if (window._equipPromptCallback) {
             const cb = window._equipPromptCallback;
@@ -11351,7 +11599,7 @@ function _showItemDetail(source, key) {
     html += `<div style="display:flex;gap:8px;">`;
     if (source === 'backpack') {
         const slotKey = _getSlotForItem(item);
-        if (slotKey) {
+        if (slotKey || item.baseType === 'weapon') {
             html += `<button onclick="_equipItem(${key})" style="padding:6px 14px;background:rgba(0,255,100,0.12);border:1px solid rgba(0,255,100,0.4);border-radius:4px;color:#00ff66;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;">EQUIP</button>`;
         }
         html += `<button onclick="_scrapItem(${key})" style="padding:6px 14px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.4);border-radius:4px;color:#ff5050;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;">SCRAP (+${rd.scrapValue})</button>`;
@@ -11545,27 +11793,24 @@ function _hpBarBoosted(label, hp, max, baseMax) {
     const pct = max > 0 ? Math.round(hp/max*100) : 0;
     const barColor = pct > 60 ? '#00ff88' : pct > 30 ? '#ffdd00' : '#ff4466';
     const bonus = Math.round(max - baseMax);
-    const bonusHtml = bonus > 0
-        ? `<span style="color:#44ff88;font-size:0.8em;margin-right:5px;">+${bonus}</span>`
-        : '';
+    const bonusData = bonus > 0 ? ` data-bonus="+${bonus} from perks/gear"` : '';
+    const bonusCls = bonus > 0 ? ' stat-has-bonus' : '';
     return `<div class="stats-hp-bar">
         <span class="stats-label" style="min-width:70px">${label}</span>
         <div class="stats-hp-track"><div class="stats-hp-fill" style="width:${pct}%;background:${barColor}"></div></div>
-        <span class="stats-value" style="font-size:13px;min-width:90px;text-align:right;color:${barColor}">${bonusHtml}${Math.round(hp)} / ${Math.round(max)}</span>
+        <span class="stats-value${bonusCls}" style="min-width:80px;text-align:right;color:${barColor}"${bonusData}>${Math.round(hp)} / ${Math.round(max)}</span>
     </div>`;
 }
 
 function _perkBonus(value, base) {
-    // Shows current value with perk bonus to the left: "+24 150"
     const diff = Math.round(value - base);
     if (diff <= 0) return String(Math.round(value));
-    return `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${diff}</span>${Math.round(value)}`;
+    return `<span class="stat-has-bonus" data-bonus="+${diff} from perks">${Math.round(value)}</span>`;
 }
 function _perkReduction(value, base) {
-    // For reload: lower is better — show reduction to the left: "−50 450"
     const diff = Math.round(base - value);
     if (diff <= 0) return String(Math.round(value));
-    return `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">−${diff}</span>${Math.round(value)}`;
+    return `<span class="stat-has-bonus" data-bonus="−${diff} from perks">${Math.round(value)}</span>`;
 }
 
 function populateStats() {
@@ -11576,16 +11821,16 @@ function populateStats() {
     const baseShield = chassisData?.max || 75;
     let chassisHtml = '';
     chassisHtml += _statRow('Chassis', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
-    // Shield: show base vs current max, with gear contribution in gold
+    // Shield: show base vs current max, tooltip for gear/perk breakdown
     const gearShieldHP = (_gearState?.shieldHP || 0);
     const shieldBonus = Math.round((player?.maxShield||0) - baseShield);
     const perkShieldBonus = shieldBonus - gearShieldHP;
-    const gearShieldTag = gearShieldHP > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${gearShieldHP}</span>` : '';
-    const perkShieldTag = perkShieldBonus > 0 ? `<span style="color:#cc88ff;font-size:0.85em;margin-right:6px;">+${perkShieldBonus}</span>` : '';
-    const shieldVal = shieldBonus > 0
-        ? `${gearShieldTag}${perkShieldTag}${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}`
-        : `${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}`;
-    chassisHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple">${shieldVal}</span></div>`;
+    let shieldTip = '';
+    if (gearShieldHP > 0) shieldTip += `+${gearShieldHP} gear`;
+    if (perkShieldBonus > 0) shieldTip += (shieldTip ? ', ' : '') + `+${perkShieldBonus} perks`;
+    const shieldBonusData = shieldTip ? ` data-bonus="${shieldTip}"` : '';
+    const shieldBonusCls = shieldTip ? ' stat-has-bonus' : '';
+    chassisHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple${shieldBonusCls}"${shieldBonusData}>${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}</span></div>`;
     chassisHtml += '<div style="margin-top:12px;margin-bottom:6px;font-size:12px;letter-spacing:2px;color:rgba(0,255,255,0.35);">HULL INTEGRITY</div>';
     if (player?.comp) {
         const baseHP = { core: chassisData?.coreHP||212, lArm: chassisData?.armHP||120, rArm: chassisData?.armHP||120, legs: chassisData?.legHP||152 };
@@ -11597,10 +11842,9 @@ function populateStats() {
         const totalMax = Object.values(player.comp).reduce((s,c)=>s+c.max,0);
         const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
         const totalBonusHp = Math.round(totalMax - totalBase);
-        const totalLabel = totalBonusHp > 0
-            ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${totalBonusHp}</span>${Math.round(totalHp)} / ${Math.round(totalMax)}`
-            : `${Math.round(totalHp)} / ${Math.round(totalMax)}`;
-        chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalLabel}</span></div></div>`;
+        const totalBonusData = totalBonusHp > 0 ? ` data-bonus="+${totalBonusHp} from perks/gear"` : '';
+        const totalBonusCls = totalBonusHp > 0 ? ' stat-has-bonus' : '';
+        chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
     }
     // ── Chassis traits & arm mode — rendered full-width below the grid ──
     const _chColor = ch==='light'?'#88ff88':ch==='medium'?'#ffcc44':'#ff8844';
@@ -11690,17 +11934,35 @@ function populateStats() {
             const effRld   = Math.round(baseRld * (_perkState.reloadMult||1) * (1 - _gReloadPct/100));
             const baseDps  = baseRld > 0 ? Math.round(baseDmg / baseRld * 1000) : 0;
             const effDps   = effRld  > 0 ? Math.round(effDmg  / effRld  * 1000) : 0;
-            const dmgSuffix = w.pellets ? ` × ${w.pellets} pellets` : '';
-            // Show perk bonus (green) + gear bonus (gold) separately
-            const _gearTag = (gearVal, perkVal) => { const d = Math.round(gearVal - perkVal); return d > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${d}</span>` : ''; };
-            const _gearTagNeg = (gearVal, perkVal) => { const d = Math.round(perkVal - gearVal); return d > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙−${d}</span>` : ''; };
-            wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value">${_gearTag(effDmg,perkDmg)}${_perkBonus(perkDmg, baseDmg)}${dmgSuffix}</span></div>`;
-            wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}">${_gearTagNeg(effRld,perkRld)}${_perkReduction(perkRld, baseRld)}</span></div>`;
-            wHtml += `<div class="stats-row"><span class="stats-label">DPS (est.)</span><span class="stats-value ${effDps>200?'green':effDps>80?'yellow':'orange'}">${_perkBonus(effDps, baseDps)}</span></div>`;
+            const dmgSuffix = w.pellets ? ` x ${w.pellets} pellets` : '';
+            // Build tooltip strings for gear+perk breakdowns
+            const _dmgGearDiff = Math.round(effDmg - perkDmg);
+            const _dmgPerkDiff = Math.round(perkDmg - baseDmg);
+            let dmgTip = '';
+            if (_dmgPerkDiff > 0) dmgTip += `+${_dmgPerkDiff} perks`;
+            if (_dmgGearDiff > 0) dmgTip += (dmgTip ? ', ' : '') + `+${_dmgGearDiff} gear`;
+            const dmgBonusData = dmgTip ? ` data-bonus="${dmgTip}"` : '';
+            const dmgBonusCls = dmgTip ? ' stat-has-bonus' : '';
+            const _rldGearDiff = Math.round(perkRld - effRld);
+            const _rldPerkDiff = Math.round(baseRld - perkRld);
+            let rldTip = '';
+            if (_rldPerkDiff > 0) rldTip += `-${_rldPerkDiff} perks`;
+            if (_rldGearDiff > 0) rldTip += (rldTip ? ', ' : '') + `-${_rldGearDiff} gear`;
+            const rldBonusData = rldTip ? ` data-bonus="${rldTip}"` : '';
+            const rldBonusCls = rldTip ? ' stat-has-bonus' : '';
+            wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value${dmgBonusCls}"${dmgBonusData}>${Math.round(effDmg)}${dmgSuffix}</span></div>`;
+            wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}${rldBonusCls}"${rldBonusData}>${Math.round(effRld)}</span></div>`;
+            const dpsTip = effDps > baseDps ? `+${effDps - baseDps} from perks/gear` : '';
+            const dpsBonusData = dpsTip ? ` data-bonus="${dpsTip}"` : '';
+            const dpsBonusCls = dpsTip ? ' stat-has-bonus' : '';
+            wHtml += `<div class="stats-row"><span class="stats-label">DPS (est.)</span><span class="stats-value ${effDps>200?'green':effDps>80?'yellow':'orange'}${dpsBonusCls}"${dpsBonusData}>${Math.round(effDps)}</span></div>`;
         }
         if (w.radius) {
             const effRad = Math.round(w.radius * (_perkState.blastMult||1));
-            wHtml += `<div class="stats-row"><span class="stats-label">Blast Radius</span><span class="stats-value">${_perkBonus(effRad, w.radius)}</span></div>`;
+            const radDiff = effRad - w.radius;
+            const radData = radDiff > 0 ? ` data-bonus="+${radDiff} from perks"` : '';
+            const radCls = radDiff > 0 ? ' stat-has-bonus' : '';
+            wHtml += `<div class="stats-row"><span class="stats-label">Blast Radius</span><span class="stats-value${radCls}"${radData}>${effRad}</span></div>`;
         }
         if (w.cooldown) wHtml += _statRow('Mod Cooldown', w.cooldown + 'ms');
         wHtml += '</div>';
@@ -11715,10 +11977,21 @@ function populateStats() {
     const gearSpdBonus = (_gearState?.speedPct || 0);
     const effSpd  = Math.round(perkSpd * (1 + gearSpdBonus/100));
     const legsOk  = player?.comp?.legs?.hp > 0;
-    const _gTag = (v) => v > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${v}</span>` : '';
-    const spdGearTag = gearSpdBonus > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${Math.round(effSpd - perkSpd)}</span>` : '';
-    const spdLabel = `<div class="stats-row"><span class="stats-label">Speed</span><span class="stats-value ${effSpd>baseSpd?'green':''}">${spdGearTag}${_perkBonus(perkSpd, baseSpd)}</span></div>`;
-    mobHtml += spdLabel;
+    // Helper: build tooltip string from perk + gear contributions
+    const _bonusTip = (perkVal, gearVal, perkLabel='perks', gearLabel='gear') => {
+        let tip = '';
+        if (perkVal > 0) tip += `+${perkVal} ${perkLabel}`;
+        if (gearVal > 0) tip += (tip ? ', ' : '') + `+${gearVal} ${gearLabel}`;
+        return tip;
+    };
+    const _bonusCls = (tip) => tip ? ' stat-has-bonus' : '';
+    const _bonusData = (tip) => tip ? ` data-bonus="${tip}"` : '';
+    let spdTip = '';
+    const spdPerkDiff = perkSpd - baseSpd;
+    const spdGearDiff = effSpd - perkSpd;
+    if (spdPerkDiff > 0) spdTip += `+${spdPerkDiff} perks`;
+    if (spdGearDiff > 0) spdTip += (spdTip ? ', ' : '') + `+${spdGearDiff} gear`;
+    mobHtml += `<div class="stats-row"><span class="stats-label">Speed</span><span class="stats-value ${effSpd>baseSpd?'green':''}${_bonusCls(spdTip)}"${_bonusData(spdTip)}>${effSpd}</span></div>`;
     mobHtml += _statRow('Legs Status', legsOk ? 'OPERATIONAL' : 'DESTROYED', legsOk ? 'green' : 'red');
     if (!legsOk) mobHtml += _statRow('Speed Penalty', '−50%', 'red');
     mobHtml += '<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:10px;padding-top:10px;"></div>';
@@ -11726,35 +11999,39 @@ function populateStats() {
     const perkRegenRate = baseRegenRate * (_perkState.shieldRegenMult||1);
     const gearRegenBonus = (_gearState?.shieldRegen || 0);
     const effRegenRate   = perkRegenRate * (1 + gearRegenBonus/100);
-    const regenGearTag = gearRegenBonus > 0 ? `<span style="color:#ffd700;font-size:0.85em;margin-right:4px;">⚙+${Math.round((effRegenRate - perkRegenRate)*10)/10}</span>` : '';
-    mobHtml += `<div class="stats-row"><span class="stats-label">Shield Regen</span><span class="stats-value purple">${regenGearTag}${_perkBonus(parseFloat(perkRegenRate.toFixed(1)), parseFloat(baseRegenRate.toFixed(1)))}/frame</span></div>`;
+    let regenTip = '';
+    const regenPerkDiff = Math.round((perkRegenRate - baseRegenRate)*10)/10;
+    const regenGearDiff = Math.round((effRegenRate - perkRegenRate)*10)/10;
+    if (regenPerkDiff > 0) regenTip += `+${regenPerkDiff} perks`;
+    if (regenGearDiff > 0) regenTip += (regenTip ? ', ' : '') + `+${regenGearDiff} gear`;
+    mobHtml += `<div class="stats-row"><span class="stats-label">Shield Regen</span><span class="stats-value purple${_bonusCls(regenTip)}"${_bonusData(regenTip)}>${parseFloat(effRegenRate.toFixed(1))}/frame</span></div>`;
     if (_perkState.noShieldRegen) mobHtml += _statRow('Regen Active', 'DISABLED', 'red');
-    if (_perkState.immovable) mobHtml += _statRow('Immovable', '3× regen while still', 'purple');
+    if (_perkState.immovable) mobHtml += _statRow('Immovable', '3x regen while still', 'purple');
     // Dodge: perk + gear
     const perkDodgePct = Math.round((_perkState.dodgeChance||0) * 100);
     const gearDodgePct = (_gearState?.dodgePct || 0);
     const totalDodge = perkDodgePct + gearDodgePct;
-    if (totalDodge > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dodge Chance</span><span class="stats-value green">${_gTag(gearDodgePct)}${perkDodgePct > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkDodgePct}%</span>` : ''}${totalDodge}%</span></div>`;
+    if (totalDodge > 0) { const _dodgeTip = _bonusTip(perkDodgePct, gearDodgePct); mobHtml += `<div class="stats-row"><span class="stats-label">Dodge Chance</span><span class="stats-value green${_bonusCls(_dodgeTip)}"${_bonusData(_dodgeTip)}>${totalDodge}%</span></div>`; }
     // DR: perk + gear
     const perkDR = Math.round(Math.min(75, (_perkState.fortress||0) * 100));
     const gearDR = (_gearState?.dr || 0);
     const totalDR = Math.min(75, perkDR + gearDR);
-    if (totalDR > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Dmg Reduction</span><span class="stats-value green">${_gTag(gearDR)}${perkDR > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkDR}%</span>` : ''}${totalDR}%</span></div>`;
+    if (totalDR > 0) { const _drTip = _bonusTip(perkDR, gearDR); mobHtml += `<div class="stats-row"><span class="stats-label">Dmg Reduction</span><span class="stats-value green${_bonusCls(_drTip)}"${_bonusData(_drTip)}>${totalDR}%</span></div>`; }
     // Auto-repair: perk + gear
     const perkRepair = _perkState.autoRepair || 0;
     const gearRepair = (_gearState?.autoRepair || 0);
     const totalRepair = perkRepair + gearRepair;
-    if (totalRepair > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Auto-Repair</span><span class="stats-value green">${_gTag(gearRepair)}${perkRepair > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkRepair}</span>` : ''}${totalRepair} HP/sec</span></div>`;
+    if (totalRepair > 0) { const _repairTip = _bonusTip(perkRepair, gearRepair); mobHtml += `<div class="stats-row"><span class="stats-label">Auto-Repair</span><span class="stats-value green${_bonusCls(_repairTip)}"${_bonusData(_repairTip)}>${totalRepair} HP/sec</span></div>`; }
     // Crit: perk + gear
     const perkCrit = Math.round((_perkState.critChance||0) * 100);
     const gearCrit = (_gearState?.critChance || 0);
     const totalCrit = perkCrit + gearCrit;
-    if (totalCrit > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Crit Chance</span><span class="stats-value green">${_gTag(gearCrit)}${perkCrit > 0 ? `<span style="color:#44ff88;font-size:0.85em;margin-right:6px;">+${perkCrit}%</span>` : ''}${totalCrit}%</span></div>`;
-    // Gear-only stats that don't come from perks
+    if (totalCrit > 0) { const _critTip = _bonusTip(perkCrit, gearCrit); mobHtml += `<div class="stats-row"><span class="stats-label">Crit Chance</span><span class="stats-value green${_bonusCls(_critTip)}"${_bonusData(_critTip)}>${totalCrit}%</span></div>`; }
+    // Gear-only stats
     const gearModCd = (_gearState?.modCdPct || 0);
-    if (gearModCd > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Mod Cooldown</span><span class="stats-value"><span style="color:#ffd700;font-size:0.85em;margin-right:6px;">⚙−${gearModCd}%</span>−${gearModCd}%</span></div>`;
+    if (gearModCd > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Mod Cooldown</span><span class="stats-value stat-has-bonus" data-bonus="−${gearModCd}% gear">−${gearModCd}%</span></div>`;
     const gearLoot = (_gearState?.lootMult || 0);
-    if (gearLoot > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Loot Quality</span><span class="stats-value"><span style="color:#ffd700;font-size:0.85em;margin-right:6px;">⚙+${gearLoot}%</span>+${gearLoot}%</span></div>`;
+    if (gearLoot > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Loot Quality</span><span class="stats-value stat-has-bonus" data-bonus="+${gearLoot}% gear">+${gearLoot}%</span></div>`;
     document.getElementById('stat-mobility-info').innerHTML = mobHtml;
 
     // ── RUN STATS ─────────────────────────────────────────────
@@ -11839,8 +12116,8 @@ function populateStats() {
                 active.forEach(k => {
                     const v = gs[k];
                     const prefix = ['reloadPct','modCdPct'].includes(k) ? '−' : '+';
-                    h += `<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px;">
-                        <span style="color:rgba(200,210,220,0.6);">⚙ ${_gsLabels[k] || k}</span>
+                    h += `<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:3px;font-size:13px;">
+                        <span style="color:rgba(200,210,220,0.6);">${_gsLabels[k] || k}</span>
                         <span style="color:#ffd700;letter-spacing:1px;">${prefix}${v}</span>
                     </div>`;
                 });
@@ -11870,6 +12147,9 @@ let _isPaused = false;
 function togglePause() {
     const scene = game.scene.scenes[0];
     if (!scene || !isDeployed) return;
+    // If stats or inventory is open, close them first
+    if (_isStats) { toggleStats(); return; }
+    if (_isInventory) { toggleInventory(); return; }
     _isPaused = !_isPaused;
     const btn = document.getElementById('pause-btn');
     const po  = document.getElementById('pause-overlay');
@@ -11889,6 +12169,14 @@ function togglePause() {
         if (po)  po.style.display = 'none';
     }
 }
+
+// ESC key handler for pause menu
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && isDeployed) {
+        e.preventDefault();
+        togglePause();
+    }
+});
 
 function goToMainMenu() {
     if (_isPaused) togglePause();
@@ -11971,6 +12259,7 @@ function returnToHangar() {
     _roundTotal = 0;
     _roundActive  = false;
     _roundClearing = false;
+    _extractionActive = false; _extractionPoint = null; _extractionVisuals = null; _extractionPromptShown = false;
     _pickedPerks  = [];
     _perksEarned  = 0;
     _shotsFired   = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0;
@@ -12319,8 +12608,15 @@ window.onload = () => {
   </div>
 </div>
 
-<div id="pause-overlay" style="display:none;position:fixed;inset:0;z-index:9998;pointer-events:none;align-items:center;justify-content:center;">
-  <div id="pause-text" style="font-family:'Courier New',monospace;font-size:36px;letter-spacing:12px;color:#00ffff;text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);animation:pausePulse 1.2s ease-in-out infinite;">PAUSED</div>
+<div id="pause-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;flex-direction:column;">
+  <div id="pause-text" style="font-family:'Courier New',monospace;font-size:36px;letter-spacing:12px;color:#00ffff;text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);animation:pausePulse 1.2s ease-in-out infinite;margin-bottom:40px;">PAUSED</div>
+  <div style="display:flex;flex-direction:column;gap:14px;align-items:center;">
+    <button onclick="togglePause();toggleStats();" class="pause-menu-btn">STATS</button>
+    <button onclick="togglePause();toggleInventory();" class="pause-menu-btn" style="border-left-color:#ffd700;color:#ffd700;border-color:rgba(255,215,0,0.3);box-shadow:0 0 10px rgba(255,215,0,0.15);">GEAR</button>
+    <button onclick="goToMainMenu();" class="pause-menu-btn" style="border-left-color:#ff4444;color:#ff4444;border-color:rgba(255,68,68,0.3);box-shadow:0 0 10px rgba(255,68,68,0.15);">MAIN MENU</button>
+    <button onclick="togglePause();" class="pause-menu-btn" style="margin-top:6px;">CLOSE</button>
+  </div>
+  <div style="margin-top:24px;font-family:'Courier New',monospace;font-size:11px;letter-spacing:2px;color:rgba(0,255,255,0.35);">PRESS ESC TO CLOSE</div>
 </div>
 <style>
 @keyframes pausePulse {
@@ -12331,6 +12627,12 @@ window.onload = () => {
 #top-left-btns button:focus-visible {
     outline: none !important;
     box-shadow: 0 0 10px rgba(0,255,255,0.15) !important;
+}
+.pause-menu-btn {
+    padding:12px 40px;min-width:200px;background:rgba(12,16,20,0.9);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:13px;letter-spacing:3px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;
+}
+.pause-menu-btn:hover {
+    background:rgba(0,255,255,0.12);box-shadow:0 0 20px rgba(0,255,255,0.35);letter-spacing:4px;
 }
 </style>
 </body>
