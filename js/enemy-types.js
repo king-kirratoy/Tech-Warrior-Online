@@ -9,8 +9,8 @@ const ENEMY_TYPE_DEFS = {
         label: 'SCOUT',
         chassis: 'light',
         behavior: 'rusher',
-        hpMult: 0.35,         // fragile
-        speedMult: 1.45,      // very fast
+        hpMult: 0.40,         // fragile but survivable
+        speedMult: 1.40,      // very fast
         primaryPool: ['smg', 'sg'],
         colors: { body: 0x0a1a00, head: 0x44ff44, eye: 0x88ff00 },
         labelColor: '#44ff44',
@@ -45,7 +45,7 @@ const ENEMY_TYPE_DEFS = {
         label: 'BERSERKER',
         chassis: 'heavy',
         behavior: 'rusher',
-        hpMult: 0.60,
+        hpMult: 0.55,         // slightly reduced for enrage compensation
         speedMult: 1.0,
         primaryPool: ['sg', 'mg', 'chain'],
         colors: { body: 0x1a0000, head: 0xff2200, eye: 0xff0000 },
@@ -57,7 +57,7 @@ const ENEMY_TYPE_DEFS = {
         label: 'SNIPER',
         chassis: 'light',
         behavior: 'sniper',
-        hpMult: 0.40,
+        hpMult: 0.42,         // slight bump for survivability
         speedMult: 1.1,
         primaryPool: ['sr', 'hr', 'rail'],
         colors: { body: 0x0a0a0a, head: 0x888888, eye: 0xff4444 },
@@ -386,7 +386,7 @@ function _initTechnician(scene, e) {
             scene.physics.add.existing(b);
             b.body.setVelocity(Math.cos(angle) * 280, Math.sin(angle) * 280);
             b._isTurretBullet = true;
-            b.damageValue = 4 + Math.floor(_round * 0.5);
+            b.damageValue = 4 + Math.min(Math.floor(_round * 0.4), 16);
             if (enemyBullets) enemyBullets.add(b);
             scene.time.delayedCall(2500, () => { if (b?.active) b.destroy(); });
         }});
@@ -415,7 +415,7 @@ function _initBerserker(scene, e) {
                         Object.values(e.comp).reduce((s, c) => s + c.max, 0);
         if (hpRatio < 0.50) {
             e._enraged = true;
-            e.speed = Math.round(e._baseSpeed * 2.0);
+            e.speed = Math.round(e._baseSpeed * 1.75);
             e.behavior = 'rusher';
             e.shield = 0;
             e.maxShield = 0;
@@ -508,7 +508,7 @@ function _initDroneCarrier(scene, e) {
             scene.physics.add.existing(b);
             b.body.setVelocity(Math.cos(bAngle) * 250, Math.sin(bAngle) * 250);
             b._isTurretBullet = true;
-            b.damageValue = 3 + Math.floor(_round * 0.3);
+            b.damageValue = 3 + Math.min(Math.floor(_round * 0.25), 12);
             if (enemyBullets) enemyBullets.add(b);
             scene.time.delayedCall(2000, () => { if (b?.active) b.destroy(); });
         }});
@@ -586,7 +586,7 @@ function applyEliteModifier(scene, e, modKey) {
     }
 
     if (modKey === 'shielded') {
-        e._eliteShieldMax = 60 + _round * 3;
+        e._eliteShieldMax = 60 + Math.min(_round * 3, 90);
         e._eliteShield = e._eliteShieldMax;
         e._eliteShieldRegen = 5; // per second
         // Blue ring
@@ -608,7 +608,7 @@ function applyEliteModifier(scene, e, modKey) {
     }
 
     if (modKey === 'armored') {
-        e._passiveDR = Math.min(0.60, (e._passiveDR || 0) + 0.30);
+        e._passiveDR = Math.min(0.50, (e._passiveDR || 0) + 0.30);
     }
 
     if (modKey === 'splitting') {
@@ -728,8 +728,8 @@ function handleEliteDamage(e, amt) {
         }
         if (amt <= 0) return 0;
     }
-    // Cloaked sniper takes reduced damage
-    if (e._cloaked) amt *= 0.3;
+    // Cloaked sniper takes reduced damage (50% DR instead of 70%)
+    if (e._cloaked) amt *= 0.5;
     return Math.max(0, amt);
 }
 

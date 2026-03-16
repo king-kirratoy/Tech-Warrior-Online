@@ -2779,6 +2779,58 @@ function sndRoundStart() {
     _tone(220,'square',0.11,0.22,330); _tone(330,'square',0.11,0.18,440,0.11);
 }
 
+// ── Phase 8: Equipment & Loot Sounds ────────────────────────────
+function sndEquipDrop(rarity) {
+    if (!_canPlay('eqdrop', 120)) return;
+    switch(rarity) {
+        case 'common':    _tone(300,'sine',0.08,0.12,400); break;
+        case 'uncommon':  _tone(400,'sine',0.09,0.16,550); _tone(550,'sine',0.07,0.10,700,0.08); break;
+        case 'rare':      _tone(500,'sine',0.10,0.20,700); _tone(700,'triangle',0.10,0.14,900,0.09); break;
+        case 'epic':      _tone(550,'sine',0.12,0.25,800); _tone(800,'sine',0.10,0.18,1100,0.10); _tone(1100,'sine',0.08,0.12,1400,0.18); break;
+        case 'legendary': _tone(440,'sine',0.14,0.30,660); _tone(660,'sine',0.12,0.24,880,0.12); _tone(880,'sine',0.10,0.18,1200,0.22); _tone(1200,'sine',0.16,0.14,1600,0.30); break;
+    }
+}
+
+function sndEquipPickup(rarity) {
+    if (!_canPlay('eqpick', 150)) return;
+    const isHigh = rarity === 'epic' || rarity === 'legendary';
+    _tone(isHigh ? 600 : 440, 'sine', 0.06, isHigh ? 0.28 : 0.18, isHigh ? 900 : 660);
+    _tone(isHigh ? 900 : 660, 'sine', 0.06, isHigh ? 0.22 : 0.14, isHigh ? 1200 : 880, 0.06);
+    if (isHigh) { _tone(1200,'sine',0.08,0.16,1600,0.12); _noise(0.05,0.08,0.12,2000); }
+}
+
+function sndObjectiveStart() {
+    if (!_canPlay('objst', 500)) return;
+    _tone(330,'square',0.08,0.20,440); _tone(440,'square',0.08,0.16,550,0.08); _tone(550,'sine',0.10,0.14,660,0.16);
+}
+
+function sndObjectiveComplete() {
+    if (!_canPlay('objcmp', 500)) return;
+    _tone(440,'sine',0.10,0.28,660); _tone(660,'sine',0.10,0.22,880,0.10); _tone(880,'sine',0.12,0.18,1100,0.20); _tone(1100,'sine',0.14,0.14,1400,0.32);
+}
+
+function sndObjectiveFail() {
+    if (!_canPlay('objfail', 500)) return;
+    _tone(330,'sawtooth',0.15,0.25,180); _tone(220,'sawtooth',0.18,0.20,110,0.12); _noise(0.15,0.12,0.20,0,400);
+}
+
+function sndArenaTransition() {
+    if (!_canPlay('arena', 800)) return;
+    _noise(0.20,0.15,0,0,600); _tone(110,'sawtooth',0.30,0.18,80); _tone(220,'square',0.12,0.14,330,0.25);
+}
+
+function sndBossSpawn() {
+    if (!_canPlay('boss', 1000)) return;
+    _tone(55,'sawtooth',0.50,0.40,35); _tone(80,'square',0.40,0.25,55,0.12);
+    _noise(0.35,0.25,0.20,0,500); _tone(110,'sawtooth',0.30,0.20,70,0.40);
+}
+
+function sndBossDefeat() {
+    if (!_canPlay('bossd', 1000)) return;
+    _noise(0.40,0.35,0,0,600); _tone(55,'sawtooth',0.50,0.35,20);
+    _tone(440,'sine',0.12,0.25,660,0.45); _tone(660,'sine',0.12,0.20,880,0.55); _tone(880,'sine',0.14,0.16,1200,0.65);
+}
+
 // PHASER GAME CONFIG
 // ================================================================
 
@@ -4548,6 +4600,7 @@ function _showArenaLabel(scene, arenaLabel, objLabel) {
     el.style.display = 'block';
     el.style.opacity = '0';
     el.style.transition = 'opacity 0.4s ease';
+    if (typeof sndArenaTransition === 'function') sndArenaTransition();
     setTimeout(() => { el.style.opacity = '1'; }, 30);
     setTimeout(() => {
         el.style.opacity = '0';
@@ -7833,6 +7886,7 @@ function spawnCore(scene) {
 
 // Updated boss cycle: 8 bosses across rounds
 function spawnBoss(scene, roundNum) {
+    if (typeof sndBossSpawn === 'function') sndBossSpawn();
     const bossCycle = (Math.floor((roundNum - 1) / 5) - 1) % 8;
     if (bossCycle === 0) spawnWarden(scene);
     else if (bossCycle === 1) spawnTwinRazors(scene);
@@ -9496,6 +9550,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         if (sw.hp <= 0) {
             sw.hp = 0;
             if (sw._onDefeat) sw._onDefeat();
+            if (typeof sndBossDefeat === 'function') sndBossDefeat();
             window._activeSwarm = null;
             // Count as boss kill
             _roundKills = _roundTotal;
@@ -9777,6 +9832,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             scene.time.delayedCall(80, () => createExplosion(scene, e.x, e.y, 50, 20));
         }
         spawnLoot(scene, e.x, e.y, false);  // 30% chance
+        if (e.isBoss && typeof sndBossDefeat === 'function') sndBossDefeat();
         spawnEquipmentLoot(scene, e.x, e.y, { isMedic: !!e.isMedic, isBoss: !!e.isBoss, bossType: e.bossType || null, isElite: !!e.isElite, enemyType: e.enemyType || null });
         }
         // All enemies move toward ally death location

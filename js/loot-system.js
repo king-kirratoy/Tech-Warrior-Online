@@ -447,30 +447,32 @@ function rollBossDrops(bossType, round) {
 // ── AFFIX POOL ─────────────────────────────────────────────────
 const AFFIX_POOL = {
     // Offensive
-    dmgFlat:      { label:'+{v} Damage',             min:1,  max:15, weight:10, types:['weapon'] },
-    dmgPct:       { label:'+{v}% Damage',            min:3,  max:25, weight:8,  types:['weapon','arms','augment'] },
-    critChance:   { label:'+{v}% Crit Chance',       min:2,  max:15, weight:7,  types:['weapon','augment'] },
-    critDmg:      { label:'+{v}% Crit Damage',       min:10, max:50, weight:5,  types:['weapon','augment'] },
-    reloadPct:    { label:'-{v}% Reload Time',       min:3,  max:20, weight:8,  types:['weapon','arms'] },
+    dmgFlat:      { label:'+{v} Damage',             min:2,  max:18, weight:10, types:['weapon'] },
+    dmgPct:       { label:'+{v}% Damage',            min:3,  max:28, weight:8,  types:['weapon','arms','augment'] },
+    critChance:   { label:'+{v}% Crit Chance',       min:2,  max:18, weight:7,  types:['weapon','augment'] },
+    critDmg:      { label:'+{v}% Crit Damage',       min:10, max:60, weight:5,  types:['weapon','augment'] },
+    reloadPct:    { label:'-{v}% Reload Time',       min:3,  max:22, weight:8,  types:['weapon','arms'] },
     pellets:      { label:'+{v} Pellets',            min:1,  max:3,  weight:3,  types:['weapon'], subTypes:['sg'] },
-    splashRadius: { label:'+{v}% Blast Radius',      min:10, max:40, weight:5,  types:['weapon'], subTypes:['gl','rl','plsm','siege'] },
+    splashRadius: { label:'+{v}% Blast Radius',      min:10, max:45, weight:5,  types:['weapon'], subTypes:['gl','rl','plsm','siege'] },
+    accuracy:     { label:'+{v}% Accuracy',          min:3,  max:15, weight:5,  types:['weapon','arms'] },
 
     // Defensive
-    coreHP:       { label:'+{v} Core HP',            min:10, max:80, weight:8,  types:['armor'] },
-    armHP:        { label:'+{v} Arm HP',             min:5,  max:40, weight:6,  types:['arms'] },
-    legHP:        { label:'+{v} Leg HP',             min:5,  max:40, weight:6,  types:['legs'] },
-    allHP:        { label:'+{v} All Part HP',        min:5,  max:25, weight:4,  types:['armor','augment'] },
-    dr:           { label:'+{v}% Damage Reduction',  min:1,  max:10, weight:5,  types:['armor','legs'] },
-    shieldHP:     { label:'+{v} Shield Capacity',    min:5,  max:40, weight:7,  types:['shield'] },
-    shieldRegen:  { label:'+{v}% Shield Regen',      min:5,  max:30, weight:6,  types:['shield'] },
-    dodgePct:     { label:'+{v}% Dodge Chance',      min:1,  max:8,  weight:4,  types:['legs'] },
+    coreHP:       { label:'+{v} Core HP',            min:10, max:100, weight:8,  types:['armor'] },
+    armHP:        { label:'+{v} Arm HP',             min:5,  max:50,  weight:6,  types:['arms'] },
+    legHP:        { label:'+{v} Leg HP',             min:5,  max:50,  weight:6,  types:['legs'] },
+    allHP:        { label:'+{v} All Part HP',        min:5,  max:30,  weight:4,  types:['armor','augment'] },
+    dr:           { label:'+{v}% Damage Reduction',  min:1,  max:12,  weight:5,  types:['armor','legs'] },
+    shieldHP:     { label:'+{v} Shield Capacity',    min:5,  max:50,  weight:7,  types:['shield'] },
+    shieldRegen:  { label:'+{v}% Shield Regen',      min:5,  max:35,  weight:6,  types:['shield'] },
+    absorbPct:    { label:'+{v}% Shield Absorb',     min:2,  max:10,  weight:4,  types:['shield'] },
+    dodgePct:     { label:'+{v}% Dodge Chance',      min:1,  max:10,  weight:4,  types:['legs'] },
 
     // Utility
-    speedPct:     { label:'+{v}% Move Speed',        min:2,  max:12, weight:6,  types:['legs','augment'] },
-    modCdPct:     { label:'-{v}% Mod Cooldown',      min:3,  max:20, weight:6,  types:['mod'] },
-    modEffPct:    { label:'+{v}% Mod Effectiveness',  min:5,  max:25, weight:5, types:['mod'] },
-    lootMult:     { label:'+{v}% Loot Quality',      min:3,  max:15, weight:3,  types:['augment'] },
-    autoRepair:   { label:'+{v} HP/sec Regen',       min:1,  max:5,  weight:4,  types:['armor','augment'] },
+    speedPct:     { label:'+{v}% Move Speed',        min:2,  max:14, weight:6,  types:['legs','augment'] },
+    modCdPct:     { label:'-{v}% Mod Cooldown',      min:3,  max:22, weight:6,  types:['mod'] },
+    modEffPct:    { label:'+{v}% Mod Effectiveness',  min:5,  max:30, weight:5, types:['mod'] },
+    lootMult:     { label:'+{v}% Loot Quality',      min:3,  max:18, weight:3,  types:['augment'] },
+    autoRepair:   { label:'+{v} HP/sec Regen',       min:1,  max:6,  weight:4,  types:['armor','augment'] },
 };
 
 // ── INVENTORY & EQUIPMENT STATE ────────────────────────────────
@@ -484,6 +486,7 @@ let _equipped = {
 let _gearState = {};
 let _scrap = 0;
 let _equipmentDrops = [];  // Array tracking ground equipment drops
+const _MAX_GROUND_DROPS = 20; // Cap to prevent scene overload
 let _lootItemIdCounter = 0;
 let _lootNotifications = []; // Active pickup toasts
 
@@ -669,11 +672,15 @@ function generateItem(round, enemyData) {
 function _getEquipDropChance(enemyData) {
     const round = (typeof _round !== 'undefined') ? _round : 1;
     if (enemyData?.isBoss) return 1.0;
-    if (enemyData?.isCommander) return 0.40;
-    if (enemyData?.isElite) return 0.30;         // Elite enemies: 30% drop chance
-    if (enemyData?.enemyType) return 0.20;       // Special enemy types: 20% base
-    if (enemyData?.isMedic) return 0.15;
-    return Math.min(0.08 + round * 0.005, 0.20);
+    if (enemyData?.isCommander) return 0.45;
+    if (enemyData?.isElite) return 0.35;
+    if (enemyData?.enemyType) return 0.25;
+    if (enemyData?.isMedic) return 0.18;
+    // Base drop rate scales with round, floors at 8%, caps at 22%
+    const base = Math.min(0.08 + round * 0.007, 0.22);
+    // Late-game bonus: +1% per round past 20, up to +10%
+    const lateBonus = round > 20 ? Math.min((round - 20) * 0.01, 0.10) : 0;
+    return Math.min(base + lateBonus, 0.35);
 }
 
 // ── GROUND LOOT ICON DRAWING ───────────────────────────────────
@@ -862,6 +869,13 @@ function _drawLootIcon(scene, x, y, iconKey, rarityColor) {
 // ── GROUND LOOT SPAWNING ───────────────────────────────────────
 function spawnEquipmentDrop(scene, x, y, item) {
     if (!item || !scene) return;
+    // Cap active ground drops — remove oldest common/uncommon first
+    while (_equipmentDrops.length >= _MAX_GROUND_DROPS) {
+        const oldest = _equipmentDrops.find(d => d.active && (d.item.rarity === 'common' || d.item.rarity === 'uncommon'))
+            || _equipmentDrops.find(d => d.active);
+        if (oldest) _removeEquipmentDrop(scene, oldest, true);
+        else break;
+    }
     const rarityDef = RARITY_DEFS[item.rarity];
 
     // Background glow circle
@@ -905,7 +919,12 @@ function spawnEquipmentDrop(scene, x, y, item) {
             alpha: 0.08, yoyo: true, repeat: -1, duration: 700
         });
     }
+    // Screen shake for epic/legendary drops
+    if (item.rarity === 'epic') {
+        scene.cameras.main.shake(120, 0.004);
+    }
     if (item.rarity === 'legendary') {
+        scene.cameras.main.shake(200, 0.008);
         // Star burst particles
         for (let i = 0; i < 4; i++) {
             const star = scene.add.star(x, y, 4, 2, 5, rarityDef.color, 0.6)
@@ -919,8 +938,10 @@ function spawnEquipmentDrop(scene, x, y, item) {
                 onComplete: () => star.destroy()
             });
         }
-        // Drop sound
-        if (typeof _noise === 'function') {
+        // Drop sound (rarity-aware)
+        if (typeof sndEquipDrop === 'function') {
+            sndEquipDrop(item.rarity);
+        } else if (typeof _noise === 'function') {
             _noise(0.12, 0.5, 0, 300, 700);
         }
     }
@@ -969,7 +990,26 @@ function checkEquipmentPickups(scene) {
             if (_inventory.length < INVENTORY_MAX) {
                 _inventory.push(drop.item);
                 _showLootPickupNotification(scene, drop.item);
-                if (typeof _noise === 'function') _noise(0.08, 0.25, 0, 500, 1100);
+                if (typeof sndEquipPickup === 'function') sndEquipPickup(drop.item.rarity);
+                else if (typeof _noise === 'function') _noise(0.08, 0.25, 0, 500, 1100);
+                // Particle burst on epic/legendary pickup
+                if (drop.item.rarity === 'epic' || drop.item.rarity === 'legendary') {
+                    const rDef = RARITY_DEFS[drop.item.rarity];
+                    const count = drop.item.rarity === 'legendary' ? 10 : 6;
+                    for (let pi = 0; pi < count; pi++) {
+                        const angle = (pi / count) * Math.PI * 2;
+                        const p = scene.add.circle(drop.x, drop.y, 3, rDef.color, 0.8).setDepth(12);
+                        scene.tweens.add({
+                            targets: p,
+                            x: drop.x + Math.cos(angle) * Phaser.Math.Between(30, 60),
+                            y: drop.y + Math.sin(angle) * Phaser.Math.Between(30, 60),
+                            alpha: 0, scale: 0,
+                            duration: 400 + pi * 40,
+                            onComplete: () => p.destroy()
+                        });
+                    }
+                    if (drop.item.rarity === 'legendary') scene.cameras.main.shake(80, 0.003);
+                }
                 if (typeof _updateInvCount === 'function') _updateInvCount();
                 if (typeof saveInventory === 'function') saveInventory();
                 _removeEquipmentDrop(scene, drop, false);
@@ -1402,12 +1442,16 @@ function cleanupEquipmentDrops() {
 }
 
 // ── SAVE/LOAD (localStorage) ───────────────────────────────────
+let _saveDebounceTimer = null;
 function saveInventory() {
-    try {
-        localStorage.setItem('tw_inventory', JSON.stringify(_inventory));
-        localStorage.setItem('tw_equipped', JSON.stringify(_equipped));
-        localStorage.setItem('tw_scrap', String(_scrap));
-    } catch(e) {}
+    if (_saveDebounceTimer) clearTimeout(_saveDebounceTimer);
+    _saveDebounceTimer = setTimeout(() => {
+        try {
+            localStorage.setItem('tw_inventory', JSON.stringify(_inventory));
+            localStorage.setItem('tw_equipped', JSON.stringify(_equipped));
+            localStorage.setItem('tw_scrap', String(_scrap));
+        } catch(e) {}
+    }, 300);
 }
 
 function loadInventory() {
@@ -1415,9 +1459,25 @@ function loadInventory() {
         const inv = localStorage.getItem('tw_inventory');
         const eq = localStorage.getItem('tw_equipped');
         const sc = localStorage.getItem('tw_scrap');
-        if (inv) _inventory = JSON.parse(inv);
-        if (eq) _equipped = JSON.parse(eq);
-        if (sc) _scrap = parseInt(sc) || 0;
+        if (inv) {
+            const parsed = JSON.parse(inv);
+            // Validate: must be array of objects with required fields
+            if (Array.isArray(parsed)) {
+                _inventory = parsed.filter(it => it && typeof it === 'object' && it.name && it.rarity && it.baseType);
+            }
+        }
+        if (eq) {
+            const parsed = JSON.parse(eq);
+            if (parsed && typeof parsed === 'object') {
+                const validSlots = ['L','R','chest','arms','legs','shield','mod','augment'];
+                const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
+                validSlots.forEach(s => {
+                    if (parsed[s] && typeof parsed[s] === 'object' && parsed[s].name) clean[s] = parsed[s];
+                });
+                _equipped = clean;
+            }
+        }
+        if (sc) _scrap = Math.max(0, parseInt(sc) || 0);
         recalcGearStats();
     } catch(e) {
         _inventory = [];

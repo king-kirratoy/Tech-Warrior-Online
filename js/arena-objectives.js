@@ -351,6 +351,7 @@ function initObjective(scene, roundNum, objectiveKey) {
     _arenaState.objectiveComplete = false;
     _arenaState.objectiveFailed = false;
     _arenaState.startTime = scene.time.now;
+    if (objectiveKey !== 'elimination' && typeof sndObjectiveStart === 'function') sndObjectiveStart();
 
     switch (objectiveKey) {
         case 'elimination':
@@ -724,6 +725,7 @@ function _updatePitZone(scene, time) {
 // ── OBJECTIVE COMPLETE / FAILED ──────────────────────────────────
 function _onObjectiveComplete(scene) {
     const def = OBJECTIVE_DEFS[_arenaState.currentObjective];
+    if (typeof sndObjectiveComplete === 'function') sndObjectiveComplete();
     const txt = scene.add.text(
         scene.cameras.main.midPoint.x, scene.cameras.main.midPoint.y - 60,
         `${def.icon} OBJECTIVE COMPLETE`, {
@@ -734,6 +736,7 @@ function _onObjectiveComplete(scene) {
 
 function _onObjectiveFailed(scene) {
     const def = OBJECTIVE_DEFS[_arenaState.currentObjective];
+    if (typeof sndObjectiveFail === 'function') sndObjectiveFail();
     const txt = scene.add.text(
         scene.cameras.main.midPoint.x, scene.cameras.main.midPoint.y - 60,
         `✖ OBJECTIVE FAILED`, {
