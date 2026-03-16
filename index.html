@@ -11100,7 +11100,7 @@ function _updateStarterPanel() {
     let html = '';
     html += `<div class="gs-row"><span class="gs-label">WEAPON</span><span class="gs-val" style="color:${chColor}">${wL?.name || 'NONE'}</span></div>`;
     html += `<div class="gs-row"><span class="gs-label">SHIELD</span><span class="gs-val" style="color:${chColor}">${shName}</span></div>`;
-    html += `<div class="gs-row"><span class="gs-label">MOD</span><span class="gs-val" style="color:rgba(200,210,220,0.4);">— find through loot —</span></div>`;
+    html += `<div class="gs-row"><span class="gs-label">CPU</span><span class="gs-val" style="color:rgba(200,210,220,0.4);">— find through loot —</span></div>`;
     html += `<div class="gs-row"><span class="gs-label">LEGS</span><span class="gs-val" style="color:rgba(200,210,220,0.4);">— find through loot —</span></div>`;
     html += `<div class="gs-row"><span class="gs-label">AUGMENT</span><span class="gs-val" style="color:rgba(200,210,220,0.4);">— find through loot —</span></div>`;
     html += `<div style="margin-top:10px;font-size:10px;letter-spacing:1px;color:rgba(0,255,255,0.4);line-height:1.6;">Find weapons, shields, mods, legs, and augments as loot drops during combat. Equip them in the LOADOUT menu.</div>`;
@@ -11483,21 +11483,23 @@ function populateInventory() {
         const mechColor = typeof loadout !== 'undefined' ? loadout.color : 0x00ff88;
         const hexColor = typeof mechColor === 'number' ? '#' + mechColor.toString(16).padStart(6,'0') : mechColor;
 
-        // Slot positions relative to the silhouette container (tuned per chassis)
+        // Slot positions: left column and right column flanking the mech
+        // Left (top→bottom): CPU, ARMS, L ARM, SHIELD
+        // Right (top→bottom): AUGMENT, ARMOR, R ARM, LEGS
         const slotPositions = {
-            L:       { top: '130px', left: '60px',  label: 'L ARM' },
-            R:       { top: '130px', right: '60px', label: 'R ARM' },
-            chest:   { top: '130px', left: '50%',   label: 'ARMOR', transform: 'translateX(-50%)' },
-            arms:    { top: '60px',  left: '50%',   label: 'ARMS',  transform: 'translateX(-50%)' },
-            legs:    { top: '310px', left: '50%',   label: 'LEGS',  transform: 'translateX(-50%)' },
-            shield:  { top: '220px', left: '60px',  label: 'SHIELD' },
-            mod:     { top: '0px',   left: '50%',   label: 'MOD',   transform: 'translateX(-50%)' },
-            augment: { top: '220px', right: '60px', label: 'AUGMENT' },
+            mod:     { top: '10px',  left: '10px',  label: 'CPU' },
+            arms:    { top: '105px', left: '10px',  label: 'ARMS' },
+            L:       { top: '200px', left: '10px',  label: 'L ARM' },
+            shield:  { top: '295px', left: '10px',  label: 'SHIELD' },
+            augment: { top: '10px',  right: '10px', label: 'AUGMENT' },
+            chest:   { top: '105px', right: '10px', label: 'ARMOR' },
+            R:       { top: '200px', right: '10px', label: 'R ARM' },
+            legs:    { top: '295px', right: '10px', label: 'LEGS' },
         };
 
         let html = '';
         // Use the actual mech PNG as the silhouette background
-        html += `<div style="position:relative;width:100%;height:390px;">`;
+        html += `<div style="position:relative;width:100%;height:385px;">`;
         const mechImgSrc = `assets/${ch}-mech.png`;
         const hexStr = typeof mechColor === 'number' ? mechColor.toString(16).padStart(6,'0') : '00ff88';
         html += `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.25;">`;
@@ -11688,7 +11690,7 @@ function _showItemDetail(source, key) {
     // System ability (hybrid system items)
     if (item.systemKey) {
         const _sysDesc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[item.systemKey]) ? SLOT_DESCS[item.systemKey] : null;
-        const _sysTypeLabel = { shield_system:'SHIELD SYSTEM', mod_system:'CORE MOD', leg_system:'LEG SYSTEM', aug_system:'AUGMENT SYSTEM' };
+        const _sysTypeLabel = { shield_system:'SHIELD SYSTEM', mod_system:'CPU MODULE', leg_system:'LEG SYSTEM', aug_system:'AUGMENT SYSTEM' };
         html += `<div style="border-top:2px solid rgba(0,255,255,0.2);margin-top:10px;padding-top:10px;background:rgba(0,255,255,0.03);border-radius:4px;padding:10px;">`;
         html += `<div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);margin-bottom:6px;">${_sysTypeLabel[item.baseType] || 'SYSTEM'}</div>`;
         html += `<div style="font-size:12px;color:#00ffcc;letter-spacing:1px;margin-bottom:4px;">Activates: ${item.systemKey.replace(/_/g,' ').toUpperCase()}</div>`;
