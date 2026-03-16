@@ -817,78 +817,6 @@ button.active {
                 </div>
 
                 <div class="dd-row">
-                    <span class="dd-label">■ HEAD</span>
-                    <div class="dd-wrap" id="ddw-A">
-                        <div class="dd-selected" id="dds-A" onclick="toggleDD('A')">
-                            <span class="dd-name" id="ddn-A">NONE</span>
-
-                            <span class="dd-arrow">▼</span>
-                        </div>
-                        <div class="dd-list" id="ddl-A"></div>
-                    </div>
-                </div>
-
-                <div class="dd-row">
-                    <span class="dd-label">■ LEFT ARM</span>
-                    <div class="dd-wrap" id="ddw-L">
-                        <div class="dd-selected" id="dds-L" onclick="toggleDD('L')">
-                            <span class="dd-name" id="ddn-L">NONE</span>
-
-                            <span class="dd-arrow">▼</span>
-                        </div>
-                        <div class="dd-list" id="ddl-L"></div>
-                    </div>
-                </div>
-
-                <div class="dd-row">
-                    <span class="dd-label">■ RIGHT ARM</span>
-                    <div class="dd-wrap" id="ddw-R">
-                        <div class="dd-selected" id="dds-R" onclick="toggleDD('R')">
-                            <span class="dd-name" id="ddn-R">NONE</span>
-
-                            <span class="dd-arrow">▼</span>
-                        </div>
-                        <div class="dd-list" id="ddl-R"></div>
-                    </div>
-                </div>
-
-                <div class="dd-row">
-                    <span class="dd-label">■ CORE</span>
-                    <div class="dd-wrap" id="ddw-M">
-                        <div class="dd-selected" id="dds-M" onclick="toggleDD('M')">
-                            <span class="dd-name" id="ddn-M">NONE</span>
-
-                            <span class="dd-arrow">▼</span>
-                        </div>
-                        <div class="dd-list" id="ddl-M"></div>
-                    </div>
-                </div>
-
-                <div class="dd-row">
-                    <span class="dd-label">■ LEGS</span>
-                    <div class="dd-wrap" id="ddw-G">
-                        <div class="dd-selected" id="dds-G" onclick="toggleDD('G')">
-                            <span class="dd-name" id="ddn-G">NONE</span>
-
-                            <span class="dd-arrow">▼</span>
-                        </div>
-                        <div class="dd-list" id="ddl-G"></div>
-                    </div>
-                </div>
-
-                <div class="dd-row">
-                    <span class="dd-label">■ DEFENSE</span>
-                    <div class="dd-wrap" id="ddw-S">
-                        <div class="dd-selected" id="dds-S" onclick="toggleDD('S')">
-                            <span class="dd-name" id="ddn-S">NONE</span>
-
-                            <span class="dd-arrow">▼</span>
-                        </div>
-                        <div class="dd-list" id="ddl-S"></div>
-                    </div>
-                </div>
-
-                <div class="dd-row">
                     <span class="dd-label">■ COLOUR</span>
                     <div class="dd-wrap" id="ddw-C">
                         <div class="dd-selected" id="dds-C" onclick="toggleDD('C')">
@@ -898,6 +826,12 @@ button.active {
                         </div>
                         <div class="dd-list" id="ddl-C"></div>
                     </div>
+                </div>
+
+                <!-- Starter loadout info panel (read-only) -->
+                <div style="margin-top:16px;">
+                    <div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);font-family:'Courier New',monospace;margin-bottom:6px;text-transform:uppercase;">■ STARTER LOADOUT</div>
+                    <div id="starter-loadout-panel"></div>
                 </div>
 
                 <div style="margin-top:16px;">
@@ -1427,28 +1361,41 @@ const WEAPONS = {
 // GAME STATE
 // ================================================================
 
+/** Starter loadouts per chassis — barebones gear to find the rest through loot. */
+const STARTER_LOADOUTS = {
+    light:  { L: 'smg',  R: 'none', mod: 'none', aug: 'none', leg: 'none', shld: 'light_shield' },
+    medium: { L: 'mg',   R: 'none', mod: 'none', aug: 'none', leg: 'none', shld: 'standard_shield' },
+    heavy:  { L: 'hr',   R: 'none', mod: 'none', aug: 'none', leg: 'none', shld: 'heavy_shield' },
+};
+
 /** Current loadout selected in the garage. */
 let loadout = {
     chassis: 'light',
-    L: 'none',
+    L: 'smg',
     R: 'none',
     mod: 'none',
     aug: 'none',
     leg: 'none',
-    shld: 'none',
+    shld: 'light_shield',
     color: 0x00ff00
 };
 
 function resetLoadout() {
     loadout.chassis = 'light';
-    loadout.L       = 'none';
-    loadout.R       = 'none';
-    loadout.mod     = 'none';
-    loadout.aug     = 'none';
-    loadout.leg     = 'none';
-    loadout.shld    = 'none';
+    _applyStarterLoadout('light');
     loadout.color   = 0x00ff00;
     closeAllDD();
+}
+
+/** Apply the starter loadout for the given chassis type. */
+function _applyStarterLoadout(ch) {
+    const starter = STARTER_LOADOUTS[ch] || STARTER_LOADOUTS.medium;
+    loadout.L    = starter.L;
+    loadout.R    = starter.R;
+    loadout.mod  = starter.mod;
+    loadout.aug  = starter.aug;
+    loadout.leg  = starter.leg;
+    loadout.shld = starter.shld;
 }
 
 // Phaser object references
@@ -11106,33 +11053,6 @@ function refreshGarage() {
         document.getElementById('c-' + ch)?.classList.toggle('active', loadout.chassis === ch);
     });
 
-    // Lock R arm when two-handed weapon equipped
-    const _is2H = WEAPONS[loadout.L]?.twoHanded;
-    const rSel = document.querySelector('#ddw-R .dd-selected');
-    if (rSel) {
-        rSel.style.opacity = _is2H ? '0.5' : '1';
-        rSel.style.pointerEvents = _is2H ? 'none' : '';
-        rSel.title = _is2H ? 'Locked — two-handed weapon equipped' : '';
-    }
-    const allLabels = [...document.querySelectorAll('.dd-label')];
-    const rLbl = allLabels.find(el => el.textContent.includes('RIGHT ARM'));
-    if (rLbl) rLbl.style.color = _is2H ? 'rgba(255,100,0,0.6)' : '';
-
-    // Update dropdown selected displays
-    const slots = [
-        { id:'L', opts:WEAPON_OPTIONS,  key:loadout.L },
-        { id:'R', opts:WEAPON_OPTIONS,  key:loadout.R },
-        { id:'M', opts:MOD_OPTIONS,     key:loadout.mod },
-        { id:'A', opts:AUG_OPTIONS,     key:loadout.aug },
-        { id:'G', opts:LEG_OPTIONS,     key:loadout.leg },
-        { id:'S', opts:SHIELD_OPTIONS,  key:loadout.shld },
-    ];
-    slots.forEach(({ id, opts, key }) => {
-        const opt = opts.find(o => o.key === key) || opts[0];
-        const nameEl = document.getElementById('ddn-' + id);
-        if (nameEl) nameEl.textContent = opt.label;
-    });
-
     // Colour dropdown header
     const hexStr = loadout.color.toString(16).padStart(6,'0').toLowerCase();
     const colOpt = COLOR_OPTIONS.find(o => o.key === hexStr) || COLOR_OPTIONS[0];
@@ -11148,21 +11068,12 @@ function refreshGarage() {
         previewImg.style.filter = `drop-shadow(0 0 15px #${hexStr})`;
     }
 
-    // HP/SH now shown in stats panel via updateGarageStats()
-
-    // Weight
-    const total  = _calcWeight(loadout);
+    // Deploy button — always enabled since starter loadout always has a weapon
     const deployBtn = document.getElementById('deploy-btn');
-    const noWeapon = loadout.L === 'none' && loadout.R === 'none';
     if (deployBtn) {
-        deployBtn.disabled = noWeapon;
-        if (noWeapon) {
-            deployBtn.innerHTML = '<span>&#9888;</span>&nbsp; EQUIP WEAPON &nbsp;<span>&#9888;</span>';
-            deployBtn.classList.add('overweight');
-        } else {
-            deployBtn.innerText = 'DEPLOY MECH';
-            deployBtn.classList.remove('overweight');
-        }
+        deployBtn.disabled = false;
+        deployBtn.innerText = 'DEPLOY MECH';
+        deployBtn.classList.remove('overweight');
     }
 
     // Dual-explosive warning
@@ -11172,7 +11083,28 @@ function refreshGarage() {
         dualWarn.style.display = bothExplosive ? 'block' : 'none';
     }
 
+    // Populate starter loadout info panel
+    _updateStarterPanel();
     updateGarageStats();
+}
+
+function _updateStarterPanel() {
+    const panel = document.getElementById('starter-loadout-panel');
+    if (!panel) return;
+    const ch = loadout.chassis;
+    const starter = STARTER_LOADOUTS[ch];
+    const wL = WEAPONS[starter.L];
+    const shName = SHIELD_SYSTEMS[starter.shld]?.name || 'NONE';
+    const chColor = ch === 'light' ? '#88ff88' : ch === 'medium' ? '#ffcc44' : '#ff8844';
+
+    let html = '';
+    html += `<div class="gs-row"><span class="gs-label">WEAPON</span><span class="gs-val" style="color:${chColor}">${wL?.name || 'NONE'}</span></div>`;
+    html += `<div class="gs-row"><span class="gs-label">SHIELD</span><span class="gs-val" style="color:${chColor}">${shName}</span></div>`;
+    html += `<div class="gs-row"><span class="gs-label">CPU</span><span class="gs-val" style="color:rgba(200,210,220,0.4);">— find through loot —</span></div>`;
+    html += `<div class="gs-row"><span class="gs-label">LEGS</span><span class="gs-val" style="color:rgba(200,210,220,0.4);">— find through loot —</span></div>`;
+    html += `<div class="gs-row"><span class="gs-label">AUGMENT</span><span class="gs-val" style="color:rgba(200,210,220,0.4);">— find through loot —</span></div>`;
+    html += `<div style="margin-top:10px;font-size:10px;letter-spacing:1px;color:rgba(0,255,255,0.4);line-height:1.6;">Find weapons, shields, mods, legs, and augments as loot drops during combat. Equip them in the LOADOUT menu.</div>`;
+    panel.innerHTML = html;
 }
 
 function updateGarageStats() {
@@ -11287,10 +11219,7 @@ document.addEventListener('click', e => {
 
 function setChassis(t) {
     loadout.chassis = t;
-    // Non-light: clear duplicate arm weapons (dual-wield is light-only)
-    if (t !== 'light' && loadout.L !== 'none' && loadout.L === loadout.R) loadout.R = 'none';
-    // Light: clear two-handed weapons (light can't use them)
-    if (t === 'light' && WEAPONS[loadout.L]?.twoHanded) { loadout.L = 'none'; loadout.R = 'none'; }
+    _applyStarterLoadout(t);
     refreshGarage();
 }
 
@@ -11554,21 +11483,23 @@ function populateInventory() {
         const mechColor = typeof loadout !== 'undefined' ? loadout.color : 0x00ff88;
         const hexColor = typeof mechColor === 'number' ? '#' + mechColor.toString(16).padStart(6,'0') : mechColor;
 
-        // Slot positions relative to the silhouette container (tuned per chassis)
+        // Slot positions: left column and right column flanking the mech
+        // Left (top→bottom): CPU, ARMS, L ARM, SHIELD
+        // Right (top→bottom): AUGMENT, ARMOR, R ARM, LEGS
         const slotPositions = {
-            L:       { top: '130px', left: '60px',  label: 'L ARM' },
-            R:       { top: '130px', right: '60px', label: 'R ARM' },
-            chest:   { top: '130px', left: '50%',   label: 'ARMOR', transform: 'translateX(-50%)' },
-            arms:    { top: '60px',  left: '50%',   label: 'ARMS',  transform: 'translateX(-50%)' },
-            legs:    { top: '310px', left: '50%',   label: 'LEGS',  transform: 'translateX(-50%)' },
-            shield:  { top: '220px', left: '60px',  label: 'SHIELD' },
-            mod:     { top: '0px',   left: '50%',   label: 'MOD',   transform: 'translateX(-50%)' },
-            augment: { top: '220px', right: '60px', label: 'AUGMENT' },
+            mod:     { top: '10px',  left: '10px',  label: 'CPU' },
+            arms:    { top: '105px', left: '10px',  label: 'ARMS' },
+            L:       { top: '200px', left: '10px',  label: 'L ARM' },
+            shield:  { top: '295px', left: '10px',  label: 'SHIELD' },
+            augment: { top: '10px',  right: '10px', label: 'AUGMENT' },
+            chest:   { top: '105px', right: '10px', label: 'ARMOR' },
+            R:       { top: '200px', right: '10px', label: 'R ARM' },
+            legs:    { top: '295px', right: '10px', label: 'LEGS' },
         };
 
         let html = '';
         // Use the actual mech PNG as the silhouette background
-        html += `<div style="position:relative;width:100%;height:390px;">`;
+        html += `<div style="position:relative;width:100%;height:385px;">`;
         const mechImgSrc = `assets/${ch}-mech.png`;
         const hexStr = typeof mechColor === 'number' ? mechColor.toString(16).padStart(6,'0') : '00ff88';
         html += `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.25;">`;
@@ -11756,6 +11687,19 @@ function _showItemDetail(source, key) {
         html += `</div>`;
     }
 
+    // System ability (hybrid system items)
+    if (item.systemKey) {
+        const _sysDesc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[item.systemKey]) ? SLOT_DESCS[item.systemKey] : null;
+        const _sysTypeLabel = { shield_system:'SHIELD SYSTEM', mod_system:'CPU MODULE', leg_system:'LEG SYSTEM', aug_system:'AUGMENT SYSTEM' };
+        html += `<div style="border-top:2px solid rgba(0,255,255,0.2);margin-top:10px;padding-top:10px;background:rgba(0,255,255,0.03);border-radius:4px;padding:10px;">`;
+        html += `<div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);margin-bottom:6px;">${_sysTypeLabel[item.baseType] || 'SYSTEM'}</div>`;
+        html += `<div style="font-size:12px;color:#00ffcc;letter-spacing:1px;margin-bottom:4px;">Activates: ${item.systemKey.replace(/_/g,' ').toUpperCase()}</div>`;
+        if (_sysDesc) {
+            html += `<div style="font-size:11px;color:rgba(200,210,220,0.65);line-height:1.4;">${_sysDesc.desc}</div>`;
+        }
+        html += `</div>`;
+    }
+
     // Unique effect (boss items)
     if (item.isUnique && item.uniqueLabel) {
         html += `<div style="border-top:2px solid rgba(255,215,0,0.3);margin-top:10px;padding-top:10px;background:rgba(255,215,0,0.04);border-radius:4px;padding:10px;">`;
@@ -11824,7 +11768,11 @@ function _showItemDetail(source, key) {
 
 function _getSlotForItem(item) {
     if (item.baseType === 'weapon') return null; // weapon needs L or R choice
-    const map = { armor:'chest', arms:'arms', legs:'legs', shield:'shield', mod:'mod', augment:'augment' };
+    const map = {
+        armor:'chest', arms:'arms', legs:'legs', shield:'shield', mod:'mod', augment:'augment',
+        // System items map to the same equip slots
+        shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment'
+    };
     return map[item.baseType] || null;
 }
 
@@ -11890,10 +11838,16 @@ function _equipItemToSlot(invIdx, slotKey) {
     _inventory.splice(invIdx, 1);
     if (old) _inventory.push(old);
 
-    // If weapon, update loadout for game system
-    if (item.baseType === 'weapon') {
-        if (typeof loadout !== 'undefined') {
+    if (typeof loadout !== 'undefined') {
+        // Weapons → loadout.L / loadout.R
+        if (item.baseType === 'weapon') {
             loadout[slotKey] = item.subType;
+        }
+        // System items → activate the actual game system
+        if (item.systemKey) {
+            const _sysLoadoutMap = { shield_system:'shld', mod_system:'mod', leg_system:'leg', aug_system:'aug' };
+            const loadoutKey = _sysLoadoutMap[item.baseType];
+            if (loadoutKey) loadout[loadoutKey] = item.systemKey;
         }
     }
 
@@ -11912,9 +11866,22 @@ function _unequipItem(slotKey) {
     _inventory.push(item);
     _equipped[slotKey] = null;
 
-    // If weapon, clear from loadout
-    if (item.baseType === 'weapon' && typeof loadout !== 'undefined') {
-        loadout[slotKey] = 'none';
+    if (typeof loadout !== 'undefined') {
+        // Weapons → clear from loadout
+        if (item.baseType === 'weapon') {
+            loadout[slotKey] = 'none';
+        }
+        // System items → revert to 'none' (or starter default)
+        if (item.systemKey) {
+            const _sysLoadoutMap = { shield_system:'shld', mod_system:'mod', leg_system:'leg', aug_system:'aug' };
+            const loadoutKey = _sysLoadoutMap[item.baseType];
+            if (loadoutKey) {
+                // Revert to starter loadout default for this slot
+                const starter = (typeof STARTER_LOADOUTS !== 'undefined') ? STARTER_LOADOUTS[loadout.chassis] : null;
+                const _starterKeyMap = { shld:'shld', mod:'mod', leg:'leg', aug:'aug' };
+                loadout[loadoutKey] = starter ? (starter[loadoutKey === 'shld' ? 'shld' : loadoutKey] || 'none') : 'none';
+            }
+        }
     }
 
     recalcGearStats();
