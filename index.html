@@ -11447,6 +11447,8 @@ function respawnMech() {
         try { _rScene.time.paused = false; } catch(e){}
     }
     _cleanupGame();
+    // Reset loot/inventory for the new run
+    if (typeof resetInventory === 'function') resetInventory();
     document.getElementById('hud-container').style.display = 'flex';
     document.getElementById('top-left-btns').style.display = 'flex';
     const _mm = document.getElementById('minimap-wrap'); if (_mm) _mm.style.display = 'block';
