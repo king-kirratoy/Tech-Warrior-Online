@@ -12286,18 +12286,20 @@ function togglePause() {
     _isPaused = !_isPaused;
     const btn = document.getElementById('pause-btn');
     const po  = document.getElementById('pause-overlay');
+    const topBtns = document.getElementById('top-left-btns');
     if (_isPaused) {
         scene.physics.pause();
         scene.time.paused = true;
         try { scene.input.setDefaultCursor('default'); } catch(e) {}
         document.body.style.cursor = 'default';
-        if (btn) { btn.innerHTML = 'RESUME'; btn.blur(); }
+        if (topBtns) topBtns.style.display = 'none';
         if (po)  po.style.display = 'flex';
     } else {
         scene.physics.resume();
         scene.time.paused = false;
         try { scene.input.setDefaultCursor('none'); } catch(e) {}
         document.body.style.cursor = 'none';
+        if (topBtns) topBtns.style.display = 'flex';
         if (btn) { btn.innerHTML = 'MENU'; btn.blur(); }
         if (po)  po.style.display = 'none';
     }
@@ -12745,8 +12747,7 @@ window.onload = () => {
   <div id="pause-text" style="font-family:'Courier New',monospace;font-size:36px;letter-spacing:12px;color:#00ffff;text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);animation:pausePulse 1.2s ease-in-out infinite;margin-bottom:40px;">PAUSED</div>
   <div style="display:flex;flex-direction:column;gap:14px;align-items:center;">
     <button onclick="togglePause();toggleStats();" class="pause-menu-btn">LOADOUT</button>
-    <button onclick="goToMainMenu();" class="pause-menu-btn" style="border-left-color:#ff4444;color:#ff4444;border-color:rgba(255,68,68,0.3);box-shadow:0 0 10px rgba(255,68,68,0.15);">MAIN MENU</button>
-    <button onclick="togglePause();" class="pause-menu-btn" style="margin-top:6px;">CLOSE</button>
+    <button onclick="goToMainMenu();" class="pause-menu-btn" style="border-left-color:#ff4444;color:#ff4444;border-color:rgba(255,68,68,0.3);box-shadow:0 0 10px rgba(255,68,68,0.15);">QUIT GAME</button>
   </div>
   <div style="margin-top:24px;font-family:'Courier New',monospace;font-size:11px;letter-spacing:2px;color:rgba(0,255,255,0.35);">PRESS ESC TO CLOSE</div>
 </div>
