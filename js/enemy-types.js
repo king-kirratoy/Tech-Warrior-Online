@@ -2,6 +2,25 @@
 //  ENEMY TYPES & ELITE MODIFIER SYSTEM — Phase 4
 //  New enemy variants and elite modifiers for Tech Warrior Online
 // ═══════════════════════════════════════════════════════════════════
+//
+// ── CROSS-FILE DEPENDENCIES ──────────────────────────────────────
+// This file is loaded via <script> in index.html AFTER loot-system.js.
+//
+// FUNCTIONS CALLED FROM index.html (search "typeof <name>" to find call sites):
+//   spawnSpecialEnemy    — called from startRound() enemy spawn loop
+//   applyEliteModifier   — called from startRound() elite assignment
+//   updateSpecialEnemies — called from update() game loop (~line 3066)
+//   handleEliteDamage    — called from damageEnemy() (~line 9624)
+//   handleEliteDeath     — called from onEnemyKilled() (~line 9849)
+//   handleVampiricHeal   — called from processPlayerDamage() (~line 5407)
+//   _getEnemySpawnConfig — called from startRound() (~line 4721)
+//
+// GLOBALS READ FROM index.html:
+//   player, enemies, enemyBullets, isDeployed, _round, coverObjects,
+//   _roundTotal, CHASSIS, ENEMY_COLORS, SHIELD_SYSTEMS,
+//   buildEnemyMech, buildEnemyTorso, createExplosion, processPlayerDamage,
+//   game, Phaser
+// ──────────────────────────────────────────────────────────────────
 
 // ── NEW ENEMY TYPE DEFINITIONS ───────────────────────────────────
 const ENEMY_TYPE_DEFS = {

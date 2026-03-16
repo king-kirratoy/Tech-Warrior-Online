@@ -5,6 +5,31 @@
 // Stronghold, Tower Defense) and round objectives (Elimination,
 // Survival, Assassination, Defense, Salvage).
 // ================================================================
+//
+// ── CROSS-FILE DEPENDENCIES ──────────────────────────────────────
+// This file is loaded via <script> in index.html AFTER enemy-types.js.
+//
+// GLOBALS EXPORTED (used by index.html and loot-system.js):
+//   _arenaState   — current arena/objective tracking state
+//   ARENA_DEFS    — arena variant definitions
+//   OBJECTIVE_DEFS — objective type definitions
+//
+// FUNCTIONS CALLED FROM index.html:
+//   selectArena(roundNum)          — called from startRound() (~line 4691)
+//   selectObjective(roundNum, key) — called from startRound() (~line 4693)
+//   initObjective(scene, round, key) — called from startRound() (~line 4703)
+//   updateObjectives(scene, time)  — called from update() loop (~line 3067)
+//   cleanupObjective(scene)        — called from startRound() (~line 4697)
+//   shouldEndRound()               — called from round-end check (~line 5218)
+//   getObjectiveLootBonus()        — called from loot-system.js rollRarity()
+//
+// FUNCTIONS CALLED BACK INTO index.html:
+//   sndObjectiveStart, sndObjectiveComplete, sndObjectiveFail (Phase 8 sounds)
+//   processPlayerDamage (pit zone damage)
+//
+// GLOBALS READ FROM index.html:
+//   player, enemies, isDeployed, coverObjects, game, Phaser
+// ──────────────────────────────────────────────────────────────────
 
 // ── ARENA DEFINITIONS ────────────────────────────────────────────
 const ARENA_DEFS = {

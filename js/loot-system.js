@@ -2,6 +2,38 @@
 // LOOT SYSTEM — Phase 1: Core Foundation
 // Items, rarity, affixes, generation, ground rendering, pickup, inventory
 // ================================================================
+//
+// ── CROSS-FILE DEPENDENCIES ──────────────────────────────────────
+// This file is loaded via <script> in index.html BEFORE enemy-types.js
+// and arena-objectives.js. It defines globals used across the codebase.
+//
+// GLOBALS EXPORTED (used by index.html):
+//   _inventory, _equipped, _gearState, _scrap
+//   RARITY_DEFS, ITEM_BASES, UNIQUE_ITEMS, AFFIX_POOL
+//
+// FUNCTIONS CALLED FROM index.html (search "typeof <name>" to find call sites):
+//   Phases 1-3: spawnEquipmentLoot, checkEquipmentPickups, recalcGearStats,
+//               saveInventory, loadInventory, cleanupEquipmentDrops
+//   Phase 5 unique effects: hasUniqueEffect, getUnstoppableSpeedBonus,
+//               getDualReloadBonus, checkDoubleStrike, spawnModCover,
+//               checkImpactArmor, getImpactArmorDR
+//   Phase 7 unique effects: triggerSwarmBurst, getAdaptiveArmorDR,
+//               checkTitanSmash, triggerTitanSmash, updateColossusStand,
+//               getColossusDmgMult, getColossusDR, triggerCoreOverload,
+//               triggerMatrixBarrier, isMatrixBarrierActive
+//
+// GLOBALS READ FROM index.html (must exist before these are called):
+//   player, torso, enemies, loadout, isDeployed, _round, _perkState,
+//   coverObjects, game, Phaser
+//
+// FUNCTIONS CALLED FROM arena-objectives.js:
+//   getObjectiveLootBonus (via rollRarity luck bonus)
+//
+// FUNCTIONS CALLED BACK INTO index.html:
+//   sndEquipDrop, sndEquipPickup (Phase 8 sound functions)
+//   _noise (fallback audio)
+//   damageEnemy, showDamageText (from unique effect procs)
+// ──────────────────────────────────────────────────────────────────
 
 // ── RARITY DEFINITIONS ─────────────────────────────────────────
 const RARITY_DEFS = {
@@ -1192,7 +1224,12 @@ function recalcGearStats() {
     });
 }
 
-// ── UNIQUE EFFECT HELPERS (called from game combat code) ─────────
+// ══════════════════════════════════════════════════════════════════
+// UNIQUE EFFECT HELPERS — Called from index.html combat code
+// These functions are defined here but wired into index.html via
+// typeof guards. Search index.html for each function name to find
+// the exact call site where it's integrated into the game loop.
+// ══════════════════════════════════════════════════════════════════
 // Check if a unique effect is currently active
 function hasUniqueEffect(effectKey) {
     return !!(_gearState?._uniqueEffects?.[effectKey]);
@@ -1289,9 +1326,15 @@ function spawnModCover(scene) {
     });
 }
 
-// ── Phase 7 UNIQUE EFFECT HELPERS ─────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+// PHASE 7 UNIQUE EFFECT HELPERS — Called from index.html
+// Wired into: damageEnemy(), processPlayerDamage(), update() loop,
+//             onEnemyKilled(), activateMod(), bullet-enemy overlap
+// Search index.html for each function name to find call sites.
+// ══════════════════════════════════════════════════════════════════
 
 // Swarm Burst: kills spawn 2 homing micro-drones
+// → Called from onEnemyKilled() in index.html (~line 5139)
 function triggerSwarmBurst(scene, x, y) {
     if (!hasUniqueEffect('swarmBurst') || !scene) return;
     for (let i = 0; i < 2; i++) {
@@ -1326,6 +1369,7 @@ function triggerSwarmBurst(scene, x, y) {
 }
 
 // Adaptive Armor: consecutive hits from same source deal less
+// → Called from processPlayerDamage() in index.html (~line 9272)
 let _adaptiveLastShooter = null;
 let _adaptiveStacks = 0;
 function getAdaptiveArmorDR(shooterId) {
@@ -1340,6 +1384,8 @@ function getAdaptiveArmorDR(shooterId) {
 }
 
 // Titan Smash: every 5th shot creates shockwave
+// → checkTitanSmash called from bullet-enemy overlap in index.html (~line 2976)
+// → triggerTitanSmash called from same location (~line 2977)
 let _titanSmashCounter = 0;
 function checkTitanSmash() {
     if (!hasUniqueEffect('titanSmash')) return false;
@@ -1368,6 +1414,9 @@ function triggerTitanSmash(scene, x, y, baseDmg) {
 }
 
 // Colossus Stand: stationary 2s grants +25% dmg, +10% DR
+// → updateColossusStand called from update() loop in index.html (~line 3068)
+// → getColossusDmgMult called from _effectiveDmg calc (~line 8842)
+// → getColossusDR called from processPlayerDamage() (~line 9277)
 let _colossusActive = false;
 let _colossusStillTime = 0;
 let _colossusLastX = 0;
@@ -1389,6 +1438,7 @@ function getColossusDmgMult() { return _colossusActive ? 1.25 : 1.0; }
 function getColossusDR() { return _colossusActive ? 0.10 : 0; }
 
 // Core Overload: mod activation damage pulse
+// → Called from activateMod() in index.html (~line 5739)
 function triggerCoreOverload(scene) {
     if (!hasUniqueEffect('coreOverload') || !scene) return;
     if (typeof player === 'undefined' || !player?.active) return;
@@ -1406,6 +1456,8 @@ function triggerCoreOverload(scene) {
 }
 
 // Matrix Barrier: shield break invulnerability bubble
+// → triggerMatrixBarrier called from processPlayerDamage() in index.html (~line 9483)
+// → isMatrixBarrierActive called from processPlayerDamage() (~line 9279)
 let _matrixBarrierCooldown = 0;
 let _matrixBarrierActive = false;
 function triggerMatrixBarrier(scene, time) {
