@@ -5270,6 +5270,7 @@ function onEnemyKilled(deadEnemy) {
     // Phase 6: check objective-based round end (survival complete, assassination done, etc.)
     const _objEnd = typeof shouldEndRound === 'function' && shouldEndRound();
     if ((_roundKills >= _roundTotal || _objEnd) && !_extractionActive) {
+        const scene = game.scene.scenes[0];
         _roundActive = false;
         // Destroy any in-flight enemy bullets
         if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
