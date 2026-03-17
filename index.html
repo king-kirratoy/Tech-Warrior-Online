@@ -12,6 +12,7 @@
 <script src="js/loot-system.js"></script>
 <script src="js/enemy-types.js"></script>
 <script src="js/arena-objectives.js"></script>
+<script src="js/campaign-system.js"></script>
 <style>
 
 /* ============================================================
@@ -533,6 +534,23 @@ button.active {
                 inset 0 0 20px rgba(0,255,255,0.08);
     letter-spacing: 8px;
 }
+.menu-start-btn.disabled-mode {
+    color: rgba(0,255,255,0.2);
+    border-color: rgba(0,255,255,0.1);
+    border-top-color: rgba(0,255,255,0.2);
+    border-bottom-color: rgba(0,255,255,0.2);
+    cursor: not-allowed;
+    box-shadow: none;
+    pointer-events: none;
+    position: relative;
+}
+.menu-start-btn.disabled-mode .coming-soon {
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: rgba(0,255,255,0.25);
+    display: block;
+    margin-top: 2px;
+}
 
 .menu-version {
     position: absolute;
@@ -765,8 +783,10 @@ button.active {
     <div class="menu-title">TECH WARRIOR ONLINE</div>
     <div class="menu-subtitle">Combat Simulation Alpha 3.0</div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
-        <button class="menu-start-btn" onclick="startGame()">&#9654;&nbsp;&nbsp;DEPLOY TO BATTLEFIELD</button>
-        <button class="menu-start-btn" onclick="showLeaderboard()">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
+        <button id="campaign-btn" class="menu-start-btn" onclick="startGame('campaign')">&#9733;&nbsp;&nbsp;CAMPAIGN</button>
+        <button class="menu-start-btn" onclick="startGame('simulation')">&#9654;&nbsp;&nbsp;COMBAT SIMULATION</button>
+        <button class="menu-start-btn disabled-mode">&#9670;&nbsp;&nbsp;MULTIPLAYER<span class="coming-soon">COMING SOON</span></button>
+        <button class="menu-start-btn" onclick="showLeaderboard()" style="margin-top:8px;">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
     </div>
     <div class="menu-version">v3.0 // ALPHA BUILD</div>
 </div>
@@ -800,7 +820,8 @@ button.active {
 <div id="deploy-cover" style="display:none;position:fixed;inset:0;background:#0c1014;z-index:998;pointer-events:none;"></div>
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu">
-        <h2 style="text-align:center;margin:0 0 20px;letter-spacing:8px;color:#00ffff;font-family:'Courier New',monospace;font-size:26px;text-shadow:0 0 18px rgba(0,255,255,0.7),0 0 40px rgba(0,255,255,0.2);font-weight:normal;">MECH HANGAR</h2>
+        <h2 id="hangar-title" style="text-align:center;margin:0 0 20px;letter-spacing:8px;color:#00ffff;font-family:'Courier New',monospace;font-size:26px;text-shadow:0 0 18px rgba(0,255,255,0.7),0 0 40px rgba(0,255,255,0.2);font-weight:normal;">MECH HANGAR</h2>
+        <div id="hangar-mode-label" style="text-align:center;margin:-14px 0 16px;font-size:10px;letter-spacing:4px;color:rgba(0,255,255,0.35);font-family:'Courier New',monospace;"></div>
 
         <div style="display:flex;gap:28px;align-items:stretch;">
 
@@ -1035,6 +1056,12 @@ button.active {
   <div id="arena-label-text" style="font-size:16px;letter-spacing:6px;text-transform:uppercase;text-shadow:0 0 12px rgba(255,255,255,0.3);"></div>
 </div>
 
+<!-- CAMPAIGN MISSION SELECT OVERLAY -->
+<div id="mission-select-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.96);z-index:10002;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:'Courier New',monospace;"></div>
+
+<!-- CAMPAIGN MISSION BRIEFING POPUP (shows modifier + bonus objective before deploy) -->
+<div id="mission-briefing-popup" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10003;flex-direction:column;align-items:flex-start;padding:16px 24px;background:rgba(12,16,20,0.95);border:1px solid rgba(255,215,0,0.3);border-left:3px solid #ffd700;border-radius:8px;box-shadow:0 0 20px rgba(255,215,0,0.15);font-family:'Courier New',monospace;pointer-events:none;max-width:500px;"></div>
+
 <!-- DEATH SCREEN -->
 <div id="death-screen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:99999;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;">
     <div style="text-align:center;">
@@ -1068,15 +1095,15 @@ button.active {
             </div>
         </div>
         <br>
-        <div style="display:flex;gap:20px;justify-content:center;">
-            <button onclick="returnToHangar()"
-                style="width:200px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
+        <div id="death-buttons" style="display:flex;gap:20px;justify-content:center;">
+            <button id="death-btn-primary" onclick="_gameMode==='campaign' ? campaignDeathToMissionSelect() : returnToHangar()"
+                style="width:220px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
                 onmouseover="this.style.background='rgba(0,255,255,0.15)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.25)';this.style.letterSpacing='4px';"
                 onmouseout="this.style.background='rgba(0,255,255,0.05)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
                 &#8962; MECH HANGAR
             </button>
             <button onclick="returnToMainMenu()"
-                style="width:200px;padding:16px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);border-left:3px solid rgba(255,60,60,0.7);color:rgba(255,100,100,0.85);font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
+                style="width:220px;padding:16px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);border-left:3px solid rgba(255,60,60,0.7);color:rgba(255,100,100,0.85);font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
                 onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.boxShadow='0 0 20px rgba(255,60,60,0.2)';this.style.letterSpacing='4px';"
                 onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
                 &#9632; MAIN MENU
@@ -1397,6 +1424,9 @@ function _applyStarterLoadout(ch) {
     loadout.leg  = starter.leg;
     loadout.shld = starter.shld;
 }
+
+// Game mode: 'simulation' (roguelike rounds) or 'campaign' (persistent progression)
+let _gameMode = 'simulation';
 
 // Phaser object references
 let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic;
@@ -4680,18 +4710,34 @@ function startRound(roundNum) {
             _perkState._autoDroneRespawnTimer = null;
         }
     }
-    _roundTotal = roundNum + 2;   // round 1=3, round 2=4, etc.
     _roundActive = true;
+    const scene = game.scene.scenes[0];
+
+    // ── Campaign mode: use mission config ──
+    const _isCampaignMode = _gameMode === 'campaign' && typeof getCampaignMission === 'function';
+    const _campaignMission = _isCampaignMode ? getCampaignMission() : null;
+    const _campaignEnemy = (_isCampaignMode && typeof getCampaignEnemyConfig === 'function') ? getCampaignEnemyConfig() : null;
+
+    if (_campaignMission && _campaignEnemy) {
+        _roundTotal = _campaignEnemy.totalEnemies + (_campaignMission.hasBoss ? 1 : 0);
+        // Store campaign enemy config for HP/speed scaling in spawnEnemy
+        window._activeCampaignConfig = _campaignEnemy;
+        // Record mission start time for speed-run bonus objective
+        window._missionStartTime = scene.time?.now || Date.now();
+    } else {
+        _roundTotal = roundNum + 2;   // round 1=3, round 2=4, etc.
+        window._activeCampaignConfig = null;
+    }
     updateRoundHUD();
 
-    const scene = game.scene.scenes[0];
     // Round 2+: wipe map debris and reset player to center
     if (roundNum > 1) _clearMapForRound(scene);
 
     // ── Phase 6: Arena & Objective selection ──
     if (typeof selectArena === 'function') {
-        const arenaKey = selectArena(roundNum);
-        const objKey = selectObjective(roundNum, arenaKey);
+        // Campaign mode: use mission's arena and objective
+        const arenaKey = _campaignMission ? _campaignMission.arena : selectArena(roundNum);
+        const objKey = _campaignMission ? _campaignMission.objective : selectObjective(roundNum, arenaKey);
         _arenaState.currentArena = arenaKey;
         _arenaState.currentObjective = objKey;
         // Cleanup previous objective state
@@ -4708,14 +4754,55 @@ function startRound(roundNum) {
         _showArenaLabel(scene, aLabel, oLabel);
     }
 
-    // Boss every 5th round; normal rounds otherwise
-    const isBossRound = roundNum > 0 && roundNum % 5 === 0;
+    // Boss every 5th round (simulation), or hasBoss flag (campaign)
+    const isBossRound = _campaignMission ? _campaignMission.hasBoss : (roundNum > 0 && roundNum % 5 === 0);
 
-    if (isBossRound) {
-        // BOSS ROUND — only the boss spawns; it counts as 1 kill to end the round
+    if (isBossRound && !(_campaignMission && _campaignEnemy && _campaignEnemy.totalEnemies > 0)) {
+        // BOSS-ONLY ROUND — only the boss spawns; it counts as 1 kill to end the round
         _roundTotal = 1;
         setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, roundNum); }, 800);
+    } else if (_campaignMission && _campaignEnemy) {
+        // ── CAMPAIGN MODE: use variable enemy composition ──
+        const comp = _campaignEnemy.composition;
+        let spawnIdx = 0;
+        let _elitesApplied = 0;
+
+        for (let i = 0; i < comp.length; i++) {
+            const typeKey = comp[i];
+            const delay = spawnIdx * 400;
+            setTimeout(() => {
+                if (!isDeployed || !_roundActive) return;
+                let spawned;
+                if (typeKey === 'normal') {
+                    spawned = spawnEnemy(scene);
+                } else if (typeof spawnSpecialEnemy === 'function') {
+                    spawned = spawnSpecialEnemy(scene, typeKey);
+                } else {
+                    spawned = spawnEnemy(scene);
+                }
+                // Apply elite modifier based on campaign config
+                if (spawned && _elitesApplied < _campaignEnemy.maxElites && Math.random() < _campaignEnemy.eliteChance) {
+                    const mod1 = (typeof _rollEliteModifier === 'function') ? _rollEliteModifier([]) : null;
+                    if (mod1) {
+                        applyEliteModifier(scene, spawned, mod1);
+                        _elitesApplied++;
+                    }
+                }
+            }, delay);
+            spawnIdx++;
+        }
+
+        // Boss fight at end of boss missions (after normal enemies)
+        if (_campaignMission.hasBoss) {
+            setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, _campaignEnemy.enemyLevel); }, spawnIdx * 400 + 600);
+        }
+
+        // Commander + medic in higher-level campaign missions
+        if (_campaignEnemy.enemyLevel >= 6) {
+            setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 800);
+        }
     } else {
+        // ── SIMULATION MODE: original round-based spawning ──
         // Normal round — commanders from round 4+, medic from round 3+
         // Phase 4: special enemy types and elite modifiers
         const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
@@ -5034,6 +5121,7 @@ function returnToMainMenu() {
         menu.style.display = 'flex';
         menu.style.opacity = '0';
         menu.style.transition = 'opacity 0.5s ease';
+        _updateCampaignButton();
         setTimeout(() => { menu.style.opacity = '1'; }, 20);
     }
 }
@@ -5154,6 +5242,21 @@ function onEnemyKilled(deadEnemy) {
     }
     _totalKills++;
     updateRoundHUD();
+    // Campaign bonus objective tracking: close kills, multi-kills, limb destroys
+    if (_gameMode === 'campaign' && typeof trackBonusObjective === 'function') {
+        // Close kill tracking (within 150px)
+        if (player?.active && deadEnemy?.x != null) {
+            const _killDist = Phaser.Math.Distance.Between(player.x, player.y, deadEnemy.x, deadEnemy.y);
+            if (_killDist <= 150) trackBonusObjective('close_kill', 1);
+        }
+        // Multi-kill tracking (2 kills within 2s)
+        if (!window._lastKillTime) window._lastKillTime = 0;
+        const now = Date.now();
+        if (now - window._lastKillTime < 2000) {
+            trackBonusObjective('multi_kill', 1);
+        }
+        window._lastKillTime = now;
+    }
     // Kill Streak: count kills without taking damage
     if (_perkState.killStreak > 0) {
         _perkState._killStreakCount = (_perkState._killStreakCount || 0) + 1;
@@ -5474,6 +5577,42 @@ function _triggerExtraction(scene) {
     _healPlayerFull();
     if (typeof cleanupObjective === 'function') cleanupObjective(scene);
     const nextRound = _round + 1;
+
+    // ── Campaign mode: award XP, mark mission complete, save ──
+    if (_gameMode === 'campaign' && typeof awardMissionXP === 'function') {
+        // Finalize bonus objective (e.g., speed run check)
+        const elapsed = (scene.time?.now || Date.now()) - (window._missionStartTime || 0);
+        if (typeof finalizeBonusObjective === 'function') finalizeBonusObjective(elapsed);
+
+        const xpResult = awardMissionXP();
+        if (typeof completeCampaignMission === 'function') completeCampaignMission();
+        saveCampaignProgress();
+        if (typeof saveCampaignState === 'function') saveCampaignState();
+        saveInventory();
+
+        // Build campaign-specific banner text
+        const mission = (typeof getCampaignMission === 'function') ? getCampaignMission() : null;
+        const mName = mission ? mission.name.toUpperCase() : 'MISSION';
+        let xpLine = `+${xpResult.xpGained} XP`;
+        if (xpResult.leveledUp) xpLine += ` // LEVEL UP! LV.${xpResult.newLevel}`;
+        const bonusLine = (_campaignState?.bonusObjectiveComplete) ? ' // BONUS COMPLETE' : '';
+
+        showRoundBanner(
+            'MISSION COMPLETE',
+            `${mName} ${xpLine}${bonusLine}`,
+            3000,
+            () => {
+                // Return to mission select instead of starting next round
+                _roundClearing = false;
+                window._activeCampaignConfig = null;
+                returnToHangarForMissionSelect();
+            }
+        );
+        return;
+    }
+
+    // Campaign: auto-save gear and progress after each cleared round
+    if (_gameMode === 'campaign') { saveCampaignProgress(); saveInventory(); }
     showRoundBanner(
         'ROUND ' + _round + ' CLEARED',
         _bannerSub,
@@ -5754,7 +5893,16 @@ function deployMech() {
             // Round system handles spawning
             // Kick off round system on first deploy / respawn
             document.getElementById('round-hud').style.display = 'flex';
-            showRoundBanner('ROUND ' + _round, (_round + 2) + ' ENEMY MECHS', 2000, null);
+            if (_gameMode === 'campaign' && typeof getCampaignMission === 'function') {
+                const _cm = getCampaignMission();
+                if (_cm) {
+                    const _campEnemy = (typeof getCampaignEnemyConfig === 'function') ? getCampaignEnemyConfig() : null;
+                    const _enemyCount = _campEnemy ? _campEnemy.totalEnemies + (_cm.hasBoss ? 1 : 0) : '?';
+                    showRoundBanner(_cm.name.toUpperCase(), _enemyCount + ' HOSTILES // LV.' + _cm.enemyLevel, 2200, null);
+                }
+            } else {
+                showRoundBanner('ROUND ' + _round, (_round + 2) + ' ENEMY MECHS', 2000, null);
+            }
             startRound(_round);
         }
     });
@@ -8383,12 +8531,18 @@ function spawnEnemy(scene) {
                  ? 'sniper'
                  : Phaser.Math.RND.pick(_behaviorPool[loadoutE.chassis]);
     e.speed      = chassisS.spd;
-    const _hm = 0.50 * (1 + Math.min(_round - 1, 30) * 0.05); // +5% HP per round, cap at round 30
+    // Campaign mode: scale HP using mission enemy level instead of round
+    const _effectiveRound = (window._activeCampaignConfig?.enemyLevel) || _round;
+    const _hm = 0.50 * (1 + Math.min(_effectiveRound - 1, 30) * 0.05); // +5% HP per level, cap at 30
+    // Apply campaign modifier HP/speed multipliers
+    const _campHpMult = (window._activeCampaignConfig?.enemyHpMult) || 1.0;
+    const _campSpdMult = (window._activeCampaignConfig?.enemySpeedMult) || 1.0;
+    if (_campSpdMult !== 1.0) e.speed = Math.round(e.speed * _campSpdMult);
     e.comp = {
-        core: { hp: Math.round(chassisS.coreHP * _hm), max: Math.round(chassisS.coreHP * _hm) },
-        lArm: { hp: Math.round(chassisS.armHP  * _hm), max: Math.round(chassisS.armHP  * _hm) },
-        rArm: { hp: Math.round(chassisS.armHP  * _hm), max: Math.round(chassisS.armHP  * _hm) },
-        legs: { hp: Math.round(chassisS.legHP  * _hm), max: Math.round(chassisS.legHP  * _hm) },
+        core: { hp: Math.round(chassisS.coreHP * _hm * _campHpMult), max: Math.round(chassisS.coreHP * _hm * _campHpMult) },
+        lArm: { hp: Math.round(chassisS.armHP  * _hm * _campHpMult), max: Math.round(chassisS.armHP  * _hm * _campHpMult) },
+        rArm: { hp: Math.round(chassisS.armHP  * _hm * _campHpMult), max: Math.round(chassisS.armHP  * _hm * _campHpMult) },
+        legs: { hp: Math.round(chassisS.legHP  * _hm * _campHpMult), max: Math.round(chassisS.legHP  * _hm * _campHpMult) },
     };
     e.health    = Object.values(e.comp).reduce((s,c) => s + c.hp, 0);
     e.maxHealth = e.health;
@@ -9509,6 +9663,13 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     player.lastHitTime = now;
 
     _damageTaken += amt;
+    // Campaign bonus objective: track core damage and HP threshold
+    if (_gameMode === 'campaign' && typeof trackBonusObjective === 'function') {
+        trackBonusObjective('no_core_damage', false);
+        if (player?.comp?.core && player.comp.core.hp < player.comp.core.max * 0.25) {
+            trackBonusObjective('hp_threshold', false);
+        }
+    }
     // Mag Anchors: -20% incoming damage while stationary
     if (_perkState._magAnchorsActive) amt *= 0.80;
     // Evasion Coils: 10% DR while moving, 15% DR vs close-range hits
@@ -9781,7 +9942,12 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     // Passive energy shield absorption
     if ((e.maxShield||0) > 0 && (e.shield||0) > 0 && !bulletShieldPierce) {
         const absorb = e._shieldAbsorb ?? 0.50;
+        const _shieldBefore = e.shield;
         e.shield = Math.max(0, e.shield - amt * absorb);
+        // Campaign bonus objective: shield break tracking
+        if (_gameMode === 'campaign' && _shieldBefore > 0 && e.shield <= 0 && typeof trackBonusObjective === 'function') {
+            trackBonusObjective('shield_break', 1);
+        }
         amt *= (1 - absorb);
         e._lastDamageTime = game.scene.scenes[0].time.now;
     } else if ((e.shield||0) > 0 && bulletShieldPierce) {
@@ -9876,6 +10042,11 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         e.comp[target].hp = Math.max(0, e.comp[target].hp - amt);
         e.health = Object.values(e.comp).reduce((s,c) => s + c.hp, 0);
         updateEnemyDoll(e);
+        // Campaign bonus objective: limb/head destroy tracking
+        if (_gameMode === 'campaign' && e.comp[target].hp <= 0 && typeof trackBonusObjective === 'function') {
+            trackBonusObjective('limb_destroy', 1);
+            if (target === 'head') trackBonusObjective('head_destroy', 1);
+        }
         // Scrap Cannon: destroyed limb explodes for 30 AoE
         if (e.comp[target].hp <= 0 && _perkState.salvageProtocol && !e['_salvageDrop_' + target]) {
             e['_salvageDrop_' + target] = true;
@@ -11288,6 +11459,11 @@ function showDeathScreen() {
     if (el('score-dmg-dealt')) el('score-dmg-dealt').innerText = Math.round(_damageDealt);
     if (el('score-dmg-taken')) el('score-dmg-taken').innerText = Math.round(_damageTaken);
     if (el('score-perks'))     el('score-perks').innerText     = _perksEarned;
+    // Campaign mode: update death screen primary button
+    const _deathBtn = el('death-btn-primary');
+    if (_deathBtn) {
+        _deathBtn.innerHTML = (_gameMode === 'campaign') ? '&#9733; MISSION SELECT' : '&#8962; MECH HANGAR';
+    }
     const ds = document.getElementById('death-screen');
     if (ds) ds.style.display = 'flex';
     const _dsc = game?.scene?.scenes[0];
@@ -11373,8 +11549,10 @@ function respawnMech() {
         try { _rScene.time.paused = false; } catch(e){}
     }
     _cleanupGame();
-    // Reset loot/inventory for the new run
-    if (typeof resetInventory === 'function') resetInventory();
+    // Reset loot/inventory — campaign keeps gear, simulation wipes
+    if (_gameMode !== 'campaign') {
+        if (typeof resetInventory === 'function') resetInventory();
+    }
     document.getElementById('hud-container').style.display = 'flex';
     document.getElementById('top-left-btns').style.display = 'flex';
     const _mm = document.getElementById('minimap-wrap'); if (_mm) _mm.style.display = 'block';
@@ -11382,7 +11560,12 @@ function respawnMech() {
     const hgc = document.getElementById('hangar-canvas');
     if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
     _resetHUDState();
-    _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
+    if (_gameMode === 'campaign') {
+        _roundKills = 0; _roundTotal = 0;
+        // Keep _round and _totalKills for campaign continuity
+    } else {
+        _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
+    }
     _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
     window._spectreClones = [];
     _pickedPerks = [];
@@ -12344,6 +12527,9 @@ function goToMainMenu() {
     const rb   = document.getElementById('round-banner'); if (rb) rb.style.display = 'none';
     const ds   = document.getElementById('death-screen'); if (ds) ds.style.display = 'none';
     const po   = document.getElementById('pause-overlay'); if (po) po.style.display = 'none';
+    const mso  = document.getElementById('mission-select-overlay'); if (mso) mso.style.display = 'none';
+    const mbp  = document.getElementById('mission-briefing-popup'); if (mbp) mbp.style.display = 'none';
+    window._activeCampaignConfig = null;
     // Stop hangar grid animation
     const hgc = document.getElementById('hangar-canvas');
     if (hgc) { hgc._gridRunning = false; hgc.style.display = 'none'; }
@@ -12383,15 +12569,31 @@ function returnToHangar() {
     const rban = document.getElementById('round-banner'); if (rban) rban.style.display = 'none';
     document.getElementById('top-left-btns').style.display = 'none';
     startHangarGrid();
+    // Update hangar mode label
+    const _modeLabel = document.getElementById('hangar-mode-label');
+    if (_modeLabel) {
+        if (_gameMode === 'campaign') {
+            _modeLabel.textContent = 'CAMPAIGN // ROUND ' + _round;
+            _modeLabel.style.color = 'rgba(255,215,0,0.45)';
+        } else {
+            _modeLabel.textContent = 'COMBAT SIMULATION';
+            _modeLabel.style.color = 'rgba(0,255,255,0.35)';
+        }
+    }
     // Reset HUD to clean state
     _resetHUDState();
-    // ── Full game reset — returning to hangar starts a new game ──
-    // Capture run for leaderboard BEFORE stats are reset
-    if (_round > 1 || _totalKills > 0) _capturePendingRun();
-    // Wipe all gear, inventory, and scrap — each run starts from scratch
-    resetInventory();
-    _applyStarterLoadout(loadout.chassis);
-    _round      = 1;
+    // ── Game reset — behavior depends on mode ──
+    if (_gameMode === 'campaign') {
+        // Campaign: keep gear, save progress, just reset combat state
+        saveCampaignProgress();
+        saveInventory();
+    } else {
+        // Simulation: full wipe — each run starts from scratch
+        if (_round > 1 || _totalKills > 0) _capturePendingRun();
+        resetInventory();
+        _applyStarterLoadout(loadout.chassis);
+    }
+    _round      = (_gameMode === 'campaign') ? _round : 1;
     CHASSIS.medium.modCooldownMult = 0.85; // restore from tactical_uplink modification
     _roundKills = 0;
     _roundTotal = 0;
@@ -12399,7 +12601,7 @@ function returnToHangar() {
     _roundClearing = false;
     _extractionActive = false; _extractionPoint = null; _extractionVisuals = null; _extractionPromptShown = false;
     _pickedPerks  = [];
-    _perksEarned  = 0;
+    _perksEarned  = (_gameMode === 'campaign') ? _perksEarned : 0;
     _shotsFired   = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0;
     _lastOfferedPerks = [];
     // Full perk state reset (same object shape as deploy reset)
@@ -12448,6 +12650,44 @@ function returnToHangar() {
     try { if (coverObjects) coverObjects.clear(true, true); } catch(e) {}
     refreshGarage();
     updateHUD();
+}
+
+/** Campaign: return from combat to the mission select screen. */
+function returnToHangarForMissionSelect() {
+    // Use returnToHangar to clean up game state
+    returnToHangar();
+    // Then hide hangar and show mission select
+    document.getElementById('ui-layer').style.display = 'none';
+    const hgc = document.getElementById('hangar-canvas');
+    if (hgc) { hgc._gridRunning = false; hgc.style.display = 'none'; }
+    window._activeCampaignConfig = null;
+    if (typeof showMissionSelect === 'function') showMissionSelect();
+}
+
+/** Campaign death: apply penalty then go to mission select. */
+function campaignDeathToMissionSelect() {
+    // Apply scrap death penalty
+    let scrapLost = 0;
+    if (typeof applyCampaignDeathPenalty === 'function') {
+        scrapLost = applyCampaignDeathPenalty();
+    }
+    // Save after penalty
+    if (typeof saveCampaignState === 'function') saveCampaignState();
+    saveCampaignProgress();
+    saveInventory();
+
+    // Show scrap loss message briefly on death screen
+    const ds = document.getElementById('death-screen');
+    const title = document.getElementById('death-title');
+    if (title && scrapLost > 0) {
+        title.innerHTML = 'MECH DESTROYED<br><span style="font-size:16px;color:#ff8844;letter-spacing:2px;">-' + scrapLost + ' SCRAP</span>';
+    }
+
+    // After a brief delay, transition to mission select
+    setTimeout(() => {
+        if (title) title.textContent = 'MECH DESTROYED';
+        returnToHangarForMissionSelect();
+    }, 2000);
 }
 
 // ================================================================
@@ -12558,11 +12798,34 @@ function proceedToMainMenu() {
         mm.style.display = 'flex';
         mm.style.opacity = '0';
         mm.style.transition = 'opacity 0.5s ease';
+        _updateCampaignButton();
         setTimeout(() => { mm.style.opacity = '1'; }, 20);
     }, 500);
 }
 
-function startGame() {
+/** Update Campaign button label based on whether a save exists. */
+function _updateCampaignButton() {
+    const btn = document.getElementById('campaign-btn');
+    if (!btn) return;
+    const saved = loadCampaignProgress();
+    // Check campaign state for level info
+    let levelInfo = '';
+    try {
+        const cState = localStorage.getItem('tw_campaign_state');
+        if (cState) {
+            const cs = JSON.parse(cState);
+            if (cs.playerLevel > 1) levelInfo = ' LV.' + cs.playerLevel;
+        }
+    } catch(e) {}
+    if (saved && (saved.round > 1 || levelInfo)) {
+        btn.innerHTML = '&#9733;&nbsp;&nbsp;CONTINUE CAMPAIGN <span style="font-size:9px;letter-spacing:2px;color:rgba(255,215,0,0.45);margin-left:6px;">' + (levelInfo || 'ROUND ' + saved.round) + '</span>';
+    } else {
+        btn.innerHTML = '&#9733;&nbsp;&nbsp;CAMPAIGN';
+    }
+}
+
+function startGame(mode) {
+    _gameMode = mode || 'simulation';
     const menu = document.getElementById('main-menu');
     if (!menu) return;
     // Callsign was already captured in proceedToMainMenu
@@ -12573,12 +12836,52 @@ function startGame() {
         _playerCallsign = _csVal || (localStorage.getItem ? (localStorage.getItem('tw_callsign') || 'ANONYMOUS') : 'ANONYMOUS');
         if (_playerCallsign && localStorage.setItem) localStorage.setItem('tw_callsign', _playerCallsign);
     }
+    // Campaign mode: restore saved progress, then show mission select
+    if (_gameMode === 'campaign') {
+        const saved = loadCampaignProgress();
+        if (saved) {
+            loadout.chassis = saved.chassis || 'light';
+            loadout.color   = saved.color   || 0x00ff00;
+            loadout.L       = saved.L       || 'smg';
+            loadout.R       = saved.R       || 'none';
+            loadout.mod     = saved.mod     || 'none';
+            loadout.aug     = saved.aug     || 'none';
+            loadout.leg     = saved.leg     || 'none';
+            loadout.shld    = saved.shld    || 'light_shield';
+            _round          = saved.round   || 1;
+            _totalKills     = saved.totalKills || 0;
+            _perksEarned    = saved.perksEarned || 0;
+            // Restore saved inventory and equipped gear
+            loadCampaignInventory();
+        } else {
+            // New campaign — starter loadout, round 1
+            _applyStarterLoadout(loadout.chassis);
+            resetInventory();
+            _round = 1;
+        }
+        // Load campaign state (chapters, missions, XP, level)
+        if (typeof loadCampaignState === 'function') loadCampaignState();
+        // Fade out menu, show mission select
+        menu.style.transition = 'opacity 0.6s ease';
+        menu.style.opacity = '0';
+        setTimeout(() => {
+            menu.style.display = 'none';
+            if (typeof showMissionSelect === 'function') showMissionSelect();
+        }, 600);
+        return;
+    }
+    // Simulation mode: go straight to hangar
     menu.style.transition = 'opacity 0.6s ease';
     menu.style.opacity = '0';
     setTimeout(() => {
         menu.style.display = 'none';
-        // loadout already synced (either fresh page load or reset by returnToMainMenu)
         document.getElementById('ui-layer').style.display = 'flex';
+        // Show mode label in hangar
+        const modeLabel = document.getElementById('hangar-mode-label');
+        if (modeLabel) {
+            modeLabel.textContent = 'COMBAT SIMULATION';
+            modeLabel.style.color = 'rgba(0,255,255,0.35)';
+        }
         startHangarGrid();
         // Ensure garage UI matches loadout state
         try { refreshGarage(); } catch(e) {}
