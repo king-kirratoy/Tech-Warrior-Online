@@ -1686,20 +1686,26 @@ function resetInventory() {
 }
 
 // ── SAVE/LOAD ──────────────────────────────────────────────────
-// Gear no longer persists across runs — each run starts fresh.
-// saveInventory is kept as a no-op so existing call sites don't break.
+// Simulation mode: gear resets every run (no persistence).
+// Campaign mode: gear persists to localStorage.
 function saveInventory() {
-    // Intentionally empty — gear resets every run
+    if (typeof _gameMode === 'undefined' || _gameMode !== 'campaign') return;
+    try {
+        localStorage.setItem('tw_campaign_inventory', JSON.stringify(_inventory));
+        localStorage.setItem('tw_campaign_equipped', JSON.stringify(_equipped));
+        localStorage.setItem('tw_campaign_scrap', String(_scrap));
+        localStorage.setItem('tw_campaign_itemCounter', String(_lootItemIdCounter));
+    } catch(e) {}
 }
 
-function loadInventory() {
+function loadCampaignInventory() {
     try {
-        const inv = localStorage.getItem('tw_inventory');
-        const eq = localStorage.getItem('tw_equipped');
-        const sc = localStorage.getItem('tw_scrap');
+        const inv = localStorage.getItem('tw_campaign_inventory');
+        const eq = localStorage.getItem('tw_campaign_equipped');
+        const sc = localStorage.getItem('tw_campaign_scrap');
+        const ic = localStorage.getItem('tw_campaign_itemCounter');
         if (inv) {
             const parsed = JSON.parse(inv);
-            // Validate: must be array of objects with required fields
             if (Array.isArray(parsed)) {
                 _inventory = parsed.filter(it => it && typeof it === 'object' && it.name && it.rarity && it.baseType);
             }
@@ -1716,10 +1722,42 @@ function loadInventory() {
             }
         }
         if (sc) _scrap = Math.max(0, parseInt(sc) || 0);
+        if (ic) _lootItemIdCounter = Math.max(_lootItemIdCounter, parseInt(ic) || 0);
         recalcGearStats();
     } catch(e) {
+        // If campaign data is corrupt, start fresh with starter gear
         _inventory = [];
         _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
         _scrap = 0;
     }
+}
+
+/** Save campaign progress (round, loadout, chassis, color). */
+function saveCampaignProgress() {
+    if (typeof _gameMode === 'undefined' || _gameMode !== 'campaign') return;
+    try {
+        const progress = {
+            round: (typeof _round !== 'undefined') ? _round : 1,
+            chassis: loadout.chassis,
+            color: loadout.color,
+            L: loadout.L,
+            R: loadout.R,
+            mod: loadout.mod,
+            aug: loadout.aug,
+            leg: loadout.leg,
+            shld: loadout.shld,
+            totalKills: (typeof _totalKills !== 'undefined') ? _totalKills : 0,
+            perksEarned: (typeof _perksEarned !== 'undefined') ? _perksEarned : 0
+        };
+        localStorage.setItem('tw_campaign_progress', JSON.stringify(progress));
+    } catch(e) {}
+}
+
+/** Load campaign progress. Returns the progress object or null. */
+function loadCampaignProgress() {
+    try {
+        const raw = localStorage.getItem('tw_campaign_progress');
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch(e) { return null; }
 }
