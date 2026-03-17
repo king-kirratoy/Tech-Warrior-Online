@@ -5494,23 +5494,37 @@ function drawMinimap() {
 // EXTRACTION POINT SYSTEM
 // ================================================================
 
+function _overlapsAnyCover(px, py, radius) {
+    if (!coverObjects) return false;
+    const pad = radius + 10; // extra margin so the player can comfortably reach the zone
+    return coverObjects.getChildren().some(c => {
+        if (!c.active) return false;
+        // coverCX/coverCY = true center; fall back to body origin + half size
+        const cx = c.coverCX ?? (c.x + (c.width || 0) / 2);
+        const cy = c.coverCY ?? (c.y + (c.height || 0) / 2);
+        const hw = (c.width  || 60) / 2 + pad;
+        const hh = (c.height || 60) / 2 + pad;
+        return Math.abs(px - cx) < hw && Math.abs(py - cy) < hh;
+    });
+}
+
 function _spawnExtractionPoint(scene) {
-    // Pick a random spot away from player, within map bounds
+    // Pick a random spot away from player, within map bounds, not overlapping cover
+    const zoneR = 60; // extraction zone radius — declared early for overlap check
     let ex, ey, attempts = 0;
     do {
         ex = Phaser.Math.Between(300, 3700);
         ey = Phaser.Math.Between(300, 3700);
         attempts++;
     } while (
-        attempts < 40 && player?.active &&
-        Phaser.Math.Distance.Between(ex, ey, player.x, player.y) < 600
+        attempts < 80 &&
+        (_overlapsAnyCover(ex, ey, zoneR) ||
+         (player?.active && Phaser.Math.Distance.Between(ex, ey, player.x, player.y) < 600))
     );
     _extractionPoint = { x: ex, y: ey };
     _extractionActive = true;
     _extractionPromptShown = false;
     updateRoundHUD();
-
-    const zoneR = 60; // extraction zone radius
 
     // Visual: pulsing green circle on the ground
     const glow = scene.add.circle(ex, ey, zoneR, 0x00ff66, 0.08).setDepth(2);
