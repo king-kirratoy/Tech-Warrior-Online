@@ -1062,6 +1062,15 @@ button.active {
 <!-- CAMPAIGN MISSION BRIEFING POPUP (shows modifier + bonus objective before deploy) -->
 <div id="mission-briefing-popup" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10003;flex-direction:column;align-items:flex-start;padding:16px 24px;background:rgba(12,16,20,0.95);border:1px solid rgba(255,215,0,0.3);border-left:3px solid #ffd700;border-radius:8px;box-shadow:0 0 20px rgba(255,215,0,0.15);font-family:'Courier New',monospace;pointer-events:none;max-width:500px;"></div>
 
+<!-- CAMPAIGN SUPPLY SHOP OVERLAY (Phase 4) -->
+<div id="shop-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.97);z-index:10004;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:'Courier New',monospace;"></div>
+
+<!-- CAMPAIGN LOADOUT SLOTS OVERLAY (Phase 4) -->
+<div id="loadout-slots-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.97);z-index:10004;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:'Courier New',monospace;"></div>
+
+<!-- CAMPAIGN CHASSIS UPGRADES OVERLAY (Phase 4) -->
+<div id="upgrades-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.97);z-index:10004;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:'Courier New',monospace;"></div>
+
 <!-- DEATH SCREEN -->
 <div id="death-screen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:99999;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;">
     <div style="text-align:center;">
@@ -5586,12 +5595,28 @@ function _triggerExtraction(scene) {
 
         const xpResult = awardMissionXP();
         if (typeof completeCampaignMission === 'function') completeCampaignMission();
+
+        // Phase 4: Award first-clear mission rewards
+        let rewardLine = '';
+        const mission = (typeof getCampaignMission === 'function') ? getCampaignMission() : null;
+        if (mission && typeof awardMissionReward === 'function') {
+            const reward = awardMissionReward(mission.id);
+            if (reward) {
+                rewardLine = ` // +${reward.scrap} SCRAP`;
+                if (reward.item) rewardLine += ` + ${reward.item.rarity.toUpperCase()} LOOT`;
+            }
+        }
+
+        // Phase 4: Apply chassis upgrades if leveled up
+        if (xpResult.leveledUp && typeof applyChassisUpgrades === 'function') {
+            applyChassisUpgrades();
+        }
+
         saveCampaignProgress();
         if (typeof saveCampaignState === 'function') saveCampaignState();
         saveInventory();
 
         // Build campaign-specific banner text
-        const mission = (typeof getCampaignMission === 'function') ? getCampaignMission() : null;
         const mName = mission ? mission.name.toUpperCase() : 'MISSION';
         let xpLine = `+${xpResult.xpGained} XP`;
         if (xpResult.leveledUp) xpLine += ` // LEVEL UP! LV.${xpResult.newLevel}`;
@@ -5599,7 +5624,7 @@ function _triggerExtraction(scene) {
 
         showRoundBanner(
             'MISSION COMPLETE',
-            `${mName} ${xpLine}${bonusLine}`,
+            `${mName} ${xpLine}${bonusLine}${rewardLine}`,
             3000,
             () => {
                 // Return to mission select instead of starting next round
@@ -5640,6 +5665,11 @@ function _cleanupExtraction(scene) {
 // ================================================================
 
 function deployMech() {
+    // Phase 4: Apply campaign chassis upgrades before deploy
+    if (_gameMode === 'campaign' && typeof applyChassisUpgrades === 'function') {
+        applyChassisUpgrades();
+    }
+
     // HEAVY: strip forbidden items if somehow equipped
     if (loadout.chassis === 'heavy') {
         if (loadout.mod === 'jump')    loadout.mod = 'none';
@@ -12529,6 +12559,9 @@ function goToMainMenu() {
     const po   = document.getElementById('pause-overlay'); if (po) po.style.display = 'none';
     const mso  = document.getElementById('mission-select-overlay'); if (mso) mso.style.display = 'none';
     const mbp  = document.getElementById('mission-briefing-popup'); if (mbp) mbp.style.display = 'none';
+    const sho  = document.getElementById('shop-overlay'); if (sho) sho.style.display = 'none';
+    const lso  = document.getElementById('loadout-slots-overlay'); if (lso) lso.style.display = 'none';
+    const ugo  = document.getElementById('upgrades-overlay'); if (ugo) ugo.style.display = 'none';
     window._activeCampaignConfig = null;
     // Stop hangar grid animation
     const hgc = document.getElementById('hangar-canvas');
@@ -12573,7 +12606,8 @@ function returnToHangar() {
     const _modeLabel = document.getElementById('hangar-mode-label');
     if (_modeLabel) {
         if (_gameMode === 'campaign') {
-            _modeLabel.textContent = 'CAMPAIGN // ROUND ' + _round;
+            const _lvl = (typeof _campaignState !== 'undefined') ? _campaignState.playerLevel : 1;
+            _modeLabel.textContent = 'CAMPAIGN // LV.' + _lvl + ' // ROUND ' + _round;
             _modeLabel.style.color = 'rgba(255,215,0,0.45)';
         } else {
             _modeLabel.textContent = 'COMBAT SIMULATION';
@@ -12661,6 +12695,8 @@ function returnToHangarForMissionSelect() {
     const hgc = document.getElementById('hangar-canvas');
     if (hgc) { hgc._gridRunning = false; hgc.style.display = 'none'; }
     window._activeCampaignConfig = null;
+    // Phase 4: Refresh shop stock when returning to mission select
+    if (typeof refreshShopStock === 'function') refreshShopStock();
     if (typeof showMissionSelect === 'function') showMissionSelect();
 }
 
@@ -12861,6 +12897,10 @@ function startGame(mode) {
         }
         // Load campaign state (chapters, missions, XP, level)
         if (typeof loadCampaignState === 'function') loadCampaignState();
+        // Phase 4: Apply chassis upgrades based on pilot level
+        if (typeof applyChassisUpgrades === 'function') applyChassisUpgrades();
+        // Phase 4: Generate initial shop stock
+        if (typeof refreshShopStock === 'function') refreshShopStock();
         // Fade out menu, show mission select
         menu.style.transition = 'opacity 0.6s ease';
         menu.style.opacity = '0';
