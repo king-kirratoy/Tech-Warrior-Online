@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════
-//  CAMPAIGN MISSION SYSTEM — Phase 3
-//  Chapters, missions, player leveling, modifiers, bonus objectives,
-//  variable enemy compositions, and level-differential XP scaling.
+//  CAMPAIGN MISSION SYSTEM — Phases 3 & 4
+//  Phase 3: Chapters, missions, player leveling, modifiers, bonus
+//           objectives, variable enemy compositions, XP scaling.
+//  Phase 4: Chassis upgrades, hangar shop, mission rewards, loadout slots.
 // ═══════════════════════════════════════════════════════════════════
 //
 // ── CROSS-FILE DEPENDENCIES ──────────────────────────────────────
@@ -12,6 +13,9 @@
 //   _campaignState        — active campaign state (current chapter, mission, XP, level, etc.)
 //   MISSION_MODIFIERS     — random modifier definitions
 //   BONUS_OBJECTIVES      — random bonus objective definitions
+//   CHASSIS_UPGRADES      — level-gated chassis stat bonuses (Phase 4)
+//   MISSION_REWARDS       — first-clear guaranteed loot per mission (Phase 4)
+//   SHOP_INVENTORY        — shop stock definitions (Phase 4)
 //
 // FUNCTIONS CALLED FROM index.html:
 //   getCampaignMission()        — returns current mission config
@@ -26,10 +30,18 @@
 //   showMissionSelect()         — show mission/chapter select UI
 //   saveCampaignState()         — save full campaign state
 //   loadCampaignState()         — load full campaign state
+//   getChassisUpgrades(level)   — get all chassis upgrades for current level (Phase 4)
+//   applyChassisUpgrades()      — apply level-based chassis stat bonuses (Phase 4)
+//   getMissionReward(missionId) — get first-clear reward for a mission (Phase 4)
+//   showShop()                  — show campaign hangar shop UI (Phase 4)
+//   refreshShopStock()          — restock shop inventory (Phase 4)
+//   saveLoadoutSlot(slotIdx)    — save current loadout to a slot (Phase 4)
+//   loadLoadoutSlot(slotIdx)    — load a saved loadout from a slot (Phase 4)
+//   showLoadoutSlots()          — show loadout slot management UI (Phase 4)
 //
 // GLOBALS READ FROM index.html / other files:
 //   _gameMode, _scrap, _round, _totalKills, _roundKills,
-//   ARENA_DEFS, OBJECTIVE_DEFS, ENEMY_TYPE_DEFS
+//   ARENA_DEFS, OBJECTIVE_DEFS, ENEMY_TYPE_DEFS, CHASSIS, loadout
 // ──────────────────────────────────────────────────────────────────
 
 // ══════════════════════════════════════════════════════════════════
@@ -251,7 +263,11 @@ let _campaignState = {
     activeModifier: null,
     activeBonusObjective: null,
     bonusObjectiveProgress: 0,
-    bonusObjectiveComplete: false
+    bonusObjectiveComplete: false,
+    // Phase 4: Claimed first-clear rewards: { 'ch1_m1': true, ... }
+    claimedRewards: {},
+    // Phase 4: Saved loadout configurations
+    loadoutSlots: []
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -796,6 +812,11 @@ function showMissionSelect() {
             html += `<div style="font-size:9px;letter-spacing:1px;color:#ff4444;border:1px solid rgba(255,68,68,0.3);padding:2px 6px;border-radius:3px;">BOSS</div>`;
         }
 
+        // Phase 4: First-clear reward badge
+        if (!completed && typeof getMissionReward === 'function' && getMissionReward(m.id)) {
+            html += `<div style="font-size:8px;letter-spacing:1px;color:#ffd700;border:1px solid rgba(255,215,0,0.3);padding:2px 5px;border-radius:3px;white-space:nowrap;">REWARD</div>`;
+        }
+
         html += '</button>';
     });
     html += '</div>';
@@ -911,4 +932,678 @@ function _closeMissionSelect() {
         menu.style.display = 'flex';
         menu.style.opacity = '1';
     }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ██████████████████████████████████████████████████████████████████
+//  PHASE 4 — CAMPAIGN-SPECIFIC RPG FEATURES
+// ██████████████████████████████████████████████████████████████████
+// ══════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════
+// 4A — CHASSIS UPGRADES (unlocked by pilot level)
+// ══════════════════════════════════════════════════════════════════
+
+/** Chassis upgrade definitions.
+ *  Each entry grants a stat bonus at a specific pilot level.
+ *  'chassis' = which chassis it applies to ('all' = universal). */
+const CHASSIS_UPGRADES = [
+    // ── Level 2-5: Early universals ──
+    { level: 2,  chassis: 'all',    stat: 'coreHP',  value: 10,  label: '+10 Core HP' },
+    { level: 3,  chassis: 'all',    stat: 'armHP',   value: 5,   label: '+5 Arm HP' },
+    { level: 4,  chassis: 'all',    stat: 'legHP',   value: 5,   label: '+5 Leg HP' },
+    { level: 5,  chassis: 'all',    stat: 'spd',     value: 5,   label: '+5 Speed' },
+
+    // ── Level 6-10: Chassis-specific ──
+    { level: 6,  chassis: 'light',  stat: 'spd',     value: 10,  label: '+10 Speed' },
+    { level: 6,  chassis: 'medium', stat: 'coreHP',  value: 15,  label: '+15 Core HP' },
+    { level: 6,  chassis: 'heavy',  stat: 'coreHP',  value: 25,  label: '+25 Core HP' },
+    { level: 8,  chassis: 'light',  stat: 'coreHP',  value: 10,  label: '+10 Core HP' },
+    { level: 8,  chassis: 'medium', stat: 'armHP',   value: 10,  label: '+10 Arm HP' },
+    { level: 8,  chassis: 'heavy',  stat: 'armHP',   value: 15,  label: '+15 Arm HP' },
+    { level: 10, chassis: 'light',  stat: 'armHP',   value: 8,   label: '+8 Arm HP' },
+    { level: 10, chassis: 'medium', stat: 'legHP',   value: 10,  label: '+10 Leg HP' },
+    { level: 10, chassis: 'heavy',  stat: 'legHP',   value: 15,  label: '+15 Leg HP' },
+
+    // ── Level 12-16: Mid-game universals ──
+    { level: 12, chassis: 'all',    stat: 'coreHP',  value: 15,  label: '+15 Core HP' },
+    { level: 14, chassis: 'all',    stat: 'spd',     value: 5,   label: '+5 Speed' },
+    { level: 16, chassis: 'all',    stat: 'armHP',   value: 8,   label: '+8 Arm HP' },
+    { level: 16, chassis: 'all',    stat: 'legHP',   value: 8,   label: '+8 Leg HP' },
+
+    // ── Level 18-22: Late chassis-specific ──
+    { level: 18, chassis: 'light',  stat: 'spd',     value: 12,  label: '+12 Speed' },
+    { level: 18, chassis: 'medium', stat: 'coreHP',  value: 20,  label: '+20 Core HP' },
+    { level: 18, chassis: 'heavy',  stat: 'coreHP',  value: 30,  label: '+30 Core HP' },
+    { level: 20, chassis: 'light',  stat: 'coreHP',  value: 15,  label: '+15 Core HP' },
+    { level: 20, chassis: 'medium', stat: 'armHP',   value: 12,  label: '+12 Arm HP' },
+    { level: 20, chassis: 'heavy',  stat: 'armHP',   value: 20,  label: '+20 Arm HP' },
+    { level: 22, chassis: 'all',    stat: 'coreHP',  value: 20,  label: '+20 Core HP' },
+    { level: 22, chassis: 'all',    stat: 'legHP',   value: 10,  label: '+10 Leg HP' },
+];
+
+/** Get all chassis upgrades unlocked at or below the given level. */
+function getChassisUpgrades(level, chassisType) {
+    return CHASSIS_UPGRADES.filter(u =>
+        u.level <= level && (u.chassis === 'all' || u.chassis === chassisType)
+    );
+}
+
+/** Compute total stat bonuses from chassis upgrades for current level.
+ *  Returns { coreHP, armHP, legHP, spd } bonus values. */
+function getChassisUpgradeBonuses(level, chassisType) {
+    const bonuses = { coreHP: 0, armHP: 0, legHP: 0, spd: 0 };
+    const upgrades = getChassisUpgrades(level, chassisType);
+    for (const u of upgrades) {
+        bonuses[u.stat] = (bonuses[u.stat] || 0) + u.value;
+    }
+    return bonuses;
+}
+
+/** Store base chassis values so we can re-apply upgrades cleanly. */
+let _chassisBaseValues = null;
+
+function _snapshotChassisBase() {
+    if (_chassisBaseValues) return; // already captured
+    if (typeof CHASSIS === 'undefined') return;
+    _chassisBaseValues = {};
+    for (const key of Object.keys(CHASSIS)) {
+        _chassisBaseValues[key] = {
+            coreHP: CHASSIS[key].coreHP,
+            armHP: CHASSIS[key].armHP,
+            legHP: CHASSIS[key].legHP,
+            spd: CHASSIS[key].spd
+        };
+    }
+}
+
+/** Apply level-based chassis upgrades to the CHASSIS object.
+ *  Should be called after loading campaign state and before deploy. */
+function applyChassisUpgrades() {
+    if (typeof CHASSIS === 'undefined') return;
+    _snapshotChassisBase();
+
+    for (const key of Object.keys(CHASSIS)) {
+        // Restore base values first
+        if (_chassisBaseValues?.[key]) {
+            CHASSIS[key].coreHP = _chassisBaseValues[key].coreHP;
+            CHASSIS[key].armHP  = _chassisBaseValues[key].armHP;
+            CHASSIS[key].legHP  = _chassisBaseValues[key].legHP;
+            CHASSIS[key].spd    = _chassisBaseValues[key].spd;
+        }
+        // Apply upgrades for this chassis at current pilot level
+        const bonuses = getChassisUpgradeBonuses(_campaignState.playerLevel, key);
+        CHASSIS[key].coreHP += bonuses.coreHP;
+        CHASSIS[key].armHP  += bonuses.armHP;
+        CHASSIS[key].legHP  += bonuses.legHP;
+        CHASSIS[key].spd    += bonuses.spd;
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 4B — MISSION REWARDS (first-clear guaranteed loot)
+// ══════════════════════════════════════════════════════════════════
+
+/** Guaranteed reward for first-time mission completion.
+ *  scrap = flat scrap bonus, itemRarity = guaranteed loot drop rarity,
+ *  itemLevel = item level for generation. */
+const MISSION_REWARDS = {
+    // Chapter 1
+    ch1_m1: { scrap: 5,   itemRarity: 'common',    itemLevel: 1 },
+    ch1_m2: { scrap: 8,   itemRarity: 'common',    itemLevel: 2 },
+    ch1_m3: { scrap: 10,  itemRarity: 'uncommon',  itemLevel: 3 },
+    ch1_m4: { scrap: 12,  itemRarity: 'uncommon',  itemLevel: 4 },
+    ch1_m5: { scrap: 25,  itemRarity: 'rare',      itemLevel: 5 },
+    // Chapter 2
+    ch2_m1: { scrap: 12,  itemRarity: 'uncommon',  itemLevel: 5 },
+    ch2_m2: { scrap: 14,  itemRarity: 'uncommon',  itemLevel: 6 },
+    ch2_m3: { scrap: 16,  itemRarity: 'rare',      itemLevel: 7 },
+    ch2_m4: { scrap: 18,  itemRarity: 'rare',      itemLevel: 8 },
+    ch2_m5: { scrap: 40,  itemRarity: 'epic',      itemLevel: 10 },
+    // Chapter 3
+    ch3_m1: { scrap: 16,  itemRarity: 'rare',      itemLevel: 9 },
+    ch3_m2: { scrap: 18,  itemRarity: 'rare',      itemLevel: 10 },
+    ch3_m3: { scrap: 22,  itemRarity: 'rare',      itemLevel: 11 },
+    ch3_m4: { scrap: 25,  itemRarity: 'epic',      itemLevel: 12 },
+    ch3_m5: { scrap: 50,  itemRarity: 'epic',      itemLevel: 14 },
+    // Chapter 4
+    ch4_m1: { scrap: 22,  itemRarity: 'rare',      itemLevel: 13 },
+    ch4_m2: { scrap: 25,  itemRarity: 'epic',      itemLevel: 14 },
+    ch4_m3: { scrap: 28,  itemRarity: 'epic',      itemLevel: 15 },
+    ch4_m4: { scrap: 30,  itemRarity: 'epic',      itemLevel: 16 },
+    ch4_m5: { scrap: 60,  itemRarity: 'legendary', itemLevel: 18 },
+    // Chapter 5
+    ch5_m1: { scrap: 28,  itemRarity: 'epic',      itemLevel: 17 },
+    ch5_m2: { scrap: 30,  itemRarity: 'epic',      itemLevel: 18 },
+    ch5_m3: { scrap: 35,  itemRarity: 'epic',      itemLevel: 19 },
+    ch5_m4: { scrap: 40,  itemRarity: 'legendary', itemLevel: 20 },
+    ch5_m5: { scrap: 100, itemRarity: 'legendary', itemLevel: 22 },
+};
+
+/** Get the first-clear reward for a mission. Returns null if already claimed. */
+function getMissionReward(missionId) {
+    if (!MISSION_REWARDS[missionId]) return null;
+    // Check if already claimed
+    if (_campaignState.claimedRewards?.[missionId]) return null;
+    return MISSION_REWARDS[missionId];
+}
+
+/** Generate and award the first-clear reward item.
+ *  Returns { scrap, item } or null. */
+function awardMissionReward(missionId) {
+    const reward = getMissionReward(missionId);
+    if (!reward) return null;
+
+    // Mark as claimed
+    if (!_campaignState.claimedRewards) _campaignState.claimedRewards = {};
+    _campaignState.claimedRewards[missionId] = true;
+
+    // Award scrap
+    if (typeof _scrap !== 'undefined') _scrap += reward.scrap;
+
+    // Generate a guaranteed item at the reward rarity
+    let item = null;
+    if (typeof generateItem === 'function') {
+        // Try up to 5 times to get the target rarity
+        for (let i = 0; i < 5; i++) {
+            item = generateItem(reward.itemLevel, {});
+            if (item) {
+                // Force the reward rarity
+                item.rarity = reward.itemRarity;
+                // Re-apply rarity stat multiplier
+                if (typeof RARITY_DEFS !== 'undefined' && item.baseStats) {
+                    const rd = RARITY_DEFS[reward.itemRarity];
+                    const levelMult = 1 + (reward.itemLevel - 1) * 0.03;
+                    for (const [k, v] of Object.entries(item.baseStats)) {
+                        if (typeof v === 'number') {
+                            item.computedStats[k] = Math.round(v * levelMult * rd.statMult);
+                        }
+                    }
+                    // Re-roll affixes for new rarity
+                    if (typeof rollAffixes === 'function') {
+                        const _affixTypeMap = { shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment' };
+                        const affixType = _affixTypeMap[item.baseType] || item.baseType;
+                        item.affixes = rollAffixes(affixType, item.subType, reward.itemRarity);
+                        // Re-merge computed stats
+                        for (const af of item.affixes) {
+                            if (af.stat && typeof af.value === 'number') {
+                                item.computedStats[af.stat] = (item.computedStats[af.stat] || 0) + af.value;
+                            }
+                        }
+                    }
+                    item.name = rd.label + ' ' + (item.shortName || item.name);
+                }
+                break;
+            }
+        }
+        // Add to inventory if there's room
+        if (item && typeof _inventory !== 'undefined' && _inventory.length < (typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30)) {
+            _inventory.push(item);
+        }
+    }
+
+    return { scrap: reward.scrap, item };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 4C — HANGAR SHOP (buy/sell gear with scrap)
+// ══════════════════════════════════════════════════════════════════
+
+/** Shop stock — refreshed each time player returns to mission select. */
+let _shopStock = [];
+const SHOP_MAX_ITEMS = 8;
+
+/** Base prices by rarity (buy price). Sell = scrapValue from RARITY_DEFS. */
+const SHOP_PRICES = {
+    common:    5,
+    uncommon:  15,
+    rare:      40,
+    epic:      100,
+    legendary: 250
+};
+
+/** Refresh shop stock with random items at the player's level. */
+function refreshShopStock() {
+    _shopStock = [];
+    if (typeof generateItem !== 'function') return;
+
+    const level = _campaignState.playerLevel || 1;
+    // Stock scales: lower levels = more commons, higher = rarer items possible
+    for (let i = 0; i < SHOP_MAX_ITEMS; i++) {
+        const item = generateItem(Math.max(1, level + Math.floor(Math.random() * 3) - 1), {});
+        if (!item) continue;
+        // Shop items cost based on rarity + level scaling
+        const basePrice = SHOP_PRICES[item.rarity] || 10;
+        const levelScale = 1 + (item.level - 1) * 0.05;
+        item._shopPrice = Math.round(basePrice * levelScale);
+        _shopStock.push(item);
+    }
+}
+
+/** Get sell price for an item (same as scrap value). */
+function getItemSellPrice(item) {
+    if (!item) return 0;
+    if (typeof RARITY_DEFS !== 'undefined' && RARITY_DEFS[item.rarity]) {
+        return RARITY_DEFS[item.rarity].scrapValue;
+    }
+    return 1;
+}
+
+/** Buy an item from the shop. Returns true if successful. */
+function shopBuyItem(shopIdx) {
+    if (shopIdx < 0 || shopIdx >= _shopStock.length) return false;
+    const item = _shopStock[shopIdx];
+    if (!item) return false;
+    if (typeof _scrap === 'undefined' || _scrap < item._shopPrice) return false;
+    if (typeof _inventory !== 'undefined' && _inventory.length >= (typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30)) return false;
+
+    _scrap -= item._shopPrice;
+    const bought = { ...item };
+    delete bought._shopPrice;
+    _inventory.push(bought);
+    _shopStock.splice(shopIdx, 1);
+    if (typeof saveInventory === 'function') saveInventory();
+    return true;
+}
+
+/** Sell an item from inventory. Returns scrap gained. */
+function shopSellItem(invIdx) {
+    if (typeof _inventory === 'undefined' || invIdx < 0 || invIdx >= _inventory.length) return 0;
+    const item = _inventory[invIdx];
+    const price = getItemSellPrice(item);
+    _scrap += price;
+    _inventory.splice(invIdx, 1);
+    if (typeof saveInventory === 'function') saveInventory();
+    return price;
+}
+
+/** Show the campaign shop UI overlay. */
+function showShop() {
+    let overlay = document.getElementById('shop-overlay');
+    if (!overlay) return;
+
+    // Refresh stock if empty
+    if (_shopStock.length === 0) refreshShopStock();
+
+    const rarityColors = {
+        common: '#c0c8d0', uncommon: '#00ff44', rare: '#4488ff',
+        epic: '#aa44ff', legendary: '#ffd700'
+    };
+
+    let html = '';
+    html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);margin-bottom:4px;">SUPPLY SHOP</div>';
+    html += `<div style="font-size:12px;letter-spacing:2px;color:rgba(255,215,0,0.6);margin-bottom:20px;">SCRAP: <span style="color:#ffd700;">${_scrap}</span></div>`;
+
+    // ── BUY SECTION ──
+    html += '<div style="font-size:13px;letter-spacing:3px;color:rgba(0,255,255,0.7);margin-bottom:10px;">BUY</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;max-width:700px;">';
+    if (_shopStock.length === 0) {
+        html += '<div style="font-size:11px;color:rgba(200,210,217,0.4);letter-spacing:1px;">No items in stock. Complete a mission to restock.</div>';
+    }
+    _shopStock.forEach((item, idx) => {
+        const rc = rarityColors[item.rarity] || '#c0c8d0';
+        const canBuy = _scrap >= item._shopPrice && _inventory.length < (typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30);
+        const opacity = canBuy ? '1' : '0.4';
+        html += `<button onclick="${canBuy ? `_shopBuy(${idx})` : ''}" style="width:155px;padding:10px;background:rgba(255,255,255,0.03);border:1px solid ${rc}40;border-left:3px solid ${rc};border-radius:4px;font-family:'Courier New',monospace;cursor:${canBuy?'pointer':'not-allowed'};opacity:${opacity};text-align:left;transition:all 0.2s;" ${canBuy ? `onmouseover="this.style.background='rgba(255,215,0,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'"` : ''}>`;
+        html += `<div style="font-size:10px;letter-spacing:1px;color:${rc};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
+        html += `<div style="font-size:9px;color:rgba(200,210,217,0.5);margin-bottom:4px;">${(item.rarity||'').toUpperCase()} LV.${item.level||1}</div>`;
+        // Show key stats
+        if (item.computedStats) {
+            const statKeys = Object.keys(item.computedStats).slice(0, 2);
+            const statStr = statKeys.map(k => `${k}:${item.computedStats[k]}`).join(' ');
+            html += `<div style="font-size:8px;color:rgba(200,210,217,0.35);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${statStr}</div>`;
+        }
+        html += `<div style="font-size:11px;letter-spacing:1px;color:#ffd700;">⬡ ${item._shopPrice}</div>`;
+        html += '</button>';
+    });
+    html += '</div>';
+
+    // ── SELL SECTION ──
+    html += '<div style="font-size:13px;letter-spacing:3px;color:rgba(255,100,100,0.7);margin-bottom:10px;">SELL</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px;max-width:700px;max-height:200px;overflow-y:auto;">';
+    if (typeof _inventory !== 'undefined' && _inventory.length > 0) {
+        _inventory.forEach((item, idx) => {
+            const rc = rarityColors[item.rarity] || '#c0c8d0';
+            const sellPrice = getItemSellPrice(item);
+            html += `<button onclick="_shopSell(${idx})" style="width:145px;padding:8px;background:rgba(255,255,255,0.03);border:1px solid ${rc}30;border-left:2px solid ${rc};border-radius:4px;font-family:'Courier New',monospace;cursor:pointer;text-align:left;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">`;
+            html += `<div style="font-size:9px;letter-spacing:1px;color:${rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
+            html += `<div style="font-size:10px;color:#ff8844;">⬡ ${sellPrice}</div>`;
+            html += '</button>';
+        });
+    } else {
+        html += '<div style="font-size:11px;color:rgba(200,210,217,0.4);letter-spacing:1px;">No items in inventory to sell.</div>';
+    }
+    html += '</div>';
+
+    // ── RESTOCK BUTTON ──
+    const restockCost = Math.max(10, Math.round(_campaignState.playerLevel * 5));
+    const canRestock = _scrap >= restockCost;
+    html += '<div style="display:flex;gap:16px;margin-top:8px;">';
+    html += `<button onclick="${canRestock ? '_shopRestock()' : ''}" style="padding:10px 24px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,${canRestock?'0.4':'0.15'});color:${canRestock?'rgba(0,255,255,0.85)':'rgba(0,255,255,0.3)'};font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:${canRestock?'pointer':'not-allowed'};transition:all 0.2s;" ${canRestock?`onmouseover="this.style.background='rgba(0,255,255,0.1)'" onmouseout="this.style.background='rgba(0,255,255,0.04)'"`:''}>RESTOCK ⬡ ${restockCost}</button>`;
+    html += `<button onclick="_closeShop()" style="padding:10px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)'" onmouseout="this.style.background='rgba(255,60,60,0.04)'">BACK</button>`;
+    html += '</div>';
+
+    overlay.innerHTML = html;
+    overlay.style.display = 'flex';
+}
+
+function _shopBuy(idx) {
+    if (shopBuyItem(idx)) {
+        showShop(); // re-render
+    }
+}
+
+function _shopSell(idx) {
+    shopSellItem(idx);
+    showShop(); // re-render
+}
+
+function _shopRestock() {
+    const cost = Math.max(10, Math.round(_campaignState.playerLevel * 5));
+    if (typeof _scrap === 'undefined' || _scrap < cost) return;
+    _scrap -= cost;
+    refreshShopStock();
+    showShop();
+}
+
+function _closeShop() {
+    const overlay = document.getElementById('shop-overlay');
+    if (overlay) overlay.style.display = 'none';
+    // Return to mission select
+    if (typeof showMissionSelect === 'function') showMissionSelect();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 4D — LOADOUT SLOTS (save/swap multiple loadout configurations)
+// ══════════════════════════════════════════════════════════════════
+
+const MAX_LOADOUT_SLOTS = 5;
+
+/** Get saved loadout slots from campaign state. */
+function _getLoadoutSlots() {
+    if (!_campaignState.loadoutSlots) _campaignState.loadoutSlots = [];
+    return _campaignState.loadoutSlots;
+}
+
+/** Save the current loadout to a named slot. */
+function saveLoadoutSlot(slotIdx, name) {
+    if (typeof loadout === 'undefined') return false;
+    const slots = _getLoadoutSlots();
+    if (slotIdx < 0 || slotIdx >= MAX_LOADOUT_SLOTS) return false;
+
+    slots[slotIdx] = {
+        name: name || ('SLOT ' + (slotIdx + 1)),
+        chassis: loadout.chassis,
+        L: loadout.L,
+        R: loadout.R,
+        mod: loadout.mod,
+        aug: loadout.aug,
+        leg: loadout.leg,
+        shld: loadout.shld,
+        color: loadout.color
+    };
+    saveCampaignState();
+    return true;
+}
+
+/** Load a saved loadout from a slot. */
+function loadLoadoutSlot(slotIdx) {
+    const slots = _getLoadoutSlots();
+    if (slotIdx < 0 || slotIdx >= slots.length || !slots[slotIdx]) return false;
+
+    const slot = slots[slotIdx];
+    loadout.chassis = slot.chassis || 'light';
+    loadout.L       = slot.L       || 'smg';
+    loadout.R       = slot.R       || 'none';
+    loadout.mod     = slot.mod     || 'none';
+    loadout.aug     = slot.aug     || 'none';
+    loadout.leg     = slot.leg     || 'none';
+    loadout.shld    = slot.shld    || 'light_shield';
+    loadout.color   = slot.color   || 0x00ff00;
+
+    // Refresh garage UI if available
+    if (typeof refreshGarage === 'function') refreshGarage();
+    return true;
+}
+
+/** Delete a saved loadout slot. */
+function deleteLoadoutSlot(slotIdx) {
+    const slots = _getLoadoutSlots();
+    if (slotIdx < 0 || slotIdx >= slots.length) return;
+    slots[slotIdx] = null;
+    saveCampaignState();
+}
+
+/** Show the loadout slots UI overlay. */
+function showLoadoutSlots() {
+    let overlay = document.getElementById('loadout-slots-overlay');
+    if (!overlay) return;
+
+    const slots = _getLoadoutSlots();
+    const chassisColors = { light: '#88ff88', medium: '#ffcc44', heavy: '#ff8844' };
+
+    let html = '';
+    html += '<div style="font-size:24px;letter-spacing:6px;color:#00ffff;text-shadow:0 0 16px rgba(0,255,255,0.5);margin-bottom:20px;">LOADOUT SLOTS</div>';
+
+    // Current loadout preview
+    html += '<div style="margin-bottom:20px;padding:12px 16px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.2);border-radius:6px;max-width:500px;">';
+    html += '<div style="font-size:10px;letter-spacing:2px;color:rgba(0,255,255,0.6);margin-bottom:6px;">CURRENT LOADOUT</div>';
+    const chc = chassisColors[loadout.chassis] || '#c8d2d9';
+    html += `<div style="font-size:12px;color:${chc};letter-spacing:1px;">${(loadout.chassis||'').toUpperCase()} // L:${(loadout.L||'none').toUpperCase()} R:${(loadout.R||'none').toUpperCase()} MOD:${(loadout.mod||'none').toUpperCase()} SHLD:${(loadout.shld||'none').toUpperCase()}</div>`;
+    html += '</div>';
+
+    // Slot list
+    html += '<div style="display:flex;flex-direction:column;gap:8px;max-width:500px;width:100%;">';
+    for (let i = 0; i < MAX_LOADOUT_SLOTS; i++) {
+        const slot = slots[i];
+        if (slot) {
+            const sc = chassisColors[slot.chassis] || '#c8d2d9';
+            html += `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(0,255,255,0.15);border-left:3px solid ${sc};border-radius:4px;">`;
+            html += `<div style="flex:1;">`;
+            html += `<div style="font-size:11px;letter-spacing:2px;color:#c8d2d9;margin-bottom:2px;">${slot.name}</div>`;
+            html += `<div style="font-size:9px;color:rgba(200,210,217,0.4);">${(slot.chassis||'').toUpperCase()} // L:${(slot.L||'none').toUpperCase()} R:${(slot.R||'none').toUpperCase()}</div>`;
+            html += '</div>';
+            html += `<button onclick="_loadSlot(${i})" style="padding:6px 14px;background:rgba(0,255,255,0.06);border:1px solid rgba(0,255,255,0.3);color:rgba(0,255,255,0.8);font-size:10px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;border-radius:3px;transition:all 0.2s;" onmouseover="this.style.background='rgba(0,255,255,0.15)'" onmouseout="this.style.background='rgba(0,255,255,0.06)'">LOAD</button>`;
+            html += `<button onclick="_deleteSlot(${i})" style="padding:6px 10px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.2);color:rgba(255,100,100,0.6);font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;border-radius:3px;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)'" onmouseout="this.style.background='rgba(255,60,60,0.04)'">✕</button>`;
+            html += '</div>';
+        } else {
+            html += `<button onclick="_saveSlot(${i})" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.1);border-radius:4px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.background='rgba(0,255,255,0.04)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">`;
+            html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(200,210,217,0.3);">SLOT ${i+1} — EMPTY</div>`;
+            html += `<div style="margin-left:auto;font-size:10px;letter-spacing:2px;color:rgba(0,255,255,0.4);">SAVE</div>`;
+            html += '</button>';
+        }
+    }
+    html += '</div>';
+
+    // Close button
+    html += '<div style="margin-top:20px;">';
+    html += `<button onclick="_closeLoadoutSlots()" style="padding:12px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:12px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)'" onmouseout="this.style.background='rgba(255,60,60,0.04)'">BACK</button>`;
+    html += '</div>';
+
+    overlay.innerHTML = html;
+    overlay.style.display = 'flex';
+}
+
+function _saveSlot(idx) {
+    const name = 'SLOT ' + (idx + 1) + ' — ' + (loadout.chassis || 'MECH').toUpperCase();
+    saveLoadoutSlot(idx, name);
+    showLoadoutSlots();
+}
+
+function _loadSlot(idx) {
+    loadLoadoutSlot(idx);
+    showLoadoutSlots();
+}
+
+function _deleteSlot(idx) {
+    deleteLoadoutSlot(idx);
+    showLoadoutSlots();
+}
+
+function _closeLoadoutSlots() {
+    const overlay = document.getElementById('loadout-slots-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 4E — UPDATED SAVE/LOAD (include Phase 4 state)
+// ══════════════════════════════════════════════════════════════════
+
+// Override saveCampaignState to include Phase 4 data
+const _phase3_saveCampaignState = saveCampaignState;
+saveCampaignState = function() {
+    try {
+        const state = {
+            playerLevel: _campaignState.playerLevel,
+            playerXP: _campaignState.playerXP,
+            currentChapter: _campaignState.currentChapter,
+            currentMission: _campaignState.currentMission,
+            completedMissions: _campaignState.completedMissions,
+            // Phase 4 additions
+            claimedRewards: _campaignState.claimedRewards || {},
+            loadoutSlots: _campaignState.loadoutSlots || []
+        };
+        localStorage.setItem('tw_campaign_state', JSON.stringify(state));
+    } catch(e) {}
+};
+
+// Override loadCampaignState to restore Phase 4 data
+const _phase3_loadCampaignState = loadCampaignState;
+loadCampaignState = function() {
+    try {
+        const raw = localStorage.getItem('tw_campaign_state');
+        if (!raw) return false;
+        const state = JSON.parse(raw);
+        if (state) {
+            _campaignState.playerLevel = state.playerLevel || 1;
+            _campaignState.playerXP = state.playerXP || 0;
+            _campaignState.currentChapter = state.currentChapter || 0;
+            _campaignState.currentMission = state.currentMission || 0;
+            _campaignState.completedMissions = state.completedMissions || {};
+            // Phase 4 additions
+            _campaignState.claimedRewards = state.claimedRewards || {};
+            _campaignState.loadoutSlots = state.loadoutSlots || [];
+            return true;
+        }
+    } catch(e) {}
+    return false;
+};
+
+// ══════════════════════════════════════════════════════════════════
+// 4F — UPDATED MISSION SELECT UI (add shop + loadout buttons)
+// ══════════════════════════════════════════════════════════════════
+
+// Override showMissionSelect to add Phase 4 buttons
+const _phase3_showMissionSelect = showMissionSelect;
+showMissionSelect = function() {
+    // Call original to render base UI
+    _phase3_showMissionSelect();
+
+    const overlay = document.getElementById('mission-select-overlay');
+    if (!overlay) return;
+
+    // Find the bottom button area and inject shop + loadout + upgrades buttons
+    // We append them after the existing content
+    const extraBar = document.createElement('div');
+    extraBar.style.cssText = 'display:flex;gap:12px;margin-top:16px;';
+
+    // Shop button
+    const shopBtn = document.createElement('button');
+    shopBtn.textContent = 'SUPPLY SHOP';
+    shopBtn.style.cssText = 'padding:10px 24px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.3);color:rgba(255,215,0,0.8);font-size:11px;letter-spacing:3px;font-family:Courier New,monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;';
+    shopBtn.onmouseover = () => { shopBtn.style.background = 'rgba(255,215,0,0.14)'; };
+    shopBtn.onmouseout  = () => { shopBtn.style.background = 'rgba(255,215,0,0.06)'; };
+    shopBtn.onclick = () => {
+        overlay.style.display = 'none';
+        showShop();
+    };
+
+    // Loadout slots button
+    const loadoutBtn = document.createElement('button');
+    loadoutBtn.textContent = 'LOADOUT SLOTS';
+    loadoutBtn.style.cssText = 'padding:10px 24px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.3);color:rgba(0,255,255,0.7);font-size:11px;letter-spacing:3px;font-family:Courier New,monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;';
+    loadoutBtn.onmouseover = () => { loadoutBtn.style.background = 'rgba(0,255,255,0.12)'; };
+    loadoutBtn.onmouseout  = () => { loadoutBtn.style.background = 'rgba(0,255,255,0.04)'; };
+    loadoutBtn.onclick = () => {
+        showLoadoutSlots();
+    };
+
+    // Upgrades info button
+    const upgradesBtn = document.createElement('button');
+    upgradesBtn.textContent = 'UPGRADES';
+    upgradesBtn.style.cssText = 'padding:10px 24px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.3);color:rgba(0,255,136,0.7);font-size:11px;letter-spacing:3px;font-family:Courier New,monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;';
+    upgradesBtn.onmouseover = () => { upgradesBtn.style.background = 'rgba(0,255,136,0.12)'; };
+    upgradesBtn.onmouseout  = () => { upgradesBtn.style.background = 'rgba(0,255,136,0.04)'; };
+    upgradesBtn.onclick = () => {
+        _showUpgradesPanel();
+    };
+
+    extraBar.appendChild(shopBtn);
+    extraBar.appendChild(loadoutBtn);
+    extraBar.appendChild(upgradesBtn);
+    overlay.appendChild(extraBar);
+
+    // Add scrap display under the XP bar
+    const scrapDisplay = document.createElement('div');
+    scrapDisplay.style.cssText = 'font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);margin-bottom:12px;';
+    scrapDisplay.innerHTML = `⬡ SCRAP: <span style="color:#ffd700;font-size:13px;">${typeof _scrap !== 'undefined' ? _scrap : 0}</span>`;
+    // Insert after the first child (title)
+    const firstChild = overlay.children[0];
+    if (firstChild) {
+        // Insert after XP bar area (3rd element usually)
+        const insertPoint = overlay.children[2] || overlay.children[1];
+        if (insertPoint) {
+            overlay.insertBefore(scrapDisplay, insertPoint);
+        }
+    }
+};
+
+/** Show chassis upgrades panel. */
+function _showUpgradesPanel() {
+    let overlay = document.getElementById('upgrades-overlay');
+    if (!overlay) return;
+
+    const level = _campaignState.playerLevel;
+    const chassisTypes = ['light', 'medium', 'heavy'];
+    const chassisColors = { light: '#88ff88', medium: '#ffcc44', heavy: '#ff8844' };
+
+    let html = '';
+    html += '<div style="font-size:24px;letter-spacing:6px;color:#00ff88;text-shadow:0 0 16px rgba(0,255,136,0.5);margin-bottom:6px;">CHASSIS UPGRADES</div>';
+    html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(0,255,136,0.5);margin-bottom:24px;">PILOT LEVEL ${level} — Upgrades unlock automatically as you level up</div>`;
+
+    for (const ch of chassisTypes) {
+        const cc = chassisColors[ch];
+        html += `<div style="margin-bottom:20px;">`;
+        html += `<div style="font-size:14px;letter-spacing:3px;color:${cc};margin-bottom:8px;">${ch.toUpperCase()}</div>`;
+
+        const allForChassis = CHASSIS_UPGRADES.filter(u => u.chassis === 'all' || u.chassis === ch);
+        html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+        for (const u of allForChassis) {
+            const unlocked = u.level <= level;
+            const borderColor = unlocked ? cc : 'rgba(255,255,255,0.08)';
+            const textColor = unlocked ? cc : 'rgba(200,210,217,0.25)';
+            const bg = unlocked ? `${cc}10` : 'rgba(0,0,0,0.2)';
+            html += `<div style="padding:6px 10px;background:${bg};border:1px solid ${borderColor};border-radius:4px;min-width:100px;">`;
+            html += `<div style="font-size:9px;letter-spacing:1px;color:${textColor};margin-bottom:2px;">${unlocked ? '✓' : '🔒'} LV.${u.level}</div>`;
+            html += `<div style="font-size:10px;color:${unlocked ? '#c8d2d9' : 'rgba(200,210,217,0.2)'};letter-spacing:1px;">${u.label}</div>`;
+            if (u.chassis !== 'all') {
+                html += `<div style="font-size:8px;color:${textColor};opacity:0.6;">${u.chassis.toUpperCase()} ONLY</div>`;
+            }
+            html += '</div>';
+        }
+        html += '</div></div>';
+    }
+
+    // Next unlock preview
+    const nextUpgrade = CHASSIS_UPGRADES.find(u => u.level > level);
+    if (nextUpgrade) {
+        html += `<div style="margin-top:8px;font-size:10px;letter-spacing:1px;color:rgba(0,255,136,0.4);">NEXT UNLOCK: LV.${nextUpgrade.level} — ${nextUpgrade.label}${nextUpgrade.chassis !== 'all' ? ' ('+nextUpgrade.chassis.toUpperCase()+')' : ''}</div>`;
+    }
+
+    html += '<div style="margin-top:20px;">';
+    html += `<button onclick="document.getElementById('upgrades-overlay').style.display='none'" style="padding:12px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:12px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)'" onmouseout="this.style.background='rgba(255,60,60,0.04)'">BACK</button>`;
+    html += '</div>';
+
+    overlay.innerHTML = html;
+    overlay.style.display = 'flex';
 }
