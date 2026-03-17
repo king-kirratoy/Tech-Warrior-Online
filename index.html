@@ -13,6 +13,8 @@
 <script src="js/enemy-types.js"></script>
 <script src="js/arena-objectives.js"></script>
 <script src="js/campaign-system.js"></script>
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<script src="js/multiplayer.js"></script>
 <style>
 
 /* ============================================================
@@ -785,7 +787,7 @@ button.active {
     <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
         <button id="campaign-btn" class="menu-start-btn" onclick="startGame('campaign')">&#9733;&nbsp;&nbsp;CAMPAIGN</button>
         <button class="menu-start-btn" onclick="startGame('simulation')">&#9654;&nbsp;&nbsp;COMBAT SIMULATION</button>
-        <button class="menu-start-btn disabled-mode">&#9670;&nbsp;&nbsp;MULTIPLAYER<span class="coming-soon">COMING SOON</span></button>
+        <button class="menu-start-btn" onclick="startMultiplayer()">&#9670;&nbsp;&nbsp;MULTIPLAYER PVP</button>
         <button class="menu-start-btn" onclick="showLeaderboard()" style="margin-top:8px;">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
     </div>
     <div class="menu-version">v3.0 // ALPHA BUILD</div>
@@ -3104,6 +3106,8 @@ function update(time) {
     if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
     if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
     if (typeof updateColossusStand === 'function') updateColossusStand(time);         // → js/loot-system.js (Colossus Frame unique)
+    // PVP multiplayer: interpolate remote players + update kill feed
+    if (typeof mpUpdate === 'function') mpUpdate(time);
 }
 
 
@@ -5442,6 +5446,9 @@ function drawMinimap() {
             ctx.stroke();
         });
     }
+
+    // PVP remote players
+    if (typeof mpDrawMinimapPlayers === 'function') mpDrawMinimapPlayers(ctx, scale, 0, 0);
 
     // Extraction point
     if (_extractionActive && _extractionPoint) {
@@ -9165,8 +9172,16 @@ function fire(scene, side) {
     const my = scene.input.activePointer.worldY;
     const aimAngle = Math.atan2(my - armOy, mx - armOx);
 
-    if (wKey === 'fth')  { fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle);  return; }
-    if (wKey === 'rail') { fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle); return; }
+    if (wKey === 'fth')  {
+        fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle);
+        if (typeof mpBroadcastBullet === 'function' && _mpMatchActive) mpBroadcastBullet(armOx, armOy, aimAngle, wKey, weapon.dmg * (_perkState.dmgMult||1));
+        return;
+    }
+    if (wKey === 'rail') {
+        fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle);
+        if (typeof mpBroadcastBullet === 'function' && _mpMatchActive) mpBroadcastBullet(armOx, armOy, aimAngle, wKey, weapon.dmg * (_perkState.dmgMult||1));
+        return;
+    }
 
     // Flash the weapon slot
     const slotEl = document.getElementById('slot-' + side);
@@ -9249,6 +9264,10 @@ function fire(scene, side) {
         }
     };
     _fireOnce();
+    // PVP: broadcast bullet to other players
+    if (typeof mpBroadcastBullet === 'function' && _mpMatchActive) {
+        mpBroadcastBullet(armOx, armOy, aimAngle, wKey, _effectiveDmg);
+    }
     // Razor Edge: every 3rd shot fires a bonus duplicate
     if (typeof checkDoubleStrike === 'function' && checkDoubleStrike()) {
         scene.time.delayedCall(50, _fireOnce);
@@ -11471,6 +11490,12 @@ function _resetHUDState() {
 function showDeathScreen() {
     console.log('[DEATH] showDeathScreen called. isDeployed=' + isDeployed + ' stack=' + new Error().stack.split('\n')[1]);
     if (!isDeployed) return;  // already dead — prevent double-call
+    // PVP: show defeat screen instead of normal death screen
+    if (_gameMode === 'pvp' && typeof mpShowDefeat === 'function') {
+        isDeployed = false;
+        mpShowDefeat();
+        return;
+    }
     isDeployed = false;
     _roundActive   = false;
     _roundClearing = false;   // prevent update() from being permanently gated
@@ -12940,6 +12965,30 @@ function startGame(mode) {
         // Ensure garage UI matches loadout state
         try { refreshGarage(); } catch(e) {}
     }, 600);
+}
+
+// ── PVP MULTIPLAYER ─────────────────────────────────────────────
+function startMultiplayer() {
+    _gameMode = 'pvp';
+    // Capture callsign
+    if (!_playerCallsign || _playerCallsign === 'ANONYMOUS') {
+        const csInput = document.getElementById('menu-callsign');
+        const csVal = (csInput?.value || '').trim().toUpperCase();
+        _playerCallsign = csVal || (localStorage.getItem ? (localStorage.getItem('tw_callsign') || 'ANONYMOUS') : 'ANONYMOUS');
+        if (_playerCallsign && localStorage.setItem) localStorage.setItem('tw_callsign', _playerCallsign);
+    }
+    // Fade out main menu
+    const menu = document.getElementById('main-menu');
+    if (menu) {
+        menu.style.transition = 'opacity 0.6s ease';
+        menu.style.opacity = '0';
+        setTimeout(() => {
+            menu.style.display = 'none';
+            // Show lobby UI and connect
+            mpShowLobby();
+            mpConnect();
+        }, 600);
+    }
 }
 
 function startHangarGrid() {
