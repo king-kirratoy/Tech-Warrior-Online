@@ -533,6 +533,23 @@ button.active {
                 inset 0 0 20px rgba(0,255,255,0.08);
     letter-spacing: 8px;
 }
+.menu-start-btn.disabled-mode {
+    color: rgba(0,255,255,0.2);
+    border-color: rgba(0,255,255,0.1);
+    border-top-color: rgba(0,255,255,0.2);
+    border-bottom-color: rgba(0,255,255,0.2);
+    cursor: not-allowed;
+    box-shadow: none;
+    pointer-events: none;
+    position: relative;
+}
+.menu-start-btn.disabled-mode .coming-soon {
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: rgba(0,255,255,0.25);
+    display: block;
+    margin-top: 2px;
+}
 
 .menu-version {
     position: absolute;
@@ -765,8 +782,10 @@ button.active {
     <div class="menu-title">TECH WARRIOR ONLINE</div>
     <div class="menu-subtitle">Combat Simulation Alpha 3.0</div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
-        <button class="menu-start-btn" onclick="startGame()">&#9654;&nbsp;&nbsp;DEPLOY TO BATTLEFIELD</button>
-        <button class="menu-start-btn" onclick="showLeaderboard()">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
+        <button class="menu-start-btn disabled-mode">&#9733;&nbsp;&nbsp;CAMPAIGN<span class="coming-soon">COMING SOON</span></button>
+        <button class="menu-start-btn" onclick="startGame('simulation')">&#9654;&nbsp;&nbsp;COMBAT SIMULATION</button>
+        <button class="menu-start-btn disabled-mode">&#9670;&nbsp;&nbsp;MULTIPLAYER<span class="coming-soon">COMING SOON</span></button>
+        <button class="menu-start-btn" onclick="showLeaderboard()" style="margin-top:8px;">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
     </div>
     <div class="menu-version">v3.0 // ALPHA BUILD</div>
 </div>
@@ -1397,6 +1416,9 @@ function _applyStarterLoadout(ch) {
     loadout.leg  = starter.leg;
     loadout.shld = starter.shld;
 }
+
+// Game mode: 'simulation' (roguelike rounds) or 'campaign' (persistent progression)
+let _gameMode = 'simulation';
 
 // Phaser object references
 let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic;
@@ -12562,7 +12584,8 @@ function proceedToMainMenu() {
     }, 500);
 }
 
-function startGame() {
+function startGame(mode) {
+    _gameMode = mode || 'simulation';
     const menu = document.getElementById('main-menu');
     if (!menu) return;
     // Callsign was already captured in proceedToMainMenu
