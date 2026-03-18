@@ -23,6 +23,11 @@ let _mpKillFeed = [];           // Recent kill messages [{ text, time }]
 let _mpLobbyPlayers = [];       // Current lobby player list
 let _mpStateInterval = null;    // Interval for sending player state
 let _mpPvpBullets = null;       // Phaser group for remote player bullets
+let _mpScoreboard = {};         // socketId → { kills, deaths } from server
+let _mpKillsToWin = 25;        // Deathmatch kill target
+let _mpMapSize = 6000;          // PVP map size (larger than standard 4000)
+let _mpChatOpen = false;        // Is in-game chat input open?
+let _mpRespawning = false;      // Are we in respawn countdown?
 
 // ── CONNECT TO SERVER ──────────────────────────────────────────
 
@@ -104,7 +109,12 @@ function mpConnect(serverUrl) {
         _mpMatchActive = true;
         _mpAlive = true;
         _mpKills = 0;
-        _mpMySpawn = data.spawns[_mpLocalId] || { x: 2000, y: 2000 };
+        _mpDeaths = 0;
+        _mpRespawning = false;
+        _mpKillsToWin = data.killsToWin || 25;
+        _mpMapSize = data.mapSize || 6000;
+        _mpScoreboard = data.scoreboard || {};
+        _mpMySpawn = data.spawns[_mpLocalId] || { x: _mpMapSize / 2, y: _mpMapSize / 2 };
 
         // Build remote player representations
         const scene = game.scene.scenes[0];
@@ -121,7 +131,32 @@ function mpConnect(serverUrl) {
     _mpSocket.on('match-ended', () => {
         _mpMatchActive = false;
         mpCleanupMatch();
-        mpShowLobby();
+        mpHideInGameChat();
+        mpShowPvpHangar();
+    });
+
+    // ── DEATHMATCH: RESPAWN ──────────────────────────────────────
+
+    _mpSocket.on('respawn', (data) => {
+        if (!_mpMatchActive) return;
+        _mpRespawning = true;
+        const delay = data.delay || 3000;
+        _mpMySpawn = { x: data.x, y: data.y };
+
+        // Show respawn countdown
+        mpShowRespawnCountdown(delay, () => {
+            _mpRespawning = false;
+            mpRespawnPlayer();
+        });
+    });
+
+    // ── DEATHMATCH: MATCH WINNER ─────────────────────────────────
+
+    _mpSocket.on('match-winner', (data) => {
+        _mpMatchActive = false;
+        _mpScoreboard = data.scoreboard || {};
+        const isWinner = data.winnerId === _mpLocalId;
+        mpShowMatchResults(isWinner, data.winnerName, data.scoreboard);
     });
 
     // ── IN-MATCH: REMOTE PLAYER STATE ──────────────────────────
@@ -177,9 +212,12 @@ function mpConnect(serverUrl) {
     // ── IN-MATCH: PLAYER KILLED ────────────────────────────────
 
     _mpSocket.on('player-killed', (data) => {
+        // Update scoreboard
+        if (data.scoreboard) _mpScoreboard = data.scoreboard;
+
         // Kill feed
         const feedMsg = data.killerName
-            ? `${data.killerName} eliminated ${data.victimName}`
+            ? `${data.killerName} fragged ${data.victimName}`
             : `${data.victimName} disconnected`;
         mpAddKillFeed(feedMsg);
 
@@ -189,25 +227,32 @@ function mpConnect(serverUrl) {
             _totalKills++;
         }
 
-        // Remove dead remote player visuals
-        if (data.victimId !== _mpLocalId) {
+        // If victim is us, mark dead (respawn handled by 'respawn' event)
+        if (data.victimId === _mpLocalId) {
+            _mpAlive = false;
+            _mpDeaths++;
+        }
+
+        // If victim is a remote player who disconnected, remove visuals
+        // (for deathmatch, don't destroy on kill — they respawn)
+        if (data.victimId !== _mpLocalId && data.killerName === 'DISCONNECT') {
             mpDestroyRemotePlayer(data.victimId);
         }
 
-        // Check for victory (are we the last one?)
-        if (_mpMatchActive && data.victimId !== _mpLocalId) {
-            const aliveRemote = Array.from(_mpPlayers.values()).filter(rp => rp.alive);
-            if (aliveRemote.length === 0 && _mpAlive) {
-                mpShowVictory();
-            }
-        }
+        // Update PVP HUD
+        mpUpdatePvpHud();
     });
 
     // ── CHAT ───────────────────────────────────────────────────
 
     _mpSocket.on('chat', (data) => {
         if (data.id === _mpLocalId) return; // Already shown locally
-        mpShowChat(`${data.name}: ${data.message}`, '#cccccc');
+        // In-match: show in game chat overlay; in lobby: show in lobby chat
+        if (_mpMatchActive) {
+            mpAddInGameChatMessage(`${data.name}: ${data.message}`, '#cccccc');
+        } else {
+            mpShowChat(`${data.name}: ${data.message}`, '#cccccc');
+        }
     });
 }
 
@@ -351,7 +396,17 @@ function mpCleanupMatch() {
 
     if (_mpStateInterval) { clearInterval(_mpStateInterval); _mpStateInterval = null; }
     _mpMatchActive = false;
+    _mpRespawning = false;
     _mpKillFeed = [];
+    _mpScoreboard = {};
+
+    // Hide PVP-specific UI
+    mpHidePvpHud();
+    mpHideInGameChat();
+    const respawnEl = document.getElementById('mp-respawn-overlay');
+    if (respawnEl) respawnEl.style.display = 'none';
+    const resultsEl = document.getElementById('mp-results-overlay');
+    if (resultsEl) resultsEl.style.display = 'none';
 }
 
 // ================================================================
@@ -390,11 +445,15 @@ function mpSpawnRemoteBullet(scene, data) {
                 y: p.y
             });
 
-            // Check if we died
-            if (player?.comp?.core?.hp <= 0) {
+            // Check if we died — deathmatch: notify server, wait for respawn
+            if (player?.comp?.core?.hp <= 0 && _mpAlive) {
                 _mpAlive = false;
-                _mpDeaths++;
                 _mpSocket.emit('player-killed', { killerId: bullet._shooterId });
+                // Hide player visually until respawn
+                if (player?.active) { player.setAlpha(0); player.body.setVelocity(0, 0); }
+                if (torso?.active) torso.setAlpha(0);
+                if (shieldGraphic?.active) shieldGraphic.setVisible(false);
+                isDeployed = false;
             }
         });
 
@@ -548,8 +607,9 @@ function mpDeployPVP() {
     const legDims = { light: [40,30], medium: [60,40], heavy: [70,40] };
     const [legW, legH] = legDims[loadout.chassis] || legDims.medium;
 
-    const spawnX = _mpMySpawn?.x || 2000;
-    const spawnY = _mpMySpawn?.y || 2000;
+    const mapSize = _mpMapSize || 6000;
+    const spawnX = _mpMySpawn?.x || mapSize / 2;
+    const spawnY = _mpMySpawn?.y || mapSize / 2;
 
     // Create player physics body at spawn
     player = scene.add.rectangle(spawnX, spawnY, legW, legH, 0x000000, 0)
@@ -572,9 +632,9 @@ function mpDeployPVP() {
     // Show battlefield
     if (scene._bfGrid) scene._bfGrid.setVisible(true);
 
-    // World & camera
-    scene.physics.world.setBounds(0, 0, 4000, 4000);
-    scene.cameras.main.setBounds(0, 0, 4000, 4000);
+    // World & camera (PVP uses larger map)
+    scene.physics.world.setBounds(0, 0, mapSize, mapSize);
+    scene.cameras.main.setBounds(0, 0, mapSize, mapSize);
     scene.cameras.main.centerOn(spawnX, spawnY);
     scene.cameras.main.startFollow(player, true, 0.5, 0.5);
 
@@ -630,7 +690,7 @@ function mpDeployPVP() {
     if (glowWedge) glowWedge.setVisible(false);
     document.getElementById('deploy-cover').style.display = 'none';
     document.getElementById('hud-container').style.display = 'flex';
-    document.getElementById('top-left-btns').style.display = 'flex';
+    document.getElementById('top-left-btns').style.display = 'none'; // No pause/stats button in PVP
     const mm = document.getElementById('minimap-wrap'); if (mm) mm.style.display = 'block';
 
     scene.cameras.main.setLerp(1.0, 1.0);
@@ -668,14 +728,18 @@ function mpDeployPVP() {
             if (typeof applyAugment === 'function') applyAugment();
             if (typeof applyLegSystem === 'function') applyLegSystem();
 
-            // Show PVP HUD
-            document.getElementById('round-hud').style.display = 'flex';
+            // Show PVP HUD (custom deathmatch HUD, not the round HUD)
+            document.getElementById('round-hud').style.display = 'none';
+            mpShowPvpHud();
+            mpShowInGameChat();
             if (typeof showRoundBanner === 'function') {
-                showRoundBanner('PVP MATCH', _mpPlayers.size + ' OPPONENTS', 2500, null);
+                showRoundBanner('DEATHMATCH', 'FIRST TO ' + _mpKillsToWin + ' KILLS', 2500, null);
             }
 
-            // Regenerate cover
-            try { generateCover(scene); } catch(e) {}
+            // Generate PVP-specific cover for the larger map
+            try { generatePvpCover(scene, _mpMapSize); } catch(e) {
+                try { generateCover(scene); } catch(e2) {}
+            }
 
             // Nudge player out of any overlapping cover objects
             try { mpNudgeOutOfCover(scene); } catch(e) {}
@@ -904,37 +968,523 @@ function mpRenderKillFeed() {
 // ================================================================
 
 function mpShowVictory() {
-    _mpMatchActive = false;
-    if (_mpStateInterval) { clearInterval(_mpStateInterval); _mpStateInterval = null; }
-
-    // Show victory banner
-    if (typeof showRoundBanner === 'function') {
-        showRoundBanner('VICTORY', `${_mpKills} KILLS // ${_mpDeaths} DEATHS`, 4000, null);
-    }
-
-    // Return to PVP hangar after delay
-    setTimeout(() => {
-        if (typeof _cleanupGame === 'function') _cleanupGame();
-        mpCleanupMatch();
-        _mpSocket?.emit('return-to-lobby');
-        mpDisconnect();
-        mpShowPvpHangar();
-    }, 5000);
+    // Legacy — now handled by mpShowMatchResults
 }
 
 function mpShowDefeat() {
-    // Called when local player dies — show spectate info or return
-    if (typeof showRoundBanner === 'function') {
-        showRoundBanner('ELIMINATED', `${_mpKills} KILLS`, 3000, null);
+    // In deathmatch, death triggers respawn — not defeat screen
+    // This is called from showDeathScreen() in index.html — block it
+}
+
+function mpShowMatchResults(isWinner, winnerName, scoreboard) {
+    _mpMatchActive = false;
+    if (_mpStateInterval) { clearInterval(_mpStateInterval); _mpStateInterval = null; }
+
+    // Build sorted scoreboard
+    const entries = [];
+    for (const [id, s] of Object.entries(scoreboard)) {
+        const p = _mpLobbyPlayers.find(pl => pl.id === id);
+        entries.push({ id, name: p?.name || 'UNKNOWN', kills: s.kills, deaths: s.deaths });
+    }
+    entries.sort((a, b) => b.kills - a.kills);
+
+    let el = document.getElementById('mp-results-overlay');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'mp-results-overlay';
+        el.style.cssText = `position:fixed;inset:0;z-index:20000;display:flex;justify-content:center;align-items:center;
+            background:rgba(0,0,0,0.85);font-family:'Courier New',monospace;color:#c8d2d9;`;
+        document.body.appendChild(el);
     }
 
-    setTimeout(() => {
-        if (typeof _cleanupGame === 'function') _cleanupGame();
-        mpCleanupMatch();
-        _mpSocket?.emit('return-to-lobby');
-        mpDisconnect();
-        mpShowPvpHangar();
-    }, 4000);
+    el.style.display = 'flex';
+    el.innerHTML = `
+        <div style="text-align:center;max-width:500px;">
+            <div style="font-size:36px;letter-spacing:8px;color:${isWinner ? '#00ff00' : '#ff4444'};
+                text-shadow:0 0 30px ${isWinner ? 'rgba(0,255,0,0.7)' : 'rgba(255,68,68,0.7)'};margin-bottom:8px;">
+                ${isWinner ? 'VICTORY' : 'MATCH OVER'}
+            </div>
+            <div style="font-size:13px;letter-spacing:3px;color:rgba(255,255,255,0.5);margin-bottom:24px;">
+                ${winnerName} WINS WITH ${scoreboard[Object.keys(scoreboard).find(k => entries[0]?.id === k)]?.kills || 0} KILLS
+            </div>
+            <div style="text-align:left;border:1px solid rgba(0,255,255,0.2);border-radius:6px;overflow:hidden;">
+                <div style="display:flex;padding:8px 16px;background:rgba(0,255,255,0.08);font-size:10px;letter-spacing:2px;color:rgba(0,255,255,0.6);">
+                    <span style="flex:1;">PLAYER</span><span style="width:60px;text-align:center;">KILLS</span><span style="width:60px;text-align:center;">DEATHS</span>
+                </div>
+                ${entries.map((e, i) => `
+                    <div style="display:flex;padding:8px 16px;border-top:1px solid rgba(255,255,255,0.05);
+                        background:${e.id === _mpLocalId ? 'rgba(0,255,255,0.06)' : 'transparent'};">
+                        <span style="flex:1;color:${i === 0 ? '#ffcc00' : e.id === _mpLocalId ? '#00ffff' : '#c8d2d9'};font-size:12px;">
+                            ${i === 0 ? '&#9733; ' : ''}${e.name}${e.id === _mpLocalId ? ' (YOU)' : ''}
+                        </span>
+                        <span style="width:60px;text-align:center;color:#00ff88;font-size:13px;">${e.kills}</span>
+                        <span style="width:60px;text-align:center;color:#ff6666;font-size:13px;">${e.deaths}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <button onclick="mpLeaveMatchResults()" style="margin-top:24px;padding:12px 40px;font-size:13px;letter-spacing:3px;
+                color:#00ffff;border:1px solid rgba(0,255,255,0.4);background:rgba(0,255,255,0.06);cursor:pointer;
+                font-family:'Courier New',monospace;">CONTINUE</button>
+        </div>
+    `;
+}
+
+function mpLeaveMatchResults() {
+    const el = document.getElementById('mp-results-overlay');
+    if (el) el.style.display = 'none';
+    if (typeof _cleanupGame === 'function') _cleanupGame();
+    mpCleanupMatch();
+    _mpSocket?.emit('return-to-lobby');
+    mpDisconnect();
+    mpShowPvpHangar();
+}
+
+// ================================================================
+// PVP DEATHMATCH HUD — kills / deaths / score to win
+// ================================================================
+
+function mpShowPvpHud() {
+    let el = document.getElementById('mp-pvp-hud');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'mp-pvp-hud';
+        el.style.cssText = `position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:9999;
+            pointer-events:none;font-family:'Courier New',monospace;`;
+        el.innerHTML = `
+            <div style="display:flex;gap:28px;align-items:center;padding:12px 24px;background:rgba(12,16,20,0.85);
+                border:1px solid rgba(0,255,255,0.3);border-radius:12px;
+                box-shadow:0 0 10px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.1);">
+                <div style="text-align:center;">
+                    <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Kills</div>
+                    <div id="pvp-hud-kills" style="font-size:22px;letter-spacing:4px;color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.5);">0</div>
+                </div>
+                <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
+                <div style="text-align:center;">
+                    <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Deaths</div>
+                    <div id="pvp-hud-deaths" style="font-size:22px;letter-spacing:4px;color:#ff4400;text-shadow:0 0 10px rgba(255,68,0,0.5);">0</div>
+                </div>
+                <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
+                <div style="text-align:center;">
+                    <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">First to</div>
+                    <div id="pvp-hud-target" style="font-size:22px;letter-spacing:4px;color:#ffcc00;text-shadow:0 0 10px rgba(255,204,0,0.5);">25</div>
+                </div>
+                <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
+                <div style="text-align:center;">
+                    <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Leader</div>
+                    <div id="pvp-hud-leader" style="font-size:14px;letter-spacing:2px;color:#ffcc00;text-shadow:0 0 10px rgba(255,204,0,0.5);">—</div>
+                </div>
+            </div>`;
+        document.body.appendChild(el);
+    }
+    el.style.display = 'block';
+    mpUpdatePvpHud();
+}
+
+function mpHidePvpHud() {
+    const el = document.getElementById('mp-pvp-hud');
+    if (el) el.style.display = 'none';
+}
+
+function mpUpdatePvpHud() {
+    const kills = document.getElementById('pvp-hud-kills');
+    const deaths = document.getElementById('pvp-hud-deaths');
+    const target = document.getElementById('pvp-hud-target');
+    const leader = document.getElementById('pvp-hud-leader');
+    if (kills) kills.innerText = _mpKills;
+    if (deaths) deaths.innerText = _mpDeaths;
+    if (target) target.innerText = _mpKillsToWin;
+    if (leader) {
+        // Find leader from scoreboard
+        let topName = '—', topKills = 0;
+        for (const [id, s] of Object.entries(_mpScoreboard)) {
+            if (s.kills > topKills) {
+                topKills = s.kills;
+                const p = _mpLobbyPlayers.find(pl => pl.id === id);
+                topName = (id === _mpLocalId ? 'YOU' : p?.name || '???') + ' (' + s.kills + ')';
+            }
+        }
+        leader.innerText = topName;
+    }
+}
+
+// ================================================================
+// IN-GAME CHAT — press T to type, messages shown in corner
+// ================================================================
+
+function mpShowInGameChat() {
+    let el = document.getElementById('mp-ingame-chat');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'mp-ingame-chat';
+        el.style.cssText = `position:fixed;bottom:24px;left:24px;z-index:9998;
+            font-family:'Courier New',monospace;width:320px;pointer-events:none;`;
+        el.innerHTML = `
+            <div id="mp-chat-messages" style="max-height:160px;overflow-y:auto;margin-bottom:6px;
+                padding:6px;pointer-events:none;"></div>
+            <div id="mp-chat-input-wrap" style="display:none;pointer-events:auto;">
+                <div style="display:flex;gap:4px;">
+                    <input id="mp-ingame-chat-input" type="text" maxlength="200" placeholder="Type message..."
+                        style="flex:1;padding:6px 10px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,255,255,0.3);
+                        color:#c8d2d9;font-family:'Courier New',monospace;font-size:11px;border-radius:3px;outline:none;"
+                        onkeydown="mpInGameChatKey(event)">
+                    <button onclick="mpSendInGameChat()" style="padding:6px 10px;font-size:10px;cursor:pointer;
+                        color:#00ffcc;border:1px solid rgba(0,255,204,0.3);background:rgba(0,255,204,0.06);
+                        font-family:'Courier New',monospace;border-radius:3px;pointer-events:auto;">SEND</button>
+                </div>
+            </div>
+            <div id="mp-chat-hint" style="font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:1px;margin-top:4px;">
+                PRESS T TO CHAT</div>
+        `;
+        document.body.appendChild(el);
+    }
+    el.style.display = 'block';
+    _mpChatOpen = false;
+}
+
+function mpHideInGameChat() {
+    _mpChatOpen = false;
+    const el = document.getElementById('mp-ingame-chat');
+    if (el) el.style.display = 'none';
+}
+
+function mpToggleInGameChat() {
+    const wrap = document.getElementById('mp-chat-input-wrap');
+    const input = document.getElementById('mp-ingame-chat-input');
+    const hint = document.getElementById('mp-chat-hint');
+    if (!wrap || !input) return;
+
+    _mpChatOpen = !_mpChatOpen;
+    if (_mpChatOpen) {
+        wrap.style.display = 'block';
+        if (hint) hint.style.display = 'none';
+        input.focus();
+        // Temporarily disable game input while typing
+        const scene = game?.scene?.scenes[0];
+        if (scene?.input?.keyboard) {
+            scene.input.keyboard.enabled = false;
+        }
+    } else {
+        wrap.style.display = 'none';
+        if (hint) hint.style.display = 'block';
+        input.value = '';
+        input.blur();
+        const scene = game?.scene?.scenes[0];
+        if (scene?.input?.keyboard) {
+            scene.input.keyboard.enabled = true;
+        }
+    }
+}
+
+function mpInGameChatKey(e) {
+    if (e.key === 'Enter') {
+        mpSendInGameChat();
+    } else if (e.key === 'Escape') {
+        mpToggleInGameChat();
+    }
+    e.stopPropagation();
+}
+
+function mpSendInGameChat() {
+    const input = document.getElementById('mp-ingame-chat-input');
+    if (!input || !_mpSocket) return;
+    const msg = input.value.trim();
+    if (msg) {
+        _mpSocket.emit('chat', msg);
+        mpAddInGameChatMessage(`${_playerCallsign || 'YOU'}: ${msg}`, '#00ffcc');
+    }
+    input.value = '';
+    mpToggleInGameChat();
+}
+
+function mpAddInGameChatMessage(text, color) {
+    const box = document.getElementById('mp-chat-messages');
+    if (!box) return;
+    const line = document.createElement('div');
+    line.style.cssText = `color:${color || '#aaa'};font-size:11px;margin-bottom:3px;
+        background:rgba(0,0,0,0.5);padding:3px 6px;border-radius:2px;
+        opacity:1;transition:opacity 2s;`;
+    line.textContent = text;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+    // Fade out after 8 seconds
+    setTimeout(() => { line.style.opacity = '0.2'; }, 8000);
+    // Remove after 15 seconds
+    setTimeout(() => { if (line.parentNode) line.remove(); }, 15000);
+}
+
+// Hook into existing chat handler — update to use in-game chat during match
+(function() {
+    // Will be called from mpShowChat during match
+})();
+
+// ================================================================
+// RESPAWN SYSTEM — countdown overlay + player recreation
+// ================================================================
+
+function mpShowRespawnCountdown(delayMs, onComplete) {
+    let el = document.getElementById('mp-respawn-overlay');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'mp-respawn-overlay';
+        el.style.cssText = `position:fixed;inset:0;z-index:15000;display:flex;justify-content:center;align-items:center;
+            background:rgba(0,0,0,0.6);font-family:'Courier New',monospace;pointer-events:none;`;
+        document.body.appendChild(el);
+    }
+    el.style.display = 'flex';
+
+    let remaining = Math.ceil(delayMs / 1000);
+    el.innerHTML = `
+        <div style="text-align:center;">
+            <div style="font-size:24px;letter-spacing:6px;color:#ff4444;text-shadow:0 0 20px rgba(255,68,68,0.7);margin-bottom:12px;">
+                DESTROYED</div>
+            <div style="font-size:48px;color:#ffcc00;text-shadow:0 0 30px rgba(255,204,0,0.7);" id="mp-respawn-timer">${remaining}</div>
+            <div style="font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.4);margin-top:8px;">RESPAWNING...</div>
+        </div>
+    `;
+
+    const interval = setInterval(() => {
+        remaining--;
+        const timer = document.getElementById('mp-respawn-timer');
+        if (timer) timer.innerText = remaining;
+        if (remaining <= 0) {
+            clearInterval(interval);
+            el.style.display = 'none';
+            if (onComplete) onComplete();
+        }
+    }, 1000);
+}
+
+function mpRespawnPlayer() {
+    if (!_mpMatchActive) return;
+    const scene = game?.scene?.scenes[0];
+    if (!scene) return;
+
+    const s = CHASSIS[loadout.chassis];
+    const spawnX = _mpMySpawn?.x || _mpMapSize / 2;
+    const spawnY = _mpMySpawn?.y || _mpMapSize / 2;
+
+    // Reset player position and HP
+    if (player?.active) {
+        player.setPosition(spawnX, spawnY);
+        player.setAlpha(1);
+        player.body.setVelocity(0, 0);
+    }
+    if (torso?.active) {
+        torso.setPosition(spawnX, spawnY);
+        torso.setAlpha(1);
+    }
+
+    // Restore full HP
+    if (player?.comp) {
+        player.comp.core.hp = player.comp.core.max;
+        player.comp.lArm.hp = player.comp.lArm.max;
+        player.comp.rArm.hp = player.comp.rArm.max;
+        player.comp.legs.hp = player.comp.legs.max;
+    }
+    const shldSys = (typeof SHIELD_SYSTEMS !== 'undefined' ? SHIELD_SYSTEMS[loadout.shld] : null) || { maxShield: 0 };
+    if (player) {
+        player.shield = player.maxShield || 0;
+        player.hp = player.maxHp || 100;
+    }
+
+    // Reset destroyed weapon states
+    _lArmDestroyed = false; _rArmDestroyed = false; _legsDestroyed = false;
+    if (typeof _resetHUDState === 'function') _resetHUDState();
+
+    // Restore weapons
+    loadout.L = _savedL; loadout.R = _savedR;
+    loadout.mod = _savedMod; loadout.aug = _savedAug; loadout.leg = _savedLeg;
+
+    // Re-enable
+    _mpAlive = true;
+    isDeployed = true;
+    player.isProcessingDamage = false;
+
+    // Camera
+    scene.cameras.main.centerOn(spawnX, spawnY);
+
+    // Brief invulnerability flash
+    if (player?.active) {
+        scene.tweens.add({
+            targets: [player, torso],
+            alpha: { from: 0.3, to: 1 },
+            duration: 200,
+            repeat: 5,
+            yoyo: true
+        });
+    }
+
+    // Nudge out of cover
+    try { mpNudgeOutOfCover(scene); } catch(e) {}
+}
+
+// ================================================================
+// PVP MAP GENERATION — larger 6000×6000 map with 7×7 grid
+// ================================================================
+
+function generatePvpCover(scene, mapSize) {
+    if (!coverObjects) return;
+    // Destroy orphaned building graphics from previous round
+    if (typeof _buildingGraphics !== 'undefined') {
+        _buildingGraphics.forEach(g => { try { if (g?.active) g.destroy(); } catch(e){} });
+        _buildingGraphics = [];
+    }
+    coverObjects.clear(true, true);
+
+    const MARGIN     = 150;
+    const SAFE_DIST  = 500;
+    const BLOCK_SIZE = 600;
+    const STREET_WIDTH = 160;
+    const GRID_START = 250;
+    const center     = mapSize / 2;
+    const placed     = [];
+
+    // Calculate grid dimensions (7×7 for 6000 map)
+    const gridCols = Math.floor((mapSize - 2 * GRID_START + STREET_WIDTH) / (BLOCK_SIZE + STREET_WIDTH));
+    const gridRows = gridCols;
+
+    const placeAt = (def, x, y) => {
+        placed.push({ x, y });
+        if (def.type === 'building') {
+            placeBuilding(scene, x, y, def);
+        } else {
+            const rect = scene.add.rectangle(x - def.w/2, y - def.h/2, def.w, def.h, def.color)
+                .setOrigin(0, 0).setStrokeStyle(2, def.stroke).setDepth(3);
+            coverObjects.add(rect, true);
+            rect.body.setSize(def.w, def.h);
+            rect.body.reset(x - def.w/2, y - def.h/2);
+            rect.body.immovable = true;
+            rect.coverType = def.type; rect.coverHp = def.hp;
+            rect.coverMaxHp = def.hp; rect.coverDef = def;
+            rect.coverCX = x; rect.coverCY = y;
+        }
+    };
+
+    // Seeded pseudo-random
+    let _seed = 77;
+    const _srand = () => { _seed = (_seed * 16807 + 0) % 2147483647; return (_seed & 0x7fffffff) / 0x7fffffff; };
+
+    // Street markings
+    const streetGfx = scene.add.graphics().setDepth(2);
+    streetGfx.lineStyle(1, 0x334433, 0.25);
+    for (let row = 0; row < gridRows - 1; row++) {
+        const sy = GRID_START + (row + 1) * BLOCK_SIZE + row * STREET_WIDTH + STREET_WIDTH / 2;
+        for (let dx = MARGIN; dx < mapSize - MARGIN; dx += 40) {
+            streetGfx.beginPath(); streetGfx.moveTo(dx, sy); streetGfx.lineTo(dx + 20, sy); streetGfx.strokePath();
+        }
+    }
+    for (let col = 0; col < gridCols - 1; col++) {
+        const sx = GRID_START + (col + 1) * BLOCK_SIZE + col * STREET_WIDTH + STREET_WIDTH / 2;
+        for (let dy = MARGIN; dy < mapSize - MARGIN; dy += 40) {
+            streetGfx.beginPath(); streetGfx.moveTo(sx, dy); streetGfx.lineTo(sx, dy + 20); streetGfx.strokePath();
+        }
+    }
+    if (typeof _buildingGraphics !== 'undefined') _buildingGraphics.push(streetGfx);
+
+    // Build city blocks
+    for (let row = 0; row < gridRows; row++) {
+        for (let col = 0; col < gridCols; col++) {
+            const bx = GRID_START + col * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
+            const by = GRID_START + row * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
+            if (bx > mapSize - MARGIN || by > mapSize - MARGIN) continue;
+            const bLeft = bx - BLOCK_SIZE / 2;
+            const bTop  = by - BLOCK_SIZE / 2;
+
+            // Skip center safe zone
+            if (Phaser.Math.Distance.Between(bx, by, center, center) < SAFE_DIST + 200) {
+                for (let i = 0; i < 3; i++) {
+                    const angle = _srand() * Math.PI * 2;
+                    const dist  = 380 + _srand() * 200;
+                    const ox = Math.round(center + Math.cos(angle) * dist);
+                    const oy = Math.round(center + Math.sin(angle) * dist);
+                    if (placed.some(p => Phaser.Math.Distance.Between(ox, oy, p.x, p.y) < 120)) continue;
+                    placeAt(COVER_DEFS[6], ox, oy);
+                }
+                continue;
+            }
+
+            const isEdge = row === 0 || row === gridRows-1 || col === 0 || col === gridCols-1;
+            const isCorner = (row === 0 || row === gridRows-1) && (col === 0 || col === gridCols-1);
+            const variant = Math.floor(_srand() * 4);
+
+            if (isCorner) {
+                placeAt(COVER_DEFS[10], bLeft + 180, bTop + 180);
+                placeAt(COVER_DEFS[8],  bLeft + 450, bTop + 420);
+                placeAt(COVER_DEFS[11], bLeft + 380, bTop + 150);
+                placeAt(COVER_DEFS[6], bLeft + 100, bTop + 420);
+                placeAt(COVER_DEFS[3], bLeft + 300, bTop + 520);
+            } else if (isEdge) {
+                placeAt(COVER_DEFS[9],  bLeft + 160, bTop + 160);
+                placeAt(COVER_DEFS[9],  bLeft + 420, bTop + 400);
+                placeAt(COVER_DEFS[8],  bLeft + 400, bTop + 140);
+                placeAt(COVER_DEFS[4], bLeft + 40,  bTop + 300);
+                placeAt(COVER_DEFS[6], bLeft + 200, bTop + 450);
+            } else if (variant === 0) {
+                placeAt(COVER_DEFS[10], bLeft + 300, bTop + 280);
+                placeAt(COVER_DEFS[8],  bLeft + 100, bTop + 140);
+                placeAt(COVER_DEFS[8],  bLeft + 480, bTop + 480);
+                placeAt(COVER_DEFS[3], bLeft + 300, bTop + 530);
+            } else if (variant === 1) {
+                placeAt(COVER_DEFS[9],  bLeft + 150, bTop + 200);
+                placeAt(COVER_DEFS[9],  bLeft + 420, bTop + 200);
+                placeAt(COVER_DEFS[11], bLeft + 280, bTop + 450);
+                placeAt(COVER_DEFS[7], bLeft + 100, bTop + 450);
+            } else if (variant === 2) {
+                placeAt(COVER_DEFS[10], bLeft + 200, bTop + 250);
+                placeAt(COVER_DEFS[8],  bLeft + 470, bTop + 150);
+                placeAt(COVER_DEFS[11], bLeft + 440, bTop + 450);
+                placeAt(COVER_DEFS[6], bLeft + 120, bTop + 500);
+                placeAt(COVER_DEFS[4], bLeft + 550, bTop + 320);
+            } else {
+                placeAt(COVER_DEFS[8],  bLeft + 120, bTop + 140);
+                placeAt(COVER_DEFS[8],  bLeft + 350, bTop + 160);
+                placeAt(COVER_DEFS[8],  bLeft + 240, bTop + 420);
+                placeAt(COVER_DEFS[9],  bLeft + 480, bTop + 440);
+            }
+
+            // Urban clutter
+            for (let c = 0; c < (isEdge ? 2 : 3); c++) {
+                const cx2 = bLeft + 60 + _srand() * (BLOCK_SIZE - 120);
+                const cy2 = bTop  + 60 + _srand() * (BLOCK_SIZE - 120);
+                if (placed.some(p => Phaser.Math.Distance.Between(cx2, cy2, p.x, p.y) < 100)) continue;
+                placeAt(COVER_DEFS[c % 4], Math.round(cx2), Math.round(cy2));
+            }
+        }
+    }
+
+    // Street obstacles
+    for (let row = 0; row < gridRows - 1; row++) {
+        for (let col = 0; col < gridCols; col++) {
+            if (_srand() < 0.4) continue;
+            const sx = GRID_START + col * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
+            const sy = GRID_START + (row + 1) * BLOCK_SIZE + row * STREET_WIDTH + STREET_WIDTH / 2;
+            if (Phaser.Math.Distance.Between(sx, sy, center, center) < SAFE_DIST) continue;
+            if (placed.some(p => Phaser.Math.Distance.Between(sx, sy, p.x, p.y) < 100)) continue;
+            placeAt(_srand() < 0.5 ? COVER_DEFS[3] : COVER_DEFS[6], Math.round(sx), Math.round(sy));
+        }
+    }
+
+    // Extra rubble
+    for (let i = 0; i < 18; i++) {
+        const rx = MARGIN + _srand() * (mapSize - 2 * MARGIN);
+        const ry = MARGIN + _srand() * (mapSize - 2 * MARGIN);
+        if (Phaser.Math.Distance.Between(rx, ry, center, center) < SAFE_DIST) continue;
+        if (placed.some(p => Phaser.Math.Distance.Between(rx, ry, p.x, p.y) < 130)) continue;
+        placeAt(COVER_DEFS[Math.floor(_srand() * 3)], Math.round(rx), Math.round(ry));
+    }
+
+    // Force-sync static bodies
+    coverObjects.getChildren().forEach(c => {
+        if (c.body) {
+            const w = c.width || 60, h = c.height || 60;
+            c.body.setSize(w, h);
+            c.body.reset(c.x, c.y);
+            c.body.immovable = true;
+            if (c.coverCX === undefined) { c.coverCX = c.x + w / 2; c.coverCY = c.y + h / 2; }
+        }
+    });
+    coverObjects.refresh();
+    try { scene.time.delayedCall(120, () => { try { coverObjects?.refresh(); } catch(e){} }); } catch(e) {}
 }
 
 // ================================================================
@@ -1290,9 +1840,13 @@ function _pvpBackToMenu() {
 // ================================================================
 
 function mpDrawMinimapPlayers(ctx, scale, offsetX, offsetY) {
-    if (!_mpMatchActive) return;
+    if (!_mpMatchActive || !player?.active) return;
+    const VIEW_RANGE = 900; // Only show enemies within this pixel range on minimap
     _mpPlayers.forEach((rp) => {
         if (!rp.alive || !rp.body?.active) return;
+        // Proximity check — only show if within viewing range
+        const dist = Math.hypot(rp.body.x - player.x, rp.body.y - player.y);
+        if (dist > VIEW_RANGE) return;
         const mx = rp.body.x * scale + offsetX;
         const my = rp.body.y * scale + offsetY;
         ctx.fillStyle = '#ff4444';

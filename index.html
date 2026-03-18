@@ -5528,7 +5528,7 @@ function drawMinimap() {
     if (!canvas || !isDeployed) return;
     const ctx   = canvas.getContext('2d');
     const S     = 160;       // canvas size px
-    const W     = 4000;      // world size
+    const W     = (_gameMode === 'pvp' && typeof _mpMapSize !== 'undefined') ? _mpMapSize : 4000;      // world size (PVP uses larger map)
     const scale = S / W;
 
     ctx.clearRect(0, 0, S, S);
@@ -11645,10 +11645,9 @@ function _resetHUDState() {
 function showDeathScreen() {
     console.log('[DEATH] showDeathScreen called. isDeployed=' + isDeployed + ' stack=' + new Error().stack.split('\n')[1]);
     if (!isDeployed) return;  // already dead — prevent double-call
-    // PVP: show defeat screen instead of normal death screen
-    if (_gameMode === 'pvp' && typeof mpShowDefeat === 'function') {
-        isDeployed = false;
-        mpShowDefeat();
+    // PVP deathmatch: death is handled by multiplayer.js (respawn system)
+    // Don't show the death screen — just return
+    if (_gameMode === 'pvp') {
         return;
     }
     isDeployed = false;
@@ -12713,6 +12712,8 @@ let _isPaused = false;
 function togglePause() {
     const scene = game.scene.scenes[0];
     if (!scene || !isDeployed) return;
+    // PVP: no pause menu, no stats — ESC does nothing (can't pause multiplayer)
+    if (_gameMode === 'pvp') return;
     // If the combined loadout overlay is open, close it first
     if (_isStats) { toggleStats(); return; }
     _isPaused = !_isPaused;
@@ -12737,11 +12738,23 @@ function togglePause() {
     }
 }
 
-// ESC key handler for pause menu
+// ESC key handler for pause menu + T for PVP chat
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && isDeployed) {
         e.preventDefault();
+        // In PVP, ESC closes chat if open
+        if (_gameMode === 'pvp' && typeof _mpChatOpen !== 'undefined' && _mpChatOpen) {
+            mpToggleInGameChat();
+            return;
+        }
         togglePause();
+    }
+    // T key opens in-game chat during PVP matches
+    if ((e.key === 't' || e.key === 'T') && isDeployed && _gameMode === 'pvp'
+        && typeof _mpChatOpen !== 'undefined' && !_mpChatOpen
+        && typeof _mpMatchActive !== 'undefined' && _mpMatchActive) {
+        e.preventDefault();
+        mpToggleInGameChat();
     }
 });
 
