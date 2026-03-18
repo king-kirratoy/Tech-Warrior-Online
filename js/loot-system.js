@@ -1751,6 +1751,17 @@ function saveCampaignProgress() {
         };
         localStorage.setItem('tw_campaign_progress', JSON.stringify(progress));
     } catch(e) {}
+    // Debounced cloud save — avoids hammering Supabase on rapid saves
+    _scheduleCloudSave();
+}
+
+let _cloudSaveTimer = null;
+function _scheduleCloudSave() {
+    if (_cloudSaveTimer) clearTimeout(_cloudSaveTimer);
+    _cloudSaveTimer = setTimeout(() => {
+        _cloudSaveTimer = null;
+        if (typeof saveToCloud === 'function') saveToCloud();
+    }, 2000); // 2-second debounce
 }
 
 /** Load campaign progress. Returns the progress object or null. */
