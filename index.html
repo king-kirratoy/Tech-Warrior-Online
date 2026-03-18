@@ -12749,8 +12749,15 @@ let _isPaused = false;
 function togglePause() {
     const scene = game.scene.scenes[0];
     if (!scene || !isDeployed) return;
-    // PVP: no pause menu, no stats — ESC does nothing (can't pause multiplayer)
-    if (_gameMode === 'pvp') return;
+    // PVP: use dedicated PVP menu instead of pause
+    if (_gameMode === 'pvp') {
+        if (typeof mpIsPvpMenuOpen === 'function' && mpIsPvpMenuOpen()) {
+            mpClosePvpMenu();
+        } else if (typeof mpShowPvpMenu === 'function') {
+            mpShowPvpMenu();
+        }
+        return;
+    }
     // If the combined loadout overlay is open, close it first
     if (_isStats) { toggleStats(); return; }
     _isPaused = !_isPaused;
@@ -12777,19 +12784,36 @@ function togglePause() {
 
 // ESC key handler for pause menu + T for PVP chat
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && isDeployed) {
+    if (e.key === 'Escape') {
         e.preventDefault();
-        // In PVP, ESC closes chat if open
+        // PVP: close hangar if open mid-match
+        if (_gameMode === 'pvp' && typeof _pvpHangarOpen !== 'undefined' && _pvpHangarOpen) {
+            if (typeof _pvpHangarInMatch !== 'undefined' && _pvpHangarInMatch) {
+                _pvpDeployFromHangar();
+            }
+            return;
+        }
+        // PVP: close chat if open
         if (_gameMode === 'pvp' && typeof _mpChatOpen !== 'undefined' && _mpChatOpen) {
             mpToggleInGameChat();
             return;
         }
-        togglePause();
+        // PVP: toggle PVP menu (or close it)
+        if (_gameMode === 'pvp' && typeof mpIsPvpMenuOpen === 'function') {
+            if (mpIsPvpMenuOpen()) { mpClosePvpMenu(); return; }
+            if (isDeployed || (typeof _mpMatchActive !== 'undefined' && _mpMatchActive)) {
+                mpShowPvpMenu();
+                return;
+            }
+        }
+        if (isDeployed) togglePause();
     }
     // T key opens in-game chat during PVP matches
-    if ((e.key === 't' || e.key === 'T') && isDeployed && _gameMode === 'pvp'
+    if ((e.key === 't' || e.key === 'T') && _gameMode === 'pvp'
         && typeof _mpChatOpen !== 'undefined' && !_mpChatOpen
-        && typeof _mpMatchActive !== 'undefined' && _mpMatchActive) {
+        && typeof _mpMatchActive !== 'undefined' && _mpMatchActive
+        && !(typeof _pvpHangarOpen !== 'undefined' && _pvpHangarOpen)
+        && !(typeof mpIsPvpMenuOpen === 'function' && mpIsPvpMenuOpen())) {
         e.preventDefault();
         mpToggleInGameChat();
     }

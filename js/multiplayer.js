@@ -1527,13 +1527,17 @@ function mpNudgeOutOfCover(scene) {
 }
 
 // ================================================================
-// PVP MECH HANGAR — full loadout selection before joining lobby
+// PVP MECH HANGAR — full loadout selection using the same style as simulation hangar
 // ================================================================
 
 let _pvpHangarOpen = false;
+let _pvpHangarInMatch = false; // true = opened mid-match via ESC menu
+let _pvpOpenDD = null;         // currently open dropdown slot key
 
-function mpShowPvpHangar() {
+function mpShowPvpHangar(inMatch) {
     _pvpHangarOpen = true;
+    _pvpHangarInMatch = !!inMatch;
+    _pvpOpenDD = null;
     let el = document.getElementById('pvp-hangar');
     if (!el) {
         el = document.createElement('div');
@@ -1546,6 +1550,10 @@ function mpShowPvpHangar() {
             overflow-y:auto;
         `;
         document.body.appendChild(el);
+        // Close dropdowns when clicking outside
+        el.addEventListener('click', (e) => {
+            if (!e.target.closest('.pvp-dd-wrap')) _pvpCloseAllDD();
+        });
     }
     el.style.display = 'flex';
     _pvpRenderHangar();
@@ -1553,13 +1561,127 @@ function mpShowPvpHangar() {
 
 function mpHidePvpHangar() {
     _pvpHangarOpen = false;
+    _pvpHangarInMatch = false;
     const el = document.getElementById('pvp-hangar');
     if (el) el.style.display = 'none';
 }
 
-function _pvpSlotLabel(key, dict) {
+function _pvpCloseAllDD() {
+    document.querySelectorAll('.pvp-dd-selected').forEach(el => el.classList.remove('dd-open'));
+    document.querySelectorAll('.pvp-dd-list').forEach(el => el.classList.remove('dd-list-open'));
+    _pvpOpenDD = null;
+}
+
+function _pvpToggleDD(slotId) {
+    if (_pvpOpenDD === slotId) { _pvpCloseAllDD(); return; }
+    _pvpCloseAllDD();
+    _pvpOpenDD = slotId;
+    _pvpBuildDropdown(slotId);
+    document.getElementById('pvp-dds-' + slotId)?.classList.add('dd-open');
+    document.getElementById('pvp-ddl-' + slotId)?.classList.add('dd-list-open');
+}
+
+function _pvpGetSlotLabel(slotId) {
+    const key = slotId === 'L' ? loadout.L : slotId === 'R' ? loadout.R
+              : slotId === 'M' ? loadout.mod : slotId === 'S' ? loadout.shld
+              : slotId === 'G' ? loadout.leg : loadout.aug;
     if (!key || key === 'none') return 'NONE';
+    const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[key] : null;
+    if (desc) return desc.title;
+    const dict = (slotId === 'L' || slotId === 'R' || slotId === 'M') ? WEAPONS
+               : slotId === 'S' ? SHIELD_SYSTEMS : slotId === 'G' ? LEG_SYSTEMS : AUGMENTS;
     return dict[key]?.name || key.toUpperCase();
+}
+
+function _pvpBuildDropdown(slotId) {
+    const list = document.getElementById('pvp-ddl-' + slotId);
+    if (!list) return;
+    list.innerHTML = '';
+    const chassis = loadout.chassis;
+
+    // Get options and restriction set for this slot
+    let options, restrictSet;
+    if (slotId === 'L' || slotId === 'R') {
+        options = typeof WEAPON_OPTIONS !== 'undefined' ? WEAPON_OPTIONS : [];
+        restrictSet = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[chassis] : null;
+    } else if (slotId === 'M') {
+        options = typeof MOD_OPTIONS !== 'undefined' ? MOD_OPTIONS : [];
+        restrictSet = typeof CHASSIS_MODS !== 'undefined' ? CHASSIS_MODS[chassis] : null;
+    } else if (slotId === 'S') {
+        options = typeof SHIELD_OPTIONS !== 'undefined' ? SHIELD_OPTIONS : [];
+        restrictSet = typeof CHASSIS_SHIELDS !== 'undefined' ? CHASSIS_SHIELDS[chassis] : null;
+    } else if (slotId === 'G') {
+        options = typeof LEG_OPTIONS !== 'undefined' ? LEG_OPTIONS : [];
+        restrictSet = typeof CHASSIS_LEGS !== 'undefined' ? CHASSIS_LEGS[chassis] : null;
+    } else {
+        options = typeof AUG_OPTIONS !== 'undefined' ? AUG_OPTIONS : [];
+        restrictSet = typeof CHASSIS_AUGS !== 'undefined' ? CHASSIS_AUGS[chassis] : null;
+    }
+
+    const currentKey = slotId === 'L' ? loadout.L : slotId === 'R' ? loadout.R
+                     : slotId === 'M' ? loadout.mod : slotId === 'S' ? loadout.shld
+                     : slotId === 'G' ? loadout.leg : loadout.aug;
+
+    const is2H = WEAPONS[loadout.L]?.twoHanded;
+
+    options.forEach(opt => {
+        // Chassis restriction
+        if (restrictSet && !restrictSet.has(opt.key)) return;
+        // Light can't use two-handed
+        if (chassis === 'light' && opt.twoHanded) return;
+        // If 2H equipped, R arm is locked
+        if (is2H && slotId === 'R' && opt.key !== loadout.L && opt.key !== 'none') return;
+
+        // Check dual-wield / already in use
+        const otherArm = slotId === 'L' ? loadout.R : slotId === 'R' ? loadout.L : null;
+        const isDual = chassis === 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
+        const isBlocked = chassis !== 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
+
+        const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[opt.key] : null;
+        const descText = (desc && opt.key !== 'none') ? desc.desc : '';
+        const titleText = desc ? desc.title : opt.label;
+
+        const div = document.createElement('div');
+        div.className = 'dd-option'
+            + (opt.key === currentKey ? ' dd-active' : '')
+            + (isBlocked ? ' do-disabled' : '');
+        div.innerHTML = `
+            <div class="do-header">
+                <span class="do-name">${titleText}${isDual ? ' <span style="font-size:9px;letter-spacing:1px;color:#00ffcc;background:rgba(0,255,204,0.12);padding:1px 5px;border:1px solid rgba(0,255,204,0.3);border-radius:2px;vertical-align:middle;">DUAL</span>' : ''}${isBlocked ? ' <span style="font-size:9px;letter-spacing:1px;color:rgba(255,100,100,0.7);background:rgba(255,60,60,0.08);padding:1px 5px;border:1px solid rgba(255,60,60,0.25);border-radius:2px;vertical-align:middle;">IN USE</span>' : ''}</span>
+            </div>
+            ${descText ? `<div class="do-desc">${descText}</div>` : ''}`;
+        if (!isBlocked) div.onclick = () => { _pvpSelectSlot(slotId, opt.key); _pvpCloseAllDD(); };
+        list.appendChild(div);
+    });
+}
+
+function _pvpBuildColorDD() {
+    const list = document.getElementById('pvp-ddl-COL');
+    if (!list) return;
+    list.innerHTML = '';
+    const curHex = loadout.color.toString(16).padStart(6, '0').toLowerCase();
+    (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : []).forEach(opt => {
+        const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS['col_' + opt.key] : null;
+        const div = document.createElement('div');
+        div.className = 'dd-option dd-color-opt' + (opt.key === curHex ? ' dd-active' : '');
+        div.innerHTML = `
+            <div class="do-header">
+                <span class="do-color-swatch" style="background:${opt.hex6};box-shadow:0 0 6px ${opt.hex6}55;"></span>
+                <span class="do-name">${opt.label}</span>
+            </div>
+            ${desc ? `<div class="do-desc">${desc.desc}</div>` : ''}`;
+        div.onclick = () => { loadout.color = opt.hex; _pvpCloseAllDD(); _pvpRenderHangar(); };
+        list.appendChild(div);
+    });
+}
+
+function _pvpToggleColorDD() {
+    if (_pvpOpenDD === 'COL') { _pvpCloseAllDD(); return; }
+    _pvpCloseAllDD();
+    _pvpOpenDD = 'COL';
+    _pvpBuildColorDD();
+    document.getElementById('pvp-dds-COL')?.classList.add('dd-open');
+    document.getElementById('pvp-ddl-COL')?.classList.add('dd-list-open');
 }
 
 function _pvpRenderHangar() {
@@ -1570,207 +1692,132 @@ function _pvpRenderHangar() {
     const hexStr = loadout.color.toString(16).padStart(6, '0');
     const colorOpt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : []).find(o => o.key === hexStr) || { label: 'GREEN', hex6: '#00ff00' };
 
-    // Get available options per slot filtered by chassis
-    const filterSet = (dict, allowed) => {
-        return Object.keys(dict).filter(k => allowed.has(k)).map(k => ({
-            key: k,
-            name: dict[k].name || k.toUpperCase(),
-            desc: dict[k].desc || ''
-        }));
-    };
-
-    const weaponKeys = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[chassis] : new Set();
-    const modKeys    = typeof CHASSIS_MODS !== 'undefined' ? CHASSIS_MODS[chassis] : new Set();
-    const shieldKeys = typeof CHASSIS_SHIELDS !== 'undefined' ? CHASSIS_SHIELDS[chassis] : new Set();
-    const legKeys    = typeof CHASSIS_LEGS !== 'undefined' ? CHASSIS_LEGS[chassis] : new Set();
-    const augKeys    = typeof CHASSIS_AUGS !== 'undefined' ? CHASSIS_AUGS[chassis] : new Set();
-
-    const wOpts = filterSet(WEAPONS, weaponKeys).filter(o => !WEAPONS[o.key]?.twoHanded || chassis !== 'light');
-    const mOpts = filterSet(WEAPONS, modKeys);
-    const sOpts = filterSet(SHIELD_SYSTEMS, shieldKeys);
-    const lOpts = filterSet(LEG_SYSTEMS, legKeys);
-    const aOpts = filterSet(AUGMENTS, augKeys);
-
     const is2H = WEAPONS[loadout.L]?.twoHanded;
-
-    function buildSelect(slotId, label, options, currentKey) {
-        const optHtml = options.map(o => {
-            const sel = o.key === currentKey;
-            const blocked = slotId === 'R' && is2H && o.key !== loadout.L && o.key !== 'none';
-            if (blocked) return '';
-            return `<div class="pvp-h-opt${sel ? ' pvp-h-active' : ''}"
-                         onclick="_pvpSelectSlot('${slotId}','${o.key}')"
-                         title="${o.desc}">
-                        <span>${o.name}</span>
-                    </div>`;
-        }).join('');
-        return `
-            <div class="pvp-h-slot">
-                <div class="pvp-h-slot-label">${label}</div>
-                <div class="pvp-h-slot-current" onclick="_pvpToggleSlot('${slotId}')">
-                    <span>${_pvpSlotLabel(currentKey, slotId === 'L' || slotId === 'R' ? WEAPONS : slotId === 'M' ? WEAPONS : slotId === 'S' ? SHIELD_SYSTEMS : slotId === 'G' ? LEG_SYSTEMS : AUGMENTS)}</span>
-                    <span style="font-size:9px;color:rgba(0,255,255,0.5);">▼</span>
-                </div>
-                <div class="pvp-h-options" id="pvp-opts-${slotId}" style="display:none;">
-                    ${optHtml}
-                </div>
-            </div>`;
-    }
-
-    // Right arm label changes for two-handed
-    const rArmLabel = is2H ? '■ R.ARM (LOCKED)' : '■ R.ARM WEAPON';
-    const rArmCurrent = is2H ? loadout.L : loadout.R;
-
     const ch = typeof CHASSIS !== 'undefined' ? CHASSIS[chassis] : {};
     const totalHP = typeof getTotalHP === 'function' ? getTotalHP(chassis) : (ch.coreHP || 0) + (ch.armHP || 0) * 2 + (ch.legHP || 0);
     const shld = typeof SHIELD_SYSTEMS !== 'undefined' ? (SHIELD_SYSTEMS[loadout.shld] || { maxShield: 0 }) : { maxShield: 0 };
 
+    // Weapon fire rate helpers
+    const fmtDps = (key) => {
+        const w = WEAPONS[key];
+        if (!w || !w.reload || !w.dmg) return '';
+        const dps = (w.dmg / (w.reload / 1000)).toFixed(1);
+        return `<span style="color:rgba(255,255,255,0.3);font-size:9px;margin-left:6px;">${dps} dps</span>`;
+    };
+
+    function ddRow(slotId, label) {
+        const headerName = _pvpGetSlotLabel(slotId);
+        const dpsTag = (slotId === 'L') ? fmtDps(loadout.L) : (slotId === 'R') ? fmtDps(is2H ? loadout.L : loadout.R) : '';
+        return `<div class="dd-row">
+            <span class="dd-label">${label}</span>
+            <div class="pvp-dd-wrap" style="position:relative;flex:1;">
+                <div class="dd-selected pvp-dd-selected" id="pvp-dds-${slotId}" onclick="_pvpToggleDD('${slotId}')">
+                    <span class="dd-name">${headerName}${dpsTag}</span>
+                    <span class="dd-arrow">▼</span>
+                </div>
+                <div class="dd-list pvp-dd-list" id="pvp-ddl-${slotId}"></div>
+            </div>
+        </div>`;
+    }
+
+    // Button section depends on context (pre-match vs in-match)
+    let buttonsHtml;
+    if (_pvpHangarInMatch) {
+        buttonsHtml = `
+            <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" style="width:100%;box-sizing:border-box;font-size:13px;padding:12px;display:flex;justify-content:center;
+                background:transparent;border:1px solid rgba(0,255,255,0.35);border-top:2px solid rgba(0,255,255,0.7);border-bottom:2px solid rgba(0,255,255,0.7);
+                color:#00ffff;text-transform:uppercase;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;
+                box-shadow:0 0 10px rgba(0,255,255,0.06);transition:all 0.3s;">DEPLOY MECH</button>
+            <button onclick="_pvpQuitToMenu()" style="width:100%;box-sizing:border-box;font-size:13px;padding:12px;display:flex;justify-content:center;
+                background:transparent;border:1px solid rgba(255,80,80,0.35);border-top:2px solid rgba(255,80,80,0.7);border-bottom:2px solid rgba(255,80,80,0.7);
+                color:rgba(255,100,100,0.9);text-transform:uppercase;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;
+                box-shadow:0 0 10px rgba(255,80,80,0.06);transition:all 0.3s;">QUIT MATCH</button>`;
+    } else {
+        buttonsHtml = `
+            <button onclick="_pvpJoinLobby()" style="width:100%;box-sizing:border-box;font-size:13px;padding:12px;display:flex;justify-content:center;
+                background:transparent;border:1px solid rgba(0,255,0,0.35);border-top:2px solid rgba(0,255,0,0.7);border-bottom:2px solid rgba(0,255,0,0.7);
+                color:#00ff00;text-transform:uppercase;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;
+                box-shadow:0 0 10px rgba(0,255,0,0.06);transition:all 0.3s;">JOIN LOBBY</button>
+            <button onclick="_pvpBackToMenu()" style="width:100%;box-sizing:border-box;font-size:13px;padding:12px;display:flex;justify-content:center;
+                background:transparent;border:1px solid rgba(255,80,80,0.35);border-top:2px solid rgba(255,80,80,0.7);border-bottom:2px solid rgba(255,80,80,0.7);
+                color:rgba(255,100,100,0.9);text-transform:uppercase;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;
+                box-shadow:0 0 10px rgba(255,80,80,0.06);transition:all 0.3s;">MAIN MENU</button>`;
+    }
+
+    const rArmLabel = is2H ? '■ R.ARM ⬡' : '■ R.ARM';
+
+    // Build details panel (same as simulation)
+    const chassisTraits = [];
+    if (chassis === 'light') { chassisTraits.push('Dual-fire both arms', '+20% reload speed', 'Fragile arms'); }
+    else if (chassis === 'medium') { chassisTraits.push('Mod cooldowns -15%', 'Kills shave 0.5s off cooldown', 'Shield absorbs 60%'); }
+    else if (chassis === 'heavy') { chassisTraits.push('Passive 15% DR', 'Cannot equip JUMP or AFTERLEG', 'Built for attrition'); }
+
     el.innerHTML = `
-        <div style="width:880px;max-width:96vw;max-height:96vh;overflow-y:auto;padding:28px 32px;border:1px solid rgba(0,255,255,0.35);border-radius:10px;
-                    background:linear-gradient(rgba(12,16,20,0.95),rgba(12,16,20,0.95));
-                    box-shadow:0 0 40px rgba(0,0,0,0.7),0 0 20px rgba(0,255,255,0.1);">
+        <div class="stat-readout" style="max-height:96vh;overflow-y:auto;">
+            <h2 style="text-align:center;margin:0 0 20px;letter-spacing:8px;color:#00ffff;font-family:'Courier New',monospace;font-size:26px;
+                text-shadow:0 0 18px rgba(0,255,255,0.7),0 0 40px rgba(0,255,255,0.2);font-weight:normal;">MECH HANGAR</h2>
+            <div style="text-align:center;margin:-14px 0 16px;font-size:10px;letter-spacing:4px;color:rgba(0,255,255,0.35);font-family:'Courier New',monospace;">
+                ${_pvpHangarInMatch ? 'CHANGE LOADOUT' : 'PVP LOADOUT CONFIGURATION'}</div>
 
-            <h2 style="text-align:center;margin:0 0 4px;letter-spacing:8px;color:#00ffff;font-size:22px;
-                       text-shadow:0 0 18px rgba(0,255,255,0.7);font-weight:normal;">MECH HANGAR</h2>
-            <div style="text-align:center;font-size:10px;letter-spacing:4px;color:rgba(0,255,255,0.4);margin-bottom:20px;">PVP LOADOUT CONFIGURATION</div>
-
-            <div style="display:flex;gap:24px;">
-                <!-- LEFT COLUMN: Build options -->
+            <div style="display:flex;gap:28px;align-items:stretch;">
+                <!-- LEFT: BUILD OPTIONS -->
                 <div style="flex:1;min-width:0;">
                     <!-- Chassis -->
-                    <div class="pvp-h-slot">
-                        <div class="pvp-h-slot-label">■ CHASSIS</div>
-                        <div style="display:flex;gap:6px;">
-                            <button class="pvp-h-chassis${chassis === 'light' ? ' active' : ''}" onclick="_pvpSetChassis('light')">LIGHT</button>
-                            <button class="pvp-h-chassis${chassis === 'medium' ? ' active' : ''}" onclick="_pvpSetChassis('medium')">MEDIUM</button>
-                            <button class="pvp-h-chassis${chassis === 'heavy' ? ' active' : ''}" onclick="_pvpSetChassis('heavy')">HEAVY</button>
+                    <div class="dd-row">
+                        <span class="dd-label">■ CHASSIS</span>
+                        <div style="display:flex;gap:6px;flex:1;">
+                            <button id="pvp-c-light" onclick="_pvpSetChassis('light')" class="${chassis === 'light' ? 'active' : ''}" style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">LIGHT</button>
+                            <button id="pvp-c-medium" onclick="_pvpSetChassis('medium')" class="${chassis === 'medium' ? 'active' : ''}" style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">MEDIUM</button>
+                            <button id="pvp-c-heavy" onclick="_pvpSetChassis('heavy')" class="${chassis === 'heavy' ? 'active' : ''}" style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">HEAVY</button>
                         </div>
                     </div>
 
-                    <!-- Color -->
-                    <div class="pvp-h-slot">
-                        <div class="pvp-h-slot-label">■ COLOUR</div>
-                        <div class="pvp-h-slot-current" onclick="_pvpToggleSlot('COL')">
-                            <span style="display:inline-block;width:12px;height:12px;background:${colorOpt.hex6};border-radius:2px;margin-right:8px;box-shadow:0 0 6px ${colorOpt.hex6}55;vertical-align:middle;"></span>
-                            <span>${colorOpt.label}</span>
-                            <span style="font-size:9px;color:rgba(0,255,255,0.5);">▼</span>
-                        </div>
-                        <div class="pvp-h-options" id="pvp-opts-COL" style="display:none;">
-                            ${(typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : []).map(c => `
-                                <div class="pvp-h-opt${c.key === hexStr ? ' pvp-h-active' : ''}"
-                                     onclick="_pvpSelectColor('${c.key}',0x${c.key})">
-                                    <span style="display:inline-block;width:10px;height:10px;background:${c.hex6};border-radius:2px;margin-right:6px;box-shadow:0 0 4px ${c.hex6}55;"></span>
-                                    <span>${c.label}</span>
-                                </div>
-                            `).join('')}
+                    <!-- Colour -->
+                    <div class="dd-row">
+                        <span class="dd-label">■ COLOUR</span>
+                        <div class="pvp-dd-wrap" style="position:relative;flex:1;">
+                            <div class="dd-selected pvp-dd-selected" id="pvp-dds-COL" onclick="_pvpToggleColorDD()">
+                                <span class="dd-color-swatch-header" style="background:${colorOpt.hex6};box-shadow:0 0 6px ${colorOpt.hex6}55;"></span>
+                                <span class="dd-name">${colorOpt.label}</span>
+                                <span class="dd-arrow">▼</span>
+                            </div>
+                            <div class="dd-list pvp-dd-list" id="pvp-ddl-COL"></div>
                         </div>
                     </div>
 
-                    ${buildSelect('L', '■ L.ARM WEAPON', wOpts, loadout.L)}
-                    ${buildSelect('R', rArmLabel, wOpts, rArmCurrent)}
-                    ${buildSelect('M', '■ CORE MOD', mOpts, loadout.mod)}
-                    ${buildSelect('S', '■ SHIELD SYSTEM', sOpts, loadout.shld)}
-                    ${buildSelect('G', '■ LEG SYSTEM', lOpts, loadout.leg)}
-                    ${buildSelect('A', '■ AUGMENT', aOpts, loadout.aug)}
-                </div>
+                    ${ddRow('L', '■ L.ARM')}
+                    ${ddRow('R', rArmLabel)}
+                    ${ddRow('M', '■ CORE MOD')}
+                    ${ddRow('S', '■ SHIELD')}
+                    ${ddRow('G', '■ LEGS')}
+                    ${ddRow('A', '■ AUGMENT')}
 
-                <!-- RIGHT COLUMN: Preview + Stats + Buttons -->
-                <div style="width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;">
-                    <div style="border:1px solid rgba(0,255,255,0.4);background:rgba(0,10,20,0.6);box-shadow:0 0 14px rgba(0,255,255,0.12);display:flex;justify-content:center;align-items:center;height:140px;">
+                    <!-- Build Details -->
+                    <div style="margin-top:16px;">
+                        <div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);font-family:'Courier New',monospace;margin-bottom:6px;text-transform:uppercase;">■ BUILD DETAILS</div>
+                        <div>
+                            <div class="gs-row"><span class="gs-label">TOTAL HP</span><span class="gs-val" style="color:#00ff88">${totalHP} HP</span></div>
+                            <div class="gs-row"><span class="gs-label">HP SPLIT</span><span class="gs-val" style="color:#55cc88">C ${ch.coreHP||0} / A ${ch.armHP||0} / L ${ch.legHP||0}</span></div>
+                            <div class="gs-row"><span class="gs-label">SPEED</span><span class="gs-val" style="color:#ffdd88">${ch.spd||210} u/s</span></div>
+                            <div class="gs-row"><span class="gs-label">SHIELD</span><span class="gs-val" style="color:#00ffff">${shld.maxShield > 0 ? shld.maxShield + ' HP / ' + Math.round((shld.absorb||0.5)*100) + '% absorb' : 'NONE'}</span></div>
+                            <div class="gs-row"><span class="gs-label">CHASSIS</span><span class="gs-val" style="color:${chassis==='light'?'#88ff88':chassis==='medium'?'#ffcc44':'#ff8844'}">${chassisTraits.join(' · ')}</span></div>
+                        </div>
+                    </div>
+                </div><!-- /left -->
+
+                <!-- RIGHT: PREVIEW + BUTTONS -->
+                <div style="width:210px;flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;gap:0;">
+                    <div style="width:200px;height:140px;border:1px solid rgba(0,255,255,0.4);background:rgba(0,10,20,0.6);
+                        box-shadow:0 0 14px rgba(0,255,255,0.12);display:flex;justify-content:center;align-items:center;">
                         <img src="assets/${chassis}-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
                     </div>
-
-                    <!-- Stats -->
-                    <div style="background:rgba(10,15,22,0.9);border:1px solid rgba(0,255,255,0.2);border-radius:6px;padding:12px;font-size:11px;">
-                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                            <span style="color:rgba(200,210,217,0.5);">TOTAL HP</span>
-                            <span style="color:#00ff88;">${totalHP}</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                            <span style="color:rgba(200,210,217,0.5);">SPEED</span>
-                            <span style="color:#ffdd88;">${ch.spd || 210} u/s</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                            <span style="color:rgba(200,210,217,0.5);">SHIELD</span>
-                            <span style="color:#00ffff;">${shld.maxShield || 0} HP</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                            <span style="color:rgba(200,210,217,0.5);">CORE HP</span>
-                            <span style="color:#55cc88;">${ch.coreHP || 0}</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;">
-                            <span style="color:rgba(200,210,217,0.5);">ARM / LEG</span>
-                            <span style="color:#55cc88;">${ch.armHP || 0} / ${ch.legHP || 0}</span>
-                        </div>
+                    <div style="width:100%;margin-top:auto;display:flex;flex-direction:column;gap:8px;">
+                        ${buttonsHtml}
                     </div>
-
-                    <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;">
-                        <button onclick="_pvpJoinLobby()" style="width:100%;padding:12px;font-size:13px;letter-spacing:3px;color:#00ff00;
-                            border:1px solid rgba(0,255,0,0.4);border-top:2px solid rgba(0,255,0,0.7);border-bottom:2px solid rgba(0,255,0,0.7);
-                            background:rgba(0,255,0,0.06);cursor:pointer;font-family:'Courier New',monospace;
-                            transition:all 0.3s;"
-                            onmouseover="this.style.background='rgba(0,255,0,0.12)';this.style.letterSpacing='5px'"
-                            onmouseout="this.style.background='rgba(0,255,0,0.06)';this.style.letterSpacing='3px'">
-                            JOIN LOBBY</button>
-                        <button onclick="_pvpBackToMenu()" style="width:100%;padding:12px;font-size:12px;letter-spacing:3px;color:#ff4444;
-                            border:1px solid rgba(255,68,68,0.3);border-left:3px solid #ff4444;
-                            background:rgba(255,68,68,0.06);cursor:pointer;font-family:'Courier New',monospace;">
-                            MAIN MENU</button>
-                    </div>
-                </div>
+                </div><!-- /right -->
             </div>
         </div>
-
-        <style>
-            .pvp-h-slot { margin-bottom:10px; }
-            .pvp-h-slot-label { font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);margin-bottom:4px;text-transform:uppercase; }
-            .pvp-h-slot-current {
-                display:flex;align-items:center;gap:6px;padding:8px 12px;cursor:pointer;
-                background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-left:3px solid transparent;
-                font-size:12px;letter-spacing:2px;transition:all 0.15s;
-            }
-            .pvp-h-slot-current:hover { background:rgba(0,255,255,0.07);border-color:rgba(0,255,255,0.3); }
-            .pvp-h-options {
-                max-height:200px;overflow-y:auto;border:1px solid rgba(0,255,255,0.2);border-top:none;
-                background:rgba(8,12,18,0.97);
-            }
-            .pvp-h-opt {
-                padding:6px 12px;cursor:pointer;font-size:11px;letter-spacing:1px;
-                border-bottom:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;gap:4px;
-                transition:background 0.1s;
-            }
-            .pvp-h-opt:hover { background:rgba(0,255,255,0.09);color:#fff; }
-            .pvp-h-opt.pvp-h-active { background:rgba(0,255,255,0.13);color:#00ffff; }
-            .pvp-h-chassis {
-                flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;
-                background:rgba(255,255,255,0.04);color:#c8d2d9;border:1px solid rgba(255,255,255,0.1);
-                border-left:3px solid transparent;cursor:pointer;transition:all 0.2s;
-            }
-            .pvp-h-chassis:hover { background:rgba(0,255,255,0.07);border-color:rgba(0,255,255,0.3);color:#fff; }
-            .pvp-h-chassis.active {
-                background:rgba(0,255,255,0.1);color:#fff;border-color:rgba(0,255,255,0.5);
-                border-left:3px solid #00ffff;box-shadow:inset 8px 0 15px rgba(0,255,255,0.06);
-                text-shadow:0 0 6px rgba(0,255,255,0.4);
-            }
-        </style>
     `;
-}
-
-let _pvpOpenSlot = null;
-
-function _pvpToggleSlot(slotId) {
-    if (_pvpOpenSlot === slotId) {
-        document.getElementById('pvp-opts-' + slotId).style.display = 'none';
-        _pvpOpenSlot = null;
-    } else {
-        // Close any open
-        if (_pvpOpenSlot) {
-            const prev = document.getElementById('pvp-opts-' + _pvpOpenSlot);
-            if (prev) prev.style.display = 'none';
-        }
-        document.getElementById('pvp-opts-' + slotId).style.display = 'block';
-        _pvpOpenSlot = slotId;
-    }
 }
 
 function _pvpSelectSlot(slotId, key) {
@@ -1797,26 +1844,17 @@ function _pvpSelectSlot(slotId, key) {
     } else if (slotId === 'A') {
         loadout.aug = key;
     }
-    _pvpOpenSlot = null;
-    _pvpRenderHangar();
-}
-
-function _pvpSelectColor(hexStr, hexNum) {
-    loadout.color = hexNum;
-    _pvpOpenSlot = null;
     _pvpRenderHangar();
 }
 
 function _pvpSetChassis(ch) {
     loadout.chassis = ch;
-    // Reset slots that are no longer valid for this chassis
     if (!CHASSIS_WEAPONS[ch]?.has(loadout.L)) loadout.L = 'none';
     if (!CHASSIS_WEAPONS[ch]?.has(loadout.R)) loadout.R = 'none';
     if (!CHASSIS_MODS[ch]?.has(loadout.mod)) loadout.mod = 'none';
     if (!CHASSIS_SHIELDS[ch]?.has(loadout.shld)) loadout.shld = 'none';
     if (!CHASSIS_LEGS[ch]?.has(loadout.leg)) loadout.leg = 'none';
     if (!CHASSIS_AUGS[ch]?.has(loadout.aug)) loadout.aug = 'none';
-    // Apply a starter weapon if none selected
     const starter = typeof STARTER_LOADOUTS !== 'undefined' ? STARTER_LOADOUTS[ch] : null;
     if (starter && loadout.L === 'none') loadout.L = starter.L;
     if (starter && loadout.shld === 'none') loadout.shld = starter.shld;
@@ -1833,6 +1871,75 @@ function _pvpBackToMenu() {
     mpHidePvpHangar();
     const menu = document.getElementById('main-menu');
     if (menu) { menu.style.display = ''; menu.style.opacity = '1'; }
+}
+
+function _pvpDeployFromHangar() {
+    // Close hangar and jump back into the match with new loadout
+    mpHidePvpHangar();
+    document.getElementById('hud-container').style.display = 'flex';
+    const mm = document.getElementById('minimap-wrap'); if (mm) mm.style.display = 'block';
+    mpShowPvpHud();
+    mpShowInGameChat();
+
+    // Respawn with new loadout
+    const scene = game?.scene?.scenes[0];
+    if (!scene) return;
+    scene.input.setDefaultCursor('none');
+    document.body.style.cursor = 'none';
+
+    // Apply new loadout — respawn at current spawn point
+    mpRespawnPlayer();
+}
+
+function _pvpQuitToMenu() {
+    mpHidePvpHangar();
+    if (typeof _cleanupGame === 'function') _cleanupGame();
+    mpCleanupMatch();
+    _mpSocket?.emit('return-to-lobby');
+    mpDisconnect();
+    // Return to main menu
+    const menu = document.getElementById('main-menu');
+    if (menu) { menu.style.display = ''; menu.style.opacity = '1'; }
+}
+
+// ================================================================
+// PVP ESC MENU — accessible during matches
+// ================================================================
+
+function mpShowPvpMenu() {
+    let el = document.getElementById('mp-pvp-menu');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'mp-pvp-menu';
+        el.style.cssText = `position:fixed;inset:0;z-index:15000;display:flex;align-items:center;justify-content:center;
+            background:rgba(0,0,0,0.7);font-family:'Courier New',monospace;`;
+        el.innerHTML = `
+            <div style="text-align:center;">
+                <div style="font-size:36px;letter-spacing:12px;color:#00ffff;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);
+                    animation:pausePulse 1.2s ease-in-out infinite;margin-bottom:40px;">MENU</div>
+                <div style="display:flex;flex-direction:column;gap:14px;align-items:center;">
+                    <button onclick="mpClosePvpMenu()" class="pause-menu-btn">RESUME</button>
+                    <button onclick="mpClosePvpMenu();mpShowPvpHangar(true);" class="pause-menu-btn">MECH HANGAR</button>
+                    <button onclick="mpClosePvpMenu();_pvpQuitToMenu();" class="pause-menu-btn"
+                        style="border-left-color:#ff4444;color:#ff4444;border-color:rgba(255,68,68,0.3);box-shadow:0 0 10px rgba(255,68,68,0.15);">
+                        QUIT MATCH</button>
+                </div>
+                <div style="margin-top:24px;font-size:11px;letter-spacing:2px;color:rgba(0,255,255,0.35);">PRESS ESC TO CLOSE</div>
+            </div>
+        `;
+        document.body.appendChild(el);
+    }
+    el.style.display = 'flex';
+}
+
+function mpClosePvpMenu() {
+    const el = document.getElementById('mp-pvp-menu');
+    if (el) el.style.display = 'none';
+}
+
+function mpIsPvpMenuOpen() {
+    const el = document.getElementById('mp-pvp-menu');
+    return el && el.style.display !== 'none';
 }
 
 // ================================================================
