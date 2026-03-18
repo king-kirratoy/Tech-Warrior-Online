@@ -6124,6 +6124,8 @@ function deployMech() {
                 if (stb.blastMult)   _perkState.blastMult = (_perkState.blastMult || 1) * (1 + stb.blastMult);
                 if (stb.dodgeChance) _perkState.dodgeChance = (_perkState.dodgeChance || 0) + stb.dodgeChance;
                 if (stb.dr)          _perkState.fortress = (_perkState.fortress || 0) + stb.dr;
+                if (stb.critDmg)     _perkState.critDmg = (_perkState.critDmg || 0) + stb.critDmg;
+                if (stb.autoRepair)  _perkState.autoRepair = (_perkState.autoRepair || 0) + stb.autoRepair;
                 if (stb.modCdMult && typeof CHASSIS !== 'undefined' && CHASSIS.medium) {
                     CHASSIS.medium.modCooldownMult = (CHASSIS.medium.modCooldownMult || 0.85) * (1 - stb.modCdMult);
                 }
