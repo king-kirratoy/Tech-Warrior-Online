@@ -3087,6 +3087,16 @@ function update(time) {
 
     if (!isDeployed || _isPaused || _roundClearing) return;
 
+    // Safety: clear stuck damage processing lock (prevents permanent freeze)
+    if (player?.isProcessingDamage && player._dmgLockTime && time - player._dmgLockTime > 200) {
+        player.isProcessingDamage = false;
+    }
+    if (player?.isProcessingDamage && !player._dmgLockTime) {
+        player._dmgLockTime = time;
+    } else if (!player?.isProcessingDamage) {
+        if (player) player._dmgLockTime = 0;
+    }
+
     handleShieldRegen(time);
     handleEnemyAI(this, time);
     handlePlayerMovement(this, time);
@@ -10150,9 +10160,14 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         showDeathScreen();
     } else {
         // Still alive — re-enable damage processing after brief lock
-        game.scene.scenes[0].time.delayedCall(50, () => {
-            if (player) player.isProcessingDamage = false;
-        });
+        try {
+            game.scene.scenes[0].time.delayedCall(50, () => {
+                if (player) player.isProcessingDamage = false;
+            });
+        } catch(e) {
+            // Fallback: use setTimeout if Phaser timer fails (prevents permanent damage lock)
+            setTimeout(() => { if (player) player.isProcessingDamage = false; }, 60);
+        }
     }
 }
 
