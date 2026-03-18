@@ -757,7 +757,7 @@ function showMissionSelect() {
     // ── Header row: centered CAMPAIGN title + small QUIT button on far right ──
     html += '<div style="position:relative;width:100%;max-width:700px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;">';
     html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);">CAMPAIGN</div>';
-    html += `<button onclick="_closeMissionSelect()" style="position:absolute;right:0;padding:8px 18px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.25);color:rgba(255,100,100,0.7);font-size:10px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.7)';this.style.boxShadow='none'">QUIT</button>`;
+    html += `<button onclick="_closeMissionSelect()" style="position:absolute;right:0;padding:8px 18px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.25);color:rgba(255,100,100,0.7);font-size:10px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;overflow:hidden;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.7)';this.style.letterSpacing='3px';this.style.boxShadow='none'">QUIT</button>`;
     html += '</div>';
 
     // ── Player level / XP bar + scrap ──
@@ -866,9 +866,9 @@ function showMissionSelect() {
             html += '</div>';
         }
 
-        // ── Deploy button — centered and compact, not full-width ──
-        html += '<div style="display:flex;justify-content:center;margin-top:16px;width:100%;max-width:700px;">';
-        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" style="padding:10px 36px;max-width:320px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)';this.style.color='#fff';this.style.letterSpacing='5px';this.style.boxShadow='0 0 24px rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.08)';this.style.color='#ffd700';this.style.letterSpacing='3px';this.style.boxShadow='none'">DEPLOY</button>`;
+        // ── Deploy button — right-aligned with action buttons above ──
+        html += '<div style="display:flex;justify-content:flex-end;margin-top:16px;width:100%;max-width:700px;">';
+        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" style="padding:10px 32px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(255,215,0,0.15)';this.style.color='#fff';this.style.letterSpacing='5px';this.style.boxShadow='0 0 24px rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.08)';this.style.color='#ffd700';this.style.letterSpacing='3px';this.style.boxShadow='none'">DEPLOY</button>`;
         html += '</div>';
     }
 
