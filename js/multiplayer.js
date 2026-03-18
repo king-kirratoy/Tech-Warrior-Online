@@ -376,27 +376,26 @@ function mpCreateRemotePlayer(scene, info, spawn) {
     // Overlap: OUR bullets hit THEIR body
     // Phaser callback order: (memberOfGroup1, object2) — bullet is from `bullets` group, rpBody is `body`
     scene.physics.add.overlap(bullets, body, (bullet, rpBody) => {
-        if (!bullet?.active) return;
-        // Don't hit dead remote players
-        const rpData = _mpPlayers.get(info.id);
-        if (rpData && !rpData.alive) return;
-        const dmg = bullet.damageValue || 10;
-        const bx = bullet.x, by = bullet.y;
-        bullet.destroy();
+        try {
+            if (!bullet?.active) return;
+            // Don't hit dead remote players
+            const rpData = _mpPlayers.get(info.id);
+            if (rpData && !rpData.alive) return;
+            const dmg = bullet.damageValue || 10;
+            const bx = bullet.x, by = bullet.y;
+            bullet.destroy();
 
-        createImpactSparks(scene, bx, by);
-        showDamageText(scene, bx, by, dmg);
-        _shotsHit++;
-        _damageDealt += dmg;
+            try { createImpactSparks(scene, bx, by); } catch(e) {}
+            try { showDamageText(scene, bx, by, dmg); } catch(e) {}
+            _shotsHit++;
+            _damageDealt += dmg;
 
-        // Tell server we hit this player
-        _mpSocket.emit('player-hit', {
-            shooterId: _mpLocalId,
-            victimId: info.id,
-            damage: dmg,
-            x: bx,
-            y: by
-        });
+            // Shooter-side visual feedback only — victim reports the actual hit to server
+            // (no player-hit emit here to avoid duplicate hit reporting)
+        } catch(e) {
+            // Prevent physics world crash from uncaught overlap callback errors
+            console.warn('[MP] Shooter overlap error:', e);
+        }
     });
 }
 
@@ -466,57 +465,72 @@ function mpSpawnRemoteBullet(scene, data) {
         // PVP bullets hit local player
         // Phaser callback order: (memberOfGroup1, object2) — bullet is from `_mpPvpBullets`, playerObj is `player`
         scene.physics.add.overlap(_mpPvpBullets, player, (bullet, playerObj) => {
-            if (!bullet?.active || !player?.active || !isDeployed) return;
-
-            const dmg = bullet.damageValue || 15;
-            const shooterId = bullet._shooterId;  // capture before destroy
-            const bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
-
-            if (isShieldActive) {
-                try { sndShieldBlock(); } catch(e) {}
-                try { createShieldSparks(scene, bullet.x, bullet.y); } catch(e) {}
-                try { showDamageText(scene, bullet.x, bullet.y, 0, true); } catch(e) {}
-                bullet.destroy();
-                return;
-            }
-
-            createImpactSparks(scene, player.x, player.y);
-            showDamageText(scene, player.x, player.y, dmg, player.shield > 0);
-            bullet.destroy();
-
             try {
-                processPlayerDamage(dmg, bAngle);
+                if (!bullet?.active || !bullet?.body || !player?.active || !isDeployed) return;
+                if (!_mpAlive || _mpRespawning) return;
+
+                const dmg = bullet.damageValue || 15;
+                const shooterId = bullet._shooterId;  // capture before destroy
+                const bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
+
+                if (isShieldActive) {
+                    try { sndShieldBlock(); } catch(e) {}
+                    try { createShieldSparks(scene, bullet.x, bullet.y); } catch(e) {}
+                    try { showDamageText(scene, bullet.x, bullet.y, 0, true); } catch(e) {}
+                    bullet.destroy();
+                    return;
+                }
+
+                try { createImpactSparks(scene, player.x, player.y); } catch(e) {}
+                try { showDamageText(scene, player.x, player.y, dmg, player.shield > 0); } catch(e) {}
+                bullet.destroy();
+
+                try {
+                    processPlayerDamage(dmg, bAngle);
+                } catch(e) {
+                    // Ensure damage lock is released even if processPlayerDamage throws
+                    if (player) player.isProcessingDamage = false;
+                }
+
+                // Report hit to server (victim is authority for damage)
+                if (_mpSocket?.connected) {
+                    _mpSocket.emit('player-hit', {
+                        shooterId: shooterId,
+                        victimId: _mpLocalId,
+                        damage: dmg,
+                        x: player.x,
+                        y: player.y
+                    });
+                }
+
+                // Check if we died — deathmatch: notify server, wait for respawn
+                if (player?.comp?.core?.hp <= 0 && _mpAlive) {
+                    _mpAlive = false;
+                    if (_mpSocket?.connected) {
+                        _mpSocket.emit('player-killed', { killerId: shooterId });
+                    }
+                    // Hide player visually until respawn
+                    try {
+                        if (player?.active) { player.setAlpha(0); player.body.setVelocity(0, 0); }
+                        if (torso?.active) torso.setAlpha(0);
+                        if (shieldGraphic?.active) shieldGraphic.setVisible(false);
+                    } catch(e) {}
+                    isDeployed = false;
+                }
             } catch(e) {
-                // Ensure damage lock is released even if processPlayerDamage throws
+                // Prevent physics world crash from uncaught overlap callback errors
+                console.warn('[MP] PVP bullet overlap error:', e);
                 if (player) player.isProcessingDamage = false;
-            }
-
-            // Report hit to server
-            _mpSocket.emit('player-hit', {
-                shooterId: shooterId,
-                victimId: _mpLocalId,
-                damage: dmg,
-                x: player.x,
-                y: player.y
-            });
-
-            // Check if we died — deathmatch: notify server, wait for respawn
-            if (player?.comp?.core?.hp <= 0 && _mpAlive) {
-                _mpAlive = false;
-                _mpSocket.emit('player-killed', { killerId: shooterId });
-                // Hide player visually until respawn
-                if (player?.active) { player.setAlpha(0); player.body.setVelocity(0, 0); }
-                if (torso?.active) torso.setAlpha(0);
-                if (shieldGraphic?.active) shieldGraphic.setVisible(false);
-                isDeployed = false;
             }
         });
 
         // PVP bullets hit cover
         scene.physics.add.collider(_mpPvpBullets, coverObjects, (bullet) => {
-            if (!bullet?.active) return;
-            createImpactSparks(scene, bullet.x, bullet.y);
-            bullet.destroy();
+            try {
+                if (!bullet?.active) return;
+                createImpactSparks(scene, bullet.x, bullet.y);
+                bullet.destroy();
+            } catch(e) {}
         });
     }
 
