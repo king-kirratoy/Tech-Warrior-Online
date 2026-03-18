@@ -527,7 +527,7 @@ button.active {
                 inset 0 0 20px rgba(0,255,255,0.03);
 }
 
-.menu-start-btn { flex: none !important; width: 320px; text-align: center; }
+.menu-start-btn { flex: none !important; width: 260px; text-align: left; }
 .menu-start-btn:hover {
     background: rgba(0,255,255,0.08);
     border-color: rgba(0,255,255,0.9);
@@ -4815,8 +4815,10 @@ function startRound(roundNum) {
             setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, _campaignEnemy.enemyLevel); }, spawnIdx * 400 + 600);
         }
 
-        // Commander + medic in higher-level campaign missions
+        // Commander in higher-level campaign missions (add to total)
         if (_campaignEnemy.enemyLevel >= 6) {
+            _roundTotal++;
+            updateRoundHUD();
             setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 800);
         }
     } else {
@@ -11784,8 +11786,8 @@ function respawnMech() {
     if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
     _resetHUDState();
     if (_gameMode === 'campaign') {
-        _roundKills = 0; _roundTotal = 0;
-        // Keep _round and _totalKills for campaign continuity
+        _round = 1; _roundKills = 0; _roundTotal = 0;
+        // Reset round to 1 for each campaign mission deploy
     } else {
         _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
     }
@@ -12389,33 +12391,46 @@ function populateStats() {
     const chassisData = CHASSIS[ch];
 
     // ── CHASSIS & HP ──────────────────────────────────────────
+    const _inGame = !!(player?.comp); // true when actually deployed in-game
     const baseShield = chassisData?.max || 75;
     let chassisHtml = '';
     chassisHtml += _statRow('Chassis', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
     // Shield: show base vs current max, tooltip for gear/perk breakdown
     const gearShieldHP = (_gearState?.shieldHP || 0);
-    const shieldBonus = Math.round((player?.maxShield||0) - baseShield);
+    const _curShield = _inGame ? Math.round(player.shield||0) : baseShield;
+    const _maxShield = _inGame ? Math.round(player.maxShield||0) : baseShield;
+    const shieldBonus = Math.round(_maxShield - baseShield);
     const perkShieldBonus = shieldBonus - gearShieldHP;
     let shieldTip = '';
     if (gearShieldHP > 0) shieldTip += `+${gearShieldHP} gear`;
     if (perkShieldBonus > 0) shieldTip += (shieldTip ? ', ' : '') + `+${perkShieldBonus} perks`;
     const shieldBonusData = shieldTip ? ` data-bonus="${shieldTip}"` : '';
     const shieldBonusCls = shieldTip ? ' stat-has-bonus' : '';
-    chassisHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple${shieldBonusCls}"${shieldBonusData}>${Math.round(player?.shield||0)} / ${Math.round(player?.maxShield||0)}</span></div>`;
+    chassisHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple${shieldBonusCls}"${shieldBonusData}>${_curShield} / ${_maxShield}</span></div>`;
     chassisHtml += '<div style="margin-top:12px;margin-bottom:6px;font-size:12px;letter-spacing:2px;color:rgba(0,255,255,0.35);">HULL INTEGRITY</div>';
-    if (player?.comp) {
+    {
         const baseHP = { core: chassisData?.coreHP||212, lArm: chassisData?.armHP||120, rArm: chassisData?.armHP||120, legs: chassisData?.legHP||152 };
-        chassisHtml += _hpBarBoosted('Core',  player.comp.core.hp,  player.comp.core.max,  baseHP.core);
-        chassisHtml += _hpBarBoosted('L.Arm', player.comp.lArm.hp,  player.comp.lArm.max,  baseHP.lArm);
-        chassisHtml += _hpBarBoosted('R.Arm', player.comp.rArm.hp,  player.comp.rArm.max,  baseHP.rArm);
-        chassisHtml += _hpBarBoosted('Legs',  player.comp.legs.hp,  player.comp.legs.max,  baseHP.legs);
-        const totalHp  = Object.values(player.comp).reduce((s,c)=>s+c.hp,0);
-        const totalMax = Object.values(player.comp).reduce((s,c)=>s+c.max,0);
-        const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
-        const totalBonusHp = Math.round(totalMax - totalBase);
-        const totalBonusData = totalBonusHp > 0 ? ` data-bonus="+${totalBonusHp} from perks/gear"` : '';
-        const totalBonusCls = totalBonusHp > 0 ? ' stat-has-bonus' : '';
-        chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
+        if (_inGame) {
+            chassisHtml += _hpBarBoosted('Core',  player.comp.core.hp,  player.comp.core.max,  baseHP.core);
+            chassisHtml += _hpBarBoosted('L.Arm', player.comp.lArm.hp,  player.comp.lArm.max,  baseHP.lArm);
+            chassisHtml += _hpBarBoosted('R.Arm', player.comp.rArm.hp,  player.comp.rArm.max,  baseHP.rArm);
+            chassisHtml += _hpBarBoosted('Legs',  player.comp.legs.hp,  player.comp.legs.max,  baseHP.legs);
+            const totalHp  = Object.values(player.comp).reduce((s,c)=>s+c.hp,0);
+            const totalMax = Object.values(player.comp).reduce((s,c)=>s+c.max,0);
+            const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
+            const totalBonusHp = Math.round(totalMax - totalBase);
+            const totalBonusData = totalBonusHp > 0 ? ` data-bonus="+${totalBonusHp} from perks/gear"` : '';
+            const totalBonusCls = totalBonusHp > 0 ? ' stat-has-bonus' : '';
+            chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
+        } else {
+            // Not in-game: show base HP values at full
+            chassisHtml += _hpBarBoosted('Core',  baseHP.core,  baseHP.core,  baseHP.core);
+            chassisHtml += _hpBarBoosted('L.Arm', baseHP.lArm,  baseHP.lArm,  baseHP.lArm);
+            chassisHtml += _hpBarBoosted('R.Arm', baseHP.rArm,  baseHP.rArm,  baseHP.rArm);
+            chassisHtml += _hpBarBoosted('Legs',  baseHP.legs,  baseHP.legs,  baseHP.legs);
+            const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
+            chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalBase} / ${totalBase}</span></div></div>`;
+        }
     }
     // ── Chassis traits & arm mode — rendered full-width below the grid ──
     const _chColor = ch==='light'?'#88ff88':ch==='medium'?'#ffcc44':'#ff8844';
@@ -12547,7 +12562,7 @@ function populateStats() {
     const perkSpd = Math.round(baseSpd * (_perkState.speedMult||1));
     const gearSpdBonus = (_gearState?.speedPct || 0);
     const effSpd  = Math.round(perkSpd * (1 + gearSpdBonus/100));
-    const legsOk  = player?.comp?.legs?.hp > 0;
+    const legsOk  = _inGame ? (player?.comp?.legs?.hp > 0) : true;
     // Helper: build tooltip string from perk + gear contributions
     const _bonusTip = (perkVal, gearVal, perkLabel='perks', gearLabel='gear') => {
         let tip = '';
