@@ -251,15 +251,85 @@ io.on('connection', (socket) => {
 // ────────────────────────────────────────────────────────────────
 
 function generateSpawnPositions(count) {
+    // City grid constants (must match client generateCover in index.html)
+    const BLOCK_SIZE   = 600;
+    const STREET_WIDTH = 160;
+    const GRID_START   = 250;
+
+    // Calculate street intersection centers — these are guaranteed clear of buildings
+    const streetIntersections = [];
+    // Vertical street centers (between columns)
+    const vStreets = [];
+    for (let col = 0; col < 4; col++) {
+        vStreets.push(GRID_START + (col + 1) * BLOCK_SIZE + col * STREET_WIDTH + STREET_WIDTH / 2);
+    }
+    // Horizontal street centers (between rows)
+    const hStreets = [];
+    for (let row = 0; row < 4; row++) {
+        hStreets.push(GRID_START + (row + 1) * BLOCK_SIZE + row * STREET_WIDTH + STREET_WIDTH / 2);
+    }
+    // All intersections
+    for (const sx of vStreets) {
+        for (const sy of hStreets) {
+            streetIntersections.push({ x: sx, y: sy });
+        }
+    }
+    // Also add street midpoints (between intersections) for more options
+    for (const sx of vStreets) {
+        // Midpoints along vertical streets (between block rows)
+        for (let row = 0; row < 5; row++) {
+            const my = GRID_START + row * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
+            streetIntersections.push({ x: sx, y: my });
+        }
+    }
+    for (const sy of hStreets) {
+        // Midpoints along horizontal streets (between block cols)
+        for (let col = 0; col < 5; col++) {
+            const mx = GRID_START + col * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
+            streetIntersections.push({ x: mx, y: sy });
+        }
+    }
+
+    // Sort by distance from center descending — prefer outer spawns for spread
     const cx = 2000, cy = 2000;
-    const radius = 1200;
+    streetIntersections.sort((a, b) => {
+        const da = Math.hypot(a.x - cx, a.y - cy);
+        const db = Math.hypot(b.x - cx, b.y - cy);
+        return db - da;
+    });
+
+    // Remove points too close to center (safe zone)
+    const filtered = streetIntersections.filter(p => Math.hypot(p.x - cx, p.y - cy) > 500);
+
+    // Select spawns that are well-spread from each other
     const spawns = [];
+    const used = new Set();
     for (let i = 0; i < count; i++) {
-        const angle = (2 * Math.PI * i) / count;
-        spawns.push({
-            x: Math.round(cx + radius * Math.cos(angle)),
-            y: Math.round(cy + radius * Math.sin(angle))
-        });
+        let best = null;
+        let bestMinDist = -1;
+        for (let j = 0; j < filtered.length; j++) {
+            if (used.has(j)) continue;
+            const p = filtered[j];
+            // Find minimum distance to already-selected spawns
+            let minDist = Infinity;
+            for (const s of spawns) {
+                const d = Math.hypot(p.x - s.x, p.y - s.y);
+                if (d < minDist) minDist = d;
+            }
+            if (spawns.length === 0) minDist = Math.hypot(p.x - cx, p.y - cy);
+            if (minDist > bestMinDist) {
+                bestMinDist = minDist;
+                best = j;
+            }
+        }
+        if (best !== null) {
+            spawns.push(filtered[best]);
+            used.add(best);
+        } else {
+            // Fallback — should never happen with 16 intersections
+            const angle = (2 * Math.PI * i) / count;
+            spawns.push({ x: Math.round(cx + 1200 * Math.cos(angle)), y: Math.round(cy + 1200 * Math.sin(angle)) });
+        }
     }
     return spawns;
 }
