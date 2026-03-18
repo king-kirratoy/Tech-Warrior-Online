@@ -10582,9 +10582,12 @@ function updateEnemyDoll(e) {
         hud.style.display = 'none';
         _eDollTarget = null;
     }, 3000);
+
+    // Resolve enemy type definition at function scope so getCol/glow can use it
+    const _typeDef = e.enemyType && typeof ENEMY_TYPE_DEFS !== 'undefined' ? ENEMY_TYPE_DEFS[e.enemyType] : null;
+
     const label = document.getElementById('edoll-label');
     if (label) {
-        const _typeDef = e.enemyType && typeof ENEMY_TYPE_DEFS !== 'undefined' ? ENEMY_TYPE_DEFS[e.enemyType] : null;
         const _elitePrefix = e._eliteMods?.length ? e._eliteMods.map(k => (typeof ELITE_MODIFIERS !== 'undefined' ? ELITE_MODIFIERS[k]?.label : k)).join(' ') + ' ' : '';
         label.innerText = e.isCommander ? '[ COMMANDER ]'
             : _typeDef ? `[ ${_elitePrefix}${_typeDef.label} ]`
@@ -10618,14 +10621,10 @@ function updateEnemyDoll(e) {
         el.style.boxShadow  = glow(comp.hp, comp.max);
     };
     if (!e.comp) return;
-    set('edoll-core',      e.comp.core);
-    set('edoll-lArm',      e.comp.lArm);
-    set('edoll-lShoulder', e.comp.lArm);
-    set('edoll-rArm',      e.comp.rArm);
-    set('edoll-rShoulder', e.comp.rArm);
-    set('edoll-lLeg',      e.comp.legs);
-    set('edoll-rLeg',      e.comp.legs);
-    set('edoll-head',      e.comp.core);
+    // Update all parts with current HP values
+    const parts = ['edoll-core','edoll-lArm','edoll-lShoulder','edoll-rArm','edoll-rShoulder','edoll-lLeg','edoll-rLeg','edoll-head'];
+    const comps = [e.comp.core, e.comp.lArm, e.comp.lArm, e.comp.rArm, e.comp.rArm, e.comp.legs, e.comp.legs, e.comp.core];
+    for (let i = 0; i < parts.length; i++) set(parts[i], comps[i]);
 }
 
 // ================================================================
