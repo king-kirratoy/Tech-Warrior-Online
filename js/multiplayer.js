@@ -166,7 +166,8 @@ function mpConnect(serverUrl) {
         const rp = _mpPlayers.get(data.id);
         if (!rp) return;
 
-        // Store target state for interpolation
+        // Store target state for interpolation (reject NaN)
+        if (isNaN(data.x) || isNaN(data.y)) return;
         rp.targetX = data.x;
         rp.targetY = data.y;
         rp.targetRotation = data.rotation;
@@ -423,6 +424,7 @@ function mpSpawnRemoteBullet(scene, data) {
             if (!bullet?.active || !player?.active || !isDeployed) return;
 
             const dmg = bullet.damageValue || 15;
+            const shooterId = bullet._shooterId;  // capture before destroy
             const bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
 
             if (isShieldActive) {
@@ -436,11 +438,17 @@ function mpSpawnRemoteBullet(scene, data) {
             createImpactSparks(scene, player.x, player.y);
             showDamageText(scene, player.x, player.y, dmg, player.shield > 0);
             bullet.destroy();
-            processPlayerDamage(dmg, bAngle);
+
+            try {
+                processPlayerDamage(dmg, bAngle);
+            } catch(e) {
+                // Ensure damage lock is released even if processPlayerDamage throws
+                if (player) player.isProcessingDamage = false;
+            }
 
             // Report hit to server
             _mpSocket.emit('player-hit', {
-                shooterId: bullet._shooterId,
+                shooterId: shooterId,
                 victimId: _mpLocalId,
                 damage: dmg,
                 x: player.x,
@@ -450,7 +458,7 @@ function mpSpawnRemoteBullet(scene, data) {
             // Check if we died — deathmatch: notify server, wait for respawn
             if (player?.comp?.core?.hp <= 0 && _mpAlive) {
                 _mpAlive = false;
-                _mpSocket.emit('player-killed', { killerId: bullet._shooterId });
+                _mpSocket.emit('player-killed', { killerId: shooterId });
                 // Hide player visually until respawn
                 if (player?.active) { player.setAlpha(0); player.body.setVelocity(0, 0); }
                 if (torso?.active) torso.setAlpha(0);
@@ -504,12 +512,14 @@ function mpUpdate(time) {
     _mpPlayers.forEach((rp) => {
         if (!rp.alive || !rp.body?.active) return;
 
-        // Smooth lerp toward target position
+        // Smooth lerp toward target position (guard against NaN)
         const lerpFactor = 0.2;
         const currentX = rp.body.x;
         const currentY = rp.body.y;
+        if (isNaN(rp.targetX) || isNaN(rp.targetY)) return;
         const newX = currentX + (rp.targetX - currentX) * lerpFactor;
         const newY = currentY + (rp.targetY - currentY) * lerpFactor;
+        if (isNaN(newX) || isNaN(newY)) return;
         rp.body.setPosition(newX, newY);
 
         // Torso follows body + rotates
@@ -547,10 +557,13 @@ function mpUpdate(time) {
 function mpSendState() {
     if (!_mpSocket || !_mpConnected || !_mpMatchActive) return;
     if (!player?.active || !torso?.active) return;
+    // Guard against NaN coordinates propagating to remote clients
+    const px = Math.round(player.x), py = Math.round(player.y);
+    if (isNaN(px) || isNaN(py)) return;
 
     _mpSocket.emit('player-state', {
-        x: Math.round(player.x),
-        y: Math.round(player.y),
+        x: px,
+        y: py,
         rotation: player.rotation || 0,
         torsoRotation: torso.rotation || 0,
         velocityX: Math.round(player.body?.velocity?.x || 0),
