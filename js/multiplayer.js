@@ -168,6 +168,20 @@ function mpConnect(serverUrl) {
 
         // Store target state for interpolation (reject NaN)
         if (isNaN(data.x) || isNaN(data.y)) return;
+
+        // Detect respawn: player was dead but now sending state with restored HP
+        if (!rp.alive && data.hp > 0) {
+            rp.alive = true;
+            if (rp.torso?.active) rp.torso.setAlpha(1);
+            if (rp.nameTag?.active) rp.nameTag.setVisible(true);
+            if (rp.hpBarBg?.active) rp.hpBarBg.setVisible(true);
+            if (rp.hpBar?.active) rp.hpBar.setVisible(true);
+            if (rp.body?.body) rp.body.body.enable = true;
+            // Snap to new position (respawn teleport, don't lerp from death location)
+            if (rp.body?.active) rp.body.setPosition(data.x, data.y);
+            if (rp.torso?.active) rp.torso.setPosition(data.x, data.y);
+        }
+
         rp.targetX = data.x;
         rp.targetY = data.y;
         rp.targetRotation = data.rotation;
@@ -234,10 +248,38 @@ function mpConnect(serverUrl) {
             _mpDeaths++;
         }
 
-        // If victim is a remote player who disconnected, remove visuals
-        // (for deathmatch, don't destroy on kill — they respawn)
-        if (data.victimId !== _mpLocalId && data.killerName === 'DISCONNECT') {
-            mpDestroyRemotePlayer(data.victimId);
+        // Handle remote player death visuals
+        if (data.victimId !== _mpLocalId) {
+            const rp = _mpPlayers.get(data.victimId);
+            if (data.killerName === 'DISCONNECT') {
+                // Disconnected players are fully removed
+                mpDestroyRemotePlayer(data.victimId);
+            } else if (rp) {
+                // Normal kill: hide visuals and disable hitbox until respawn
+                rp.alive = false;
+                if (rp.torso?.active) rp.torso.setAlpha(0);
+                if (rp.nameTag?.active) rp.nameTag.setVisible(false);
+                if (rp.hpBarBg?.active) rp.hpBarBg.setVisible(false);
+                if (rp.hpBar?.active) rp.hpBar.setVisible(false);
+                if (rp.body?.body) rp.body.body.enable = false;
+                // Death explosion visual
+                const scene = game?.scene?.scenes[0];
+                if (scene && rp.body?.active) {
+                    try {
+                        const dust = scene.add.particles(rp.body.x, rp.body.y, 'smoke', {
+                            lifespan: { min: 400, max: 800 },
+                            scale: { start: 2, end: 0 },
+                            alpha: { start: 0.8, end: 0 },
+                            speed: { min: 60, max: 200 },
+                            angle: { min: 0, max: 360 },
+                            tint: 0xff4400,
+                            quantity: 20,
+                            frequency: -1
+                        }).setDepth(15);
+                        scene.time.delayedCall(1000, () => dust.destroy());
+                    } catch(e) {}
+                }
+            }
         }
 
         // Update PVP HUD
@@ -335,6 +377,9 @@ function mpCreateRemotePlayer(scene, info, spawn) {
     // Phaser callback order: (memberOfGroup1, object2) — bullet is from `bullets` group, rpBody is `body`
     scene.physics.add.overlap(bullets, body, (bullet, rpBody) => {
         if (!bullet?.active) return;
+        // Don't hit dead remote players
+        const rpData = _mpPlayers.get(info.id);
+        if (rpData && !rpData.alive) return;
         const dmg = bullet.damageValue || 10;
         const bx = bullet.x, by = bullet.y;
         bullet.destroy();
@@ -556,6 +601,7 @@ function mpUpdate(time) {
 
 function mpSendState() {
     if (!_mpSocket || !_mpConnected || !_mpMatchActive) return;
+    if (!_mpAlive || _mpRespawning) return;
     if (!player?.active || !torso?.active) return;
     // Guard against NaN coordinates propagating to remote clients
     const px = Math.round(player.x), py = Math.round(player.y);
