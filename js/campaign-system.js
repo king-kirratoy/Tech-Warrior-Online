@@ -752,10 +752,10 @@ function showMissionSelect() {
 
     let html = '';
 
-    // ── Header row: CAMPAIGN title + BACK button on far right ──
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;width:100%;max-width:700px;margin-bottom:6px;">';
+    // ── Header row: centered CAMPAIGN title + small QUIT button on far right ──
+    html += '<div style="position:relative;width:100%;max-width:700px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;">';
     html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);">CAMPAIGN</div>';
-    html += `<button onclick="_closeMissionSelect()" style="padding:10px 24px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)'" onmouseout="this.style.background='rgba(255,60,60,0.04)'">BACK</button>`;
+    html += `<button onclick="_closeMissionSelect()" style="position:absolute;right:0;padding:5px 12px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.25);color:rgba(255,100,100,0.7);font-size:9px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)'" onmouseout="this.style.background='rgba(255,60,60,0.04)'">QUIT</button>`;
     html += '</div>';
 
     // ── Player level / XP bar + scrap ──
@@ -771,11 +771,12 @@ function showMissionSelect() {
     html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);margin-left:auto;">SCRAP: <span style="color:#ffd700;font-size:13px;">${typeof _scrap !== 'undefined' ? _scrap : 0}</span></div>`;
     html += '</div>';
 
-    // ── Action buttons: Supply Shop, Loadout Slots, Upgrades (above chapters) ──
+    // ── Action buttons: Supply Shop, Upgrades, Loadout, Loadout Slots ──
     html += '<div style="display:flex;gap:10px;margin-bottom:16px;width:100%;max-width:700px;">';
     html += `<button onclick="_openShopFromMission()" style="flex:1;padding:10px 16px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.3);color:rgba(255,215,0,0.8);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(255,215,0,0.14)'" onmouseout="this.style.background='rgba(255,215,0,0.06)'">SUPPLY SHOP</button>`;
-    html += `<button onclick="showLoadoutSlots()" style="flex:1;padding:10px 16px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.3);color:rgba(0,255,255,0.7);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(0,255,255,0.12)'" onmouseout="this.style.background='rgba(0,255,255,0.04)'">LOADOUT SLOTS</button>`;
     html += `<button onclick="_showUpgradesPanel()" style="flex:1;padding:10px 16px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.3);color:rgba(0,255,136,0.7);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(0,255,136,0.12)'" onmouseout="this.style.background='rgba(0,255,136,0.04)'">UPGRADES</button>`;
+    html += `<button onclick="_openLoadoutFromMission()" style="flex:1;padding:10px 16px;background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.3);color:rgba(0,200,255,0.7);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(0,200,255,0.12)'" onmouseout="this.style.background='rgba(0,200,255,0.04)'">LOADOUT</button>`;
+    html += `<button onclick="showLoadoutSlots()" style="flex:1;padding:10px 16px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.3);color:rgba(0,255,255,0.7);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(0,255,255,0.12)'" onmouseout="this.style.background='rgba(0,255,255,0.04)'">LOADOUT SLOTS</button>`;
     html += '</div>';
 
     // ── Chapter tabs ──
@@ -847,12 +848,26 @@ function showMissionSelect() {
     });
     html += '</div>';
 
-    // ── Deploy button — only shown when a mission is selected, centered below missions ──
+    // ── Mission briefing panel — shown inline when a mission is selected ──
     if (_selectedMissionIdx !== null) {
         const selMission = ch.missions[_selectedMissionIdx];
+        if (selMission) {
+            const levelDiff = selMission.enemyLevel - _campaignState.playerLevel;
+            const diffColor = levelDiff >= 3 ? '#ff2200' : levelDiff >= 1 ? '#ff8844' : levelDiff === 0 ? '#00ff88' : levelDiff >= -2 ? '#88aacc' : '#666666';
+            html += '<div style="margin-top:16px;padding:14px 18px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-left:3px solid rgba(255,215,0,0.5);border-radius:4px;width:100%;max-width:700px;">';
+            html += `<div style="font-size:13px;letter-spacing:3px;color:#ffd700;margin-bottom:4px;">${selMission.name.toUpperCase()}</div>`;
+            html += `<div style="font-size:10px;letter-spacing:0.5px;color:rgba(200,210,217,0.5);margin-bottom:8px;">${selMission.briefing}</div>`;
+            html += `<div style="font-size:10px;letter-spacing:1px;color:${diffColor};">ENEMY LEVEL ${selMission.enemyLevel} // YOUR LEVEL ${_campaignState.playerLevel}</div>`;
+            if (selMission.hasBoss) {
+                html += `<div style="font-size:9px;letter-spacing:1px;color:#ff4444;margin-top:4px;">BOSS ENCOUNTER</div>`;
+            }
+            html += '</div>';
+        }
+
+        // ── Deploy button — centered and compact ──
         const mLabel = selMission ? selMission.name.toUpperCase() : 'MISSION';
-        html += '<div style="display:flex;justify-content:center;margin-top:24px;width:100%;max-width:700px;">';
-        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" style="padding:14px 64px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:13px;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)'" onmouseout="this.style.background='rgba(255,215,0,0.08)'">DEPLOY — ${mLabel}</button>`;
+        html += '<div style="display:flex;justify-content:center;margin-top:16px;width:100%;max-width:700px;">';
+        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" style="padding:10px 36px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)'" onmouseout="this.style.background='rgba(255,215,0,0.08)'">DEPLOY — ${mLabel}</button>`;
         html += '</div>';
     }
 
@@ -865,6 +880,22 @@ function _openShopFromMission() {
     const overlay = document.getElementById('mission-select-overlay');
     if (overlay) overlay.style.display = 'none';
     showShop();
+}
+
+/** Open the loadout (stats/gear) overlay from mission select. */
+function _openLoadoutFromMission() {
+    const overlay = document.getElementById('mission-select-overlay');
+    if (overlay) overlay.style.display = 'none';
+    // Mark that we came from mission select so we can return there on close
+    window._loadoutOpenedFromMission = true;
+    // Open the loadout overlay directly (set _isStats so toggleStats close path works)
+    if (typeof _isStats !== 'undefined') _isStats = true;
+    const statsOv = document.getElementById('stats-overlay');
+    if (statsOv) statsOv.style.display = 'flex';
+    if (typeof populateStats === 'function') populateStats();
+    if (typeof populateInventory === 'function') populateInventory();
+    if (typeof _updateInvCount === 'function') _updateInvCount();
+    if (typeof _switchLoadoutTab === 'function') _switchLoadoutTab('stats');
 }
 
 /** Select a chapter tab. */
@@ -882,7 +913,7 @@ function _selectMission(idx) {
     showMissionSelect();
 }
 
-/** Deploy from mission select — go to hangar with mission config. */
+/** Deploy from mission select — skip hangar, go straight to game. */
 function _deployFromMissionSelect() {
     const mission = getCampaignMission();
     if (!mission) return;
@@ -894,29 +925,14 @@ function _deployFromMissionSelect() {
     // Save state
     saveCampaignState();
 
-    // Hide mission select, show hangar
+    // Hide mission select
     const overlay = document.getElementById('mission-select-overlay');
     if (overlay) overlay.style.display = 'none';
 
-    // Update hangar mode label with mission info
-    const modeLabel = document.getElementById('hangar-mode-label');
-    if (modeLabel) {
-        modeLabel.textContent = `CAMPAIGN // ${mission.name.toUpperCase()}`;
-        modeLabel.style.color = 'rgba(255,215,0,0.45)';
+    // Skip the hangar entirely — deploy the mech directly
+    if (typeof deployMech === 'function') {
+        deployMech();
     }
-
-    // Hide chassis selector in campaign mode — chassis is locked to initial choice
-    const chassisRow = document.getElementById('chassis-select-row');
-    if (chassisRow) {
-        chassisRow.style.display = 'none';
-    }
-
-    document.getElementById('ui-layer').style.display = 'flex';
-    if (typeof startHangarGrid === 'function') startHangarGrid();
-    try { refreshGarage(); } catch(e) {}
-
-    // Show modifier and bonus objective in a brief overlay
-    _showMissionBriefing(mission);
 }
 
 /** Show a brief mission briefing before deploy. */
@@ -963,8 +979,12 @@ function _showMissionBriefing(mission) {
     }, 4000);
 }
 
-/** Close mission select and return to main menu. */
+/** Close mission select and return to main menu. Saves progress first. */
 function _closeMissionSelect() {
+    // Save current campaign data before quitting
+    if (typeof saveCampaignProgress === 'function') saveCampaignProgress();
+    if (typeof saveCampaignState === 'function') saveCampaignState();
+
     const overlay = document.getElementById('mission-select-overlay');
     if (overlay) overlay.style.display = 'none';
 
