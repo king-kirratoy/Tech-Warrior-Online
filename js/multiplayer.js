@@ -461,7 +461,7 @@ function mpCleanupMatch() {
 
 function mpSpawnRemoteBullet(scene, data) {
     if (!_mpPvpBullets) {
-        _mpPvpBullets = scene.physics.add.group();
+        _mpPvpBullets = scene.physics.add.group({ allowGravity: false });
         // PVP bullets hit local player
         // Phaser callback order: (memberOfGroup1, object2) — bullet is from `_mpPvpBullets`, playerObj is `player`
         scene.physics.add.overlap(_mpPvpBullets, player, (bullet, playerObj) => {
@@ -485,19 +485,34 @@ function mpSpawnRemoteBullet(scene, data) {
                 try { showDamageText(scene, player.x, player.y, dmg, player.shield > 0); } catch(e) {}
                 bullet.destroy();
 
+                // Snapshot HP + shield before damage so we can detect actual change
+                const hpBefore = player.hp || 0;
+                const shieldBefore = player.shield || 0;
+
+                // Force-clear the PvE damage lock — PVP bullets are discrete
+                // events, not sustained overlaps, so each must process damage
+                player.isProcessingDamage = false;
+
                 try {
                     processPlayerDamage(dmg, bAngle);
                 } catch(e) {
-                    // Ensure damage lock is released even if processPlayerDamage throws
-                    if (player) player.isProcessingDamage = false;
+                    console.warn('[MP] processPlayerDamage error:', e);
                 }
 
-                // Report hit to server (victim is authority for damage)
-                if (_mpSocket?.connected) {
+                // Immediately clear lock so the next bullet in this frame
+                // (or the next frame) can also process damage
+                player.isProcessingDamage = false;
+
+                // Calculate actual damage dealt (HP + shield change)
+                const actualHpLoss = (hpBefore - (player.hp || 0)) + (shieldBefore - (player.shield || 0));
+
+                // Only report hit to server if damage was actually applied
+                // (prevents phantom hit reports that cause desync)
+                if (actualHpLoss > 0 && _mpSocket?.connected) {
                     _mpSocket.emit('player-hit', {
                         shooterId: shooterId,
                         victimId: _mpLocalId,
-                        damage: dmg,
+                        damage: Math.round(actualHpLoss),
                         x: player.x,
                         y: player.y
                     });
@@ -548,11 +563,17 @@ function mpSpawnRemoteBullet(scene, data) {
         const b = scene.add.circle(data.x, data.y, bSize, 0xff4444, 0.9).setDepth(11);
         scene.physics.add.existing(b);
         b.body.setCircle(bSize);
-        b.body.velocity.x = Math.cos(angle) * bSpeed;
-        b.body.velocity.y = Math.sin(angle) * bSpeed;
         b.damageValue = Math.round((data.damage || 10) / pelletCount);
         b._shooterId = data.shooterId;
+
+        // Add to group BEFORE setting velocity — group.add() can
+        // re-enable physics on the body which resets velocity to 0
         _mpPvpBullets.add(b);
+
+        b.body.setVelocity(
+            Math.cos(angle) * bSpeed,
+            Math.sin(angle) * bSpeed
+        );
 
         // Auto-destroy after 2 seconds
         scene.time.delayedCall(2000, () => { if (b?.active) b.destroy(); });
