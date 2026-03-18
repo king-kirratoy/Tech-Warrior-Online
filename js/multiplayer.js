@@ -631,8 +631,12 @@ function mpDeployPVP() {
     // Player <-> cover
     if (coverObjects) scene.physics.add.collider(player, coverObjects);
 
-    // Show battlefield
-    if (scene._bfGrid) scene._bfGrid.setVisible(true);
+    // Show battlefield — resize grid to match PVP map size
+    if (scene._bfGrid) {
+        scene._bfGrid.setPosition(mapSize / 2, mapSize / 2);
+        scene._bfGrid.setSize(mapSize, mapSize);
+        scene._bfGrid.setVisible(true);
+    }
 
     // World & camera (PVP uses larger map)
     scene.physics.world.setBounds(0, 0, mapSize, mapSize);
@@ -693,7 +697,9 @@ function mpDeployPVP() {
     document.getElementById('deploy-cover').style.display = 'none';
     document.getElementById('hud-container').style.display = 'flex';
     document.getElementById('top-left-btns').style.display = 'none'; // No pause/stats button in PVP
+    document.getElementById('round-hud').style.display = 'none';
     const mm = document.getElementById('minimap-wrap'); if (mm) mm.style.display = 'block';
+    mpShowPvpHud();
 
     scene.cameras.main.setLerp(1.0, 1.0);
     const dropOffsetY = 280;
@@ -1950,12 +1956,8 @@ function mpIsPvpMenuOpen() {
 
 function mpDrawMinimapPlayers(ctx, scale, offsetX, offsetY) {
     if (!_mpMatchActive || !player?.active) return;
-    const VIEW_RANGE = 900; // Only show enemies within this pixel range on minimap
     _mpPlayers.forEach((rp) => {
         if (!rp.alive || !rp.body?.active) return;
-        // Proximity check — only show if within viewing range
-        const dist = Math.hypot(rp.body.x - player.x, rp.body.y - player.y);
-        if (dist > VIEW_RANGE) return;
         const mx = rp.body.x * scale + offsetX;
         const my = rp.body.y * scale + offsetY;
         ctx.fillStyle = '#ff4444';
