@@ -1016,99 +1016,167 @@ function _closeMissionSelect() {
 // ══════════════════════════════════════════════════════════════════
 
 /** Skill tree definitions per chassis.
- *  Each node: { id, tier, label, desc, stats: { stat: value, ... }, requires: [nodeId,...] }
- *  'stats' can include: coreHP, armHP, legHP, spd, dmgMult, reloadMult, critChance,
- *  shieldRegen, blastMult, dodgeChance, dr, modCdMult */
+ *  Each node: { id, label, desc, stats, requires, x, y }
+ *  x/y are grid positions for visual tree layout (x: 0-6 columns, y: 0-9 rows).
+ *  Three branches: LEFT=offense, CENTER=defense/hull, RIGHT=utility/mobility */
 const SKILL_TREES = {
+    // ══════════════════════════════════════════════════════════════
+    // LIGHT CHASSIS — Speed, Crit, Dodge focused
+    // ══════════════════════════════════════════════════════════════
     light: [
-        // ── TIER 1 (no requirements) ──
-        { id:'l_core1',    tier:1, label:'+15 Core HP',       desc:'Reinforce core plating.',            stats:{ coreHP:15 } },
-        { id:'l_spd1',     tier:1, label:'+10 Speed',         desc:'Tune leg actuators for faster movement.', stats:{ spd:10 } },
-        { id:'l_arm1',     tier:1, label:'+10 Arm HP',        desc:'Reinforce arm joints.',              stats:{ armHP:10 } },
-        { id:'l_reload1',  tier:1, label:'+5% Reload Speed',  desc:'Optimized ammo feed systems.',       stats:{ reloadMult:0.05 } },
-        // ── TIER 2 ──
-        { id:'l_dodge1',   tier:2, label:'+3% Dodge',         desc:'Evasive maneuver subroutines.',      stats:{ dodgeChance:0.03 }, requires:['l_spd1'] },
-        { id:'l_spd2',     tier:2, label:'+12 Speed',         desc:'Advanced thruster calibration.',      stats:{ spd:12 }, requires:['l_spd1'] },
-        { id:'l_dmg1',     tier:2, label:'+5% Damage',        desc:'Weapon amplifier circuit.',           stats:{ dmgMult:0.05 }, requires:['l_reload1'] },
-        { id:'l_leg1',     tier:2, label:'+12 Leg HP',        desc:'Composite leg armor.',                stats:{ legHP:12 }, requires:['l_core1'] },
-        // ── TIER 3 ──
-        { id:'l_crit1',    tier:3, label:'+4% Crit Chance',   desc:'Precision targeting algorithms.',     stats:{ critChance:0.04 }, requires:['l_dmg1'] },
-        { id:'l_core2',    tier:3, label:'+20 Core HP',       desc:'Layered core shielding.',             stats:{ coreHP:20 }, requires:['l_core1'] },
-        { id:'l_dodge2',   tier:3, label:'+4% Dodge',         desc:'Predictive evasion matrix.',          stats:{ dodgeChance:0.04 }, requires:['l_dodge1'] },
-        { id:'l_reload2',  tier:3, label:'+8% Reload Speed',  desc:'Dual-feed magazine system.',          stats:{ reloadMult:0.08 }, requires:['l_reload1'] },
-        // ── TIER 4 ──
-        { id:'l_spd3',     tier:4, label:'+15 Speed',         desc:'Afterburner integration.',            stats:{ spd:15 }, requires:['l_spd2'] },
-        { id:'l_dmg2',     tier:4, label:'+8% Damage',        desc:'Overclocked weapon rails.',           stats:{ dmgMult:0.08 }, requires:['l_dmg1'] },
-        { id:'l_arm2',     tier:4, label:'+15 Arm HP',        desc:'Hardened arm plating.',               stats:{ armHP:15 }, requires:['l_arm1'] },
-        { id:'l_shld1',    tier:4, label:'+10% Shield Regen', desc:'Quick-charge capacitors.',            stats:{ shieldRegen:0.10 }, requires:['l_core2'] },
-        // ── TIER 5 (endgame) ──
-        { id:'l_crit2',    tier:5, label:'+6% Crit Chance',   desc:'Neural-linked targeting.',            stats:{ critChance:0.06 }, requires:['l_crit1'] },
-        { id:'l_glass',    tier:5, label:'+12% Damage, -20 Core HP', desc:'Glass cannon protocol.', stats:{ dmgMult:0.12, coreHP:-20 }, requires:['l_dmg2'] },
-        { id:'l_ghost',    tier:5, label:'+6% Dodge, +8 Speed', desc:'Ghost frame modification.', stats:{ dodgeChance:0.06, spd:8 }, requires:['l_dodge2','l_spd3'] },
-        { id:'l_mod1',     tier:5, label:'-10% Mod Cooldown', desc:'CPU overclock for faster mod cycles.', stats:{ modCdMult:0.10 }, requires:['l_shld1'] },
-        // ── TIER 6 (capstones) ──
-        { id:'l_all1',     tier:6, label:'+25 All HP',        desc:'Full chassis reinforcement.',         stats:{ coreHP:25, armHP:15, legHP:15 }, requires:['l_core2','l_arm2'] },
-        { id:'l_lethal',   tier:6, label:'+15% Dmg, +8% Crit', desc:'Lethal precision systems.', stats:{ dmgMult:0.15, critChance:0.08 }, requires:['l_crit2','l_dmg2'] },
+        // ── ROW 0: Entry nodes (3 branches) ──
+        { id:'l_dmg1',     x:0, y:0, label:'+5% Damage',         desc:'Weapon amplifier circuit.',         stats:{ dmgMult:0.05 } },
+        { id:'l_core1',    x:3, y:0, label:'+15 Core HP',        desc:'Reinforce core plating.',           stats:{ coreHP:15 } },
+        { id:'l_spd1',     x:6, y:0, label:'+10 Speed',          desc:'Tune leg actuators.',               stats:{ spd:10 } },
+        // ── ROW 1 ──
+        { id:'l_reload1',  x:0, y:1, label:'+5% Reload',         desc:'Optimized ammo feed.',              stats:{ reloadMult:0.05 }, requires:['l_dmg1'] },
+        { id:'l_crit1',    x:1, y:1, label:'+3% Crit',           desc:'Precision targeting.',              stats:{ critChance:0.03 }, requires:['l_dmg1'] },
+        { id:'l_arm1',     x:2, y:1, label:'+10 Arm HP',         desc:'Reinforce arm joints.',             stats:{ armHP:10 }, requires:['l_core1'] },
+        { id:'l_shld1',    x:4, y:1, label:'+8% Shield Regen',   desc:'Quick-charge capacitors.',          stats:{ shieldRegen:0.08 }, requires:['l_core1'] },
+        { id:'l_dodge1',   x:5, y:1, label:'+3% Dodge',          desc:'Evasive subroutines.',              stats:{ dodgeChance:0.03 }, requires:['l_spd1'] },
+        { id:'l_leg1',     x:6, y:1, label:'+10 Leg HP',         desc:'Composite leg armor.',              stats:{ legHP:10 }, requires:['l_spd1'] },
+        // ── ROW 2 ──
+        { id:'l_reload2',  x:0, y:2, label:'+8% Reload',         desc:'Dual-feed magazine.',               stats:{ reloadMult:0.08 }, requires:['l_reload1'] },
+        { id:'l_crit2',    x:1, y:2, label:'+4% Crit',           desc:'Weak-point analyzer.',              stats:{ critChance:0.04 }, requires:['l_crit1'] },
+        { id:'l_core2',    x:3, y:2, label:'+20 Core HP',        desc:'Layered core shielding.',           stats:{ coreHP:20 }, requires:['l_core1'] },
+        { id:'l_dodge2',   x:5, y:2, label:'+4% Dodge',          desc:'Predictive evasion.',               stats:{ dodgeChance:0.04 }, requires:['l_dodge1'] },
+        { id:'l_spd2',     x:6, y:2, label:'+12 Speed',          desc:'Advanced thrusters.',               stats:{ spd:12 }, requires:['l_spd1'] },
+        // ── ROW 3 ──
+        { id:'l_dmg2',     x:0, y:3, label:'+8% Damage',         desc:'Overclocked weapon rails.',         stats:{ dmgMult:0.08 }, requires:['l_reload1'] },
+        { id:'l_critdmg1', x:1, y:3, label:'+20% Crit Damage',   desc:'Armor-piercing rounds.',           stats:{ critDmg:0.20 }, requires:['l_crit2'] },
+        { id:'l_arm2',     x:2, y:3, label:'+15 Arm HP',         desc:'Hardened arm plating.',             stats:{ armHP:15 }, requires:['l_arm1'] },
+        { id:'l_shld2',    x:4, y:3, label:'+12% Shield Regen',  desc:'Rapid-cycle shield array.',         stats:{ shieldRegen:0.12 }, requires:['l_shld1'] },
+        { id:'l_leg2',     x:5, y:3, label:'+15 Leg HP',         desc:'Carbon-fiber legs.',                stats:{ legHP:15 }, requires:['l_leg1'] },
+        { id:'l_spd3',     x:6, y:3, label:'+15 Speed',          desc:'Afterburner integration.',          stats:{ spd:15 }, requires:['l_spd2'] },
+        // ── ROW 4 ──
+        { id:'l_reload3',  x:0, y:4, label:'+10% Reload',        desc:'Neural-linked auto-loader.',        stats:{ reloadMult:0.10 }, requires:['l_reload2'] },
+        { id:'l_crit3',    x:1, y:4, label:'+5% Crit',           desc:'Thermal imaging scope.',            stats:{ critChance:0.05 }, requires:['l_crit2'] },
+        { id:'l_dr1',      x:3, y:4, label:'+3% DR',             desc:'Reactive nano-plating.',            stats:{ dr:0.03 }, requires:['l_core2'] },
+        { id:'l_dodge3',   x:5, y:4, label:'+5% Dodge',          desc:'Phase-shift module.',               stats:{ dodgeChance:0.05 }, requires:['l_dodge2'] },
+        { id:'l_mod1',     x:6, y:4, label:'-8% Mod CD',         desc:'CPU overclock.',                    stats:{ modCdMult:0.08 }, requires:['l_spd3'] },
+        // ── ROW 5 ──
+        { id:'l_dmg3',     x:0, y:5, label:'+10% Damage',        desc:'Supercharged weapon cores.',        stats:{ dmgMult:0.10 }, requires:['l_dmg2'] },
+        { id:'l_critdmg2', x:1, y:5, label:'+30% Crit Damage',   desc:'Devastator rounds.',               stats:{ critDmg:0.30 }, requires:['l_critdmg1'] },
+        { id:'l_core3',    x:3, y:5, label:'+25 Core HP',        desc:'Reinforced inner hull.',            stats:{ coreHP:25 }, requires:['l_core2','l_dr1'] },
+        { id:'l_spd4',     x:5, y:5, label:'+18 Speed',          desc:'Quantum thrusters.',                stats:{ spd:18 }, requires:['l_dodge3'] },
+        { id:'l_mod2',     x:6, y:5, label:'-12% Mod CD',        desc:'Quantum processing unit.',          stats:{ modCdMult:0.12 }, requires:['l_mod1'] },
+        // ── ROW 6 ──
+        { id:'l_dmg4',     x:0, y:6, label:'+12% Damage',        desc:'Hypervelocity barrels.',            stats:{ dmgMult:0.12 }, requires:['l_dmg3'] },
+        { id:'l_crit4',    x:1, y:6, label:'+6% Crit',           desc:'Neural-linked targeting.',          stats:{ critChance:0.06 }, requires:['l_crit3','l_critdmg1'] },
+        { id:'l_all1',     x:3, y:6, label:'+20 All HP',         desc:'Full chassis reinforcement.',       stats:{ coreHP:20, armHP:12, legHP:12 }, requires:['l_core3','l_arm2'] },
+        { id:'l_dodge4',   x:5, y:6, label:'+6% Dodge',          desc:'Ghost-frame modification.',         stats:{ dodgeChance:0.06 }, requires:['l_dodge3','l_spd4'] },
+        { id:'l_spd5',     x:6, y:6, label:'+20 Speed',          desc:'Experimental drive system.',        stats:{ spd:20 }, requires:['l_spd4'] },
+        // ── ROW 7: Capstones ──
+        { id:'l_glass',    x:0, y:7, label:'Glass Cannon',       desc:'+15% Dmg, +10% Crit, -25 Core HP.', stats:{ dmgMult:0.15, critChance:0.10, coreHP:-25 }, requires:['l_dmg4'] },
+        { id:'l_lethal',   x:1, y:7, label:'Lethal Precision',   desc:'+8% Crit, +40% Crit Damage.',      stats:{ critChance:0.08, critDmg:0.40 }, requires:['l_crit4','l_critdmg2'] },
+        { id:'l_titan',    x:3, y:7, label:'Titanium Frame',     desc:'+30 Core, +20 Arm, +5% DR.',       stats:{ coreHP:30, armHP:20, dr:0.05 }, requires:['l_all1'] },
+        { id:'l_ghost',    x:5, y:7, label:'Ghost Protocol',     desc:'+8% Dodge, +25 Speed.',             stats:{ dodgeChance:0.08, spd:25 }, requires:['l_dodge4','l_spd5'] },
+        { id:'l_apex',     x:6, y:7, label:'Apex Striker',       desc:'-15% Mod CD, +10% Reload.',        stats:{ modCdMult:0.15, reloadMult:0.10 }, requires:['l_mod2'] },
     ],
+    // ══════════════════════════════════════════════════════════════
+    // MEDIUM CHASSIS — Balanced, Mod Cooldown, Versatility
+    // ══════════════════════════════════════════════════════════════
     medium: [
-        // ── TIER 1 ──
-        { id:'m_core1',    tier:1, label:'+20 Core HP',       desc:'Reinforce core hull.',                stats:{ coreHP:20 } },
-        { id:'m_arm1',     tier:1, label:'+12 Arm HP',        desc:'Servo-assisted arm joints.',          stats:{ armHP:12 } },
-        { id:'m_spd1',     tier:1, label:'+8 Speed',          desc:'Balanced thruster output.',            stats:{ spd:8 } },
-        { id:'m_mod1',     tier:1, label:'-5% Mod Cooldown',  desc:'Efficient CPU thermal management.',   stats:{ modCdMult:0.05 } },
-        // ── TIER 2 ──
-        { id:'m_core2',    tier:2, label:'+25 Core HP',       desc:'Composite core plating.',             stats:{ coreHP:25 }, requires:['m_core1'] },
-        { id:'m_dmg1',     tier:2, label:'+5% Damage',        desc:'Weapon calibration suite.',           stats:{ dmgMult:0.05 }, requires:['m_arm1'] },
-        { id:'m_leg1',     tier:2, label:'+15 Leg HP',        desc:'Reinforced leg struts.',              stats:{ legHP:15 }, requires:['m_spd1'] },
-        { id:'m_shld1',    tier:2, label:'+8% Shield Regen',  desc:'Shield capacitor upgrade.',           stats:{ shieldRegen:0.08 }, requires:['m_core1'] },
-        // ── TIER 3 ──
-        { id:'m_mod2',     tier:3, label:'-8% Mod Cooldown',  desc:'Dual-core CPU module.',               stats:{ modCdMult:0.08 }, requires:['m_mod1'] },
-        { id:'m_reload1',  tier:3, label:'+6% Reload Speed',  desc:'Optimized ammo rack.',                stats:{ reloadMult:0.06 }, requires:['m_dmg1'] },
-        { id:'m_dr1',      tier:3, label:'+3% Damage Reduction', desc:'Ablative armor coating.',          stats:{ dr:0.03 }, requires:['m_core2'] },
-        { id:'m_arm2',     tier:3, label:'+15 Arm HP',        desc:'Titanium arm plating.',               stats:{ armHP:15 }, requires:['m_arm1'] },
-        // ── TIER 4 ──
-        { id:'m_dmg2',     tier:4, label:'+8% Damage',        desc:'Weapon rail overcharge.',             stats:{ dmgMult:0.08 }, requires:['m_dmg1'] },
-        { id:'m_spd2',     tier:4, label:'+10 Speed',         desc:'Balanced thrust vectoring.',           stats:{ spd:10 }, requires:['m_spd1'] },
-        { id:'m_crit1',    tier:4, label:'+4% Crit Chance',   desc:'Weak-point analyzer.',                stats:{ critChance:0.04 }, requires:['m_reload1'] },
-        { id:'m_shld2',    tier:4, label:'+12% Shield Regen', desc:'Rapid-cycle shield array.',           stats:{ shieldRegen:0.12 }, requires:['m_shld1'] },
-        // ── TIER 5 ──
-        { id:'m_core3',    tier:5, label:'+30 Core HP',       desc:'Layered composite hull.',             stats:{ coreHP:30 }, requires:['m_core2','m_dr1'] },
-        { id:'m_mod3',     tier:5, label:'-12% Mod Cooldown', desc:'Quantum processing unit.',            stats:{ modCdMult:0.12 }, requires:['m_mod2'] },
-        { id:'m_all1',     tier:5, label:'+10 All HP, +5 Spd', desc:'Balanced systems upgrade.', stats:{ coreHP:10, armHP:10, legHP:10, spd:5 }, requires:['m_leg1','m_arm2'] },
-        { id:'m_dmg3',     tier:5, label:'+10% Damage',       desc:'Overclocked weapon systems.',         stats:{ dmgMult:0.10 }, requires:['m_dmg2'] },
-        // ── TIER 6 ──
-        { id:'m_apex',     tier:6, label:'+5% DR, -10% Mod CD', desc:'Apex command systems.', stats:{ dr:0.05, modCdMult:0.10 }, requires:['m_mod3','m_dr1'] },
-        { id:'m_war',      tier:6, label:'+12% Dmg, +5% Crit', desc:'War machine protocol.', stats:{ dmgMult:0.12, critChance:0.05 }, requires:['m_dmg3','m_crit1'] },
+        // ── ROW 0 ──
+        { id:'m_dmg1',     x:0, y:0, label:'+5% Damage',         desc:'Weapon calibration suite.',         stats:{ dmgMult:0.05 } },
+        { id:'m_core1',    x:3, y:0, label:'+20 Core HP',        desc:'Reinforce core hull.',              stats:{ coreHP:20 } },
+        { id:'m_mod1',     x:6, y:0, label:'-5% Mod CD',         desc:'Efficient CPU thermals.',           stats:{ modCdMult:0.05 } },
+        // ── ROW 1 ──
+        { id:'m_reload1',  x:0, y:1, label:'+6% Reload',         desc:'Optimized ammo rack.',              stats:{ reloadMult:0.06 }, requires:['m_dmg1'] },
+        { id:'m_crit1',    x:1, y:1, label:'+3% Crit',           desc:'Targeting algorithms.',             stats:{ critChance:0.03 }, requires:['m_dmg1'] },
+        { id:'m_arm1',     x:2, y:1, label:'+12 Arm HP',         desc:'Servo-assisted joints.',            stats:{ armHP:12 }, requires:['m_core1'] },
+        { id:'m_shld1',    x:4, y:1, label:'+8% Shield Regen',   desc:'Shield capacitor upgrade.',         stats:{ shieldRegen:0.08 }, requires:['m_core1'] },
+        { id:'m_spd1',     x:5, y:1, label:'+8 Speed',           desc:'Balanced thruster output.',          stats:{ spd:8 }, requires:['m_mod1'] },
+        { id:'m_mod2',     x:6, y:1, label:'-8% Mod CD',         desc:'Dual-core CPU module.',             stats:{ modCdMult:0.08 }, requires:['m_mod1'] },
+        // ── ROW 2 ──
+        { id:'m_dmg2',     x:0, y:2, label:'+8% Damage',         desc:'Weapon rail overcharge.',           stats:{ dmgMult:0.08 }, requires:['m_dmg1'] },
+        { id:'m_crit2',    x:1, y:2, label:'+4% Crit',           desc:'Weak-point scanner.',               stats:{ critChance:0.04 }, requires:['m_crit1'] },
+        { id:'m_core2',    x:3, y:2, label:'+25 Core HP',        desc:'Composite core plating.',           stats:{ coreHP:25 }, requires:['m_core1'] },
+        { id:'m_leg1',     x:5, y:2, label:'+15 Leg HP',         desc:'Reinforced leg struts.',            stats:{ legHP:15 }, requires:['m_spd1'] },
+        { id:'m_spd2',     x:6, y:2, label:'+10 Speed',          desc:'Thrust vectoring.',                  stats:{ spd:10 }, requires:['m_spd1'] },
+        // ── ROW 3 ──
+        { id:'m_reload2',  x:0, y:3, label:'+8% Reload',         desc:'Auto-loading mechanism.',           stats:{ reloadMult:0.08 }, requires:['m_reload1'] },
+        { id:'m_critdmg1', x:1, y:3, label:'+20% Crit Damage',   desc:'Penetrator rounds.',               stats:{ critDmg:0.20 }, requires:['m_crit2'] },
+        { id:'m_dr1',      x:2, y:3, label:'+3% DR',             desc:'Ablative armor coating.',           stats:{ dr:0.03 }, requires:['m_arm1'] },
+        { id:'m_shld2',    x:4, y:3, label:'+12% Shield Regen',  desc:'Rapid-cycle array.',                stats:{ shieldRegen:0.12 }, requires:['m_shld1'] },
+        { id:'m_arm2',     x:3, y:3, label:'+15 Arm HP',         desc:'Titanium arm plating.',             stats:{ armHP:15 }, requires:['m_arm1'] },
+        { id:'m_mod3',     x:6, y:3, label:'-10% Mod CD',        desc:'Overclocked processor.',            stats:{ modCdMult:0.10 }, requires:['m_mod2'] },
+        // ── ROW 4 ──
+        { id:'m_dmg3',     x:0, y:4, label:'+10% Damage',        desc:'Overclocked weapons.',              stats:{ dmgMult:0.10 }, requires:['m_dmg2'] },
+        { id:'m_crit3',    x:1, y:4, label:'+5% Crit',           desc:'Combat analytics AI.',              stats:{ critChance:0.05 }, requires:['m_crit2'] },
+        { id:'m_core3',    x:3, y:4, label:'+30 Core HP',        desc:'Layered composite hull.',           stats:{ coreHP:30 }, requires:['m_core2'] },
+        { id:'m_dodge1',   x:5, y:4, label:'+3% Dodge',          desc:'Reactive maneuver jets.',           stats:{ dodgeChance:0.03 }, requires:['m_leg1'] },
+        { id:'m_mod4',     x:6, y:4, label:'-12% Mod CD',        desc:'Quantum processor.',                stats:{ modCdMult:0.12 }, requires:['m_mod3'] },
+        // ── ROW 5 ──
+        { id:'m_reload3',  x:0, y:5, label:'+10% Reload',        desc:'Neural auto-loader.',               stats:{ reloadMult:0.10 }, requires:['m_reload2'] },
+        { id:'m_critdmg2', x:1, y:5, label:'+25% Crit Damage',   desc:'Armor-piercing sabot.',            stats:{ critDmg:0.25 }, requires:['m_critdmg1'] },
+        { id:'m_dr2',      x:2, y:5, label:'+4% DR',             desc:'Active armor response.',            stats:{ dr:0.04 }, requires:['m_dr1'] },
+        { id:'m_shld3',    x:4, y:5, label:'+15% Shield Regen',  desc:'Overcharged shield core.',          stats:{ shieldRegen:0.15 }, requires:['m_shld2'] },
+        { id:'m_leg2',     x:5, y:5, label:'+20 Leg HP',         desc:'Armored leg housing.',              stats:{ legHP:20 }, requires:['m_leg1'] },
+        { id:'m_spd3',     x:6, y:5, label:'+12 Speed',          desc:'Advanced drive system.',            stats:{ spd:12 }, requires:['m_spd2'] },
+        // ── ROW 6 ──
+        { id:'m_dmg4',     x:0, y:6, label:'+12% Damage',        desc:'Supercharged rails.',               stats:{ dmgMult:0.12 }, requires:['m_dmg3'] },
+        { id:'m_crit4',    x:1, y:6, label:'+6% Crit',           desc:'Neural-linked precision.',          stats:{ critChance:0.06 }, requires:['m_crit3'] },
+        { id:'m_all1',     x:3, y:6, label:'+15 All HP, +5 Spd', desc:'Balanced systems upgrade.',         stats:{ coreHP:15, armHP:12, legHP:12, spd:5 }, requires:['m_core3','m_arm2'] },
+        { id:'m_dodge2',   x:5, y:6, label:'+4% Dodge',          desc:'Predictive evasion.',               stats:{ dodgeChance:0.04 }, requires:['m_dodge1'] },
+        { id:'m_mod5',     x:6, y:6, label:'-15% Mod CD',        desc:'Experimental AI core.',             stats:{ modCdMult:0.15 }, requires:['m_mod4'] },
+        // ── ROW 7: Capstones ──
+        { id:'m_war',      x:0, y:7, label:'War Machine',        desc:'+15% Dmg, +8% Crit, +10% Reload.', stats:{ dmgMult:0.15, critChance:0.08, reloadMult:0.10 }, requires:['m_dmg4','m_crit4'] },
+        { id:'m_bastion',  x:2, y:7, label:'Bastion',            desc:'+6% DR, +35 Core HP.',             stats:{ dr:0.06, coreHP:35 }, requires:['m_dr2','m_core3'] },
+        { id:'m_sentinel', x:4, y:7, label:'Sentinel',           desc:'+20% Shield Regen, +5% Dodge.',    stats:{ shieldRegen:0.20, dodgeChance:0.05 }, requires:['m_shld3','m_dodge2'] },
+        { id:'m_apex',     x:6, y:7, label:'Apex Commander',     desc:'-20% Mod CD, +15 Speed.',          stats:{ modCdMult:0.20, spd:15 }, requires:['m_mod5'] },
     ],
+    // ══════════════════════════════════════════════════════════════
+    // HEAVY CHASSIS — HP, DR, Blast Radius focused
+    // ══════════════════════════════════════════════════════════════
     heavy: [
-        // ── TIER 1 ──
-        { id:'h_core1',    tier:1, label:'+30 Core HP',       desc:'Thick core armor plating.',           stats:{ coreHP:30 } },
-        { id:'h_arm1',     tier:1, label:'+15 Arm HP',        desc:'Reinforced arm housing.',             stats:{ armHP:15 } },
-        { id:'h_leg1',     tier:1, label:'+15 Leg HP',        desc:'Heavy-duty leg actuators.',           stats:{ legHP:15 } },
-        { id:'h_dr1',      tier:1, label:'+2% Damage Reduction', desc:'Layered reactive plating.',       stats:{ dr:0.02 } },
-        // ── TIER 2 ──
-        { id:'h_core2',    tier:2, label:'+35 Core HP',       desc:'Reinforced inner hull.',              stats:{ coreHP:35 }, requires:['h_core1'] },
-        { id:'h_dr2',      tier:2, label:'+3% Damage Reduction', desc:'Active armor response.',           stats:{ dr:0.03 }, requires:['h_dr1'] },
-        { id:'h_dmg1',     tier:2, label:'+5% Damage',        desc:'Heavy weapon mounting brackets.',     stats:{ dmgMult:0.05 }, requires:['h_arm1'] },
-        { id:'h_spd1',     tier:2, label:'+6 Speed',          desc:'Improved hydraulic systems.',          stats:{ spd:6 }, requires:['h_leg1'] },
-        // ── TIER 3 ──
-        { id:'h_arm2',     tier:3, label:'+20 Arm HP',        desc:'Siege-grade arm plating.',            stats:{ armHP:20 }, requires:['h_arm1'] },
-        { id:'h_blast1',   tier:3, label:'+10% Blast Radius', desc:'Expanded warhead chambers.',          stats:{ blastMult:0.10 }, requires:['h_dmg1'] },
-        { id:'h_shld1',    tier:3, label:'+8% Shield Regen',  desc:'Reinforced shield capacitors.',       stats:{ shieldRegen:0.08 }, requires:['h_core2'] },
-        { id:'h_leg2',     tier:3, label:'+20 Leg HP',        desc:'Armored leg housing.',                stats:{ legHP:20 }, requires:['h_leg1'] },
-        // ── TIER 4 ──
-        { id:'h_dmg2',     tier:4, label:'+8% Damage',        desc:'Heavy bore weapon calibration.',      stats:{ dmgMult:0.08 }, requires:['h_dmg1'] },
-        { id:'h_core3',    tier:4, label:'+40 Core HP',       desc:'Titan-class hull reinforcement.',     stats:{ coreHP:40 }, requires:['h_core2'] },
-        { id:'h_dr3',      tier:4, label:'+4% Damage Reduction', desc:'Composite ablative layers.',       stats:{ dr:0.04 }, requires:['h_dr2'] },
-        { id:'h_reload1',  tier:4, label:'+5% Reload Speed',  desc:'Hydraulic auto-loader.',              stats:{ reloadMult:0.05 }, requires:['h_arm2'] },
-        // ── TIER 5 ──
-        { id:'h_blast2',   tier:5, label:'+15% Blast Radius', desc:'Cluster munition upgrade.',           stats:{ blastMult:0.15 }, requires:['h_blast1'] },
-        { id:'h_tank',     tier:5, label:'+50 Core HP, +5% DR', desc:'Walking fortress protocol.', stats:{ coreHP:50, dr:0.05 }, requires:['h_core3','h_dr3'] },
-        { id:'h_all1',     tier:5, label:'+20 All HP',        desc:'Full chassis reinforcement.',         stats:{ coreHP:20, armHP:15, legHP:15 }, requires:['h_arm2','h_leg2'] },
-        { id:'h_dmg3',     tier:5, label:'+10% Damage',       desc:'Overcharged weapon rails.',           stats:{ dmgMult:0.10 }, requires:['h_dmg2'] },
-        // ── TIER 6 ──
-        { id:'h_jugg',     tier:6, label:'+8% DR, +30 Core HP', desc:'Juggernaut designation.', stats:{ dr:0.08, coreHP:30 }, requires:['h_tank'] },
-        { id:'h_siege',    tier:6, label:'+15% Dmg, +20% Blast', desc:'Siege artillery systems.', stats:{ dmgMult:0.15, blastMult:0.20 }, requires:['h_dmg3','h_blast2'] },
+        // ── ROW 0 ──
+        { id:'h_dmg1',     x:0, y:0, label:'+5% Damage',         desc:'Heavy weapon mounts.',              stats:{ dmgMult:0.05 } },
+        { id:'h_core1',    x:3, y:0, label:'+30 Core HP',        desc:'Thick core armor.',                 stats:{ coreHP:30 } },
+        { id:'h_dr1',      x:6, y:0, label:'+2% DR',             desc:'Layered reactive plating.',         stats:{ dr:0.02 } },
+        // ── ROW 1 ──
+        { id:'h_blast1',   x:0, y:1, label:'+8% Blast Radius',   desc:'Expanded warheads.',                stats:{ blastMult:0.08 }, requires:['h_dmg1'] },
+        { id:'h_reload1',  x:1, y:1, label:'+5% Reload',         desc:'Hydraulic auto-loader.',            stats:{ reloadMult:0.05 }, requires:['h_dmg1'] },
+        { id:'h_arm1',     x:2, y:1, label:'+15 Arm HP',         desc:'Reinforced arm housing.',           stats:{ armHP:15 }, requires:['h_core1'] },
+        { id:'h_shld1',    x:4, y:1, label:'+8% Shield Regen',   desc:'Shield capacitors.',                stats:{ shieldRegen:0.08 }, requires:['h_core1'] },
+        { id:'h_leg1',     x:5, y:1, label:'+15 Leg HP',         desc:'Heavy-duty actuators.',             stats:{ legHP:15 }, requires:['h_dr1'] },
+        { id:'h_dr2',      x:6, y:1, label:'+3% DR',             desc:'Active armor response.',            stats:{ dr:0.03 }, requires:['h_dr1'] },
+        // ── ROW 2 ──
+        { id:'h_dmg2',     x:0, y:2, label:'+8% Damage',         desc:'Heavy bore calibration.',           stats:{ dmgMult:0.08 }, requires:['h_dmg1'] },
+        { id:'h_blast2',   x:1, y:2, label:'+10% Blast Radius',  desc:'Cluster munitions.',                stats:{ blastMult:0.10 }, requires:['h_blast1'] },
+        { id:'h_core2',    x:3, y:2, label:'+35 Core HP',        desc:'Reinforced inner hull.',            stats:{ coreHP:35 }, requires:['h_core1'] },
+        { id:'h_spd1',     x:5, y:2, label:'+6 Speed',           desc:'Improved hydraulics.',              stats:{ spd:6 }, requires:['h_leg1'] },
+        { id:'h_dr3',      x:6, y:2, label:'+4% DR',             desc:'Composite ablative layers.',        stats:{ dr:0.04 }, requires:['h_dr2'] },
+        // ── ROW 3 ──
+        { id:'h_dmg3',     x:0, y:3, label:'+10% Damage',        desc:'Overcharged weapon rails.',         stats:{ dmgMult:0.10 }, requires:['h_dmg2'] },
+        { id:'h_crit1',    x:1, y:3, label:'+3% Crit',           desc:'Heavy targeting system.',           stats:{ critChance:0.03 }, requires:['h_reload1'] },
+        { id:'h_arm2',     x:2, y:3, label:'+20 Arm HP',         desc:'Siege-grade arm plating.',          stats:{ armHP:20 }, requires:['h_arm1'] },
+        { id:'h_shld2',    x:4, y:3, label:'+12% Shield Regen',  desc:'Reinforced shield core.',           stats:{ shieldRegen:0.12 }, requires:['h_shld1'] },
+        { id:'h_leg2',     x:5, y:3, label:'+20 Leg HP',         desc:'Armored leg housing.',              stats:{ legHP:20 }, requires:['h_leg1'] },
+        { id:'h_core3',    x:3, y:3, label:'+40 Core HP',        desc:'Titan-class hull.',                 stats:{ coreHP:40 }, requires:['h_core2'] },
+        // ── ROW 4 ──
+        { id:'h_blast3',   x:0, y:4, label:'+12% Blast Radius',  desc:'High-yield warheads.',              stats:{ blastMult:0.12 }, requires:['h_blast2'] },
+        { id:'h_reload2',  x:1, y:4, label:'+8% Reload',         desc:'Motorized ammo belt.',              stats:{ reloadMult:0.08 }, requires:['h_reload1'] },
+        { id:'h_dr4',      x:3, y:4, label:'+5% DR',             desc:'Nanite repair armor.',              stats:{ dr:0.05 }, requires:['h_core3','h_dr3'] },
+        { id:'h_spd2',     x:5, y:4, label:'+8 Speed',           desc:'Reinforced drive train.',           stats:{ spd:8 }, requires:['h_spd1'] },
+        { id:'h_mod1',     x:6, y:4, label:'-8% Mod CD',         desc:'Heavy processor upgrade.',          stats:{ modCdMult:0.08 }, requires:['h_dr3'] },
+        // ── ROW 5 ──
+        { id:'h_dmg4',     x:0, y:5, label:'+12% Damage',        desc:'Supercharged weapon cores.',        stats:{ dmgMult:0.12 }, requires:['h_dmg3'] },
+        { id:'h_crit2',    x:1, y:5, label:'+4% Crit',           desc:'Structural analyzer.',              stats:{ critChance:0.04 }, requires:['h_crit1'] },
+        { id:'h_all1',     x:2, y:5, label:'+20 All HP',         desc:'Full chassis reinforcement.',       stats:{ coreHP:20, armHP:15, legHP:15 }, requires:['h_arm2','h_leg2'] },
+        { id:'h_core4',    x:3, y:5, label:'+50 Core HP',        desc:'Fortress-class hull.',              stats:{ coreHP:50 }, requires:['h_core3'] },
+        { id:'h_shld3',    x:4, y:5, label:'+15% Shield Regen',  desc:'Overcharged shield array.',         stats:{ shieldRegen:0.15 }, requires:['h_shld2'] },
+        { id:'h_mod2',     x:6, y:5, label:'-12% Mod CD',        desc:'Tactical processor.',               stats:{ modCdMult:0.12 }, requires:['h_mod1'] },
+        // ── ROW 6 ──
+        { id:'h_blast4',   x:0, y:6, label:'+15% Blast Radius',  desc:'Tactical warhead system.',          stats:{ blastMult:0.15 }, requires:['h_blast3'] },
+        { id:'h_dmg5',     x:1, y:6, label:'+15% Damage',        desc:'Devastator weapon package.',        stats:{ dmgMult:0.15 }, requires:['h_dmg4','h_crit2'] },
+        { id:'h_dr5',      x:3, y:6, label:'+6% DR',             desc:'Adaptive nano-armor.',              stats:{ dr:0.06 }, requires:['h_dr4'] },
+        { id:'h_all2',     x:5, y:6, label:'+25 All HP, +5 Spd', desc:'Titan systems upgrade.',            stats:{ coreHP:25, armHP:15, legHP:15, spd:5 }, requires:['h_all1','h_spd2'] },
+        { id:'h_repair1',  x:6, y:6, label:'+2 Auto-Repair',     desc:'Nanite repair system.',             stats:{ autoRepair:2 }, requires:['h_mod2'] },
+        // ── ROW 7: Capstones ──
+        { id:'h_siege',    x:0, y:7, label:'Siege Artillery',    desc:'+18% Dmg, +20% Blast Radius.',     stats:{ dmgMult:0.18, blastMult:0.20 }, requires:['h_blast4','h_dmg5'] },
+        { id:'h_jugg',     x:3, y:7, label:'Juggernaut',         desc:'+8% DR, +60 Core HP.',             stats:{ dr:0.08, coreHP:60 }, requires:['h_dr5','h_core4'] },
+        { id:'h_titan',    x:5, y:7, label:'Titan',              desc:'+30 All HP, +8 Spd, +3 Repair.',   stats:{ coreHP:30, armHP:20, legHP:20, spd:8, autoRepair:3 }, requires:['h_all2','h_repair1'] },
     ]
 };
 
@@ -1148,7 +1216,8 @@ function purchaseSkillNode(nodeId) {
  *            shieldRegen, blastMult, dodgeChance, dr, modCdMult } */
 function getSkillTreeBonuses(chassisType) {
     const bonuses = { coreHP:0, armHP:0, legHP:0, spd:0, dmgMult:0, reloadMult:0,
-                      critChance:0, shieldRegen:0, blastMult:0, dodgeChance:0, dr:0, modCdMult:0 };
+                      critChance:0, critDmg:0, shieldRegen:0, blastMult:0, dodgeChance:0,
+                      dr:0, modCdMult:0, autoRepair:0 };
     const tree = SKILL_TREES[chassisType];
     if (!tree) return bonuses;
     const chosen = _campaignState.skillsChosen || [];
@@ -1767,82 +1836,88 @@ function _showUpgradesPanel() {
     const chosen = _campaignState.skillsChosen || [];
     const availPts = getAvailableSkillPoints();
 
-    // Group nodes by tier
-    const tiers = {};
-    for (const node of tree) {
-        if (!tiers[node.tier]) tiers[node.tier] = [];
-        tiers[node.tier].push(node);
+    // Tree layout dimensions
+    const COLS = 7, NODE_W = 96, NODE_H = 52, GAP_X = 12, GAP_Y = 14;
+    const maxRow = Math.max(...tree.map(n => n.y));
+    const gridW = COLS * (NODE_W + GAP_X) - GAP_X;
+    const gridH = (maxRow + 1) * (NODE_H + GAP_Y) - GAP_Y;
+
+    // Node center positions for SVG lines
+    const nodePos = {};
+    for (const n of tree) {
+        nodePos[n.id] = {
+            cx: n.x * (NODE_W + GAP_X) + NODE_W / 2,
+            cy: n.y * (NODE_H + GAP_Y) + NODE_H / 2
+        };
     }
-    const maxTier = Math.max(...Object.keys(tiers).map(Number));
 
     let html = '';
     html += `<div style="font-size:24px;letter-spacing:6px;color:${cc};text-shadow:0 0 16px ${cc}80;margin-bottom:4px;">SKILL TREE</div>`;
     html += `<div style="font-size:11px;letter-spacing:2px;color:${cc}88;margin-bottom:4px;">${ch.toUpperCase()} CHASSIS — PILOT LEVEL ${level}</div>`;
-    html += `<div style="font-size:12px;letter-spacing:2px;color:${availPts > 0 ? '#ffd700' : 'rgba(200,210,217,0.4)'};margin-bottom:20px;">SKILL POINTS: <span style="font-size:14px;">${availPts}</span></div>`;
+    html += `<div style="font-size:12px;letter-spacing:2px;color:${availPts > 0 ? '#ffd700' : 'rgba(200,210,217,0.4)'};margin-bottom:16px;">SKILL POINTS: <span style="font-size:14px;">${availPts}</span></div>`;
 
-    // Render tiers from top to bottom
-    for (let t = 1; t <= maxTier; t++) {
-        const nodes = tiers[t] || [];
-        html += `<div style="margin-bottom:4px;font-size:9px;letter-spacing:2px;color:rgba(200,210,217,0.25);">TIER ${t}</div>`;
-        html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;max-width:750px;">';
-        for (const node of nodes) {
-            const owned = chosen.includes(node.id);
-            const canBuy = !owned && availPts > 0 && _skillNodeAvailable(node.id, ch);
-            const locked = !owned && !canBuy;
+    // Tree container with relative positioning
+    html += `<div style="position:relative;width:${gridW}px;height:${gridH}px;margin-bottom:16px;">`;
 
-            let borderColor, textColor, bg, labelIcon;
-            if (owned) {
-                borderColor = cc;
-                textColor = cc;
-                bg = `${cc}18`;
-                labelIcon = '✓';
-            } else if (canBuy) {
-                borderColor = '#ffd700';
-                textColor = '#ffd700';
-                bg = 'rgba(255,215,0,0.06)';
-                labelIcon = '●';
-            } else {
-                borderColor = 'rgba(255,255,255,0.08)';
-                textColor = 'rgba(200,210,217,0.25)';
-                bg = 'rgba(0,0,0,0.2)';
-                labelIcon = '🔒';
-            }
-
-            const onclick = canBuy ? `onclick="_buySkillNode('${node.id}')"` : '';
-            const cursor = canBuy ? 'pointer' : 'default';
-            const hoverBg = canBuy ? 'rgba(255,215,0,0.12)' : bg;
-            const shadowStyle = owned ? `box-shadow:0 0 8px ${cc}33;` : canBuy ? 'box-shadow:0 0 8px rgba(255,215,0,0.15);' : '';
-
-            html += `<div ${onclick} style="padding:8px 12px;background:${bg};border:1px solid ${borderColor};border-radius:4px;min-width:155px;max-width:175px;cursor:${cursor};transition:all 0.2s;${shadowStyle}" ${canBuy ? `onmouseover="this.style.background='${hoverBg}';this.style.boxShadow='0 0 12px rgba(255,215,0,0.25)'" onmouseout="this.style.background='${bg}';this.style.boxShadow='0 0 8px rgba(255,215,0,0.15)'"` : ''}>`;
-            html += `<div style="font-size:9px;letter-spacing:1px;color:${textColor};margin-bottom:3px;">${labelIcon} ${node.label}</div>`;
-            html += `<div style="font-size:9px;color:${owned ? 'rgba(200,210,217,0.6)' : 'rgba(200,210,217,0.3)'};line-height:1.4;">${node.desc}</div>`;
-            if (node.requires && locked) {
-                const reqLabels = node.requires.map(rid => {
-                    const rn = tree.find(n => n.id === rid);
-                    return rn ? rn.label : rid;
-                }).join(', ');
-                html += `<div style="font-size:8px;color:rgba(255,100,100,0.4);margin-top:3px;">Requires: ${reqLabels}</div>`;
-            }
-            html += '</div>';
+    // SVG layer for connecting lines
+    html += `<svg style="position:absolute;inset:0;width:${gridW}px;height:${gridH}px;pointer-events:none;z-index:0;">`;
+    for (const node of tree) {
+        if (!node.requires) continue;
+        const to = nodePos[node.id];
+        for (const reqId of node.requires) {
+            const from = nodePos[reqId];
+            if (!from || !to) continue;
+            const bothOwned = chosen.includes(node.id) && chosen.includes(reqId);
+            const oneOwned = chosen.includes(reqId);
+            const lineColor = bothOwned ? cc : oneOwned ? 'rgba(255,215,0,0.4)' : 'rgba(255,255,255,0.08)';
+            html += `<line x1="${from.cx}" y1="${from.cy}" x2="${to.cx}" y2="${to.cy}" stroke="${lineColor}" stroke-width="${bothOwned ? 2 : 1}" />`;
         }
+    }
+    html += '</svg>';
+
+    // Node elements
+    for (const node of tree) {
+        const owned = chosen.includes(node.id);
+        const canBuy = !owned && availPts > 0 && _skillNodeAvailable(node.id, ch);
+        const locked = !owned && !canBuy;
+        const left = node.x * (NODE_W + GAP_X);
+        const top = node.y * (NODE_H + GAP_Y);
+
+        let borderColor, textColor, bg, labelIcon;
+        if (owned) {
+            borderColor = cc; textColor = cc; bg = `${cc}18`; labelIcon = '✓';
+        } else if (canBuy) {
+            borderColor = '#ffd700'; textColor = '#ffd700'; bg = 'rgba(255,215,0,0.06)'; labelIcon = '●';
+        } else {
+            borderColor = 'rgba(255,255,255,0.08)'; textColor = 'rgba(200,210,217,0.25)'; bg = 'rgba(0,0,0,0.3)'; labelIcon = '🔒';
+        }
+
+        const onclick = canBuy ? `onclick="_buySkillNode('${node.id}')"` : '';
+        const cursor = canBuy ? 'pointer' : 'default';
+        const shadowStyle = owned ? `box-shadow:0 0 8px ${cc}33;` : canBuy ? 'box-shadow:0 0 8px rgba(255,215,0,0.15);' : '';
+
+        html += `<div ${onclick} title="${node.desc}" style="position:absolute;left:${left}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px;padding:4px 6px;background:${bg};border:1px solid ${borderColor};border-radius:4px;cursor:${cursor};transition:all 0.2s;z-index:1;overflow:hidden;box-sizing:border-box;${shadowStyle}" ${canBuy ? `onmouseover="this.style.background='rgba(255,215,0,0.12)';this.style.boxShadow='0 0 12px rgba(255,215,0,0.25)'" onmouseout="this.style.background='${bg}';this.style.boxShadow='${canBuy ? '0 0 8px rgba(255,215,0,0.15)' : 'none'}'"` : ''}>`;
+        html += `<div style="font-size:8px;letter-spacing:0.5px;color:${textColor};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${labelIcon} ${node.label}</div>`;
+        html += `<div style="font-size:7px;color:${owned ? 'rgba(200,210,217,0.5)' : 'rgba(200,210,217,0.25)'};line-height:1.3;overflow:hidden;max-height:30px;">${node.desc}</div>`;
         html += '</div>';
     }
+    html += '</div>'; // end tree container
 
     // Summary of current bonuses
     const bonuses = getSkillTreeBonuses(ch);
     const activeStats = Object.entries(bonuses).filter(([k, v]) => v !== 0);
     if (activeStats.length > 0) {
-        html += '<div style="margin-top:8px;padding:10px 14px;background:rgba(0,255,255,0.03);border:1px solid rgba(0,255,255,0.1);border-radius:4px;max-width:750px;">';
+        html += `<div style="padding:10px 14px;background:rgba(0,255,255,0.03);border:1px solid rgba(0,255,255,0.1);border-radius:4px;max-width:${gridW}px;margin-bottom:12px;">`;
         html += '<div style="font-size:9px;letter-spacing:2px;color:rgba(0,255,255,0.4);margin-bottom:6px;">ACTIVE BONUSES</div>';
-        html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
         const statLabels = { coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', spd:'Speed',
-            dmgMult:'Damage', reloadMult:'Reload Spd', critChance:'Crit Chance',
+            dmgMult:'Damage', reloadMult:'Reload Spd', critChance:'Crit Chance', critDmg:'Crit Damage',
             shieldRegen:'Shield Regen', blastMult:'Blast Radius', dodgeChance:'Dodge',
-            dr:'Dmg Reduction', modCdMult:'Mod Cooldown' };
-        const pctStats = new Set(['dmgMult','reloadMult','critChance','shieldRegen','blastMult','dodgeChance','dr','modCdMult']);
+            dr:'Dmg Reduction', modCdMult:'Mod Cooldown', autoRepair:'Auto Repair' };
+        const pctStats = new Set(['dmgMult','reloadMult','critChance','critDmg','shieldRegen','blastMult','dodgeChance','dr','modCdMult']);
         for (const [k, v] of activeStats) {
             const label = statLabels[k] || k;
-            const isNeg = k === 'modCdMult'; // mod cooldown reduction is shown as negative
+            const isNeg = k === 'modCdMult';
             const sign = v > 0 ? '+' : '';
             const display = pctStats.has(k) ? `${sign}${Math.round(v * 100)}%` : `${sign}${v}`;
             const color = (v > 0 && !isNeg) || (v < 0 && isNeg) ? '#44ff88' : v < 0 ? '#ff5050' : '#44ff88';
@@ -1851,7 +1926,7 @@ function _showUpgradesPanel() {
         html += '</div></div>';
     }
 
-    html += '<div style="margin-top:20px;">';
+    html += '<div style="margin-top:8px;">';
     html += `<button onclick="_closeUpgrades()" style="padding:12px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:12px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.85)';this.style.letterSpacing='3px';this.style.boxShadow='none'">BACK</button>`;
     html += '</div>';
 
