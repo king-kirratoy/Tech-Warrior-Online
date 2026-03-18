@@ -1280,6 +1280,31 @@ function shopSellItem(invIdx) {
     return price;
 }
 
+/** Currently selected shop item index (null = none). */
+let _selectedShopIdx = null;
+
+/** Stat display names for comparison panel. */
+const _shopStatNames = {
+    dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit %', critDmg:'Crit Dmg %',
+    reloadPct:'Reload Spd %', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All HP',
+    dr:'Dmg Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %',
+    dodgePct:'Dodge %', speedPct:'Move Speed %', modCdPct:'Mod CD %', modEffPct:'Mod Eff %',
+    lootMult:'Loot Quality %', autoRepair:'Auto Repair', pellets:'Pellets', splashRadius:'Blast Radius %',
+    accuracy:'Accuracy', dmg:'Damage', reload:'Reload (ms)'
+};
+
+/** Get the total computed stats for an item (baseStats + affixes). */
+function _shopItemTotal(item) {
+    const totals = {};
+    if (item?.baseStats) {
+        for (const [k, v] of Object.entries(item.baseStats)) totals[k] = (totals[k] || 0) + v;
+    }
+    if (item?.computedStats) {
+        for (const [k, v] of Object.entries(item.computedStats)) totals[k] = (totals[k] || 0) + v;
+    }
+    return totals;
+}
+
 /** Show the campaign shop UI overlay. */
 function showShop() {
     let overlay = document.getElementById('shop-overlay');
@@ -1299,15 +1324,17 @@ function showShop() {
 
     // ── BUY SECTION ──
     html += '<div style="font-size:13px;letter-spacing:3px;color:rgba(0,255,255,0.7);margin-bottom:10px;">BUY</div>';
-    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;max-width:700px;">';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;max-width:700px;">';
     if (_shopStock.length === 0) {
         html += '<div style="font-size:11px;color:rgba(200,210,217,0.4);letter-spacing:1px;">No items in stock. Complete a mission to restock.</div>';
     }
     _shopStock.forEach((item, idx) => {
         const rc = rarityColors[item.rarity] || '#c0c8d0';
-        const canBuy = _scrap >= item._shopPrice && _inventory.length < (typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30);
-        const opacity = canBuy ? '1' : '0.4';
-        html += `<button onclick="${canBuy ? `_shopBuy(${idx})` : ''}" style="width:155px;padding:10px;background:rgba(255,255,255,0.03);border:1px solid ${rc}40;border-left:3px solid ${rc};border-radius:4px;font-family:'Courier New',monospace;cursor:${canBuy?'pointer':'not-allowed'};opacity:${opacity};text-align:left;transition:all 0.2s;" ${canBuy ? `onmouseover="this.style.background='rgba(255,215,0,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'"` : ''}>`;
+        const isSelected = (_selectedShopIdx === idx);
+        const bgBase = isSelected ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.03)';
+        const bdBase = isSelected ? `${rc}` : `${rc}40`;
+        const shadowStyle = isSelected ? `box-shadow:0 0 12px ${rc}33;` : '';
+        html += `<button onclick="_shopSelect(${idx})" style="width:155px;padding:10px;background:${bgBase};border:1px solid ${bdBase};border-left:3px solid ${rc};border-radius:4px;font-family:'Courier New',monospace;cursor:pointer;text-align:left;transition:all 0.2s;${shadowStyle}" onmouseover="this.style.background='rgba(255,215,0,0.06)'" onmouseout="this.style.background='${bgBase}'">`;
         html += `<div style="font-size:10px;letter-spacing:1px;color:${rc};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
         html += `<div style="font-size:9px;color:rgba(200,210,217,0.5);margin-bottom:4px;">${(item.rarity||'').toUpperCase()} LV.${item.level||1}</div>`;
         // Show key stats
@@ -1320,6 +1347,62 @@ function showShop() {
         html += '</button>';
     });
     html += '</div>';
+
+    // ── SELECTED ITEM DETAIL + COMPARISON ──
+    if (_selectedShopIdx !== null && _selectedShopIdx < _shopStock.length) {
+        const selItem = _shopStock[_selectedShopIdx];
+        const rc = rarityColors[selItem.rarity] || '#c0c8d0';
+        const canBuy = _scrap >= selItem._shopPrice && _inventory.length < (typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30);
+
+        html += `<div style="margin-bottom:16px;padding:14px 18px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-left:3px solid ${rc};border-radius:4px;width:100%;max-width:700px;">`;
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">`;
+        html += `<div><span style="font-size:13px;letter-spacing:2px;color:${rc};">${selItem.name || 'Item'}</span>`;
+        html += `<span style="font-size:9px;color:rgba(200,210,217,0.5);margin-left:10px;">${(selItem.rarity||'').toUpperCase()} LV.${selItem.level||1}</span></div>`;
+        html += `<div style="font-size:13px;letter-spacing:1px;color:#ffd700;">⬡ ${selItem._shopPrice}</div>`;
+        html += `</div>`;
+
+        // Stat comparison with equipped item
+        const slotKey = typeof _getSlotForItem === 'function' ? _getSlotForItem(selItem) : null;
+        const equippedItem = (slotKey && typeof _equipped !== 'undefined') ? _equipped[slotKey] : null;
+        const newStats = _shopItemTotal(selItem);
+        const oldStats = equippedItem ? _shopItemTotal(equippedItem) : {};
+        const allKeys = new Set([...Object.keys(newStats), ...Object.keys(oldStats)]);
+
+        if (allKeys.size > 0) {
+            html += `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:2px 12px;font-size:11px;margin-bottom:10px;">`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;">STAT</div>`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">${equippedItem ? 'EQUIPPED' : ''}</div>`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">NEW</div>`;
+            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">${equippedItem ? 'DIFF' : ''}</div>`;
+            allKeys.forEach(k => {
+                const o = oldStats[k] || 0;
+                const n = newStats[k] || 0;
+                if (o === 0 && n === 0) return;
+                const diff = n - o;
+                const diffColor = diff > 0 ? '#44ff88' : diff < 0 ? '#ff5050' : 'rgba(200,210,220,0.5)';
+                const diffStr = equippedItem ? (diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : '—') : '';
+                html += `<div style="color:rgba(200,210,220,0.6);">${_shopStatNames[k] || k}</div>`;
+                html += `<div style="text-align:right;color:rgba(200,210,220,0.5);">${equippedItem ? o : ''}</div>`;
+                html += `<div style="text-align:right;color:rgba(200,210,220,0.9);">${n}</div>`;
+                html += `<div style="text-align:right;color:${diffColor};font-weight:bold;">${diffStr}</div>`;
+            });
+            html += `</div>`;
+            if (equippedItem) {
+                html += `<div style="font-size:9px;color:rgba(200,210,217,0.35);margin-bottom:8px;">Comparing to: ${equippedItem.name || 'equipped item'} (${slotKey})</div>`;
+            } else if (slotKey) {
+                html += `<div style="font-size:9px;color:rgba(200,210,217,0.35);margin-bottom:8px;">Slot: ${slotKey.toUpperCase()} (nothing equipped)</div>`;
+            }
+        }
+
+        // BUY button
+        if (canBuy) {
+            html += `<button onclick="_shopBuy(${_selectedShopIdx})" style="padding:8px 28px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.08)';this.style.color='#ffd700';this.style.letterSpacing='3px';this.style.boxShadow='none'">BUY — ⬡ ${selItem._shopPrice}</button>`;
+        } else {
+            const reason = _scrap < selItem._shopPrice ? 'Not enough scrap' : 'Inventory full';
+            html += `<div style="font-size:10px;color:rgba(255,100,100,0.6);letter-spacing:1px;">${reason}</div>`;
+        }
+        html += '</div>';
+    }
 
     // ── SELL SECTION ──
     html += '<div style="font-size:13px;letter-spacing:3px;color:rgba(255,100,100,0.7);margin-bottom:10px;">SELL</div>';
@@ -1350,8 +1433,15 @@ function showShop() {
     overlay.style.display = 'flex';
 }
 
+/** Select a shop item (highlight, show details). */
+function _shopSelect(idx) {
+    _selectedShopIdx = (_selectedShopIdx === idx) ? null : idx; // toggle
+    showShop();
+}
+
 function _shopBuy(idx) {
     if (shopBuyItem(idx)) {
+        _selectedShopIdx = null;
         showShop(); // re-render
     }
 }
@@ -1365,11 +1455,13 @@ function _shopRestock() {
     const cost = Math.max(10, Math.round(_campaignState.playerLevel * 5));
     if (typeof _scrap === 'undefined' || _scrap < cost) return;
     _scrap -= cost;
+    _selectedShopIdx = null;
     refreshShopStock();
     showShop();
 }
 
 function _closeShop() {
+    _selectedShopIdx = null;
     const overlay = document.getElementById('shop-overlay');
     if (overlay) overlay.style.display = 'none';
     // Return to mission select
