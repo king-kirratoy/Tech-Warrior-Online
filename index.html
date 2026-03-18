@@ -7487,7 +7487,8 @@ function spawnMedic(scene) {
         stroke: '#000000', strokeThickness: 3
     }).setOrigin(0.5).setDepth(10);
 
-    const _hm = 0.35 * (1 + Math.min(_round - 1, 30) * 0.05); // medics have less HP than normal
+    const _effectiveLvl = (window._activeCampaignConfig?.enemyLevel) || _round;
+    const _hm = 0.35 * (1 + (_effectiveLvl - 1) * 0.08); // medics have less HP than normal
     const loadoutE = {
         chassis: 'medium', primary: 'smg', secondary: 'none', mod: 'repair',
         shld: 'standard_shield', leg: 'none', aug: 'none'
@@ -7593,7 +7594,8 @@ function _buildBossEnemy(scene, x, y, chassisKey, colorSet, hpMult, speedMult) {
     e.torso = buildEnemyTorso(scene, chassisKey, colorSet);
     e.torso.setPosition(x, y).setScale(scl).setDepth(6);
     e.speed = chassisS.spd * (speedMult || 1.0);
-    const bm = hpMult * (1 + Math.min(_round - 1, 40) * 0.07);
+    const _bossLvl = (window._activeCampaignConfig?.enemyLevel) || _round;
+    const bm = hpMult * (1 + (_bossLvl - 1) * 0.10);
     e.comp = {
         core: { hp: Math.round(chassisS.coreHP * bm), max: Math.round(chassisS.coreHP * bm) },
         lArm: { hp: Math.round(chassisS.armHP  * bm), max: Math.round(chassisS.armHP  * bm) },
@@ -8773,11 +8775,13 @@ function spawnEnemy(scene) {
     e.speed      = chassisS.spd;
     // Campaign mode: scale HP using mission enemy level instead of round
     const _effectiveRound = (window._activeCampaignConfig?.enemyLevel) || _round;
-    const _hm = 0.50 * (1 + Math.min(_effectiveRound - 1, 30) * 0.05); // +5% HP per level, cap at 30
+    const _hm = 0.50 * (1 + (_effectiveRound - 1) * 0.08); // +8% HP per level, no cap
     // Apply campaign modifier HP/speed multipliers
     const _campHpMult = (window._activeCampaignConfig?.enemyHpMult) || 1.0;
     const _campSpdMult = (window._activeCampaignConfig?.enemySpeedMult) || 1.0;
-    if (_campSpdMult !== 1.0) e.speed = Math.round(e.speed * _campSpdMult);
+    // Level-based speed scaling: +1% per level
+    const _levelSpdMult = 1.0 + (_effectiveRound - 1) * 0.01;
+    e.speed = Math.round(e.speed * _levelSpdMult * _campSpdMult);
     e.comp = {
         core: { hp: Math.round(chassisS.coreHP * _hm * _campHpMult), max: Math.round(chassisS.coreHP * _hm * _campHpMult) },
         lArm: { hp: Math.round(chassisS.armHP  * _hm * _campHpMult), max: Math.round(chassisS.armHP  * _hm * _campHpMult) },
@@ -8915,8 +8919,9 @@ function spawnCommander(scene) {
     e.loadout    = loadoutE;
     e.isCommander = true;
     e.behavior   = 'circle';
-    e.speed      = chassisS.spd * 1.2;
-    const _cm = 0.50 * 1.5 * (1 + Math.min(_round - 1, 30) * 0.05);
+    const _effectiveLvl = (window._activeCampaignConfig?.enemyLevel) || _round;
+    e.speed      = Math.round(chassisS.spd * 1.2 * (1 + (_effectiveLvl - 1) * 0.01));
+    const _cm = 0.50 * 1.5 * (1 + (_effectiveLvl - 1) * 0.08);
     e.comp = {
         core: { hp: Math.round(chassisS.coreHP * _cm), max: Math.round(chassisS.coreHP * _cm) },
         lArm: { hp: Math.round(chassisS.armHP  * _cm), max: Math.round(chassisS.armHP  * _cm) },
@@ -8984,6 +8989,9 @@ function enemyFire(scene, enemy, time) {
         br:    0.75,   // 30  → 22
     };
     let dmg    = Math.round((weapon.dmg || 15) * (_enemyDmgScale[wKey] || 1.0));
+    // Level-based damage scaling: +3% per enemy level
+    const _eLvl = (window._activeCampaignConfig?.enemyLevel) || _round;
+    dmg = Math.round(dmg * (1.0 + (_eLvl - 1) * 0.03));
     // Berserker enrage: 1.5x damage
     if (enemy._enrageDmgMult) dmg = Math.round(dmg * enemy._enrageDmgMult);
     // Helper: tag bullets with shooter ref for vampiric healing

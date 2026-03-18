@@ -252,8 +252,9 @@ function spawnSpecialEnemy(scene, typeKey) {
     e.loadout = loadoutE;
     e.enemyType = typeKey;
     e.behavior = def.behavior;
-    e.speed = Math.round(chassisS.spd * def.speedMult);
-    const _hm = def.hpMult * (1 + Math.min(_round - 1, 30) * 0.05);
+    const _effectiveLvl = (window._activeCampaignConfig?.enemyLevel) || _round;
+    e.speed = Math.round(chassisS.spd * def.speedMult * (1 + (_effectiveLvl - 1) * 0.01));
+    const _hm = def.hpMult * (1 + (_effectiveLvl - 1) * 0.08);
     e.comp = {
         core: { hp: Math.round(chassisS.coreHP * _hm), max: Math.round(chassisS.coreHP * _hm) },
         lArm: { hp: Math.round(chassisS.armHP  * _hm), max: Math.round(chassisS.armHP  * _hm) },
