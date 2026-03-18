@@ -296,48 +296,49 @@ io.on('connection', (socket) => {
 // HELPERS
 // ────────────────────────────────────────────────────────────────
 
-// PVP map grid constants (6000×6000 map, 7×7 city blocks)
-const PVP_BLOCK_SIZE   = 600;
-const PVP_STREET_WIDTH = 160;
-const PVP_GRID_START   = 250;
-const PVP_GRID_COLS    = 7;
-const PVP_GRID_ROWS    = 7;
-
+// PVP spawn positions — open areas in each zone of the map
+// Matches the zone-based layout in generatePvpCover (client).
+// Positions are in corridors, plazas, and open gaps between buildings.
 function _getPvpStreetPositions() {
-    const positions = [];
     const cx = PVP_MAP_SIZE / 2, cy = PVP_MAP_SIZE / 2;
+    return [
+        // NW Dense Urban — alley intersections and gaps
+        { x: 550, y: 530 }, { x: 950, y: 650 }, { x: 1350, y: 700 },
+        { x: 500, y: 1150 }, { x: 900, y: 1100 }, { x: 1100, y: 1200 },
+        { x: 350, y: 1680 }, { x: 1000, y: 1650 }, { x: 1500, y: 1500 },
+        { x: 1900, y: 1400 }, { x: 700, y: 470 }, { x: 1250, y: 900 },
 
-    // Vertical street centers (between columns)
-    const vStreets = [];
-    for (let col = 0; col < PVP_GRID_COLS - 1; col++) {
-        vStreets.push(PVP_GRID_START + (col + 1) * PVP_BLOCK_SIZE + col * PVP_STREET_WIDTH + PVP_STREET_WIDTH / 2);
-    }
-    // Horizontal street centers (between rows)
-    const hStreets = [];
-    for (let row = 0; row < PVP_GRID_ROWS - 1; row++) {
-        hStreets.push(PVP_GRID_START + (row + 1) * PVP_BLOCK_SIZE + row * PVP_STREET_WIDTH + PVP_STREET_WIDTH / 2);
-    }
-    // All intersections
-    for (const sx of vStreets) {
-        for (const sy of hStreets) {
-            positions.push({ x: sx, y: sy });
-        }
-    }
-    // Street midpoints
-    for (const sx of vStreets) {
-        for (let row = 0; row < PVP_GRID_ROWS; row++) {
-            const my = PVP_GRID_START + row * (PVP_BLOCK_SIZE + PVP_STREET_WIDTH) + PVP_BLOCK_SIZE / 2;
-            positions.push({ x: sx, y: my });
-        }
-    }
-    for (const sy of hStreets) {
-        for (let col = 0; col < PVP_GRID_COLS; col++) {
-            const mx = PVP_GRID_START + col * (PVP_BLOCK_SIZE + PVP_STREET_WIDTH) + PVP_BLOCK_SIZE / 2;
-            positions.push({ x: mx, y: sy });
-        }
-    }
+        // NE Industrial — open yards between warehouses
+        { x: 4400, y: 800 }, { x: 4900, y: 850 }, { x: 5400, y: 700 },
+        { x: 4200, y: 1200 }, { x: 4700, y: 1200 }, { x: 5300, y: 1200 },
+        { x: 4600, y: 1800 }, { x: 5200, y: 1800 }, { x: 3900, y: 1700 },
+        { x: 4400, y: 500 }, { x: 5100, y: 1000 },
 
-    return positions;
+        // SW Ruins — rubble clearings and crater edges
+        { x: 700, y: 4100 }, { x: 1100, y: 4350 }, { x: 1500, y: 4100 },
+        { x: 800, y: 4600 }, { x: 1200, y: 4600 }, { x: 1600, y: 4550 },
+        { x: 500, y: 5100 }, { x: 1000, y: 5100 }, { x: 1600, y: 5100 },
+        { x: 700, y: 5550 }, { x: 1400, y: 5550 }, { x: 2000, y: 5100 },
+
+        // SE Fortress — alleys between barracks and motor pool
+        { x: 4300, y: 4250 }, { x: 4650, y: 4250 }, { x: 5000, y: 4000 },
+        { x: 4200, y: 4700 }, { x: 4500, y: 4850 }, { x: 4800, y: 4700 },
+        { x: 5300, y: 4700 }, { x: 4700, y: 5300 }, { x: 5300, y: 5350 },
+        { x: 4100, y: 5350 }, { x: 5000, y: 5500 },
+
+        // Corridors — connecting passages between zones
+        { x: 2800, y: 2050 }, { x: 3200, y: 2200 }, { x: 2600, y: 2500 },
+        { x: 3400, y: 2500 }, { x: 3000, y: 3000 }, // center area
+        { x: 2600, y: 3500 }, { x: 3400, y: 3500 }, { x: 3000, y: 3800 },
+        { x: 2900, y: 4850 }, { x: 4500, y: 2900 }, { x: 2100, y: 3000 },
+        { x: 3900, y: 3000 },
+
+        // Transition zones — edges between districts
+        { x: 2800, y: 700 }, { x: 3200, y: 1200 }, { x: 3000, y: 1700 },
+        { x: 700, y: 2800 }, { x: 1200, y: 3200 }, { x: 1800, y: 2800 },
+        { x: 4400, y: 3000 }, { x: 5200, y: 3200 }, { x: 4800, y: 3400 },
+        { x: 2800, y: 4400 }, { x: 3200, y: 5000 }, { x: 3000, y: 5400 },
+    ];
 }
 
 function generateSpawnPositions(count) {
