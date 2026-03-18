@@ -1327,7 +1327,9 @@ function mpRespawnPlayer() {
 }
 
 // ================================================================
-// PVP MAP GENERATION — larger 6000×6000 map with 7×7 grid
+// PVP MAP GENERATION — zone-based 6000×6000 map
+// Five distinct districts: Dense Urban, Industrial, Ruins, Fortress,
+// and Center Arena, connected by corridors of varying width.
 // ================================================================
 
 function generatePvpCover(scene, mapSize) {
@@ -1339,20 +1341,13 @@ function generatePvpCover(scene, mapSize) {
     }
     coverObjects.clear(true, true);
 
-    const MARGIN     = 150;
-    const SAFE_DIST  = 500;
-    const BLOCK_SIZE = 600;
-    const STREET_WIDTH = 160;
-    const GRID_START = 250;
-    const center     = mapSize / 2;
-    const placed     = [];
-
-    // Calculate grid dimensions (7×7 for 6000 map)
-    const gridCols = Math.floor((mapSize - 2 * GRID_START + STREET_WIDTH) / (BLOCK_SIZE + STREET_WIDTH));
-    const gridRows = gridCols;
+    const M = mapSize || 6000;
+    const center = M / 2;
+    const placed = [];
 
     const placeAt = (def, x, y) => {
-        placed.push({ x, y });
+        if (x < 80 || y < 80 || x > M - 80 || y > M - 80) return;
+        placed.push({ x, y, w: def.w, h: def.h });
         if (def.type === 'building') {
             placeBuilding(scene, x, y, def);
         } else {
@@ -1368,117 +1363,417 @@ function generatePvpCover(scene, mapSize) {
         }
     };
 
-    // Seeded pseudo-random
-    let _seed = 77;
-    const _srand = () => { _seed = (_seed * 16807 + 0) % 2147483647; return (_seed & 0x7fffffff) / 0x7fffffff; };
+    const tooClose = (x, y, minDist) => placed.some(p =>
+        Math.abs(p.x - x) < (minDist + (p.w || 0) / 2) && Math.abs(p.y - y) < (minDist + (p.h || 0) / 2));
 
-    // Street markings
+    // Seeded pseudo-random for deterministic maps
+    let _seed = 77;
+    const R = () => { _seed = (_seed * 16807 + 0) % 2147483647; return (_seed & 0x7fffffff) / 0x7fffffff; };
+
+    // Shorthand for COVER_DEFS indices
+    const ROCK_L = 2, ROCK_M = 0, ROCK_S = 1;
+    const WALL_H = 3, WALL_V = 4, WALL_S = 5;
+    const CRATE = 6, CRATE_S = 7;
+    const BLD_S = 8, BLD_M = 9, BLD_L = 10, BLD_R = 11;
+
+    // ── Street / corridor markings ────────────────────────────────
     const streetGfx = scene.add.graphics().setDepth(2);
-    streetGfx.lineStyle(1, 0x334433, 0.25);
-    for (let row = 0; row < gridRows - 1; row++) {
-        const sy = GRID_START + (row + 1) * BLOCK_SIZE + row * STREET_WIDTH + STREET_WIDTH / 2;
-        for (let dx = MARGIN; dx < mapSize - MARGIN; dx += 40) {
-            streetGfx.beginPath(); streetGfx.moveTo(dx, sy); streetGfx.lineTo(dx + 20, sy); streetGfx.strokePath();
-        }
-    }
-    for (let col = 0; col < gridCols - 1; col++) {
-        const sx = GRID_START + (col + 1) * BLOCK_SIZE + col * STREET_WIDTH + STREET_WIDTH / 2;
-        for (let dy = MARGIN; dy < mapSize - MARGIN; dy += 40) {
-            streetGfx.beginPath(); streetGfx.moveTo(sx, dy); streetGfx.lineTo(sx, dy + 20); streetGfx.strokePath();
-        }
-    }
     if (typeof _buildingGraphics !== 'undefined') _buildingGraphics.push(streetGfx);
 
-    // Build city blocks
-    for (let row = 0; row < gridRows; row++) {
-        for (let col = 0; col < gridCols; col++) {
-            const bx = GRID_START + col * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
-            const by = GRID_START + row * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
-            if (bx > mapSize - MARGIN || by > mapSize - MARGIN) continue;
-            const bLeft = bx - BLOCK_SIZE / 2;
-            const bTop  = by - BLOCK_SIZE / 2;
-
-            // Skip center safe zone
-            if (Phaser.Math.Distance.Between(bx, by, center, center) < SAFE_DIST + 200) {
-                for (let i = 0; i < 3; i++) {
-                    const angle = _srand() * Math.PI * 2;
-                    const dist  = 380 + _srand() * 200;
-                    const ox = Math.round(center + Math.cos(angle) * dist);
-                    const oy = Math.round(center + Math.sin(angle) * dist);
-                    if (placed.some(p => Phaser.Math.Distance.Between(ox, oy, p.x, p.y) < 120)) continue;
-                    placeAt(COVER_DEFS[6], ox, oy);
-                }
-                continue;
-            }
-
-            const isEdge = row === 0 || row === gridRows-1 || col === 0 || col === gridCols-1;
-            const isCorner = (row === 0 || row === gridRows-1) && (col === 0 || col === gridCols-1);
-            const variant = Math.floor(_srand() * 4);
-
-            if (isCorner) {
-                placeAt(COVER_DEFS[10], bLeft + 180, bTop + 180);
-                placeAt(COVER_DEFS[8],  bLeft + 450, bTop + 420);
-                placeAt(COVER_DEFS[11], bLeft + 380, bTop + 150);
-                placeAt(COVER_DEFS[6], bLeft + 100, bTop + 420);
-                placeAt(COVER_DEFS[3], bLeft + 300, bTop + 520);
-            } else if (isEdge) {
-                placeAt(COVER_DEFS[9],  bLeft + 160, bTop + 160);
-                placeAt(COVER_DEFS[9],  bLeft + 420, bTop + 400);
-                placeAt(COVER_DEFS[8],  bLeft + 400, bTop + 140);
-                placeAt(COVER_DEFS[4], bLeft + 40,  bTop + 300);
-                placeAt(COVER_DEFS[6], bLeft + 200, bTop + 450);
-            } else if (variant === 0) {
-                placeAt(COVER_DEFS[10], bLeft + 300, bTop + 280);
-                placeAt(COVER_DEFS[8],  bLeft + 100, bTop + 140);
-                placeAt(COVER_DEFS[8],  bLeft + 480, bTop + 480);
-                placeAt(COVER_DEFS[3], bLeft + 300, bTop + 530);
-            } else if (variant === 1) {
-                placeAt(COVER_DEFS[9],  bLeft + 150, bTop + 200);
-                placeAt(COVER_DEFS[9],  bLeft + 420, bTop + 200);
-                placeAt(COVER_DEFS[11], bLeft + 280, bTop + 450);
-                placeAt(COVER_DEFS[7], bLeft + 100, bTop + 450);
-            } else if (variant === 2) {
-                placeAt(COVER_DEFS[10], bLeft + 200, bTop + 250);
-                placeAt(COVER_DEFS[8],  bLeft + 470, bTop + 150);
-                placeAt(COVER_DEFS[11], bLeft + 440, bTop + 450);
-                placeAt(COVER_DEFS[6], bLeft + 120, bTop + 500);
-                placeAt(COVER_DEFS[4], bLeft + 550, bTop + 320);
-            } else {
-                placeAt(COVER_DEFS[8],  bLeft + 120, bTop + 140);
-                placeAt(COVER_DEFS[8],  bLeft + 350, bTop + 160);
-                placeAt(COVER_DEFS[8],  bLeft + 240, bTop + 420);
-                placeAt(COVER_DEFS[9],  bLeft + 480, bTop + 440);
-            }
-
-            // Urban clutter
-            for (let c = 0; c < (isEdge ? 2 : 3); c++) {
-                const cx2 = bLeft + 60 + _srand() * (BLOCK_SIZE - 120);
-                const cy2 = bTop  + 60 + _srand() * (BLOCK_SIZE - 120);
-                if (placed.some(p => Phaser.Math.Distance.Between(cx2, cy2, p.x, p.y) < 100)) continue;
-                placeAt(COVER_DEFS[c % 4], Math.round(cx2), Math.round(cy2));
-            }
+    const drawStreetH = (y, x1, x2) => {
+        streetGfx.lineStyle(1, 0x334433, 0.25);
+        for (let dx = x1; dx < x2; dx += 40) {
+            streetGfx.beginPath(); streetGfx.moveTo(dx, y); streetGfx.lineTo(dx + 20, y); streetGfx.strokePath();
         }
+    };
+    const drawStreetV = (x, y1, y2) => {
+        streetGfx.lineStyle(1, 0x334433, 0.25);
+        for (let dy = y1; dy < y2; dy += 40) {
+            streetGfx.beginPath(); streetGfx.moveTo(x, dy); streetGfx.lineTo(x, dy + 20); streetGfx.strokePath();
+        }
+    };
+
+    // ──────────────────────────────────────────────────────────────
+    // ZONE 1: CENTER ARENA (2400-3600, 2400-3600)
+    // Open contested area — scattered crates, low walls, good sightlines
+    // ──────────────────────────────────────────────────────────────
+    // Ring of barricades around center
+    for (let a = 0; a < 8; a++) {
+        const angle = (a / 8) * Math.PI * 2 + 0.2;
+        const dist = 350 + R() * 100;
+        const bx = Math.round(center + Math.cos(angle) * dist);
+        const by = Math.round(center + Math.sin(angle) * dist);
+        placeAt(COVER_DEFS[a % 2 === 0 ? WALL_H : WALL_V], bx, by);
+    }
+    // Scattered crates in center
+    for (let i = 0; i < 6; i++) {
+        const angle = R() * Math.PI * 2;
+        const dist = 100 + R() * 200;
+        const cx = Math.round(center + Math.cos(angle) * dist);
+        const cy = Math.round(center + Math.sin(angle) * dist);
+        if (!tooClose(cx, cy, 80)) placeAt(COVER_DEFS[CRATE], cx, cy);
+    }
+    // Outer ring — rocks and ruins at ~550-700px from center
+    for (let a = 0; a < 6; a++) {
+        const angle = (a / 6) * Math.PI * 2 + R() * 0.3;
+        const dist = 550 + R() * 150;
+        const ox = Math.round(center + Math.cos(angle) * dist);
+        const oy = Math.round(center + Math.sin(angle) * dist);
+        if (!tooClose(ox, oy, 100)) placeAt(COVER_DEFS[a % 3 === 0 ? ROCK_L : BLD_R], ox, oy);
     }
 
-    // Street obstacles
-    for (let row = 0; row < gridRows - 1; row++) {
-        for (let col = 0; col < gridCols; col++) {
-            if (_srand() < 0.4) continue;
-            const sx = GRID_START + col * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
-            const sy = GRID_START + (row + 1) * BLOCK_SIZE + row * STREET_WIDTH + STREET_WIDTH / 2;
-            if (Phaser.Math.Distance.Between(sx, sy, center, center) < SAFE_DIST) continue;
-            if (placed.some(p => Phaser.Math.Distance.Between(sx, sy, p.x, p.y) < 100)) continue;
-            placeAt(_srand() < 0.5 ? COVER_DEFS[3] : COVER_DEFS[6], Math.round(sx), Math.round(sy));
-        }
-    }
+    // ──────────────────────────────────────────────────────────────
+    // ZONE 2: NW DENSE URBAN (200-2300, 200-2300)
+    // Tight corridors, many small/medium buildings packed close.
+    // Creates alleyway combat with lots of corner-peeking.
+    // ──────────────────────────────────────────────────────────────
+    const nwOx = 250, nwOy = 250, nwW = 2050, nwH = 2050;
 
-    // Extra rubble
-    for (let i = 0; i < 18; i++) {
-        const rx = MARGIN + _srand() * (mapSize - 2 * MARGIN);
-        const ry = MARGIN + _srand() * (mapSize - 2 * MARGIN);
-        if (Phaser.Math.Distance.Between(rx, ry, center, center) < SAFE_DIST) continue;
-        if (placed.some(p => Phaser.Math.Distance.Between(rx, ry, p.x, p.y) < 130)) continue;
-        placeAt(COVER_DEFS[Math.floor(_srand() * 3)], Math.round(rx), Math.round(ry));
+    // Main boulevard through the district (diagonal feel via offset rows)
+    drawStreetH(nwOy + 500, nwOx, nwOx + nwW);
+    drawStreetH(nwOy + 1100, nwOx, nwOx + nwW);
+    drawStreetH(nwOy + 1700, nwOx, nwOx + nwW);
+    drawStreetV(nwOx + 600, nwOy, nwOy + nwH);
+    drawStreetV(nwOx + 1300, nwOy, nwOy + nwH);
+
+    // Dense cluster 1: tight block (top-left)
+    placeAt(COVER_DEFS[BLD_S], 450,  400);
+    placeAt(COVER_DEFS[BLD_S], 700,  380);
+    placeAt(COVER_DEFS[BLD_M], 580,  600);
+    placeAt(COVER_DEFS[BLD_S], 380,  650);
+    placeAt(COVER_DEFS[WALL_H], 550, 520);
+    placeAt(COVER_DEFS[CRATE], 480,  480);
+
+    // Dense cluster 2: L-shaped arrangement
+    placeAt(COVER_DEFS[BLD_M], 1100, 350);
+    placeAt(COVER_DEFS[BLD_S], 1300, 350);
+    placeAt(COVER_DEFS[BLD_S], 1100, 550);
+    placeAt(COVER_DEFS[WALL_V], 1250, 480);
+    placeAt(COVER_DEFS[CRATE_S], 1200, 430);
+
+    // Dense cluster 3: courtyard with buildings on 3 sides
+    placeAt(COVER_DEFS[BLD_M], 400,  850);
+    placeAt(COVER_DEFS[BLD_S], 620,  780);
+    placeAt(COVER_DEFS[BLD_S], 620,  960);
+    placeAt(COVER_DEFS[WALL_H], 500, 900);
+    placeAt(COVER_DEFS[CRATE], 530,  870);
+
+    // Dense cluster 4: narrow alley between parallel buildings
+    placeAt(COVER_DEFS[BLD_M], 1050, 820);
+    placeAt(COVER_DEFS[BLD_M], 1050, 1020);
+    placeAt(COVER_DEFS[WALL_S], 1180, 920);
+    placeAt(COVER_DEFS[CRATE], 1100, 920);
+
+    // Dense cluster 5: T-junction
+    placeAt(COVER_DEFS[BLD_L], 480,  1350);
+    placeAt(COVER_DEFS[BLD_S], 750,  1280);
+    placeAt(COVER_DEFS[BLD_S], 750,  1450);
+    placeAt(COVER_DEFS[WALL_V], 680, 1380);
+    placeAt(COVER_DEFS[ROCK_M], 600, 1500);
+
+    // Dense cluster 6: deep corner compound
+    placeAt(COVER_DEFS[BLD_M], 1200, 1350);
+    placeAt(COVER_DEFS[BLD_S], 1400, 1300);
+    placeAt(COVER_DEFS[BLD_S], 1400, 1480);
+    placeAt(COVER_DEFS[BLD_S], 1200, 1550);
+    placeAt(COVER_DEFS[WALL_H], 1300, 1420);
+
+    // Cluster 7: south edge of NW district
+    placeAt(COVER_DEFS[BLD_S], 400,  1850);
+    placeAt(COVER_DEFS[BLD_M], 620,  1900);
+    placeAt(COVER_DEFS[BLD_S], 850,  1830);
+    placeAt(COVER_DEFS[WALL_H], 700, 1780);
+
+    // Cluster 8: SE corner of NW zone
+    placeAt(COVER_DEFS[BLD_S], 1600, 1700);
+    placeAt(COVER_DEFS[BLD_S], 1800, 1650);
+    placeAt(COVER_DEFS[BLD_M], 1700, 1880);
+    placeAt(COVER_DEFS[ROCK_S], 1550, 1800);
+    placeAt(COVER_DEFS[CRATE], 1680, 1760);
+
+    // Alley clutter — scattered crates and rocks in gaps
+    const nwClutter = [[340,530],[720,470],[950,650],[1350,700],[500,1150],[900,1100],
+                        [1100,1200],[350,1680],[1000,1650],[1500,1500],[1900,1400]];
+    nwClutter.forEach(([cx,cy]) => {
+        if (!tooClose(cx, cy, 90)) placeAt(COVER_DEFS[R() < 0.5 ? CRATE : ROCK_S], cx, cy);
+    });
+
+    // ──────────────────────────────────────────────────────────────
+    // ZONE 3: NE INDUSTRIAL (3700-5800, 200-2300)
+    // Large warehouses with wide open spaces between them.
+    // Long sightlines, few but big cover objects.
+    // ──────────────────────────────────────────────────────────────
+    drawStreetH(1200, 3700, 5800);
+    drawStreetV(4700, 200, 2300);
+
+    // Warehouse row 1 (top)
+    placeAt(COVER_DEFS[BLD_L], 4100, 500);
+    placeAt(COVER_DEFS[BLD_L], 4700, 450);
+    placeAt(COVER_DEFS[BLD_M], 5350, 520);
+
+    // Open yard between rows — just a few crates
+    placeAt(COVER_DEFS[CRATE], 4300, 800);
+    placeAt(COVER_DEFS[CRATE], 4900, 850);
+    placeAt(COVER_DEFS[WALL_H], 4600, 780);
+
+    // Warehouse row 2 (middle)
+    placeAt(COVER_DEFS[BLD_L], 3950, 1450);
+    placeAt(COVER_DEFS[BLD_M], 4400, 1500);
+    placeAt(COVER_DEFS[BLD_L], 5100, 1400);
+    placeAt(COVER_DEFS[BLD_M], 5550, 1500);
+
+    // Loading docks — walls and crates
+    placeAt(COVER_DEFS[WALL_H], 4200, 1150);
+    placeAt(COVER_DEFS[WALL_H], 5300, 1100);
+    placeAt(COVER_DEFS[CRATE], 4450, 1100);
+    placeAt(COVER_DEFS[CRATE_S], 5200, 1150);
+
+    // Warehouse row 3 (bottom of NE zone)
+    placeAt(COVER_DEFS[BLD_L], 4200, 2050);
+    placeAt(COVER_DEFS[BLD_M], 4850, 2000);
+    placeAt(COVER_DEFS[BLD_L], 5450, 2080);
+
+    // Scattered industrial debris
+    placeAt(COVER_DEFS[ROCK_L], 3900, 900);
+    placeAt(COVER_DEFS[ROCK_M], 5500, 800);
+    placeAt(COVER_DEFS[CRATE], 4600, 1800);
+    placeAt(COVER_DEFS[WALL_V], 5100, 900);
+    placeAt(COVER_DEFS[CRATE_S], 3850, 1800);
+
+    // ──────────────────────────────────────────────────────────────
+    // ZONE 4: SW RUINS (200-2300, 3700-5800)
+    // Destroyed buildings, rubble piles, partial walls.
+    // Unpredictable, asymmetric cover — ambush territory.
+    // ──────────────────────────────────────────────────────────────
+    drawStreetH(4500, 200, 2300);
+    drawStreetV(1200, 3700, 5800);
+
+    // Ruined building cluster 1
+    placeAt(COVER_DEFS[BLD_R], 500,  3950);
+    placeAt(COVER_DEFS[BLD_R], 850,  3900);
+    placeAt(COVER_DEFS[ROCK_L], 680, 4100);
+    placeAt(COVER_DEFS[WALL_H], 600, 4050);
+    placeAt(COVER_DEFS[ROCK_S], 400, 4100);
+
+    // Collapsed overpass — wall segments with gaps
+    placeAt(COVER_DEFS[WALL_H], 350,  4400);
+    placeAt(COVER_DEFS[WALL_H], 600,  4400);
+    // gap here for movement
+    placeAt(COVER_DEFS[WALL_H], 950,  4400);
+    placeAt(COVER_DEFS[ROCK_M], 800,  4450);
+
+    // Rubble field — scattered rocks
+    placeAt(COVER_DEFS[ROCK_L], 1500, 3900);
+    placeAt(COVER_DEFS[ROCK_M], 1300, 4050);
+    placeAt(COVER_DEFS[ROCK_S], 1650, 4020);
+    placeAt(COVER_DEFS[ROCK_M], 1450, 4200);
+
+    // Ruined cluster 2 — partially standing buildings
+    placeAt(COVER_DEFS[BLD_R], 400,  4800);
+    placeAt(COVER_DEFS[BLD_S], 650,  4750);
+    placeAt(COVER_DEFS[BLD_R], 500,  5000);
+    placeAt(COVER_DEFS[ROCK_L], 800, 4900);
+    placeAt(COVER_DEFS[WALL_V], 720, 4800);
+
+    // Open crater area (south)
+    placeAt(COVER_DEFS[ROCK_L], 1100, 4700);
+    placeAt(COVER_DEFS[ROCK_M], 1350, 4800);
+    placeAt(COVER_DEFS[CRATE], 1200, 4600);
+
+    // Deep ruins cluster
+    placeAt(COVER_DEFS[BLD_R], 1600, 4700);
+    placeAt(COVER_DEFS[BLD_R], 1850, 4650);
+    placeAt(COVER_DEFS[ROCK_L], 1750, 4850);
+    placeAt(COVER_DEFS[WALL_H], 1700, 4550);
+
+    // Bottom rubble
+    placeAt(COVER_DEFS[BLD_R], 500,  5400);
+    placeAt(COVER_DEFS[ROCK_M], 800, 5350);
+    placeAt(COVER_DEFS[BLD_R], 1200, 5300);
+    placeAt(COVER_DEFS[ROCK_S], 1500, 5450);
+    placeAt(COVER_DEFS[BLD_S], 1800, 5350);
+    placeAt(COVER_DEFS[ROCK_L], 2050, 5200);
+
+    // Ruin clutter
+    const swClutter = [[350,4250],[900,3850],[1100,4350],[600,4600],[1400,4500],
+                        [1000,5100],[1600,5100],[700,5550],[1400,5550]];
+    swClutter.forEach(([cx,cy]) => {
+        if (!tooClose(cx, cy, 90)) placeAt(COVER_DEFS[R() < 0.6 ? ROCK_S : CRATE], cx, cy);
+    });
+
+    // ──────────────────────────────────────────────────────────────
+    // ZONE 5: SE FORTRESS (3700-5800, 3700-5800)
+    // Military compound — organized medium buildings with alleys,
+    // plus a fortified inner compound. Mix of tight and open.
+    // ──────────────────────────────────────────────────────────────
+    drawStreetH(4600, 3700, 5800);
+    drawStreetV(4800, 3700, 5800);
+
+    // Outer wall segments (north side of fortress)
+    placeAt(COVER_DEFS[WALL_H], 4100, 3850);
+    placeAt(COVER_DEFS[WALL_H], 4500, 3850);
+    // gate gap
+    placeAt(COVER_DEFS[WALL_H], 5000, 3850);
+    placeAt(COVER_DEFS[WALL_H], 5400, 3850);
+
+    // Barracks row 1
+    placeAt(COVER_DEFS[BLD_M], 4100, 4100);
+    placeAt(COVER_DEFS[BLD_M], 4500, 4100);
+    placeAt(COVER_DEFS[BLD_S], 4850, 4080);
+
+    // Alley between barracks
+    placeAt(COVER_DEFS[CRATE], 4300, 4250);
+    placeAt(COVER_DEFS[CRATE_S], 4650, 4230);
+
+    // Barracks row 2
+    placeAt(COVER_DEFS[BLD_M], 4100, 4400);
+    placeAt(COVER_DEFS[BLD_S], 4450, 4380);
+    placeAt(COVER_DEFS[BLD_M], 4750, 4420);
+
+    // Central command building (large)
+    placeAt(COVER_DEFS[BLD_L], 5300, 4200);
+    placeAt(COVER_DEFS[WALL_V], 5100, 4200);
+    placeAt(COVER_DEFS[CRATE], 5150, 4100);
+    placeAt(COVER_DEFS[CRATE], 5150, 4300);
+
+    // Motor pool — open area with scattered vehicles (crates)
+    placeAt(COVER_DEFS[CRATE], 4200, 4850);
+    placeAt(COVER_DEFS[CRATE], 4450, 4900);
+    placeAt(COVER_DEFS[CRATE], 4350, 4750);
+    placeAt(COVER_DEFS[WALL_H], 4300, 4700);
+
+    // Southern structures
+    placeAt(COVER_DEFS[BLD_M], 5100, 4800);
+    placeAt(COVER_DEFS[BLD_S], 5400, 4750);
+    placeAt(COVER_DEFS[BLD_S], 5400, 4950);
+    placeAt(COVER_DEFS[WALL_V], 5250, 4900);
+
+    // Guard towers (small buildings at corners)
+    placeAt(COVER_DEFS[BLD_S], 3900, 5200);
+    placeAt(COVER_DEFS[BLD_S], 5600, 5200);
+    placeAt(COVER_DEFS[BLD_S], 3900, 5500);
+    placeAt(COVER_DEFS[BLD_S], 5600, 5500);
+
+    // Inner compound walls
+    placeAt(COVER_DEFS[WALL_H], 4200, 5150);
+    placeAt(COVER_DEFS[WALL_H], 4700, 5150);
+    placeAt(COVER_DEFS[WALL_H], 5200, 5150);
+    placeAt(COVER_DEFS[BLD_M], 4500, 5350);
+    placeAt(COVER_DEFS[BLD_L], 5100, 5400);
+
+    // Fortress clutter
+    placeAt(COVER_DEFS[CRATE_S], 4000, 4500);
+    placeAt(COVER_DEFS[ROCK_S], 5500, 4500);
+    placeAt(COVER_DEFS[CRATE], 4700, 5300);
+    placeAt(COVER_DEFS[ROCK_M], 4100, 5500);
+    placeAt(COVER_DEFS[CRATE], 5300, 5550);
+
+    // ──────────────────────────────────────────────────────────────
+    // CORRIDORS: connecting zones through the cross-shaped gaps
+    // North-South corridor (x ~2300-3700) and East-West (y ~2300-3700)
+    // ──────────────────────────────────────────────────────────────
+
+    // N-S corridor: NW→Center (x ≈ 2300-3700, y ≈ 2000-2500)
+    drawStreetV(2600, 1800, 2500);
+    drawStreetV(3400, 1800, 2500);
+    placeAt(COVER_DEFS[BLD_S], 2500, 2100);
+    placeAt(COVER_DEFS[ROCK_M], 3500, 2150);
+    placeAt(COVER_DEFS[WALL_V], 3000, 2200);
+    placeAt(COVER_DEFS[CRATE], 2800, 2050);
+
+    // N-S corridor: Center→SW (x ≈ 2300-3700, y ≈ 3500-4000)
+    drawStreetV(2600, 3500, 4200);
+    drawStreetV(3400, 3500, 4200);
+    placeAt(COVER_DEFS[BLD_R], 2500, 3800);
+    placeAt(COVER_DEFS[ROCK_L], 3500, 3750);
+    placeAt(COVER_DEFS[WALL_H], 3000, 3700);
+    placeAt(COVER_DEFS[CRATE], 3200, 3850);
+
+    // E-W corridor: NW→Center (x ≈ 2000-2500, y ≈ 2300-3700)
+    drawStreetH(2600, 1800, 2500);
+    drawStreetH(3400, 1800, 2500);
+    placeAt(COVER_DEFS[BLD_S], 2100, 2700);
+    placeAt(COVER_DEFS[ROCK_M], 2200, 3300);
+    placeAt(COVER_DEFS[WALL_H], 2050, 3000);
+
+    // E-W corridor: Center→NE (x ≈ 3500-4000, y ≈ 2300-3700)
+    drawStreetH(2600, 3500, 4200);
+    drawStreetH(3400, 3500, 4200);
+    placeAt(COVER_DEFS[BLD_M], 3800, 2700);
+    placeAt(COVER_DEFS[ROCK_M], 3750, 3300);
+    placeAt(COVER_DEFS[CRATE], 3900, 3000);
+    placeAt(COVER_DEFS[WALL_V], 3650, 2900);
+
+    // E-W corridor: SW→SE (y ≈ 4500-5000 area)
+    drawStreetH(4800, 2200, 3800);
+    placeAt(COVER_DEFS[BLD_R], 2600, 4800);
+    placeAt(COVER_DEFS[ROCK_L], 3200, 4750);
+    placeAt(COVER_DEFS[CRATE], 2900, 4850);
+
+    // N-S corridor: NE→SE (x ≈ 4500-5000 area)
+    drawStreetV(4500, 2200, 3800);
+    placeAt(COVER_DEFS[BLD_S], 4500, 2600);
+    placeAt(COVER_DEFS[ROCK_M], 4550, 3200);
+    placeAt(COVER_DEFS[CRATE], 4450, 2900);
+    placeAt(COVER_DEFS[WALL_H], 4600, 3400);
+
+    // ──────────────────────────────────────────────────────────────
+    // TRANSITION ZONES: fill the diagonal spaces with mixed cover
+    // to prevent empty dead zones
+    // ──────────────────────────────────────────────────────────────
+
+    // NE gap fill (between NW dense and NE industrial, y 200-2300, x 2300-3700)
+    placeAt(COVER_DEFS[BLD_M], 2800, 600);
+    placeAt(COVER_DEFS[BLD_S], 3200, 500);
+    placeAt(COVER_DEFS[ROCK_L], 3000, 900);
+    placeAt(COVER_DEFS[BLD_R], 2600, 1200);
+    placeAt(COVER_DEFS[BLD_S], 3400, 1100);
+    placeAt(COVER_DEFS[WALL_H], 3100, 1400);
+    placeAt(COVER_DEFS[CRATE], 2900, 1500);
+    placeAt(COVER_DEFS[BLD_S], 3200, 1700);
+    placeAt(COVER_DEFS[ROCK_M], 2600, 1800);
+
+    // SW gap fill (between NW dense and SW ruins, x 200-2300, y 2300-3700)
+    placeAt(COVER_DEFS[BLD_S], 600,  2800);
+    placeAt(COVER_DEFS[BLD_R], 500,  3200);
+    placeAt(COVER_DEFS[ROCK_L], 900, 3000);
+    placeAt(COVER_DEFS[BLD_M], 1200, 2600);
+    placeAt(COVER_DEFS[WALL_V], 1100, 3400);
+    placeAt(COVER_DEFS[CRATE], 1500, 2900);
+    placeAt(COVER_DEFS[BLD_S], 1700, 3200);
+    placeAt(COVER_DEFS[ROCK_M], 1800, 2600);
+
+    // SE gap fill (between NE industrial and SE fortress, x 3700-5800, y 2300-3700)
+    placeAt(COVER_DEFS[BLD_M], 4200, 2800);
+    placeAt(COVER_DEFS[BLD_S], 4800, 3000);
+    placeAt(COVER_DEFS[BLD_R], 5200, 2700);
+    placeAt(COVER_DEFS[ROCK_L], 5500, 3100);
+    placeAt(COVER_DEFS[WALL_H], 4500, 3200);
+    placeAt(COVER_DEFS[CRATE], 5000, 3400);
+    placeAt(COVER_DEFS[BLD_S], 4300, 3500);
+    placeAt(COVER_DEFS[ROCK_M], 5400, 3500);
+
+    // Bottom-left gap fill (between SW ruins and SE fortress, x 2300-3700, y 3700-5800)
+    placeAt(COVER_DEFS[BLD_R], 2800, 4200);
+    placeAt(COVER_DEFS[BLD_S], 3200, 4400);
+    placeAt(COVER_DEFS[ROCK_L], 3000, 4600);
+    placeAt(COVER_DEFS[BLD_M], 2600, 5000);
+    placeAt(COVER_DEFS[BLD_R], 3400, 4900);
+    placeAt(COVER_DEFS[WALL_V], 3100, 5200);
+    placeAt(COVER_DEFS[CRATE], 2800, 5400);
+    placeAt(COVER_DEFS[BLD_S], 3300, 5500);
+
+    // ──────────────────────────────────────────────────────────────
+    // RANDOM SCATTER: fill remaining gaps with light cover
+    // ──────────────────────────────────────────────────────────────
+    for (let i = 0; i < 30; i++) {
+        const rx = 200 + R() * (M - 400);
+        const ry = 200 + R() * (M - 400);
+        // Skip center arena
+        if (Math.hypot(rx - center, ry - center) < 500) continue;
+        if (tooClose(rx, ry, 140)) continue;
+        const defIdx = R() < 0.3 ? ROCK_S : R() < 0.6 ? CRATE : ROCK_M;
+        placeAt(COVER_DEFS[defIdx], Math.round(rx), Math.round(ry));
     }
 
     // Force-sync static bodies
