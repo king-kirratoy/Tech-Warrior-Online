@@ -657,12 +657,14 @@ function getCampaignEnemyConfig() {
     const mission = getCampaignMission();
     if (!mission) return null;
 
-    const composition = generateEnemyComposition(mission.enemyLevel, mission.enemyCount);
     const mod = _campaignState.activeModifier;
 
     // Apply modifier effects to count
     let extraEnemies = 0;
     if (mod?.effect === 'extraEnemies') extraEnemies = mod.value;
+
+    const totalCount = mission.enemyCount + extraEnemies;
+    const composition = generateEnemyComposition(mission.enemyLevel, totalCount);
 
     // Determine elite chance based on level
     let eliteChance = 0;
@@ -677,7 +679,7 @@ function getCampaignEnemyConfig() {
 
     return {
         composition,
-        totalEnemies: mission.enemyCount + extraEnemies,
+        totalEnemies: totalCount,
         enemyLevel: mission.enemyLevel,
         hasBoss: mission.hasBoss,
         eliteChance,
@@ -817,15 +819,15 @@ function showMissionSelect() {
         const blBase = isSelected ? '#ffd700' : (completed ? '#00ff88' : 'rgba(255,215,0,0.4)');
         const shadowStyle = isSelected ? 'box-shadow:0 0 12px rgba(255,215,0,0.15),inset 0 0 12px rgba(255,215,0,0.05);' : '';
 
-        html += '<button onclick="_selectMission(' + idx + ')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:' + bgBase + ';border:1px solid ' + bdBase + ';border-left:3px solid ' + blBase + ';border-radius:4px;font-family:Courier New,monospace;cursor:pointer;transition:all 0.2s;text-align:left;outline:none;width:100%;' + shadowStyle + '">';
+        html += '<button onclick="_selectMission(' + idx + ')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;min-height:54px;background:' + bgBase + ';border:1px solid ' + bdBase + ';border-left:3px solid ' + blBase + ';border-radius:4px;font-family:Courier New,monospace;cursor:pointer;transition:all 0.2s;text-align:left;outline:none;width:100%;' + shadowStyle + '">';
 
         // Mission number
         html += `<div style="font-size:18px;letter-spacing:2px;color:${completed ? '#00ff88' : 'rgba(255,215,0,0.6)'};min-width:30px;text-align:center;">${completed ? '✓' : (idx + 1)}</div>`;
 
         // Mission info
-        html += '<div style="flex:1;">';
+        html += '<div style="flex:1;min-width:0;">';
         html += `<div style="font-size:12px;letter-spacing:1px;color:${isSelected ? '#ffd700' : (completed ? 'rgba(0,255,136,0.8)' : '#c8d2d9')};margin-bottom:2px;">${m.name}</div>`;
-        html += `<div style="font-size:10px;letter-spacing:0.5px;color:rgba(200,210,217,0.4);">${m.briefing}</div>`;
+        html += `<div style="font-size:10px;letter-spacing:0.5px;color:rgba(200,210,217,0.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.briefing}</div>`;
         html += '</div>';
 
         // Level + difficulty indicator
@@ -864,10 +866,10 @@ function showMissionSelect() {
             html += '</div>';
         }
 
-        // ── Deploy button — centered and compact ──
+        // ── Deploy button — centered and compact, not full-width ──
         const mLabel = selMission ? selMission.name.toUpperCase() : 'MISSION';
         html += '<div style="display:flex;justify-content:center;margin-top:16px;width:100%;max-width:700px;">';
-        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" style="padding:10px 36px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)'" onmouseout="this.style.background='rgba(255,215,0,0.08)'">DEPLOY — ${mLabel}</button>`;
+        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" style="padding:10px 36px;max-width:320px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)'" onmouseout="this.style.background='rgba(255,215,0,0.08)'">DEPLOY — ${mLabel}</button>`;
         html += '</div>';
     }
 
