@@ -3061,6 +3061,9 @@ function create() {
 }
 
 function update(time) {
+    // PVP multiplayer: always interpolate remote players, even when dead/paused
+    if (typeof mpUpdate === 'function') mpUpdate(time);
+
     if (!isDeployed || _isPaused || _roundClearing) return;
 
     handleShieldRegen(time);
@@ -3106,8 +3109,6 @@ function update(time) {
     if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
     if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
     if (typeof updateColossusStand === 'function') updateColossusStand(time);         // → js/loot-system.js (Colossus Frame unique)
-    // PVP multiplayer: interpolate remote players + update kill feed
-    if (typeof mpUpdate === 'function') mpUpdate(time);
 }
 
 
@@ -11241,8 +11242,9 @@ function toggleDD(slotId) {
 }
 
 function closeAllDD() {
-    document.querySelectorAll('.dd-selected').forEach(el => el.classList.remove('dd-open'));
-    document.querySelectorAll('.dd-list').forEach(el => el.classList.remove('dd-list-open'));
+    // Only close main hangar dropdowns — PVP hangar has its own close handler
+    document.querySelectorAll('.dd-selected:not(.pvp-dd-selected)').forEach(el => el.classList.remove('dd-open'));
+    document.querySelectorAll('.dd-list:not(.pvp-dd-list)').forEach(el => el.classList.remove('dd-list-open'));
     _openDD = null;
 }
 
@@ -11443,9 +11445,9 @@ function updateGarageStats() {
     ).join('');
 }
 
-// Close dropdowns when clicking outside
+// Close dropdowns when clicking outside (skip PVP hangar dropdowns — they have their own handler)
 document.addEventListener('click', e => {
-    if (!e.target.closest('.dd-wrap')) closeAllDD();
+    if (!e.target.closest('.dd-wrap') && !e.target.closest('.pvp-dd-wrap') && !e.target.closest('#pvp-hangar')) closeAllDD();
 });
 
 // ================================================================
