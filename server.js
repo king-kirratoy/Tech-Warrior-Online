@@ -21,14 +21,22 @@ const io = new Server(server, {
 app.use(express.static(path.join(__dirname)));
 
 // ────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ────────────────────────────────────────────────────────────────
+
+const KILLS_TO_WIN = 25;
+const PVP_MAP_SIZE = 6000;   // larger PVP map (client must match)
+
+// ────────────────────────────────────────────────────────────────
 // LOBBY STATE
 // ────────────────────────────────────────────────────────────────
 
 const lobby = {
-    players: new Map(),   // socketId → { id, name, chassis, color, ready }
+    players: new Map(),   // socketId → { id, name, chassis, color, loadout, ready }
     hostId: null,         // first player to join becomes host
     matchActive: false,   // true once host starts match
-    matchId: 0            // increments each match
+    matchId: 0,           // increments each match
+    scores: new Map()     // socketId → { kills, deaths } (deathmatch)
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -95,7 +103,13 @@ io.on('connection', (socket) => {
         lobby.matchActive = true;
         lobby.matchId++;
 
-        // Assign spawn positions in a circle around map center
+        // Reset scores for all players
+        lobby.scores.clear();
+        lobby.players.forEach((p) => {
+            lobby.scores.set(p.id, { kills: 0, deaths: 0 });
+        });
+
+        // Assign spawn positions on the PVP map
         const spawns = generateSpawnPositions(lobby.players.size);
         const playerList = Array.from(lobby.players.values());
         const spawnMap = {};
@@ -103,13 +117,20 @@ io.on('connection', (socket) => {
             spawnMap[p.id] = spawns[i];
         });
 
+        // Build initial scoreboard
+        const scoreboard = {};
+        lobby.scores.forEach((s, id) => { scoreboard[id] = s; });
+
         io.emit('match-begin', {
             matchId: lobby.matchId,
             players: playerList,
-            spawns: spawnMap
+            spawns: spawnMap,
+            killsToWin: KILLS_TO_WIN,
+            mapSize: PVP_MAP_SIZE,
+            scoreboard: scoreboard
         });
 
-        console.log(`[MATCH] Started match #${lobby.matchId} with ${lobby.players.size} players`);
+        console.log(`[MATCH] Started deathmatch #${lobby.matchId} with ${lobby.players.size} players (first to ${KILLS_TO_WIN})`);
     });
 
     // ── IN-MATCH: PLAYER STATE (position, rotation, hp) ────────
@@ -168,23 +189,45 @@ io.on('connection', (socket) => {
         });
     });
 
-    // ── IN-MATCH: PLAYER KILLED ────────────────────────────────
+    // ── IN-MATCH: PLAYER KILLED (deathmatch — respawn, track score) ──
     socket.on('player-killed', (data) => {
+        const killerScore = lobby.scores.get(data.killerId);
+        const victimScore = lobby.scores.get(socket.id);
+
+        if (killerScore && data.killerId) killerScore.kills++;
+        if (victimScore) victimScore.deaths++;
+
+        // Build updated scoreboard
+        const scoreboard = {};
+        lobby.scores.forEach((s, id) => { scoreboard[id] = s; });
+
         io.emit('player-killed', {
             victimId: socket.id,
             killerId: data.killerId,
             victimName: lobby.players.get(socket.id)?.name || 'UNKNOWN',
-            killerName: lobby.players.get(data.killerId)?.name || 'UNKNOWN'
+            killerName: lobby.players.get(data.killerId)?.name || 'UNKNOWN',
+            scoreboard: scoreboard
         });
 
-        // Check for match end (last player standing)
-        const alive = Array.from(lobby.players.values()).filter(p => {
-            // The victim just died — exclude them
-            return p.id !== socket.id;
+        // Assign a new spawn point for the victim to respawn at
+        const respawnPos = getRandomSpawnPosition();
+        socket.emit('respawn', {
+            x: respawnPos.x,
+            y: respawnPos.y,
+            delay: 3000 // 3 second respawn delay
         });
 
-        // Count how many are still connected (proxy for alive)
-        // Actual alive tracking is client-side; server just relays
+        // Check for match winner (first to KILLS_TO_WIN)
+        if (killerScore && killerScore.kills >= KILLS_TO_WIN) {
+            const winner = lobby.players.get(data.killerId);
+            io.emit('match-winner', {
+                winnerId: data.killerId,
+                winnerName: winner?.name || 'UNKNOWN',
+                scoreboard: scoreboard
+            });
+            lobby.matchActive = false;
+            console.log(`[MATCH] ${winner?.name} wins with ${killerScore.kills} kills!`);
+        }
     });
 
     // ── IN-MATCH: CHAT ─────────────────────────────────────────
@@ -205,6 +248,7 @@ io.on('connection', (socket) => {
         if (socket.id === lobby.hostId) {
             // Reset all ready states
             lobby.players.forEach(p => { p.ready = false; });
+            lobby.scores.clear();
             io.emit('match-ended', { reason: 'host-return' });
             io.emit('lobby-state', {
                 players: Array.from(lobby.players.values()),
@@ -219,6 +263,7 @@ io.on('connection', (socket) => {
         const p = lobby.players.get(socket.id);
         const name = p?.name || socket.id;
         lobby.players.delete(socket.id);
+        lobby.scores.delete(socket.id);
 
         // Host migration
         if (socket.id === lobby.hostId) {
@@ -232,13 +277,14 @@ io.on('connection', (socket) => {
 
         io.emit('lobby-player-left', { id: socket.id });
 
-        // If match is active, broadcast player death (disconnect = elimination)
+        // If match is active, broadcast disconnect kill feed
         if (lobby.matchActive) {
             io.emit('player-killed', {
                 victimId: socket.id,
                 killerId: null,
                 victimName: name,
-                killerName: 'DISCONNECT'
+                killerName: 'DISCONNECT',
+                scoreboard: Object.fromEntries(lobby.scores)
             });
         }
 
@@ -250,56 +296,63 @@ io.on('connection', (socket) => {
 // HELPERS
 // ────────────────────────────────────────────────────────────────
 
-function generateSpawnPositions(count) {
-    // City grid constants (must match client generateCover in index.html)
-    const BLOCK_SIZE   = 600;
-    const STREET_WIDTH = 160;
-    const GRID_START   = 250;
+// PVP map grid constants (6000×6000 map, 7×7 city blocks)
+const PVP_BLOCK_SIZE   = 600;
+const PVP_STREET_WIDTH = 160;
+const PVP_GRID_START   = 250;
+const PVP_GRID_COLS    = 7;
+const PVP_GRID_ROWS    = 7;
 
-    // Calculate street intersection centers — these are guaranteed clear of buildings
-    const streetIntersections = [];
+function _getPvpStreetPositions() {
+    const positions = [];
+    const cx = PVP_MAP_SIZE / 2, cy = PVP_MAP_SIZE / 2;
+
     // Vertical street centers (between columns)
     const vStreets = [];
-    for (let col = 0; col < 4; col++) {
-        vStreets.push(GRID_START + (col + 1) * BLOCK_SIZE + col * STREET_WIDTH + STREET_WIDTH / 2);
+    for (let col = 0; col < PVP_GRID_COLS - 1; col++) {
+        vStreets.push(PVP_GRID_START + (col + 1) * PVP_BLOCK_SIZE + col * PVP_STREET_WIDTH + PVP_STREET_WIDTH / 2);
     }
     // Horizontal street centers (between rows)
     const hStreets = [];
-    for (let row = 0; row < 4; row++) {
-        hStreets.push(GRID_START + (row + 1) * BLOCK_SIZE + row * STREET_WIDTH + STREET_WIDTH / 2);
+    for (let row = 0; row < PVP_GRID_ROWS - 1; row++) {
+        hStreets.push(PVP_GRID_START + (row + 1) * PVP_BLOCK_SIZE + row * PVP_STREET_WIDTH + PVP_STREET_WIDTH / 2);
     }
     // All intersections
     for (const sx of vStreets) {
         for (const sy of hStreets) {
-            streetIntersections.push({ x: sx, y: sy });
+            positions.push({ x: sx, y: sy });
         }
     }
-    // Also add street midpoints (between intersections) for more options
+    // Street midpoints
     for (const sx of vStreets) {
-        // Midpoints along vertical streets (between block rows)
-        for (let row = 0; row < 5; row++) {
-            const my = GRID_START + row * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
-            streetIntersections.push({ x: sx, y: my });
+        for (let row = 0; row < PVP_GRID_ROWS; row++) {
+            const my = PVP_GRID_START + row * (PVP_BLOCK_SIZE + PVP_STREET_WIDTH) + PVP_BLOCK_SIZE / 2;
+            positions.push({ x: sx, y: my });
         }
     }
     for (const sy of hStreets) {
-        // Midpoints along horizontal streets (between block cols)
-        for (let col = 0; col < 5; col++) {
-            const mx = GRID_START + col * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
-            streetIntersections.push({ x: mx, y: sy });
+        for (let col = 0; col < PVP_GRID_COLS; col++) {
+            const mx = PVP_GRID_START + col * (PVP_BLOCK_SIZE + PVP_STREET_WIDTH) + PVP_BLOCK_SIZE / 2;
+            positions.push({ x: mx, y: sy });
         }
     }
 
+    return positions;
+}
+
+function generateSpawnPositions(count) {
+    const cx = PVP_MAP_SIZE / 2, cy = PVP_MAP_SIZE / 2;
+    const positions = _getPvpStreetPositions();
+
     // Sort by distance from center descending — prefer outer spawns for spread
-    const cx = 2000, cy = 2000;
-    streetIntersections.sort((a, b) => {
+    positions.sort((a, b) => {
         const da = Math.hypot(a.x - cx, a.y - cy);
         const db = Math.hypot(b.x - cx, b.y - cy);
         return db - da;
     });
 
-    // Remove points too close to center (safe zone)
-    const filtered = streetIntersections.filter(p => Math.hypot(p.x - cx, p.y - cy) > 500);
+    // Remove points too close to center
+    const filtered = positions.filter(p => Math.hypot(p.x - cx, p.y - cy) > 600);
 
     // Select spawns that are well-spread from each other
     const spawns = [];
@@ -310,7 +363,6 @@ function generateSpawnPositions(count) {
         for (let j = 0; j < filtered.length; j++) {
             if (used.has(j)) continue;
             const p = filtered[j];
-            // Find minimum distance to already-selected spawns
             let minDist = Infinity;
             for (const s of spawns) {
                 const d = Math.hypot(p.x - s.x, p.y - s.y);
@@ -326,12 +378,19 @@ function generateSpawnPositions(count) {
             spawns.push(filtered[best]);
             used.add(best);
         } else {
-            // Fallback — should never happen with 16 intersections
             const angle = (2 * Math.PI * i) / count;
-            spawns.push({ x: Math.round(cx + 1200 * Math.cos(angle)), y: Math.round(cy + 1200 * Math.sin(angle)) });
+            spawns.push({ x: Math.round(cx + 1800 * Math.cos(angle)), y: Math.round(cy + 1800 * Math.sin(angle)) });
         }
     }
     return spawns;
+}
+
+// Get a random street position for respawning
+function getRandomSpawnPosition() {
+    const positions = _getPvpStreetPositions();
+    const cx = PVP_MAP_SIZE / 2, cy = PVP_MAP_SIZE / 2;
+    const valid = positions.filter(p => Math.hypot(p.x - cx, p.y - cy) > 400);
+    return valid[Math.floor(Math.random() * valid.length)] || { x: cx, y: cy };
 }
 
 // ────────────────────────────────────────────────────────────────
