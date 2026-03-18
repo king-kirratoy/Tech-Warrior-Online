@@ -331,7 +331,8 @@ function mpCreateRemotePlayer(scene, info, spawn) {
     _mpPlayers.set(info.id, rp);
 
     // Overlap: OUR bullets hit THEIR body
-    scene.physics.add.overlap(bullets, body, (rpBody, bullet) => {
+    // Phaser callback order: (memberOfGroup1, object2) — bullet is from `bullets` group, rpBody is `body`
+    scene.physics.add.overlap(bullets, body, (bullet, rpBody) => {
         if (!bullet?.active) return;
         const dmg = bullet.damageValue || 10;
         const bx = bullet.x, by = bullet.y;
@@ -417,7 +418,8 @@ function mpSpawnRemoteBullet(scene, data) {
     if (!_mpPvpBullets) {
         _mpPvpBullets = scene.physics.add.group();
         // PVP bullets hit local player
-        scene.physics.add.overlap(_mpPvpBullets, player, (p, bullet) => {
+        // Phaser callback order: (memberOfGroup1, object2) — bullet is from `_mpPvpBullets`, playerObj is `player`
+        scene.physics.add.overlap(_mpPvpBullets, player, (bullet, playerObj) => {
             if (!bullet?.active || !player?.active || !isDeployed) return;
 
             const dmg = bullet.damageValue || 15;
@@ -431,8 +433,8 @@ function mpSpawnRemoteBullet(scene, data) {
                 return;
             }
 
-            createImpactSparks(scene, p.x, p.y);
-            showDamageText(scene, p.x, p.y, dmg, player.shield > 0);
+            createImpactSparks(scene, player.x, player.y);
+            showDamageText(scene, player.x, player.y, dmg, player.shield > 0);
             bullet.destroy();
             processPlayerDamage(dmg, bAngle);
 
@@ -441,8 +443,8 @@ function mpSpawnRemoteBullet(scene, data) {
                 shooterId: bullet._shooterId,
                 victimId: _mpLocalId,
                 damage: dmg,
-                x: p.x,
-                y: p.y
+                x: player.x,
+                y: player.y
             });
 
             // Check if we died — deathmatch: notify server, wait for respawn
