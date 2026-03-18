@@ -527,14 +527,13 @@ button.active {
                 inset 0 0 20px rgba(0,255,255,0.03);
 }
 
-.menu-start-btn { flex: none !important; }
+.menu-start-btn { flex: none !important; width: 320px; text-align: center; }
 .menu-start-btn:hover {
     background: rgba(0,255,255,0.08);
     border-color: rgba(0,255,255,0.9);
     color: #fff;
     box-shadow: 0 0 40px rgba(0,255,255,0.25),
                 inset 0 0 20px rgba(0,255,255,0.08);
-    letter-spacing: 8px;
 }
 .menu-start-btn.disabled-mode {
     color: rgba(0,255,255,0.2);
@@ -784,11 +783,17 @@ button.active {
     <canvas id="menu-canvas"></canvas>
     <div class="menu-title">TECH WARRIOR ONLINE</div>
     <div class="menu-subtitle">Combat Simulation Alpha 3.0</div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
-        <button id="campaign-btn" class="menu-start-btn" onclick="startGame('campaign')">&#9733;&nbsp;&nbsp;CAMPAIGN</button>
+    <div id="main-menu-buttons" style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
+        <button id="campaign-btn" class="menu-start-btn" onclick="showCampaignSubMenu()">&#9733;&nbsp;&nbsp;CAMPAIGN</button>
         <button class="menu-start-btn" onclick="startGame('simulation')">&#9654;&nbsp;&nbsp;COMBAT SIMULATION</button>
         <button class="menu-start-btn" onclick="startMultiplayer()">&#9670;&nbsp;&nbsp;MULTIPLAYER PVP</button>
         <button class="menu-start-btn" onclick="showLeaderboard()" style="margin-top:8px;">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
+    </div>
+    <!-- Campaign sub-menu (Resume / New) -->
+    <div id="campaign-sub-menu" style="display:none;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
+        <button id="resume-campaign-btn" class="menu-start-btn" onclick="startGame('campaign')" style="display:none;">&#9733;&nbsp;&nbsp;RESUME CAMPAIGN</button>
+        <button id="new-campaign-btn" class="menu-start-btn" onclick="confirmNewCampaign()">&#9733;&nbsp;&nbsp;NEW CAMPAIGN</button>
+        <button class="menu-start-btn" onclick="hideCampaignSubMenu()" style="margin-top:8px;border-color:rgba(255,60,60,0.35);border-top-color:rgba(255,60,60,0.7);border-bottom-color:rgba(255,60,60,0.7);color:rgba(255,100,100,0.85);">&#9664;&nbsp;&nbsp;BACK</button>
     </div>
     <div class="menu-version">v3.0 // ALPHA BUILD</div>
 </div>
@@ -830,7 +835,7 @@ button.active {
             <!-- LEFT: BUILD OPTIONS -->
             <div style="flex:1;min-width:0;">
 
-                <div class="dd-row">
+                <div id="chassis-select-row" class="dd-row">
                     <span class="dd-label">■ CHASSIS</span>
                     <div style="display:flex;gap:6px;flex:1;">
                         <button id="c-light"  onclick="setChassis('light')"  style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">LIGHT</button>
@@ -4920,6 +4925,153 @@ function startRound(roundNum) {
 const SUPABASE_URL  = 'https://sqkqczkxjeutxcirbsgv.supabase.co';
 const SUPABASE_KEY  = 'sb_publishable_OKjtHa6csB206hHGBaNa1g_LZrYXtvo';
 const SUPABASE_TABLE = 'tw_scores';
+const SUPABASE_CAMPAIGN_TABLE = 'tw_campaign_saves';
+
+// ── Supabase Campaign Cloud Save/Load ─────────────────────────────
+// Table: tw_campaign_saves
+// Columns: callsign (text, PK), campaign_state (jsonb), campaign_progress (jsonb),
+//          inventory (jsonb), equipped (jsonb), scrap (int4), item_counter (int4),
+//          updated_at (timestamptz default now())
+// RLS: Enable read/write for anon key (or use service role if restricted)
+
+/** Save all campaign data to Supabase (upsert by callsign). */
+async function saveToCloud() {
+    if (!_supabaseEnabled() || _gameMode !== 'campaign') return;
+    const callsign = _playerCallsign || 'ANONYMOUS';
+    if (callsign === 'ANONYMOUS') return;
+
+    try {
+        const campaignState = {
+            playerLevel: _campaignState.playerLevel,
+            playerXP: _campaignState.playerXP,
+            currentChapter: _campaignState.currentChapter,
+            currentMission: _campaignState.currentMission,
+            completedMissions: _campaignState.completedMissions,
+            chassis: _campaignState.chassis || null,
+            claimedRewards: _campaignState.claimedRewards || {},
+            loadoutSlots: _campaignState.loadoutSlots || []
+        };
+
+        const campaignProgress = {
+            round: (typeof _round !== 'undefined') ? _round : 1,
+            chassis: loadout.chassis,
+            color: loadout.color,
+            L: loadout.L, R: loadout.R,
+            mod: loadout.mod, aug: loadout.aug,
+            leg: loadout.leg, shld: loadout.shld,
+            totalKills: (typeof _totalKills !== 'undefined') ? _totalKills : 0,
+            perksEarned: (typeof _perksEarned !== 'undefined') ? _perksEarned : 0
+        };
+
+        const payload = {
+            callsign: callsign,
+            campaign_state: campaignState,
+            campaign_progress: campaignProgress,
+            inventory: (typeof _inventory !== 'undefined') ? _inventory : [],
+            equipped: (typeof _equipped !== 'undefined') ? _equipped : {},
+            scrap: (typeof _scrap !== 'undefined') ? _scrap : 0,
+            item_counter: (typeof _lootItemIdCounter !== 'undefined') ? _lootItemIdCounter : 0,
+            updated_at: new Date().toISOString()
+        };
+
+        await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_CAMPAIGN_TABLE}`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates,return=minimal'
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch(e) { console.warn('Cloud save failed', e); }
+}
+
+/** Load campaign data from Supabase by callsign. Returns data object or null. */
+async function loadFromCloud() {
+    if (!_supabaseEnabled()) return null;
+    const callsign = _playerCallsign || 'ANONYMOUS';
+    if (callsign === 'ANONYMOUS') return null;
+
+    try {
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/${SUPABASE_CAMPAIGN_TABLE}?callsign=eq.${encodeURIComponent(callsign)}&limit=1`,
+            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+        );
+        if (!res.ok) return null;
+        const rows = await res.json();
+        if (!rows || rows.length === 0) return null;
+        return rows[0];
+    } catch(e) { console.warn('Cloud load failed', e); return null; }
+}
+
+/** Delete cloud save for current player. */
+async function deleteCloudSave() {
+    if (!_supabaseEnabled()) return;
+    const callsign = _playerCallsign || 'ANONYMOUS';
+    if (callsign === 'ANONYMOUS') return;
+    try {
+        await fetch(
+            `${SUPABASE_URL}/rest/v1/${SUPABASE_CAMPAIGN_TABLE}?callsign=eq.${encodeURIComponent(callsign)}`,
+            {
+                method: 'DELETE',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+            }
+        );
+    } catch(e) { console.warn('Cloud delete failed', e); }
+}
+
+/** Restore campaign state from cloud data object. */
+function _restoreFromCloudData(data) {
+    if (!data) return false;
+    // Restore campaign state
+    if (data.campaign_state) {
+        const cs = data.campaign_state;
+        _campaignState.playerLevel = cs.playerLevel || 1;
+        _campaignState.playerXP = cs.playerXP || 0;
+        _campaignState.currentChapter = cs.currentChapter || 0;
+        _campaignState.currentMission = cs.currentMission || 0;
+        _campaignState.completedMissions = cs.completedMissions || {};
+        _campaignState.chassis = cs.chassis || null;
+        _campaignState.claimedRewards = cs.claimedRewards || {};
+        _campaignState.loadoutSlots = cs.loadoutSlots || [];
+    }
+    // Restore campaign progress (loadout)
+    if (data.campaign_progress) {
+        const cp = data.campaign_progress;
+        loadout.chassis = cp.chassis || 'light';
+        loadout.color = cp.color || 0x00ff00;
+        loadout.L = cp.L || 'smg';
+        loadout.R = cp.R || 'none';
+        loadout.mod = cp.mod || 'none';
+        loadout.aug = cp.aug || 'none';
+        loadout.leg = cp.leg || 'none';
+        loadout.shld = cp.shld || 'light_shield';
+        _round = cp.round || 1;
+        _totalKills = cp.totalKills || 0;
+        _perksEarned = cp.perksEarned || 0;
+    }
+    // Restore inventory
+    if (data.inventory && Array.isArray(data.inventory)) {
+        _inventory = data.inventory.filter(it => it && typeof it === 'object' && it.name && it.rarity && it.baseType);
+    }
+    if (data.equipped && typeof data.equipped === 'object') {
+        const validSlots = ['L','R','chest','arms','legs','shield','mod','augment'];
+        const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
+        validSlots.forEach(s => { if (data.equipped[s] && typeof data.equipped[s] === 'object' && data.equipped[s].name) clean[s] = data.equipped[s]; });
+        _equipped = clean;
+    }
+    if (typeof data.scrap === 'number') _scrap = Math.max(0, data.scrap);
+    if (typeof data.item_counter === 'number') _lootItemIdCounter = Math.max(_lootItemIdCounter, data.item_counter);
+    if (typeof recalcGearStats === 'function') recalcGearStats();
+    // Also save to localStorage as local cache
+    try {
+        saveCampaignProgress();
+        if (typeof saveCampaignState === 'function') saveCampaignState();
+        saveInventory();
+    } catch(e) {}
+    return true;
+}
 
 const LB_KEY    = 'tw_leaderboard_v1';
 const LB_MAX    = 20;
@@ -5125,6 +5277,9 @@ function closeLeaderboard() {
 function returnToMainMenu() {
     // Full cleanup same as returnToHangar
     returnToHangar();
+    // Restore chassis selector (may have been hidden in campaign mode)
+    const chassisRow = document.getElementById('chassis-select-row');
+    if (chassisRow) chassisRow.style.display = '';
     // Hide the hangar ui-layer (returnToHangar shows it — hide it again)
     document.getElementById('ui-layer').style.display = 'none';
     // Show main menu directly (skip callsign screen — callsign already known)
@@ -12199,7 +12354,32 @@ function _perkReduction(value, base) {
     return `<span class="stat-has-bonus" data-bonus="−${diff} from perks">${Math.round(value)}</span>`;
 }
 
+/** Update the campaign XP bar in the loadout/stats overlay. */
+function _updateCampaignXPBar() {
+    const bar = document.getElementById('campaign-xp-bar');
+    if (!bar) return;
+    if (_gameMode !== 'campaign' || typeof _campaignState === 'undefined') {
+        bar.style.display = 'none';
+        return;
+    }
+    bar.style.display = 'block';
+    const level = _campaignState.playerLevel;
+    const xpCur = _campaignState.playerXP - (typeof getXPForLevel === 'function' ? getXPForLevel(level) : 0);
+    const xpNeeded = (typeof getXPToNextLevel === 'function') ? getXPToNextLevel(level) : 100;
+    const pct = xpNeeded > 0 ? Math.min(100, Math.round((xpCur / xpNeeded) * 100)) : 100;
+
+    const lvEl = document.getElementById('campaign-xp-level');
+    const fillEl = document.getElementById('campaign-xp-fill');
+    const txtEl = document.getElementById('campaign-xp-text');
+    if (lvEl) lvEl.textContent = 'LEVEL ' + level;
+    if (fillEl) fillEl.style.width = pct + '%';
+    if (txtEl) txtEl.textContent = xpCur + ' / ' + xpNeeded + ' XP';
+}
+
 function populateStats() {
+    // Update campaign XP bar if in campaign mode
+    _updateCampaignXPBar();
+
     const ch = loadout.chassis;
     const chassisData = CHASSIS[ch];
 
@@ -12602,6 +12782,9 @@ function goToMainMenu() {
     const lso  = document.getElementById('loadout-slots-overlay'); if (lso) lso.style.display = 'none';
     const ugo  = document.getElementById('upgrades-overlay'); if (ugo) ugo.style.display = 'none';
     window._activeCampaignConfig = null;
+    // Restore chassis selector (may have been hidden in campaign mode)
+    const chassisRow2 = document.getElementById('chassis-select-row');
+    if (chassisRow2) chassisRow2.style.display = '';
     // Stop hangar grid animation
     const hgc = document.getElementById('hangar-canvas');
     if (hgc) { hgc._gridRunning = false; hgc.style.display = 'none'; }
@@ -12723,6 +12906,42 @@ function returnToHangar() {
     try { if (coverObjects) coverObjects.clear(true, true); } catch(e) {}
     refreshGarage();
     updateHUD();
+}
+
+/** Load campaign data: try cloud first, fall back to localStorage. */
+async function _loadCampaignData() {
+    // Try cloud load
+    let cloudLoaded = false;
+    try {
+        const cloudData = await loadFromCloud();
+        if (cloudData) {
+            cloudLoaded = _restoreFromCloudData(cloudData);
+        }
+    } catch(e) { console.warn('Cloud load attempt failed', e); }
+
+    if (!cloudLoaded) {
+        // Fall back to localStorage
+        const saved = loadCampaignProgress();
+        if (saved) {
+            loadout.chassis = saved.chassis || 'light';
+            loadout.color   = saved.color   || 0x00ff00;
+            loadout.L       = saved.L       || 'smg';
+            loadout.R       = saved.R       || 'none';
+            loadout.mod     = saved.mod     || 'none';
+            loadout.aug     = saved.aug     || 'none';
+            loadout.leg     = saved.leg     || 'none';
+            loadout.shld    = saved.shld    || 'light_shield';
+            _round          = saved.round   || 1;
+            _totalKills     = saved.totalKills || 0;
+            _perksEarned    = saved.perksEarned || 0;
+            loadCampaignInventory();
+        }
+        if (typeof loadCampaignState === 'function') loadCampaignState();
+    }
+    // Enforce locked chassis from campaign state
+    if (_campaignState.chassis) {
+        loadout.chassis = _campaignState.chassis;
+    }
 }
 
 /** Campaign: return from combat to the mission select screen. */
@@ -12878,25 +13097,163 @@ function proceedToMainMenu() {
     }, 500);
 }
 
-/** Update Campaign button label based on whether a save exists. */
+/** Update Campaign button label. */
 function _updateCampaignButton() {
+    // Campaign button is now always just "CAMPAIGN" — sub-menu handles Resume/New
     const btn = document.getElementById('campaign-btn');
-    if (!btn) return;
-    const saved = loadCampaignProgress();
-    // Check campaign state for level info
+    if (btn) btn.innerHTML = '&#9733;&nbsp;&nbsp;CAMPAIGN';
+    // Reset sub-menu state
+    hideCampaignSubMenu();
+}
+
+/** Show campaign sub-menu with Resume/New options. */
+async function showCampaignSubMenu() {
+    const mainBtns = document.getElementById('main-menu-buttons');
+    const subMenu = document.getElementById('campaign-sub-menu');
+    if (!mainBtns || !subMenu) return;
+    mainBtns.style.display = 'none';
+    subMenu.style.display = 'flex';
+
+    // Check local save
+    let hasSave = !!(loadCampaignProgress() || localStorage.getItem('tw_campaign_state'));
     let levelInfo = '';
-    try {
-        const cState = localStorage.getItem('tw_campaign_state');
-        if (cState) {
-            const cs = JSON.parse(cState);
-            if (cs.playerLevel > 1) levelInfo = ' LV.' + cs.playerLevel;
-        }
-    } catch(e) {}
-    if (saved && (saved.round > 1 || levelInfo)) {
-        btn.innerHTML = '&#9733;&nbsp;&nbsp;CONTINUE CAMPAIGN <span style="font-size:9px;letter-spacing:2px;color:rgba(255,215,0,0.45);margin-left:6px;">' + (levelInfo || 'ROUND ' + saved.round) + '</span>';
-    } else {
-        btn.innerHTML = '&#9733;&nbsp;&nbsp;CAMPAIGN';
+
+    // Also check cloud save
+    if (!hasSave) {
+        try {
+            const cloudData = await loadFromCloud();
+            if (cloudData) hasSave = true;
+        } catch(e) {}
     }
+
+    if (hasSave) {
+        try {
+            const cs = JSON.parse(localStorage.getItem('tw_campaign_state'));
+            if (cs?.playerLevel > 1) levelInfo = ' LV.' + cs.playerLevel;
+        } catch(e) {}
+    }
+
+    const resumeBtn = document.getElementById('resume-campaign-btn');
+    if (resumeBtn) {
+        if (hasSave) {
+            resumeBtn.style.display = 'inline-block';
+            resumeBtn.innerHTML = '&#9733;&nbsp;&nbsp;RESUME CAMPAIGN' + (levelInfo ? ' <span style="font-size:9px;letter-spacing:2px;color:rgba(255,215,0,0.45);margin-left:6px;">' + levelInfo + '</span>' : '');
+        } else {
+            resumeBtn.style.display = 'none';
+        }
+    }
+}
+
+/** Hide campaign sub-menu and return to main buttons. */
+function hideCampaignSubMenu() {
+    const mainBtns = document.getElementById('main-menu-buttons');
+    const subMenu = document.getElementById('campaign-sub-menu');
+    if (mainBtns) mainBtns.style.display = 'flex';
+    if (subMenu) subMenu.style.display = 'none';
+}
+
+/** Start a brand new campaign — wipe all progress. */
+function confirmNewCampaign() {
+    // If save exists, confirm first
+    const hasSave = loadCampaignProgress() || localStorage.getItem('tw_campaign_state');
+    if (hasSave) {
+        if (!confirm('Start a NEW campaign? All existing progress, inventory, and levels will be wiped!')) return;
+    }
+    // Wipe all campaign data
+    try {
+        localStorage.removeItem('tw_campaign_state');
+        localStorage.removeItem('tw_campaign_progress');
+        localStorage.removeItem('tw_campaign_inventory');
+        localStorage.removeItem('tw_campaign_equipped');
+        localStorage.removeItem('tw_campaign_scrap');
+        localStorage.removeItem('tw_campaign_itemCounter');
+    } catch(e) {}
+    // Delete cloud save too
+    deleteCloudSave();
+    // Reset campaign state in memory
+    _campaignState.playerLevel = 1;
+    _campaignState.playerXP = 0;
+    _campaignState.currentChapter = 0;
+    _campaignState.currentMission = 0;
+    _campaignState.completedMissions = {};
+    _campaignState.claimedRewards = {};
+    _campaignState.loadoutSlots = [];
+    _campaignState.activeModifier = null;
+    _campaignState.activeBonusObjective = null;
+    _campaignState.bonusObjectiveProgress = 0;
+    _campaignState.bonusObjectiveComplete = false;
+    // Show chassis selection for new campaign
+    _showNewCampaignChassisSelect();
+}
+
+/** Show chassis selection screen for new campaign. */
+function _showNewCampaignChassisSelect() {
+    const menu = document.getElementById('main-menu');
+    if (menu) { menu.style.transition = 'opacity 0.6s ease'; menu.style.opacity = '0'; }
+    setTimeout(() => {
+        if (menu) menu.style.display = 'none';
+        const overlay = document.getElementById('mission-select-overlay');
+        if (!overlay) return;
+
+        let html = '';
+        html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);margin-bottom:6px;">NEW CAMPAIGN</div>';
+        html += '<div style="font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);margin-bottom:32px;">SELECT YOUR CHASSIS CLASS</div>';
+
+        const chassisInfo = {
+            light: { color: '#88ff88', desc: 'Fast and agile. Access to SMGs, Battle Rifles, Shotguns, Snipers. Mods: Jump, Decoy, Barrier, EMP, Ghost Step.', hp: 'Low HP', speed: 'High Speed' },
+            medium: { color: '#ffcc44', desc: 'Balanced all-rounder. Access to Machine Guns, Battle Rifles, Heavy Rifles, Grenade Launchers, Plasma, Snipers. Mods: Barrier, Repair, Missile, Drone, Overclock.', hp: 'Medium HP', speed: 'Medium Speed' },
+            heavy: { color: '#ff8844', desc: 'Slow but powerful tank. Access to Machine Guns, Heavy Rifles, Rocket Launchers, Plasma, Siege, Chain Gun. Mods: Barrier, Repair, Rage, Siege Mode, Anchor.', hp: 'High HP', speed: 'Low Speed' }
+        };
+
+        html += '<div style="display:flex;gap:16px;max-width:800px;width:100%;">';
+        for (const ch of ['light', 'medium', 'heavy']) {
+            const info = chassisInfo[ch];
+            html += `<button onclick="_startNewCampaignWithChassis('${ch}')" style="flex:1;padding:24px 16px;background:rgba(255,255,255,0.03);border:1px solid ${info.color}40;border-top:3px solid ${info.color};border-radius:6px;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Courier New',monospace;" onmouseover="this.style.background='rgba(255,215,0,0.06)';this.style.borderColor='${info.color}'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='${info.color}40'">`;
+            html += `<div style="font-size:18px;letter-spacing:4px;color:${info.color};margin-bottom:8px;">${ch.toUpperCase()}</div>`;
+            html += `<div style="font-size:10px;color:${info.color};opacity:0.7;margin-bottom:8px;">${info.hp} // ${info.speed}</div>`;
+            html += `<div style="font-size:9px;color:rgba(200,210,217,0.5);line-height:1.5;">${info.desc}</div>`;
+            html += '</button>';
+        }
+        html += '</div>';
+
+        html += '<div style="margin-top:24px;">';
+        html += `<button onclick="_cancelNewCampaign()" style="padding:12px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:12px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)'" onmouseout="this.style.background='rgba(255,60,60,0.04)'">BACK</button>`;
+        html += '</div>';
+
+        overlay.innerHTML = html;
+        overlay.style.display = 'flex';
+    }, 600);
+}
+
+/** Start campaign with the selected chassis. */
+function _startNewCampaignWithChassis(chassisType) {
+    loadout.chassis = chassisType;
+    _applyStarterLoadout(chassisType);
+    resetInventory();
+    _round = 1;
+    _totalKills = 0;
+    _perksEarned = 0;
+    // Lock chassis choice in campaign state
+    _campaignState.chassis = chassisType;
+    // Save the chassis choice
+    saveCampaignProgress();
+    if (typeof saveCampaignState === 'function') saveCampaignState();
+    // Hide chassis select, show mission select
+    const overlay = document.getElementById('mission-select-overlay');
+    if (overlay) overlay.style.display = 'none';
+    _gameMode = 'campaign';
+    if (typeof applyChassisUpgrades === 'function') applyChassisUpgrades();
+    if (typeof refreshShopStock === 'function') refreshShopStock();
+    if (typeof showMissionSelect === 'function') showMissionSelect();
+}
+
+/** Cancel new campaign chassis selection — return to main menu. */
+function _cancelNewCampaign() {
+    const overlay = document.getElementById('mission-select-overlay');
+    if (overlay) overlay.style.display = 'none';
+    const menu = document.getElementById('main-menu');
+    if (menu) { menu.style.display = 'flex'; menu.style.opacity = '1'; }
+    hideCampaignSubMenu();
 }
 
 function startGame(mode) {
@@ -12913,40 +13270,20 @@ function startGame(mode) {
     }
     // Campaign mode: restore saved progress, then show mission select
     if (_gameMode === 'campaign') {
-        const saved = loadCampaignProgress();
-        if (saved) {
-            loadout.chassis = saved.chassis || 'light';
-            loadout.color   = saved.color   || 0x00ff00;
-            loadout.L       = saved.L       || 'smg';
-            loadout.R       = saved.R       || 'none';
-            loadout.mod     = saved.mod     || 'none';
-            loadout.aug     = saved.aug     || 'none';
-            loadout.leg     = saved.leg     || 'none';
-            loadout.shld    = saved.shld    || 'light_shield';
-            _round          = saved.round   || 1;
-            _totalKills     = saved.totalKills || 0;
-            _perksEarned    = saved.perksEarned || 0;
-            // Restore saved inventory and equipped gear
-            loadCampaignInventory();
-        } else {
-            // New campaign — starter loadout, round 1
-            _applyStarterLoadout(loadout.chassis);
-            resetInventory();
-            _round = 1;
-        }
-        // Load campaign state (chapters, missions, XP, level)
-        if (typeof loadCampaignState === 'function') loadCampaignState();
-        // Phase 4: Apply chassis upgrades based on pilot level
-        if (typeof applyChassisUpgrades === 'function') applyChassisUpgrades();
-        // Phase 4: Generate initial shop stock
-        if (typeof refreshShopStock === 'function') refreshShopStock();
-        // Fade out menu, show mission select
-        menu.style.transition = 'opacity 0.6s ease';
-        menu.style.opacity = '0';
-        setTimeout(() => {
-            menu.style.display = 'none';
-            if (typeof showMissionSelect === 'function') showMissionSelect();
-        }, 600);
+        // Try cloud load first, then fall back to localStorage
+        _loadCampaignData().then(() => {
+            // Apply chassis upgrades based on pilot level
+            if (typeof applyChassisUpgrades === 'function') applyChassisUpgrades();
+            // Generate initial shop stock
+            if (typeof refreshShopStock === 'function') refreshShopStock();
+            // Fade out menu, show mission select
+            menu.style.transition = 'opacity 0.6s ease';
+            menu.style.opacity = '0';
+            setTimeout(() => {
+                menu.style.display = 'none';
+                if (typeof showMissionSelect === 'function') showMissionSelect();
+            }, 600);
+        });
         return;
     }
     // Simulation mode: go straight to hangar
@@ -13084,6 +13421,16 @@ window.onload = () => {
       <div style="font-size:26px;letter-spacing:6px;color:#00ffff;text-shadow:0 0 20px rgba(0,255,255,0.5);">LOADOUT</div>
       <div id="inv-header-count" style="position:absolute;left:0;font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);"></div>
       <button onclick="toggleStats()" style="position:absolute;right:0;padding:10px 20px;min-width:120px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">CLOSE</button>
+    </div>
+    <!-- Campaign XP Bar (only visible in campaign mode) -->
+    <div id="campaign-xp-bar" style="display:none;margin-bottom:16px;padding:10px 16px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-radius:6px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div id="campaign-xp-level" style="font-size:12px;letter-spacing:2px;color:rgba(255,215,0,0.7);font-family:'Courier New',monospace;white-space:nowrap;">LEVEL 1</div>
+        <div style="flex:1;height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
+          <div id="campaign-xp-fill" style="width:0%;height:100%;background:linear-gradient(90deg,#ffd700,#ffaa00);border-radius:4px;transition:width 0.5s ease;"></div>
+        </div>
+        <div id="campaign-xp-text" style="font-size:10px;letter-spacing:1px;color:rgba(255,215,0,0.4);font-family:'Courier New',monospace;white-space:nowrap;">0 / 100 XP</div>
+      </div>
     </div>
     <!-- Tab Buttons -->
     <div style="display:flex;gap:0;margin-bottom:20px;">

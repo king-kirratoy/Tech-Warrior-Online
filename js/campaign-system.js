@@ -257,6 +257,8 @@ let _campaignState = {
     playerXP: 0,
     currentChapter: 0,    // index into CAMPAIGN_CHAPTERS
     currentMission: 0,    // index into chapter.missions
+    // Locked chassis type chosen at campaign start
+    chassis: null,
     // Track completed missions: { 'ch1_m1': true, 'ch1_m3': true, ... }
     completedMissions: {},
     // Currently active modifier and bonus objective for this deploy
@@ -292,14 +294,19 @@ function getXPToNextLevel(level) {
 }
 
 /** Level-differential XP multiplier.
- *  playerLvl vs missionEnemyLvl determines reward scaling. */
+ *  playerLvl vs missionEnemyLvl determines reward scaling.
+ *  Smooth curve with steep diminishing returns for lower-level enemies.
+ *  At same level: 1.0x. Higher enemies: up to 1.5x. Lower enemies drop off fast. */
 function getXPMultiplier(playerLvl, missionLvl) {
-    const diff = missionLvl - playerLvl;
-    if (diff >= 3)  return 1.50;  // enemies 3+ above
-    if (diff >= 1)  return 1.25;  // enemies 1-2 above
+    const diff = missionLvl - playerLvl; // positive = enemies above, negative = below
+    if (diff >= 5)  return 1.60;  // enemies 5+ above
+    if (diff >= 3)  return 1.50;  // enemies 3-4 above
+    if (diff >= 1)  return 1.00 + diff * 0.15; // enemies 1-2 above: 1.15, 1.30
     if (diff === 0) return 1.00;  // same level
-    if (diff >= -2) return 0.60;  // enemies 1-2 below
-    return 0.30;                   // enemies 3+ below
+    // Below player level: steep exponential dropoff
+    // diff=-1: 0.55, diff=-2: 0.30, diff=-3: 0.15, diff=-4: 0.08, diff=-5+: 0.05
+    const penalty = Math.max(0.05, Math.pow(0.55, Math.abs(diff)));
+    return Math.round(penalty * 100) / 100;
 }
 
 /** Base XP for completing a mission (before multiplier). */
@@ -735,29 +742,44 @@ function loadCampaignState() {
 // MISSION SELECT UI
 // ══════════════════════════════════════════════════════════════════
 
+// Track which mission is currently selected (null = none selected)
+let _selectedMissionIdx = null;
+
 /** Show the mission select overlay. */
 function showMissionSelect() {
     let overlay = document.getElementById('mission-select-overlay');
     if (!overlay) return;
 
-    // Build chapter tabs + mission list
     let html = '';
-    html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);margin-bottom:6px;">CAMPAIGN</div>';
 
-    // Player level / XP bar
+    // ── Header row: CAMPAIGN title + BACK button on far right ──
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;width:100%;max-width:700px;margin-bottom:6px;">';
+    html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);">CAMPAIGN</div>';
+    html += `<button onclick="_closeMissionSelect()" style="padding:10px 24px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)'" onmouseout="this.style.background='rgba(255,60,60,0.04)'">BACK</button>`;
+    html += '</div>';
+
+    // ── Player level / XP bar + scrap ──
     const xpCur = _campaignState.playerXP - getXPForLevel(_campaignState.playerLevel);
     const xpNeeded = getXPToNextLevel(_campaignState.playerLevel);
     const xpPct = xpNeeded > 0 ? Math.min(1, xpCur / xpNeeded) : 1;
-    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">';
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;width:100%;max-width:700px;">';
     html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.7);">LEVEL ${_campaignState.playerLevel}</div>`;
     html += `<div style="flex:1;max-width:300px;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">`;
     html += `<div style="width:${xpPct * 100}%;height:100%;background:#ffd700;border-radius:3px;transition:width 0.3s;"></div>`;
     html += `</div>`;
     html += `<div style="font-size:10px;letter-spacing:1px;color:rgba(255,215,0,0.4);">${xpCur} / ${xpNeeded} XP</div>`;
+    html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);margin-left:auto;">SCRAP: <span style="color:#ffd700;font-size:13px;">${typeof _scrap !== 'undefined' ? _scrap : 0}</span></div>`;
     html += '</div>';
 
-    // Chapter tabs
-    html += '<div style="display:flex;gap:0;margin-bottom:20px;">';
+    // ── Action buttons: Supply Shop, Loadout Slots, Upgrades (above chapters) ──
+    html += '<div style="display:flex;gap:10px;margin-bottom:16px;width:100%;max-width:700px;">';
+    html += `<button onclick="_openShopFromMission()" style="flex:1;padding:10px 16px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.3);color:rgba(255,215,0,0.8);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(255,215,0,0.14)'" onmouseout="this.style.background='rgba(255,215,0,0.06)'">SUPPLY SHOP</button>`;
+    html += `<button onclick="showLoadoutSlots()" style="flex:1;padding:10px 16px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.3);color:rgba(0,255,255,0.7);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(0,255,255,0.12)'" onmouseout="this.style.background='rgba(0,255,255,0.04)'">LOADOUT SLOTS</button>`;
+    html += `<button onclick="_showUpgradesPanel()" style="flex:1;padding:10px 16px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.3);color:rgba(0,255,136,0.7);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(0,255,136,0.12)'" onmouseout="this.style.background='rgba(0,255,136,0.04)'">UPGRADES</button>`;
+    html += '</div>';
+
+    // ── Chapter tabs ──
+    html += '<div style="display:flex;gap:0;margin-bottom:16px;width:100%;max-width:700px;">';
     CAMPAIGN_CHAPTERS.forEach((ch, idx) => {
         const unlocked = isChapterUnlocked(idx);
         const active = idx === _campaignState.currentChapter;
@@ -774,30 +796,34 @@ function showMissionSelect() {
     });
     html += '</div>';
 
-    // Current chapter info
+    // ── Current chapter info ──
     const ch = CAMPAIGN_CHAPTERS[_campaignState.currentChapter];
     html += `<div style="font-size:14px;letter-spacing:3px;color:#ffd700;margin-bottom:4px;">${ch.title}</div>`;
     html += `<div style="font-size:11px;letter-spacing:1px;color:rgba(200,210,217,0.5);margin-bottom:16px;">${ch.desc}</div>`;
 
-    // Mission list
-    html += '<div style="display:flex;flex-direction:column;gap:8px;max-width:600px;width:100%;">';
+    // ── Mission list (all missions selectable, including cleared ones) ──
+    html += '<div style="display:flex;flex-direction:column;gap:8px;max-width:700px;width:100%;">';
     ch.missions.forEach((m, idx) => {
         const completed = isMissionCompleted(m.id);
+        const isSelected = (_selectedMissionIdx === idx);
         const levelDiff = m.enemyLevel - _campaignState.playerLevel;
         const diffColor = levelDiff >= 3 ? '#ff2200' : levelDiff >= 1 ? '#ff8844' : levelDiff === 0 ? '#00ff88' : levelDiff >= -2 ? '#88aacc' : '#666666';
         const diffLabel = levelDiff >= 3 ? 'HARD' : levelDiff >= 1 ? 'TOUGH' : levelDiff === 0 ? 'EVEN' : levelDiff >= -2 ? 'EASY' : 'TRIVIAL';
 
-        const bgBase = completed ? 'rgba(0,255,136,0.04)' : 'rgba(255,255,255,0.03)';
-        const bdBase = completed ? 'rgba(0,255,136,0.2)' : 'rgba(255,255,255,0.1)';
-        const blBase = completed ? '#00ff88' : 'rgba(255,215,0,0.4)';
-        html += '<button onclick="_selectMission(' + idx + ')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:' + bgBase + ';border:1px solid ' + bdBase + ';border-left:3px solid ' + blBase + ';border-radius:4px;font-family:Courier New,monospace;cursor:pointer;transition:all 0.2s;text-align:left;outline:none;width:100%;" onmouseover="this.style.background=\'rgba(255,215,0,0.08)\'" onmouseout="this.style.background=\'' + bgBase + '\'">';
+        // Selected state uses gold highlight
+        const bgBase = isSelected ? 'rgba(255,215,0,0.12)' : (completed ? 'rgba(0,255,136,0.04)' : 'rgba(255,255,255,0.03)');
+        const bdBase = isSelected ? 'rgba(255,215,0,0.6)' : (completed ? 'rgba(0,255,136,0.2)' : 'rgba(255,255,255,0.1)');
+        const blBase = isSelected ? '#ffd700' : (completed ? '#00ff88' : 'rgba(255,215,0,0.4)');
+        const shadowStyle = isSelected ? 'box-shadow:0 0 12px rgba(255,215,0,0.15),inset 0 0 12px rgba(255,215,0,0.05);' : '';
+
+        html += '<button onclick="_selectMission(' + idx + ')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:' + bgBase + ';border:1px solid ' + bdBase + ';border-left:3px solid ' + blBase + ';border-radius:4px;font-family:Courier New,monospace;cursor:pointer;transition:all 0.2s;text-align:left;outline:none;width:100%;' + shadowStyle + '">';
 
         // Mission number
         html += `<div style="font-size:18px;letter-spacing:2px;color:${completed ? '#00ff88' : 'rgba(255,215,0,0.6)'};min-width:30px;text-align:center;">${completed ? '✓' : (idx + 1)}</div>`;
 
         // Mission info
         html += '<div style="flex:1;">';
-        html += `<div style="font-size:12px;letter-spacing:1px;color:${completed ? 'rgba(0,255,136,0.8)' : '#c8d2d9'};margin-bottom:2px;">${m.name}</div>`;
+        html += `<div style="font-size:12px;letter-spacing:1px;color:${isSelected ? '#ffd700' : (completed ? 'rgba(0,255,136,0.8)' : '#c8d2d9')};margin-bottom:2px;">${m.name}</div>`;
         html += `<div style="font-size:10px;letter-spacing:0.5px;color:rgba(200,210,217,0.4);">${m.briefing}</div>`;
         html += '</div>';
 
@@ -812,7 +838,7 @@ function showMissionSelect() {
             html += `<div style="font-size:9px;letter-spacing:1px;color:#ff4444;border:1px solid rgba(255,68,68,0.3);padding:2px 6px;border-radius:3px;">BOSS</div>`;
         }
 
-        // Phase 4: First-clear reward badge
+        // First-clear reward badge
         if (!completed && typeof getMissionReward === 'function' && getMissionReward(m.id)) {
             html += `<div style="font-size:8px;letter-spacing:1px;color:#ffd700;border:1px solid rgba(255,215,0,0.3);padding:2px 5px;border-radius:3px;white-space:nowrap;">REWARD</div>`;
         }
@@ -821,28 +847,38 @@ function showMissionSelect() {
     });
     html += '</div>';
 
-    // Bottom buttons
-    html += '<div style="display:flex;gap:16px;margin-top:24px;">';
-    html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" style="padding:14px 48px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:13px;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)';this.style.letterSpacing='6px';" onmouseout="this.style.background='rgba(255,215,0,0.08)';this.style.letterSpacing='4px';">DEPLOY</button>`;
-    html += `<button onclick="_closeMissionSelect()" style="padding:14px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:13px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)';" onmouseout="this.style.background='rgba(255,60,60,0.04)';">BACK</button>`;
-    html += '</div>';
+    // ── Deploy button — only shown when a mission is selected, centered below missions ──
+    if (_selectedMissionIdx !== null) {
+        const selMission = ch.missions[_selectedMissionIdx];
+        const mLabel = selMission ? selMission.name.toUpperCase() : 'MISSION';
+        html += '<div style="display:flex;justify-content:center;margin-top:24px;width:100%;max-width:700px;">';
+        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" style="padding:14px 64px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:13px;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)'" onmouseout="this.style.background='rgba(255,215,0,0.08)'">DEPLOY — ${mLabel}</button>`;
+        html += '</div>';
+    }
 
     overlay.innerHTML = html;
     overlay.style.display = 'flex';
+}
+
+/** Open shop from mission select. */
+function _openShopFromMission() {
+    const overlay = document.getElementById('mission-select-overlay');
+    if (overlay) overlay.style.display = 'none';
+    showShop();
 }
 
 /** Select a chapter tab. */
 function _selectChapter(idx) {
     if (!isChapterUnlocked(idx)) return;
     _campaignState.currentChapter = idx;
-    _campaignState.currentMission = 0;
+    _selectedMissionIdx = null; // Reset selection when switching chapters
     showMissionSelect();
 }
 
 /** Select a mission within the current chapter. */
 function _selectMission(idx) {
     _campaignState.currentMission = idx;
-    // Highlight selected mission
+    _selectedMissionIdx = idx;
     showMissionSelect();
 }
 
@@ -867,6 +903,12 @@ function _deployFromMissionSelect() {
     if (modeLabel) {
         modeLabel.textContent = `CAMPAIGN // ${mission.name.toUpperCase()}`;
         modeLabel.style.color = 'rgba(255,215,0,0.45)';
+    }
+
+    // Hide chassis selector in campaign mode — chassis is locked to initial choice
+    const chassisRow = document.getElementById('chassis-select-row');
+    if (chassisRow) {
+        chassisRow.style.display = 'none';
     }
 
     document.getElementById('ui-layer').style.display = 'flex';
@@ -1459,6 +1501,7 @@ saveCampaignState = function() {
             currentChapter: _campaignState.currentChapter,
             currentMission: _campaignState.currentMission,
             completedMissions: _campaignState.completedMissions,
+            chassis: _campaignState.chassis || null,
             // Phase 4 additions
             claimedRewards: _campaignState.claimedRewards || {},
             loadoutSlots: _campaignState.loadoutSlots || []
@@ -1480,6 +1523,7 @@ loadCampaignState = function() {
             _campaignState.currentChapter = state.currentChapter || 0;
             _campaignState.currentMission = state.currentMission || 0;
             _campaignState.completedMissions = state.completedMissions || {};
+            _campaignState.chassis = state.chassis || null;
             // Phase 4 additions
             _campaignState.claimedRewards = state.claimedRewards || {};
             _campaignState.loadoutSlots = state.loadoutSlots || [];
@@ -1489,74 +1533,7 @@ loadCampaignState = function() {
     return false;
 };
 
-// ══════════════════════════════════════════════════════════════════
-// 4F — UPDATED MISSION SELECT UI (add shop + loadout buttons)
-// ══════════════════════════════════════════════════════════════════
-
-// Override showMissionSelect to add Phase 4 buttons
-const _phase3_showMissionSelect = showMissionSelect;
-showMissionSelect = function() {
-    // Call original to render base UI
-    _phase3_showMissionSelect();
-
-    const overlay = document.getElementById('mission-select-overlay');
-    if (!overlay) return;
-
-    // Find the bottom button area and inject shop + loadout + upgrades buttons
-    // We append them after the existing content
-    const extraBar = document.createElement('div');
-    extraBar.style.cssText = 'display:flex;gap:12px;margin-top:16px;';
-
-    // Shop button
-    const shopBtn = document.createElement('button');
-    shopBtn.textContent = 'SUPPLY SHOP';
-    shopBtn.style.cssText = 'padding:10px 24px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.3);color:rgba(255,215,0,0.8);font-size:11px;letter-spacing:3px;font-family:Courier New,monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;';
-    shopBtn.onmouseover = () => { shopBtn.style.background = 'rgba(255,215,0,0.14)'; };
-    shopBtn.onmouseout  = () => { shopBtn.style.background = 'rgba(255,215,0,0.06)'; };
-    shopBtn.onclick = () => {
-        overlay.style.display = 'none';
-        showShop();
-    };
-
-    // Loadout slots button
-    const loadoutBtn = document.createElement('button');
-    loadoutBtn.textContent = 'LOADOUT SLOTS';
-    loadoutBtn.style.cssText = 'padding:10px 24px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.3);color:rgba(0,255,255,0.7);font-size:11px;letter-spacing:3px;font-family:Courier New,monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;';
-    loadoutBtn.onmouseover = () => { loadoutBtn.style.background = 'rgba(0,255,255,0.12)'; };
-    loadoutBtn.onmouseout  = () => { loadoutBtn.style.background = 'rgba(0,255,255,0.04)'; };
-    loadoutBtn.onclick = () => {
-        showLoadoutSlots();
-    };
-
-    // Upgrades info button
-    const upgradesBtn = document.createElement('button');
-    upgradesBtn.textContent = 'UPGRADES';
-    upgradesBtn.style.cssText = 'padding:10px 24px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.3);color:rgba(0,255,136,0.7);font-size:11px;letter-spacing:3px;font-family:Courier New,monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;';
-    upgradesBtn.onmouseover = () => { upgradesBtn.style.background = 'rgba(0,255,136,0.12)'; };
-    upgradesBtn.onmouseout  = () => { upgradesBtn.style.background = 'rgba(0,255,136,0.04)'; };
-    upgradesBtn.onclick = () => {
-        _showUpgradesPanel();
-    };
-
-    extraBar.appendChild(shopBtn);
-    extraBar.appendChild(loadoutBtn);
-    extraBar.appendChild(upgradesBtn);
-    overlay.appendChild(extraBar);
-
-    // Add scrap display under the XP bar
-    const scrapDisplay = document.createElement('div');
-    scrapDisplay.style.cssText = 'font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);margin-bottom:12px;';
-    scrapDisplay.innerHTML = `⬡ SCRAP: <span style="color:#ffd700;font-size:13px;">${typeof _scrap !== 'undefined' ? _scrap : 0}</span>`;
-    // Insert after the first child (title)
-    const firstChild = overlay.children[0];
-    if (firstChild) {
-        // Insert after XP bar area (3rd element usually)
-        const insertPoint = overlay.children[2] || overlay.children[1];
-        if (insertPoint) {
-            overlay.insertBefore(scrapDisplay, insertPoint);
-        }
-    }
-};
+// Phase 4F: showMissionSelect now includes shop/loadout/upgrades buttons inline.
 
 /** Show chassis upgrades panel. */
 function _showUpgradesPanel() {
