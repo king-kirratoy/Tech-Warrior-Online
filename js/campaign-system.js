@@ -62,31 +62,31 @@ const CAMPAIGN_CHAPTERS = [
                 id: 'ch1_m1', name: 'Warehouse Sweep',
                 briefing: 'Rogue mechs detected in Sector 7. Eliminate all contacts.',
                 arena: 'warehouse', objective: 'elimination',
-                enemyLevel: 1, enemyCount: 3, hasBoss: false
+                enemyLevel: 1, enemyCount: 4, hasBoss: false
             },
             {
                 id: 'ch1_m2', name: 'First Contact',
                 briefing: 'Multiple hostiles converging on your position. Hold the line.',
                 arena: 'warehouse', objective: 'elimination',
-                enemyLevel: 2, enemyCount: 4, hasBoss: false
+                enemyLevel: 3, enemyCount: 5, hasBoss: false
             },
             {
                 id: 'ch1_m3', name: 'Salvage Run',
                 briefing: 'Intelligence cores scattered across the warehouse. Recover them before the enemy does.',
                 arena: 'warehouse', objective: 'salvage',
-                enemyLevel: 3, enemyCount: 4, hasBoss: false
+                enemyLevel: 5, enemyCount: 6, hasBoss: false
             },
             {
                 id: 'ch1_m4', name: 'Under Siege',
                 briefing: 'Enemy forces are targeting our generator. Protect it at all costs.',
                 arena: 'warehouse', objective: 'defense',
-                enemyLevel: 4, enemyCount: 5, hasBoss: false
+                enemyLevel: 7, enemyCount: 7, hasBoss: false
             },
             {
                 id: 'ch1_m5', name: 'Warehouse Boss',
                 briefing: 'A heavily armored command unit has taken position in the warehouse. Destroy it.',
                 arena: 'warehouse', objective: 'elimination',
-                enemyLevel: 5, enemyCount: 2, hasBoss: true
+                enemyLevel: 10, enemyCount: 4, hasBoss: true
             }
         ]
     },
@@ -101,31 +101,31 @@ const CAMPAIGN_CHAPTERS = [
                 id: 'ch2_m1', name: 'Corridor Breach',
                 briefing: 'Hostiles fortified in the transit tunnels. Push through.',
                 arena: 'corridors', objective: 'elimination',
-                enemyLevel: 5, enemyCount: 5, hasBoss: false
+                enemyLevel: 11, enemyCount: 6, hasBoss: false
             },
             {
                 id: 'ch2_m2', name: 'Chokepoint',
                 briefing: 'Enemy snipers control the main corridor. Survive their ambush.',
                 arena: 'corridors', objective: 'survival',
-                enemyLevel: 6, enemyCount: 6, hasBoss: false
+                enemyLevel: 13, enemyCount: 7, hasBoss: false
             },
             {
                 id: 'ch2_m3', name: 'High Value Target',
                 briefing: 'Intelligence identifies a rogue commander in the tunnels. Eliminate them.',
                 arena: 'corridors', objective: 'assassination',
-                enemyLevel: 7, enemyCount: 5, hasBoss: false
+                enemyLevel: 15, enemyCount: 7, hasBoss: false
             },
             {
                 id: 'ch2_m4', name: 'Data Recovery',
                 briefing: 'Critical data cores are hidden throughout the corridor network. Find them.',
                 arena: 'corridors', objective: 'salvage',
-                enemyLevel: 8, enemyCount: 6, hasBoss: false
+                enemyLevel: 17, enemyCount: 8, hasBoss: false
             },
             {
                 id: 'ch2_m5', name: 'Tunnel Warden',
                 briefing: 'A massive siege unit blocks the exit. Break through or be buried.',
                 arena: 'corridors', objective: 'elimination',
-                enemyLevel: 10, enemyCount: 3, hasBoss: true
+                enemyLevel: 20, enemyCount: 5, hasBoss: true
             }
         ]
     },
@@ -140,31 +140,31 @@ const CAMPAIGN_CHAPTERS = [
                 id: 'ch3_m1', name: 'Descent',
                 briefing: 'The pit awaits. Fight your way to the center as the zone closes in.',
                 arena: 'pit', objective: 'survival',
-                enemyLevel: 9, enemyCount: 5, hasBoss: false
+                enemyLevel: 21, enemyCount: 7, hasBoss: false
             },
             {
                 id: 'ch3_m2', name: 'Blood Sport',
                 briefing: 'No rules. No mercy. Eliminate everything that moves.',
                 arena: 'pit', objective: 'elimination',
-                enemyLevel: 10, enemyCount: 7, hasBoss: false
+                enemyLevel: 24, enemyCount: 9, hasBoss: false
             },
             {
                 id: 'ch3_m3', name: 'The Gauntlet',
                 briefing: 'Wave after wave of enemies in a shrinking arena. How long can you last?',
                 arena: 'pit', objective: 'survival',
-                enemyLevel: 11, enemyCount: 8, hasBoss: false
+                enemyLevel: 27, enemyCount: 10, hasBoss: false
             },
             {
                 id: 'ch3_m4', name: 'Pit Viper',
                 briefing: 'A modified assassin mech lurks in the pit. Hunt it down before it hunts you.',
                 arena: 'pit', objective: 'assassination',
-                enemyLevel: 12, enemyCount: 6, hasBoss: false
+                enemyLevel: 30, enemyCount: 8, hasBoss: false
             },
             {
                 id: 'ch3_m5', name: 'Pit Champion',
                 briefing: 'The reigning champion of The Pit challenges you. Only one mech leaves.',
                 arena: 'pit', objective: 'elimination',
-                enemyLevel: 14, enemyCount: 3, hasBoss: true
+                enemyLevel: 34, enemyCount: 5, hasBoss: true
             }
         ]
     },
@@ -179,31 +179,31 @@ const CAMPAIGN_CHAPTERS = [
                 id: 'ch4_m1', name: 'Outer Defenses',
                 briefing: 'Breach the outer perimeter. Expect heavy resistance.',
                 arena: 'stronghold', objective: 'elimination',
-                enemyLevel: 13, enemyCount: 7, hasBoss: false
+                enemyLevel: 35, enemyCount: 9, hasBoss: false
             },
             {
                 id: 'ch4_m2', name: 'Defend the Relay',
                 briefing: 'Our comms relay is under attack. Protect it while reinforcements arrive.',
                 arena: 'stronghold', objective: 'defense',
-                enemyLevel: 14, enemyCount: 8, hasBoss: false
+                enemyLevel: 38, enemyCount: 10, hasBoss: false
             },
             {
                 id: 'ch4_m3', name: 'Behind Enemy Lines',
                 briefing: 'Recover encrypted intel from deep within the stronghold.',
                 arena: 'stronghold', objective: 'salvage',
-                enemyLevel: 15, enemyCount: 7, hasBoss: false
+                enemyLevel: 41, enemyCount: 9, hasBoss: false
             },
             {
                 id: 'ch4_m4', name: 'Iron Curtain',
                 briefing: 'Survive the enemy\'s full assault. They know you\'re coming.',
                 arena: 'stronghold', objective: 'survival',
-                enemyLevel: 16, enemyCount: 9, hasBoss: false
+                enemyLevel: 44, enemyCount: 11, hasBoss: false
             },
             {
                 id: 'ch4_m5', name: 'Stronghold Commander',
                 briefing: 'The stronghold\'s commander deploys their personal war machine. End this.',
                 arena: 'stronghold', objective: 'elimination',
-                enemyLevel: 18, enemyCount: 4, hasBoss: true
+                enemyLevel: 48, enemyCount: 6, hasBoss: true
             }
         ]
     },
@@ -218,31 +218,31 @@ const CAMPAIGN_CHAPTERS = [
                 id: 'ch5_m1', name: 'Forward Operating Base',
                 briefing: 'Establish a foothold at the command post perimeter.',
                 arena: 'tower_defense', objective: 'defense',
-                enemyLevel: 17, enemyCount: 8, hasBoss: false
+                enemyLevel: 50, enemyCount: 10, hasBoss: false
             },
             {
                 id: 'ch5_m2', name: 'Signal Intercept',
                 briefing: 'Recover enemy transmission data before they purge the servers.',
                 arena: 'tower_defense', objective: 'salvage',
-                enemyLevel: 18, enemyCount: 8, hasBoss: false
+                enemyLevel: 54, enemyCount: 11, hasBoss: false
             },
             {
                 id: 'ch5_m3', name: 'Kill Order',
                 briefing: 'The enemy general is exposed. Execute the kill order.',
                 arena: 'tower_defense', objective: 'assassination',
-                enemyLevel: 19, enemyCount: 9, hasBoss: false
+                enemyLevel: 58, enemyCount: 12, hasBoss: false
             },
             {
                 id: 'ch5_m4', name: 'Last Stand',
                 briefing: 'The enemy throws everything they have. Hold the generator or lose everything.',
                 arena: 'tower_defense', objective: 'defense',
-                enemyLevel: 20, enemyCount: 10, hasBoss: false
+                enemyLevel: 62, enemyCount: 13, hasBoss: false
             },
             {
                 id: 'ch5_m5', name: 'Endgame',
                 briefing: 'The final boss. The war ends here.',
                 arena: 'tower_defense', objective: 'elimination',
-                enemyLevel: 22, enemyCount: 5, hasBoss: true
+                enemyLevel: 66, enemyCount: 7, hasBoss: true
             }
         ]
     }
@@ -269,7 +269,9 @@ let _campaignState = {
     // Phase 4: Claimed first-clear rewards: { 'ch1_m1': true, ... }
     claimedRewards: {},
     // Phase 4: Saved loadout configurations
-    loadoutSlots: []
+    loadoutSlots: [],
+    // Skill tree: array of chosen node IDs
+    skillsChosen: []
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -717,7 +719,10 @@ function saveCampaignState() {
             playerXP: _campaignState.playerXP,
             currentChapter: _campaignState.currentChapter,
             currentMission: _campaignState.currentMission,
-            completedMissions: _campaignState.completedMissions
+            completedMissions: _campaignState.completedMissions,
+            claimedRewards: _campaignState.claimedRewards,
+            skillsChosen: _campaignState.skillsChosen,
+            chassis: _campaignState.chassis
         };
         localStorage.setItem('tw_campaign_state', JSON.stringify(state));
     } catch(e) {}
@@ -734,6 +739,9 @@ function loadCampaignState() {
             _campaignState.currentChapter = state.currentChapter || 0;
             _campaignState.currentMission = state.currentMission || 0;
             _campaignState.completedMissions = state.completedMissions || {};
+            _campaignState.claimedRewards = state.claimedRewards || {};
+            _campaignState.skillsChosen = state.skillsChosen || [];
+            if (state.chassis) _campaignState.chassis = state.chassis;
             return true;
         }
     } catch(e) {}
@@ -1004,63 +1012,159 @@ function _closeMissionSelect() {
 // ══════════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════════
-// 4A — CHASSIS UPGRADES (unlocked by pilot level)
+// 4A — SKILL TREE UPGRADES (1 skill point per level)
 // ══════════════════════════════════════════════════════════════════
 
-/** Chassis upgrade definitions.
- *  Each entry grants a stat bonus at a specific pilot level.
- *  'chassis' = which chassis it applies to ('all' = universal). */
-const CHASSIS_UPGRADES = [
-    // ── Level 2-5: Early universals ──
-    { level: 2,  chassis: 'all',    stat: 'coreHP',  value: 10,  label: '+10 Core HP' },
-    { level: 3,  chassis: 'all',    stat: 'armHP',   value: 5,   label: '+5 Arm HP' },
-    { level: 4,  chassis: 'all',    stat: 'legHP',   value: 5,   label: '+5 Leg HP' },
-    { level: 5,  chassis: 'all',    stat: 'spd',     value: 5,   label: '+5 Speed' },
+/** Skill tree definitions per chassis.
+ *  Each node: { id, tier, label, desc, stats: { stat: value, ... }, requires: [nodeId,...] }
+ *  'stats' can include: coreHP, armHP, legHP, spd, dmgMult, reloadMult, critChance,
+ *  shieldRegen, blastMult, dodgeChance, dr, modCdMult */
+const SKILL_TREES = {
+    light: [
+        // ── TIER 1 (no requirements) ──
+        { id:'l_core1',    tier:1, label:'+15 Core HP',       desc:'Reinforce core plating.',            stats:{ coreHP:15 } },
+        { id:'l_spd1',     tier:1, label:'+10 Speed',         desc:'Tune leg actuators for faster movement.', stats:{ spd:10 } },
+        { id:'l_arm1',     tier:1, label:'+10 Arm HP',        desc:'Reinforce arm joints.',              stats:{ armHP:10 } },
+        { id:'l_reload1',  tier:1, label:'+5% Reload Speed',  desc:'Optimized ammo feed systems.',       stats:{ reloadMult:0.05 } },
+        // ── TIER 2 ──
+        { id:'l_dodge1',   tier:2, label:'+3% Dodge',         desc:'Evasive maneuver subroutines.',      stats:{ dodgeChance:0.03 }, requires:['l_spd1'] },
+        { id:'l_spd2',     tier:2, label:'+12 Speed',         desc:'Advanced thruster calibration.',      stats:{ spd:12 }, requires:['l_spd1'] },
+        { id:'l_dmg1',     tier:2, label:'+5% Damage',        desc:'Weapon amplifier circuit.',           stats:{ dmgMult:0.05 }, requires:['l_reload1'] },
+        { id:'l_leg1',     tier:2, label:'+12 Leg HP',        desc:'Composite leg armor.',                stats:{ legHP:12 }, requires:['l_core1'] },
+        // ── TIER 3 ──
+        { id:'l_crit1',    tier:3, label:'+4% Crit Chance',   desc:'Precision targeting algorithms.',     stats:{ critChance:0.04 }, requires:['l_dmg1'] },
+        { id:'l_core2',    tier:3, label:'+20 Core HP',       desc:'Layered core shielding.',             stats:{ coreHP:20 }, requires:['l_core1'] },
+        { id:'l_dodge2',   tier:3, label:'+4% Dodge',         desc:'Predictive evasion matrix.',          stats:{ dodgeChance:0.04 }, requires:['l_dodge1'] },
+        { id:'l_reload2',  tier:3, label:'+8% Reload Speed',  desc:'Dual-feed magazine system.',          stats:{ reloadMult:0.08 }, requires:['l_reload1'] },
+        // ── TIER 4 ──
+        { id:'l_spd3',     tier:4, label:'+15 Speed',         desc:'Afterburner integration.',            stats:{ spd:15 }, requires:['l_spd2'] },
+        { id:'l_dmg2',     tier:4, label:'+8% Damage',        desc:'Overclocked weapon rails.',           stats:{ dmgMult:0.08 }, requires:['l_dmg1'] },
+        { id:'l_arm2',     tier:4, label:'+15 Arm HP',        desc:'Hardened arm plating.',               stats:{ armHP:15 }, requires:['l_arm1'] },
+        { id:'l_shld1',    tier:4, label:'+10% Shield Regen', desc:'Quick-charge capacitors.',            stats:{ shieldRegen:0.10 }, requires:['l_core2'] },
+        // ── TIER 5 (endgame) ──
+        { id:'l_crit2',    tier:5, label:'+6% Crit Chance',   desc:'Neural-linked targeting.',            stats:{ critChance:0.06 }, requires:['l_crit1'] },
+        { id:'l_glass',    tier:5, label:'+12% Damage, -20 Core HP', desc:'Glass cannon protocol.', stats:{ dmgMult:0.12, coreHP:-20 }, requires:['l_dmg2'] },
+        { id:'l_ghost',    tier:5, label:'+6% Dodge, +8 Speed', desc:'Ghost frame modification.', stats:{ dodgeChance:0.06, spd:8 }, requires:['l_dodge2','l_spd3'] },
+        { id:'l_mod1',     tier:5, label:'-10% Mod Cooldown', desc:'CPU overclock for faster mod cycles.', stats:{ modCdMult:0.10 }, requires:['l_shld1'] },
+        // ── TIER 6 (capstones) ──
+        { id:'l_all1',     tier:6, label:'+25 All HP',        desc:'Full chassis reinforcement.',         stats:{ coreHP:25, armHP:15, legHP:15 }, requires:['l_core2','l_arm2'] },
+        { id:'l_lethal',   tier:6, label:'+15% Dmg, +8% Crit', desc:'Lethal precision systems.', stats:{ dmgMult:0.15, critChance:0.08 }, requires:['l_crit2','l_dmg2'] },
+    ],
+    medium: [
+        // ── TIER 1 ──
+        { id:'m_core1',    tier:1, label:'+20 Core HP',       desc:'Reinforce core hull.',                stats:{ coreHP:20 } },
+        { id:'m_arm1',     tier:1, label:'+12 Arm HP',        desc:'Servo-assisted arm joints.',          stats:{ armHP:12 } },
+        { id:'m_spd1',     tier:1, label:'+8 Speed',          desc:'Balanced thruster output.',            stats:{ spd:8 } },
+        { id:'m_mod1',     tier:1, label:'-5% Mod Cooldown',  desc:'Efficient CPU thermal management.',   stats:{ modCdMult:0.05 } },
+        // ── TIER 2 ──
+        { id:'m_core2',    tier:2, label:'+25 Core HP',       desc:'Composite core plating.',             stats:{ coreHP:25 }, requires:['m_core1'] },
+        { id:'m_dmg1',     tier:2, label:'+5% Damage',        desc:'Weapon calibration suite.',           stats:{ dmgMult:0.05 }, requires:['m_arm1'] },
+        { id:'m_leg1',     tier:2, label:'+15 Leg HP',        desc:'Reinforced leg struts.',              stats:{ legHP:15 }, requires:['m_spd1'] },
+        { id:'m_shld1',    tier:2, label:'+8% Shield Regen',  desc:'Shield capacitor upgrade.',           stats:{ shieldRegen:0.08 }, requires:['m_core1'] },
+        // ── TIER 3 ──
+        { id:'m_mod2',     tier:3, label:'-8% Mod Cooldown',  desc:'Dual-core CPU module.',               stats:{ modCdMult:0.08 }, requires:['m_mod1'] },
+        { id:'m_reload1',  tier:3, label:'+6% Reload Speed',  desc:'Optimized ammo rack.',                stats:{ reloadMult:0.06 }, requires:['m_dmg1'] },
+        { id:'m_dr1',      tier:3, label:'+3% Damage Reduction', desc:'Ablative armor coating.',          stats:{ dr:0.03 }, requires:['m_core2'] },
+        { id:'m_arm2',     tier:3, label:'+15 Arm HP',        desc:'Titanium arm plating.',               stats:{ armHP:15 }, requires:['m_arm1'] },
+        // ── TIER 4 ──
+        { id:'m_dmg2',     tier:4, label:'+8% Damage',        desc:'Weapon rail overcharge.',             stats:{ dmgMult:0.08 }, requires:['m_dmg1'] },
+        { id:'m_spd2',     tier:4, label:'+10 Speed',         desc:'Balanced thrust vectoring.',           stats:{ spd:10 }, requires:['m_spd1'] },
+        { id:'m_crit1',    tier:4, label:'+4% Crit Chance',   desc:'Weak-point analyzer.',                stats:{ critChance:0.04 }, requires:['m_reload1'] },
+        { id:'m_shld2',    tier:4, label:'+12% Shield Regen', desc:'Rapid-cycle shield array.',           stats:{ shieldRegen:0.12 }, requires:['m_shld1'] },
+        // ── TIER 5 ──
+        { id:'m_core3',    tier:5, label:'+30 Core HP',       desc:'Layered composite hull.',             stats:{ coreHP:30 }, requires:['m_core2','m_dr1'] },
+        { id:'m_mod3',     tier:5, label:'-12% Mod Cooldown', desc:'Quantum processing unit.',            stats:{ modCdMult:0.12 }, requires:['m_mod2'] },
+        { id:'m_all1',     tier:5, label:'+10 All HP, +5 Spd', desc:'Balanced systems upgrade.', stats:{ coreHP:10, armHP:10, legHP:10, spd:5 }, requires:['m_leg1','m_arm2'] },
+        { id:'m_dmg3',     tier:5, label:'+10% Damage',       desc:'Overclocked weapon systems.',         stats:{ dmgMult:0.10 }, requires:['m_dmg2'] },
+        // ── TIER 6 ──
+        { id:'m_apex',     tier:6, label:'+5% DR, -10% Mod CD', desc:'Apex command systems.', stats:{ dr:0.05, modCdMult:0.10 }, requires:['m_mod3','m_dr1'] },
+        { id:'m_war',      tier:6, label:'+12% Dmg, +5% Crit', desc:'War machine protocol.', stats:{ dmgMult:0.12, critChance:0.05 }, requires:['m_dmg3','m_crit1'] },
+    ],
+    heavy: [
+        // ── TIER 1 ──
+        { id:'h_core1',    tier:1, label:'+30 Core HP',       desc:'Thick core armor plating.',           stats:{ coreHP:30 } },
+        { id:'h_arm1',     tier:1, label:'+15 Arm HP',        desc:'Reinforced arm housing.',             stats:{ armHP:15 } },
+        { id:'h_leg1',     tier:1, label:'+15 Leg HP',        desc:'Heavy-duty leg actuators.',           stats:{ legHP:15 } },
+        { id:'h_dr1',      tier:1, label:'+2% Damage Reduction', desc:'Layered reactive plating.',       stats:{ dr:0.02 } },
+        // ── TIER 2 ──
+        { id:'h_core2',    tier:2, label:'+35 Core HP',       desc:'Reinforced inner hull.',              stats:{ coreHP:35 }, requires:['h_core1'] },
+        { id:'h_dr2',      tier:2, label:'+3% Damage Reduction', desc:'Active armor response.',           stats:{ dr:0.03 }, requires:['h_dr1'] },
+        { id:'h_dmg1',     tier:2, label:'+5% Damage',        desc:'Heavy weapon mounting brackets.',     stats:{ dmgMult:0.05 }, requires:['h_arm1'] },
+        { id:'h_spd1',     tier:2, label:'+6 Speed',          desc:'Improved hydraulic systems.',          stats:{ spd:6 }, requires:['h_leg1'] },
+        // ── TIER 3 ──
+        { id:'h_arm2',     tier:3, label:'+20 Arm HP',        desc:'Siege-grade arm plating.',            stats:{ armHP:20 }, requires:['h_arm1'] },
+        { id:'h_blast1',   tier:3, label:'+10% Blast Radius', desc:'Expanded warhead chambers.',          stats:{ blastMult:0.10 }, requires:['h_dmg1'] },
+        { id:'h_shld1',    tier:3, label:'+8% Shield Regen',  desc:'Reinforced shield capacitors.',       stats:{ shieldRegen:0.08 }, requires:['h_core2'] },
+        { id:'h_leg2',     tier:3, label:'+20 Leg HP',        desc:'Armored leg housing.',                stats:{ legHP:20 }, requires:['h_leg1'] },
+        // ── TIER 4 ──
+        { id:'h_dmg2',     tier:4, label:'+8% Damage',        desc:'Heavy bore weapon calibration.',      stats:{ dmgMult:0.08 }, requires:['h_dmg1'] },
+        { id:'h_core3',    tier:4, label:'+40 Core HP',       desc:'Titan-class hull reinforcement.',     stats:{ coreHP:40 }, requires:['h_core2'] },
+        { id:'h_dr3',      tier:4, label:'+4% Damage Reduction', desc:'Composite ablative layers.',       stats:{ dr:0.04 }, requires:['h_dr2'] },
+        { id:'h_reload1',  tier:4, label:'+5% Reload Speed',  desc:'Hydraulic auto-loader.',              stats:{ reloadMult:0.05 }, requires:['h_arm2'] },
+        // ── TIER 5 ──
+        { id:'h_blast2',   tier:5, label:'+15% Blast Radius', desc:'Cluster munition upgrade.',           stats:{ blastMult:0.15 }, requires:['h_blast1'] },
+        { id:'h_tank',     tier:5, label:'+50 Core HP, +5% DR', desc:'Walking fortress protocol.', stats:{ coreHP:50, dr:0.05 }, requires:['h_core3','h_dr3'] },
+        { id:'h_all1',     tier:5, label:'+20 All HP',        desc:'Full chassis reinforcement.',         stats:{ coreHP:20, armHP:15, legHP:15 }, requires:['h_arm2','h_leg2'] },
+        { id:'h_dmg3',     tier:5, label:'+10% Damage',       desc:'Overcharged weapon rails.',           stats:{ dmgMult:0.10 }, requires:['h_dmg2'] },
+        // ── TIER 6 ──
+        { id:'h_jugg',     tier:6, label:'+8% DR, +30 Core HP', desc:'Juggernaut designation.', stats:{ dr:0.08, coreHP:30 }, requires:['h_tank'] },
+        { id:'h_siege',    tier:6, label:'+15% Dmg, +20% Blast', desc:'Siege artillery systems.', stats:{ dmgMult:0.15, blastMult:0.20 }, requires:['h_dmg3','h_blast2'] },
+    ]
+};
 
-    // ── Level 6-10: Chassis-specific ──
-    { level: 6,  chassis: 'light',  stat: 'spd',     value: 10,  label: '+10 Speed' },
-    { level: 6,  chassis: 'medium', stat: 'coreHP',  value: 15,  label: '+15 Core HP' },
-    { level: 6,  chassis: 'heavy',  stat: 'coreHP',  value: 25,  label: '+25 Core HP' },
-    { level: 8,  chassis: 'light',  stat: 'coreHP',  value: 10,  label: '+10 Core HP' },
-    { level: 8,  chassis: 'medium', stat: 'armHP',   value: 10,  label: '+10 Arm HP' },
-    { level: 8,  chassis: 'heavy',  stat: 'armHP',   value: 15,  label: '+15 Arm HP' },
-    { level: 10, chassis: 'light',  stat: 'armHP',   value: 8,   label: '+8 Arm HP' },
-    { level: 10, chassis: 'medium', stat: 'legHP',   value: 10,  label: '+10 Leg HP' },
-    { level: 10, chassis: 'heavy',  stat: 'legHP',   value: 15,  label: '+15 Leg HP' },
-
-    // ── Level 12-16: Mid-game universals ──
-    { level: 12, chassis: 'all',    stat: 'coreHP',  value: 15,  label: '+15 Core HP' },
-    { level: 14, chassis: 'all',    stat: 'spd',     value: 5,   label: '+5 Speed' },
-    { level: 16, chassis: 'all',    stat: 'armHP',   value: 8,   label: '+8 Arm HP' },
-    { level: 16, chassis: 'all',    stat: 'legHP',   value: 8,   label: '+8 Leg HP' },
-
-    // ── Level 18-22: Late chassis-specific ──
-    { level: 18, chassis: 'light',  stat: 'spd',     value: 12,  label: '+12 Speed' },
-    { level: 18, chassis: 'medium', stat: 'coreHP',  value: 20,  label: '+20 Core HP' },
-    { level: 18, chassis: 'heavy',  stat: 'coreHP',  value: 30,  label: '+30 Core HP' },
-    { level: 20, chassis: 'light',  stat: 'coreHP',  value: 15,  label: '+15 Core HP' },
-    { level: 20, chassis: 'medium', stat: 'armHP',   value: 12,  label: '+12 Arm HP' },
-    { level: 20, chassis: 'heavy',  stat: 'armHP',   value: 20,  label: '+20 Arm HP' },
-    { level: 22, chassis: 'all',    stat: 'coreHP',  value: 20,  label: '+20 Core HP' },
-    { level: 22, chassis: 'all',    stat: 'legHP',   value: 10,  label: '+10 Leg HP' },
-];
-
-/** Get all chassis upgrades unlocked at or below the given level. */
-function getChassisUpgrades(level, chassisType) {
-    return CHASSIS_UPGRADES.filter(u =>
-        u.level <= level && (u.chassis === 'all' || u.chassis === chassisType)
-    );
+/** Get available skill points = playerLevel - 1 (level 1 has 0 points). */
+function getAvailableSkillPoints() {
+    const total = Math.max(0, _campaignState.playerLevel - 1);
+    const spent = (_campaignState.skillsChosen || []).length;
+    return total - spent;
 }
 
-/** Compute total stat bonuses from chassis upgrades for current level.
- *  Returns { coreHP, armHP, legHP, spd } bonus values. */
-function getChassisUpgradeBonuses(level, chassisType) {
-    const bonuses = { coreHP: 0, armHP: 0, legHP: 0, spd: 0 };
-    const upgrades = getChassisUpgrades(level, chassisType);
-    for (const u of upgrades) {
-        bonuses[u.stat] = (bonuses[u.stat] || 0) + u.value;
+/** Check if a skill node's prerequisites are met. */
+function _skillNodeAvailable(nodeId, chassisType) {
+    const tree = SKILL_TREES[chassisType];
+    if (!tree) return false;
+    const node = tree.find(n => n.id === nodeId);
+    if (!node) return false;
+    const chosen = _campaignState.skillsChosen || [];
+    if (chosen.includes(nodeId)) return false; // already purchased
+    if (!node.requires) return true; // tier 1 nodes have no requirements
+    return node.requires.every(reqId => chosen.includes(reqId));
+}
+
+/** Purchase a skill node. */
+function purchaseSkillNode(nodeId) {
+    const chassisType = _campaignState.chassis;
+    if (!chassisType) return false;
+    if (getAvailableSkillPoints() <= 0) return false;
+    if (!_skillNodeAvailable(nodeId, chassisType)) return false;
+    if (!_campaignState.skillsChosen) _campaignState.skillsChosen = [];
+    _campaignState.skillsChosen.push(nodeId);
+    saveCampaignState();
+    return true;
+}
+
+/** Compute total stat bonuses from all chosen skill nodes.
+ *  Returns { coreHP, armHP, legHP, spd, dmgMult, reloadMult, critChance,
+ *            shieldRegen, blastMult, dodgeChance, dr, modCdMult } */
+function getSkillTreeBonuses(chassisType) {
+    const bonuses = { coreHP:0, armHP:0, legHP:0, spd:0, dmgMult:0, reloadMult:0,
+                      critChance:0, shieldRegen:0, blastMult:0, dodgeChance:0, dr:0, modCdMult:0 };
+    const tree = SKILL_TREES[chassisType];
+    if (!tree) return bonuses;
+    const chosen = _campaignState.skillsChosen || [];
+    for (const nodeId of chosen) {
+        const node = tree.find(n => n.id === nodeId);
+        if (!node) continue;
+        for (const [k, v] of Object.entries(node.stats)) {
+            bonuses[k] = (bonuses[k] || 0) + v;
+        }
     }
     return bonuses;
+}
+
+// Legacy compat: getChassisUpgradeBonuses maps to skill tree bonuses
+function getChassisUpgradeBonuses(level, chassisType) {
+    return getSkillTreeBonuses(chassisType);
 }
 
 /** Store base chassis values so we can re-apply upgrades cleanly. */
@@ -1080,7 +1184,7 @@ function _snapshotChassisBase() {
     }
 }
 
-/** Apply level-based chassis upgrades to the CHASSIS object.
+/** Apply skill tree upgrades to the CHASSIS object.
  *  Should be called after loading campaign state and before deploy. */
 function applyChassisUpgrades() {
     if (typeof CHASSIS === 'undefined') return;
@@ -1094,12 +1198,15 @@ function applyChassisUpgrades() {
             CHASSIS[key].legHP  = _chassisBaseValues[key].legHP;
             CHASSIS[key].spd    = _chassisBaseValues[key].spd;
         }
-        // Apply upgrades for this chassis at current pilot level
-        const bonuses = getChassisUpgradeBonuses(_campaignState.playerLevel, key);
-        CHASSIS[key].coreHP += bonuses.coreHP;
-        CHASSIS[key].armHP  += bonuses.armHP;
-        CHASSIS[key].legHP  += bonuses.legHP;
-        CHASSIS[key].spd    += bonuses.spd;
+    }
+    // Apply skill tree bonuses only to the player's chosen chassis
+    const ch = _campaignState.chassis;
+    if (ch && CHASSIS[ch]) {
+        const bonuses = getSkillTreeBonuses(ch);
+        CHASSIS[ch].coreHP += bonuses.coreHP;
+        CHASSIS[ch].armHP  += bonuses.armHP;
+        CHASSIS[ch].legHP  += bonuses.legHP;
+        CHASSIS[ch].spd    += bonuses.spd;
     }
 }
 
@@ -1111,36 +1218,36 @@ function applyChassisUpgrades() {
  *  scrap = flat scrap bonus, itemRarity = guaranteed loot drop rarity,
  *  itemLevel = item level for generation. */
 const MISSION_REWARDS = {
-    // Chapter 1
+    // Chapter 1 (LV 1-10)
     ch1_m1: { scrap: 5,   itemRarity: 'common',    itemLevel: 1 },
-    ch1_m2: { scrap: 8,   itemRarity: 'common',    itemLevel: 2 },
-    ch1_m3: { scrap: 10,  itemRarity: 'uncommon',  itemLevel: 3 },
-    ch1_m4: { scrap: 12,  itemRarity: 'uncommon',  itemLevel: 4 },
-    ch1_m5: { scrap: 25,  itemRarity: 'rare',      itemLevel: 5 },
-    // Chapter 2
-    ch2_m1: { scrap: 12,  itemRarity: 'uncommon',  itemLevel: 5 },
-    ch2_m2: { scrap: 14,  itemRarity: 'uncommon',  itemLevel: 6 },
-    ch2_m3: { scrap: 16,  itemRarity: 'rare',      itemLevel: 7 },
-    ch2_m4: { scrap: 18,  itemRarity: 'rare',      itemLevel: 8 },
-    ch2_m5: { scrap: 40,  itemRarity: 'epic',      itemLevel: 10 },
-    // Chapter 3
-    ch3_m1: { scrap: 16,  itemRarity: 'rare',      itemLevel: 9 },
-    ch3_m2: { scrap: 18,  itemRarity: 'rare',      itemLevel: 10 },
-    ch3_m3: { scrap: 22,  itemRarity: 'rare',      itemLevel: 11 },
-    ch3_m4: { scrap: 25,  itemRarity: 'epic',      itemLevel: 12 },
-    ch3_m5: { scrap: 50,  itemRarity: 'epic',      itemLevel: 14 },
-    // Chapter 4
-    ch4_m1: { scrap: 22,  itemRarity: 'rare',      itemLevel: 13 },
-    ch4_m2: { scrap: 25,  itemRarity: 'epic',      itemLevel: 14 },
-    ch4_m3: { scrap: 28,  itemRarity: 'epic',      itemLevel: 15 },
-    ch4_m4: { scrap: 30,  itemRarity: 'epic',      itemLevel: 16 },
-    ch4_m5: { scrap: 60,  itemRarity: 'legendary', itemLevel: 18 },
-    // Chapter 5
-    ch5_m1: { scrap: 28,  itemRarity: 'epic',      itemLevel: 17 },
-    ch5_m2: { scrap: 30,  itemRarity: 'epic',      itemLevel: 18 },
-    ch5_m3: { scrap: 35,  itemRarity: 'epic',      itemLevel: 19 },
-    ch5_m4: { scrap: 40,  itemRarity: 'legendary', itemLevel: 20 },
-    ch5_m5: { scrap: 100, itemRarity: 'legendary', itemLevel: 22 },
+    ch1_m2: { scrap: 8,   itemRarity: 'common',    itemLevel: 3 },
+    ch1_m3: { scrap: 12,  itemRarity: 'uncommon',  itemLevel: 5 },
+    ch1_m4: { scrap: 15,  itemRarity: 'uncommon',  itemLevel: 7 },
+    ch1_m5: { scrap: 30,  itemRarity: 'rare',      itemLevel: 10 },
+    // Chapter 2 (LV 11-20)
+    ch2_m1: { scrap: 15,  itemRarity: 'uncommon',  itemLevel: 11 },
+    ch2_m2: { scrap: 18,  itemRarity: 'rare',      itemLevel: 13 },
+    ch2_m3: { scrap: 22,  itemRarity: 'rare',      itemLevel: 15 },
+    ch2_m4: { scrap: 28,  itemRarity: 'rare',      itemLevel: 17 },
+    ch2_m5: { scrap: 50,  itemRarity: 'epic',      itemLevel: 20 },
+    // Chapter 3 (LV 21-34)
+    ch3_m1: { scrap: 25,  itemRarity: 'rare',      itemLevel: 21 },
+    ch3_m2: { scrap: 30,  itemRarity: 'rare',      itemLevel: 24 },
+    ch3_m3: { scrap: 35,  itemRarity: 'epic',      itemLevel: 27 },
+    ch3_m4: { scrap: 40,  itemRarity: 'epic',      itemLevel: 30 },
+    ch3_m5: { scrap: 70,  itemRarity: 'epic',      itemLevel: 34 },
+    // Chapter 4 (LV 35-48)
+    ch4_m1: { scrap: 35,  itemRarity: 'epic',      itemLevel: 35 },
+    ch4_m2: { scrap: 40,  itemRarity: 'epic',      itemLevel: 38 },
+    ch4_m3: { scrap: 50,  itemRarity: 'epic',      itemLevel: 41 },
+    ch4_m4: { scrap: 55,  itemRarity: 'legendary', itemLevel: 44 },
+    ch4_m5: { scrap: 90,  itemRarity: 'legendary', itemLevel: 48 },
+    // Chapter 5 (LV 50-66)
+    ch5_m1: { scrap: 50,  itemRarity: 'epic',      itemLevel: 50 },
+    ch5_m2: { scrap: 60,  itemRarity: 'legendary', itemLevel: 54 },
+    ch5_m3: { scrap: 70,  itemRarity: 'legendary', itemLevel: 58 },
+    ch5_m4: { scrap: 85,  itemRarity: 'legendary', itemLevel: 62 },
+    ch5_m5: { scrap: 150, itemRarity: 'legendary', itemLevel: 66 },
 };
 
 /** Get the first-clear reward for a mission. Returns null if already claimed. */
@@ -1653,47 +1760,116 @@ function _showUpgradesPanel() {
     let overlay = document.getElementById('upgrades-overlay');
     if (!overlay) return;
 
+    const ch = _campaignState.chassis || 'medium';
     const level = _campaignState.playerLevel;
-    const chassisTypes = ['light', 'medium', 'heavy'];
-    const chassisColors = { light: '#88ff88', medium: '#ffcc44', heavy: '#ff8844' };
+    const cc = ch === 'light' ? '#88ff88' : ch === 'medium' ? '#ffcc44' : '#ff8844';
+    const tree = SKILL_TREES[ch] || [];
+    const chosen = _campaignState.skillsChosen || [];
+    const availPts = getAvailableSkillPoints();
+
+    // Group nodes by tier
+    const tiers = {};
+    for (const node of tree) {
+        if (!tiers[node.tier]) tiers[node.tier] = [];
+        tiers[node.tier].push(node);
+    }
+    const maxTier = Math.max(...Object.keys(tiers).map(Number));
 
     let html = '';
-    html += '<div style="font-size:24px;letter-spacing:6px;color:#00ff88;text-shadow:0 0 16px rgba(0,255,136,0.5);margin-bottom:6px;">CHASSIS UPGRADES</div>';
-    html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(0,255,136,0.5);margin-bottom:24px;">PILOT LEVEL ${level} — Upgrades unlock automatically as you level up</div>`;
+    html += `<div style="font-size:24px;letter-spacing:6px;color:${cc};text-shadow:0 0 16px ${cc}80;margin-bottom:4px;">SKILL TREE</div>`;
+    html += `<div style="font-size:11px;letter-spacing:2px;color:${cc}88;margin-bottom:4px;">${ch.toUpperCase()} CHASSIS — PILOT LEVEL ${level}</div>`;
+    html += `<div style="font-size:12px;letter-spacing:2px;color:${availPts > 0 ? '#ffd700' : 'rgba(200,210,217,0.4)'};margin-bottom:20px;">SKILL POINTS: <span style="font-size:14px;">${availPts}</span></div>`;
 
-    for (const ch of chassisTypes) {
-        const cc = chassisColors[ch];
-        html += `<div style="margin-bottom:20px;">`;
-        html += `<div style="font-size:14px;letter-spacing:3px;color:${cc};margin-bottom:8px;">${ch.toUpperCase()}</div>`;
+    // Render tiers from top to bottom
+    for (let t = 1; t <= maxTier; t++) {
+        const nodes = tiers[t] || [];
+        html += `<div style="margin-bottom:4px;font-size:9px;letter-spacing:2px;color:rgba(200,210,217,0.25);">TIER ${t}</div>`;
+        html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;max-width:750px;">';
+        for (const node of nodes) {
+            const owned = chosen.includes(node.id);
+            const canBuy = !owned && availPts > 0 && _skillNodeAvailable(node.id, ch);
+            const locked = !owned && !canBuy;
 
-        const allForChassis = CHASSIS_UPGRADES.filter(u => u.chassis === 'all' || u.chassis === ch);
-        html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
-        for (const u of allForChassis) {
-            const unlocked = u.level <= level;
-            const borderColor = unlocked ? cc : 'rgba(255,255,255,0.08)';
-            const textColor = unlocked ? cc : 'rgba(200,210,217,0.25)';
-            const bg = unlocked ? `${cc}10` : 'rgba(0,0,0,0.2)';
-            html += `<div style="padding:6px 10px;background:${bg};border:1px solid ${borderColor};border-radius:4px;min-width:100px;">`;
-            html += `<div style="font-size:9px;letter-spacing:1px;color:${textColor};margin-bottom:2px;">${unlocked ? '✓' : '🔒'} LV.${u.level}</div>`;
-            html += `<div style="font-size:10px;color:${unlocked ? '#c8d2d9' : 'rgba(200,210,217,0.2)'};letter-spacing:1px;">${u.label}</div>`;
-            if (u.chassis !== 'all') {
-                html += `<div style="font-size:8px;color:${textColor};opacity:0.6;">${u.chassis.toUpperCase()} ONLY</div>`;
+            let borderColor, textColor, bg, labelIcon;
+            if (owned) {
+                borderColor = cc;
+                textColor = cc;
+                bg = `${cc}18`;
+                labelIcon = '✓';
+            } else if (canBuy) {
+                borderColor = '#ffd700';
+                textColor = '#ffd700';
+                bg = 'rgba(255,215,0,0.06)';
+                labelIcon = '●';
+            } else {
+                borderColor = 'rgba(255,255,255,0.08)';
+                textColor = 'rgba(200,210,217,0.25)';
+                bg = 'rgba(0,0,0,0.2)';
+                labelIcon = '🔒';
+            }
+
+            const onclick = canBuy ? `onclick="_buySkillNode('${node.id}')"` : '';
+            const cursor = canBuy ? 'pointer' : 'default';
+            const hoverBg = canBuy ? 'rgba(255,215,0,0.12)' : bg;
+            const shadowStyle = owned ? `box-shadow:0 0 8px ${cc}33;` : canBuy ? 'box-shadow:0 0 8px rgba(255,215,0,0.15);' : '';
+
+            html += `<div ${onclick} style="padding:8px 12px;background:${bg};border:1px solid ${borderColor};border-radius:4px;min-width:155px;max-width:175px;cursor:${cursor};transition:all 0.2s;${shadowStyle}" ${canBuy ? `onmouseover="this.style.background='${hoverBg}';this.style.boxShadow='0 0 12px rgba(255,215,0,0.25)'" onmouseout="this.style.background='${bg}';this.style.boxShadow='0 0 8px rgba(255,215,0,0.15)'"` : ''}>`;
+            html += `<div style="font-size:9px;letter-spacing:1px;color:${textColor};margin-bottom:3px;">${labelIcon} ${node.label}</div>`;
+            html += `<div style="font-size:9px;color:${owned ? 'rgba(200,210,217,0.6)' : 'rgba(200,210,217,0.3)'};line-height:1.4;">${node.desc}</div>`;
+            if (node.requires && locked) {
+                const reqLabels = node.requires.map(rid => {
+                    const rn = tree.find(n => n.id === rid);
+                    return rn ? rn.label : rid;
+                }).join(', ');
+                html += `<div style="font-size:8px;color:rgba(255,100,100,0.4);margin-top:3px;">Requires: ${reqLabels}</div>`;
             }
             html += '</div>';
+        }
+        html += '</div>';
+    }
+
+    // Summary of current bonuses
+    const bonuses = getSkillTreeBonuses(ch);
+    const activeStats = Object.entries(bonuses).filter(([k, v]) => v !== 0);
+    if (activeStats.length > 0) {
+        html += '<div style="margin-top:8px;padding:10px 14px;background:rgba(0,255,255,0.03);border:1px solid rgba(0,255,255,0.1);border-radius:4px;max-width:750px;">';
+        html += '<div style="font-size:9px;letter-spacing:2px;color:rgba(0,255,255,0.4);margin-bottom:6px;">ACTIVE BONUSES</div>';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+        const statLabels = { coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', spd:'Speed',
+            dmgMult:'Damage', reloadMult:'Reload Spd', critChance:'Crit Chance',
+            shieldRegen:'Shield Regen', blastMult:'Blast Radius', dodgeChance:'Dodge',
+            dr:'Dmg Reduction', modCdMult:'Mod Cooldown' };
+        const pctStats = new Set(['dmgMult','reloadMult','critChance','shieldRegen','blastMult','dodgeChance','dr','modCdMult']);
+        for (const [k, v] of activeStats) {
+            const label = statLabels[k] || k;
+            const isNeg = k === 'modCdMult'; // mod cooldown reduction is shown as negative
+            const sign = v > 0 ? '+' : '';
+            const display = pctStats.has(k) ? `${sign}${Math.round(v * 100)}%` : `${sign}${v}`;
+            const color = (v > 0 && !isNeg) || (v < 0 && isNeg) ? '#44ff88' : v < 0 ? '#ff5050' : '#44ff88';
+            html += `<span style="font-size:10px;color:${color};padding:2px 6px;border:1px solid ${color}33;border-radius:3px;">${label}: ${isNeg ? '-' + Math.round(v*100) + '%' : display}</span>`;
         }
         html += '</div></div>';
     }
 
-    // Next unlock preview
-    const nextUpgrade = CHASSIS_UPGRADES.find(u => u.level > level);
-    if (nextUpgrade) {
-        html += `<div style="margin-top:8px;font-size:10px;letter-spacing:1px;color:rgba(0,255,136,0.4);">NEXT UNLOCK: LV.${nextUpgrade.level} — ${nextUpgrade.label}${nextUpgrade.chassis !== 'all' ? ' ('+nextUpgrade.chassis.toUpperCase()+')' : ''}</div>`;
-    }
-
     html += '<div style="margin-top:20px;">';
-    html += `<button onclick="document.getElementById('upgrades-overlay').style.display='none'" style="padding:12px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:12px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.85)';this.style.letterSpacing='3px';this.style.boxShadow='none'">BACK</button>`;
+    html += `<button onclick="_closeUpgrades()" style="padding:12px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:12px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.85)';this.style.letterSpacing='3px';this.style.boxShadow='none'">BACK</button>`;
     html += '</div>';
 
     overlay.innerHTML = html;
     overlay.style.display = 'flex';
+}
+
+function _buySkillNode(nodeId) {
+    if (purchaseSkillNode(nodeId)) {
+        // Re-apply chassis upgrades with new skill
+        if (typeof applyChassisUpgrades === 'function') applyChassisUpgrades();
+        _showUpgradesPanel(); // re-render
+    }
+}
+
+function _closeUpgrades() {
+    const overlay = document.getElementById('upgrades-overlay');
+    if (overlay) overlay.style.display = 'none';
+    // Return to mission select
+    if (typeof showMissionSelect === 'function') showMissionSelect();
 }

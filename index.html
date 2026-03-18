@@ -4967,7 +4967,8 @@ async function saveToCloud() {
             completedMissions: _campaignState.completedMissions,
             chassis: _campaignState.chassis || null,
             claimedRewards: _campaignState.claimedRewards || {},
-            loadoutSlots: _campaignState.loadoutSlots || []
+            loadoutSlots: _campaignState.loadoutSlots || [],
+            skillsChosen: _campaignState.skillsChosen || []
         };
 
         const campaignProgress = {
@@ -5053,6 +5054,7 @@ function _restoreFromCloudData(data) {
         _campaignState.chassis = cs.chassis || null;
         _campaignState.claimedRewards = cs.claimedRewards || {};
         _campaignState.loadoutSlots = cs.loadoutSlots || [];
+        _campaignState.skillsChosen = cs.skillsChosen || [];
     }
     // Restore campaign progress (loadout)
     if (data.campaign_progress) {
@@ -6112,6 +6114,20 @@ function deployMech() {
             try { game.scene.scenes[0].time.paused = false; } catch(e) {}
             applyAugment();
             applyLegSystem();
+            // Apply skill tree combat bonuses to perkState
+            if (_gameMode === 'campaign' && typeof getSkillTreeBonuses === 'function') {
+                const stb = getSkillTreeBonuses(_campaignState.chassis);
+                if (stb.dmgMult)     _perkState.dmgMult = (_perkState.dmgMult || 1) * (1 + stb.dmgMult);
+                if (stb.reloadMult)  _perkState.reloadMult = (_perkState.reloadMult || 1) * (1 - stb.reloadMult);
+                if (stb.critChance)  _perkState.critChance = (_perkState.critChance || 0) + stb.critChance;
+                if (stb.shieldRegen) _perkState.shieldRegenMult = (_perkState.shieldRegenMult || 1) * (1 + stb.shieldRegen);
+                if (stb.blastMult)   _perkState.blastMult = (_perkState.blastMult || 1) * (1 + stb.blastMult);
+                if (stb.dodgeChance) _perkState.dodgeChance = (_perkState.dodgeChance || 0) + stb.dodgeChance;
+                if (stb.dr)          _perkState.fortress = (_perkState.fortress || 0) + stb.dr;
+                if (stb.modCdMult && typeof CHASSIS !== 'undefined' && CHASSIS.medium) {
+                    CHASSIS.medium.modCooldownMult = (CHASSIS.medium.modCooldownMult || 0.85) * (1 - stb.modCdMult);
+                }
+            }
             const sc = game.scene.scenes[0];
             // Always spawn 6 fresh enemies after landing
             // Round system handles spawning
@@ -13214,6 +13230,7 @@ function confirmNewCampaign() {
     _campaignState.completedMissions = {};
     _campaignState.claimedRewards = {};
     _campaignState.loadoutSlots = [];
+    _campaignState.skillsChosen = [];
     _campaignState.activeModifier = null;
     _campaignState.activeBonusObjective = null;
     _campaignState.bonusObjectiveProgress = 0;
