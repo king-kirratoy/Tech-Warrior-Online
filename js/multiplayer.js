@@ -39,7 +39,7 @@ function mpConnect(serverUrl) {
         _mpLocalId = _mpSocket.id;
         console.log('[MP] Connected:', _mpLocalId);
 
-        // Auto-join lobby with current callsign + loadout
+        // Auto-join lobby with current callsign + full loadout
         _mpSocket.emit('lobby-join', {
             name: _playerCallsign || 'ANONYMOUS',
             chassis: loadout.chassis,
@@ -49,7 +49,9 @@ function mpConnect(serverUrl) {
                 L: loadout.L,
                 R: loadout.R,
                 mod: loadout.mod,
-                shld: loadout.shld
+                shld: loadout.shld,
+                leg: loadout.leg,
+                aug: loadout.aug
             }
         });
     });
@@ -675,6 +677,9 @@ function mpDeployPVP() {
             // Regenerate cover
             try { generateCover(scene); } catch(e) {}
 
+            // Nudge player out of any overlapping cover objects
+            try { mpNudgeOutOfCover(scene); } catch(e) {}
+
             // Start sending state at 20Hz
             if (_mpStateInterval) clearInterval(_mpStateInterval);
             _mpStateInterval = setInterval(mpSendState, 50);
@@ -768,12 +773,17 @@ function mpUpdateLobbyUI() {
         statusEl.style.color = _mpConnected ? 'rgba(0,255,204,0.7)' : 'rgba(255,200,0,0.7)';
     }
 
-    // Player list
+    // Player list — show chassis + weapon loadout summary
     listEl.innerHTML = _mpLobbyPlayers.map(p => {
         const isMe = p.id === _mpLocalId;
         const isHost = p.id && _mpLobbyPlayers[0]?.id === p.id;
         const chassisLabel = (p.chassis || 'light').toUpperCase();
         const colorHex = '#' + (p.color || 0x00ff00).toString(16).padStart(6, '0');
+        // Build loadout summary
+        const lo = p.loadout || {};
+        const wL = lo.L && lo.L !== 'none' ? (typeof WEAPONS !== 'undefined' && WEAPONS[lo.L]?.name || lo.L.toUpperCase()) : '';
+        const wR = lo.R && lo.R !== 'none' && lo.R !== lo.L ? (typeof WEAPONS !== 'undefined' && WEAPONS[lo.R]?.name || lo.R.toUpperCase()) : '';
+        const weapons = [wL, wR].filter(Boolean).join(' / ') || 'UNARMED';
         return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:4px;
                     background:rgba(${isMe?'0,255,255':'255,255,255'},0.04);
                     border:1px solid rgba(${isMe?'0,255,255':'255,255,255'},${isMe?'0.2':'0.06'});
@@ -783,6 +793,7 @@ function mpUpdateLobbyUI() {
                 <span style="color:${isMe?'#00ffff':'#c8d2d9'};font-size:13px;font-weight:bold;">${p.name}</span>
                 ${isHost?'<span style="color:#ffcc00;font-size:9px;margin-left:6px;">HOST</span>':''}
                 ${isMe?'<span style="color:rgba(0,255,255,0.5);font-size:9px;margin-left:6px;">YOU</span>':''}
+                <div style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:2px;letter-spacing:1px;">${weapons}</div>
             </div>
             <span style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.4);">${chassisLabel}</span>
         </div>`;
@@ -814,7 +825,8 @@ function mpStartMatch() {
         loadout: {
             chassis: loadout.chassis,
             L: loadout.L, R: loadout.R,
-            mod: loadout.mod, shld: loadout.shld
+            mod: loadout.mod, shld: loadout.shld,
+            leg: loadout.leg, aug: loadout.aug
         }
     });
     _mpSocket.emit('match-start');
@@ -823,9 +835,8 @@ function mpStartMatch() {
 function mpLeaveLobby() {
     mpDisconnect();
     mpHideLobby();
-    // Return to main menu
-    const menu = document.getElementById('main-menu');
-    if (menu) { menu.style.display = ''; menu.style.opacity = '1'; }
+    // Return to PVP hangar for loadout changes
+    mpShowPvpHangar();
 }
 
 function mpSendChat() {
@@ -901,12 +912,13 @@ function mpShowVictory() {
         showRoundBanner('VICTORY', `${_mpKills} KILLS // ${_mpDeaths} DEATHS`, 4000, null);
     }
 
-    // Return to lobby after delay
+    // Return to PVP hangar after delay
     setTimeout(() => {
         if (typeof _cleanupGame === 'function') _cleanupGame();
         mpCleanupMatch();
         _mpSocket?.emit('return-to-lobby');
-        mpShowLobby();
+        mpDisconnect();
+        mpShowPvpHangar();
     }, 5000);
 }
 
@@ -920,8 +932,357 @@ function mpShowDefeat() {
         if (typeof _cleanupGame === 'function') _cleanupGame();
         mpCleanupMatch();
         _mpSocket?.emit('return-to-lobby');
-        mpShowLobby();
+        mpDisconnect();
+        mpShowPvpHangar();
     }, 4000);
+}
+
+// ================================================================
+// SPAWN SAFETY: nudge player out of cover objects after generation
+// ================================================================
+
+function mpNudgeOutOfCover(scene) {
+    if (!player?.active || !coverObjects) return;
+    const px = player.x, py = player.y;
+    const hitR = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
+
+    // Check overlap with each cover object
+    const covers = coverObjects.getChildren();
+    for (const c of covers) {
+        if (!c?.active || !c.body) continue;
+        const cx = c.coverCX || (c.x + (c.width || 0) / 2);
+        const cy = c.coverCY || (c.y + (c.height || 0) / 2);
+        const cw = (c.width || 60) / 2 + hitR + 10;
+        const ch = (c.height || 60) / 2 + hitR + 10;
+
+        // AABB overlap check
+        if (Math.abs(px - cx) < cw && Math.abs(py - cy) < ch) {
+            // Push player to nearest edge
+            const dx = px - cx;
+            const dy = py - cy;
+            const pushX = dx >= 0 ? cx + cw + 5 : cx - cw - 5;
+            const pushY = dy >= 0 ? cy + ch + 5 : cy - ch - 5;
+
+            // Push along shortest axis
+            if (Math.abs(dx) / cw > Math.abs(dy) / ch) {
+                player.x = pushX;
+                if (torso?.active) torso.x = pushX;
+            } else {
+                player.y = pushY;
+                if (torso?.active) torso.y = pushY;
+            }
+            break; // Re-check could be needed but one nudge is usually enough
+        }
+    }
+}
+
+// ================================================================
+// PVP MECH HANGAR — full loadout selection before joining lobby
+// ================================================================
+
+let _pvpHangarOpen = false;
+
+function mpShowPvpHangar() {
+    _pvpHangarOpen = true;
+    let el = document.getElementById('pvp-hangar');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'pvp-hangar';
+        el.style.cssText = `
+            position:fixed;inset:0;z-index:2000;
+            display:flex;justify-content:center;align-items:center;
+            background:#0c1014;
+            font-family:'Courier New',monospace;color:#c8d2d9;
+            overflow-y:auto;
+        `;
+        document.body.appendChild(el);
+    }
+    el.style.display = 'flex';
+    _pvpRenderHangar();
+}
+
+function mpHidePvpHangar() {
+    _pvpHangarOpen = false;
+    const el = document.getElementById('pvp-hangar');
+    if (el) el.style.display = 'none';
+}
+
+function _pvpSlotLabel(key, dict) {
+    if (!key || key === 'none') return 'NONE';
+    return dict[key]?.name || key.toUpperCase();
+}
+
+function _pvpRenderHangar() {
+    const el = document.getElementById('pvp-hangar');
+    if (!el) return;
+
+    const chassis = loadout.chassis;
+    const hexStr = loadout.color.toString(16).padStart(6, '0');
+    const colorOpt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : []).find(o => o.key === hexStr) || { label: 'GREEN', hex6: '#00ff00' };
+
+    // Get available options per slot filtered by chassis
+    const filterSet = (dict, allowed) => {
+        return Object.keys(dict).filter(k => allowed.has(k)).map(k => ({
+            key: k,
+            name: dict[k].name || k.toUpperCase(),
+            desc: dict[k].desc || ''
+        }));
+    };
+
+    const weaponKeys = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[chassis] : new Set();
+    const modKeys    = typeof CHASSIS_MODS !== 'undefined' ? CHASSIS_MODS[chassis] : new Set();
+    const shieldKeys = typeof CHASSIS_SHIELDS !== 'undefined' ? CHASSIS_SHIELDS[chassis] : new Set();
+    const legKeys    = typeof CHASSIS_LEGS !== 'undefined' ? CHASSIS_LEGS[chassis] : new Set();
+    const augKeys    = typeof CHASSIS_AUGS !== 'undefined' ? CHASSIS_AUGS[chassis] : new Set();
+
+    const wOpts = filterSet(WEAPONS, weaponKeys).filter(o => !WEAPONS[o.key]?.twoHanded || chassis !== 'light');
+    const mOpts = filterSet(WEAPONS, modKeys);
+    const sOpts = filterSet(SHIELD_SYSTEMS, shieldKeys);
+    const lOpts = filterSet(LEG_SYSTEMS, legKeys);
+    const aOpts = filterSet(AUGMENTS, augKeys);
+
+    const is2H = WEAPONS[loadout.L]?.twoHanded;
+
+    function buildSelect(slotId, label, options, currentKey) {
+        const optHtml = options.map(o => {
+            const sel = o.key === currentKey;
+            const blocked = slotId === 'R' && is2H && o.key !== loadout.L && o.key !== 'none';
+            if (blocked) return '';
+            return `<div class="pvp-h-opt${sel ? ' pvp-h-active' : ''}"
+                         onclick="_pvpSelectSlot('${slotId}','${o.key}')"
+                         title="${o.desc}">
+                        <span>${o.name}</span>
+                    </div>`;
+        }).join('');
+        return `
+            <div class="pvp-h-slot">
+                <div class="pvp-h-slot-label">${label}</div>
+                <div class="pvp-h-slot-current" onclick="_pvpToggleSlot('${slotId}')">
+                    <span>${_pvpSlotLabel(currentKey, slotId === 'L' || slotId === 'R' ? WEAPONS : slotId === 'M' ? WEAPONS : slotId === 'S' ? SHIELD_SYSTEMS : slotId === 'G' ? LEG_SYSTEMS : AUGMENTS)}</span>
+                    <span style="font-size:9px;color:rgba(0,255,255,0.5);">▼</span>
+                </div>
+                <div class="pvp-h-options" id="pvp-opts-${slotId}" style="display:none;">
+                    ${optHtml}
+                </div>
+            </div>`;
+    }
+
+    // Right arm label changes for two-handed
+    const rArmLabel = is2H ? '■ R.ARM (LOCKED)' : '■ R.ARM WEAPON';
+    const rArmCurrent = is2H ? loadout.L : loadout.R;
+
+    const ch = typeof CHASSIS !== 'undefined' ? CHASSIS[chassis] : {};
+    const totalHP = typeof getTotalHP === 'function' ? getTotalHP(chassis) : (ch.coreHP || 0) + (ch.armHP || 0) * 2 + (ch.legHP || 0);
+    const shld = typeof SHIELD_SYSTEMS !== 'undefined' ? (SHIELD_SYSTEMS[loadout.shld] || { maxShield: 0 }) : { maxShield: 0 };
+
+    el.innerHTML = `
+        <div style="width:880px;max-width:96vw;max-height:96vh;overflow-y:auto;padding:28px 32px;border:1px solid rgba(0,255,255,0.35);border-radius:10px;
+                    background:linear-gradient(rgba(12,16,20,0.95),rgba(12,16,20,0.95));
+                    box-shadow:0 0 40px rgba(0,0,0,0.7),0 0 20px rgba(0,255,255,0.1);">
+
+            <h2 style="text-align:center;margin:0 0 4px;letter-spacing:8px;color:#00ffff;font-size:22px;
+                       text-shadow:0 0 18px rgba(0,255,255,0.7);font-weight:normal;">MECH HANGAR</h2>
+            <div style="text-align:center;font-size:10px;letter-spacing:4px;color:rgba(0,255,255,0.4);margin-bottom:20px;">PVP LOADOUT CONFIGURATION</div>
+
+            <div style="display:flex;gap:24px;">
+                <!-- LEFT COLUMN: Build options -->
+                <div style="flex:1;min-width:0;">
+                    <!-- Chassis -->
+                    <div class="pvp-h-slot">
+                        <div class="pvp-h-slot-label">■ CHASSIS</div>
+                        <div style="display:flex;gap:6px;">
+                            <button class="pvp-h-chassis${chassis === 'light' ? ' active' : ''}" onclick="_pvpSetChassis('light')">LIGHT</button>
+                            <button class="pvp-h-chassis${chassis === 'medium' ? ' active' : ''}" onclick="_pvpSetChassis('medium')">MEDIUM</button>
+                            <button class="pvp-h-chassis${chassis === 'heavy' ? ' active' : ''}" onclick="_pvpSetChassis('heavy')">HEAVY</button>
+                        </div>
+                    </div>
+
+                    <!-- Color -->
+                    <div class="pvp-h-slot">
+                        <div class="pvp-h-slot-label">■ COLOUR</div>
+                        <div class="pvp-h-slot-current" onclick="_pvpToggleSlot('COL')">
+                            <span style="display:inline-block;width:12px;height:12px;background:${colorOpt.hex6};border-radius:2px;margin-right:8px;box-shadow:0 0 6px ${colorOpt.hex6}55;vertical-align:middle;"></span>
+                            <span>${colorOpt.label}</span>
+                            <span style="font-size:9px;color:rgba(0,255,255,0.5);">▼</span>
+                        </div>
+                        <div class="pvp-h-options" id="pvp-opts-COL" style="display:none;">
+                            ${(typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : []).map(c => `
+                                <div class="pvp-h-opt${c.key === hexStr ? ' pvp-h-active' : ''}"
+                                     onclick="_pvpSelectColor('${c.key}',0x${c.key})">
+                                    <span style="display:inline-block;width:10px;height:10px;background:${c.hex6};border-radius:2px;margin-right:6px;box-shadow:0 0 4px ${c.hex6}55;"></span>
+                                    <span>${c.label}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    ${buildSelect('L', '■ L.ARM WEAPON', wOpts, loadout.L)}
+                    ${buildSelect('R', rArmLabel, wOpts, rArmCurrent)}
+                    ${buildSelect('M', '■ CORE MOD', mOpts, loadout.mod)}
+                    ${buildSelect('S', '■ SHIELD SYSTEM', sOpts, loadout.shld)}
+                    ${buildSelect('G', '■ LEG SYSTEM', lOpts, loadout.leg)}
+                    ${buildSelect('A', '■ AUGMENT', aOpts, loadout.aug)}
+                </div>
+
+                <!-- RIGHT COLUMN: Preview + Stats + Buttons -->
+                <div style="width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;">
+                    <div style="border:1px solid rgba(0,255,255,0.4);background:rgba(0,10,20,0.6);box-shadow:0 0 14px rgba(0,255,255,0.12);display:flex;justify-content:center;align-items:center;height:140px;">
+                        <img src="assets/${chassis}-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
+                    </div>
+
+                    <!-- Stats -->
+                    <div style="background:rgba(10,15,22,0.9);border:1px solid rgba(0,255,255,0.2);border-radius:6px;padding:12px;font-size:11px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:rgba(200,210,217,0.5);">TOTAL HP</span>
+                            <span style="color:#00ff88;">${totalHP}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:rgba(200,210,217,0.5);">SPEED</span>
+                            <span style="color:#ffdd88;">${ch.spd || 210} u/s</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:rgba(200,210,217,0.5);">SHIELD</span>
+                            <span style="color:#00ffff;">${shld.maxShield || 0} HP</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <span style="color:rgba(200,210,217,0.5);">CORE HP</span>
+                            <span style="color:#55cc88;">${ch.coreHP || 0}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span style="color:rgba(200,210,217,0.5);">ARM / LEG</span>
+                            <span style="color:#55cc88;">${ch.armHP || 0} / ${ch.legHP || 0}</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;">
+                        <button onclick="_pvpJoinLobby()" style="width:100%;padding:12px;font-size:13px;letter-spacing:3px;color:#00ff00;
+                            border:1px solid rgba(0,255,0,0.4);border-top:2px solid rgba(0,255,0,0.7);border-bottom:2px solid rgba(0,255,0,0.7);
+                            background:rgba(0,255,0,0.06);cursor:pointer;font-family:'Courier New',monospace;
+                            transition:all 0.3s;"
+                            onmouseover="this.style.background='rgba(0,255,0,0.12)';this.style.letterSpacing='5px'"
+                            onmouseout="this.style.background='rgba(0,255,0,0.06)';this.style.letterSpacing='3px'">
+                            JOIN LOBBY</button>
+                        <button onclick="_pvpBackToMenu()" style="width:100%;padding:12px;font-size:12px;letter-spacing:3px;color:#ff4444;
+                            border:1px solid rgba(255,68,68,0.3);border-left:3px solid #ff4444;
+                            background:rgba(255,68,68,0.06);cursor:pointer;font-family:'Courier New',monospace;">
+                            MAIN MENU</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .pvp-h-slot { margin-bottom:10px; }
+            .pvp-h-slot-label { font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);margin-bottom:4px;text-transform:uppercase; }
+            .pvp-h-slot-current {
+                display:flex;align-items:center;gap:6px;padding:8px 12px;cursor:pointer;
+                background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-left:3px solid transparent;
+                font-size:12px;letter-spacing:2px;transition:all 0.15s;
+            }
+            .pvp-h-slot-current:hover { background:rgba(0,255,255,0.07);border-color:rgba(0,255,255,0.3); }
+            .pvp-h-options {
+                max-height:200px;overflow-y:auto;border:1px solid rgba(0,255,255,0.2);border-top:none;
+                background:rgba(8,12,18,0.97);
+            }
+            .pvp-h-opt {
+                padding:6px 12px;cursor:pointer;font-size:11px;letter-spacing:1px;
+                border-bottom:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;gap:4px;
+                transition:background 0.1s;
+            }
+            .pvp-h-opt:hover { background:rgba(0,255,255,0.09);color:#fff; }
+            .pvp-h-opt.pvp-h-active { background:rgba(0,255,255,0.13);color:#00ffff; }
+            .pvp-h-chassis {
+                flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;
+                background:rgba(255,255,255,0.04);color:#c8d2d9;border:1px solid rgba(255,255,255,0.1);
+                border-left:3px solid transparent;cursor:pointer;transition:all 0.2s;
+            }
+            .pvp-h-chassis:hover { background:rgba(0,255,255,0.07);border-color:rgba(0,255,255,0.3);color:#fff; }
+            .pvp-h-chassis.active {
+                background:rgba(0,255,255,0.1);color:#fff;border-color:rgba(0,255,255,0.5);
+                border-left:3px solid #00ffff;box-shadow:inset 8px 0 15px rgba(0,255,255,0.06);
+                text-shadow:0 0 6px rgba(0,255,255,0.4);
+            }
+        </style>
+    `;
+}
+
+let _pvpOpenSlot = null;
+
+function _pvpToggleSlot(slotId) {
+    if (_pvpOpenSlot === slotId) {
+        document.getElementById('pvp-opts-' + slotId).style.display = 'none';
+        _pvpOpenSlot = null;
+    } else {
+        // Close any open
+        if (_pvpOpenSlot) {
+            const prev = document.getElementById('pvp-opts-' + _pvpOpenSlot);
+            if (prev) prev.style.display = 'none';
+        }
+        document.getElementById('pvp-opts-' + slotId).style.display = 'block';
+        _pvpOpenSlot = slotId;
+    }
+}
+
+function _pvpSelectSlot(slotId, key) {
+    if (slotId === 'L' || slotId === 'R') {
+        const is2H = WEAPONS[key]?.twoHanded;
+        if (loadout.chassis === 'light' && is2H) return;
+        if (is2H) {
+            loadout.L = key; loadout.R = key;
+        } else if (slotId === 'L') {
+            if (WEAPONS[loadout.L]?.twoHanded) loadout.R = 'none';
+            loadout.L = key;
+            if (loadout.chassis !== 'light' && key !== 'none' && loadout.R === key) loadout.R = 'none';
+        } else {
+            if (WEAPONS[loadout.R]?.twoHanded) loadout.L = 'none';
+            loadout.R = key;
+            if (loadout.chassis !== 'light' && key !== 'none' && loadout.L === key) loadout.L = 'none';
+        }
+    } else if (slotId === 'M') {
+        loadout.mod = key;
+    } else if (slotId === 'S') {
+        loadout.shld = key;
+    } else if (slotId === 'G') {
+        loadout.leg = key;
+    } else if (slotId === 'A') {
+        loadout.aug = key;
+    }
+    _pvpOpenSlot = null;
+    _pvpRenderHangar();
+}
+
+function _pvpSelectColor(hexStr, hexNum) {
+    loadout.color = hexNum;
+    _pvpOpenSlot = null;
+    _pvpRenderHangar();
+}
+
+function _pvpSetChassis(ch) {
+    loadout.chassis = ch;
+    // Reset slots that are no longer valid for this chassis
+    if (!CHASSIS_WEAPONS[ch]?.has(loadout.L)) loadout.L = 'none';
+    if (!CHASSIS_WEAPONS[ch]?.has(loadout.R)) loadout.R = 'none';
+    if (!CHASSIS_MODS[ch]?.has(loadout.mod)) loadout.mod = 'none';
+    if (!CHASSIS_SHIELDS[ch]?.has(loadout.shld)) loadout.shld = 'none';
+    if (!CHASSIS_LEGS[ch]?.has(loadout.leg)) loadout.leg = 'none';
+    if (!CHASSIS_AUGS[ch]?.has(loadout.aug)) loadout.aug = 'none';
+    // Apply a starter weapon if none selected
+    const starter = typeof STARTER_LOADOUTS !== 'undefined' ? STARTER_LOADOUTS[ch] : null;
+    if (starter && loadout.L === 'none') loadout.L = starter.L;
+    if (starter && loadout.shld === 'none') loadout.shld = starter.shld;
+    _pvpRenderHangar();
+}
+
+function _pvpJoinLobby() {
+    mpHidePvpHangar();
+    mpShowLobby();
+    mpConnect();
+}
+
+function _pvpBackToMenu() {
+    mpHidePvpHangar();
+    const menu = document.getElementById('main-menu');
+    if (menu) { menu.style.display = ''; menu.style.opacity = '1'; }
 }
 
 // ================================================================

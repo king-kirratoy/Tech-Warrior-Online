@@ -12977,16 +12977,15 @@ function startMultiplayer() {
         _playerCallsign = csVal || (localStorage.getItem ? (localStorage.getItem('tw_callsign') || 'ANONYMOUS') : 'ANONYMOUS');
         if (_playerCallsign && localStorage.setItem) localStorage.setItem('tw_callsign', _playerCallsign);
     }
-    // Fade out main menu
+    // Fade out main menu → show PVP hangar for loadout configuration
     const menu = document.getElementById('main-menu');
     if (menu) {
         menu.style.transition = 'opacity 0.6s ease';
         menu.style.opacity = '0';
         setTimeout(() => {
             menu.style.display = 'none';
-            // Show lobby UI and connect
-            mpShowLobby();
-            mpConnect();
+            // Show PVP hangar for mech buildout before joining lobby
+            mpShowPvpHangar();
         }, 600);
     }
 }
