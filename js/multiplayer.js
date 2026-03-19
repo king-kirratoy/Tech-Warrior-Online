@@ -29,6 +29,8 @@ let _mpMapSize = 6000;          // PVP map size (larger than standard 4000)
 let _mpChatOpen = false;        // Is in-game chat input open?
 let _mpRespawning = false;      // Are we in respawn countdown?
 let _mpRespawnInvuln = false;   // Brief invulnerability after respawn
+let _mpRemoteBodies = null;     // Phaser group for all remote player hitbox sprites
+let _mpBulletOverlap = null;    // Collider ref: local bullets vs remote bodies
 
 // ── CONNECT TO SERVER ──────────────────────────────────────────
 
@@ -273,10 +275,17 @@ function mpConnect(serverUrl) {
                 rp.alive = false;
                 if (rp.nameTag?.active) rp.nameTag.setVisible(false);
                 if (rp.body?.body) rp.body.body.enable = false;
-                // Death explosion — same as single-player enemy death
+                // Death explosion — use torso position (always tracked) with
+                // body as fallback, so the explosion appears even if the
+                // invisible hitbox sprite has been deactivated
                 const scene = game?.scene?.scenes[0];
-                if (scene && rp.body?.active) {
-                    const dx = rp.body.x, dy = rp.body.y;
+                const dx = rp.torso?.active ? rp.torso.x
+                         : rp.body?.active  ? rp.body.x
+                         : rp.targetX;
+                const dy = rp.torso?.active ? rp.torso.y
+                         : rp.body?.active  ? rp.body.y
+                         : rp.targetY;
+                if (scene && dx !== undefined) {
                     try {
                         createExplosion(scene, dx, dy, 60, 0);
                         scene.cameras.main.shake(250, 0.008);
@@ -353,6 +362,14 @@ function mpCreateRemotePlayer(scene, info, spawn) {
     body.body.setCircle(hitR);
     body.body.setOffset(2 - hitR, 2 - hitR);
     body.body.setImmovable(true);
+    // Tag body with owning player ID so the shared overlap callback can look up the player
+    body._mpPlayerId = info.id;
+
+    // Add to shared remote-bodies group (overlap registered once in mpDeployPVP)
+    if (!_mpRemoteBodies) {
+        _mpRemoteBodies = scene.physics.add.group({ allowGravity: false });
+    }
+    _mpRemoteBodies.add(body);
 
     // Visual mech torso
     const remoteTorso = buildPlayerMech(scene, chassis, color);
@@ -392,39 +409,6 @@ function mpCreateRemotePlayer(scene, info, spawn) {
         alive: true
     };
     _mpPlayers.set(info.id, rp);
-
-    // Overlap: OUR bullets hit THEIR body
-    // Phaser callback order: (memberOfGroup1, object2) — bullet is from `bullets` group, rpBody is `body`
-    scene.physics.add.overlap(bullets, body, (bullet, rpBody) => {
-        try {
-            if (!bullet?.active) return;
-            // Don't hit dead remote players
-            const rpData = _mpPlayers.get(info.id);
-            if (rpData && !rpData.alive) return;
-            const dmg = bullet.damageValue || 10;
-            const bx = bullet.x, by = bullet.y;
-            bullet.destroy();
-
-            try { createImpactSparks(scene, bx, by); } catch(e) {}
-            try { showDamageText(scene, bx, by, dmg); } catch(e) {}
-            _shotsHit++;
-            _damageDealt += dmg;
-
-            // Show enemy paper doll with remote player's component HP
-            if (rpData?.comp && typeof updateEnemyDoll === 'function') {
-                try {
-                    updateEnemyDoll({
-                        comp: rpData.comp,
-                        loadout: { chassis: rpData.info?.chassis || 'medium' },
-                        _pvpName: rpData.info?.name || 'ENEMY'
-                    });
-                } catch(e) {}
-            }
-        } catch(e) {
-            // Prevent physics world crash from uncaught overlap callback errors
-            console.warn('[MP] Shooter overlap error:', e);
-        }
-    });
 }
 
 function mpDestroyRemotePlayer(playerId) {
@@ -443,15 +427,34 @@ function mpDestroyRemotePlayer(playerId) {
         } catch(e) {}
     }
 
+    // Remove from shared remote-bodies group before destroying
+    if (_mpRemoteBodies && rp.body?.active) {
+        try { _mpRemoteBodies.remove(rp.body); } catch(e) {}
+    }
     try { if (rp.body?.active) rp.body.destroy(); } catch(e) {}
     try { if (rp.torso?.active) rp.torso.destroy(); } catch(e) {}
     try { if (rp.nameTag?.active) rp.nameTag.destroy(); } catch(e) {}
 }
 
 function mpCleanupMatch() {
+    // Remove bullet overlap collider before destroying bodies
+    if (_mpBulletOverlap) {
+        try {
+            const scene = game?.scene?.scenes[0];
+            if (scene) scene.physics.world.removeCollider(_mpBulletOverlap);
+        } catch(e) {}
+        _mpBulletOverlap = null;
+    }
+
     // Destroy all remote players
     _mpPlayers.forEach((rp, id) => mpDestroyRemotePlayer(id));
     _mpPlayers.clear();
+
+    // Destroy remote body group
+    if (_mpRemoteBodies) {
+        try { _mpRemoteBodies.clear(true, true); } catch(e) {}
+        _mpRemoteBodies = null;
+    }
 
     // Destroy remote bullets
     if (_mpPvpBullets) {
@@ -612,16 +615,33 @@ function mpSpawnRemoteBullet(scene, data) {
         });
     }
 
-    // Muzzle flash at the remote player's firing position
+    // Muzzle flash at the remote player's visual position.
+    // Use the remote player's interpolated torso position (what we actually see
+    // on screen) instead of the raw server coordinates, which may be slightly
+    // offset due to network latency + interpolation lag. The flash is placed
+    // at a barrel distance along the shot angle from the torso center.
     try {
         if (typeof createMuzzleFlash === 'function') {
+            const rp = data.shooterId ? _mpPlayers.get(data.shooterId) : null;
+            const flashX = rp?.torso?.active ? rp.torso.x : data.x;
+            const flashY = rp?.torso?.active ? rp.torso.y : data.y;
+            const barrelDist = 35; // distance from torso center to barrel tip
             const flashColor = (data.weapon === 'fth') ? 0xff6600
                              : (data.weapon === 'sr')  ? 0xffffff
                              : (data.weapon === 'plsm') ? 0x00ffff
                              : 0xffffff;
-            createMuzzleFlash(scene, data.x, data.y, data.angle, 0, flashColor);
+            createMuzzleFlash(scene, flashX, flashY, data.angle, barrelDist, flashColor);
         }
     } catch(e) {}
+
+    // Compute bullet origin from the shooter's interpolated visual position
+    // so bullets emerge from the barrel, not from the raw (latency-offset) coords
+    const _rp = data.shooterId ? _mpPlayers.get(data.shooterId) : null;
+    const _baseX = _rp?.torso?.active ? _rp.torso.x : data.x;
+    const _baseY = _rp?.torso?.active ? _rp.torso.y : data.y;
+    const _barrelOff = 35; // barrel distance from torso center
+    const _spawnX = _baseX + Math.cos(data.angle) * _barrelOff;
+    const _spawnY = _baseY + Math.sin(data.angle) * _barrelOff;
 
     // Handle shotgun pellets
     const pelletCount = data.pellets || 1;
@@ -634,7 +654,7 @@ function mpSpawnRemoteBullet(scene, data) {
 
         const bSize = data.bulletSize || 5;
         const bSpeed = data.speed || 800;
-        const b = scene.add.circle(data.x, data.y, bSize, 0xff4444, 0.9).setDepth(11);
+        const b = scene.add.circle(_spawnX, _spawnY, bSize, 0xff4444, 0.9).setDepth(11);
         scene.physics.add.existing(b);
         b.body.setCircle(bSize);
         b.body.allowGravity = false;
@@ -910,6 +930,41 @@ function mpDeployPVP() {
             _isPaused = false;
             try { scene.physics.resume(); } catch(e) {}
             try { scene.time.paused = false; } catch(e) {}
+
+            // Register overlap: local bullets vs all remote player hitboxes.
+            // Done HERE (after physics.resume) so the physics world is fully
+            // active and the collider is guaranteed to be checked every step.
+            if (_mpRemoteBodies && !_mpBulletOverlap) {
+                _mpBulletOverlap = scene.physics.add.overlap(
+                    bullets, _mpRemoteBodies, (bullet, rpBody) => {
+                        try {
+                            if (!bullet?.active) return;
+                            const rpId = rpBody._mpPlayerId;
+                            const rpData = rpId ? _mpPlayers.get(rpId) : null;
+                            if (rpData && !rpData.alive) return;
+                            const dmg = bullet.damageValue || 10;
+                            const bx = bullet.x, by = bullet.y;
+                            bullet.destroy();
+                            try { createImpactSparks(scene, bx, by); } catch(e) {}
+                            try { showDamageText(scene, bx, by, dmg); } catch(e) {}
+                            _shotsHit++;
+                            _damageDealt += dmg;
+                            if (rpData?.comp && typeof updateEnemyDoll === 'function') {
+                                try {
+                                    updateEnemyDoll({
+                                        comp: rpData.comp,
+                                        loadout: { chassis: rpData.info?.chassis || 'medium' },
+                                        _pvpName: rpData.info?.name || 'ENEMY'
+                                    });
+                                } catch(e) {}
+                            }
+                        } catch(e) {
+                            console.warn('[MP] Shooter overlap error:', e);
+                        }
+                    }
+                );
+            }
+
             if (typeof applyAugment === 'function') applyAugment();
             if (typeof applyLegSystem === 'function') applyLegSystem();
 
