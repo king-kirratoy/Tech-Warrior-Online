@@ -456,6 +456,61 @@ function mpCleanupMatch() {
 }
 
 // ================================================================
+// PVP DAMAGE — clean damage path that avoids PvE perk/enemy refs
+// ================================================================
+
+function _mpApplyDamage(rawDmg) {
+    if (!player?.active || !player?.comp) return 0;
+
+    let amt = rawDmg;
+
+    // Chassis DR
+    if (loadout.chassis === 'heavy') amt *= 0.85;
+
+    // Shield absorption (passive shield, not mod shield)
+    if (player.maxShield > 0 && player.shield > 0) {
+        const absorb = player._shieldAbsorb ?? 0.50;
+        const shieldDmg = amt * absorb;
+        player.shield = Math.max(0, player.shield - shieldDmg);
+        amt -= shieldDmg;
+    }
+
+    if (amt <= 0) {
+        try { updateBars(); } catch(e) {}
+        return rawDmg - amt;
+    }
+
+    // Weighted random hit — legs 35%, core 25%, lArm 20%, rArm 20%
+    const r = Math.random();
+    let target = r < 0.35 ? 'legs' : r < 0.60 ? 'core' : r < 0.80 ? 'lArm' : 'rArm';
+    let component = player.comp[target];
+    if (component.hp <= 0 && target !== 'core') component = player.comp.core;
+
+    component.hp = Math.max(0, component.hp - amt);
+
+    // Recalculate total HP
+    player.hp = Object.values(player.comp).reduce((sum, c) => sum + c.hp, 0);
+
+    // Limb destruction
+    if (player.comp.lArm.hp <= 0 && !_lArmDestroyed) {
+        loadout.L = 'none'; _lArmDestroyed = true;
+    }
+    if (player.comp.rArm.hp <= 0 && !_rArmDestroyed) {
+        loadout.R = 'none'; _rArmDestroyed = true;
+    }
+    if (player.comp.legs.hp <= 0 && !_legsDestroyed) {
+        _legsDestroyed = true;
+    }
+
+    try { sndPlayerHit(); } catch(e) {}
+    try { updateBars(); } catch(e) {}
+    try { updatePaperDoll(); } catch(e) {}
+    try { updateHUD(); } catch(e) {}
+
+    return rawDmg;
+}
+
+// ================================================================
 // REMOTE BULLET SPAWNING
 // ================================================================
 
@@ -463,15 +518,13 @@ function mpSpawnRemoteBullet(scene, data) {
     if (!_mpPvpBullets) {
         _mpPvpBullets = scene.physics.add.group({ allowGravity: false });
         // PVP bullets hit local player
-        // Phaser callback order: (memberOfGroup1, object2) — bullet is from `_mpPvpBullets`, playerObj is `player`
         scene.physics.add.overlap(_mpPvpBullets, player, (bullet, playerObj) => {
             try {
                 if (!bullet?.active || !bullet?.body || !player?.active || !isDeployed) return;
                 if (!_mpAlive || _mpRespawning) return;
 
                 const dmg = bullet.damageValue || 15;
-                const shooterId = bullet._shooterId;  // capture before destroy
-                const bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
+                const shooterId = bullet._shooterId;
 
                 if (isShieldActive) {
                     try { sndShieldBlock(); } catch(e) {}
@@ -485,46 +538,25 @@ function mpSpawnRemoteBullet(scene, data) {
                 try { showDamageText(scene, player.x, player.y, dmg, player.shield > 0); } catch(e) {}
                 bullet.destroy();
 
-                // Snapshot HP + shield before damage so we can detect actual change
-                const hpBefore = player.hp || 0;
-                const shieldBefore = player.shield || 0;
+                // Use PVP-specific damage path (bypasses PvE perk/enemy interactions)
+                const actualDmg = _mpApplyDamage(dmg);
 
-                // Force-clear the PvE damage lock — PVP bullets are discrete
-                // events, not sustained overlaps, so each must process damage
-                player.isProcessingDamage = false;
-
-                try {
-                    processPlayerDamage(dmg, bAngle);
-                } catch(e) {
-                    console.warn('[MP] processPlayerDamage error:', e);
-                }
-
-                // Immediately clear lock so the next bullet in this frame
-                // (or the next frame) can also process damage
-                player.isProcessingDamage = false;
-
-                // Calculate actual damage dealt (HP + shield change)
-                const actualHpLoss = (hpBefore - (player.hp || 0)) + (shieldBefore - (player.shield || 0));
-
-                // Only report hit to server if damage was actually applied
-                // (prevents phantom hit reports that cause desync)
-                if (actualHpLoss > 0 && _mpSocket?.connected) {
+                if (actualDmg > 0 && _mpSocket?.connected) {
                     _mpSocket.emit('player-hit', {
                         shooterId: shooterId,
                         victimId: _mpLocalId,
-                        damage: Math.round(actualHpLoss),
+                        damage: Math.round(actualDmg),
                         x: player.x,
                         y: player.y
                     });
                 }
 
-                // Check if we died — deathmatch: notify server, wait for respawn
+                // Check if we died
                 if (player?.comp?.core?.hp <= 0 && _mpAlive) {
                     _mpAlive = false;
                     if (_mpSocket?.connected) {
                         _mpSocket.emit('player-killed', { killerId: shooterId });
                     }
-                    // Hide player visually until respawn
                     try {
                         if (player?.active) { player.setAlpha(0); player.body.setVelocity(0, 0); }
                         if (torso?.active) torso.setAlpha(0);
@@ -533,9 +565,7 @@ function mpSpawnRemoteBullet(scene, data) {
                     isDeployed = false;
                 }
             } catch(e) {
-                // Prevent physics world crash from uncaught overlap callback errors
                 console.warn('[MP] PVP bullet overlap error:', e);
-                if (player) player.isProcessingDamage = false;
             }
         });
 
@@ -563,17 +593,13 @@ function mpSpawnRemoteBullet(scene, data) {
         const b = scene.add.circle(data.x, data.y, bSize, 0xff4444, 0.9).setDepth(11);
         scene.physics.add.existing(b);
         b.body.setCircle(bSize);
+        b.body.allowGravity = false;
         b.damageValue = Math.round((data.damage || 10) / pelletCount);
         b._shooterId = data.shooterId;
-
-        // Add to group BEFORE setting velocity — group.add() can
-        // re-enable physics on the body which resets velocity to 0
         _mpPvpBullets.add(b);
 
-        b.body.setVelocity(
-            Math.cos(angle) * bSpeed,
-            Math.sin(angle) * bSpeed
-        );
+        // Set velocity using velocityFromRotation (matches local bullet code)
+        scene.physics.velocityFromRotation(angle, bSpeed, b.body.velocity);
 
         // Auto-destroy after 2 seconds
         scene.time.delayedCall(2000, () => { if (b?.active) b.destroy(); });
