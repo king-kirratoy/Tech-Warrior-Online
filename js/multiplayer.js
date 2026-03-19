@@ -518,11 +518,11 @@ function mpSpawnRemoteBullet(scene, data) {
     if (!_mpPvpBullets) {
         _mpPvpBullets = scene.physics.add.group({ allowGravity: false });
         // PVP bullets hit local player
-        scene.physics.add.overlap(_mpPvpBullets, player, (bullet, playerObj) => {
+        // Phaser overlap(group, sprite) callback order: (sprite, groupMember) = (player, bullet)
+        scene.physics.add.overlap(_mpPvpBullets, player, (playerObj, bullet) => {
             try {
                 if (!bullet?.active || !bullet?.body) return;
                 if (!player?.active || !isDeployed) {
-                    console.log('[PVP-HIT] Skipped: player.active=' + player?.active + ' isDeployed=' + isDeployed);
                     if (bullet?.active) bullet.destroy();
                     return;
                 }
@@ -546,16 +546,8 @@ function mpSpawnRemoteBullet(scene, data) {
                 try { showDamageText(scene, player.x, player.y, dmg, player.shield > 0); } catch(e) {}
                 bullet.destroy();
 
-                // Snapshot state before damage
-                const coreBefore = player.comp?.core?.hp || 0;
-                const shieldBefore = player.shield || 0;
-
                 // Use PVP-specific damage path (bypasses PvE perk/enemy interactions)
                 const actualDmg = _mpApplyDamage(dmg);
-
-                console.log('[PVP-HIT] dmg=' + dmg + ' coreHP=' + Math.round(coreBefore) + '→' + Math.round(player.comp?.core?.hp || 0)
-                    + ' shield=' + Math.round(shieldBefore) + '→' + Math.round(player.shield || 0)
-                    + ' isDeployed=' + isDeployed + ' active=' + player?.active);
 
                 if (actualDmg > 0 && _mpSocket?.connected) {
                     _mpSocket.emit('player-hit', {
@@ -569,7 +561,6 @@ function mpSpawnRemoteBullet(scene, data) {
 
                 // Check if we died
                 if (player?.comp?.core?.hp <= 0 && _mpAlive) {
-                    console.log('[PVP-HIT] Player died — triggering respawn flow');
                     _mpAlive = false;
                     if (_mpSocket?.connected) {
                         _mpSocket.emit('player-killed', { killerId: shooterId });
@@ -754,14 +745,6 @@ function mpDeployPVP() {
     player = scene.add.rectangle(spawnX, spawnY, legW, legH, 0x000000, 0)
         .setDepth(5);
     scene.physics.add.existing(player);
-
-    // DEBUG: trap destroy to find what's killing the player
-    const _origDestroy = player.destroy.bind(player);
-    player.destroy = function() {
-        console.error('[PVP-DEBUG] player.destroy() called! Stack:', new Error().stack);
-        _origDestroy();
-    };
-
     const hitR = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
     const hitOff = loadout.chassis === 'light' ? -8 : loadout.chassis === 'medium' ? -10 : -12;
     player.body.setCircle(hitR);
