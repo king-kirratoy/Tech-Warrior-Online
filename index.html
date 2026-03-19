@@ -11799,6 +11799,7 @@ function _cleanupGame() {
                 } catch(e) {}
             }
             if (typeof _mpPvpBullets !== 'undefined' && _mpPvpBullets) keep.push(_mpPvpBullets);
+            if (typeof _mpRemoteBodies !== 'undefined' && _mpRemoteBodies) keep.push(_mpRemoteBodies);
         }
         scene.children.list.slice().forEach(obj => {
             if (keep.includes(obj)) return;
