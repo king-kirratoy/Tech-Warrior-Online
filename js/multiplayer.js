@@ -520,8 +520,16 @@ function mpSpawnRemoteBullet(scene, data) {
         // PVP bullets hit local player
         scene.physics.add.overlap(_mpPvpBullets, player, (bullet, playerObj) => {
             try {
-                if (!bullet?.active || !bullet?.body || !player?.active || !isDeployed) return;
-                if (!_mpAlive || _mpRespawning) return;
+                if (!bullet?.active || !bullet?.body) return;
+                if (!player?.active || !isDeployed) {
+                    console.log('[PVP-HIT] Skipped: player.active=' + player?.active + ' isDeployed=' + isDeployed);
+                    if (bullet?.active) bullet.destroy();
+                    return;
+                }
+                if (!_mpAlive || _mpRespawning) {
+                    if (bullet?.active) bullet.destroy();
+                    return;
+                }
 
                 const dmg = bullet.damageValue || 15;
                 const shooterId = bullet._shooterId;
@@ -538,8 +546,16 @@ function mpSpawnRemoteBullet(scene, data) {
                 try { showDamageText(scene, player.x, player.y, dmg, player.shield > 0); } catch(e) {}
                 bullet.destroy();
 
+                // Snapshot state before damage
+                const coreBefore = player.comp?.core?.hp || 0;
+                const shieldBefore = player.shield || 0;
+
                 // Use PVP-specific damage path (bypasses PvE perk/enemy interactions)
                 const actualDmg = _mpApplyDamage(dmg);
+
+                console.log('[PVP-HIT] dmg=' + dmg + ' coreHP=' + Math.round(coreBefore) + '→' + Math.round(player.comp?.core?.hp || 0)
+                    + ' shield=' + Math.round(shieldBefore) + '→' + Math.round(player.shield || 0)
+                    + ' isDeployed=' + isDeployed + ' active=' + player?.active);
 
                 if (actualDmg > 0 && _mpSocket?.connected) {
                     _mpSocket.emit('player-hit', {
@@ -553,6 +569,7 @@ function mpSpawnRemoteBullet(scene, data) {
 
                 // Check if we died
                 if (player?.comp?.core?.hp <= 0 && _mpAlive) {
+                    console.log('[PVP-HIT] Player died — triggering respawn flow');
                     _mpAlive = false;
                     if (_mpSocket?.connected) {
                         _mpSocket.emit('player-killed', { killerId: shooterId });
@@ -2320,9 +2337,40 @@ function _pvpQuitToMenu() {
     mpCleanupMatch();
     _mpSocket?.emit('return-to-lobby');
     mpDisconnect();
+
+    // Reset game state flags
+    isDeployed = false;
+    _gameMode = 'simulation';
+
+    // Hide all in-game HUD elements that may persist
+    const hud = document.getElementById('hud-container');
+    if (hud) hud.style.display = 'none';
+    const minimap = document.getElementById('minimap-wrap');
+    if (minimap) minimap.style.display = 'none';
+    const paperdoll = document.getElementById('paperdoll-container');
+    if (paperdoll) paperdoll.style.display = 'none';
+    const topBtns = document.getElementById('top-left-btns');
+    if (topBtns) topBtns.style.display = 'none';
+
+    // Restore cursor
+    try { document.body.style.cursor = 'default'; } catch(e) {}
+    try { game?.scene?.scenes[0]?.input?.setDefaultCursor('default'); } catch(e) {}
+
+    // Resume physics/timers in case they were paused
+    try {
+        const scene = game?.scene?.scenes[0];
+        if (scene) {
+            scene.physics.resume();
+            scene.time.paused = false;
+            scene.cameras.main.stopFollow();
+            if (scene.hangarOverlay) scene.hangarOverlay.setVisible(true);
+        }
+    } catch(e) {}
+
     // Return to main menu
     const menu = document.getElementById('main-menu');
     if (menu) { menu.style.display = ''; menu.style.opacity = '1'; }
+    if (typeof startMenuGrid === 'function') startMenuGrid();
 }
 
 // ================================================================

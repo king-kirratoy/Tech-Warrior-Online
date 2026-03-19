@@ -3064,6 +3064,16 @@ function update(time) {
     // PVP multiplayer: always interpolate remote players, even when dead/paused
     if (typeof mpUpdate === 'function') mpUpdate(time);
 
+    // PVP safety: if match is active and player is alive but isDeployed got
+    // cleared by a stale PvE code path, force it back to true
+    if (_gameMode === 'pvp' && typeof _mpMatchActive !== 'undefined' && _mpMatchActive
+        && typeof _mpAlive !== 'undefined' && _mpAlive
+        && typeof _mpRespawning !== 'undefined' && !_mpRespawning
+        && !isDeployed) {
+        console.warn('[PVP] isDeployed was false while alive in active match — forcing true');
+        isDeployed = true;
+    }
+
     if (!isDeployed || _isPaused || _roundClearing) return;
 
     // Safety: clear stuck damage processing lock (prevents permanent freeze)
@@ -3077,47 +3087,51 @@ function update(time) {
     }
 
     handleShieldRegen(time);
-    handleEnemyAI(this, time);
+    // Skip PvE enemy AI in PVP (enemies group is empty but avoid any edge cases)
+    if (_gameMode !== 'pvp') handleEnemyAI(this, time);
     handlePlayerMovement(this, time);
     handlePlayerFiring(this);
     handleRageGhosts(this, time);
     syncVisuals(this, time);
     updateCooldownOverlays(time);
     drawMinimap();
-    checkLootPickups(this);
-    checkEquipmentPickups(this);                                                   // → js/loot-system.js
-    if (_extractionActive) _updateExtraction(this);                                // extraction point check
-    // Check for objective-based round end between kills (e.g., survival timer expires)
-    // Skip on boss rounds — boss spawn has an 800ms delay and shouldn't be pre-empted
-    const _isBossRound = _round > 0 && _round % 5 === 0;
-    if (!_extractionActive && _roundActive && !_isBossRound && typeof shouldEndRound === 'function' && shouldEndRound()) {
-        const _scene = this;
-        _roundActive = false;
-        if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
-        // Destroy remaining enemies with full visual cleanup
-        enemies?.getChildren().slice().forEach(e => {
-            try {
-                if (!e.active) return;
-                if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) handleEliteDeath(_scene, e);
-                if (e.visuals?.active) e.visuals.destroy();
-                if (e.torso?.active) e.torso.destroy();
-                if (e.cmdLabel?.active) e.cmdLabel.destroy();
-                if (e.medicLabel?.active) e.medicLabel.destroy();
-                if (e.medicCross?.active) e.medicCross.destroy();
-                if (e._healTimer) e._healTimer.remove();
-                if (e.shieldRing?.active) e.shieldRing.destroy();
-                if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
-                if (e._splitLabel?.active) e._splitLabel.destroy();
-                if (e._onDestroy) e._onDestroy();
-                e.destroy();
-            } catch(ex){}
-        });
-        _roundKills = _roundTotal;
-        _spawnExtractionPoint(_scene);
-        showRoundBanner('OBJECTIVE COMPLETE', 'REACH EXTRACTION POINT', 2500, null);
+    // Skip PvE-only per-frame systems in PVP
+    if (_gameMode !== 'pvp') {
+        checkLootPickups(this);
+        checkEquipmentPickups(this);                                                   // → js/loot-system.js
+        if (_extractionActive) _updateExtraction(this);                                // extraction point check
+        // Check for objective-based round end between kills (e.g., survival timer expires)
+        // Skip on boss rounds — boss spawn has an 800ms delay and shouldn't be pre-empted
+        const _isBossRound = _round > 0 && _round % 5 === 0;
+        if (!_extractionActive && _roundActive && !_isBossRound && typeof shouldEndRound === 'function' && shouldEndRound()) {
+            const _scene = this;
+            _roundActive = false;
+            if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+            // Destroy remaining enemies with full visual cleanup
+            enemies?.getChildren().slice().forEach(e => {
+                try {
+                    if (!e.active) return;
+                    if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) handleEliteDeath(_scene, e);
+                    if (e.visuals?.active) e.visuals.destroy();
+                    if (e.torso?.active) e.torso.destroy();
+                    if (e.cmdLabel?.active) e.cmdLabel.destroy();
+                    if (e.medicLabel?.active) e.medicLabel.destroy();
+                    if (e.medicCross?.active) e.medicCross.destroy();
+                    if (e._healTimer) e._healTimer.remove();
+                    if (e.shieldRing?.active) e.shieldRing.destroy();
+                    if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
+                    if (e._splitLabel?.active) e._splitLabel.destroy();
+                    if (e._onDestroy) e._onDestroy();
+                    e.destroy();
+                } catch(ex){}
+            });
+            _roundKills = _roundTotal;
+            _spawnExtractionPoint(_scene);
+            showRoundBanner('OBJECTIVE COMPLETE', 'REACH EXTRACTION POINT', 2500, null);
+        }
+        if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
+        if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
     }
-    if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
-    if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
     if (typeof updateColossusStand === 'function') updateColossusStand(time);         // → js/loot-system.js (Colossus Frame unique)
 }
 
