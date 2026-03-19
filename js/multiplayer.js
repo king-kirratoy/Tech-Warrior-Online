@@ -612,6 +612,17 @@ function mpSpawnRemoteBullet(scene, data) {
         });
     }
 
+    // Muzzle flash at the remote player's firing position
+    try {
+        if (typeof createMuzzleFlash === 'function') {
+            const flashColor = (data.weapon === 'fth') ? 0xff6600
+                             : (data.weapon === 'sr')  ? 0xffffff
+                             : (data.weapon === 'plsm') ? 0x00ffff
+                             : 0xffffff;
+            createMuzzleFlash(scene, data.x, data.y, data.angle, 0, flashColor);
+        }
+    } catch(e) {}
+
     // Handle shotgun pellets
     const pelletCount = data.pellets || 1;
     for (let i = 0; i < pelletCount; i++) {
@@ -660,6 +671,18 @@ function mpUpdate(time) {
         const newY = currentY + (rp.targetY - currentY) * lerpFactor;
         if (isNaN(newX) || isNaN(newY)) return;
         rp.body.setPosition(newX, newY);
+
+        // Directly sync the physics body position so overlap checks in
+        // the CURRENT frame's physics step use the latest coordinates.
+        // Without this, setPosition() only updates the game object; the
+        // Arcade Physics body doesn't sync until next frame's preUpdate(),
+        // causing a 1-frame positional lag that makes fast bullets miss.
+        if (rp.body.body) {
+            const hw = rp.body.body.halfWidth;
+            const hh = rp.body.body.halfHeight;
+            rp.body.body.position.set(newX - hw, newY - hh);
+            rp.body.body.prev.set(newX - hw, newY - hh);
+        }
 
         // Torso follows body + rotates
         if (rp.torso?.active) {
