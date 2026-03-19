@@ -3085,16 +3085,6 @@ function update(time) {
     // PVP multiplayer: always interpolate remote players, even when dead/paused
     if (typeof mpUpdate === 'function') mpUpdate(time);
 
-    // PVP safety: if match is active and player is alive but isDeployed got
-    // cleared by a stale PvE code path, force it back to true
-    if (_gameMode === 'pvp' && typeof _mpMatchActive !== 'undefined' && _mpMatchActive
-        && typeof _mpAlive !== 'undefined' && _mpAlive
-        && typeof _mpRespawning !== 'undefined' && !_mpRespawning
-        && !isDeployed) {
-        console.warn('[PVP] isDeployed was false while alive in active match — forcing true');
-        isDeployed = true;
-    }
-
     if (!isDeployed || _isPaused || _roundClearing) return;
 
     // Safety: clear stuck damage processing lock (prevents permanent freeze)
