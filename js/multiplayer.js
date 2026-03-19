@@ -173,20 +173,23 @@ function mpConnect(serverUrl) {
         // Detect respawn: player was dead but now sending state with restored HP
         if (!rp.alive && data.hp > 0) {
             rp.alive = true;
+            // Re-enable physics hitbox
+            if (rp.body?.body) rp.body.body.enable = true;
+            // Snap all objects to respawn position
+            if (rp.body?.active) rp.body.setPosition(data.x, data.y);
             if (rp.torso?.active) {
+                rp.torso.setPosition(data.x, data.y);
                 rp.torso.setAlpha(1);
                 rp.torso.setVisible(true);
+                // Force-restore all children in the container
+                rp.torso.each(child => {
+                    if (child) { child.setAlpha(1); child.setVisible(true); }
+                });
             }
-            if (rp.nameTag?.active) rp.nameTag.setVisible(true);
-            if (rp.body?.body) rp.body.body.enable = true;
-            // Snap to new position (respawn teleport, don't lerp from death location)
-            if (rp.body?.active) {
-                rp.body.setPosition(data.x, data.y);
-                // Sync physics body — Rectangle has no preUpdate to do this automatically
-                if (rp.body.body) rp.body.body.updateFromGameObject();
+            if (rp.nameTag?.active) {
+                rp.nameTag.setVisible(true);
+                rp.nameTag.setPosition(data.x, data.y - 50);
             }
-            if (rp.torso?.active) rp.torso.setPosition(data.x, data.y);
-            if (rp.nameTag?.active) rp.nameTag.setPosition(data.x, data.y - 50);
         }
 
         rp.targetX = data.x;
@@ -282,7 +285,10 @@ function mpConnect(serverUrl) {
                     } catch(e) {}
                 }
                 // Hide torso AFTER capturing position for explosion
-                if (rp.torso?.active) rp.torso.setAlpha(0);
+                if (rp.torso?.active) {
+                    rp.torso.setAlpha(0);
+                    rp.torso.setVisible(false);
+                }
             }
         }
 
@@ -328,16 +334,25 @@ function mpCreateRemotePlayer(scene, info, spawn) {
     const chassis = info.chassis || 'medium';
     const color = info.color || 0xff4444;
 
-    // Physics body for collision detection with our bullets
-    const body = scene.add.rectangle(spawnPos.x, spawnPos.y, 40, 40, 0x000000, 0)
+    // Physics body for collision detection with our bullets.
+    // MUST use a Sprite (not Rectangle/Zone/Image) because only Sprites have
+    // preUpdate() which auto-syncs the physics body position each frame.
+    // Without preUpdate, setPosition() moves the visual but the physics body
+    // stays at the old coordinates, causing bullets to pass through.
+    if (!scene.textures.exists('_mpBlank')) {
+        const g = scene.make.graphics({ add: false });
+        g.fillStyle(0x000000, 0);
+        g.fillRect(0, 0, 4, 4);
+        g.generateTexture('_mpBlank', 4, 4);
+        g.destroy();
+    }
+    const body = scene.physics.add.sprite(spawnPos.x, spawnPos.y, '_mpBlank')
+        .setVisible(false)
         .setDepth(5);
-    scene.physics.add.existing(body);
     const hitR = chassis === 'light' ? 24 : chassis === 'medium' ? 32 : 42;
     body.body.setCircle(hitR);
-    body.body.setOffset(20 - hitR, 20 - hitR);
+    body.body.setOffset(2 - hitR, 2 - hitR);
     body.body.setImmovable(true);
-    // Sync physics body to initial position (Rectangle has no preUpdate)
-    body.body.updateFromGameObject();
 
     // Visual mech torso
     const remoteTorso = buildPlayerMech(scene, chassis, color);
@@ -645,8 +660,6 @@ function mpUpdate(time) {
         const newY = currentY + (rp.targetY - currentY) * lerpFactor;
         if (isNaN(newX) || isNaN(newY)) return;
         rp.body.setPosition(newX, newY);
-        // Rectangle doesn't have preUpdate, so manually sync physics body
-        if (rp.body.body) rp.body.body.updateFromGameObject();
 
         // Torso follows body + rotates
         if (rp.torso?.active) {
@@ -660,6 +673,9 @@ function mpUpdate(time) {
 
         // Name tag follows
         if (rp.nameTag?.active) rp.nameTag.setPosition(newX, newY - 50);
+
+        // Ensure torso is visible while alive (respawn may have cleared visibility)
+        if (rp.torso?.active && !rp.torso.visible) rp.torso.setVisible(true);
 
         // Stale check — if no update for 3s, fade out
         if (now - rp.lastUpdate > 3000 && rp.torso?.active) {
