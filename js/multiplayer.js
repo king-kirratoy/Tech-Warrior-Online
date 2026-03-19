@@ -175,8 +175,6 @@ function mpConnect(serverUrl) {
             rp.alive = true;
             if (rp.torso?.active) rp.torso.setAlpha(1);
             if (rp.nameTag?.active) rp.nameTag.setVisible(true);
-            if (rp.hpBarBg?.active) rp.hpBarBg.setVisible(true);
-            if (rp.hpBar?.active) rp.hpBar.setVisible(true);
             if (rp.body?.body) rp.body.body.enable = true;
             // Snap to new position (respawn teleport, don't lerp from death location)
             if (rp.body?.active) rp.body.setPosition(data.x, data.y);
@@ -193,6 +191,10 @@ function mpConnect(serverUrl) {
         rp.shield = data.shield;
         rp.maxHp = data.maxHp;
         rp.maxShield = data.maxShield;
+        // Update component HP for paper doll
+        if (data.comp) {
+            rp.comp = data.comp;
+        }
         rp.lastUpdate = Date.now();
     });
 
@@ -258,28 +260,21 @@ function mpConnect(serverUrl) {
             } else if (rp) {
                 // Normal kill: hide visuals and disable hitbox until respawn
                 rp.alive = false;
-                if (rp.torso?.active) rp.torso.setAlpha(0);
                 if (rp.nameTag?.active) rp.nameTag.setVisible(false);
-                if (rp.hpBarBg?.active) rp.hpBarBg.setVisible(false);
-                if (rp.hpBar?.active) rp.hpBar.setVisible(false);
                 if (rp.body?.body) rp.body.body.enable = false;
-                // Death explosion visual
+                // Death explosion — same as single-player enemy death
                 const scene = game?.scene?.scenes[0];
                 if (scene && rp.body?.active) {
+                    const dx = rp.body.x, dy = rp.body.y;
                     try {
-                        const dust = scene.add.particles(rp.body.x, rp.body.y, 'smoke', {
-                            lifespan: { min: 400, max: 800 },
-                            scale: { start: 2, end: 0 },
-                            alpha: { start: 0.8, end: 0 },
-                            speed: { min: 60, max: 200 },
-                            angle: { min: 0, max: 360 },
-                            tint: 0xff4400,
-                            quantity: 20,
-                            frequency: -1
-                        }).setDepth(15);
-                        scene.time.delayedCall(1000, () => dust.destroy());
+                        createExplosion(scene, dx, dy, 60, 0);
+                        scene.cameras.main.shake(250, 0.008);
+                        const debrisCol = rp.info?.color || 0xff4444;
+                        spawnDebris(scene, dx, dy, debrisCol);
                     } catch(e) {}
                 }
+                // Hide torso AFTER capturing position for explosion
+                if (rp.torso?.active) rp.torso.setAlpha(0);
             }
         }
 
@@ -331,7 +326,7 @@ function mpCreateRemotePlayer(scene, info, spawn) {
     scene.physics.add.existing(body);
     const hitR = chassis === 'light' ? 24 : chassis === 'medium' ? 32 : 42;
     body.body.setCircle(hitR);
-    body.body.setOffset(-hitR, -hitR);
+    body.body.setOffset(20 - hitR, 20 - hitR);
     body.body.setImmovable(true);
 
     // Visual mech torso
@@ -346,19 +341,11 @@ function mpCreateRemotePlayer(scene, info, spawn) {
         strokeThickness: 3
     }).setOrigin(0.5).setDepth(20);
 
-    // HP bar above name
-    const hpBarBg = scene.add.rectangle(spawnPos.x, spawnPos.y - 38, 50, 5, 0x333333)
-        .setOrigin(0.5).setDepth(19);
-    const hpBar = scene.add.rectangle(spawnPos.x, spawnPos.y - 38, 50, 5, 0x00ff00)
-        .setOrigin(0.5).setDepth(20);
-
     const rp = {
         info: info,
         body: body,
         torso: remoteTorso,
         nameTag: nameTag,
-        hpBarBg: hpBarBg,
-        hpBar: hpBar,
         targetX: spawnPos.x,
         targetY: spawnPos.y,
         targetRotation: 0,
@@ -369,6 +356,13 @@ function mpCreateRemotePlayer(scene, info, spawn) {
         shield: 0,
         maxHp: 100,
         maxShield: 100,
+        // Component HP for paper doll display
+        comp: {
+            core: { hp: 100, max: 100 },
+            lArm: { hp: 100, max: 100 },
+            rArm: { hp: 100, max: 100 },
+            legs: { hp: 100, max: 100 }
+        },
         lastUpdate: Date.now(),
         alive: true
     };
@@ -391,8 +385,16 @@ function mpCreateRemotePlayer(scene, info, spawn) {
             _shotsHit++;
             _damageDealt += dmg;
 
-            // Shooter-side visual feedback only — victim reports the actual hit to server
-            // (no player-hit emit here to avoid duplicate hit reporting)
+            // Show enemy paper doll with remote player's component HP
+            if (rpData?.comp && typeof updateEnemyDoll === 'function') {
+                try {
+                    updateEnemyDoll({
+                        comp: rpData.comp,
+                        loadout: { chassis: rpData.info?.chassis || 'medium' },
+                        _pvpName: rpData.info?.name || 'ENEMY'
+                    });
+                } catch(e) {}
+            }
         } catch(e) {
             // Prevent physics world crash from uncaught overlap callback errors
             console.warn('[MP] Shooter overlap error:', e);
@@ -406,28 +408,19 @@ function mpDestroyRemotePlayer(playerId) {
     rp.alive = false;
 
     // Death explosion visual
-    const scene = game.scene.scenes[0];
+    const scene = game?.scene?.scenes[0];
     if (scene && rp.body?.active) {
+        const dx = rp.body.x, dy = rp.body.y;
         try {
-            const dust = scene.add.particles(rp.body.x, rp.body.y, 'smoke', {
-                lifespan: { min: 400, max: 800 },
-                scale: { start: 2, end: 0 },
-                alpha: { start: 0.8, end: 0 },
-                speed: { min: 60, max: 200 },
-                angle: { min: 0, max: 360 },
-                tint: 0xff4400,
-                quantity: 20,
-                frequency: -1
-            }).setDepth(15);
-            scene.time.delayedCall(1000, () => dust.destroy());
+            createExplosion(scene, dx, dy, 60, 0);
+            const debrisCol = rp.info?.color || 0xff4444;
+            spawnDebris(scene, dx, dy, debrisCol);
         } catch(e) {}
     }
 
     try { if (rp.body?.active) rp.body.destroy(); } catch(e) {}
     try { if (rp.torso?.active) rp.torso.destroy(); } catch(e) {}
     try { if (rp.nameTag?.active) rp.nameTag.destroy(); } catch(e) {}
-    try { if (rp.hpBarBg?.active) rp.hpBarBg.destroy(); } catch(e) {}
-    try { if (rp.hpBar?.active) rp.hpBar.destroy(); } catch(e) {}
 }
 
 function mpCleanupMatch() {
@@ -568,9 +561,14 @@ function mpSpawnRemoteBullet(scene, data) {
                         _mpSocket.emit('player-killed', { killerId: shooterId });
                     }
                     try {
+                        const deathX = player.x, deathY = player.y;
                         if (player?.active) { player.setAlpha(0); player.body.setVelocity(0, 0); }
                         if (torso?.active) torso.setAlpha(0);
                         if (shieldGraphic?.active) shieldGraphic.setVisible(false);
+                        // Death explosion on own mech
+                        createExplosion(scene, deathX, deathY, 60, 0);
+                        scene.cameras.main.shake(300, 0.015);
+                        spawnDebris(scene, deathX, deathY, loadout.color || 0x4488ff);
                     } catch(e) {}
                     isDeployed = false;
                 }
@@ -648,16 +646,8 @@ function mpUpdate(time) {
             );
         }
 
-        // Name tag + HP bar follow
+        // Name tag follows
         if (rp.nameTag?.active) rp.nameTag.setPosition(newX, newY - 50);
-        if (rp.hpBarBg?.active) rp.hpBarBg.setPosition(newX, newY - 38);
-        if (rp.hpBar?.active) {
-            const hpFrac = Math.max(0, rp.hp / (rp.maxHp || 1));
-            const barWidth = 50 * hpFrac;
-            rp.hpBar.setSize(barWidth, 5);
-            rp.hpBar.setPosition(newX - (50 - barWidth) / 2, newY - 38);
-            rp.hpBar.setFillStyle(hpFrac > 0.5 ? 0x00ff00 : hpFrac > 0.25 ? 0xffcc00 : 0xff0000);
-        }
 
         // Stale check — if no update for 3s, fade out
         if (now - rp.lastUpdate > 3000 && rp.torso?.active) {
@@ -689,6 +679,12 @@ function mpSendState() {
         shield: Math.round(player?.shield || 0),
         maxHp: Math.round(player?.comp?.core?.max || 100),
         maxShield: Math.round(player?.maxShield || 0),
+        comp: player?.comp ? {
+            core: { hp: Math.round(player.comp.core.hp), max: Math.round(player.comp.core.max) },
+            lArm: { hp: Math.round(player.comp.lArm.hp), max: Math.round(player.comp.lArm.max) },
+            rArm: { hp: Math.round(player.comp.rArm.hp), max: Math.round(player.comp.rArm.max) },
+            legs: { hp: Math.round(player.comp.legs.hp), max: Math.round(player.comp.legs.max) }
+        } : null,
         firing: false,
         chassis: loadout.chassis,
         color: loadout.color

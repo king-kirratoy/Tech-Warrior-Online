@@ -10635,12 +10635,13 @@ function updateEnemyDoll(e) {
     const label = document.getElementById('edoll-label');
     if (label) {
         const _elitePrefix = e._eliteMods?.length ? e._eliteMods.map(k => (typeof ELITE_MODIFIERS !== 'undefined' ? ELITE_MODIFIERS[k]?.label : k)).join(' ') + ' ' : '';
-        label.innerText = e.isCommander ? '[ COMMANDER ]'
+        label.innerText = e._pvpName ? `[ ${e._pvpName} ]`
+            : e.isCommander ? '[ COMMANDER ]'
             : _typeDef ? `[ ${_elitePrefix}${_typeDef.label} ]`
             : e.isMedic ? '[ MEDIC ]'
             : _elitePrefix ? `[ ${_elitePrefix.trim()} ${(e.loadout?.chassis?.toUpperCase() || 'TARGET')} ]`
             : (e.loadout?.chassis?.toUpperCase() || 'TARGET');
-        const _labelCol = e.isCommander ? '#ddaa00' : _typeDef ? _typeDef.labelColor : e.isMedic ? '#00ff88' : e.isElite ? (typeof ELITE_MODIFIERS !== 'undefined' && e._eliteMods?.[0] ? ELITE_MODIFIERS[e._eliteMods[0]].color : '#ff8800') : '#c8d2d9';
+        const _labelCol = e._pvpName ? '#ff4444' : e.isCommander ? '#ddaa00' : _typeDef ? _typeDef.labelColor : e.isMedic ? '#00ff88' : e.isElite ? (typeof ELITE_MODIFIERS !== 'undefined' && e._eliteMods?.[0] ? ELITE_MODIFIERS[e._eliteMods[0]].color : '#ff8800') : '#c8d2d9';
         label.style.color = _labelCol;
         label.style.opacity = '0.8';
     }

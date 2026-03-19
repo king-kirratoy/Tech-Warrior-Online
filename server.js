@@ -148,6 +148,7 @@ io.on('connection', (socket) => {
             shield: data.shield,
             maxHp: data.maxHp,
             maxShield: data.maxShield,
+            comp: data.comp || null,
             firing: data.firing,
             chassis: data.chassis,
             color: data.color
