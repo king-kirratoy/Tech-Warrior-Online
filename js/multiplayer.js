@@ -173,12 +173,20 @@ function mpConnect(serverUrl) {
         // Detect respawn: player was dead but now sending state with restored HP
         if (!rp.alive && data.hp > 0) {
             rp.alive = true;
-            if (rp.torso?.active) rp.torso.setAlpha(1);
+            if (rp.torso?.active) {
+                rp.torso.setAlpha(1);
+                rp.torso.setVisible(true);
+            }
             if (rp.nameTag?.active) rp.nameTag.setVisible(true);
             if (rp.body?.body) rp.body.body.enable = true;
             // Snap to new position (respawn teleport, don't lerp from death location)
-            if (rp.body?.active) rp.body.setPosition(data.x, data.y);
+            if (rp.body?.active) {
+                rp.body.setPosition(data.x, data.y);
+                // Sync physics body — Rectangle has no preUpdate to do this automatically
+                if (rp.body.body) rp.body.body.updateFromGameObject();
+            }
             if (rp.torso?.active) rp.torso.setPosition(data.x, data.y);
+            if (rp.nameTag?.active) rp.nameTag.setPosition(data.x, data.y - 50);
         }
 
         rp.targetX = data.x;
@@ -328,6 +336,8 @@ function mpCreateRemotePlayer(scene, info, spawn) {
     body.body.setCircle(hitR);
     body.body.setOffset(20 - hitR, 20 - hitR);
     body.body.setImmovable(true);
+    // Sync physics body to initial position (Rectangle has no preUpdate)
+    body.body.updateFromGameObject();
 
     // Visual mech torso
     const remoteTorso = buildPlayerMech(scene, chassis, color);
@@ -635,6 +645,8 @@ function mpUpdate(time) {
         const newY = currentY + (rp.targetY - currentY) * lerpFactor;
         if (isNaN(newX) || isNaN(newY)) return;
         rp.body.setPosition(newX, newY);
+        // Rectangle doesn't have preUpdate, so manually sync physics body
+        if (rp.body.body) rp.body.body.updateFromGameObject();
 
         // Torso follows body + rotates
         if (rp.torso?.active) {
