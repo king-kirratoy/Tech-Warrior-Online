@@ -328,7 +328,7 @@ function mpCreateRemotePlayer(scene, info, spawn) {
     const body = scene.add.rectangle(spawnPos.x, spawnPos.y, 40, 40, 0x000000, 0)
         .setDepth(5);
     scene.physics.add.existing(body);
-    const hitR = chassis === 'light' ? 16 : chassis === 'medium' ? 22 : 30;
+    const hitR = chassis === 'light' ? 24 : chassis === 'medium' ? 32 : 42;
     body.body.setCircle(hitR);
     body.body.setOffset(-hitR, -hitR);
     body.body.setImmovable(true);
@@ -745,8 +745,8 @@ function mpDeployPVP() {
     player = scene.add.rectangle(spawnX, spawnY, legW, legH, 0x000000, 0)
         .setDepth(5);
     scene.physics.add.existing(player);
-    const hitR = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
-    const hitOff = loadout.chassis === 'light' ? -8 : loadout.chassis === 'medium' ? -10 : -12;
+    const hitR = loadout.chassis === 'light' ? 24 : loadout.chassis === 'medium' ? 32 : 42;
+    const hitOff = loadout.chassis === 'light' ? -12 : loadout.chassis === 'medium' ? -14 : -16;
     player.body.setCircle(hitR);
     player.body.setOffset(-hitR, hitOff);
     player.setScale(s.scale);
@@ -1925,7 +1925,7 @@ function generatePvpCover(scene, mapSize) {
 function mpNudgeOutOfCover(scene) {
     if (!player?.active || !coverObjects) return;
     const px = player.x, py = player.y;
-    const hitR = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
+    const hitR = loadout.chassis === 'light' ? 24 : loadout.chassis === 'medium' ? 32 : 42;
 
     // Check overlap with each cover object
     const covers = coverObjects.getChildren();
