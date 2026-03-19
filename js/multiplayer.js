@@ -28,6 +28,7 @@ let _mpKillsToWin = 25;        // Deathmatch kill target
 let _mpMapSize = 6000;          // PVP map size (larger than standard 4000)
 let _mpChatOpen = false;        // Is in-game chat input open?
 let _mpRespawning = false;      // Are we in respawn countdown?
+let _mpRespawnInvuln = false;   // Brief invulnerability after respawn
 
 // ── CONNECT TO SERVER ──────────────────────────────────────────
 
@@ -328,7 +329,7 @@ function mpCreateRemotePlayer(scene, info, spawn) {
     const body = scene.add.rectangle(spawnPos.x, spawnPos.y, 40, 40, 0x000000, 0)
         .setDepth(5);
     scene.physics.add.existing(body);
-    const hitR = chassis === 'light' ? 16 : chassis === 'medium' ? 22 : 30;
+    const hitR = chassis === 'light' ? 24 : chassis === 'medium' ? 32 : 42;
     body.body.setCircle(hitR);
     body.body.setOffset(-hitR, -hitR);
     body.body.setImmovable(true);
@@ -443,6 +444,7 @@ function mpCleanupMatch() {
     if (_mpStateInterval) { clearInterval(_mpStateInterval); _mpStateInterval = null; }
     _mpMatchActive = false;
     _mpRespawning = false;
+    _mpRespawnInvuln = false;
     _mpKillFeed = [];
     _mpScoreboard = {};
 
@@ -526,7 +528,7 @@ function mpSpawnRemoteBullet(scene, data) {
                     if (bullet?.active) bullet.destroy();
                     return;
                 }
-                if (!_mpAlive || _mpRespawning) {
+                if (!_mpAlive || _mpRespawning || _mpRespawnInvuln) {
                     if (bullet?.active) bullet.destroy();
                     return;
                 }
@@ -745,8 +747,8 @@ function mpDeployPVP() {
     player = scene.add.rectangle(spawnX, spawnY, legW, legH, 0x000000, 0)
         .setDepth(5);
     scene.physics.add.existing(player);
-    const hitR = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
-    const hitOff = loadout.chassis === 'light' ? -8 : loadout.chassis === 'medium' ? -10 : -12;
+    const hitR = loadout.chassis === 'light' ? 24 : loadout.chassis === 'medium' ? 32 : 42;
+    const hitOff = loadout.chassis === 'light' ? -12 : loadout.chassis === 'medium' ? -14 : -16;
     player.body.setCircle(hitR);
     player.body.setOffset(-hitR, hitOff);
     player.setScale(s.scale);
@@ -1441,12 +1443,19 @@ function mpRespawnPlayer() {
 
     // Brief invulnerability flash
     if (player?.active) {
+        _mpRespawnInvuln = true;
         scene.tweens.add({
             targets: [player, torso],
             alpha: { from: 0.3, to: 1 },
             duration: 200,
             repeat: 5,
-            yoyo: true
+            yoyo: true,
+            onComplete: () => {
+                // Ensure alpha is fully restored after flash ends
+                if (player?.active) player.setAlpha(1);
+                if (torso?.active) torso.setAlpha(1);
+                _mpRespawnInvuln = false;
+            }
         });
     }
 
@@ -1925,7 +1934,7 @@ function generatePvpCover(scene, mapSize) {
 function mpNudgeOutOfCover(scene) {
     if (!player?.active || !coverObjects) return;
     const px = player.x, py = player.y;
-    const hitR = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
+    const hitR = loadout.chassis === 'light' ? 24 : loadout.chassis === 'medium' ? 32 : 42;
 
     // Check overlap with each cover object
     const covers = coverObjects.getChildren();
