@@ -28,6 +28,7 @@ let _mpKillsToWin = 25;        // Deathmatch kill target
 let _mpMapSize = 6000;          // PVP map size (larger than standard 4000)
 let _mpChatOpen = false;        // Is in-game chat input open?
 let _mpRespawning = false;      // Are we in respawn countdown?
+let _mpRespawnInvuln = false;   // Brief invulnerability after respawn
 
 // ── CONNECT TO SERVER ──────────────────────────────────────────
 
@@ -443,6 +444,7 @@ function mpCleanupMatch() {
     if (_mpStateInterval) { clearInterval(_mpStateInterval); _mpStateInterval = null; }
     _mpMatchActive = false;
     _mpRespawning = false;
+    _mpRespawnInvuln = false;
     _mpKillFeed = [];
     _mpScoreboard = {};
 
@@ -526,7 +528,7 @@ function mpSpawnRemoteBullet(scene, data) {
                     if (bullet?.active) bullet.destroy();
                     return;
                 }
-                if (!_mpAlive || _mpRespawning) {
+                if (!_mpAlive || _mpRespawning || _mpRespawnInvuln) {
                     if (bullet?.active) bullet.destroy();
                     return;
                 }
@@ -1441,12 +1443,19 @@ function mpRespawnPlayer() {
 
     // Brief invulnerability flash
     if (player?.active) {
+        _mpRespawnInvuln = true;
         scene.tweens.add({
             targets: [player, torso],
             alpha: { from: 0.3, to: 1 },
             duration: 200,
             repeat: 5,
-            yoyo: true
+            yoyo: true,
+            onComplete: () => {
+                // Ensure alpha is fully restored after flash ends
+                if (player?.active) player.setAlpha(1);
+                if (torso?.active) torso.setAlpha(1);
+                _mpRespawnInvuln = false;
+            }
         });
     }
 
