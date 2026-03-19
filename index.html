@@ -11591,17 +11591,24 @@ function _cleanupGame() {
             scene.hangarOverlay, scene._bfGrid,
             bullets, enemyBullets, enemies, coverObjects
         ].filter(Boolean);
-        // In PVP, also keep all remote player objects and PVP bullet group
-        if (_gameMode === 'pvp' && typeof _mpPlayers !== 'undefined') {
-            try {
-                _mpPlayers.forEach(rp => {
-                    if (rp.body) keep.push(rp.body);
-                    if (rp.torso) keep.push(rp.torso);
-                    if (rp.nameTag) keep.push(rp.nameTag);
-                    if (rp.hpBarBg) keep.push(rp.hpBarBg);
-                    if (rp.hpBar) keep.push(rp.hpBar);
-                });
-            } catch(e) {}
+        // In PVP, also keep the local player, torso, shield, remote players, and bullet group
+        if (_gameMode === 'pvp') {
+            if (player) keep.push(player);
+            if (torso) keep.push(torso);
+            if (typeof shieldGraphic !== 'undefined' && shieldGraphic) keep.push(shieldGraphic);
+            if (typeof glowWedge !== 'undefined' && glowWedge) keep.push(glowWedge);
+            if (typeof crosshair !== 'undefined' && crosshair) keep.push(crosshair);
+            if (typeof _mpPlayers !== 'undefined') {
+                try {
+                    _mpPlayers.forEach(rp => {
+                        if (rp.body) keep.push(rp.body);
+                        if (rp.torso) keep.push(rp.torso);
+                        if (rp.nameTag) keep.push(rp.nameTag);
+                        if (rp.hpBarBg) keep.push(rp.hpBarBg);
+                        if (rp.hpBar) keep.push(rp.hpBar);
+                    });
+                } catch(e) {}
+            }
             if (typeof _mpPvpBullets !== 'undefined' && _mpPvpBullets) keep.push(_mpPvpBullets);
         }
         scene.children.list.slice().forEach(obj => {

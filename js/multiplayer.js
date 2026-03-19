@@ -754,6 +754,14 @@ function mpDeployPVP() {
     player = scene.add.rectangle(spawnX, spawnY, legW, legH, 0x000000, 0)
         .setDepth(5);
     scene.physics.add.existing(player);
+
+    // DEBUG: trap destroy to find what's killing the player
+    const _origDestroy = player.destroy.bind(player);
+    player.destroy = function() {
+        console.error('[PVP-DEBUG] player.destroy() called! Stack:', new Error().stack);
+        _origDestroy();
+    };
+
     const hitR = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
     const hitOff = loadout.chassis === 'light' ? -8 : loadout.chassis === 'medium' ? -10 : -12;
     player.body.setCircle(hitR);
