@@ -3201,9 +3201,11 @@ function handleShieldRegen(time) {
         }
         updateBars();
     }
-    // Auto-repair: regenerate core HP slowly
-    if (_perkState.autoRepair > 0 && player?.comp?.core && player.comp.core.hp < player.comp.core.max) {
-        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + (game.loop.delta / 1000) * _perkState.autoRepair);
+    // Auto-repair: regenerate core HP slowly.
+    // _gearState.autoRepair (from armor/augment gear) stacks with the perk value.
+    const _totalAutoRepair = (_perkState.autoRepair || 0) + (_gearState?.autoRepair || 0);
+    if (_totalAutoRepair > 0 && player?.comp?.core && player.comp.core.hp < player.comp.core.max) {
+        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + (game.loop.delta / 1000) * _totalAutoRepair);
         updateBars(); updatePaperDoll();
     }
     // Hit-and-run timer expiry
@@ -5983,10 +5985,12 @@ function deployMech() {
     player.shield    = _shldSys.maxShield + _gShieldHP;
     player._shieldRegenRate  = _shldSys.regenRate;
     player._shieldRegenDelay = _shldSys.regenDelay;
-    // Absorb from shield definition; medium chassis gets +10% absorb bonus on top
+    // Absorb from shield definition; medium chassis gets +10% absorb bonus on top.
+    // _gearState.absorbPct (from absorb_matrix base stat or shield affixes) stacks additively.
     const _shldAbsorbBase = _shldSys.absorb ?? 0.50;
     const _chassisBonus   = loadout.chassis === 'medium' ? 0.10 : 0;
-    player._shieldAbsorb  = Math.min(0.90, _shldAbsorbBase + _chassisBonus);
+    const _gearAbsorb     = ((_gearState?.absorbPct || 0) / 100);
+    player._shieldAbsorb  = Math.min(0.90, _shldAbsorbBase + _chassisBonus + _gearAbsorb);
     // Per-shield state
     player._shieldFlickerHit  = false;  // flicker_shield: tracks odd/even hits
     player._shieldAdaptStack  = 0;      // adaptive_shield: consecutive hit count
@@ -6809,7 +6813,8 @@ function activateShield(scene) {
     }
     // Thorns Protocol: reflect damage to attackers while shield is up — handled in processPlayerDamage
     // Capacitor Armor: tracked in processPlayerDamage
-    const _barrierDur = WEAPONS.barrier.shieldTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _barrierDur = WEAPONS.barrier.shieldTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
     scene.time.delayedCall(_barrierDur, () => {
         isShieldActive = false;
         sndShieldDeactivate();
@@ -6821,7 +6826,8 @@ function activateRage(scene) {
     sndRage();
     isRageActive = true;
     refreshMechColor();
-    const _rageDur = WEAPONS.rage.rageTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * (_perkState.rageDurMult || 1);
+    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _rageDur = WEAPONS.rage.rageTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * (_perkState.rageDurMult || 1) * _gearModEffMult;
     scene.time.delayedCall(_rageDur, () => {
         isRageActive = false;
         refreshMechColor();
@@ -6847,7 +6853,8 @@ function activateEMP(scene, time) {
     enemies.getChildren().forEach(enemy => {
         const _empRad  = WEAPONS.emp.radius  * (_perkState.empAmplifier ? 1.30 : 1.0);
     const _empAmpMult = (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify')) ? 1.5 : 1;
-    const _empStun = WEAPONS.emp.stunTime * (_perkState.empAmplifier ? 1.40 : 1.0) * _empAmpMult;
+    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _empStun = WEAPONS.emp.stunTime * (_perkState.empAmplifier ? 1.40 : 1.0) * _empAmpMult * _gearModEffMult;
     if (Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y) < _empRad) {
             enemy.isStunned = true;
             if (enemy.visuals?.setStrokeStyle) enemy.visuals.setStrokeStyle(4, 0x00ffff);
@@ -6869,7 +6876,8 @@ function activateGhostStep(scene, time) {
     _perkState._ghostStepActive = true;
     // Make player sprite semi-transparent
     if (torso) torso.setAlpha(0.15);
-    const _gsCloakDur = WEAPONS.ghost_step.cloakTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _gsCloakDur = WEAPONS.ghost_step.cloakTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
     const _gTimer = scene.time.delayedCall(_gsCloakDur, () => {
         _perkState._ghostStepActive = false;
         if (torso?.active) torso.setAlpha(1);
@@ -6884,7 +6892,8 @@ function activateOverclockBurst(scene, time) {
     _perkState._overclockBurst = true;
     _perkState.speedMult = (_perkState.speedMult || 1) * 1.20;
     _perkState._overclockReloadMult = 0.75; // 25% faster fire rate
-    const _obDur = WEAPONS.overclock_burst.boostTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _obDur = WEAPONS.overclock_burst.boostTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
     scene.time.delayedCall(_obDur, () => {
         _perkState._overclockBurst = false;
         _perkState.speedMult = (_perkState.speedMult || 1.20) / 1.20;
@@ -6903,7 +6912,8 @@ function activateFortressMode(scene, time) {
         player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + Math.round(1 * (1 + (_perkState.fmHeal || 0)))); // 5 HP/s base; fmHeal perk scales this
         updateHUD();
     }});
-    const _fmDur = WEAPONS.fortress_mode.modeTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _fmDur = WEAPONS.fortress_mode.modeTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
     scene.time.delayedCall(_fmDur, () => {
         _perkState._fortressMode = false;
         _perkState._fortressDR = 0;
@@ -9448,7 +9458,12 @@ function fire(scene, side) {
     const _gearDmgPct  = 1 + ((_gearState?.dmgPct || 0) / 100);
     const _colossusMult = (typeof getColossusDmgMult === 'function') ? getColossusDmgMult() : 1.0;
     const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult);
-    const _wEff = Object.assign({}, weapon, { dmg: _effectiveDmg });
+    // Apply gear splash radius bonus to explosion weapons (GL, RL, PLSM, siege).
+    const _gearSplashMult = 1 + ((_gearState?.splashRadius || 0) / 100);
+    const _wEff = Object.assign({}, weapon, {
+        dmg: _effectiveDmg,
+        ...(weapon.radius ? { radius: Math.round(weapon.radius * _gearSplashMult) } : {})
+    });
     // Phantom: mark all bullets from this shot as piercing
     if (_phantomMult > 1) _wEff._phantomPierce = true;
     // Ballistic Weave: bullets ignore 20% of shield
@@ -9702,7 +9717,7 @@ function fireSIEGE(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
 function fireSG(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
     armOx = armOx ?? torso.x; armOy = armOy ?? torso.y; aimAngle = aimAngle ?? torso.rotation;
     const spread = 0.3;
-    const _totalPellets = weapon.pellets + (_perkState.sgFlechette || 0);
+    const _totalPellets = weapon.pellets + (_perkState.sgFlechette || 0) + (_gearState?.pellets || 0);
     for (let i = 0; i < _totalPellets; i++) {
         const offset = (Math.random() - 0.5) * spread;
         const b = scene.add.circle(armOx, armOy, weapon.bulletSize, 0xffff00);
@@ -10265,7 +10280,9 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     // Critical hit
     const _totalCrit = (_perkState.critChance || 0) + ((_gearState?.critChance || 0) / 100);
     if (!explosive && _totalCrit > 0 && Math.random() < _totalCrit) {
-        amt *= 2;
+        // Base crit = 2× damage. _gearState.critDmg adds extra multiplier (e.g. +15 → 2.15×).
+        const _critMult = 2 + ((_gearState?.critDmg || 0) / 100);
+        amt *= _critMult;
         const scene = game.scene.scenes[0];
         const critTxt = scene.add.text(e.x, e.y - 25, 'CRIT!', {
             font:'bold 16px monospace', fill:'#ffff00', stroke:'#000', strokeThickness:3
@@ -12319,7 +12336,10 @@ function _unequipItem(slotKey) {
     const item = _equipped[slotKey];
     if (!item) return;
     if (_inventory.length >= INVENTORY_MAX) {
-        return; // inventory full
+        // Inventory full — show feedback so the player knows why nothing happened
+        const _sc = game?.scene?.scenes[0];
+        if (_sc && typeof _showFloatingWarning === 'function') _showFloatingWarning(_sc, 'INVENTORY FULL', '#ff4444');
+        return;
     }
     _inventory.push(item);
     _equipped[slotKey] = null;

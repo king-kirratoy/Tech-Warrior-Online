@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 20, 2026
+Last updated: March 20, 2026 (v3.4)
 
 ---
 
@@ -80,8 +80,11 @@ loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js
 **Lives in:** `js/loot-system.js`
 **What it does:** Generates randomized items with rarity (Common→Legendary), rolled affixes from `AFFIX_POOL`, and base stats from `ITEM_BASES`. Ground drops render with floating animations and rarity glow effects. Player walks over to pick up. Items go to `_inventory[]`. Gear equipped to `_equipped{}` affects `_gearState{}` via `recalcGearStats()`.
 **Key constants:** `RARITY_DEFS` (colors, scrap values, affix counts), `AFFIX_POOL` (stat modifiers with weights/ranges), `INVENTORY_MAX=30`
-**Gear stat keys:** `dmgFlat` `dmgPct` `critChance` `reloadPct` `coreHP` `armHP` `legHP` `allHP` `dr` `shieldHP` `shieldRegen` `dodgePct` `speedPct` `modCdPct` `modEffPct` `lootMult` `autoRepair`
-**Connects to:** `damageEnemy()` → death triggers `spawnEquipmentLoot()`, `deployMech()` calls `recalcGearStats()` to apply gear HP bonuses, `populateInventory()` renders the GEAR tab
+**Gear stat keys (all applied in gameplay as of v3.4):** `dmgFlat` `dmgPct` `critChance` `critDmg` `reloadPct` `coreHP` `armHP` `legHP` `allHP` `dr` `shieldHP` `shieldRegen` `absorbPct` `dodgePct` `speedPct` `modCdPct` `modEffPct` `lootMult` `autoRepair` `pellets` `splashRadius`
+**Gear stat keys (accumulated but no gameplay effect yet):** `accuracy` — no general accuracy system exists; stat is displayed in stat overlay only
+**Unique effects stubbed (Phase 7):** `echoStrike` (Echo Frame), `mirrorShot` (Mirror Shard) — effect keys registered, stubs exist, procs not yet wired
+**2H weapons excluded from loot drops:** `siege` and `chain` cannot drop as loot items (equip system can only set one arm slot at a time; 2H locking requires both slots share the same key)
+**Connects to:** `damageEnemy()` → death triggers `spawnEquipmentLoot()`, `deployMech()` calls `recalcGearStats()` to apply gear HP/shield bonuses, `populateInventory()` renders the GEAR tab
 
 ### Audio Engine
 **Lives in:** `index.html` — `_tone()`, `_noise()`, `sndFire()`, `sndExplosion()`, `sndEnemyDeath()`, etc.
