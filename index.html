@@ -4769,24 +4769,6 @@ function showRoundBanner(title, sub, duration, onDone) {
     }, duration);
 }
 
-function _showArenaLabel(scene, arenaLabel, objLabel) {
-    const el = document.getElementById('arena-label');
-    const txt = document.getElementById('arena-label-text');
-    if (!el || !txt) return;
-    const arenaDef = typeof ARENA_DEFS !== 'undefined' ? ARENA_DEFS[_arenaState?.currentArena] : null;
-    const color = arenaDef?.color || '#88aacc';
-    txt.innerHTML = `<span style="color:${color}">${arenaLabel}</span>` +
-        (objLabel ? `<br><span style="font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:3px;">${objLabel}</span>` : '');
-    el.style.display = 'block';
-    el.style.opacity = '0';
-    el.style.transition = 'opacity 0.4s ease';
-    if (typeof sndArenaTransition === 'function') sndArenaTransition();
-    setTimeout(() => { el.style.opacity = '1'; }, 30);
-    setTimeout(() => {
-        el.style.opacity = '0';
-        setTimeout(() => { el.style.display = 'none'; }, 400);
-    }, 3000);
-}
 
 function _clearMapForRound(scene) {
     // Clean up extraction point visuals from previous round
@@ -4909,7 +4891,7 @@ function startRound(roundNum) {
         // Show arena + objective banner
         const aLabel = typeof getArenaLabel === 'function' ? getArenaLabel() : '';
         const oLabel = typeof getObjectiveLabel === 'function' ? getObjectiveLabel() : '';
-        _showArenaLabel(scene, aLabel, oLabel);
+        if (typeof _showArenaLabel === 'function') _showArenaLabel(scene, aLabel, oLabel);
     }
 
     // Boss every 5th round (simulation), or hasBoss flag (campaign)
@@ -12671,31 +12653,10 @@ function _perkReduction(value, base) {
     return `<span class="stat-has-bonus" data-bonus="−${diff} from perks">${Math.round(value)}</span>`;
 }
 
-/** Update the campaign XP bar in the loadout/stats overlay. */
-function _updateCampaignXPBar() {
-    const bar = document.getElementById('campaign-xp-bar');
-    if (!bar) return;
-    if (_gameMode !== 'campaign' || typeof _campaignState === 'undefined') {
-        bar.style.display = 'none';
-        return;
-    }
-    bar.style.display = 'block';
-    const level = _campaignState.playerLevel;
-    const xpCur = _campaignState.playerXP - (typeof getXPForLevel === 'function' ? getXPForLevel(level) : 0);
-    const xpNeeded = (typeof getXPToNextLevel === 'function') ? getXPToNextLevel(level) : 100;
-    const pct = xpNeeded > 0 ? Math.min(100, Math.round((xpCur / xpNeeded) * 100)) : 100;
-
-    const lvEl = document.getElementById('campaign-xp-level');
-    const fillEl = document.getElementById('campaign-xp-fill');
-    const txtEl = document.getElementById('campaign-xp-text');
-    if (lvEl) lvEl.textContent = 'LEVEL ' + level;
-    if (fillEl) fillEl.style.width = pct + '%';
-    if (txtEl) txtEl.textContent = xpCur + ' / ' + xpNeeded + ' XP';
-}
 
 function populateStats() {
     // Update campaign XP bar if in campaign mode
-    _updateCampaignXPBar();
+    if (typeof _updateCampaignXPBar === 'function') _updateCampaignXPBar();
 
     const ch = loadout.chassis;
     const chassisData = CHASSIS[ch];

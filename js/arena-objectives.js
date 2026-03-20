@@ -899,3 +899,23 @@ function getObjectiveLabel() {
     if (!def || _arenaState.currentObjective === 'elimination') return '';
     return `${def.icon} ${def.label}: ${def.desc}`;
 }
+
+// ── Arena label banner ────────────────────────────────────
+function _showArenaLabel(scene, arenaLabel, objLabel) {
+    const el = document.getElementById('arena-label');
+    const txt = document.getElementById('arena-label-text');
+    if (!el || !txt) return;
+    const arenaDef = ARENA_DEFS[_arenaState?.currentArena] || null;
+    const color = arenaDef?.color || '#88aacc';
+    txt.innerHTML = `<span style="color:${color}">${arenaLabel}</span>` +
+        (objLabel ? `<br><span style="font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:3px;">${objLabel}</span>` : '');
+    el.style.display = 'block';
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.4s ease';
+    if (typeof sndArenaTransition === 'function') sndArenaTransition();
+    setTimeout(() => { el.style.opacity = '1'; }, 30);
+    setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => { el.style.display = 'none'; }, 400);
+    }, 3000);
+}
