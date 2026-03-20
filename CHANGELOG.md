@@ -5,6 +5,56 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v3.8 — State Reset Audit
+
+**Date:** 2026-03-20 (Central Time)
+
+Eliminated all stale global state that could carry over between runs, mode switches, and rounds by auditing every cleanup and reset path and adding the missing explicit resets.
+
+### Area 1 — `_cleanupGame()` Missing Resets
+
+- **`_roundClearing` and `_roundActive` not reset in `_cleanupGame()` (index.html):** Both flags were only reset by callers (`returnToHangar`, `respawnMech`) after `_cleanupGame()` returned. Any future caller added without explicit post-reset would inherit stale `true` values, permanently gating `update()` or allowing logic to run while a round is supposedly inactive. Fixed: added `_roundClearing = false; _roundActive = false;` directly inside `_cleanupGame()`.
+
+- **`_lArmDestroyed`, `_rArmDestroyed`, `_legsDestroyed` not reset in `_cleanupGame()` (index.html):** These flags were cleared by `_resetHUDState()` (called later in `returnToHangar`/`respawnMech`) but not by `_cleanupGame()` itself. `goToMainMenu()` called `_cleanupGame()` but not `_resetHUDState()`, leaving the destroyed flags set when returning to the main menu. Fixed: added explicit resets to `_cleanupGame()`.
+
+- **`window._activeDecoy`, `window._phantomDecoys` not cleaned up in `_cleanupGame()` (index.html):** `_clearMapForRound()` cleaned these between rounds, but if the player quit mid-round (death or pause→quit), the decoy torso remained a live (or destroyed) scene object and the phantom decoy timer events kept firing. Fixed: `_cleanupGame()` now explicitly destroys the active decoy, removes drift/fire timer events on all phantom decoys, and nulls both window references.
+
+- **`window._activeSwarm` not nulled in `_cleanupGame()` (index.html):** The swarm boss `_swarmState` was only nulled on swarm defeat (inside `damageEnemy`). Quitting during a swarm boss fight left `window._activeSwarm` pointing to a defunct state object. Fixed: `_cleanupGame()` now removes the swarm tick timer and nulls `window._activeSwarm`.
+
+- **`window._equipPromptCallback` not cleared in `_cleanupGame()` (index.html):** If the player opened the gear overlay from the equip-item prompt and then died/quit before closing it, the stored callback survived into the next session. The next time the loadout overlay was closed, the old callback would fire spuriously, triggering `startRound()` outside its intended context. Fixed: `window._equipPromptCallback = null` added to `_cleanupGame()`.
+
+### Area 2 — `goToMainMenu()` Mode-Switch Resets
+
+- **`CHASSIS.medium.modCooldownMult` not restored in `goToMainMenu()` (index.html):** `tactical_uplink` mod permanently mutates `CHASSIS.medium.modCooldownMult` from `0.85` toward `0.60` each time it is equipped. The restore line (`CHASSIS.medium.modCooldownMult = 0.85`) existed in `returnToHangar()` and `respawnMech()` but was absent from `goToMainMenu()`. A medium-chassis player who equipped `tactical_uplink` and quit directly to the main menu (via pause → Quit) would carry the reduced cooldown into the next simulation run even without the mod equipped. Fixed: restore line added to `goToMainMenu()`.
+
+- **`_roundTotal` not reset in `goToMainMenu()` (index.html):** `_roundTotal` was omitted from the round-state reset block (`_round`, `_roundKills`, `_roundActive` were present). Fixed: added `_roundTotal = 0` to the same reset line.
+
+- **Extraction state (`_extractionActive`, `_extractionPoint`, `_extractionVisuals`, `_extractionPromptShown`) not reset in `goToMainMenu()` (index.html):** These four variables were reset in `returnToHangar()` and `respawnMech()` but missing from `goToMainMenu()`. Fixed: added the full extraction reset block to `goToMainMenu()`.
+
+- **`_lArmDestroyed`, `_rArmDestroyed`, `_legsDestroyed` not reset in `goToMainMenu()` (index.html):** `goToMainMenu()` calls `_cleanupGame()` and `resetLoadout()` but not `_resetHUDState()`. Fixed: explicit arm-destroyed resets added (now also covered by `_cleanupGame()` per Area 1, providing double insurance).
+
+- **`_perkState` reset in `goToMainMenu()` was missing 15 legendary/chassis perk fields (index.html):** The one-liner `_perkState = { ... }` in `goToMainMenu()` was an older copy that pre-dated the legendary perk additions. Missing fields: `lightSpectre`, `lightGhostMech`, `mediumCommand`, `mediumApexSystem`, `heavyDreadnought`, `heavyTitan`, `adaptiveEvolution`, `heavyCoreTank`, `_heavyCoreTankUsed`, `heavyRampage`, `mediumOverload`, `mediumSalvage`, `mediumMultiMod`, `apexPredator`, `_apexPredatorActive`. A run where any of these perks were picked would leave them active in the next run's starting state. Fixed: replaced the stale one-liner with the canonical multi-line form matching `returnToHangar()`.
+
+- **`window._spectreClones`, `_lastKillTime`, `window._missionStartTime` not reset in `goToMainMenu()` (index.html):** All three were reset in `returnToHangar()` but omitted from `goToMainMenu()`. Fixed: added all three to `goToMainMenu()`.
+
+### Area 3 — Per-Round Reset in `resetRoundPerks()`
+
+- **`_heavyCoreTankUsed` not reset at round start (index.html):** `heavyCoreTank` perk (legendary heavy) allows the player to survive one lethal hit per round. The `_heavyCoreTankUsed` flag that tracks this was set to `false` by the perk's `apply()` function (on pick) and on full `_perkState` wipe, but never reset by `resetRoundPerks()`. So after the first round where the player triggered the save, the perk would not activate again in subsequent rounds. Fixed: added `if (_perkState.heavyCoreTank) _perkState._heavyCoreTankUsed = false;` to `resetRoundPerks()`.
+
+### Area 4 — `window.*` Globals in `returnToHangar()`
+
+- **`_lastKillTime` not reset in `returnToHangar()` (index.html):** The module-level `_lastKillTime` counter (used for multi-kill streak tracking) was never zeroed on hangar return. A player who got a kill streak on their last round before returning to hangar would have a ~2-second window where the stale timestamp could falsely trigger streak logic on the very first kill of the next deploy. Fixed: `_lastKillTime = 0` added to `returnToHangar()`.
+
+- **`window._missionStartTime` not reset in `returnToHangar()` (index.html):** The campaign mission speed-run timer was set at the start of each round and read at extraction to compute elapsed time. It was never nulled on hangar return, meaning a subsequent deploy's first bonus-objective check could read a time from a previous mission. Fixed: `window._missionStartTime = null` added to `returnToHangar()`.
+
+### Files Changed
+
+- `index.html` — `_cleanupGame()` (added `_roundClearing`, `_roundActive`, `_lArmDestroyed`/`_rArmDestroyed`/`_legsDestroyed`, `window._activeDecoy`/`window._phantomDecoys`, `window._activeSwarm`, `window._equipPromptCallback` resets); `goToMainMenu()` (added `_roundTotal`, extraction state, arm-destroyed flags, `CHASSIS.medium.modCooldownMult`, full `_perkState` with 15 legendary fields, `window._spectreClones`, `_lastKillTime`, `window._missionStartTime`); `resetRoundPerks()` (added `_heavyCoreTankUsed` per-round reset); `returnToHangar()` (added `_lastKillTime`, `window._missionStartTime`); version bump to v3.8
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v3.8
+
+---
+
 ## v3.7 — Security & Input Validation Audit
 
 **Date:** 2026-03-20 (Central Time)
