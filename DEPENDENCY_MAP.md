@@ -48,6 +48,8 @@ Every function call in `index.html`'s inline `<script>` that is defined in one o
 | `shouldEndRound()` | ✓ | ~3198, ~5726 |
 | `getArenaLabel()` | ✓ | ~4899 |
 | `getObjectiveLabel()` | ✓ | ~4900 |
+| `_showArenaLabel()` | ✓ | ~4949 (moved from index.html to arena-objectives.js in v4.4) |
+| `_initPitZone()` | ✓ | ~4945 |
 
 **Direct `_arenaState` mutations (no function call — object from arena-objectives.js mutated inline):**
 
@@ -77,13 +79,21 @@ window[arenaDef.generator](scene, coverObjects, placeAt, COVER_DEFS)
 | `getAdaptiveArmorDR()` | ✓ | (unique effect helper) |
 | `checkTitanSmash()` | ✓ | (unique effect helper) |
 | `updateColossusStand()` | ✓ | (unique effect helper — in PvE-only update block) |
-| `triggerVoidstepDash()` | ✓ | (unique effect helper) |
-| `applyMirrorShieldBlock()` | ✓ | (unique effect helper) |
-| `checkArcDischarge()` | ✓ | (unique effect helper) |
-| `triggerNullCoreDetonation()` | ✓ | (unique effect helper) |
-| `checkChainReactionProc()` | ✓ | (unique effect helper) |
-| `checkWarpStrikeProc()` | ✓ | (unique effect helper) |
-| `updateEquippedUniqueEffects()` | ✓ | (unique effect helper) |
+| `hasUniqueEffect()` | ✓ | (unique effect helper — several mod activation functions) |
+| `applyFrontalAbsorb()` | ✓ | (unique effect helper) |
+| `getShieldDRBonus()` | ✓ | (unique effect helper) |
+| `getImpactArmorDR()` | ✓ | (unique effect helper) |
+| `checkImpactArmor()` | ✓ | (unique effect helper) |
+| `isMatrixBarrierActive()` | ✓ | (unique effect helper) |
+| `triggerMatrixBarrier()` | ✓ | (unique effect helper) |
+| `getColossusDR()` | ✓ | (unique effect helper) |
+| `getColossusDmgMult()` | ✓ | (unique effect helper) |
+| `getDualReloadBonus()` | ✓ | (unique effect helper) |
+| `getUnstoppableSpeedBonus()` | ✓ | (unique effect helper) |
+| `checkDoubleStrike()` | ✓ | (unique effect helper) |
+| `spawnModCover()` | ✓ | (unique effect helper — Blueprint Core mod activation) |
+| `triggerCoreOverload()` | ✓ | (unique effect helper — Core Reactor mod activation) |
+| `_showFloatingWarning()` | ✓ | (~12642 — inventory full warning) |
 
 #### Unguarded calls (✗)
 
@@ -127,6 +137,13 @@ All calls are typeof-guarded (✓):
 | `applyChassisUpgrades()` | ~6009, ~6067, ~13860, ~13899 |
 | `refreshShopStock()` | ~13505, ~13861, ~13901 |
 | `finalizeBonusObjective()` | ~5992 |
+| `completeCampaignMission()` | ~6030 |
+| `awardMissionReward()` | ~6035 |
+| `getSkillTreeBonuses()` | ~6366 |
+| `_updateCampaignXPBar()` | ~12727 (moved from index.html to campaign-system.js in v4.4) |
+| `_closeShop()` | ~13227 (ESC handler for campaign shop overlay) |
+| `_closeLoadoutSlots()` | ~13233 (ESC handler for loadout slots overlay) |
+| `_closeUpgrades()` | ~13239 (ESC handler for upgrades overlay) |
 
 **Direct `_campaignState` access (no function call — object from campaign-system.js used inline):**
 
@@ -176,7 +193,7 @@ Globals and functions defined in `index.html`'s inline `<script>` (or `<script>`
 | `isDeployed` | boolean | Guard: don't spawn if not in-game |
 | `_round` | number | Enemy level/difficulty scaling |
 | `coverObjects` | Phaser Group | Pathfinding, LOS |
-| `game` | Phaser.Game | Scene access |
+| `GAME` | Phaser.Game | Scene access (renamed from `game` in v4.3) |
 | `Phaser` | global | Phaser API |
 | `buildEnemyMech()` | function | Called in `spawnSpecialEnemy()` |
 | `buildEnemyTorso()` | function | Called in `spawnSpecialEnemy()` |
@@ -207,7 +224,7 @@ Globals and functions defined in `index.html`'s inline `<script>` (or `<script>`
 | `_totalKills` | number | Read for loot bonus calculations |
 | `_perksEarned` | number | Read for milestone bonuses |
 | `coverObjects` | Phaser Group | Drop item placement |
-| `game` | Phaser.Game | Scene access |
+| `GAME` | Phaser.Game | Scene access (renamed from `game` in v4.3) |
 | `Phaser` | global | Phaser API |
 | `CHASSIS_WEAPONS` | constant | Valid weapon list per chassis |
 | `CHASSIS_MODS` | constant | Valid mod list per chassis |
@@ -288,7 +305,7 @@ Variables written by one file and read (or also written) by another. These are t
 | `enemies` | index.html | loot-system.js, enemy-types.js, arena-objectives.js | — | Phaser Group — never destroy |
 | `enemyBullets` | index.html | enemy-types.js | — | Phaser Group |
 | `coverObjects` | index.html | loot-system.js, enemy-types.js | — | Phaser Group |
-| `game` | index.html | loot-system.js, enemy-types.js | — | Phaser.Game instance |
+| `GAME` | index.html | loot-system.js, enemy-types.js | — | Phaser.Game instance (renamed from `game` in v4.3) |
 | `loadout` | index.html | loot-system.js, campaign-system.js | — | `{ L, R, mod, aug, leg, shld }` |
 | `_round` | index.html | loot-system.js, enemy-types.js | — | Current round number |
 | `_gameMode` | index.html | loot-system.js | — | `'simulation'`/`'campaign'`/`'pvp'` |
