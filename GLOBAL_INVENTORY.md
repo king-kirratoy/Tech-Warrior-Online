@@ -271,3 +271,45 @@
 | `_pendingLoadoutTab` | `state.js` | Acts as a coordination signal between the equip-prompt (menus) and the inventory view (garage); consumed and nulled by `toggleStats()` |
 | `_isPaused` | `state.js` | Read by `update()`, `handlePlayerFiring()`, `activateJump()`, and the global keydown handler — too widely consulted to be local to any one feature file |
 | `_selectedNewChassis` | `menus.js` | Written and read exclusively within the new-campaign chassis-selection overlay and its keydown handler; no other system touches it |
+
+---
+
+## Section 3 — Collision Risks
+
+### Pass 1 Methodology
+
+Each of the five external JS files (`loot-system.js`, `enemy-types.js`, `arena-objectives.js`, `campaign-system.js`, `multiplayer.js`) was scanned for top-level `let`/`const`/`var` declarations. Every name found was compared against all 130 names in Section 1.
+
+### Cross-File Collisions
+
+| Variable | File A | File B | Same Thing? | Risk |
+|----------|--------|--------|-------------|------|
+| *(none)* | — | — | — | **No exact name collisions found.** All five external files use distinct prefixes (`_mp*`, `_pvp*`, `_arena*`, `_campaign*`, `_shop*`, `_loot*`, `ENEMY_TYPE_*`, etc.) that do not overlap with any index.html top-level declaration. |
+
+**Near-miss semantic pairs (different names, same concept — confusing during refactor):**
+
+| index.html name | External file name | File | Relationship |
+|---|---|---|---|
+| `_openDD` | `_pvpOpenDD` | `multiplayer.js` | Both track the currently open dropdown slot key; parallel pattern, same data shape, different UI contexts |
+| `_playerBulletOverlap` | `_mpBulletOverlap` | `multiplayer.js` | Both are stored Phaser `Collider` references for bullet overlap; parallel lifecycle but different bullet groups |
+| `isDeployed` | `_mpAlive` | `multiplayer.js` | Both answer "is the local player currently active in the game world"; semantically overlapping but structurally different (isDeployed gates PvE deploy, _mpAlive tracks PVP respawn state) |
+| `_round` | `_campaignState.currentMission` | `campaign-system.js` | Both encode "where in the progression sequence are we"; misreading one for the other in scaling formulas is an existing pitfall noted in CLAUDE.md |
+
+### Generic Name Risks
+
+| Variable | Current File | Risk | Suggested Rename |
+|----------|-------------|------|-----------------|
+| `keys` | `state.js` | **HIGH** — 4 chars; `keys` is a standard JS idiom (`Object.keys()`, destructuring, `event.key`). Any future utility or extracted function that writes `const keys = …` at module scope will silently shadow or be shadowed by this Phaser cursor-key handle. Most likely name to collide. | `_cursorKeys` |
+| `config` | `constants.js` | **HIGH** — 6 chars, no prefix; one of the most common variable names in all of JavaScript. Every library, plugin, and future feature file that needs a configuration object will naturally reach for `config`. The refactor will import this file globally, making the bare name a landmine. | `PHASER_CONFIG` (it's a `const` — use SCREAMING_SNAKE) |
+| `game` | `state.js` | **HIGH** — 4 chars, no prefix; the Phaser game instance. Any loop body, callback, or spawned agent that needs "the game" will instinctively write `const game = …`, immediately shadowing this global. Also: Phaser's own documentation uses `game` as the canonical example variable name. | `_phaserGame` |
+| `_ac` | `audio.js` | **HIGH** — 3 chars; the most terse name in the entire file. `ac` is also a common abbreviation for AbortController, access control, alternating current, and `accumulator`. Any developer unfamiliar with the audio engine who adds `const _ac = …` anywhere will silently clobber the AudioContext reference. | `_audioCtx` |
+| `player` | `state.js` | **MEDIUM-HIGH** — 6 chars, no underscore prefix despite being module-level mutable state. `player` is the single most common local parameter name in game-engine code — every `spawnEnemy(scene, player)`, `onHit(player, bullet)`, and similar callback uses it. Already confirmed issue: `multiplayer.js` assigns to `torso` (the paired global) and the DEPENDENCY_MAP notes the paired write risk. | `_player` (adds underscore per module-state convention; external files already access it via `window.player`) |
+| `reloadL` | `state.js` | **MEDIUM** — no underscore prefix for a module-level mutable var; single-letter suffix `L` makes automated search ambiguous (matches `reloadLobby`, `reloadLevel`, etc.). Inconsistent with `_roundKills`, `_lastKillTime`, etc. | `_reloadL` |
+| `reloadR` | `state.js` | **MEDIUM** — same issues as `reloadL`. | `_reloadR` |
+| `lastDamageTime` | `state.js` | **MEDIUM** — module-level mutable state missing underscore prefix per project convention (compare: `_lastPlayerDamageTime`, `_lastKillTime`, `_lastTorsoX`). Without the prefix, a function with a local `const lastDamageTime = …` would silently shadow the global, breaking shield regen. | `_lastDamageTime` |
+| `lastModTime` | `state.js` | **MEDIUM** — same missing-underscore issue as `lastDamageTime`; module-level timing var used as a mod-cooldown gate, breakable by any local `lastModTime` declaration. | `_lastModTime` |
+| `loadout` | `state.js` | **MEDIUM** — no underscore prefix; a natural local variable name in any function that processes loadout data (e.g., `function applyLoadout(loadout) {…}`). Currently read by `loot-system.js`, `campaign-system.js`, and `multiplayer.js` as `window.loadout` — the bare name is workable but fragile. | `_loadout` |
+| `lootPickups` | `state.js` | **LOW-MEDIUM** — no underscore prefix for a module-level mutable array. Less collision-prone than `loadout` because the compound word is more specific, but inconsistent with `_buildingGraphics`, `_equipmentDrops` (loot-system.js) and other array globals. | `_lootPickups` |
+| `LB_KEY` | `constants.js` | **LOW** — `LB` is a non-obvious abbreviation for "leaderboard"; not a naming collision risk per se but a comprehension risk — new contributors may search for `LEADERBOARD` and miss this constant, leading to duplicate declarations. | `LEADERBOARD_LS_KEY` |
+| `LB_MAX` | `constants.js` | **LOW** — same opaque-abbreviation issue as `LB_KEY`. | `LEADERBOARD_MAX_ENTRIES` |
+| `_openDD` | `garage.js` | **LOW** — `DD` is an abbreviation for "dropdown" that is not defined anywhere in the codebase documentation. Combined with the parallel `_pvpOpenDD` in `multiplayer.js`, a new developer working on both files could confuse them. | `_openDropdownSlot` |
