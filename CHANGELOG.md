@@ -5,6 +5,24 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.1 — CSS Extraction into Separate Files
+
+**Date:** 2026-03-20
+
+Extracted all CSS from the inline `<style>` blocks in `index.html` into four dedicated files. The BASE / RESET section (reset, body, scrollbar, shared button components) went into `css/base.css`; all in-game HUD and paper doll rules went into `css/hud.css`; the hangar/garage panel, dropdown system, perk cards, stats panel, and related garage rules went into `css/garage.css`; and the main menu, pause overlay, animations (@keyframes), loadout tab buttons, mech equip slots, backpack drag styles, and arm picker modal went into `css/menus.css`. Both `<style>` blocks were removed from `index.html` and replaced with four `<link>` tags in load order: `base.css → hud.css → garage.css → menus.css`.
+
+### Files Changed
+
+- `css/base.css` — created (reset, body, scrollbar, shared button styles)
+- `css/hud.css` — created (in-game HUD, weapon rows, paper doll)
+- `css/garage.css` — created (hangar panel, dropdowns, perk cards, stats panel, garage stats, deploy button)
+- `css/menus.css` — created (main menu, animations, pause overlay, loadout tabs, mech equip slots, backpack, arm picker)
+- `index.html` — both `<style>` blocks removed; four `<link>` tags added to `<head>`
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v5.1
+
+---
+
 ## v5.0 — Fix _inGame ReferenceError in Loadout Menu
 
 **Date:** 2026-03-20
