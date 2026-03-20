@@ -1,0 +1,46 @@
+/* ============================================================
+   BASE / RESET
+   ============================================================ */
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: #0c1014;
+    color: #c8d2d9;
+    font-family: 'Verdana', 'Segoe UI', sans-serif;
+    overflow: hidden;
+}
+
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: #0c1014; }
+::-webkit-scrollbar-thumb { background: #0f0; }
+
+/* --- Shared Buttons --- */
+button {
+    background: rgba(255,255,255,0.04);
+    color: #c8d2d9;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    padding: 10px 12px;
+    font-size: 13px;
+    text-align: left;
+    flex: 1;
+    transition: all 0.2s ease;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+button:hover {
+    background: rgba(0,255,255,0.07);
+    border-color: rgba(0,255,255,0.3);
+    color: #fff;
+}
+
+button.active {
+    background: rgba(0,255,255,0.1);
+    color: #fff;
+    border-color: rgba(0,255,255,0.5);
+    border-left: 3px solid #00ffff;
+    box-shadow: inset 8px 0 15px rgba(0,255,255,0.06), 0 0 8px rgba(0,255,255,0.1);
+    text-shadow: 0 0 6px rgba(0,255,255,0.4);
+}
