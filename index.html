@@ -813,7 +813,7 @@ button.active {
         <button id="new-campaign-btn" class="menu-start-btn" onclick="confirmNewCampaign()">&#9733;&nbsp;&nbsp;NEW CAMPAIGN</button>
         <button class="menu-start-btn menu-btn-red" onclick="hideCampaignSubMenu()" style="margin-top:8px;">&#9664;&nbsp;&nbsp;BACK</button>
     </div>
-    <div class="menu-version">v4.0 // ALPHA BUILD</div>
+    <div class="menu-version">v4.1 // ALPHA BUILD</div>
 </div>
 <script>
 // Pre-fill callsign and update button state on page load
@@ -3178,8 +3178,8 @@ function update(time) {
         handleObjectiveRoundEnd(this);
         if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
         if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
+        if (typeof updateColossusStand === 'function') updateColossusStand(time);         // → js/loot-system.js (Colossus Frame unique)
     }
-    if (typeof updateColossusStand === 'function') updateColossusStand(time);         // → js/loot-system.js (Colossus Frame unique)
 }
 
 
@@ -4852,6 +4852,8 @@ function resetRoundPerks() {
 }
 
 function startRound(roundNum) {
+    // PVP mode has no rounds, enemy spawns, objectives, or extraction — skip entirely
+    if (_gameMode === 'pvp') return;
     _round      = roundNum;
     _roundKills = 0;
     resetRoundPerks();
@@ -5637,6 +5639,8 @@ function destroyEnemyWithCleanup(scene, e) {
 }
 
 function onEnemyKilled(deadEnemy) {
+    // PVP has no PvE enemy kills, extraction, or round progression — skip entirely
+    if (_gameMode === 'pvp') return;
     _roundKills++;
     // Swarm Burst unique: kills spawn homing micro-drones
     if (typeof triggerSwarmBurst === 'function' && deadEnemy?.x != null) {
@@ -5962,6 +5966,8 @@ function _updateExtraction(scene) {
 }
 
 function _triggerExtraction(scene) {
+    // PVP has no extraction system, campaign XP, or perk menus — skip entirely
+    if (_gameMode === 'pvp') return;
     _extractionActive = false;
     _cleanupExtraction(scene);
 
@@ -6332,21 +6338,22 @@ function deployMech() {
                 }
             }
             const sc = game.scene.scenes[0];
-            // Always spawn 6 fresh enemies after landing
-            // Round system handles spawning
-            // Kick off round system on first deploy / respawn
-            document.getElementById('round-hud').style.display = 'flex';
-            if (_gameMode === 'campaign' && typeof getCampaignMission === 'function') {
-                const _cm = getCampaignMission();
-                if (_cm) {
-                    const _campEnemy = (typeof getCampaignEnemyConfig === 'function') ? getCampaignEnemyConfig() : null;
-                    const _enemyCount = _campEnemy ? _campEnemy.totalEnemies + (_cm.hasBoss ? 1 : 0) : '?';
-                    showRoundBanner(_cm.name.toUpperCase(), _enemyCount + ' HOSTILES // LV.' + _cm.enemyLevel, 2200, null);
+            // PVP uses its own deploy path (mpDeployPVP) — skip PvE round system entirely
+            if (_gameMode !== 'pvp') {
+                // Kick off round system on first deploy / respawn
+                document.getElementById('round-hud').style.display = 'flex';
+                if (_gameMode === 'campaign' && typeof getCampaignMission === 'function') {
+                    const _cm = getCampaignMission();
+                    if (_cm) {
+                        const _campEnemy = (typeof getCampaignEnemyConfig === 'function') ? getCampaignEnemyConfig() : null;
+                        const _enemyCount = _campEnemy ? _campEnemy.totalEnemies + (_cm.hasBoss ? 1 : 0) : '?';
+                        showRoundBanner(_cm.name.toUpperCase(), _enemyCount + ' HOSTILES // LV.' + _cm.enemyLevel, 2200, null);
+                    }
+                } else {
+                    showRoundBanner('ROUND ' + _round, (_round + 2) + ' ENEMY MECHS', 2000, null);
                 }
-            } else {
-                showRoundBanner('ROUND ' + _round, (_round + 2) + ' ENEMY MECHS', 2000, null);
+                startRound(_round);
             }
-            startRound(_round);
         }
     });
 }
@@ -13211,6 +13218,19 @@ document.addEventListener('keydown', function(e) {
 
 function goToMainMenu() {
     if (_isPaused) togglePause();
+    // PVP: destroy remote players, disconnect socket, and downgrade mode before _cleanupGame()
+    // so the scene wipe destroys all PVP mech objects instead of preserving them.
+    if (_gameMode === 'pvp') {
+        if (typeof mpCleanupMatch === 'function') mpCleanupMatch();
+        if (typeof mpDisconnect === 'function') mpDisconnect();
+        if (typeof _pvpHangarOpen !== 'undefined') _pvpHangarOpen = false;
+        if (typeof _mpChatOpen !== 'undefined') _mpChatOpen = false;
+        const pvpHangarEl = document.getElementById('pvp-hangar');
+        if (pvpHangarEl) pvpHangarEl.style.display = 'none';
+        const pvpMenuEl = document.getElementById('mp-pvp-menu');
+        if (pvpMenuEl) pvpMenuEl.style.display = 'none';
+        _gameMode = 'simulation';  // downgrade so _cleanupGame() destroys PVP objects properly
+    }
     const _gmScene = game?.scene?.scenes[0];
     if (_gmScene) { try { _gmScene.physics.resume(); } catch(e){} }
     _cleanupGame();

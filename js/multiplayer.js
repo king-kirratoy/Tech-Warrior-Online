@@ -341,6 +341,11 @@ function mpDisconnect() {
     _mpConnected = false;
     _mpLocalId = null;
     _mpIsHost = false;
+    // Destroy all remote player visuals and physics before clearing the reference map.
+    // _mpPlayers.clear() alone only drops the JS references — without this loop the
+    // Phaser scene objects (body, torso, nameTag) would remain as orphaned display
+    // children with no path to cleanup.
+    _mpPlayers.forEach((rp, id) => { try { mpDestroyRemotePlayer(id); } catch(e) {} });
     _mpPlayers.clear();
     _mpMatchActive = false;
     _mpLobbyPlayers = [];
@@ -479,12 +484,18 @@ function mpCleanupMatch() {
     _mpMatchActive = false;
     _mpRespawning = false;
     _mpRespawnInvuln = false;
+    _mpAlive = true;
+    _mpKills = 0;
+    _mpDeaths = 0;
     _mpKillFeed = [];
     _mpScoreboard = {};
+    _mpMySpawn = null;
 
     // Hide PVP-specific UI
     mpHidePvpHud();
     mpHideInGameChat();
+    const killfeedEl = document.getElementById('mp-killfeed');
+    if (killfeedEl) killfeedEl.style.display = 'none';
     const respawnEl = document.getElementById('mp-respawn-overlay');
     if (respawnEl) respawnEl.style.display = 'none';
     const resultsEl = document.getElementById('mp-results-overlay');
@@ -2412,8 +2423,9 @@ function _pvpJoinLobby() {
 
 function _pvpBackToMenu() {
     mpHidePvpHangar();
-    const menu = document.getElementById('main-menu');
-    if (menu) { menu.style.display = ''; menu.style.opacity = '1'; }
+    // Delegate to goToMainMenu() for full state reset (_round, _perkState, loadout,
+    // _inventory) and proper socket cleanup before showing the main menu.
+    if (typeof goToMainMenu === 'function') goToMainMenu();
 }
 
 function _pvpDeployFromHangar() {
@@ -2436,44 +2448,12 @@ function _pvpDeployFromHangar() {
 
 function _pvpQuitToMenu() {
     mpHidePvpHangar();
-    if (typeof _cleanupGame === 'function') _cleanupGame();
-    mpCleanupMatch();
+    // Notify server before disconnecting
     _mpSocket?.emit('return-to-lobby');
-    mpDisconnect();
-
-    // Reset game state flags
-    isDeployed = false;
-    _gameMode = 'simulation';
-
-    // Hide all in-game HUD elements that may persist
-    const hud = document.getElementById('hud-container');
-    if (hud) hud.style.display = 'none';
-    const minimap = document.getElementById('minimap-wrap');
-    if (minimap) minimap.style.display = 'none';
-    const paperdoll = document.getElementById('paperdoll-container');
-    if (paperdoll) paperdoll.style.display = 'none';
-    const topBtns = document.getElementById('top-left-btns');
-    if (topBtns) topBtns.style.display = 'none';
-
-    // Restore cursor
-    try { document.body.style.cursor = 'default'; } catch(e) {}
-    try { game?.scene?.scenes[0]?.input?.setDefaultCursor('default'); } catch(e) {}
-
-    // Resume physics/timers in case they were paused
-    try {
-        const scene = game?.scene?.scenes[0];
-        if (scene) {
-            scene.physics.resume();
-            scene.time.paused = false;
-            scene.cameras.main.stopFollow();
-            if (scene.hangarOverlay) scene.hangarOverlay.setVisible(true);
-        }
-    } catch(e) {}
-
-    // Return to main menu
-    const menu = document.getElementById('main-menu');
-    if (menu) { menu.style.display = ''; menu.style.opacity = '1'; }
-    if (typeof startMenuGrid === 'function') startMenuGrid();
+    // Delegate to goToMainMenu() which runs the full PVP cleanup path added in goToMainMenu():
+    //   mpCleanupMatch() → mpDisconnect() → _gameMode='simulation' → _cleanupGame()
+    //   → resets _round, _perkState, loadout, _inventory → shows main menu
+    if (typeof goToMainMenu === 'function') goToMainMenu();
 }
 
 // ================================================================

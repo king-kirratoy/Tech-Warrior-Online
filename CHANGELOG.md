@@ -5,6 +5,53 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v4.1 — PVP Bug-Fix Audit
+
+**Date:** 2026-03-20 (Central Time)
+
+Eliminated all PvE-bleed into PVP, guaranteed cleanup of every remote-player object on disconnect or exit, and ensured a fully clean state when switching from PVP into simulation or campaign.
+
+### Area 1 — PvE Bleed into PVP
+
+- **`update()` — `updateColossusStand` unguarded (index.html):** The call to `updateColossusStand(time)` was placed after the `if (_gameMode !== 'pvp')` block and therefore ran every frame in PVP mode. Moved it inside the guard block alongside the other PvE-only per-frame systems.
+
+- **`deployMech()` — round HUD and `startRound()` unguarded (index.html):** Inside the drop-in tween `onComplete`, the `round-hud` element was unconditionally shown and `startRound(_round)` was unconditionally called. If `deployMech()` were invoked in PVP mode (or called defensively), this would have spawned PvE enemies, set up arena/objectives, and displayed the round counter. Wrapped the entire block in `if (_gameMode !== 'pvp')`.
+
+- **`startRound()` — no PVP guard (index.html):** No early-return existed at the top of the function. Added `if (_gameMode === 'pvp') return;` as the first statement so that any path that calls `startRound()` during PVP — including future code — is silently skipped rather than spawning enemies, running the arena/objective system, or mutating `_roundTotal`.
+
+- **`onEnemyKilled()` — no PVP guard (index.html):** The function had no PVP guard. If called during PVP (e.g. from a leftover timer or future code), it would increment `_roundKills`, call `_spawnExtractionPoint()`, and display a "REACH EXTRACTION POINT" banner. Added `if (_gameMode === 'pvp') return;` at the top.
+
+- **`_triggerExtraction()` — no PVP guard (index.html):** No early-return existed. Extraction sets `_roundClearing = true`, runs campaign XP logic, calls `showPerkMenu()`, and blocks `update()` — none of which should ever run in PVP. Added `if (_gameMode === 'pvp') return;` at the top.
+
+### Area 2 — Remote Player Cleanup
+
+- **`mpDisconnect()` — remote player visuals leaked on clear (js/multiplayer.js):** `_mpPlayers.clear()` dropped the JS references but never called `mpDestroyRemotePlayer()` for each entry. Any remote players that existed at disconnect time (e.g. when leaving a lobby that had previously started a match) would remain as orphaned Phaser scene objects — body sprites, torso containers, and name tags — with no path to destruction. Added a `_mpPlayers.forEach(mpDestroyRemotePlayer)` loop immediately before the `.clear()` call.
+
+- **`mpCleanupMatch()` — kill-feed overlay not hidden (js/multiplayer.js):** The `#mp-killfeed` overlay was shown via `mpShowKillFeedOverlay()` at match start but never hidden in `mpCleanupMatch()`. After a match ended or the player disconnected, the kill feed remained visible on top of the main menu or hangar. Added `killfeedEl.style.display = 'none'` to the UI teardown block in `mpCleanupMatch()`.
+
+- **`mpCleanupMatch()` — `_mpAlive`, `_mpKills`, `_mpDeaths`, `_mpMySpawn` not reset (js/multiplayer.js):** These four fields were only initialised in the `match-begin` handler, never reset in `mpCleanupMatch()`. A player who died in one match would re-enter the next match with `_mpAlive = false`, locking them out of firing and state-sends. Reset all four to their default values (`_mpAlive = true`, `_mpKills = 0`, `_mpDeaths = 0`, `_mpMySpawn = null`) inside `mpCleanupMatch()`.
+
+- **`_pvpBackToMenu()` — bypassed all cleanup and state reset (js/multiplayer.js):** The function only called `mpHidePvpHangar()` and manually set `main-menu` to visible, bypassing `_cleanupGame()`, `mpCleanupMatch()`, `mpDisconnect()`, and all variable resets. Any remote player objects or socket listeners active at that point were leaked, and `_gameMode` was left as `'pvp'`. Replaced the manual display code with a call to `goToMainMenu()`, which now contains the full PVP exit path (see Area 3).
+
+### Area 3 — State Reset on Mode Switch
+
+- **`goToMainMenu()` — no PVP cleanup path (index.html):** When called while `_gameMode === 'pvp'`, `goToMainMenu()` went straight into `_cleanupGame()`, which in PVP mode preserves the local player mech and all remote player objects (by design, to keep them alive during a match). The remote players were never destroyed, the Socket.IO socket was never disconnected, and `_pvpHangarOpen`/`_mpChatOpen` were never reset. Added a PVP guard block at the top of `goToMainMenu()` that, when `_gameMode === 'pvp'`: (1) calls `mpCleanupMatch()` to destroy all remote player scene objects; (2) calls `mpDisconnect()` to null the socket and remove all state intervals; (3) resets `_pvpHangarOpen = false` and `_mpChatOpen = false`; (4) hides the `#pvp-hangar` and `#mp-pvp-menu` overlays; (5) sets `_gameMode = 'simulation'` so the subsequent `_cleanupGame()` call destroys the local PVP mech objects instead of preserving them.
+
+- **`_pvpQuitToMenu()` — manual state reset missed `_round`, `_perkState`, `loadout`, `_inventory` (js/multiplayer.js):** The function manually showed the main menu div and called `startMenuGrid()` but did not reset any game state variables. A PVP session followed by a simulation run would start with whatever `_round`, `_perkState`, `loadout`, and `_inventory` were set to during PVP (or from a prior session). Replaced the entire manual teardown block with a `goToMainMenu()` call (preceded by `_mpSocket?.emit('return-to-lobby')` so the server is notified before disconnect). `goToMainMenu()` now performs the full PVP cleanup path and resets all state.
+
+### Version Bump
+
+- **Version display updated to v4.1 in `#main-menu` subtitle and OVERVIEW.md.**
+
+### Files Changed
+
+- `index.html` — `update()` (moved `updateColossusStand` inside PVP guard); `startRound()` (added PVP guard); `onEnemyKilled()` (added PVP guard); `_triggerExtraction()` (added PVP guard); `deployMech()` drop-in `onComplete` (guarded round-hud show and `startRound()` call); `goToMainMenu()` (added PVP cleanup block: `mpCleanupMatch`, `mpDisconnect`, flag resets, overlay hides, `_gameMode` downgrade); version bump to v4.1
+- `js/multiplayer.js` — `mpDisconnect()` (added remote-player destroy loop before `_mpPlayers.clear()`); `mpCleanupMatch()` (added `#mp-killfeed` hide; reset `_mpAlive`, `_mpKills`, `_mpDeaths`, `_mpMySpawn`); `_pvpBackToMenu()` (replaced manual display with `goToMainMenu()` call); `_pvpQuitToMenu()` (replaced manual teardown with `goToMainMenu()` call)
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v4.1
+
+---
+
 ## v4.0 — Audio System Audit
 
 **Date:** 2026-03-20 (Central Time)
