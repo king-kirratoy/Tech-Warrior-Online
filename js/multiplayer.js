@@ -67,7 +67,16 @@ function mpConnect(serverUrl) {
     _mpSocket.on('disconnect', () => {
         _mpConnected = false;
         console.log('[MP] Disconnected');
+        const statusEl = document.getElementById('mp-lobby-status');
+        if (statusEl) { statusEl.textContent = 'DISCONNECTED — RECONNECTING...'; statusEl.style.color = 'rgba(255,80,80,0.8)'; }
         mpCleanupMatch();
+    });
+
+    _mpSocket.on('connect_error', (err) => {
+        _mpConnected = false;
+        console.warn('[MP] Connection error:', err?.message);
+        const statusEl = document.getElementById('mp-lobby-status');
+        if (statusEl) { statusEl.textContent = 'CONNECTION FAILED — CHECK SERVER'; statusEl.style.color = 'rgba(255,80,80,0.9)'; }
     });
 
     // ── LOBBY EVENTS ───────────────────────────────────────────

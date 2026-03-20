@@ -5,6 +5,79 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v3.9 — Accessibility & UX Audit
+
+**Date:** 2026-03-20 (Central Time)
+
+Eliminated all purely mouse-only interactions in menus and overlays, replaced hardcoded pixel sizes that broke at narrow viewports, added visible loading and error feedback to every async operation, and corrected cursor/physics state across all overlay open/close paths.
+
+### Area 1 — Mouse-Only Interactions: Keyboard Support Added
+
+- **Global keydown handler rewritten (index.html):** Restructured the single `document.addEventListener('keydown', ...)` handler to process overlays in priority order before falling through to `togglePause`. Perk menu, death screen, equip prompt, campaign shop/slots/upgrades, leaderboard, and stats overlay are all now checked first so Escape and Enter work in every context regardless of which layer is frontmost.
+
+- **Perk menu — number keys 1–4 pick a perk; arrow keys navigate cards; Enter confirms (index.html `showPerkMenu`):** Added module-level `_currentPerkKeys[]` and `_currentPerkNextRound` so the keydown handler can resolve the selection without DOM traversal. Each `.perk-card` is now `tabindex="0"` with `role="button"` and an `aria-label`. The slot label shows the `[N]` hint so keyboard users can see which key to press. Focus is moved to the first card when the menu opens. Cards also handle `keydown` for Enter/Space directly.
+
+- **Death screen — Enter triggers primary action, Escape goes to main menu (index.html global keydown):** The death screen check fires before any pause or overlay handling, preventing Enter from leaking through to the game loop.
+
+- **Equip-prompt — Enter opens inventory, Escape skips (index.html global keydown + `_showEquipPrompt`):** The equip prompt was entirely keyboard-inaccessible. Keyboard shortcuts now match the two visible buttons.
+
+- **Leaderboard — Escape closes it (index.html global keydown):** Previously only the "MAIN MENU" button could dismiss the leaderboard.
+
+- **Stats/Loadout overlay — Escape closes it from any context (index.html global keydown):** This was missing when the overlay was opened from the hangar (not deployed). The check is now in the global handler and fires correctly in both deployed and hangar contexts.
+
+- **Main menu — Up/Down arrow keys move focus between buttons; Escape closes campaign sub-menu (index.html `_mainMenuKeyNav` listener):** Added a dedicated named keydown handler that attaches to document and routes arrow key presses to the visible button list (main or campaign sub-menu), enabling full keyboard navigation without a mouse.
+
+- **Campaign sub-menu — first button focused on open (index.html `showCampaignSubMenu`):** After the cloud check resolves and the correct buttons are visible, focus is moved to the first enabled button so arrow navigation begins immediately.
+
+- **Pause menu — first button focused on open (index.html `togglePause`):** When the pause overlay is shown, `firstPauseBtn.focus()` ensures Tab and arrow keys work immediately for keyboard-only users.
+
+- **Campaign chassis select — Left/Right arrows pick chassis; Enter confirms; Escape cancels (index.html global keydown):** The `mission-select-overlay` is tagged `dataset.mode = 'chassis-select'` while in chassis selection mode so the handler can distinguish it from the mission list screen. `_cancelNewCampaign()` now also cleans up the dataset attribute on close.
+
+- **Campaign shop, loadout-slots, upgrades overlays — Escape closes each and returns to mission select (index.html global keydown):** Three campaign overlays from `campaign-system.js` are now keyboard-dismissible via `_closeShop()`, `_closeLoadoutSlots()`, and `_closeUpgrades()` (all called with `typeof` guards).
+
+### Area 2 — Screen Size Assumptions: Responsive Fixes
+
+- **Boss HP bar — hardcoded `width:440px` and `min-width:480px` replaced with viewport-relative values (index.html HTML):** `#boss-hud` now uses `min-width:min(480px,96vw)` and `max-width:96vw`; `#boss-bar-track` uses `width:min(440px,calc(96vw - 40px))`. The bar shrinks gracefully on any screen narrower than ~530px instead of overflowing.
+
+- **Perk cards — `width:200px` replaced with `clamp(160px, 200px, calc(50vw - 24px))` (index.html CSS):** Cards contract on screens narrower than ~450px so the perk menu remains usable on small viewports.
+
+- **Perk card focus state added to CSS (index.html CSS):** `.perk-card:focus` now shares the hover style (glow, border highlight, translateY), giving keyboard users a clear visual indicator without a browser default focus ring.
+
+- **Phaser canvas resize handler added (index.html, after `new Phaser.Game`):** `window.addEventListener('resize', _onWindowResize)` calls `game.scale.resize(window.innerWidth, window.innerHeight)` so the canvas fills the window correctly after any browser resize, browser zoom change, or device orientation change.
+
+### Area 3 — Error & Loading States: Async Feedback
+
+- **`_showCloudStatusToast(msg, isError)` helper added (index.html):** Creates a small fixed-position toast in the top-right corner that fades out after 2.4 s. Used to surface silent async results to the player without blocking UI.
+
+- **`saveToCloud()` now shows success/failure toast (index.html):** On a successful Supabase upsert the toast reads "CLOUD SAVE SYNCED" (cyan). On a network error or non-OK response it reads "CLOUD SAVE FAILED — SAVED LOCALLY" (red). Previously all outcomes were silent apart from a `console.warn`.
+
+- **Campaign resume — button disabled and relabeled "LOADING SAVE DATA…" during `_loadCampaignData()` (index.html `startGame`):** The "RESUME CAMPAIGN" button now gives visible feedback while the cloud fetch is in progress. The button is re-enabled and its original label is restored in the `.finally()` handler regardless of whether the load succeeded or fell back to localStorage.
+
+- **Campaign sub-menu — "CHECKING SAVE DATA…" label shown while cloud check runs (index.html `showCampaignSubMenu`):** When no local save exists, the resume button is temporarily enabled, relabeled, and disabled during the async cloud check rather than silently flickering in/out of view.
+
+- **Socket.IO connection error — error state shown in lobby status bar (js/multiplayer.js `mpConnect`):** `connect_error` now updates `#mp-lobby-status` to "CONNECTION FAILED — CHECK SERVER" in red. `disconnect` updates it to "DISCONNECTED — RECONNECTING…" in red rather than reverting to the static "CONNECTING…" string that gave no indication of a prior failure.
+
+### Area 4 — UI State Consistency: Overlay/Cursor/Physics
+
+- **Equip-prompt cursor fix (index.html `_showEquipPrompt`):** When the equip-prompt overlay appears, the cursor is now explicitly set to `'default'` (both on the DOM body and via Phaser's `setDefaultCursor`). Previously the cursor remained `'none'` (the in-game cursor) while the prompt was visible, making the mouse pointer invisible and the buttons effectively unclickable without knowing cursor position.
+
+- **Global ESC handler ordering fixed (index.html global keydown):** The handler now checks overlays in strict priority order — perk menu → death screen → equip prompt → campaign overlays → leaderboard → stats overlay → chassis select → pause — ensuring that Escape always closes the topmost visible layer and never leaks through to trigger a second action.
+
+- **`_cancelNewCampaign()` cleans up `dataset.mode` (index.html):** The chassis-select `data-mode` attribute is now removed from `mission-select-overlay` on cancel so the chassis-select ESC handler does not accidentally intercept keys when the overlay is later reused for the campaign mission list.
+
+### Version Bump
+
+- **Version display updated to v3.9 in `#main-menu` subtitle and OVERVIEW.md.**
+
+### Files Changed
+
+- `index.html` — `showPerkMenu()` (tabindex/role/aria-label/key-hint on cards, focus first card); global keydown handler (perk keys 1–4, death-screen Enter/ESC, equip-prompt Enter/ESC, campaign overlays ESC, leaderboard ESC, stats ESC, chassis-select arrows/Enter/ESC); `_mainMenuKeyNav` listener (arrow key main menu nav); `togglePause()` (focus first button on open); `_showEquipPrompt()` (cursor fix); `showCampaignSubMenu()` (loading state + focus); `showCampaignSubMenu()` (first-button focus); `_showNewCampaignChassisSelect()` (dataset.mode tag); `_cancelNewCampaign()` (clear dataset.mode); `startGame()` (campaign loading state with disable/relabel); `saveToCloud()` (success/fail toast); `_showCloudStatusToast()` (new helper); `.perk-card` CSS (clamp width, :focus state); `#boss-hud`/`#boss-bar-track` (responsive min/max/width); `window resize` listener (Phaser canvas resize); version bump to v3.9
+- `js/multiplayer.js` — `mpConnect()` (`connect_error` and `disconnect` error states in lobby status)
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v3.9
+
+---
+
 ## v3.8 — State Reset Audit
 
 **Date:** 2026-03-20 (Central Time)
