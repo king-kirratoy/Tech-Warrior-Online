@@ -232,6 +232,10 @@ function mpConnect(serverUrl) {
 
     _mpSocket.on('player-hit-visual', (data) => {
         if (!_mpMatchActive) return;
+        // Skip if we are the shooter — local bullet overlap already
+        // showed impact sparks and damage text, so displaying the server
+        // relay too would cause duplicate hit effects.
+        if (data.shooterId === _mpLocalId) return;
         const scene = game.scene.scenes[0];
         if (!scene) return;
         try {
@@ -615,33 +619,35 @@ function mpSpawnRemoteBullet(scene, data) {
         });
     }
 
-    // Muzzle flash at the remote player's visual position.
-    // Use the remote player's interpolated torso position (what we actually see
-    // on screen) instead of the raw server coordinates, which may be slightly
-    // offset due to network latency + interpolation lag. The flash is placed
-    // at a barrel distance along the shot angle from the torso center.
+    // Compute arm-offset bullet origin from the shooter's interpolated torso.
+    // Matches the local fire() arm offset logic: bullets spawn from the L or R
+    // shoulder, not the torso center. Uses the remote player's visual position
+    // (what the observer actually sees) to avoid network-lag offset.
+    const _rp = data.shooterId ? _mpPlayers.get(data.shooterId) : null;
+    const _torsoX = _rp?.torso?.active ? _rp.torso.x : data.x;
+    const _torsoY = _rp?.torso?.active ? _rp.torso.y : data.y;
+    const _torsoRot = _rp?.torso?.active ? _rp.torso.rotation : data.angle;
+    const _chassis = _rp?.info?.chassis || 'medium';
+    const _armSideOffset = _chassis === 'light' ? 12 : _chassis === 'medium' ? 26 : 42;
+    const _barrelDist = _chassis === 'light' ? 25 : _chassis === 'medium' ? 32 : 40;
+    const _side = data.side || 'R';
+    const _perpSign = _side === 'L' ? -1 : 1;
+    const _perpAngle = _torsoRot + _perpSign * Math.PI / 2;
+    const _armX = _torsoX + Math.cos(_perpAngle) * _armSideOffset;
+    const _armY = _torsoY + Math.sin(_perpAngle) * _armSideOffset;
+    const _spawnX = _armX + Math.cos(data.angle) * _barrelDist;
+    const _spawnY = _armY + Math.sin(data.angle) * _barrelDist;
+
+    // Muzzle flash at the arm barrel tip
     try {
         if (typeof createMuzzleFlash === 'function') {
-            const rp = data.shooterId ? _mpPlayers.get(data.shooterId) : null;
-            const flashX = rp?.torso?.active ? rp.torso.x : data.x;
-            const flashY = rp?.torso?.active ? rp.torso.y : data.y;
-            const barrelDist = 35; // distance from torso center to barrel tip
             const flashColor = (data.weapon === 'fth') ? 0xff6600
                              : (data.weapon === 'sr')  ? 0xffffff
                              : (data.weapon === 'plsm') ? 0x00ffff
                              : 0xffffff;
-            createMuzzleFlash(scene, flashX, flashY, data.angle, barrelDist, flashColor);
+            createMuzzleFlash(scene, _armX, _armY, data.angle, _barrelDist, flashColor);
         }
     } catch(e) {}
-
-    // Compute bullet origin from the shooter's interpolated visual position
-    // so bullets emerge from the barrel, not from the raw (latency-offset) coords
-    const _rp = data.shooterId ? _mpPlayers.get(data.shooterId) : null;
-    const _baseX = _rp?.torso?.active ? _rp.torso.x : data.x;
-    const _baseY = _rp?.torso?.active ? _rp.torso.y : data.y;
-    const _barrelOff = 35; // barrel distance from torso center
-    const _spawnX = _baseX + Math.cos(data.angle) * _barrelOff;
-    const _spawnY = _baseY + Math.sin(data.angle) * _barrelOff;
 
     // Handle shotgun pellets
     const pelletCount = data.pellets || 1;
@@ -764,7 +770,7 @@ function mpSendState() {
 
 // ── BROADCAST BULLET FIRED (called from fire() hook) ───────────
 
-function mpBroadcastBullet(x, y, angle, weaponKey, damage) {
+function mpBroadcastBullet(x, y, angle, weaponKey, damage, side) {
     if (!_mpSocket || !_mpConnected || !_mpMatchActive) return;
     const w = WEAPONS[weaponKey];
     if (!w) return;
@@ -781,7 +787,8 @@ function mpBroadcastBullet(x, y, angle, weaponKey, damage) {
         explosive: w.explosive || false,
         radius: w.radius || 0,
         pellets: w.pellets || 0,
-        spread: w.pellets ? 0.35 : 0
+        spread: w.pellets ? 0.35 : 0,
+        side: side || 'R'
     });
 }
 

@@ -170,7 +170,8 @@ io.on('connection', (socket) => {
             explosive: data.explosive || false,
             radius: data.radius || 0,
             pellets: data.pellets || 0,
-            spread: data.spread || 0
+            spread: data.spread || 0,
+            side: data.side || 'R'
         });
     });
 
@@ -184,6 +185,7 @@ io.on('connection', (socket) => {
         // Broadcast to all for visual effects
         socket.broadcast.emit('player-hit-visual', {
             victimId: socket.id,
+            shooterId: data.shooterId,
             x: data.x,
             y: data.y,
             damage: data.damage

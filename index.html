@@ -9388,12 +9388,12 @@ function fire(scene, side) {
 
     if (wKey === 'fth')  {
         fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle);
-        if (typeof mpBroadcastBullet === 'function' && _mpMatchActive) mpBroadcastBullet(armOx, armOy, aimAngle, wKey, weapon.dmg * (_perkState.dmgMult||1));
+        if (typeof mpBroadcastBullet === 'function' && _mpMatchActive) mpBroadcastBullet(armOx, armOy, aimAngle, wKey, weapon.dmg * (_perkState.dmgMult||1), side);
         return;
     }
     if (wKey === 'rail') {
         fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle);
-        if (typeof mpBroadcastBullet === 'function' && _mpMatchActive) mpBroadcastBullet(armOx, armOy, aimAngle, wKey, weapon.dmg * (_perkState.dmgMult||1));
+        if (typeof mpBroadcastBullet === 'function' && _mpMatchActive) mpBroadcastBullet(armOx, armOy, aimAngle, wKey, weapon.dmg * (_perkState.dmgMult||1), side);
         return;
     }
 
@@ -9480,7 +9480,7 @@ function fire(scene, side) {
     _fireOnce();
     // PVP: broadcast bullet to other players
     if (typeof mpBroadcastBullet === 'function' && _mpMatchActive) {
-        mpBroadcastBullet(armOx, armOy, aimAngle, wKey, _effectiveDmg);
+        mpBroadcastBullet(armOx, armOy, aimAngle, wKey, _effectiveDmg, side);
     }
     // Razor Edge: every 3rd shot fires a bonus duplicate
     if (typeof checkDoubleStrike === 'function' && checkDoubleStrike()) {
