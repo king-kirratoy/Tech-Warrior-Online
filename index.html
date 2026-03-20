@@ -1584,7 +1584,7 @@ const _perks = {
     plsm_overcharge: { cat:'plsm', label:'Overcharge',      desc:'Plasma: +20% size & damage (stackable)',    apply: () => { _perkState.plsmMult=(_perkState.plsmMult||1)*1.20; } },
     plsm_chain:      { cat:'plsm', label:'Chain Plasma',    desc:'Plasma orb chains to nearest enemy within 150px on hit', apply: () => { _perkState.plsmChain=true; } },
     fth_napalm:      { cat:'fth',  label:'Napalm',          desc:'FTH: ignited enemies burn for 3s after leaving range', apply: () => { _perkState.fthNapalm=true; } },
-    fth_wide_cone:   { cat:'fth',  label:'Wide Cone',       desc:'FTH: flame spread +30%, range +20% (stackable)', apply: () => { _perkState.fthRange=(_perkState.fthRange||0)+0.20; } },
+    fth_wide_cone:   { cat:'fth',  label:'Wide Cone',       desc:'FTH: flame spread +30%, range +20% (stackable)', apply: () => { _perkState.fthRange=(_perkState.fthRange||0)+0.20; _perkState.fthCone=(_perkState.fthCone||0)+0.30; } },
     rail_capacitor:  { cat:'rail', label:'Capacitor',       desc:'RAIL: charge time −20% (stackable)',        apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.80; } },
     rail_overload:   { cat:'rail', label:'Overload',        desc:'RAIL: +25% damage per enemy pierced (stackable)', apply: () => { _perkState.railPierceBonus=(_perkState.railPierceBonus||0)+0.25; } },
     reactive_shield: { cat:'shield', label:'Reactive Shield', desc:'Shield activation reflects 30 dmg to nearby enemies (+30/stack)', apply: () => { _perkState.reactiveShield=(_perkState.reactiveShield||0)+30; } },
@@ -3889,7 +3889,8 @@ function handlePlayerMovement(scene, time) {
     const _gearModCdMult = 1 - ((_gearState?.modCdPct || 0) / 100);
     const effectiveModCooldown = (isChargeActive ? modCooldown * 0.5
         : (loadout.chassis === 'medium' ? modCooldown * (CHASSIS.medium.modCooldownMult || 0.85) : modCooldown))
-        * _gearModCdMult;
+        * _gearModCdMult
+        * (loadout.mod === 'jump' ? (_perkState.jumpCdMult || 1) * (_perkState.jumpCooldownMult || 1) : 1);
     if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + effectiveModCooldown) {
         activateMod(scene, time);
     }
@@ -5395,7 +5396,7 @@ function _spawnSpectreClone() {
         const b = scene.add.circle(cloneTorso.x, cloneTorso.y, (weapon.bulletSize || 4), 0x8844ff, 0.7).setDepth(11);
         scene.physics.add.existing(b);
         b.body.setAllowGravity(false);
-        b.damageValue = Math.round((weapon.dmg || 10) * (_perkState.dmgMult || 1) * 0.5);
+        b.damageValue = Math.round((weapon.dmg || 10) * 0.5);
         bullets.add(b);
         scene.physics.velocityFromRotation(ang, (weapon.speed || 800) * 0.9, b.body.velocity);
         scene.time.delayedCall(1500, () => { if (b.active) b.destroy(); });
@@ -6476,7 +6477,7 @@ function _spawnDrone(scene, offsetX, offsetY, isAuto) {
             const baseDmg = mod.droneDmg;
             const uplink  = 1 + (_perkState.droneUplink || 0);
             const overw   = 1 + (_perkState.overwatchStacks > 0 ? (_perkState.overwatchKills || 0) * 0.20 * _perkState.overwatchStacks : 0);
-            const dmg     = Math.round(baseDmg * uplink * overw * (_perkState.dmgMult || 1));
+            const dmg     = Math.round(baseDmg * uplink * overw);
             damageEnemy(target, dmg, 0);
             showDamageText(scene, target.x, target.y, dmg);
             const zap = scene.add.graphics().setDepth(13);
@@ -6616,7 +6617,7 @@ function activateMissiles(scene, time) {
                     smokeInterval?.remove();
                     rocket.destroy();
                     if (target.active) {
-                        damageEnemy(scene, target, mod.missileDmg);
+                        damageEnemy(target, mod.missileDmg, 0);
                         createExplosion(scene, target.x, target.y, 45, 0);
                         // Individual impact sound
                         _noise(0.08, 0.25, 0, 80, 900);
@@ -6820,7 +6821,7 @@ function activateRage(scene) {
     sndRage();
     isRageActive = true;
     refreshMechColor();
-    const _rageDur = WEAPONS.rage.rageTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
+    const _rageDur = WEAPONS.rage.rageTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * (_perkState.rageDurMult || 1);
     scene.time.delayedCall(_rageDur, () => {
         isRageActive = false;
         refreshMechColor();
@@ -6867,13 +6868,11 @@ function activateGhostStep(scene, time) {
     if (!player?.active) return;
     _perkState._ghostStepActive = true;
     // Make player sprite semi-transparent
-    if (player.torso) player.torso.setAlpha(0.15);
-    if (player.visuals) player.visuals.setAlpha(0.15);
+    if (torso) torso.setAlpha(0.15);
     const _gsCloakDur = WEAPONS.ghost_step.cloakTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
     const _gTimer = scene.time.delayedCall(_gsCloakDur, () => {
         _perkState._ghostStepActive = false;
-        if (player?.torso) player.torso.setAlpha(1);
-        if (player?.visuals) player.visuals.setAlpha(1);
+        if (torso?.active) torso.setAlpha(1);
     });
     // End early if player fires (checked in handlePlayerFiring)
     lastModTime = time;
@@ -6901,7 +6900,7 @@ function activateFortressMode(scene, time) {
     _perkState._fortressDR = 0.30; // 30% DR
     const _fTick = scene.time.addEvent({ delay: 200, loop: true, callback: () => {
         if (!_perkState._fortressMode || !player?.comp?.core) { _fTick.remove(); return; }
-        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 1); // 5 HP/s at 200ms ticks
+        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + Math.round(1 * (1 + (_perkState.fmHeal || 0)))); // 5 HP/s base; fmHeal perk scales this
         updateHUD();
     }});
     const _fmDur = WEAPONS.fortress_mode.modeTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1);
@@ -9448,7 +9447,7 @@ function fire(scene, side) {
     const _gearDmgFlat = (_gearState?.dmgFlat || 0);
     const _gearDmgPct  = 1 + ((_gearState?.dmgPct || 0) / 100);
     const _colossusMult = (typeof getColossusDmgMult === 'function') ? getColossusDmgMult() : 1.0;
-    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * (_perkState.dmgMult || 1) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult);
+    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult);
     const _wEff = Object.assign({}, weapon, { dmg: _effectiveDmg });
     // Phantom: mark all bullets from this shot as piercing
     if (_phantomMult > 1) _wEff._phantomPierce = true;
@@ -9493,7 +9492,7 @@ function fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     const _coneWidthMult = 1 + (_perkState.fthCone || 0);
     const coneSteps = _perkState.fuelInjector ? 4 : 2;
     const coneAngleStep = 0.055 * _coneWidthMult;
-    const dmg = Math.round(weapon.dmg * (_perkState.dmgMult||1));
+    const dmg = Math.round(weapon.dmg);
     for (let i = -coneSteps; i <= coneSteps; i++) {
         const a = angle + i * coneAngleStep + (Math.random()-0.5)*0.06;
         const bx = armOx + Math.cos(a) * barrelDist;
@@ -9576,7 +9575,7 @@ function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     scene.tweens.add({ targets: beam, alpha: 0, duration: 220, onComplete: () => beam.destroy() });
 
     // Hitscan: check each enemy using point-to-line distance
-    const dmg = Math.round(weapon.dmg * (_perkState.dmgMult||1));
+    const dmg = Math.round(weapon.dmg);
     let hitCount = 0;
     enemies.getChildren().forEach(e => {
         if (!e.active) return;
