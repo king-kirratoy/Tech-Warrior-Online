@@ -5,6 +5,50 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v4.7 — Final Consistency Check
+
+**Date:** 2026-03-20
+
+Pre-split consistency audit. Verified all function references, variable references, typeof guards, and documentation accuracy. No game logic changed.
+
+### Checks Performed
+
+1. **Function references** — All function calls in `index.html` resolve to existing definitions. All 22 v4.6 sub-functions and 2 v4.5 helpers verified present. No dangling calls found.
+2. **Variable references** — All variable references in `index.html` resolve to existing declarations. `GAME_CONFIG` and `GAME` (renamed v4.3) confirmed in use throughout.
+3. **typeof guards** — All guards reference functions that exist in the expected external file. No guard checks for a non-existent function.
+4. **Documentation accuracy** — Found and fixed 5 issues (see below).
+5. **CHANGELOG gaps** — Found duplicate v3.2 entry; resolved.
+
+### Issues Found and Fixed
+
+**DEPENDENCY_MAP.md — Section 1.3: 7 phantom unique-effect function entries removed**
+- `triggerVoidstepDash`, `applyMirrorShieldBlock`, `checkArcDischarge`, `triggerNullCoreDetonation`, `checkChainReactionProc`, `checkWarpStrikeProc`, `updateEquippedUniqueEffects` were listed as guarded calls from `index.html` into `loot-system.js` but none of these functions exist anywhere in the codebase and no typeof guards for them appear in `index.html`. Removed the 7 stale rows.
+- Replaced with accurate entries for the 12 unique-effect helpers that actually do exist and are called from `index.html` (`hasUniqueEffect`, `applyFrontalAbsorb`, `getShieldDRBonus`, `getImpactArmorDR`, `checkImpactArmor`, `isMatrixBarrierActive`, `triggerMatrixBarrier`, `getColossusDR`, `getColossusDmgMult`, `getDualReloadBonus`, `getUnstoppableSpeedBonus`, `checkDoubleStrike`, `spawnModCover`, `triggerCoreOverload`, `_showFloatingWarning`).
+
+**DEPENDENCY_MAP.md — `game` → `GAME` in sections 2.1, 2.3, 4.1**
+- The Phaser game instance was renamed from `game` to `GAME` in v4.3. Updated all three section entries.
+
+**DEPENDENCY_MAP.md — Missing cross-file calls added in v4.4**
+- Section 1.2: Added `_showArenaLabel()` (moved from `index.html` to `arena-objectives.js` in v4.4) and `_initPitZone()`.
+- Section 1.4: Added `_updateCampaignXPBar()` (moved from `index.html` to `campaign-system.js` in v4.4), plus `completeCampaignMission`, `awardMissionReward`, `getSkillTreeBonuses`, `_closeShop`, `_closeLoadoutSlots`, `_closeUpgrades`.
+
+**GLOBAL_INVENTORY.md — `config`/`game` entries updated**
+- Section 1: Renamed `config` → `GAME_CONFIG` and `game` → `GAME` with v4.3 rename notes.
+- Section 2: Same renames in destination table.
+- Section 3: Collision-risk rows for `config` and `game` marked as resolved (renamed in v4.3).
+
+**CHANGELOG.md — Duplicate v3.2 entry**
+- Two entries both labeled `v3.2` existed: "Structural Audit Fixes" and "GLOBAL_INVENTORY.md Complete". The latter (oldest entry, positioned at the bottom of the file) renamed to `v3.0` to eliminate the duplicate version number.
+
+### Files Changed
+
+- `DEPENDENCY_MAP.md` — Section 1.2 (added `_showArenaLabel`, `_initPitZone`); Section 1.3 (removed 7 phantom functions, added 15 accurate unique-effect helper rows); Section 1.4 (added 6 missing guarded calls); Sections 2.1, 2.3, 4.1 (`game` → `GAME`)
+- `GLOBAL_INVENTORY.md` — Section 1 (`config` → `GAME_CONFIG`, `game` → `GAME`); Section 2 (same); Section 3 (resolved-rename rows for `config`/`game`)
+- `CHANGELOG.md` — Duplicate v3.2 renamed to v3.0; this entry added
+- `OVERVIEW.md` — Version updated to v4.7
+
+---
+
 ## v4.6 — Function Decomposition Pass
 
 **Date:** 2026-03-20
@@ -697,7 +741,7 @@ Eliminated per-frame heap allocations in the enemy AI hot loop, stopped orphaned
 
 - `index.html` — `processPlayerDamage()`, `damageEnemy()`, `handleShieldRegen()`
 
-## v3.2 — GLOBAL_INVENTORY.md Complete
+## v3.0 — GLOBAL_INVENTORY.md Complete
 
 **Date:** 2026-03-20
 
