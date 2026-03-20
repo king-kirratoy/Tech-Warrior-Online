@@ -13,9 +13,8 @@
 //   _campaignState        — active campaign state (current chapter, mission, XP, level, etc.)
 //   MISSION_MODIFIERS     — random modifier definitions
 //   BONUS_OBJECTIVES      — random bonus objective definitions
-//   CHASSIS_UPGRADES      — level-gated chassis stat bonuses (Phase 4)
+//   SKILL_TREES           — skill tree definitions per chassis (Phase 4)
 //   MISSION_REWARDS       — first-clear guaranteed loot per mission (Phase 4)
-//   SHOP_INVENTORY        — shop stock definitions (Phase 4)
 //
 // FUNCTIONS CALLED FROM index.html:
 //   getCampaignMission()        — returns current mission config
@@ -24,14 +23,14 @@
 //   applyCampaignDeathPenalty() — apply scrap loss on death
 //   rollMissionModifier()       — roll a random modifier for current deploy
 //   rollBonusObjective()        — roll a random bonus objective
-//   checkBonusObjective(event)  — check if bonus objective condition is met
+//   trackBonusObjective(eventType, value) — check if bonus objective condition is met
 //   getXPForLevel(level)        — XP required for a given level
 //   getXPMultiplier(playerLvl, missionLvl) — level-differential multiplier
 //   showMissionSelect()         — show mission/chapter select UI
 //   saveCampaignState()         — save full campaign state
 //   loadCampaignState()         — load full campaign state
-//   getChassisUpgrades(level)   — get all chassis upgrades for current level (Phase 4)
-//   applyChassisUpgrades()      — apply level-based chassis stat bonuses (Phase 4)
+//   getSkillTreeBonuses(chassisType) — get bonuses from chosen skills (Phase 4)
+//   applySkillTreeBonuses()     — apply skill-based chassis stat bonuses (Phase 4)
 //   getMissionReward(missionId) — get first-clear reward for a mission (Phase 4)
 //   showShop()                  — show campaign hangar shop UI (Phase 4)
 //   refreshShopStock()          — restock shop inventory (Phase 4)
@@ -547,11 +546,6 @@ function trackBonusObjective(eventType, value) {
     }
 }
 
-/** Check if bonus objective is still achievable (for negative-condition types). */
-function isBonusObjectiveFailed() {
-    return _campaignState.bonusObjectiveProgress === -1;
-}
-
 /** Finalize bonus objective check at mission end. */
 function finalizeBonusObjective(elapsedMs) {
     const obj = _campaignState.activeBonusObjective;
@@ -709,44 +703,10 @@ function applyCampaignDeathPenalty() {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// CAMPAIGN SAVE / LOAD
+// CAMPAIGN SAVE / LOAD (declared here, full implementation in Phase 4E below)
 // ══════════════════════════════════════════════════════════════════
-
-function saveCampaignState() {
-    try {
-        const state = {
-            playerLevel: _campaignState.playerLevel,
-            playerXP: _campaignState.playerXP,
-            currentChapter: _campaignState.currentChapter,
-            currentMission: _campaignState.currentMission,
-            completedMissions: _campaignState.completedMissions,
-            claimedRewards: _campaignState.claimedRewards,
-            skillsChosen: _campaignState.skillsChosen,
-            chassis: _campaignState.chassis
-        };
-        localStorage.setItem('tw_campaign_state', JSON.stringify(state));
-    } catch(e) {}
-}
-
-function loadCampaignState() {
-    try {
-        const raw = localStorage.getItem('tw_campaign_state');
-        if (!raw) return false;
-        const state = JSON.parse(raw);
-        if (state) {
-            _campaignState.playerLevel = state.playerLevel || 1;
-            _campaignState.playerXP = state.playerXP || 0;
-            _campaignState.currentChapter = state.currentChapter || 0;
-            _campaignState.currentMission = state.currentMission || 0;
-            _campaignState.completedMissions = state.completedMissions || {};
-            _campaignState.claimedRewards = state.claimedRewards || {};
-            _campaignState.skillsChosen = state.skillsChosen || [];
-            if (state.chassis) _campaignState.chassis = state.chassis;
-            return true;
-        }
-    } catch(e) {}
-    return false;
-}
+function saveCampaignState() {}
+function loadCampaignState() { return false; }
 
 // ══════════════════════════════════════════════════════════════════
 // MISSION SELECT UI
@@ -942,50 +902,6 @@ function _deployFromMissionSelect() {
     if (typeof deployMech === 'function') {
         deployMech();
     }
-}
-
-/** Show a brief mission briefing before deploy. */
-function _showMissionBriefing(mission) {
-    const mod = _campaignState.activeModifier;
-    const bonus = _campaignState.activeBonusObjective;
-
-    let briefEl = document.getElementById('mission-briefing-popup');
-    if (!briefEl) return;
-
-    let html = '';
-    html += `<div style="font-size:18px;letter-spacing:4px;color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,0.5);margin-bottom:4px;">${mission.name.toUpperCase()}</div>`;
-    html += `<div style="font-size:11px;letter-spacing:1px;color:rgba(200,210,217,0.6);margin-bottom:16px;">${mission.briefing}</div>`;
-
-    // Modifier
-    if (mod && mod.id !== 'no_modifier') {
-        html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">`;
-        html += `<span style="font-size:13px;">${mod.icon}</span>`;
-        html += `<span style="font-size:11px;letter-spacing:2px;color:#ff8844;">${mod.label}</span>`;
-        html += `<span style="font-size:10px;color:rgba(200,210,217,0.45);">— ${mod.desc}</span>`;
-        html += '</div>';
-    }
-
-    // Bonus objective
-    if (bonus) {
-        html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">`;
-        html += `<span style="font-size:13px;">${bonus.icon}</span>`;
-        html += `<span style="font-size:11px;letter-spacing:2px;color:#00ccff;">BONUS: ${bonus.label}</span>`;
-        html += `<span style="font-size:10px;color:rgba(200,210,217,0.45);">— ${bonus.desc}</span>`;
-        html += '</div>';
-    }
-
-    // Enemy level info
-    const levelDiff = mission.enemyLevel - _campaignState.playerLevel;
-    const diffColor = levelDiff >= 3 ? '#ff2200' : levelDiff >= 1 ? '#ff8844' : levelDiff === 0 ? '#00ff88' : '#88aacc';
-    html += `<div style="font-size:10px;letter-spacing:1px;color:${diffColor};margin-top:8px;">ENEMY LEVEL ${mission.enemyLevel} // YOUR LEVEL ${_campaignState.playerLevel}</div>`;
-
-    briefEl.innerHTML = html;
-    briefEl.style.display = 'flex';
-
-    // Auto-hide after 4 seconds
-    setTimeout(() => {
-        if (briefEl) briefEl.style.display = 'none';
-    }, 4000);
 }
 
 /** Close mission select and return to main menu. Saves progress first. */
@@ -1229,11 +1145,6 @@ function getSkillTreeBonuses(chassisType) {
         }
     }
     return bonuses;
-}
-
-// Legacy compat: getChassisUpgradeBonuses maps to skill tree bonuses
-function getChassisUpgradeBonuses(level, chassisType) {
-    return getSkillTreeBonuses(chassisType);
 }
 
 /** Store base chassis values so we can re-apply upgrades cleanly. */
@@ -1780,8 +1691,6 @@ function _closeLoadoutSlots() {
 // 4E — UPDATED SAVE/LOAD (include Phase 4 state)
 // ══════════════════════════════════════════════════════════════════
 
-// Override saveCampaignState to include Phase 4 data
-const _phase3_saveCampaignState = saveCampaignState;
 saveCampaignState = function() {
     try {
         const state = {
@@ -1791,7 +1700,7 @@ saveCampaignState = function() {
             currentMission: _campaignState.currentMission,
             completedMissions: _campaignState.completedMissions,
             chassis: _campaignState.chassis || null,
-            // Phase 4 additions
+            skillsChosen: _campaignState.skillsChosen || [],
             claimedRewards: _campaignState.claimedRewards || {},
             loadoutSlots: _campaignState.loadoutSlots || []
         };
@@ -1799,8 +1708,6 @@ saveCampaignState = function() {
     } catch(e) {}
 };
 
-// Override loadCampaignState to restore Phase 4 data
-const _phase3_loadCampaignState = loadCampaignState;
 loadCampaignState = function() {
     try {
         const raw = localStorage.getItem('tw_campaign_state');
@@ -1813,7 +1720,7 @@ loadCampaignState = function() {
             _campaignState.currentMission = state.currentMission || 0;
             _campaignState.completedMissions = state.completedMissions || {};
             _campaignState.chassis = state.chassis || null;
-            // Phase 4 additions
+            _campaignState.skillsChosen = state.skillsChosen || [];
             _campaignState.claimedRewards = state.claimedRewards || {};
             _campaignState.loadoutSlots = state.loadoutSlots || [];
             return true;

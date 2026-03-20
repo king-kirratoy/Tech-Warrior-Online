@@ -13,7 +13,7 @@
 //
 // FUNCTIONS CALLED FROM index.html (search "typeof <name>" to find call sites):
 //   Phases 1-3: spawnEquipmentLoot, checkEquipmentPickups, recalcGearStats,
-//               saveInventory, loadInventory, cleanupEquipmentDrops
+//               loadCampaignInventory, loadCampaignProgress, cleanupEquipmentDrops
 //   Phase 5 unique effects: hasUniqueEffect, getUnstoppableSpeedBonus,
 //               getDualReloadBonus, checkDoubleStrike, spawnModCover,
 //               checkImpactArmor, getImpactArmorDR
@@ -1375,12 +1375,11 @@ function getUnstoppableSpeedBonus() {
 
 // Impact Armor: heavy hit triggers temp DR
 let _impactArmorActive = false;
-let _impactArmorTimer = null;
 function checkImpactArmor(dmg) {
     if (!hasUniqueEffect('impactArmor') || _impactArmorActive) return;
     if (dmg > 25) {
         _impactArmorActive = true;
-        _impactArmorTimer = setTimeout(() => { _impactArmorActive = false; }, 3000);
+        setTimeout(() => { _impactArmorActive = false; }, 3000);
     }
 }
 function getImpactArmorDR() {

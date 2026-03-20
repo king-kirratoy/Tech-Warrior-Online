@@ -680,7 +680,7 @@ function mpSpawnRemoteBullet(scene, data) {
 // UPDATE LOOP (called from game update())
 // ================================================================
 
-function mpUpdate(time) {
+function mpUpdate() {
     if (!_mpMatchActive || !_mpConnected) return;
 
     // Interpolate remote player positions
@@ -1211,17 +1211,8 @@ function mpRenderKillFeed() {
 }
 
 // ================================================================
-// VICTORY / DEFEAT SCREEN
+// MATCH RESULTS SCREEN
 // ================================================================
-
-function mpShowVictory() {
-    // Legacy — now handled by mpShowMatchResults
-}
-
-function mpShowDefeat() {
-    // In deathmatch, death triggers respawn — not defeat screen
-    // This is called from showDeathScreen() in index.html — block it
-}
 
 function mpShowMatchResults(isWinner, winnerName, scoreboard) {
     _mpMatchActive = false;
@@ -1459,11 +1450,6 @@ function mpAddInGameChatMessage(text, color) {
     setTimeout(() => { if (line.parentNode) line.remove(); }, 15000);
 }
 
-// Hook into existing chat handler — update to use in-game chat during match
-(function() {
-    // Will be called from mpShowChat during match
-})();
-
 // ================================================================
 // RESPAWN SYSTEM — countdown overlay + player recreation
 // ================================================================
@@ -1528,7 +1514,6 @@ function mpRespawnPlayer() {
         player.comp.rArm.hp = player.comp.rArm.max;
         player.comp.legs.hp = player.comp.legs.max;
     }
-    const shldSys = (typeof SHIELD_SYSTEMS !== 'undefined' ? SHIELD_SYSTEMS[loadout.shld] : null) || { maxShield: 0 };
     if (player) {
         player.shield = player.maxShield || 0;
         player.hp = player.maxHp || 100;
