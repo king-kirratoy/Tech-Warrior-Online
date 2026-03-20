@@ -12915,6 +12915,7 @@ function _renderWeaponPanel() {
 
 function _renderMobilityPanel() {
     const chassisData = CHASSIS[loadout.chassis];
+    const _inGame = !!(player?.comp); // true when actually deployed in-game
     // ── MOBILITY & SHIELD ─────────────────────────────────────
     let mobHtml = '';
     const baseSpd = chassisData?.spd || 200;
