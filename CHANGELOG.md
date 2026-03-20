@@ -5,6 +5,50 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v4.3 — Constants Audit & Magic Number Extraction
+
+**Date:** 2026-03-20 (Central Time)
+
+Full audit of all 46 top-level `const` declarations in `index.html`, classification of magic numbers in the JS logic sections, and targeted fixes.
+
+### PART 1 — Audit
+
+Classified all 46 top-level `const` declarations alphabetically into three categories:
+
+- **TRUE CONSTANT (20):** Never reassigned and never mutated — safe for `constants.js` in the upcoming split. Includes `_FEELER_OFFSETS`, `_MAX_NODES`, `COMMANDER_COLORS`, `ENEMY_2H_WEAPONS`, `ENEMY_ARM_WEAPONS`, `ENEMY_PRIMARY`, `EXPLOSIVE_KEYS`, `LB_KEY`, `LB_MAX`, `MEDIC_COLORS`, `SCORE_MAX_*`, `SLOT_ID_MAP`, all `SUPABASE_*` constants, and two that needed renaming (`config`, `game`).
+- **MUTATED CONSTANT (3):** Declared `const` but properties written at runtime — `CHASSIS`, `_sndThrottle`, `_CONE_RAY_POINTS`.
+- **LOOKUP TABLE (23):** Large read-only data objects — `CHASSIS_WEAPONS`, `SHIELD_SYSTEMS`, `WEAPONS`, `_perks`, `COVER_DEFS`, `LOOT_TYPES`, all garage dropdown option arrays, etc.
+
+Magic number scan identified two module-level values appearing 10+ times each with no named form: `4000` (world size) and `2000` (world center / player spawn).
+
+### PART 2 — Fixes
+
+**Step 1 — ⚠️ MUTATED AT RUNTIME comments (`index.html`):**
+- Added comment above `CHASSIS` explaining that `applyChassisUpgrades()` and `tactical_uplink` write into it at runtime.
+- Added comment above `_sndThrottle` explaining that `_canPlay()` writes timestamps into it on every sound play.
+- Added comment above `_CONE_RAY_POINTS` explaining that `handleEnemyAI()` overwrites `.x`/`.y` on each element every frame.
+
+**Step 2 — Magic number extraction (`index.html`):**
+- Added `WORLD_SIZE = 4000` and `WORLD_CENTER = 2000` at the top of the CONSTANTS section.
+- Extracted 19 magic numbers into named constants across `setBounds`, `centerOn`, `setPosition`, `Distance.Between`, arena generator, swarm spawn, Core boss, and AI patrol target clamping calls.
+
+**Step 3 — SCREAMING_SNAKE_CASE renames (`index.html` + all 5 external JS files):**
+- `config` → `GAME_CONFIG` (2 sites in `index.html`).
+- `game` → `GAME` (83 lines in `index.html`; 30 additional lines across `loot-system.js`, `enemy-types.js`, `multiplayer.js`, `arena-objectives.js`, `campaign-system.js`). `scene.game` (Phaser's internal scene property) was correctly preserved unchanged.
+
+### Files Changed
+
+- `index.html` — `⚠️` comments on `CHASSIS`, `_sndThrottle`, `_CONE_RAY_POINTS`; new `WORLD_SIZE`/`WORLD_CENTER` constants; 19 magic number replacements; `config` → `GAME_CONFIG`; `game` → `GAME` throughout.
+- `js/loot-system.js` — `game` → `GAME` (7 lines).
+- `js/enemy-types.js` — `game` → `GAME` (3 lines).
+- `js/multiplayer.js` — `game` → `GAME` (16 lines).
+- `js/arena-objectives.js` — `game` → `GAME` (2 lines).
+- `js/campaign-system.js` — `game` → `GAME` (2 lines).
+- `CHANGELOG.md` — this entry.
+- `OVERVIEW.md` — version updated to v4.3.
+
+---
+
 ## v4.2 — Dependency Map
 
 **Date:** 2026-03-20 (Central Time)

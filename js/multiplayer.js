@@ -26,7 +26,7 @@ let _mpPvpBullets = null;       // Phaser group for remote player bullets
 let _mpScoreboard = {};         // socketId → { kills, deaths } from server
 let _mpKillsToWin = 25;        // Deathmatch kill target
 let _mpMapSize = 6000;          // PVP map size (larger than standard 4000)
-let _mpChatOpen = false;        // Is in-game chat input open?
+let _mpChatOpen = false;        // Is in-GAME chat input open?
 let _mpRespawning = false;      // Are we in respawn countdown?
 let _mpRespawnInvuln = false;   // Brief invulnerability after respawn
 let _mpRemoteBodies = null;     // Phaser group for all remote player hitbox sprites
@@ -129,7 +129,7 @@ function mpConnect(serverUrl) {
         _mpMySpawn = data.spawns[_mpLocalId] || { x: _mpMapSize / 2, y: _mpMapSize / 2 };
 
         // Build remote player representations
-        const scene = game.scene.scenes[0];
+        const scene = GAME.scene.scenes[0];
         data.players.forEach(p => {
             if (p.id === _mpLocalId) return;
             mpCreateRemotePlayer(scene, p, data.spawns[p.id]);
@@ -224,7 +224,7 @@ function mpConnect(serverUrl) {
 
     _mpSocket.on('bullet-fired', (data) => {
         if (!_mpMatchActive) return;
-        const scene = game.scene.scenes[0];
+        const scene = GAME.scene.scenes[0];
         if (!scene) return;
         mpSpawnRemoteBullet(scene, data);
     });
@@ -245,7 +245,7 @@ function mpConnect(serverUrl) {
         // showed impact sparks and damage text, so displaying the server
         // relay too would cause duplicate hit effects.
         if (data.shooterId === _mpLocalId) return;
-        const scene = game.scene.scenes[0];
+        const scene = GAME.scene.scenes[0];
         if (!scene) return;
         try {
             createImpactSparks(scene, data.x, data.y);
@@ -291,7 +291,7 @@ function mpConnect(serverUrl) {
                 // Death explosion — use torso position (always tracked) with
                 // body as fallback, so the explosion appears even if the
                 // invisible hitbox sprite has been deactivated
-                const scene = game?.scene?.scenes[0];
+                const scene = GAME?.scene?.scenes[0];
                 const dx = rp.torso?.active ? rp.torso.x
                          : rp.body?.active  ? rp.body.x
                          : rp.targetX;
@@ -322,7 +322,7 @@ function mpConnect(serverUrl) {
 
     _mpSocket.on('chat', (data) => {
         if (data.id === _mpLocalId) return; // Already shown locally
-        // In-match: show in game chat overlay; in lobby: show in lobby chat
+        // In-match: show in GAME chat overlay; in lobby: show in lobby chat
         if (_mpMatchActive) {
             mpAddInGameChatMessage(`${data.name}: ${data.message}`, '#cccccc');
         } else {
@@ -435,7 +435,7 @@ function mpDestroyRemotePlayer(playerId) {
     rp.alive = false;
 
     // Death explosion visual
-    const scene = game?.scene?.scenes[0];
+    const scene = GAME?.scene?.scenes[0];
     if (scene && rp.body?.active) {
         const dx = rp.body.x, dy = rp.body.y;
         try {
@@ -458,7 +458,7 @@ function mpCleanupMatch() {
     // Remove bullet overlap collider before destroying bodies
     if (_mpBulletOverlap) {
         try {
-            const scene = game?.scene?.scenes[0];
+            const scene = GAME?.scene?.scenes[0];
             if (scene) scene.physics.world.removeCollider(_mpBulletOverlap);
         } catch(e) {}
         _mpBulletOverlap = null;
@@ -697,7 +697,7 @@ function mpSpawnRemoteBullet(scene, data) {
 }
 
 // ================================================================
-// UPDATE LOOP (called from game update())
+// UPDATE LOOP (called from GAME update())
 // ================================================================
 
 function mpUpdate() {
@@ -720,7 +720,7 @@ function mpUpdate() {
 
         // Directly sync the physics body position so overlap checks in
         // the CURRENT frame's physics step use the latest coordinates.
-        // Without this, setPosition() only updates the game object; the
+        // Without this, setPosition() only updates the GAME object; the
         // Arcade Physics body doesn't sync until next frame's preUpdate(),
         // causing a 1-frame positional lag that makes fast bullets miss.
         if (rp.body.body) {
@@ -822,7 +822,7 @@ function mpDeployPVP() {
     document.getElementById('ui-layer').style.display = 'none';
 
     // Override spawn position
-    const scene = game.scene.scenes[0];
+    const scene = GAME.scene.scenes[0];
     const s = CHASSIS[loadout.chassis];
 
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(false);
@@ -1416,8 +1416,8 @@ function mpToggleInGameChat() {
         wrap.style.display = 'block';
         if (hint) hint.style.display = 'none';
         input.focus();
-        // Temporarily disable game input while typing
-        const scene = game?.scene?.scenes[0];
+        // Temporarily disable GAME input while typing
+        const scene = GAME?.scene?.scenes[0];
         if (scene?.input?.keyboard) {
             scene.input.keyboard.enabled = false;
         }
@@ -1426,7 +1426,7 @@ function mpToggleInGameChat() {
         if (hint) hint.style.display = 'block';
         input.value = '';
         input.blur();
-        const scene = game?.scene?.scenes[0];
+        const scene = GAME?.scene?.scenes[0];
         if (scene?.input?.keyboard) {
             scene.input.keyboard.enabled = true;
         }
@@ -1509,7 +1509,7 @@ function mpShowRespawnCountdown(delayMs, onComplete) {
 
 function mpRespawnPlayer() {
     if (!_mpMatchActive) return;
-    const scene = game?.scene?.scenes[0];
+    const scene = GAME?.scene?.scenes[0];
     if (!scene) return;
 
     const s = CHASSIS[loadout.chassis];
@@ -2437,7 +2437,7 @@ function _pvpDeployFromHangar() {
     mpShowInGameChat();
 
     // Respawn with new loadout
-    const scene = game?.scene?.scenes[0];
+    const scene = GAME?.scene?.scenes[0];
     if (!scene) return;
     scene.input.setDefaultCursor('none');
     document.body.style.cursor = 'none';

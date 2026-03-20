@@ -9,7 +9,7 @@
 // FUNCTIONS CALLED FROM index.html (search "typeof <name>" to find call sites):
 //   spawnSpecialEnemy    — called from startRound() enemy spawn loop
 //   applyEliteModifier   — called from startRound() elite assignment
-//   updateSpecialEnemies — called from update() game loop (~line 3066)
+//   updateSpecialEnemies — called from update() GAME loop (~line 3066)
 //   handleEliteDamage    — called from damageEnemy() (~line 9624)
 //   handleEliteDeath     — called from onEnemyKilled() (~line 9849)
 //   handleVampiricHeal   — called from processPlayerDamage() (~line 5407)
@@ -19,7 +19,7 @@
 //   player, enemies, enemyBullets, isDeployed, _round, coverObjects,
 //   _roundTotal, CHASSIS, ENEMY_COLORS, SHIELD_SYSTEMS,
 //   buildEnemyMech, buildEnemyTorso, createExplosion, processPlayerDamage,
-//   game, Phaser
+//   GAME, Phaser
 // ──────────────────────────────────────────────────────────────────
 
 // ── NEW ENEMY TYPE DEFINITIONS ───────────────────────────────────
@@ -737,7 +737,7 @@ function handleEliteDamage(e, amt) {
         if (e._shieldGateDamageAbsorbed >= e._shieldGateMax) {
             e._shieldGateActive = false;
             // Visual: gate break
-            const scene = game?.scene?.scenes[0];
+            const scene = GAME?.scene?.scenes[0];
             if (scene) {
                 const txt = scene.add.text(e.x, e.y - 30, 'GATE BROKEN', {
                     font: 'bold 9px monospace', fill: '#0088cc',

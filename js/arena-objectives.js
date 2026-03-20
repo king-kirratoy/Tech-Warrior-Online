@@ -28,7 +28,7 @@
 //   processPlayerDamage (pit zone damage)
 //
 // GLOBALS READ FROM index.html:
-//   player, enemies, isDeployed, coverObjects, game, Phaser
+//   player, enemies, isDeployed, coverObjects, GAME, Phaser
 // ──────────────────────────────────────────────────────────────────
 
 // ── ARENA DEFINITIONS ────────────────────────────────────────────
@@ -826,7 +826,7 @@ function _updateObjectiveHUD() {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// CLEANUP — called between rounds / on game over
+// CLEANUP — called between rounds / on GAME over
 // ══════════════════════════════════════════════════════════════════
 function cleanupObjective(scene) {
     _arenaState.objectiveActive = false;
