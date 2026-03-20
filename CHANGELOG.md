@@ -5,6 +5,64 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v4.4 — Misplaced Function Audit
+
+**Date:** 2026-03-20
+
+Full audit of all functions in `index.html` against the three misplacement criteria: (1) exclusively operates on data owned by an external file, (2) duplicates logic already in an external file, (3) clearly belongs to a system with its own file. Scanned all ~14,200 lines in ~500-line sections.
+
+### Misplacements Found and Fixed
+
+**`_showArenaLabel(scene, arenaLabel, objLabel)` — moved from `index.html` → `js/arena-objectives.js`**
+- Exclusively read `ARENA_DEFS` and `_arenaState` (both owned by `arena-objectives.js`).
+- Added after `getObjectiveLabel()` in the arena label helper section of `arena-objectives.js`.
+- The `ARENA_DEFS` typeof guard in the original was removed (unnecessary inside the owning file).
+- Deleted from `index.html`. Call site in `startRound()` wrapped with `if (typeof _showArenaLabel === 'function')` guard.
+
+**`_updateCampaignXPBar()` — moved from `index.html` → `js/campaign-system.js`**
+- Exclusively read `_campaignState.playerLevel` / `.playerXP` and called `getXPForLevel()` / `getXPToNextLevel()` (all owned by `campaign-system.js`).
+- Added in a new `// CAMPAIGN HUD HELPERS` section before the `// MISSION SELECT UI` section in `campaign-system.js`.
+- Internal typeof guards for `_campaignState`, `getXPForLevel`, `getXPToNextLevel` removed (unnecessary inside the owning file); `_gameMode` guard changed to `typeof _gameMode === 'undefined'` check since `_gameMode` is index.html state.
+- Deleted from `index.html`. Call site in `populateStats()` wrapped with `if (typeof _updateCampaignXPBar === 'function')` guard.
+
+### Sections Scanned — No Other Misplacements Found
+
+- Lines 1–500: HTML/CSS only
+- Lines 500–1400: HTML/CSS only
+- Lines 1400–2600: game state vars, `_perks` const, `resetLoadout()`, `_applyStarterLoadout()` — all index.html state
+- Lines 2600–2965: audio engine (`_getAC`, `_canPlay`, `_tone`, `_noise`, all `sndXxx`) — no audio.js file yet
+- Lines 2965–3312: `preload()`, `create()`, `update()`, `handleBulletEnemyOverlap()` — Phaser lifecycle, index.html state
+- Lines 3312–3946: `handleEnemyAI()` — index.html state
+- Lines 3946–4772: movement, firing, sync, perk selection, `showPerkMenu()`, `_showEquipPrompt()`, `showRoundBanner()` — index.html state
+- Lines 4772–4870: `_showArenaLabel()` → **MOVED** ✓; `_clearMapForRound()` — index.html state
+- Lines 4865–5083: `startRound()` — index.html orchestrator
+- Lines 5083–5288: cloud save / leaderboard helpers — index.html state
+- Lines 5288–6054: leaderboard, spectral clone, `destroyEnemyWithCleanup()`, `onEnemyKilled()`, minimap, extraction — index.html state
+- Lines 6054–6379: `deployMech()` — index.html state
+- Lines 6379–6525: `applyAugment()`, `applyLegSystem()` — write to `_perkState` (index.html state)
+- Lines 6525–7407: all `activateXxx()` mod functions — index.html state
+- Lines 7407–7765: `generateCover()`, `placeBuilding()`, `spawnMedic()` — index.html state
+- Lines 7765–8892: boss spawners — index.html state
+- Lines 8892–9543: `randomEnemyLoadout()`, `spawnEnemy()`, `spawnCommander()`, `enemyFire()` — index.html state
+- Lines 9543–10730: `fire()` and all `fireXxx()` functions, `processPlayerDamage()`, `damageEnemy()` — index.html state
+- Lines 10730–11056: `dropMine()`, `updateEnemyDoll()`, visual FX — index.html state
+- Lines 11056–11576: `buildPlayerMech()`, `buildEnemyTorso()`, utility helpers, `updateHUD()`, `updateBars()`, `updatePaperDoll()` — index.html state
+- Lines 11576–12116: garage system — index.html state
+- Lines 12116–12196: `toggleStats()`, `toggleInventory()`, `_switchLoadoutTab()` — index.html state
+- Lines 12196–12675: inventory UI, drag-and-drop handlers, stat helpers — mixed index.html/loot-system state
+- Lines 12675–12695: `_updateCampaignXPBar()` → **MOVED** ✓
+- Lines 12695–13044: `populateStats()` — multi-system read, index.html orchestrator
+- Lines 13044–13507: event handlers, `togglePause()`, `goToMainMenu()`, `returnToHangar()` — index.html state
+- Lines 13507–end: entry points, campaign chassis select, `startGame()`, `startMultiplayer()` — index.html state
+
+### Files Changed
+
+- `index.html` — `_showArenaLabel()` deleted, `_updateCampaignXPBar()` deleted, two call sites updated with typeof guards
+- `js/arena-objectives.js` — `_showArenaLabel()` added after `getObjectiveLabel()`
+- `js/campaign-system.js` — `_updateCampaignXPBar()` added in new `CAMPAIGN HUD HELPERS` section
+
+---
+
 ## v4.3 — Constants Audit & Magic Number Extraction
 
 **Date:** 2026-03-20 (Central Time)

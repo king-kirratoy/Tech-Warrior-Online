@@ -709,6 +709,31 @@ function saveCampaignState() {}
 function loadCampaignState() { return false; }
 
 // ══════════════════════════════════════════════════════════════════
+// CAMPAIGN HUD HELPERS
+// ══════════════════════════════════════════════════════════════════
+
+/** Update the campaign XP bar in the loadout/stats overlay. */
+function _updateCampaignXPBar() {
+    const bar = document.getElementById('campaign-xp-bar');
+    if (!bar) return;
+    if (typeof _gameMode === 'undefined' || _gameMode !== 'campaign') {
+        bar.style.display = 'none';
+        return;
+    }
+    bar.style.display = 'block';
+    const level = _campaignState.playerLevel;
+    const xpCur = _campaignState.playerXP - getXPForLevel(level);
+    const xpNeeded = getXPToNextLevel(level);
+    const pct = xpNeeded > 0 ? Math.min(100, Math.round((xpCur / xpNeeded) * 100)) : 100;
+    const lvEl = document.getElementById('campaign-xp-level');
+    const fillEl = document.getElementById('campaign-xp-fill');
+    const txtEl = document.getElementById('campaign-xp-text');
+    if (lvEl) lvEl.textContent = 'LEVEL ' + level;
+    if (fillEl) fillEl.style.width = pct + '%';
+    if (txtEl) txtEl.textContent = xpCur + ' / ' + xpNeeded + ' XP';
+}
+
+// ══════════════════════════════════════════════════════════════════
 // MISSION SELECT UI
 // ══════════════════════════════════════════════════════════════════
 
