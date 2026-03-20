@@ -5,6 +5,36 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v4.9 — Fix Remaining Syntax Errors in _syncEnemyVisuals and _applyEnemyObstacleAvoidance
+
+**Date:** 2026-03-20
+
+The v4.8 fix restored the `function` keyword but two additional structural bugs remained that still crashed the script block.
+
+### Root Causes
+
+1. **Missing `});` and `}` in `_syncEnemyVisuals`** (index.html ~line 3884): The `if (enemy.isCommander && player) { enemies.getChildren().forEach(other => { ... })` block was missing its arrow-function closing `});` and the outer `if` closing `}`. This left the forEach callback and the isCommander branch both unclosed, causing the JS parser to nest everything that followed inside them at the wrong scope depth.
+
+2. **Missing `}` in `_applyEnemyObstacleAvoidance`** (index.html ~line 3963): The `if (_curSpd > 20) {` wall-stuck detection block was missing its closing `}`. The "Tank locomotion" code that followed was intended to run unconditionally (4-space indent = function body level), but the unclosed if left the entire function body open, so `_applyEnemyObstacleAvoidance`'s own closing `}` was consumed by the if block — leaving the function itself unclosed and producing "Unexpected end of input" at end-of-file.
+
+### Effect
+
+Even after the v4.8 keyword fix, the JS engine still could not parse the script block. `proceedToMainMenu` and all other functions remained undefined, keeping the game unlaunchable.
+
+### Fix
+
+- Restored `});` and `}` closing the `forEach` callback and `isCommander` if-block in `_syncEnemyVisuals`.
+- Added the missing `}` closing the `if (_curSpd > 20)` block in `_applyEnemyObstacleAvoidance`.
+- Verified with Node.js `--check`: script now parses cleanly. Brace balance: `{ 4080 } 4080 diff: 0`.
+
+### Files Changed
+
+- `index.html` — two structural brace fixes in `_syncEnemyVisuals` and `_applyEnemyObstacleAvoidance`
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v4.9
+
+---
+
 ## v4.8 — Fix Callsign Screen Syntax Error
 
 **Date:** 2026-03-20

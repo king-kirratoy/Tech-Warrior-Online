@@ -3891,7 +3891,10 @@ function _syncEnemyVisuals(scene, enemy, time) {
             } else {
                 const base = CHASSIS[other.loadout?.chassis]?.spd || 250;
                 if (other.speed > base) other.speed = base;
-            }    // Chassis movement FX
+            }
+        });
+    }
+    // Chassis movement FX
     syncEnemyChassisEffect(scene, time, enemy);
 }
 
@@ -3958,6 +3961,7 @@ function _applyEnemyObstacleAvoidance(enemy, angle, speed, time, vx, vy) {
             if (!enemy._lastPos) enemy._lastPos = { x: enemy.x, y: enemy.y };
             else { enemy._lastPos.x = enemy.x; enemy._lastPos.y = enemy.y; }
         }
+    }
 
     // Tank locomotion: rotate legs toward travel direction, drive forward/back only
     const desiredAngle = (vx !== 0 || vy !== 0)
