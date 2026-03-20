@@ -1158,6 +1158,10 @@ button.active {
 // CONSTANTS & DATA TABLES
 // ================================================================
 
+// ── WORLD DIMENSIONS ─────────────────────────────────────────────
+const WORLD_SIZE   = 4000; // map width and height (square world)
+const WORLD_CENTER = 2000; // world center X and Y; also the player spawn point
+
 // ── CHASSIS RESTRICTIONS ─────────────────────────────────────────
 const CHASSIS_WEAPONS = {
     light:  new Set(['none','smg','br','fth','sg','sr']),
@@ -1322,6 +1326,9 @@ const LEG_SYSTEMS = {
     // ── HEAVY CHASSIS UNIQUE (replacing jump-dependent leg) ───────
     warlord_stride:  { name: 'WARLORD STRIDE', weight: 38,  desc: 'While leg HP is above 50%: +8% move speed and +10% damage at close range (<180px).' },
 };
+// ⚠️ MUTATED AT RUNTIME — applyChassisUpgrades() (campaign-system.js) writes upgrade HP
+// values into this object; tactical_uplink aug writes CHASSIS.medium.modCooldownMult;
+// goToMainMenu() restores modCooldownMult to its original value.
 const CHASSIS = {
     // max = weight limit.
     // Light: dual-fire, fast, fragile. Unique: kill sprint, ghost dodge, shadow mobility.
@@ -2601,6 +2608,8 @@ let _masterVol       = 0.32;
 let _activeNodes     = 0;
 let _lastNodeStartTime = 0; // performance.now() of most recent node creation
 const _MAX_NODES     = 48;   // generous cap — each weapon sound uses multiple tones
+// ⚠️ MUTATED AT RUNTIME — _canPlay() writes a per-sound timestamp into this object
+// every time a sound is allowed to play.
 const _sndThrottle   = {}; // per-sound last-played timestamps
 let _audioReady      = false; // gate: prevents AudioContext creation before first user gesture
 
@@ -2693,7 +2702,7 @@ function _noise(duration, vol, startDelay = 0, highpass = 0, lowpass = 0) {
 }
 
 // ── Per-weapon fire sounds ─────────────────────────────────────────
-// minGap controls max fire rate for sound (independent of game fire rate)
+// minGap controls max fire rate for sound (independent of GAME fire rate)
 function sndFire(wKey) {
     const gaps = { smg:80, mg:180, sg:300, br:120, hr:400, sr:500, rl:400, gl:300, plsm:400, fth:80, rail:4500 };
     const gap  = gaps[wKey] || 150;
@@ -2920,7 +2929,7 @@ function sndBossDefeat() {
 // PHASER GAME CONFIG
 // ================================================================
 
-const config = {
+const GAME_CONFIG = {
     type: Phaser.AUTO,
     parent: 'game-container',
     roundPixels: true,
@@ -2934,13 +2943,13 @@ const config = {
     scene: { preload, create, update }
 };
 
-const game = new Phaser.Game(config);
+const GAME = new Phaser.Game(GAME_CONFIG);
 
 // Resize the Phaser canvas whenever the browser window size changes.
 // Without this the canvas stays at its initial dimensions after any resize.
 window.addEventListener('resize', function _onWindowResize() {
-    if (game && game.scale) {
-        try { game.scale.resize(window.innerWidth, window.innerHeight); } catch(e) {}
+    if (GAME && GAME.scale) {
+        try { GAME.scale.resize(window.innerWidth, window.innerHeight); } catch(e) {}
     }
 });
 
@@ -3096,14 +3105,14 @@ function handleBulletEnemyOverlap(scene, bullet, enemy) {
 
 function create() {
     // Battlefield grid — hidden until deployed
-    const _bfGrid = this.add.grid(2000, 2000, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
+    const _bfGrid = this.add.grid(WORLD_CENTER, WORLD_CENTER, WORLD_SIZE, WORLD_SIZE, 64, 64, 0, 0, 0x004400, 0.3);
     _bfGrid.setVisible(false);
     this._bfGrid = _bfGrid;
 
     // Input
     keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,E');
 
-    // Prevent right-click context menu on the game canvas so RMB can fire R arm
+    // Prevent right-click context menu on the GAME canvas so RMB can fire R arm
     const _canvas = this.sys.canvas;
     if (_canvas) _canvas.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -3215,7 +3224,7 @@ function handleShieldRegen(time) {
         enemies.getChildren().forEach(e => {
             if (!e.active) return;
             if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < (_thermSys.thermalRange || 160)) {
-                e._thermalTickTimer = (e._thermalTickTimer || 0) + (game.loop.delta || 16);
+                e._thermalTickTimer = (e._thermalTickTimer || 0) + (GAME.loop.delta || 16);
                 if (e._thermalTickTimer >= 500) {
                     e._thermalTickTimer = 0;
                     damageEnemy(e, Math.round(_thermSys.thermalAura * 0.5), 0);
@@ -3229,14 +3238,14 @@ function handleShieldRegen(time) {
         enemies.getChildren().forEach(e => {
             if (!e.active) return;
             const _bsd = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
-            if (_bsd < 140) damageEnemy(e, 15 * (game.loop.delta / 1000), 0);
+            if (_bsd < 140) damageEnemy(e, 15 * (GAME.loop.delta / 1000), 0);
         });
     }
     // Heavy chassis passive core regen: 2 HP/s after 4s without taking damage
     if (loadout.chassis === 'heavy' && player?.comp?.core) {
-        const _timeSinceDmg = (game.loop.time - (_lastPlayerDamageTime || 0));
+        const _timeSinceDmg = (GAME.loop.time - (_lastPlayerDamageTime || 0));
         if (_timeSinceDmg > 4000 && player.comp.core.hp > 0 && player.comp.core.hp < player.comp.core.max) {
-            player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 2 * (game.loop.delta / 1000));
+            player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 2 * (GAME.loop.delta / 1000));
             updateHUD();
         }
     }
@@ -3245,7 +3254,7 @@ function handleShieldRegen(time) {
         enemies.getChildren().forEach(e => {
             if (!e.active) return;
             const _md = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
-            if (_md < 180) damageEnemy(e, 8 * (game.loop.delta / 1000), 0);
+            if (_md < 180) damageEnemy(e, 8 * (GAME.loop.delta / 1000), 0);
         });
     }
     if (_perkState.noShieldRegen) return;
@@ -3268,7 +3277,7 @@ function handleShieldRegen(time) {
     // _gearState.autoRepair (from armor/augment gear) stacks with the perk value.
     const _totalAutoRepair = (_perkState.autoRepair || 0) + (_gearState?.autoRepair || 0);
     if (_totalAutoRepair > 0 && player?.comp?.core && player.comp.core.hp < player.comp.core.max) {
-        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + (game.loop.delta / 1000) * _totalAutoRepair);
+        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + (GAME.loop.delta / 1000) * _totalAutoRepair);
         updateBars(); updatePaperDoll();
     }
     // Hit-and-run timer expiry
@@ -3295,6 +3304,8 @@ function handleShieldRegen(time) {
 // ── Module-level constants / reusable objects for handleEnemyAI ──
 // Avoids per-frame / per-enemy heap allocations in the hot AI loop.
 const _FEELER_OFFSETS = Object.freeze([0, -0.35, 0.35]);
+// ⚠️ MUTATED AT RUNTIME — handleEnemyAI() overwrites .x/.y on each element every
+// frame to avoid per-frame heap allocation. The array reference itself never changes.
 const _CONE_RAY_POINTS = Array.from({ length: 19 }, () => ({ x: 0, y: 0 }));
 
 /** Per-frame enemy AI: movement, strafing, and firing. */
@@ -3479,7 +3490,7 @@ function handleEnemyAI(scene, time) {
             // Player not detectable this frame
             if (enemy._aiState === 'chase' || enemy._aiState === 'combat') {
                 // Start or continue break-off timer — only give up after 3s far away
-                enemy._breakOffTimer = (enemy._breakOffTimer || 0) + game.loop.delta;
+                enemy._breakOffTimer = (enemy._breakOffTimer || 0) + GAME.loop.delta;
                 if (enemy._breakOffTimer > 3000) {
                     // Player has been out of range long enough — fall back to search
                     enemy._aiState = 'search';
@@ -3546,7 +3557,7 @@ function handleEnemyAI(scene, time) {
                         const _angle = Math.random() * Math.PI * 2;
                         const _dist  = 400 + Math.random() * 800;
                         const _cx = 2000 + (Math.random() - 0.5) * 1200; // center-biased origin
-                        const _cy = 2000 + (Math.random() - 0.5) * 1200;
+                        const _cy = WORLD_CENTER + (Math.random() - 0.5) * 1200;
                         const _tx = Phaser.Math.Clamp(_cx + Math.cos(_angle) * _dist, 200, 3800);
                         const _ty = Phaser.Math.Clamp(_cy + Math.sin(_angle) * _dist, 200, 3800);
                         enemy._patrolTarget = { x: _tx, y: _ty };
@@ -4006,7 +4017,7 @@ function handlePlayerMovement(scene, time) {
             _perkState._ironFortressTimer = 0;
             _perkState._ironFortressActive = false;
         } else {
-            _perkState._ironFortressTimer = (_perkState._ironFortressTimer || 0) + game.loop.delta;
+            _perkState._ironFortressTimer = (_perkState._ironFortressTimer || 0) + GAME.loop.delta;
             _perkState._ironFortressActive = _perkState._ironFortressTimer > 1500;
         }
     }
@@ -4655,7 +4666,7 @@ function showPerkMenu(nextRound) {
     });
     _lastOfferedPerks = [...chosen];
     menu.style.display = 'flex';
-    const _psc = game?.scene?.scenes[0];
+    const _psc = GAME?.scene?.scenes[0];
     if (_psc) { try { _psc.input.setDefaultCursor('default'); } catch(e){} }
     document.body.style.cursor = 'default';
     // Focus first card so keyboard users can immediately interact
@@ -4679,7 +4690,7 @@ function pickPerk(key, nextRound) {
         return;
     }
 
-    const _rsc = game?.scene?.scenes[0];
+    const _rsc = GAME?.scene?.scenes[0];
     if (_rsc) { try { _rsc.input.setDefaultCursor('none'); } catch(e){} }
     document.body.style.cursor = 'none';
     sndRoundStart();
@@ -4707,7 +4718,7 @@ function _showEquipPrompt(nextRound) {
     document.getElementById('equip-prompt-count').textContent = `${_inventory.length} item${_inventory.length > 1 ? 's' : ''} in backpack`;
     overlay.style.display = 'flex';
     // Ensure cursor is visible so the player can click the prompt buttons
-    const _epScene = game?.scene?.scenes[0];
+    const _epScene = GAME?.scene?.scenes[0];
     if (_epScene) { try { _epScene.input.setDefaultCursor('default'); } catch(e){} }
     document.body.style.cursor = 'default';
 
@@ -4716,7 +4727,7 @@ function _showEquipPrompt(nextRound) {
 
     const _dismissAndStart = () => {
         overlay.style.display = 'none';
-        const _rsc = game?.scene?.scenes[0];
+        const _rsc = GAME?.scene?.scenes[0];
         if (_rsc) { try { _rsc.input.setDefaultCursor('none'); } catch(e){} }
         document.body.style.cursor = 'none';
         sndRoundStart();
@@ -4797,14 +4808,14 @@ function _clearMapForRound(scene) {
     lootPickups = [];
     // Teleport player to map center
     if (player?.body) {
-        player.x = 2000; player.y = 2000;
+        player.x = WORLD_CENTER; player.y = WORLD_CENTER;
         player.body.setVelocity(0, 0);
         player.body.setAngularVelocity(0);
     }
-    if (torso) torso.setPosition(2000, 2000);
+    if (torso) torso.setPosition(WORLD_CENTER, WORLD_CENTER);
     // Re-anchor camera
     try {
-        scene.cameras.main.centerOn(2000, 2000);
+        scene.cameras.main.centerOn(WORLD_CENTER, WORLD_CENTER);
         scene.cameras.main.startFollow(player, true, 0.5, 0.5);
     } catch(e) {}
 }
@@ -4858,7 +4869,7 @@ function startRound(roundNum) {
     _roundKills = 0;
     resetRoundPerks();
     _roundActive = true;
-    const scene = game.scene.scenes[0];
+    const scene = GAME.scene.scenes[0];
 
     // ── Campaign mode: use mission config ──
     const isCampaignMode  = _gameMode === 'campaign' && typeof getCampaignMission === 'function';
@@ -5519,7 +5530,7 @@ function returnToMainMenu() {
 
 // ── SPECTRE CLONE (Light Legendary) ─────────────────────────────────
 function _spawnSpectreClone() {
-    const scene = game?.scene?.scenes[0];
+    const scene = GAME?.scene?.scenes[0];
     if (!scene || !player?.active) return;
     // Remove expired/destroyed clones from tracking
     _spectreClones = _spectreClones.filter(c => c.torso?.active);
@@ -5644,7 +5655,7 @@ function onEnemyKilled(deadEnemy) {
     _roundKills++;
     // Swarm Burst unique: kills spawn homing micro-drones
     if (typeof triggerSwarmBurst === 'function' && deadEnemy?.x != null) {
-        triggerSwarmBurst(game.scene.scenes[0], deadEnemy.x, deadEnemy.y);
+        triggerSwarmBurst(GAME.scene.scenes[0], deadEnemy.x, deadEnemy.y);
     }
     // Swarm Logic: kills while drone active reduce drone cooldown
     if (_perkState.swarmLogic > 0 && (_perkState._droneActive || _perkState._autoDroneActive)) {
@@ -5687,7 +5698,7 @@ function onEnemyKilled(deadEnemy) {
         if (!_perkState._killStreakActive && _perkState._killStreakCount >= 3) {
             _perkState._killStreakActive = true;
             _perkState.dmgMult = (_perkState.dmgMult || 1) * (1 + 0.25 * _perkState.killStreak);
-            const sc3 = game.scene.scenes[0];
+            const sc3 = GAME.scene.scenes[0];
             const kst = sc3.add.text(player.x, player.y - 55, 'KILL STREAK!', {
                 font: 'bold 14px Courier New', fill: '#ffff00', stroke: '#aa6600', strokeThickness: 3
             }).setDepth(20).setOrigin(0.5);
@@ -5700,7 +5711,7 @@ function onEnemyKilled(deadEnemy) {
     }
     // Hit-and-run: speed burst on kill
     if (_perkState.hitRunStacks > 0) {
-        const scene = game.scene.scenes[0];
+        const scene = GAME.scene.scenes[0];
         if (!_perkState._hitRunActive) {
             _perkState.speedMult *= (1 + 0.25 * _perkState.hitRunStacks);
         }
@@ -5725,7 +5736,7 @@ function onEnemyKilled(deadEnemy) {
     // Phase 6: check objective-based round end (survival complete, assassination done, etc.)
     const _objEnd = typeof shouldEndRound === 'function' && shouldEndRound();
     if ((_roundKills >= _roundTotal || _objEnd) && !_extractionActive) {
-        const scene = game.scene.scenes[0];
+        const scene = GAME.scene.scenes[0];
         _roundActive = false;
         // Destroy any in-flight enemy bullets
         if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
@@ -6076,7 +6087,7 @@ function deployMech() {
 
     // Regenerate cover map — visual rects are wiped by _cleanupGame each session
     // so we must rebuild them every deploy to keep both visuals and physics in sync
-    const deployScene = game.scene.scenes[0];
+    const deployScene = GAME.scene.scenes[0];
     if (deployScene) {
         try { generateCover(deployScene); } catch(e) { console.warn('generateCover error', e); }
     }
@@ -6088,7 +6099,7 @@ function deployMech() {
     const hgc = document.getElementById('hangar-canvas');
     if (hgc) { hgc.style.display = 'none'; hgc._gridRunning = false; }
 
-    const scene = game.scene.scenes[0];
+    const scene = GAME.scene.scenes[0];
     const s     = CHASSIS[loadout.chassis];
 
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(false);
@@ -6098,7 +6109,7 @@ function deployMech() {
     const [legW, legH] = legDims[loadout.chassis] ?? legDims.medium;
 
     // Physics body (legs / lower hull) — invisible, used for collision only
-    player = scene.add.rectangle(2000, 2000, legW, legH, 0x000000, 0)
+    player = scene.add.rectangle(WORLD_CENTER, WORLD_CENTER, legW, legH, 0x000000, 0)
         .setDepth(5);
     scene.physics.add.existing(player);
     // Hitbox circle sized to match each chassis's core visual
@@ -6120,9 +6131,9 @@ function deployMech() {
     if (scene._bfGrid) scene._bfGrid.setVisible(true);
 
     // World & camera
-    scene.physics.world.setBounds(0, 0, 4000, 4000);
-    scene.cameras.main.setBounds(0, 0, 4000, 4000);
-    scene.cameras.main.centerOn(2000, 2000);
+    scene.physics.world.setBounds(0, 0, WORLD_SIZE, WORLD_SIZE);
+    scene.cameras.main.setBounds(0, 0, WORLD_SIZE, WORLD_SIZE);
+    scene.cameras.main.centerOn(WORLD_CENTER, WORLD_CENTER);
     scene.cameras.main.startFollow(player, true, 0.5, 0.5);
 
     // Enemy bullet overlap — stored so it can be destroyed on cleanup
@@ -6317,8 +6328,8 @@ function deployMech() {
             isDeployed = true;
                     _isPaused = false;
             // Ensure physics and time are running (could be paused from death/stats)
-            try { game.scene.scenes[0].physics.resume(); } catch(e) {}
-            try { game.scene.scenes[0].time.paused = false; } catch(e) {}
+            try { GAME.scene.scenes[0].physics.resume(); } catch(e) {}
+            try { GAME.scene.scenes[0].time.paused = false; } catch(e) {}
             applyAugment();
             applyLegSystem();
             // Apply skill tree combat bonuses to perkState
@@ -6337,7 +6348,7 @@ function deployMech() {
                     CHASSIS.medium.modCooldownMult = (CHASSIS.medium.modCooldownMult || 0.85) * (1 - stb.modCdMult);
                 }
             }
-            const sc = game.scene.scenes[0];
+            const sc = GAME.scene.scenes[0];
             // PVP uses its own deploy path (mpDeployPVP) — skip PvE round system entirely
             if (_gameMode !== 'pvp') {
                 // Kick off round system on first deploy / respawn
@@ -6919,7 +6930,7 @@ function activateDecoy(scene, time) {
         // ghost_exit: cloak for 2s after decoy expires
         if (_perkState.ghostExit && player?.active && isDeployed) {
             player._ghostExitActive = true;
-            const gscene = game.scene.scenes[0];
+            const gscene = GAME.scene.scenes[0];
             if (torso) torso.setAlpha(0.15);
             gscene.time.delayedCall(2000, () => {
                 player._ghostExitActive = false;
@@ -6948,7 +6959,7 @@ function activateJump(scene) {
         onComplete: () => {
             if (torso?.active) torso.setScale(_jumpBaseScale);
             isJumping = false;
-            lastModTime = game.scene.scenes[0].time.now;
+            lastModTime = GAME.scene.scenes[0].time.now;
             // Restore jump charges
             if (_perkState.jumpCharges > 1) _perkState._jumpChargesLeft = _perkState.jumpCharges;
             // Neural Accelerator: 3s 2× damage window after landing
@@ -7021,7 +7032,7 @@ function activateShield(scene) {
     scene.time.delayedCall(_barrierDur, () => {
         isShieldActive = false;
         sndShieldDeactivate();
-        lastModTime = game.scene.scenes[0].time.now;
+        lastModTime = GAME.scene.scenes[0].time.now;
     });
 }
 
@@ -7034,7 +7045,7 @@ function activateRage(scene) {
     scene.time.delayedCall(_rageDur, () => {
         isRageActive = false;
         refreshMechColor();
-        lastModTime = game.scene.scenes[0].time.now;
+        lastModTime = GAME.scene.scenes[0].time.now;
     });
 }
 
@@ -7470,7 +7481,7 @@ function generateCover(scene, arenaKey) {
         for (let attempt = 0; attempt < 60; attempt++) {
             const x = Phaser.Math.Between(xMin, xMax);
             const y = Phaser.Math.Between(yMin, yMax);
-            if (Phaser.Math.Distance.Between(x, y, 2000, 2000) < SAFE_DIST) continue;
+            if (Phaser.Math.Distance.Between(x, y, WORLD_CENTER, WORLD_CENTER) < SAFE_DIST) continue;
             if (placed.some(p => Phaser.Math.Distance.Between(x, y, p.x, p.y) < sep)) continue;
             placeAt(def, x, y);
             return true;
@@ -7539,13 +7550,13 @@ function generateCover(scene, arenaKey) {
         const bTop  = block.y - BLOCK_SIZE / 2;
 
         // Skip blocks that overlap the center spawn safe zone
-        if (Phaser.Math.Distance.Between(block.x, block.y, 2000, 2000) < SAFE_DIST + 200) {
+        if (Phaser.Math.Distance.Between(block.x, block.y, WORLD_CENTER, WORLD_CENTER) < SAFE_DIST + 200) {
             // Center block: place only a few small obstacles (crates, walls) around edges
             for (let i = 0; i < 3; i++) {
                 const angle = _srand() * Math.PI * 2;
                 const dist  = 320 + _srand() * 200;
-                const ox = Math.round(2000 + Math.cos(angle) * dist);
-                const oy = Math.round(2000 + Math.sin(angle) * dist);
+                const ox = Math.round(WORLD_CENTER + Math.cos(angle) * dist);
+                const oy = Math.round(WORLD_CENTER + Math.sin(angle) * dist);
                 if (placed.some(p => Phaser.Math.Distance.Between(ox, oy, p.x, p.y) < 120)) continue;
                 placeAt(COVER_DEFS[6], ox, oy); // crate
             }
@@ -7624,7 +7635,7 @@ function generateCover(scene, arenaKey) {
             if (_srand() < 0.4) continue; // ~60% of intersections get something
             const sx = GRID_START + col * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
             const sy = GRID_START + (row + 1) * BLOCK_SIZE + row * STREET_WIDTH + STREET_WIDTH / 2;
-            if (Phaser.Math.Distance.Between(sx, sy, 2000, 2000) < SAFE_DIST) continue;
+            if (Phaser.Math.Distance.Between(sx, sy, WORLD_CENTER, WORLD_CENTER) < SAFE_DIST) continue;
             if (placed.some(p => Phaser.Math.Distance.Between(sx, sy, p.x, p.y) < 100)) continue;
             const streetDef = _srand() < 0.5 ? COVER_DEFS[3] : COVER_DEFS[6]; // h-wall or crate
             placeAt(streetDef, Math.round(sx), Math.round(sy));
@@ -7635,7 +7646,7 @@ function generateCover(scene, arenaKey) {
             if (_srand() < 0.4) continue;
             const sx = GRID_START + (col + 1) * BLOCK_SIZE + col * STREET_WIDTH + STREET_WIDTH / 2;
             const sy = GRID_START + row * (BLOCK_SIZE + STREET_WIDTH) + BLOCK_SIZE / 2;
-            if (Phaser.Math.Distance.Between(sx, sy, 2000, 2000) < SAFE_DIST) continue;
+            if (Phaser.Math.Distance.Between(sx, sy, WORLD_CENTER, WORLD_CENTER) < SAFE_DIST) continue;
             if (placed.some(p => Phaser.Math.Distance.Between(sx, sy, p.x, p.y) < 100)) continue;
             const streetDef = _srand() < 0.5 ? COVER_DEFS[4] : COVER_DEFS[7]; // v-wall or small crate
             placeAt(streetDef, Math.round(sx), Math.round(sy));
@@ -7644,9 +7655,9 @@ function generateCover(scene, arenaKey) {
 
     // ── Extra rocks/rubble scattered across streets for additional cover ──
     for (let i = 0; i < 12; i++) {
-        const rx = MARGIN + _srand() * (4000 - 2 * MARGIN);
-        const ry = MARGIN + _srand() * (4000 - 2 * MARGIN);
-        if (Phaser.Math.Distance.Between(rx, ry, 2000, 2000) < SAFE_DIST) continue;
+        const rx = MARGIN + _srand() * (WORLD_SIZE - 2 * MARGIN);
+        const ry = MARGIN + _srand() * (WORLD_SIZE - 2 * MARGIN);
+        if (Phaser.Math.Distance.Between(rx, ry, WORLD_CENTER, WORLD_CENTER) < SAFE_DIST) continue;
         if (placed.some(p => Phaser.Math.Distance.Between(rx, ry, p.x, p.y) < 130)) continue;
         placeAt(COVER_DEFS[Math.floor(_srand() * 3)], Math.round(rx), Math.round(ry)); // random rock variant
     }
@@ -7663,7 +7674,7 @@ function generateCover(scene, arenaKey) {
     });
     coverObjects.refresh();
     try {
-        const _sc = game?.scene?.scenes[0];
+        const _sc = GAME?.scene?.scenes[0];
         if (_sc?.time) _sc.time.delayedCall(120, () => { try { coverObjects?.refresh(); } catch(e){} });
     } catch(e) {}
 }
@@ -8235,8 +8246,8 @@ function spawnSwarm(scene) {
     for (let i = 0; i < SWARM_COUNT; i++) {
         const angle = (i / SWARM_COUNT) * Math.PI * 2;
         const r = 150 + Math.random() * 200;
-        const sx = 2000 + Math.cos(angle) * (800 + r);
-        const sy = 2000 + Math.sin(angle) * (800 + r);
+        const sx = WORLD_CENTER + Math.cos(angle) * (800 + r);
+        const sy = WORLD_CENTER + Math.sin(angle) * (800 + r);
         spawnSwarmUnit(Phaser.Math.Clamp(sx, 300, 3700), Phaser.Math.Clamp(sy, 300, 3700));
     }
 
@@ -8359,7 +8370,7 @@ function spawnMirror(scene) {
         if (now - lastMirrorMod > 8000 && e._mirrorPhase >= 2) {
             lastMirrorMod = now;
             // Mirror EMP: stuns player briefly
-            const dist = Phaser.Math.Distance.Between(e.x, e.y, player?.x || 2000, player?.y || 2000);
+            const dist = Phaser.Math.Distance.Between(e.x, e.y, player?.x || WORLD_CENTER, player?.y || WORLD_CENTER);
             if (dist < 350) {
                 const ring = scene.add.circle(e.x, e.y, 10, 0x4488ff, 0.3).setStrokeStyle(2, 0x4488ff).setDepth(12);
                 scene.tweens.add({ targets: ring, radius: 250, alpha: 0, duration: 400, onComplete: () => ring.destroy() });
@@ -8527,7 +8538,7 @@ function spawnTitan(scene) {
 function spawnCore(scene) {
     // Central core — stationary
     const coreHP = Math.round(600 * (1 + Math.min(_round - 1, 40) * 0.07));
-    const coreE = scene.add.rectangle(2000, 1200, 80, 80, 0x000000, 0);
+    const coreE = scene.add.rectangle(WORLD_CENTER, 1200, 80, 80, 0x000000, 0);
     scene.physics.add.existing(coreE);
     coreE.body.setCircle(50);
     coreE.body.setImmovable(true);
@@ -8540,9 +8551,9 @@ function spawnCore(scene) {
     coreGfx.strokeCircle(0, 0, 40);
     coreGfx.fillStyle(0x00ffff, 0.6);
     coreGfx.fillCircle(0, 0, 15);
-    coreGfx.setPosition(2000, 1200);
+    coreGfx.setPosition(WORLD_CENTER, 1200);
     coreE.visuals = coreGfx;
-    coreE.torso = scene.add.circle(2000, 1200, 5, 0xffffff).setDepth(6);
+    coreE.torso = scene.add.circle(WORLD_CENTER, 1200, 5, 0xffffff).setDepth(6);
 
     coreE.speed = 0;
     coreE.comp = {
@@ -8558,7 +8569,7 @@ function spawnCore(scene) {
     coreE.lastFireTime = 0; coreE.lastSecTime = 0;
     coreE.lastModTime = -99999; coreE.isModActive = false;
     coreE.fxFootTimer = 0; coreE.fxFootSide = 1; coreE.fxShockTimer = 0;
-    coreE.fxLastX = 2000; coreE.fxLastY = 1200; coreE.fxLastMX = 2000; coreE.fxLastMY = 1200;
+    coreE.fxLastX = WORLD_CENTER; coreE.fxLastY = 1200; coreE.fxLastMX = WORLD_CENTER; coreE.fxLastMY = 1200;
     coreE._fireGrace = true;
     setTimeout(() => { if (coreE?.active) coreE._fireGrace = false; }, 3000);
     coreE._visionConeGfx = scene.add.graphics().setDepth(3);
@@ -8578,7 +8589,7 @@ function spawnCore(scene) {
 
     for (let i = 0; i < TURRET_COUNT; i++) {
         const ta = (i / TURRET_COUNT) * Math.PI * 2;
-        const tx = 2000 + Math.cos(ta) * orbitRadius;
+        const tx = WORLD_CENTER + Math.cos(ta) * orbitRadius;
         const ty = 1200 + Math.sin(ta) * orbitRadius;
         const turretHP = Math.round(200 * (1 + Math.min(_round - 1, 40) * 0.07));
 
@@ -8800,7 +8811,7 @@ function applyLoot(scene, type) {
         font: 'bold 13px monospace', fill: def.glow,
         stroke: '#000000', strokeThickness: 3
     }).setOrigin(0.5).setDepth(100).setScrollFactor(0)
-      .setPosition(game.config.width/2, game.config.height * 0.35);
+      .setPosition(GAME.config.width/2, GAME.config.height * 0.35);
     scene.tweens.add({ targets: fx, y: fx.y - 40, alpha: 0, duration: 1800,
         onComplete: () => fx.destroy() });
 
@@ -8965,7 +8976,7 @@ function spawnEnemy(scene) {
         attempts++;
     } while (
         attempts < 30 && (
-            Phaser.Math.Distance.Between(x, y, 2000, 2000) < 1200 ||
+            Phaser.Math.Distance.Between(x, y, WORLD_CENTER, WORLD_CENTER) < 1200 ||
             (player && isDeployed && Phaser.Math.Distance.Between(x, y, player.x, player.y) < 900)
         )
     );
@@ -9176,7 +9187,7 @@ function spawnCommander(scene) {
     e.fxLastX = x; e.fxLastY = y;
     e.fxLastMX = x; e.fxLastMY = y;
 
-    e._visionConeGfx = game.scene.scenes[0]?.add?.graphics()?.setDepth(3);
+    e._visionConeGfx = GAME.scene.scenes[0]?.add?.graphics()?.setDepth(3);
     enemies.add(e);
     if (coverObjects) scene.physics.add.collider(e, coverObjects);
     sndCommanderSpawn();
@@ -9558,7 +9569,7 @@ function fire(scene, side) {
             _chaingunSpinStart = now;
             _chaingunReady = false;
             // Show spin-up indicator
-            const scene2 = game.scene.scenes[0];
+            const scene2 = GAME.scene.scenes[0];
             const spinTxt = scene2.add.text(torso.x, torso.y - 40, '◎ SPINNING UP', {
                 font: 'bold 13px monospace', fill: '#ffcc00',
                 stroke: '#000', strokeThickness: 3
@@ -10040,11 +10051,11 @@ function fireStandard(scene, wKey, weapon, barrelDist, armOx, armOy, aimAngle) {
 
 function processPlayerDamage(amt, bulletAngle, explosive = false) {
     if (!player?.active || player.isProcessingDamage) return;
-    _lastPlayerDamageTime = game?.loop?.time || 0;
+    _lastPlayerDamageTime = GAME?.loop?.time || 0;
     // Thorns Protocol: reflect damage to attacker while shield/barrier is active
     if (isShieldActive) {
         if (_perkState.thornsProtocol > 0) {
-            const scene = game.scene.scenes[0];
+            const scene = GAME.scene.scenes[0];
             if (scene && enemies) {
                 // Reflect to nearest enemy (proxy for attacker)
                 let _thornTarget = null, _thornDist = Infinity;
@@ -10121,7 +10132,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     // Phantom dodge chance
     const _totalDodge = (_perkState.dodgeChance || 0) + ((_gearState?.dodgePct || 0) / 100);
     if (_totalDodge > 0 && Math.random() < _totalDodge) {
-        const scene = game.scene.scenes[0];
+        const scene = GAME.scene.scenes[0];
         const dodgeTxt = scene.add.text(player.x, player.y - 30, 'DODGE!', {
             font:'bold 18px monospace', fill:'#88ff88', stroke:'#000', strokeThickness:3
         }).setDepth(20);
@@ -10131,7 +10142,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     // Glass Step: first hit per round is always dodged
     if (_perkState.glassStep && !_perkState._glassStepUsed) {
         _perkState._glassStepUsed = true;
-        const scene3 = game.scene.scenes[0];
+        const scene3 = GAME.scene.scenes[0];
         const dodgeTxt = scene3.add.text(player.x, player.y-30, 'GLASS STEP', {
             font:'bold 16px monospace', fill:'#88ffff', stroke:'#000', strokeThickness:3
         }).setOrigin(0.5).setDepth(20);
@@ -10149,7 +10160,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         _perkState._killStreakCount = 0;
     }
 
-    const now = game.scene.scenes[0].time.now;
+    const now = GAME.scene.scenes[0].time.now;
     lastDamageTime = now;
     player.lastHitTime = now;
 
@@ -10180,7 +10191,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     if (_perkState.lastStand && player.comp.core.hp / player.comp.core.max < 0.20) amt *= 0.60;
     // Trigger flicker on hit
     if (_perkState.flicker && !_perkState._flickerActive) {
-        const _now = game.scene.scenes[0].time.now;
+        const _now = GAME.scene.scenes[0].time.now;
         if (_now > _perkState._flickerLastTrigger + 4000) {
             _perkState._flickerActive = true;
             _perkState._flickerLastTrigger = _now;
@@ -10188,7 +10199,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     }
     // Adaptive armor: grant 10% resistance for 4s
     if (_perkState.adaptiveArmor > 0 && !_perkState._adaptiveActive) {
-        const _now2 = game.scene.scenes[0].time.now;
+        const _now2 = GAME.scene.scenes[0].time.now;
         _perkState._adaptiveActive = true;
         _perkState._adaptiveTimer = _now2 + 4000;
         _perkState.fortress += 0.10 * _perkState.adaptiveArmor;
@@ -10214,7 +10225,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         if (player.comp.core.hp <= 0 && _perkState.ironWill && !_perkState._ironWillUsed) {
             player.comp.core.hp = 1;
             _perkState._ironWillUsed = true;
-            const _sc2 = game.scene.scenes[0];
+            const _sc2 = GAME.scene.scenes[0];
             const iwTxt = _sc2.add.text(player.x, player.y - 40, 'IRON WILL!', {
                 font:'bold 20px monospace', fill:'#ff8844', stroke:'#000', strokeThickness:3
             }).setDepth(20);
@@ -10225,7 +10236,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
             player.isProcessingDamage = false;
             showDeathScreen();
         } else {
-            game.scene.scenes[0].time.delayedCall(50, () => { if (player) player.isProcessingDamage = false; });
+            GAME.scene.scenes[0].time.delayedCall(50, () => { if (player) player.isProcessingDamage = false; });
         }
         return;
     }
@@ -10251,7 +10262,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         // ── Phase Shield: brief invuln on each hit ──
         if (_ss.phaseInvuln && !player._phaseInvulnActive) {
             player._phaseInvulnActive = true;
-            const _sc = game.scene.scenes[0];
+            const _sc = GAME.scene.scenes[0];
             _sc?.time.delayedCall(_ss.phaseInvuln * 1000, () => { player._phaseInvulnActive = false; });
         }
         if (player._phaseInvulnActive) { player.isProcessingDamage = false; return; }
@@ -10272,7 +10283,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
                 if (_d < _nd) { _nd = _d; _nearest = e; }
             });
             if (_nearest) {
-                const _sc = game.scene.scenes[0];
+                const _sc = GAME.scene.scenes[0];
                 damageEnemy(_nearest, Math.round(_reflected), 0);
                 if (_sc) showDamageText(_sc, _nearest.x, _nearest.y, Math.round(_reflected));
             }
@@ -10295,7 +10306,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
 
         // ── On-break effects ──
         if (_prevShield > 0 && player.shield <= 0) {
-            const _sc = game.scene.scenes[0];
+            const _sc = GAME.scene.scenes[0];
 
             // Reactive Shield: invuln window on break
             if (loadout.shld === 'reactive_shield' && !player._reactInvulnActive) {
@@ -10379,7 +10390,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     } else {
         // Still alive — re-enable damage processing after brief lock
         try {
-            game.scene.scenes[0].time.delayedCall(50, () => {
+            GAME.scene.scenes[0].time.delayedCall(50, () => {
                 if (player) player.isProcessingDamage = false;
             });
         } catch(e) {
@@ -10406,7 +10417,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             _totalKills++;
             updateRoundHUD();
             // Drop boss loot
-            const scene = game.scene.scenes[0];
+            const scene = GAME.scene.scenes[0];
             if (typeof spawnEquipmentLoot === 'function') {
                 spawnEquipmentLoot(scene, e.x, e.y, { isBoss: true, bossType: 'swarm' });
             }
@@ -10438,9 +10449,9 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             trackBonusObjective('shield_break', 1);
         }
         amt *= (1 - absorb);
-        e._lastDamageTime = game.scene.scenes[0].time.now;
+        e._lastDamageTime = GAME.scene.scenes[0].time.now;
     } else if ((e.shield||0) > 0 && bulletShieldPierce) {
-        e._lastDamageTime = game.scene.scenes[0].time.now;
+        e._lastDamageTime = GAME.scene.scenes[0].time.now;
     }
     // Enemy Reactive Plating: stacking DR
     if (e._augState?.reactivePlatingStacks !== undefined) {
@@ -10512,7 +10523,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         // Base crit = 2× damage. _gearState.critDmg adds extra multiplier (e.g. +15 → 2.15×).
         const _critMult = 2 + ((_gearState?.critDmg || 0) / 100);
         amt *= _critMult;
-        const scene = game.scene.scenes[0];
+        const scene = GAME.scene.scenes[0];
         const critTxt = scene.add.text(e.x, e.y - 25, 'CRIT!', {
             font:'bold 16px monospace', fill:'#ffff00', stroke:'#000', strokeThickness:3
         }).setDepth(20);
@@ -10541,12 +10552,12 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         // Scrap Cannon: destroyed limb explodes for 30 AoE
         if (e.comp[target].hp <= 0 && _perkState.salvageProtocol && !e['_salvageDrop_' + target]) {
             e['_salvageDrop_' + target] = true;
-            const sc5 = game.scene.scenes[0];
+            const sc5 = GAME.scene.scenes[0];
             if (sc5) spawnLoot(sc5, e.x + (Math.random()-0.5)*30, e.y + (Math.random()-0.5)*30);
         }
         if (_perkState.scrapCannon && e.comp[target].hp <= 0 && !e["_scrapFired_" + target]) {
             e["_scrapFired_" + target] = true;
-            const scene = game.scene.scenes[0];
+            const scene = GAME.scene.scenes[0];
             createExplosion(scene, e.x, e.y, 45, 30);
         }
         // Arm destroyed — disable that weapon slot so enemy stops firing from it
@@ -10569,7 +10580,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         // Enemy Scrap Cannon augment
         if (e._augState?.scrapCannon && e.comp[target].hp <= 0 && !e["_eScrapFired_" + target]) {
             e["_eScrapFired_" + target] = true;
-            const scene = game.scene.scenes[0];
+            const scene = GAME.scene.scenes[0];
             createExplosion(scene, e.x, e.y, 40, 0);
             processPlayerDamage(25, 0, true);
         }
@@ -10580,7 +10591,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     if (_perkState.incendiary > 0 && !explosive && e.active && !e._burning) {
         if (Math.random() < _perkState.incendiary) {
             e._burning = true;
-            const scene2 = game.scene.scenes[0];
+            const scene2 = GAME.scene.scenes[0];
             let _burnTicks = 0;
             const _burnTimer = scene2.time.addEvent({ delay: 400, loop: true, callback: () => {
                 if (!e.active || _burnTicks >= 5) { e._burning = false; _burnTimer.remove(); return; }
@@ -10598,14 +10609,14 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         e._analyzed = true;
         const _analyzerResist = _perkState.analyzerDepth ? 0.75 : 0.85;
         e._dmgMult = (e._dmgMult || 1) / _analyzerResist;
-        game.scene.scenes[0].time.delayedCall(3000, () => {
+        GAME.scene.scenes[0].time.delayedCall(3000, () => {
             if (e?.active) { e._dmgMult = (e._dmgMult || 1) * _analyzerResist; e._analyzed = false; }
         });
     }
     // Die when core is destroyed (same logic as player)
     const _coreDead = e.comp ? e.comp.core.hp <= 0 : e.health <= 0;
     if (_coreDead) {
-        const scene = game.scene.scenes[0];
+        const scene = GAME.scene.scenes[0];
         // Capture position before any cleanup destroys it
         const _deadRef = { x: e.x, y: e.y };
         try {
@@ -10620,7 +10631,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             showRoundBanner('COMMANDER DESTROYED', '', 1500, null);
             if (_perkState.commanderBounty && player) { player.shield = player.maxShield; updateBars(); }
             if (_perkState.chainReaction > 0 && e._chainReactionCheck && Math.random() < _perkState.chainReaction) {
-                const sc2 = game.scene.scenes[0];
+                const sc2 = GAME.scene.scenes[0];
                 createExplosion(sc2, e.x, e.y, 45, 20);
             }
         } else {
@@ -10688,7 +10699,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
                 if (_nd < 400 && (nearby._aiState === 'patrol' || nearby._aiState === 'search')) {
                     nearby._aiState = 'search';
                     nearby._lastKnownPlayer = { x: _diedX, y: _diedY };
-                    nearby._stateTimer = game?.loop?.time || 0;
+                    nearby._stateTimer = GAME?.loop?.time || 0;
                 } else if (nearby._aiState === 'patrol') {
                     nearby._patrolTarget = { x: _diedX + (Math.random()-0.5)*80, y: _diedY + (Math.random()-0.5)*80 };
                     nearby._patrolSet = false;
@@ -10803,7 +10814,7 @@ function dropEnemyMine(scene, enemy) {
             _pulseTick.remove();
             g.destroy(); tick.remove();
             processPlayerDamage(70, 0, true);
-            const scene2 = game.scene.scenes[0];
+            const scene2 = GAME.scene.scenes[0];
             createExplosion(scene2, mx, my, 70, 0);
         }
     }});
@@ -11921,7 +11932,7 @@ function showDeathScreen() {
     isDeployed = false;
     _roundActive   = false;
     _roundClearing = false;   // prevent update() from being permanently gated
-    _cleanupExtraction(game?.scene?.scenes[0]);
+    _cleanupExtraction(GAME?.scene?.scenes[0]);
     // Close stats overlay if open
     _isStats = false;
     _isPaused = false;
@@ -11930,7 +11941,7 @@ function showDeathScreen() {
     const _pauseBtn2 = document.getElementById('pause-btn');
     if (_pauseBtn2) _pauseBtn2.innerHTML = 'MENU';
     // Pause the Phaser scene so the update loop stops running against destroyed objects
-    const _dScene = game?.scene?.scenes[0];
+    const _dScene = GAME?.scene?.scenes[0];
     if (_dScene) {
         try { _dScene.physics.pause(); } catch(e) {}
         try { _dScene.time.paused = true; } catch(e) {}
@@ -11957,13 +11968,13 @@ function showDeathScreen() {
     }
     const ds = document.getElementById('death-screen');
     if (ds) ds.style.display = 'flex';
-    const _dsc = game?.scene?.scenes[0];
+    const _dsc = GAME?.scene?.scenes[0];
     if (_dsc) { try { _dsc.input.setDefaultCursor('default'); } catch(e){} }
     document.body.style.cursor = 'default';
 }
 
 function _cleanupGame() {
-    const scene = game.scene.scenes[0];
+    const scene = GAME.scene.scenes[0];
     // Destroy per-deploy physics overlap/colliders so they don't accumulate across respawns
     if (_playerBulletOverlap) { try { scene.physics.world.removeCollider(_playerBulletOverlap); } catch(e){} _playerBulletOverlap = null; }
     if (_playerEnemyCollider) { try { scene.physics.world.removeCollider(_playerEnemyCollider); } catch(e){} _playerEnemyCollider = null; }
@@ -12065,7 +12076,7 @@ function respawnMech() {
     const _pauseOv = document.getElementById('pause-overlay');
     if (_pauseOv) _pauseOv.style.display = 'none';
     // Resume physics AND time before cleanup so destroys work cleanly
-    const _rScene = game?.scene?.scenes[0];
+    const _rScene = GAME?.scene?.scenes[0];
     if (_rScene) {
         try { _rScene.physics.resume(); } catch(e){}
         try { _rScene.time.paused = false; } catch(e){}
@@ -12095,7 +12106,7 @@ function respawnMech() {
     _roundClearing = false;
     _extractionActive = false; _extractionPoint = null; _extractionVisuals = null; _extractionPromptShown = false;
     CHASSIS.medium.modCooldownMult = 0.85;
-    const scene = game.scene.scenes[0];
+    const scene = GAME.scene.scenes[0];
     deployMech();
 }
 
@@ -12110,7 +12121,7 @@ function toggleStats() {
         populateStats();
         overlay.style.display = 'flex';
         _isPaused = true;
-        const scene = game?.scene?.scenes[0];
+        const scene = GAME?.scene?.scenes[0];
         if (scene) { try { scene.physics.pause(); scene.time.paused = true; scene.input.setDefaultCursor('default'); } catch(e){} }
         document.body.style.cursor = 'default';
         // Switch to the appropriate tab
@@ -12124,13 +12135,13 @@ function toggleStats() {
         overlay.style.display = 'none';
         _isInventory = false;
         _isPaused = false;
-        // If opened from mission select, return there instead of resuming game
+        // If opened from mission select, return there instead of resuming GAME
         if (window._loadoutOpenedFromMission) {
             window._loadoutOpenedFromMission = false;
             if (typeof showMissionSelect === 'function') showMissionSelect();
             return;
         }
-        const scene = game?.scene?.scenes[0];
+        const scene = GAME?.scene?.scenes[0];
         if (scene && isDeployed) { try { scene.physics.resume(); scene.time.paused = false; scene.input.setDefaultCursor('none'); } catch(e){} }
         document.body.style.cursor = isDeployed ? 'none' : 'default';
         const pauseBtn = document.getElementById('pause-btn');
@@ -12557,7 +12568,7 @@ function _equipItemToSlot(invIdx, slotKey) {
         if (item.baseType === 'weapon') {
             loadout[slotKey] = item.subType;
         }
-        // System items → activate the actual game system
+        // System items → activate the actual GAME system
         if (item.systemKey) {
             const _sysLoadoutMap = { shield_system:'shld', mod_system:'mod', leg_system:'leg', aug_system:'aug' };
             const loadoutKey = _sysLoadoutMap[item.baseType];
@@ -12576,7 +12587,7 @@ function _unequipItem(slotKey) {
     if (!item) return;
     if (_inventory.length >= INVENTORY_MAX) {
         // Inventory full — show feedback so the player knows why nothing happened
-        const _sc = game?.scene?.scenes[0];
+        const _sc = GAME?.scene?.scenes[0];
         if (_sc && typeof _showFloatingWarning === 'function') _showFloatingWarning(_sc, 'INVENTORY FULL', '#ff4444');
         return;
     }
@@ -12690,7 +12701,7 @@ function populateStats() {
     const chassisData = CHASSIS[ch];
 
     // ── CHASSIS & HP ──────────────────────────────────────────
-    const _inGame = !!(player?.comp); // true when actually deployed in-game
+    const _inGame = !!(player?.comp); // true when actually deployed in-GAME
     const baseShield = chassisData?.max || 75;
     let chassisHtml = '';
     chassisHtml += _statRow('Chassis', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
@@ -12722,7 +12733,7 @@ function populateStats() {
             const totalBonusCls = totalBonusHp > 0 ? ' stat-has-bonus' : '';
             chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
         } else {
-            // Not in-game: show base HP values at full
+            // Not in-GAME: show base HP values at full
             chassisHtml += _hpBarBoosted('Core',  baseHP.core,  baseHP.core,  baseHP.core);
             chassisHtml += _hpBarBoosted('L.Arm', baseHP.lArm,  baseHP.lArm,  baseHP.lArm);
             chassisHtml += _hpBarBoosted('R.Arm', baseHP.rArm,  baseHP.rArm,  baseHP.rArm);
@@ -13030,7 +13041,7 @@ function populateStats() {
 let _isPaused = false;
 
 function togglePause() {
-    const scene = game.scene.scenes[0];
+    const scene = GAME.scene.scenes[0];
     if (!scene || !isDeployed) return;
     // PVP: use dedicated PVP menu instead of pause
     if (_gameMode === 'pvp') {
@@ -13205,7 +13216,7 @@ document.addEventListener('keydown', function(e) {
         }
         if (isDeployed) togglePause();
     }
-    // T key opens in-game chat during PVP matches
+    // T key opens in-GAME chat during PVP matches
     if ((e.key === 't' || e.key === 'T') && _gameMode === 'pvp'
         && typeof _mpChatOpen !== 'undefined' && !_mpChatOpen
         && typeof _mpMatchActive !== 'undefined' && _mpMatchActive
@@ -13231,7 +13242,7 @@ function goToMainMenu() {
         if (pvpMenuEl) pvpMenuEl.style.display = 'none';
         _gameMode = 'simulation';  // downgrade so _cleanupGame() destroys PVP objects properly
     }
-    const _gmScene = game?.scene?.scenes[0];
+    const _gmScene = GAME?.scene?.scenes[0];
     if (_gmScene) { try { _gmScene.physics.resume(); } catch(e){} }
     _cleanupGame();
     // Reset round state
@@ -13291,10 +13302,10 @@ function goToMainMenu() {
     if (_gameMode !== 'campaign' && typeof resetInventory === 'function') resetInventory();
     resetLoadout(); // reset gear when returning to main menu
     // Restore cursor (Phaser hides it on deploy)
-    const sc = game?.scene?.scenes[0];
+    const sc = GAME?.scene?.scenes[0];
     if (sc) { try { sc.input.setDefaultCursor('default'); } catch(e){} }
     document.body.style.cursor = 'default';
-    // Hide all in-game UI
+    // Hide all in-GAME UI
     document.getElementById('ui-layer').style.display = 'none';
     document.getElementById('hud-container').style.display = 'none';
     document.getElementById('top-left-btns').style.display = 'none';
@@ -13330,8 +13341,8 @@ function goToMainMenu() {
 }
 
 function returnToHangar() {
-    if (_isPaused) { _isPaused=false; const s=game.scene.scenes[0]; if(s){s.physics.resume();s.time.paused=false;} }
-    const _sc = game?.scene?.scenes[0]; if (_sc?._bfGrid) _sc._bfGrid.setVisible(false);
+    if (_isPaused) { _isPaused=false; const s=GAME.scene.scenes[0]; if(s){s.physics.resume();s.time.paused=false;} }
+    const _sc = GAME?.scene?.scenes[0]; if (_sc?._bfGrid) _sc._bfGrid.setVisible(false);
     // Scale cleanup for jump tween interruption
     if (_sc) {
         try {
@@ -13342,7 +13353,7 @@ function returnToHangar() {
     }
     document.getElementById('death-screen').style.display = 'none';
     _cleanupGame();
-    const scene = game.scene.scenes[0];
+    const scene = GAME.scene.scenes[0];
     try { scene.input.setDefaultCursor('default'); } catch(e){}
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(true);
     document.getElementById('ui-layer').style.display = 'flex';
@@ -13494,7 +13505,7 @@ async function _loadCampaignData() {
 
 /** Campaign: return from combat to the mission select screen. */
 function returnToHangarForMissionSelect() {
-    // Use returnToHangar to clean up game state
+    // Use returnToHangar to clean up GAME state
     returnToHangar();
     // Then hide hangar and show mission select
     document.getElementById('ui-layer').style.display = 'none';

@@ -510,7 +510,7 @@ function rollBonusObjective() {
 }
 
 /** Track progress on the bonus objective.
- *  Called from game events (kills, damage, etc.). */
+ *  Called from GAME events (kills, damage, etc.). */
 function trackBonusObjective(eventType, value) {
     const obj = _campaignState.activeBonusObjective;
     if (!obj || _campaignState.bonusObjectiveComplete) return;
@@ -882,7 +882,7 @@ function _selectMission(idx) {
     showMissionSelect();
 }
 
-/** Deploy from mission select — skip hangar, go straight to game. */
+/** Deploy from mission select — skip hangar, go straight to GAME. */
 function _deployFromMissionSelect() {
     const mission = getCampaignMission();
     if (!mission) return;

@@ -24,7 +24,7 @@
 //
 // GLOBALS READ FROM index.html (must exist before these are called):
 //   player, torso, enemies, loadout, isDeployed, _round, _perkState,
-//   coverObjects, game, Phaser
+//   coverObjects, GAME, Phaser
 //
 // FUNCTIONS CALLED FROM arena-objectives.js:
 //   getObjectiveLootBonus (via rollRarity luck bonus)
@@ -80,7 +80,7 @@ const ITEM_BASES = {
     combat_matrix:   { baseType:'augment', name:'Combat Matrix',  icon:'aug_combat',   baseStats:{ dmgPct:3, speedPct:2 } },
 
     // ══════════════════════════════════════════════════════════════
-    // HYBRID SYSTEM ITEMS — carry a real game system + stat affixes
+    // HYBRID SYSTEM ITEMS — carry a real GAME system + stat affixes
     // These replace the hangar equipment selection. Finding a "Jump Jets"
     // drop gives you the jump mod ability AND rarity-scaled bonus stats.
     // ══════════════════════════════════════════════════════════════
@@ -762,7 +762,7 @@ function generateItem(round, enemyData) {
     // Generate rarity-colored name
     const fullName = rarity === 'common' ? name : `${rarityDef.label} ${name}`;
 
-    // For system items, carry the systemKey so equip logic can activate the game system
+    // For system items, carry the systemKey so equip logic can activate the GAME system
     const _baseDef = ITEM_BASES[baseKey];
     const systemKey = _baseDef?.systemKey || null;
 
@@ -801,7 +801,7 @@ function _getEquipDropChance(enemyData) {
     if (enemyData?.isMedic) return 0.18;
     // Base drop rate scales with round, floors at 8%, caps at 22%
     const base = Math.min(0.08 + round * 0.007, 0.22);
-    // Late-game bonus: +1% per round past 20, up to +10%
+    // Late-GAME bonus: +1% per round past 20, up to +10%
     const lateBonus = round > 20 ? Math.min((round - 20) * 0.01, 0.10) : 0;
     return Math.min(base + lateBonus, 0.35);
 }
@@ -1178,7 +1178,7 @@ function _showLootPickupNotification(scene, item) {
     _lootNotifications = _lootNotifications.filter(n => n.active);
     const yOffset = _lootNotifications.length * 36;
 
-    const baseX = game.config.width - 10;
+    const baseX = GAME.config.width - 10;
     const baseY = 80 + yOffset;
 
     // Build notification text
@@ -1247,7 +1247,7 @@ function _showLootPickupNotification(scene, item) {
 }
 
 function _showFloatingWarning(scene, text, color) {
-    const fx = scene.add.text(game.config.width / 2, game.config.height * 0.40, text, {
+    const fx = scene.add.text(GAME.config.width / 2, GAME.config.height * 0.40, text, {
         font: 'bold 14px Courier New',
         fill: color,
         stroke: '#000000',
@@ -1339,7 +1339,7 @@ function recalcGearStats() {
 // UNIQUE EFFECT HELPERS — Called from index.html combat code
 // These functions are defined here but wired into index.html via
 // typeof guards. Search index.html for each function name to find
-// the exact call site where it's integrated into the game loop.
+// the exact call site where it's integrated into the GAME loop.
 // ══════════════════════════════════════════════════════════════════
 // Check if a unique effect is currently active
 function hasUniqueEffect(effectKey) {
