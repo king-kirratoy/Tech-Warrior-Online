@@ -5,6 +5,31 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v4.2 — Dependency Map
+
+**Date:** 2026-03-20 (Central Time)
+
+Produced a complete static dependency map of the codebase in preparation for the upcoming file split. No game logic was modified.
+
+### What Was Documented
+
+- **Section 1 — INDEX.HTML → EXTERNAL FILES:** Every call from `index.html`'s inline script into the five external JS files, with call-site line numbers and typeof-guard status. Identified six unguarded call chains (simulation enemy spawn path calls `applyEliteModifier`/`_rollEliteModifier` directly; `checkEquipmentPickups` runs unguarded every frame in `update()`; `saveCampaignProgress`/`saveInventory`/`cleanupEquipmentDrops`/`loadCampaign*` have no guards).
+
+- **Section 2 — EXTERNAL FILES → INDEX.HTML:** All globals and functions defined in `index.html` that the external files depend on. Includes Phaser objects (`player`, `torso`, `enemies`, `enemyBullets`, `coverObjects`, `game`), constants (`CHASSIS`, `WEAPONS`, `SHIELD_SYSTEMS`, `CHASSIS_*`, `ENEMY_COLORS`), state variables (`_round`, `_perkState`, `_gameMode`, etc.), and callback functions (`buildEnemyMech`, `buildEnemyTorso`, `damageEnemy`, `showDamageText`, `updateBars`, etc.). Notable: `multiplayer.js` **writes** `torso`, `_lArmDestroyed`, `_rArmDestroyed`, `_legsDestroyed`, and `_totalKills` back into index.html state.
+
+- **Section 3 — EXTERNAL FILES → EXTERNAL FILES:** Two cross-file dependencies identified: (1) `loot-system.js` calls `getObjectiveLootBonus()` from `arena-objectives.js` (typeof guarded); (2) `campaign-system.js` reads and writes `_scrap` owned by `loot-system.js` (no guard).
+
+- **Section 4 — SHARED GLOBALS:** Full table of every variable written by one file and read by another. Flags `CHASSIS` mutation by `campaign-system.js`, `_scrap` shared between two external files, `_mpMatchActive` read as a bare variable in `fire()` with no typeof guard, and `_campaignState`/`_arenaState` accessed directly by index.html bypassing their owner files' APIs.
+
+- **Refactor Risk Summary:** Ranked table of the highest-risk items to address before any file is moved.
+
+### Files Changed
+
+- `DEPENDENCY_MAP.md` — created (new file, project root)
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v4.1 — PVP Bug-Fix Audit
 
 **Date:** 2026-03-20 (Central Time)
