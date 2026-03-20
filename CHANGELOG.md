@@ -525,3 +525,13 @@ Eliminated per-frame heap allocations in the enemy AI hot loop, stopped orphaned
 ### Files Changed
 
 - `index.html` — `processPlayerDamage()`, `damageEnemy()`, `handleShieldRegen()`
+
+## v3.2 — GLOBAL_INVENTORY.md Complete
+
+**Date:** 2026-03-20
+
+`GLOBAL_INVENTORY.md` is now fully documented with all four sections: Section 1 (130 top-level variables from `index.html` with types and purposes), Section 2 (ownership assignments for all 130 variables to their destination files in the planned refactor), Section 3 (naming collision analysis — 0 cross-file collisions, 4 near-miss pairs, 14 generic-name risks with suggested renames), and Section 4 (8 explicit `window.*` globals across the codebase, all assigned to `state.js` post-refactor, with cross-file read tracking and a confirmed-empty unmatched-reads table). This document serves as the authoritative reference for the upcoming `index.html` file split.
+
+### Files Changed
+
+- `GLOBAL_INVENTORY.md` — Sections 1–4 complete

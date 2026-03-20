@@ -313,3 +313,28 @@ Each of the five external JS files (`loot-system.js`, `enemy-types.js`, `arena-o
 | `LB_KEY` | `constants.js` | **LOW** — `LB` is a non-obvious abbreviation for "leaderboard"; not a naming collision risk per se but a comprehension risk — new contributors may search for `LEADERBOARD` and miss this constant, leading to duplicate declarations. | `LEADERBOARD_LS_KEY` |
 | `LB_MAX` | `constants.js` | **LOW** — same opaque-abbreviation issue as `LB_KEY`. | `LEADERBOARD_MAX_ENTRIES` |
 | `_openDD` | `garage.js` | **LOW** — `DD` is an abbreviation for "dropdown" that is not defined anywhere in the codebase documentation. Combined with the parallel `_pvpOpenDD` in `multiplayer.js`, a new developer working on both files could confuse them. | `_openDropdownSlot` |
+
+---
+
+## Section 4 — Window Globals
+
+All explicit `window.*` assignments across the entire codebase. Globals assigned to `window` (rather than declared with `let`/`const`) cross file boundaries at runtime; this table tracks each one so the refactor knows where to declare it in `state.js` and which files depend on it.
+
+| Variable | Assigned In | Read By | Move To | Notes |
+|----------|------------|---------|---------|-------|
+| `window._equipPromptCallback` | `index.html` | `index.html` | `state.js` | Stores the `_dismissAndStart` callback so the hangar-close handler (different call stack) can invoke it and return the player to the in-progress mission. Nulled immediately after invocation and on deploy reset. |
+| `window._activeDecoy` | `index.html` | `index.html` | `state.js` | Holds the live Phaser object for the Spectre mod's active decoy torso. Stored on `window` so `_resetDeployState()` (separate call stack from the mod activation) can safely call `.destroy()` on it during cleanup. |
+| `window._phantomDecoys` | `index.html` | `index.html` | `state.js` | Array of up to 3 phantom-decoy records `{ torso, label, drift, fire }` created by the Spectre mod. Capped by `.shift()`-on-overflow. Same cross-scope cleanup rationale as `_activeDecoy`; cleared in `_resetDeployState()` and on death. |
+| `window._activeCampaignConfig` | `index.html` | `index.html`, `enemy-types.js` | `state.js` | **Cross-file read** — `enemy-types.js:255` reads `window._activeCampaignConfig?.enemyLevel` for enemy scaling. This is the highest-priority window global in the project; it must live in `state.js` (not a closure or module-local) so all files can access it post-refactor without changing call sites. |
+| `window._missionStartTime` | `index.html` | `index.html` | `state.js` | Timestamp (`scene.time.now \|\| Date.now()`) recorded at campaign mission start. Read by the bonus-objective timer at `index.html:5991` to compute elapsed mission duration. Nulled on mission end and extraction. |
+| `window._activeSwarm` | `index.html` | `index.html` | `state.js` | Handle to the live `_swarmState` object for the swarm boss. Written in the swarm boss spawn function; read by the standard damage path and by `_resetDeployState()` to cancel the swarm tick event. The CLAUDE.md `_isSwarmUnit` rule depends on this being readable from anywhere. |
+| `window._spectreClones` | `index.html` | `index.html` | `state.js` | Array of active Spectre clone objects. Reset to `[]` at deploy (`index.html:12092`), on extraction (`index.html:13284`), and on death (`index.html:13435`). No cross-file reads found; window scope used for cleanup consistency with the other Spectre state vars. |
+| `window._loadoutOpenedFromMission` | `index.html`, `campaign-system.js` | `index.html` | `state.js` | **Multi-file write** — `campaign-system.js:859` sets this `true` when opening the hangar mid-mission; `index.html:12128–12129` reads then clears it `false`. A flag that straddles the campaign system and the hangar UI; ownership must be explicitly assigned to `state.js` after the refactor so neither file silently owns it. |
+
+### Unmatched Reads
+
+No unmatched reads found. Every `window.*` variable consumed anywhere in the codebase has a corresponding assignment in the table above.
+
+| Variable | Read In | Notes |
+|----------|---------|-------|
+| *(none)* | — | All cross-file `window.*` reads are accounted for above. |
