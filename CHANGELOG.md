@@ -5,6 +5,32 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v4.6 — Function Decomposition Pass
+
+**Date:** 2026-03-20
+
+Scanned all of `index.html` in ~500-line sections and extracted every function exceeding ~80 lines or handling more than one distinct responsibility. Each oversized function was split into a coordinator calling named sub-functions placed directly below under a `// ── Sub-section name` comment.
+
+### Functions Split
+
+| Parent Function | Lines Before | Sub-functions Extracted |
+|---|---|---|
+| `startRound` | ~184 | `_setupArenaAndObjective`, `_spawnCampaignEnemies`, `_spawnSimulationEnemies` |
+| `damageEnemy` | ~329 | `_resolveEnemyDeath` |
+| `populateStats` | ~347 | `_renderChassisPanel`, `_renderWeaponPanel`, `_renderMobilityPanel`, `_renderRunStatsPanel`, `_renderActivePerksPanel`, `_renderGearBonusesPanel` |
+| `processPlayerDamage` | ~351 | `_applyExplosivePlayerDamage`, `_applyPassiveShieldAbsorption` |
+| `deployMech` | ~303 | `_registerEnemyBulletOverlap`, `_initPlayerHP`, `_execDropInTween` |
+| `enemyFire` | ~202 | `_dispatchEnemyWeapon` |
+| `spawnEnemy` | ~143 | `_assignEnemyToSquad` |
+| `_showItemDetail` | ~135 | `_buildItemComparisonHTML` |
+| `handleEnemyAI` | ~634 | `_applyEnemyPassiveShieldRegen`, `_computeEnemyVisibility`, `_updateEnemyAIState`, `_calcEnemyBehaviorVelocity`, `_handleEnemyFiringDecision`, `_applyEnemyObstacleAvoidance`, `_syncEnemyVisuals` |
+
+**Total: 9 parent functions split → 22 new named sub-functions created.**
+
+Functions assessed and left intact (single responsibility or tightly coupled internals): `generateCover`, `fire`, `drawMinimap`, `spawnTitan`, `spawnCore`, `togglePause`, `returnToHangar`, `updatePaperDoll`.
+
+---
+
 ## v4.5 — Duplicate Logic Audit
 
 **Date:** 2026-03-20

@@ -2986,48 +2986,22 @@ function preload() {
 function handleBulletEnemyOverlap(scene, bullet, enemy) {
     if (bullet.isGLBall) return;
     // Capture position and damage BEFORE destroying bullet (velocity zeroes on destroy)
-    const bAngle          = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
-    let dmg               = bullet.damageValue || 2;
-    // SMG range dropoff: calculate from spawn origin if tracked
-    if (bullet.rangeDropoff && bullet._originX !== undefined) {
-        const tDist = Phaser.Math.Distance.Between(bullet._originX, bullet._originY, bullet.x, bullet.y);
-        if (tDist > bullet.rangeDropoff) {
-            dmg = Math.max(1, Math.round(dmg * Math.max(0.40, 1 - (tDist - bullet.rangeDropoff) / 800)));
-        }
-    }
+    const bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
+    const dmg = _calcBulletDamage(bullet);
     const bulletShieldPierce = bullet.shieldPierce || false;
     _shotsHit++; _damageDealt += dmg;
     const bx = bullet.x, by = bullet.y;   // cached before destroy
     bullet.destroy();
 
     if (enemy.isShielded && !bulletShieldPierce) {
-        // Shield absorbs hit — impact sparks + BLOCK text
-        try { createShieldSparks(scene, bx, by); } catch(ex) {}
-        const blockTxt = scene.add.text(bx, by - 20, 'BLOCK', {
-            font: 'bold 22px monospace', fill: '#00ffff',
-            stroke: '#000000', strokeThickness: 4
-        }).setOrigin(0.5).setDepth(100);
-        blockTxt.setShadow(0, 0, '#00ffff', 8, true, true);
-        scene.tweens.add({ targets: blockTxt, y: by - 100, alpha: 0,
-            duration: 1500, hold: 500, ease: 'Back.easeOut',
-            onComplete: () => blockTxt.destroy() });
+        _handleShieldedHit(scene, bx, by);
         return;
     }
     createImpactSparks(scene, enemy.x, enemy.y);
     showDamageText(scene, enemy.x, enemy.y, dmg);
 
-    // Incendiary: chance to ignite on hit
-    if (_perkState.incendiary > 0 && Math.random() < _perkState.incendiary && !enemy._burning) {
-        enemy._burning = true;
-        let burnTicks = 0;
-        const burnTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
-            if (!enemy.active || burnTicks >= 5) { enemy._burning = false; burnTimer.remove(); return; }
-            damageEnemy(enemy, 5, 0);
-            burnTicks++;
-            const sp = scene.add.circle(enemy.x + (Math.random()-0.5)*16, enemy.y + (Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
-            scene.tweens.add({ targets: sp, alpha: 0, y: sp.y - 8, duration: 300, onComplete: () => sp.destroy() });
-        }});
-    }
+    _applyIncendiaryProc(scene, enemy);
+
     // Chain Reaction: flag for explosion on kill
     if (_perkState.chainReaction > 0) enemy._chainReactionCheck = true;
     // One Shot: SR-magnitude hit → halve reload on kill
@@ -3045,61 +3019,108 @@ function handleBulletEnemyOverlap(scene, bullet, enemy) {
     if (typeof checkTitanSmash === 'function' && checkTitanSmash()) {
         triggerTitanSmash(scene, bx, by, dmg);
     }
-    // Chain Plasma: chain to nearest other enemy on plasma-sized hit
-    if (_perkState.plsmChain && dmg >= 200) {
-        let chainTarget = null, chainDist = Infinity;
-        enemies.getChildren().forEach(e2 => {
-            if (!e2.active || e2 === enemy) return;
-            const d2 = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
-            if (d2 < 150 && d2 < chainDist) { chainDist = d2; chainTarget = e2; }
-        });
-        if (chainTarget) {
-            damageEnemy(chainTarget, Math.round(dmg * 0.55), 0, true);
-            showDamageText(scene, chainTarget.x, chainTarget.y, Math.round(dmg * 0.55));
-            const cg = scene.add.graphics().setDepth(13);
-            cg.lineStyle(3, 0x00ffff, 0.85);
-            cg.lineBetween(enemy.x, enemy.y, chainTarget.x, chainTarget.y);
-            scene.tweens.add({ targets: cg, alpha: 0, duration: 180, onComplete: () => cg.destroy() });
-        }
-    }
-    // Thermal Core / Melt Armor / Pressure Spray — FTH flame bullet effects
-    if (bullet._flame) {
-        const igniteChance = _perkState.thermalCore ? 1.0 : (_perkState.incendiary || 0);
-        if (igniteChance > 0 && (igniteChance >= 1 || Math.random() < igniteChance) && !enemy._burning) {
-            const burnDur = _perkState.thermalCore ? 7 : 5;
-            enemy._burning = true;
-            let bt = 0;
-            const bTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
-                if (!enemy.active || bt >= burnDur) { enemy._burning = false; bTimer.remove(); return; }
-                damageEnemy(enemy, 5, 0);
-                bt++;
-                const sp = scene.add.circle(enemy.x+(Math.random()-0.5)*16, enemy.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
-                scene.tweens.add({ targets: sp, alpha:0, y:sp.y-8, duration:300, onComplete:()=>sp.destroy() });
-            }});
-        }
-        if (_perkState.meltArmor > 0) {
-            const stacks = Math.min(3, (enemy._meltArmorStacks||0) + 1);
-            enemy._meltArmorStacks = stacks;
-            enemy._dmgMult = (enemy._dmgMult || 1) / Math.max(0.1, 1 - stacks * 0.10);
-            clearTimeout(enemy._meltArmorTimer);
-            enemy._meltArmorTimer = setTimeout(() => {
-                if (enemy.active) { enemy._meltArmorStacks = 0; enemy._dmgMult = 1; }
-            }, 4000);
-        }
-        if (_perkState.pressureSpray && !enemy._fthSlowed) {
-            enemy._fthSlowed = true;
-            enemy._baseSpeed = enemy._baseSpeed || enemy.speed;
-            enemy.speed = Math.round(enemy.speed * 0.80);
-            clearTimeout(enemy._fthSlowTimer);
-            enemy._fthSlowTimer = setTimeout(() => {
-                if (enemy.active) { enemy.speed = enemy._baseSpeed; enemy._fthSlowed = false; }
-            }, 300);
-        }
-    }
+    _applyChainPlasma(scene, enemy, dmg);
+    _applyFlameBulletEffects(scene, bullet, enemy);
+
     // Phantom Protocol: 4× pierce shot consumed on hit
     if (_perkState._phantomShotReady) {
         _perkState._phantomShotReady = false;
         _perkState._phantomActive = false;
+    }
+}
+
+// ── handleBulletEnemyOverlap sub-functions ───────────────────────────────
+
+/** Apply SMG/bullet range dropoff to base damage. Returns adjusted dmg value. */
+function _calcBulletDamage(bullet) {
+    let dmg = bullet.damageValue || 2;
+    if (bullet.rangeDropoff && bullet._originX !== undefined) {
+        const tDist = Phaser.Math.Distance.Between(bullet._originX, bullet._originY, bullet.x, bullet.y);
+        if (tDist > bullet.rangeDropoff) {
+            dmg = Math.max(1, Math.round(dmg * Math.max(0.40, 1 - (tDist - bullet.rangeDropoff) / 800)));
+        }
+    }
+    return dmg;
+}
+
+/** Show shield-block sparks and BLOCK floating text when enemy shield absorbs the hit. */
+function _handleShieldedHit(scene, bx, by) {
+    try { createShieldSparks(scene, bx, by); } catch(ex) {}
+    const blockTxt = scene.add.text(bx, by - 20, 'BLOCK', {
+        font: 'bold 22px monospace', fill: '#00ffff',
+        stroke: '#000000', strokeThickness: 4
+    }).setOrigin(0.5).setDepth(100);
+    blockTxt.setShadow(0, 0, '#00ffff', 8, true, true);
+    scene.tweens.add({ targets: blockTxt, y: by - 100, alpha: 0,
+        duration: 1500, hold: 500, ease: 'Back.easeOut',
+        onComplete: () => blockTxt.destroy() });
+}
+
+/** Chance to ignite enemy from the Incendiary Rounds perk on bullet impact. */
+function _applyIncendiaryProc(scene, enemy) {
+    if (!(_perkState.incendiary > 0 && Math.random() < _perkState.incendiary && !enemy._burning)) return;
+    enemy._burning = true;
+    let burnTicks = 0;
+    const burnTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
+        if (!enemy.active || burnTicks >= 5) { enemy._burning = false; burnTimer.remove(); return; }
+        damageEnemy(enemy, 5, 0);
+        burnTicks++;
+        const sp = scene.add.circle(enemy.x + (Math.random()-0.5)*16, enemy.y + (Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
+        scene.tweens.add({ targets: sp, alpha: 0, y: sp.y - 8, duration: 300, onComplete: () => sp.destroy() });
+    }});
+}
+
+/** Chain Plasma: bolt chains to nearest enemy within 150px on a plasma-sized hit. */
+function _applyChainPlasma(scene, enemy, dmg) {
+    if (!(_perkState.plsmChain && dmg >= 200)) return;
+    let chainTarget = null, chainDist = Infinity;
+    enemies.getChildren().forEach(e2 => {
+        if (!e2.active || e2 === enemy) return;
+        const d2 = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
+        if (d2 < 150 && d2 < chainDist) { chainDist = d2; chainTarget = e2; }
+    });
+    if (!chainTarget) return;
+    damageEnemy(chainTarget, Math.round(dmg * 0.55), 0, true);
+    showDamageText(scene, chainTarget.x, chainTarget.y, Math.round(dmg * 0.55));
+    const cg = scene.add.graphics().setDepth(13);
+    cg.lineStyle(3, 0x00ffff, 0.85);
+    cg.lineBetween(enemy.x, enemy.y, chainTarget.x, chainTarget.y);
+    scene.tweens.add({ targets: cg, alpha: 0, duration: 180, onComplete: () => cg.destroy() });
+}
+
+/** FTH flame bullet procs: ignite (Thermal Core), Melt Armor stacks, Pressure Spray slow. */
+function _applyFlameBulletEffects(scene, bullet, enemy) {
+    if (!bullet._flame) return;
+    const igniteChance = _perkState.thermalCore ? 1.0 : (_perkState.incendiary || 0);
+    if (igniteChance > 0 && (igniteChance >= 1 || Math.random() < igniteChance) && !enemy._burning) {
+        const burnDur = _perkState.thermalCore ? 7 : 5;
+        enemy._burning = true;
+        let bt = 0;
+        const bTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
+            if (!enemy.active || bt >= burnDur) { enemy._burning = false; bTimer.remove(); return; }
+            damageEnemy(enemy, 5, 0);
+            bt++;
+            const sp = scene.add.circle(enemy.x+(Math.random()-0.5)*16, enemy.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
+            scene.tweens.add({ targets: sp, alpha:0, y:sp.y-8, duration:300, onComplete:()=>sp.destroy() });
+        }});
+    }
+    if (_perkState.meltArmor > 0) {
+        const stacks = Math.min(3, (enemy._meltArmorStacks||0) + 1);
+        enemy._meltArmorStacks = stacks;
+        enemy._dmgMult = (enemy._dmgMult || 1) / Math.max(0.1, 1 - stacks * 0.10);
+        clearTimeout(enemy._meltArmorTimer);
+        enemy._meltArmorTimer = setTimeout(() => {
+            if (enemy.active) { enemy._meltArmorStacks = 0; enemy._dmgMult = 1; }
+        }, 4000);
+    }
+    if (_perkState.pressureSpray && !enemy._fthSlowed) {
+        enemy._fthSlowed = true;
+        enemy._baseSpeed = enemy._baseSpeed || enemy.speed;
+        enemy.speed = Math.round(enemy.speed * 0.80);
+        clearTimeout(enemy._fthSlowTimer);
+        enemy._fthSlowTimer = setTimeout(() => {
+            if (enemy.active) { enemy.speed = enemy._baseSpeed; enemy._fthSlowed = false; }
+        }, 300);
     }
 }
 
@@ -3218,7 +3239,18 @@ function handleObjectiveRoundEnd(scene) {
 /** Passive shield regeneration — kicks in 5 s after last hit. */
 function handleShieldRegen(time) {
     if (!player?.active || !isDeployed) return;
-    // ── Thermal Shield: burn enemies near player while shield is active ──
+    _applyPassiveAuras();
+    _applyHeavyChassisRegen();
+    _applyShieldRegen(time);
+    _applyAutoRepair();
+    _tickPerkExpiries(time);
+}
+
+// ── handleShieldRegen sub-functions ──────────────────────────────────────
+
+/** Damage auras that tick every frame: thermal shield, barrier spike, meltdown core. */
+function _applyPassiveAuras() {
+    // Thermal Shield: burn enemies near player while shield is active
     const _thermSys = SHIELD_SYSTEMS[loadout.shld];
     if (_thermSys?.thermalAura && player.shield > 0 && enemies) {
         enemies.getChildren().forEach(e => {
@@ -3232,7 +3264,6 @@ function handleShieldRegen(time) {
             } else { e._thermalTickTimer = 0; }
         });
     }
-
     // Barrier spike: damage aura while shield mod is active
     if (_perkState.barrierSpike && isShieldActive) {
         enemies.getChildren().forEach(e => {
@@ -3240,14 +3271,6 @@ function handleShieldRegen(time) {
             const _bsd = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
             if (_bsd < 140) damageEnemy(e, 15 * (GAME.loop.delta / 1000), 0);
         });
-    }
-    // Heavy chassis passive core regen: 2 HP/s after 4s without taking damage
-    if (loadout.chassis === 'heavy' && player?.comp?.core) {
-        const _timeSinceDmg = (GAME.loop.time - (_lastPlayerDamageTime || 0));
-        if (_timeSinceDmg > 4000 && player.comp.core.hp > 0 && player.comp.core.hp < player.comp.core.max) {
-            player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 2 * (GAME.loop.delta / 1000));
-            updateHUD();
-        }
     }
     // Meltdown Core: passive heat aura — 8 dmg/s within 180px
     if (_perkState.meltdownCore) {
@@ -3257,9 +3280,23 @@ function handleShieldRegen(time) {
             if (_md < 180) damageEnemy(e, 8 * (GAME.loop.delta / 1000), 0);
         });
     }
+}
+
+/** Heavy chassis passive: 2 HP/s core regen after 4s without taking damage. */
+function _applyHeavyChassisRegen() {
+    if (loadout.chassis === 'heavy' && player?.comp?.core) {
+        const _timeSinceDmg = (GAME.loop.time - (_lastPlayerDamageTime || 0));
+        if (_timeSinceDmg > 4000 && player.comp.core.hp > 0 && player.comp.core.hp < player.comp.core.max) {
+            player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 2 * (GAME.loop.delta / 1000));
+            updateHUD();
+        }
+    }
+}
+
+/** Tick shield HP upward once the regen delay has elapsed since last damage. */
+function _applyShieldRegen(time) {
     if (_perkState.noShieldRegen) return;
     const secondsSinceHit = (time - lastDamageTime) / 1000;
-    // Immovable perk: triple regen while still
     const playerSpeed = player?.body ? Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2) : 999;
     const immovableBonus = (_perkState.immovable && playerSpeed < 10) ? 3 : 1;
     const regenDelay = player._shieldRegenDelay ?? 5;
@@ -3273,27 +3310,32 @@ function handleShieldRegen(time) {
         }
         updateBars();
     }
-    // Auto-repair: regenerate core HP slowly.
-    // _gearState.autoRepair (from armor/augment gear) stacks with the perk value.
+}
+
+/** Auto-repair: regenerate core HP slowly from perk + gear combined rate. */
+function _applyAutoRepair() {
     const _totalAutoRepair = (_perkState.autoRepair || 0) + (_gearState?.autoRepair || 0);
     if (_totalAutoRepair > 0 && player?.comp?.core && player.comp.core.hp < player.comp.core.max) {
         player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + (GAME.loop.delta / 1000) * _totalAutoRepair);
         updateBars(); updatePaperDoll();
     }
-    // Hit-and-run timer expiry
+}
+
+/** Tick and expire time-limited perk buffs: hit-and-run, adaptive armor, battle rhythm, flicker. */
+function _tickPerkExpiries(time) {
+    // Hit-and-run speed bonus expiry
     if (_perkState._hitRunActive && time > _perkState._hitRunTimer) {
         _perkState._hitRunActive = false;
         _perkState.speedMult = Math.max(1, _perkState.speedMult / (1 + 0.25 * _perkState.hitRunStacks));
     }
-    // Adaptive armor timer expiry
+    // Adaptive armor DR bonus expiry
     if (_perkState._adaptiveActive && time > _perkState._adaptiveTimer) {
         _perkState._adaptiveActive = false;
         _perkState.fortress = Math.max(0, _perkState.fortress - 0.10 * _perkState.adaptiveArmor);
     }
     // Battle rhythm bonus (recalculate each frame based on kills this round)
     if (_perkState.battleRhythm > 0) {
-        const rhythmBonus = Math.floor(_roundKills / 5) * 0.10 * _perkState.battleRhythm;
-        _perkState._battleRhythmBonus = rhythmBonus;
+        _perkState._battleRhythmBonus = Math.floor(_roundKills / 5) * 0.10 * _perkState.battleRhythm;
     }
     // Flicker invincibility expiry
     if (_perkState._flickerActive && time > _perkState._flickerLastTrigger + 300) {
@@ -3325,621 +3367,613 @@ function handleEnemyAI(scene, time) {
         const _legsOk  = !enemy.comp || enemy.comp.legs.hp > 0;
         const speed    = _legsOk ? (enemy.speed || _baseSpd) : _baseSpd * 0.5;
 
-        // ── VISION CONE + STATE MACHINE ──────────────────────────────
-        if (!enemy._aiState)         enemy._aiState = 'patrol';
-        if (!enemy._patrolTarget)    enemy._patrolTarget = { x: Phaser.Math.Between(300, 3700), y: Phaser.Math.Between(300, 3700) };
-        if (!enemy._lastKnownPlayer) enemy._lastKnownPlayer = null;
-        if (!enemy._stateTimer)      enemy._stateTimer = 0;
-
-        // ── DETECTION RANGES ──────────────────────────────────────
-        // Patrol: narrow vision cone from torso facing direction
-        const _coneRange   = enemy.behavior === 'sniper' ? 900 : 680;
-        const _coneAngle   = 0.75; // ±43° half-angle
-        // Pursuit: once alerted, enemy tracks player in a huge radius (no cone needed)
-        const _pursuitRange = 1400;
-        // Break-off: enemy gives up only after being this far away for 3s continuously
-        const _breakRange   = 1400;
-
-        // Cone uses the TORSO facing direction (head/gun), not the legs
-        const _facingAngle = enemy.torso?.rotation ?? enemy.visuals?.rotation ?? 0;
-
-        // ── VISION CONE CHECK (only relevant in patrol/search) ──────
-        const _angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
-        const _angleDiff     = Phaser.Math.Angle.Wrap(_angleToPlayer - _facingAngle);
-        const _inCone        = Math.abs(_angleDiff) < _coneAngle && dist < _coneRange;
-
-        // LOS raycast for cone detection
-        let _hasLOS = false;
-        if (_inCone && coverObjects) {
-            _hasLOS = true;
-            const _raySteps = 12;
-            for (let _rs = 1; _rs <= _raySteps; _rs++) {
-                const _rt = _rs / _raySteps;
-                const _rx = enemy.x + (player.x - enemy.x) * _rt;
-                const _ry = enemy.y + (player.y - enemy.y) * _rt;
-                const _hit = coverObjects.getChildren().some(c => {
-                    if (!c.active) return false;
-                    // Use stored center coords (coverCX/CY) — c.x/c.y is top-left (origin 0,0)
-                    const cx = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
-                    const cy = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
-                    const hw = (c.width || 60) / 2, hh = (c.height || 60) / 2;
-                    return _rx > cx - hw && _rx < cx + hw && _ry > cy - hh && _ry < cy + hh;
-                });
-                if (_hit) { _hasLOS = false; break; }
-            }
-        }
-        const _canSeeViaConeCone = _inCone && _hasLOS && !player?._ghostExitActive;
-
-        // ── PURSUIT DETECTION (chase/combat only): wide radius, no cone needed ──
-        // Once alerted, enemy tracks player within pursuit range BUT still needs LOS
-        const _isAlerted   = !player?._ghostExitActive && (enemy._aiState === 'chase' || enemy._aiState === 'combat');
-        let _pursueLOS = false;
-        if (_isAlerted && dist < _pursuitRange && coverObjects) {
-            _pursueLOS = true;
-            const _pRaySteps = 8;
-            for (let _prs = 1; _prs <= _pRaySteps; _prs++) {
-                const _prt = _prs / _pRaySteps;
-                const _prx = enemy.x + (player.x - enemy.x) * _prt;
-                const _pry = enemy.y + (player.y - enemy.y) * _prt;
-                const _phit = coverObjects.getChildren().some(c => {
-                    if (!c.active) return false;
-                    const cx = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
-                    const cy = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
-                    const hw = (c.width || 60) / 2, hh = (c.height || 60) / 2;
-                    return _prx > cx - hw && _prx < cx + hw && _pry > cy - hh && _pry < cy + hh;
-                });
-                if (_phit) { _pursueLOS = false; break; }
-            }
-        }
-        const _canPursue   = _isAlerted && dist < _pursuitRange && _pursueLOS;
-
-        // Combined: can the enemy detect the player this frame?
-        const _canSeePlayer = _canSeeViaConeCone || _canPursue;
-
-        // ── DRAW VISION CONE — wall-occluded (patrol/search only) ───
-        if (enemy._visionConeGfx?.active) {
-            const _cg = enemy._visionConeGfx;
-            _cg.clear();
-            const _showCone = (enemy._aiState === 'patrol' || enemy._aiState === 'search');
-            if (_showCone) {
-                const _coneJustSpotted = _canSeeViaConeCone;
-                const _coneCol   = _coneJustSpotted ? 0xff2200
-                                 : enemy._aiState === 'search' ? 0xffcc00
-                                 : 0x4488ff;
-                const _coneAlpha = _coneJustSpotted ? 0.18 : 0.07;
-
-                // Cast individual rays — each stops at the first cover object hit
-                // This makes the cone visually respect walls and buildings
-                const _coneRays  = 18;  // number of rays (more = smoother but costs more)
-                const _coneCovers = _activeCoverCache;
-                let _rayCount = 0;
-
-                for (let _ri = 0; _ri <= _coneRays; _ri++) {
-                    const _ra = _facingAngle - _coneAngle + (_ri / _coneRays) * _coneAngle * 2;
-                    let _rayLen = _coneRange;
-
-                    // Step along ray and find first cover intersection
-                    const _steps = 12;
-                    for (let _rs = 1; _rs <= _steps; _rs++) {
-                        const _t  = _rs / _steps;
-                        const _rx = enemy.x + Math.cos(_ra) * _coneRange * _t;
-                        const _ry = enemy.y + Math.sin(_ra) * _coneRange * _t;
-                        let _hit  = false;
-                        for (let _ci2 = 0; _ci2 < _coneCovers.length; _ci2++) {
-                            const _cv = _coneCovers[_ci2];
-                            // Use stored center coords — c.x/c.y is top-left (origin 0,0)
-                            const _cvCX = _cv.coverCX !== undefined ? _cv.coverCX : _cv.x + (_cv.width||60)/2;
-                            const _cvCY = _cv.coverCY !== undefined ? _cv.coverCY : _cv.y + (_cv.height||60)/2;
-                            const _hw = (_cv.width  || 60) * 0.5 + 2;
-                            const _hh = (_cv.height || 60) * 0.5 + 2;
-                            if (_rx > _cvCX - _hw && _rx < _cvCX + _hw &&
-                                _ry > _cvCY - _hh && _ry < _cvCY + _hh) {
-                                _hit = true; break;
-                            }
-                        }
-                        if (_hit) {
-                            _rayLen = _coneRange * (_t - 1/_steps); // stop just before obstacle
-                            break;
-                        }
-                    }
-                    _CONE_RAY_POINTS[_rayCount].x = enemy.x + Math.cos(_ra) * Math.max(0, _rayLen);
-                    _CONE_RAY_POINTS[_rayCount].y = enemy.y + Math.sin(_ra) * Math.max(0, _rayLen);
-                    _rayCount++;
-                }
-
-                // Draw filled polygon from enemy origin through all ray endpoints
-                _cg.fillStyle(_coneCol, _coneAlpha);
-                _cg.beginPath();
-                _cg.moveTo(enemy.x, enemy.y);
-                for (let _i = 0; _i < _rayCount; _i++) _cg.lineTo(_CONE_RAY_POINTS[_i].x, _CONE_RAY_POINTS[_i].y);
-                _cg.closePath();
-                _cg.fillPath();
-
-                // Thin outer edge on first and last ray
-                _cg.lineStyle(1, _coneCol, _coneAlpha * 3.5);
-                _cg.beginPath();
-                _cg.moveTo(enemy.x, enemy.y);
-                _cg.lineTo(_CONE_RAY_POINTS[0].x, _CONE_RAY_POINTS[0].y);
-                _cg.strokePath();
-                _cg.beginPath();
-                _cg.moveTo(enemy.x, enemy.y);
-                _cg.lineTo(_CONE_RAY_POINTS[_rayCount - 1].x, _CONE_RAY_POINTS[_rayCount - 1].y);
-                _cg.strokePath();
-            }
-        }
-
-        // ── STATE TRANSITIONS ─────────────────────────────────────
-        if (_canSeePlayer) {
-            // Always update last known position — mutate in-place to avoid heap allocation
-            if (!enemy._lastKnownPlayer) enemy._lastKnownPlayer = { x: player.x, y: player.y };
-            else { enemy._lastKnownPlayer.x = player.x; enemy._lastKnownPlayer.y = player.y; }
-
-            if (enemy._aiState === 'patrol' || enemy._aiState === 'search') {
-                // Just spotted — enter chase
-                enemy._aiState = 'chase';
-                enemy._breakOffTimer = 0;
-            } else if (enemy._aiState === 'chase' && dist < (enemy.behavior === 'sniper' ? 480 : 350)) {
-                enemy._aiState = 'combat';
-                enemy._breakOffTimer = 0;
-            } else if (enemy._aiState === 'combat' && dist > 500) {
-                enemy._aiState = 'chase';
-            }
-            enemy._breakOffTimer = 0; // reset break-off countdown whenever player is seen
-
-        } else {
-            // Player not detectable this frame
-            if (enemy._aiState === 'chase' || enemy._aiState === 'combat') {
-                // Start or continue break-off timer — only give up after 3s far away
-                enemy._breakOffTimer = (enemy._breakOffTimer || 0) + GAME.loop.delta;
-                if (enemy._breakOffTimer > 3000) {
-                    // Player has been out of range long enough — fall back to search
-                    enemy._aiState = 'search';
-                    enemy._stateTimer = time;
-                    enemy._breakOffTimer = 0;
-                }
-                // While timer is running: keep chasing last known position
-            }
-            if (enemy._aiState === 'search' && time - enemy._stateTimer > 5000) {
-                enemy._aiState = 'patrol';
-                enemy._lastKnownPlayer = null;
-                enemy._patrolTarget = { x: Phaser.Math.Between(300, 3700), y: Phaser.Math.Between(300, 3700) };
-            }
-        }
-
-        // If shot from outside vision cone, immediately alert regardless of cone
-        if (enemy._justHit) {
-            if (enemy._aiState === 'patrol' || enemy._aiState === 'search') {
-                enemy._aiState = 'chase';
-                if (!enemy._lastKnownPlayer) enemy._lastKnownPlayer = { x: player.x, y: player.y };
-                else { enemy._lastKnownPlayer.x = player.x; enemy._lastKnownPlayer.y = player.y; }
-            }
-            enemy._justHit = false;
-            enemy._breakOffTimer = 0;
-        }
-
-        // Squad alert: when one member detects the player, alert nearby squad mates
-        if (_canSeePlayer && enemy._squadId != null) {
-            enemies.getChildren().forEach(mate => {
-                if (!mate.active || mate === enemy || mate._squadId !== enemy._squadId) return;
-                if (mate._aiState === 'patrol' || mate._aiState === 'search') {
-                    const _mateDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, mate.x, mate.y);
-                    if (_mateDist < 800) {
-                        mate._aiState = 'chase';
-                        if (!mate._lastKnownPlayer) mate._lastKnownPlayer = { x: player.x, y: player.y };
-                        else { mate._lastKnownPlayer.x = player.x; mate._lastKnownPlayer.y = player.y; }
-                        mate._breakOffTimer = 0;
-                    }
-                }
-            });
-        }
-
+        // Detection: vision cone + LOS raycasting (returns true if player is visible)
+        const _canSeePlayer = _computeEnemyVisibility(enemy, dist, _activeCoverCache);
+        // State machine transitions — updates enemy._aiState based on visibility
+        _updateEnemyAIState(enemy, _canSeePlayer, dist, time);
         if (!enemy.isStunned && !enemy.isJumping) {
-            let vx = 0, vy = 0;
+            // Compute desired velocity from AI behavior pattern
+            let {vx, vy} = _calcEnemyBehaviorVelocity(enemy, dist, angle, speed, time);
+            // Ghost abilities: skip firing + avoidance entirely for this enemy this frame
+            if (isJumping && _perkState.ghostJump) return;
+            if (_perkState._ghostStepActive) return;
+            // Weapon firing decisions + mod activation
+            _handleEnemyFiringDecision(scene, enemy, dist, time);
 
-            // AI BEHAVIOR PATTERNS
-            const beh = enemy.behavior || 'circle';
-
-            // Patrol: wander to random target — always moving, never spinning
-            if (enemy._aiState === 'patrol') {
-                const ptDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._patrolTarget.x, enemy._patrolTarget.y);
-                // Pick new target when close enough to current one
-                if (ptDist < 120) {
-                    // If in a squad, follow squad leader's general area
-                    if (enemy._squadLeader && enemy._squadLeader.active && enemy._squadLeader !== enemy) {
-                        const leader = enemy._squadLeader;
-                        const _offX = (Math.random() - 0.5) * 300;
-                        const _offY = (Math.random() - 0.5) * 300;
-                        const _tx = Phaser.Math.Clamp(leader._patrolTarget.x + _offX, 200, 3800);
-                        const _ty = Phaser.Math.Clamp(leader._patrolTarget.y + _offY, 200, 3800);
-                        enemy._patrolTarget = { x: _tx, y: _ty };
-                    } else {
-                        // Pick a random point across the map — bias toward center to keep enemies roaming
-                        const _angle = Math.random() * Math.PI * 2;
-                        const _dist  = 400 + Math.random() * 800;
-                        const _cx = 2000 + (Math.random() - 0.5) * 1200; // center-biased origin
-                        const _cy = WORLD_CENTER + (Math.random() - 0.5) * 1200;
-                        const _tx = Phaser.Math.Clamp(_cx + Math.cos(_angle) * _dist, 200, 3800);
-                        const _ty = Phaser.Math.Clamp(_cy + Math.sin(_angle) * _dist, 200, 3800);
-                        enemy._patrolTarget = { x: _tx, y: _ty };
-                    }
-                }
-                const ptAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, enemy._patrolTarget.x, enemy._patrolTarget.y);
-                // Minimum 60% speed so patrol is always visible movement
-                const ptSpeed = Math.max(speed * 0.55, 60);
-                vx = Math.cos(ptAngle) * ptSpeed;
-                vy = Math.sin(ptAngle) * ptSpeed;
-            }
-            // Search: move to last known player position
-            else if (enemy._aiState === 'search') {
-                const lkp = enemy._lastKnownPlayer;
-                if (lkp) {
-                    const lkDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, lkp.x, lkp.y);
-                    if (lkDist > 60) {
-                        const lkAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, lkp.x, lkp.y);
-                        vx = Math.cos(lkAngle) * speed * 0.7;
-                        vy = Math.sin(lkAngle) * speed * 0.7;
-                    }
-                }
-            }
-            // Chase/Combat: use behavior patterns toward player
-            // Strafe direction: periodically reverse to prevent perpetual orbits
-            else if (beh === 'circle') {
-                if (!enemy._strafeDir) enemy._strafeDir = Phaser.Math.RND.pick([-1, 1]);
-                if (!enemy._strafeFlipTime) enemy._strafeFlipTime = time + 2000 + Math.random() * 3000;
-                if (time > enemy._strafeFlipTime) {
-                    enemy._strafeDir *= -1;
-                    enemy._strafeFlipTime = time + 2000 + Math.random() * 3000;
-                }
-                if (dist > 350) {
-                    vx = Math.cos(angle) * speed;
-                    vy = Math.sin(angle) * speed;
-                } else if (dist < 200) {
-                    vx = -Math.cos(angle) * speed;
-                    vy = -Math.sin(angle) * speed;
-                } else {
-                    // Strafe with a forward/backward bias to create spiraling, not pure circles
-                    const strafe = angle + (Math.PI / 2) * enemy._strafeDir;
-                    const fwdBias = dist > 280 ? 0.3 : -0.2; // push in or out to avoid stable orbit
-                    vx = Math.cos(strafe) * speed * 0.8 + Math.cos(angle) * speed * fwdBias;
-                    vy = Math.sin(strafe) * speed * 0.8 + Math.sin(angle) * speed * fwdBias;
-                }
-            }
-            else if (beh === 'rusher') {
-                if (!enemy._strafeDir) enemy._strafeDir = Phaser.Math.RND.pick([-1, 1]);
-                if (!enemy._strafeFlipTime) enemy._strafeFlipTime = time + 1500 + Math.random() * 2000;
-                if (time > enemy._strafeFlipTime) {
-                    enemy._strafeDir *= -1;
-                    enemy._strafeFlipTime = time + 1500 + Math.random() * 2000;
-                }
-                if (dist > 260) {
-                    vx = Math.cos(angle) * speed;
-                    vy = Math.sin(angle) * speed;
-                } else if (dist < 160) {
-                    vx = -Math.cos(angle) * speed * 0.8;
-                    vy = -Math.sin(angle) * speed * 0.8;
-                } else {
-                    const strafe = angle + (Math.PI / 2) * enemy._strafeDir;
-                    // Rushers add forward bias to keep closing in
-                    vx = Math.cos(strafe) * speed * 0.6 + Math.cos(angle) * speed * 0.4;
-                    vy = Math.sin(strafe) * speed * 0.6 + Math.sin(angle) * speed * 0.4;
-                }
-            }
-            else if (beh === 'sniper') {
-                if (!enemy._strafeDir) enemy._strafeDir = Phaser.Math.RND.pick([-1, 1]);
-                if (!enemy._strafeFlipTime) enemy._strafeFlipTime = time + 3000 + Math.random() * 4000;
-                if (time > enemy._strafeFlipTime) {
-                    enemy._strafeDir *= -1;
-                    enemy._strafeFlipTime = time + 3000 + Math.random() * 4000;
-                }
-                if (dist > 480) {
-                    vx = Math.cos(angle) * speed * 0.5;
-                    vy = Math.sin(angle) * speed * 0.5;
-                } else if (dist < 400) {
-                    vx = -Math.cos(angle) * speed * 0.6;
-                    vy = -Math.sin(angle) * speed * 0.6;
-                } else {
-                    const strafe = angle + (Math.PI / 2) * enemy._strafeDir;
-                    vx = Math.cos(strafe) * speed * 0.3;
-                    vy = Math.sin(strafe) * speed * 0.3;
-                }
-            }
-            else if (beh === 'flanker') {
-                // Arcs wide to get behind the player
-                if (!enemy.flankDir) enemy.flankDir = Phaser.Math.RND.pick([-1, 1]);
-                if (dist > 500) {
-                    vx = Math.cos(angle) * speed;
-                    vy = Math.sin(angle) * speed;
-                } else {
-                    const fa = angle + (Math.PI / 2) * enemy.flankDir;
-                    vx = Math.cos(fa) * speed * 0.75 + Math.cos(angle) * speed * 0.25;
-                    vy = Math.sin(fa) * speed * 0.75 + Math.sin(angle) * speed * 0.25;
-                }
-            }
-            else if (beh === 'ambusher') {
-                // Stays still or creeps slowly until player is close, then rushes in
-                if (dist > 350) {
-                    // Creep toward player slowly — ambush positioning
-                    vx = Math.cos(angle) * speed * 0.2;
-                    vy = Math.sin(angle) * speed * 0.2;
-                } else if (dist > 150) {
-                    // Close enough — spring the ambush, rush in fast
-                    vx = Math.cos(angle) * speed * 1.1;
-                    vy = Math.sin(angle) * speed * 1.1;
-                } else {
-                    // Point-blank — strafe to avoid return fire
-                    const strafe = angle + Math.PI / 2 * (enemy.flankDir || 1);
-                    vx = Math.cos(strafe) * speed * 0.9;
-                    vy = Math.sin(strafe) * speed * 0.9;
-                }
-            }
-            else if (beh === 'guardian') {
-                // Holds ground — only moves to maintain optimal range, prioritizes staying near spawn
-                if (!enemy._guardPos) enemy._guardPos = { x: enemy.x, y: enemy.y };
-                const guardDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._guardPos.x, enemy._guardPos.y);
-                if (dist < 250) {
-                    // Player too close — back away
-                    vx = -Math.cos(angle) * speed * 0.7;
-                    vy = -Math.sin(angle) * speed * 0.7;
-                } else if (guardDist > 300) {
-                    // Drifted too far from guard position — return
-                    const gAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, enemy._guardPos.x, enemy._guardPos.y);
-                    vx = Math.cos(gAngle) * speed * 0.6;
-                    vy = Math.sin(gAngle) * speed * 0.6;
-                } else if (dist > 500) {
-                    // Player far away — slowly advance
-                    vx = Math.cos(angle) * speed * 0.3;
-                    vy = Math.sin(angle) * speed * 0.3;
-                } else {
-                    // Optimal range — strafe slowly
-                    const strafe = angle + Math.PI / 2;
-                    vx = Math.cos(strafe) * speed * 0.25;
-                    vy = Math.sin(strafe) * speed * 0.25;
-                }
-            }
-
-            // Weapon-driven fire rate — only fire in combat state (has LOS on player)
-            if (isJumping && _perkState.ghostJump) return; // Ghost Jump: enemies won't fire
-            if (_perkState._ghostStepActive) return; // Ghost Step: player is cloaked
-            if (enemy._aiState !== 'combat' && enemy._aiState !== 'chase') {
-                // In patrol/search — no shooting
-            } else {
-            const _pWep = enemy.loadout?.primary || 'smg';
-            // Close-range weapons need tighter engagement
-            const fireRange  = (_pWep === 'fth' || _pWep === 'sg') ? 320
-                             : enemy.behavior === 'sniper' ? 1000 : 750;
-            const wepReload  = WEAPONS[_pWep]?.reload || 300;
-            const reloadMult = enemy.behavior === 'sniper' ? 1.4
-                             : enemy.behavior === 'rusher' ? 0.85
-                             : enemy.behavior === 'flanker' ? 1.0 : 1.1;
-            const _eliteFireMult = (enemy._swiftFireRateMult || 1);
-            if (!enemy._fireGrace && dist < fireRange && time > (enemy.lastFireTime || 0) + wepReload * reloadMult * _eliteFireMult) {
-                enemyFire(scene, enemy, time);
-                enemy.lastFireTime = time;
-                // Sniper Elite: cloak after firing
-                if (enemy.enemyType === 'sniperElite' && enemy._onFire) enemy._onFire();
-            }
-
-            // Secondary weapon — fires less frequently, with per-weapon range gates
-            const secKey = enemy.loadout?.secondary;
-            if (secKey && secKey !== 'none') {
-                const secW    = WEAPONS[secKey];
-                const secCd   = (secW?.reload || 3500) * 1.2;
-                // Per-weapon range gates: GL and EMP only fire when player is close enough
-                const secRange = secKey === 'emp'  ? WEAPONS.emp.radius
-                             : secKey === 'gl'   ? 700
-                             : secKey === 'fth'  ? 320
-                             : secKey === 'rail' ? 1200
-                             : secKey === 'sr'   ? 1000
-                             : fireRange;
-                if (!enemy._fireGrace && dist < secRange && time > enemy.lastSecTime + secCd) {
-                    enemyFireSecondary(scene, enemy, secKey, time);
-                    enemy.lastSecTime = time;
-                }
-            }
-
-            } // end combat/chase firing block
-
-            // Enemy mod activation
-            const eMod = enemy.loadout?.mod;
-            if (eMod && eMod !== 'none' && !enemy.isModActive) {
-                const modDef   = WEAPONS[eMod];
-                const cooldown = (modDef?.cooldown || 8000) * 1.5; // enemies wait 1.5x player cooldown
-                const lastMT   = enemy.lastModTime ?? -99999;
-                if (time > lastMT + cooldown) {
-                    activateEnemyMod(scene, enemy, eMod, time);
-                }
-            }
-
-            // ── OBSTACLE AVOIDANCE STEERING ──────────────────────
-            // Cast feeler rays ahead of travel direction; steer away from nearby cover
-            if ((vx !== 0 || vy !== 0) && coverObjects) {
-                const _travelAngle = Math.atan2(vy, vx);
-                const _feelerDist  = 90;   // how far ahead to sense
-                const _avoidRadius = 70;   // cover objects within this dist trigger avoidance
-                let _avoidX = 0, _avoidY = 0;
-
-                // Three feelers: straight, left-20°, right-20° (module-level constant — no per-frame allocation)
-                for (const _fOffset of _FEELER_OFFSETS) {
-                    const _fa  = _travelAngle + _fOffset;
-                    const _ftx = enemy.x + Math.cos(_fa) * _feelerDist;
-                    const _fty = enemy.y + Math.sin(_fa) * _feelerDist;
-
-                    coverObjects.getChildren().forEach(c => {
-                        if (!c.active) return;
-                        // Use stored center coords (coverCX/CY) for correct distance checks
-                        const _cCX = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
-                        const _cCY = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
-                        const _cdist = Phaser.Math.Distance.Between(_ftx, _fty, _cCX, _cCY);
-                        if (_cdist < _avoidRadius + (c.width || 60) * 0.5) {
-                            const _pushAngle = Phaser.Math.Angle.Between(_cCX, _cCY, enemy.x, enemy.y);
-                            const _pushStr   = (_avoidRadius - Math.max(0, _cdist - (c.width||60)*0.5)) / _avoidRadius;
-                            _avoidX += Math.cos(_pushAngle) * _pushStr * speed * 1.2;
-                            _avoidY += Math.sin(_pushAngle) * _pushStr * speed * 1.2;
-                        }
-                    });
-                }
-
-                // Blend avoidance into desired velocity
-                if (_avoidX !== 0 || _avoidY !== 0) {
-                    vx += _avoidX * 0.6;
-                    vy += _avoidY * 0.6;
-                    // Re-normalise to original speed so avoidance doesn't slow/accelerate
-                    const _newSpd = Math.sqrt(vx*vx + vy*vy);
-                    if (_newSpd > 0) {
-                        const _origSpd = Math.sqrt((vx-_avoidX*0.6)**2 + (vy-_avoidY*0.6)**2) || speed;
-                        vx = (vx / _newSpd) * _origSpd;
-                        vy = (vy / _newSpd) * _origSpd;
-                    }
-                }
-            }
-
-            // Wall-stuck detection: if enemy has barely moved but has velocity, nudge them
-            const _curSpd = Math.sqrt(vx*vx + vy*vy);
-            if (_curSpd > 20) {
-                const _movedSince = enemy._lastPos ? Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._lastPos.x, enemy._lastPos.y) : 999;
-                if (!enemy._stuckCheckTime) enemy._stuckCheckTime = time;
-                if (time - enemy._stuckCheckTime > 800) {
-                    if (_movedSince < 15) {
-                        // Stuck against wall — pick a new random patrol target and add a perpendicular nudge
-                        enemy._patrolTarget = { x: Phaser.Math.Between(300, 3700), y: Phaser.Math.Between(300, 3700) };
-                        if (enemy._aiState === 'combat' || enemy._aiState === 'chase') enemy._aiState = 'patrol';
-                        vx += (Math.random() - 0.5) * speed * 2;
-                        vy += (Math.random() - 0.5) * speed * 2;
-                    }
-                    enemy._stuckCheckTime = time;
-                    // Mutate in-place to avoid per-frame heap allocation
-                    if (!enemy._lastPos) enemy._lastPos = { x: enemy.x, y: enemy.y };
-                    else { enemy._lastPos.x = enemy.x; enemy._lastPos.y = enemy.y; }
-                }
-            } else {
-                enemy._stuckCheckTime = time;
-                if (!enemy._lastPos) enemy._lastPos = { x: enemy.x, y: enemy.y };
-                else { enemy._lastPos.x = enemy.x; enemy._lastPos.y = enemy.y; }
-            }
-
-            // Circular orbit detection: track displacement from a reference point over 3s
-            // If enemy moves a lot per-frame but stays near same spot, it's orbiting
-            if (!enemy._orbitRefPos) enemy._orbitRefPos = { x: enemy.x, y: enemy.y };
-            if (!enemy._orbitCheckTime) enemy._orbitCheckTime = time;
-            if (time - enemy._orbitCheckTime > 3000) {
-                const _orbitDisp = Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._orbitRefPos.x, enemy._orbitRefPos.y);
-                if (_orbitDisp < 80 && (enemy._aiState === 'combat' || enemy._aiState === 'chase')) {
-                    // Orbiting in combat — force strafe direction flip and nudge inward/outward
-                    if (enemy._strafeDir) enemy._strafeDir *= -1;
-                    const _nudgeAngle = angle + (Math.random() > 0.5 ? 0 : Math.PI); // toward or away from player
-                    vx += Math.cos(_nudgeAngle) * speed * 0.5;
-                    vy += Math.sin(_nudgeAngle) * speed * 0.5;
-                }
-                // Mutate in-place to avoid heap allocation
-                enemy._orbitRefPos.x = enemy.x; enemy._orbitRefPos.y = enemy.y;
-                enemy._orbitCheckTime = time;
-            }
-
-            // Separation: push away from nearby enemies to prevent stacking
-            enemies.getChildren().forEach(other => {
-                if (other === enemy || !other.active) return;
-                const sd = Phaser.Math.Distance.Between(enemy.x, enemy.y, other.x, other.y);
-                if (sd < 80 && sd > 0) {
-                    const sa = Phaser.Math.Angle.Between(other.x, other.y, enemy.x, enemy.y);
-                    const f  = (80 - sd) / 80 * speed * 1.5;
-                    vx += Math.cos(sa) * f;
-                    vy += Math.sin(sa) * f;
-                }
-            });
-
-            // Tank locomotion: rotate legs toward travel direction,
-            // then drive forward/back only along that axis
-            const desiredAngle = (vx !== 0 || vy !== 0)
-                ? Math.atan2(vy, vx)
-                : enemy.visuals.rotation;
-            // Smoothly rotate the visual body toward desired angle
-            // Faster rotation in patrol so enemies don't circle around obstacles
-            const _turnRate = (enemy._aiState === 'patrol' || enemy._aiState === 'search') ? 0.14 : 0.08;
-            enemy.visuals.rotation = Phaser.Math.Angle.RotateTo(
-                enemy.visuals.rotation, desiredAngle, _turnRate);
-            // Slow down when turning sharply to prevent circular drift
-            const _angleMismatch = Math.abs(Phaser.Math.Angle.Wrap(desiredAngle - enemy.visuals.rotation));
-            const _turnBrake = _angleMismatch > 1.2 ? 0.25 : _angleMismatch > 0.6 ? 0.55 : 1.0;
-            // Drive physics body along the visual facing direction only
-            const spd = Math.sqrt(vx*vx + vy*vy) * _turnBrake;
-            enemy.body.setVelocity(
-                Math.cos(enemy.visuals.rotation) * spd,
-                Math.sin(enemy.visuals.rotation) * spd
-            );
-            enemy.body.setImmovable(false);
+            // Obstacle avoidance, stuck/orbit/separation correction, + tank locomotion
+            _applyEnemyObstacleAvoidance(enemy, angle, speed, time, vx, vy);
         } else {
             enemy.body.setVelocity(0, 0);
             enemy.body.setImmovable(true);
         }
 
-        // Passive shield regen
-        if ((enemy.maxShield||0) > 0 && enemy.shield < enemy.maxShield) {
-            const _secSinceHit = (time - (enemy._lastDamageTime || -99999)) / 1000;
-            if (_secSinceHit >= (enemy._shieldRegenDelay ?? 5)) {
-                enemy.shield = Math.min(enemy.maxShield, enemy.shield + (enemy._shieldRegenRate ?? 1.0));
+        // Passive shield regen + leg passives
+        _applyEnemyPassiveShieldRegen(scene, enemy, time);
+        // Visual sync: positions, torso, labels, commander buff, chassis FX
+        _syncEnemyVisuals(scene, enemy, time);
+    });
+}
+
+// ── handleEnemyAI sub-functions ─────────────────────────────────────────────────────────────────
+function _applyEnemyPassiveShieldRegen(scene, enemy, time) {
+    // Passive shield regen
+    if ((enemy.maxShield||0) > 0 && enemy.shield < enemy.maxShield) {
+        const _secSinceHit = (time - (enemy._lastDamageTime || -99999)) / 1000;
+        if (_secSinceHit >= (enemy._shieldRegenDelay ?? 5)) {
+            enemy.shield = Math.min(enemy.maxShield, enemy.shield + (enemy._shieldRegenRate ?? 1.0));
+        }
+    }
+    // Mine Layer leg system
+    if (enemy.loadout?.leg === 'mine_layer' && enemy._legSystemActive) {
+        const _ev = enemy.body.velocity;
+        if (Math.abs(_ev.x) + Math.abs(_ev.y) > 20) {
+            enemy._mineTimer = (enemy._mineTimer || 0) + scene.game.loop.delta;
+            if (enemy._mineTimer >= 10000) {
+                enemy._mineTimer = 0;
+                dropEnemyMine(scene, enemy);
             }
         }
-        // Mine Layer leg system
-        if (enemy.loadout?.leg === 'mine_layer' && enemy._legSystemActive) {
-            const _ev = enemy.body.velocity;
-            if (Math.abs(_ev.x) + Math.abs(_ev.y) > 20) {
-                enemy._mineTimer = (enemy._mineTimer || 0) + scene.game.loop.delta;
-                if (enemy._mineTimer >= 10000) {
-                    enemy._mineTimer = 0;
-                    dropEnemyMine(scene, enemy);
+    }
+    // Mag Anchors: track stationary state
+    if (enemy.loadout?.leg === 'mag_anchors' && enemy._legSystemActive) {
+        const _ev2 = enemy.body.velocity;
+        enemy._magAnchorsActive = (Math.abs(_ev2.x) + Math.abs(_ev2.y) < 15);
+    } else {
+        enemy._magAnchorsActive = false;
+    }
+}
+
+function _computeEnemyVisibility(enemy, dist, _activeCoverCache) {
+    // Vision cone + AI state init — initialise missing state on first call
+    // ── VISION CONE + STATE MACHINE ──────────────────────────────
+    if (!enemy._aiState)         enemy._aiState = 'patrol';
+    if (!enemy._patrolTarget)    enemy._patrolTarget = { x: Phaser.Math.Between(300, 3700), y: Phaser.Math.Between(300, 3700) };
+    if (!enemy._lastKnownPlayer) enemy._lastKnownPlayer = null;
+    if (!enemy._stateTimer)      enemy._stateTimer = 0;
+
+    // ── DETECTION RANGES ──────────────────────────────────────
+    // Patrol: narrow vision cone from torso facing direction
+    const _coneRange   = enemy.behavior === 'sniper' ? 900 : 680;
+    const _coneAngle   = 0.75; // ±43° half-angle
+    // Pursuit: once alerted, enemy tracks player in a huge radius (no cone needed)
+    const _pursuitRange = 1400;
+    // Break-off: enemy gives up only after being this far away for 3s continuously
+    const _breakRange   = 1400;
+
+    // Cone uses the TORSO facing direction (head/gun), not the legs
+    const _facingAngle = enemy.torso?.rotation ?? enemy.visuals?.rotation ?? 0;
+
+    // ── VISION CONE CHECK (only relevant in patrol/search) ──────
+    const _angleToPlayer = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+    const _angleDiff     = Phaser.Math.Angle.Wrap(_angleToPlayer - _facingAngle);
+    const _inCone        = Math.abs(_angleDiff) < _coneAngle && dist < _coneRange;
+
+    // LOS raycast for cone detection
+    let _hasLOS = false;
+    if (_inCone && coverObjects) {
+        _hasLOS = true;
+        const _raySteps = 12;
+        for (let _rs = 1; _rs <= _raySteps; _rs++) {
+            const _rt = _rs / _raySteps;
+            const _rx = enemy.x + (player.x - enemy.x) * _rt;
+            const _ry = enemy.y + (player.y - enemy.y) * _rt;
+            const _hit = coverObjects.getChildren().some(c => {
+                if (!c.active) return false;
+                // Use stored center coords (coverCX/CY) — c.x/c.y is top-left (origin 0,0)
+                const cx = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
+                const cy = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
+                const hw = (c.width || 60) / 2, hh = (c.height || 60) / 2;
+                return _rx > cx - hw && _rx < cx + hw && _ry > cy - hh && _ry < cy + hh;
+            });
+            if (_hit) { _hasLOS = false; break; }
+        }
+    }
+    const _canSeeViaConeCone = _inCone && _hasLOS && !player?._ghostExitActive;
+
+    // ── PURSUIT DETECTION (chase/combat only): wide radius, no cone needed ──
+    // Once alerted, enemy tracks player within pursuit range BUT still needs LOS
+    const _isAlerted   = !player?._ghostExitActive && (enemy._aiState === 'chase' || enemy._aiState === 'combat');
+    let _pursueLOS = false;
+    if (_isAlerted && dist < _pursuitRange && coverObjects) {
+        _pursueLOS = true;
+        const _pRaySteps = 8;
+        for (let _prs = 1; _prs <= _pRaySteps; _prs++) {
+            const _prt = _prs / _pRaySteps;
+            const _prx = enemy.x + (player.x - enemy.x) * _prt;
+            const _pry = enemy.y + (player.y - enemy.y) * _prt;
+            const _phit = coverObjects.getChildren().some(c => {
+                if (!c.active) return false;
+                const cx = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
+                const cy = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
+                const hw = (c.width || 60) / 2, hh = (c.height || 60) / 2;
+                return _prx > cx - hw && _prx < cx + hw && _pry > cy - hh && _pry < cy + hh;
+            });
+            if (_phit) { _pursueLOS = false; break; }
+        }
+    }
+    const _canPursue   = _isAlerted && dist < _pursuitRange && _pursueLOS;
+
+    // Combined: can the enemy detect the player this frame?
+    const _canSeePlayer = _canSeeViaConeCone || _canPursue;
+
+    // ── DRAW VISION CONE — wall-occluded (patrol/search only) ───
+    if (enemy._visionConeGfx?.active) {
+        const _cg = enemy._visionConeGfx;
+        _cg.clear();
+        const _showCone = (enemy._aiState === 'patrol' || enemy._aiState === 'search');
+        if (_showCone) {
+            const _coneJustSpotted = _canSeeViaConeCone;
+            const _coneCol   = _coneJustSpotted ? 0xff2200
+                             : enemy._aiState === 'search' ? 0xffcc00
+                             : 0x4488ff;
+            const _coneAlpha = _coneJustSpotted ? 0.18 : 0.07;
+
+            // Cast individual rays — each stops at the first cover object hit
+            // This makes the cone visually respect walls and buildings
+            const _coneRays  = 18;  // number of rays (more = smoother but costs more)
+            const _coneCovers = _activeCoverCache;
+            let _rayCount = 0;
+
+            for (let _ri = 0; _ri <= _coneRays; _ri++) {
+                const _ra = _facingAngle - _coneAngle + (_ri / _coneRays) * _coneAngle * 2;
+                let _rayLen = _coneRange;
+
+                // Step along ray and find first cover intersection
+                const _steps = 12;
+                for (let _rs = 1; _rs <= _steps; _rs++) {
+                    const _t  = _rs / _steps;
+                    const _rx = enemy.x + Math.cos(_ra) * _coneRange * _t;
+                    const _ry = enemy.y + Math.sin(_ra) * _coneRange * _t;
+                    let _hit  = false;
+                    for (let _ci2 = 0; _ci2 < _coneCovers.length; _ci2++) {
+                        const _cv = _coneCovers[_ci2];
+                        // Use stored center coords — c.x/c.y is top-left (origin 0,0)
+                        const _cvCX = _cv.coverCX !== undefined ? _cv.coverCX : _cv.x + (_cv.width||60)/2;
+                        const _cvCY = _cv.coverCY !== undefined ? _cv.coverCY : _cv.y + (_cv.height||60)/2;
+                        const _hw = (_cv.width  || 60) * 0.5 + 2;
+                        const _hh = (_cv.height || 60) * 0.5 + 2;
+                        if (_rx > _cvCX - _hw && _rx < _cvCX + _hw &&
+                            _ry > _cvCY - _hh && _ry < _cvCY + _hh) {
+                            _hit = true; break;
+                        }
+                    }
+                    if (_hit) {
+                        _rayLen = _coneRange * (_t - 1/_steps); // stop just before obstacle
+                        break;
+                    }
+                }
+                _CONE_RAY_POINTS[_rayCount].x = enemy.x + Math.cos(_ra) * Math.max(0, _rayLen);
+                _CONE_RAY_POINTS[_rayCount].y = enemy.y + Math.sin(_ra) * Math.max(0, _rayLen);
+                _rayCount++;
+            }
+
+            // Draw filled polygon from enemy origin through all ray endpoints
+            _cg.fillStyle(_coneCol, _coneAlpha);
+            _cg.beginPath();
+            _cg.moveTo(enemy.x, enemy.y);
+            for (let _i = 0; _i < _rayCount; _i++) _cg.lineTo(_CONE_RAY_POINTS[_i].x, _CONE_RAY_POINTS[_i].y);
+            _cg.closePath();
+            _cg.fillPath();
+
+            // Thin outer edge on first and last ray
+            _cg.lineStyle(1, _coneCol, _coneAlpha * 3.5);
+            _cg.beginPath();
+            _cg.moveTo(enemy.x, enemy.y);
+            _cg.lineTo(_CONE_RAY_POINTS[0].x, _CONE_RAY_POINTS[0].y);
+            _cg.strokePath();
+            _cg.beginPath();
+            _cg.moveTo(enemy.x, enemy.y);
+            _cg.lineTo(_CONE_RAY_POINTS[_rayCount - 1].x, _CONE_RAY_POINTS[_rayCount - 1].y);
+            _cg.strokePath();
+        }
+    }
+
+    return _canSeePlayer;
+}
+
+function _updateEnemyAIState(enemy, _canSeePlayer, dist, time) {
+    // ── STATE TRANSITIONS ─────────────────────────────────────
+    // ── STATE TRANSITIONS ─────────────────────────────────────
+    if (_canSeePlayer) {
+        // Always update last known position — mutate in-place to avoid heap allocation
+        if (!enemy._lastKnownPlayer) enemy._lastKnownPlayer = { x: player.x, y: player.y };
+        else { enemy._lastKnownPlayer.x = player.x; enemy._lastKnownPlayer.y = player.y; }
+
+        if (enemy._aiState === 'patrol' || enemy._aiState === 'search') {
+            // Just spotted — enter chase
+            enemy._aiState = 'chase';
+            enemy._breakOffTimer = 0;
+        } else if (enemy._aiState === 'chase' && dist < (enemy.behavior === 'sniper' ? 480 : 350)) {
+            enemy._aiState = 'combat';
+            enemy._breakOffTimer = 0;
+        } else if (enemy._aiState === 'combat' && dist > 500) {
+            enemy._aiState = 'chase';
+        }
+        enemy._breakOffTimer = 0; // reset break-off countdown whenever player is seen
+
+    } else {
+        // Player not detectable this frame
+        if (enemy._aiState === 'chase' || enemy._aiState === 'combat') {
+            // Start or continue break-off timer — only give up after 3s far away
+            enemy._breakOffTimer = (enemy._breakOffTimer || 0) + GAME.loop.delta;
+            if (enemy._breakOffTimer > 3000) {
+                // Player has been out of range long enough — fall back to search
+                enemy._aiState = 'search';
+                enemy._stateTimer = time;
+                enemy._breakOffTimer = 0;
+            }
+            // While timer is running: keep chasing last known position
+        }
+        if (enemy._aiState === 'search' && time - enemy._stateTimer > 5000) {
+            enemy._aiState = 'patrol';
+            enemy._lastKnownPlayer = null;
+            enemy._patrolTarget = { x: Phaser.Math.Between(300, 3700), y: Phaser.Math.Between(300, 3700) };
+        }
+    }
+
+    // If shot from outside vision cone, immediately alert regardless of cone
+    if (enemy._justHit) {
+        if (enemy._aiState === 'patrol' || enemy._aiState === 'search') {
+            enemy._aiState = 'chase';
+            if (!enemy._lastKnownPlayer) enemy._lastKnownPlayer = { x: player.x, y: player.y };
+            else { enemy._lastKnownPlayer.x = player.x; enemy._lastKnownPlayer.y = player.y; }
+        }
+        enemy._justHit = false;
+        enemy._breakOffTimer = 0;
+    }
+
+    // Squad alert: when one member detects the player, alert nearby squad mates
+    if (_canSeePlayer && enemy._squadId != null) {
+        enemies.getChildren().forEach(mate => {
+            if (!mate.active || mate === enemy || mate._squadId !== enemy._squadId) return;
+            if (mate._aiState === 'patrol' || mate._aiState === 'search') {
+                const _mateDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, mate.x, mate.y);
+                if (_mateDist < 800) {
+                    mate._aiState = 'chase';
+                    if (!mate._lastKnownPlayer) mate._lastKnownPlayer = { x: player.x, y: player.y };
+                    else { mate._lastKnownPlayer.x = player.x; mate._lastKnownPlayer.y = player.y; }
+                    mate._breakOffTimer = 0;
                 }
             }
-        }
-        // Mag Anchors: track stationary state
-        if (enemy.loadout?.leg === 'mag_anchors' && enemy._legSystemActive) {
-            const _ev2 = enemy.body.velocity;
-            enemy._magAnchorsActive = (Math.abs(_ev2.x) + Math.abs(_ev2.y) < 15);
-        } else {
-            enemy._magAnchorsActive = false;
-        }
-        // Always sync visual container to physics body
-        enemy.visuals.setPosition(enemy.x, enemy.y);
+        });
+    }
 
-        // Torso rotation: in combat/chase → aim at player. In patrol/search → follow body direction.
-        if (enemy.torso && player && !enemy.isStunned) {
-            enemy.torso.setPosition(enemy.x, enemy.y);
-            const _state = enemy._aiState || 'patrol';
-            if (_state === 'combat' || _state === 'chase') {
-                // Lock onto player
-                const aimAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
-                enemy.torso.rotation = Phaser.Math.Angle.RotateTo(enemy.torso.rotation, aimAngle, 0.1);
+}
+
+function _calcEnemyBehaviorVelocity(enemy, dist, angle, speed, time) {
+    let vx = 0, vy = 0;
+    // AI BEHAVIOR PATTERNS
+    const beh = enemy.behavior || 'circle';
+
+    // Patrol: wander to random target — always moving, never spinning
+    if (enemy._aiState === 'patrol') {
+        const ptDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._patrolTarget.x, enemy._patrolTarget.y);
+        // Pick new target when close enough to current one
+        if (ptDist < 120) {
+            // If in a squad, follow squad leader's general area
+            if (enemy._squadLeader && enemy._squadLeader.active && enemy._squadLeader !== enemy) {
+                const leader = enemy._squadLeader;
+                const _offX = (Math.random() - 0.5) * 300;
+                const _offY = (Math.random() - 0.5) * 300;
+                const _tx = Phaser.Math.Clamp(leader._patrolTarget.x + _offX, 200, 3800);
+                const _ty = Phaser.Math.Clamp(leader._patrolTarget.y + _offY, 200, 3800);
+                enemy._patrolTarget = { x: _tx, y: _ty };
             } else {
-                // Follow legs direction — torso matches body facing
-                const bodyAngle = enemy.visuals?.rotation ?? enemy.torso.rotation;
-                enemy.torso.rotation = Phaser.Math.Angle.RotateTo(enemy.torso.rotation, bodyAngle, 0.06);
+                // Pick a random point across the map — bias toward center to keep enemies roaming
+                const _angle = Math.random() * Math.PI * 2;
+                const _dist  = 400 + Math.random() * 800;
+                const _cx = 2000 + (Math.random() - 0.5) * 1200; // center-biased origin
+                const _cy = WORLD_CENTER + (Math.random() - 0.5) * 1200;
+                const _tx = Phaser.Math.Clamp(_cx + Math.cos(_angle) * _dist, 200, 3800);
+                const _ty = Phaser.Math.Clamp(_cy + Math.sin(_angle) * _dist, 200, 3800);
+                enemy._patrolTarget = { x: _tx, y: _ty };
             }
-        } else if (enemy.torso) {
-            enemy.torso.setPosition(enemy.x, enemy.y);
         }
-        // Sync shield ring to enemy position
-        if (enemy.shieldRing?.active) enemy.shieldRing.setPosition(enemy.x, enemy.y);
-        // Sync commander/medic labels
-        if (enemy.cmdLabel?.active)   enemy.cmdLabel.setPosition(enemy.x, enemy.y - 70);
-        if (enemy.medicLabel?.active) enemy.medicLabel.setPosition(enemy.x, enemy.y - 52);
-        if (enemy.medicCross?.active) enemy.medicCross.setPosition(enemy.x, enemy.y - 64);
-        // Commander buff aura — boost nearby standard enemies
-        if (enemy.isCommander && player) {
-            enemies.getChildren().forEach(other => {
-                if (other === enemy || !other.active) return;
-                const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, other.x, other.y);
-                if (d < 300) {
-                    const base = CHASSIS[other.loadout?.chassis]?.spd || 250;
-                    other.speed = base * 1.2;
-                } else {
-                    const base = CHASSIS[other.loadout?.chassis]?.spd || 250;
-                    if (other.speed > base) other.speed = base;
+        const ptAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, enemy._patrolTarget.x, enemy._patrolTarget.y);
+        // Minimum 60% speed so patrol is always visible movement
+        const ptSpeed = Math.max(speed * 0.55, 60);
+        vx = Math.cos(ptAngle) * ptSpeed;
+        vy = Math.sin(ptAngle) * ptSpeed;
+    }
+    // Search: move to last known player position
+    else if (enemy._aiState === 'search') {
+        const lkp = enemy._lastKnownPlayer;
+        if (lkp) {
+            const lkDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, lkp.x, lkp.y);
+            if (lkDist > 60) {
+                const lkAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, lkp.x, lkp.y);
+                vx = Math.cos(lkAngle) * speed * 0.7;
+                vy = Math.sin(lkAngle) * speed * 0.7;
+            }
+        }
+    }
+    // Chase/Combat: use behavior patterns toward player
+    // Strafe direction: periodically reverse to prevent perpetual orbits
+    else if (beh === 'circle') {
+        if (!enemy._strafeDir) enemy._strafeDir = Phaser.Math.RND.pick([-1, 1]);
+        if (!enemy._strafeFlipTime) enemy._strafeFlipTime = time + 2000 + Math.random() * 3000;
+        if (time > enemy._strafeFlipTime) {
+            enemy._strafeDir *= -1;
+            enemy._strafeFlipTime = time + 2000 + Math.random() * 3000;
+        }
+        if (dist > 350) {
+            vx = Math.cos(angle) * speed;
+            vy = Math.sin(angle) * speed;
+        } else if (dist < 200) {
+            vx = -Math.cos(angle) * speed;
+            vy = -Math.sin(angle) * speed;
+        } else {
+            // Strafe with a forward/backward bias to create spiraling, not pure circles
+            const strafe = angle + (Math.PI / 2) * enemy._strafeDir;
+            const fwdBias = dist > 280 ? 0.3 : -0.2; // push in or out to avoid stable orbit
+            vx = Math.cos(strafe) * speed * 0.8 + Math.cos(angle) * speed * fwdBias;
+            vy = Math.sin(strafe) * speed * 0.8 + Math.sin(angle) * speed * fwdBias;
+        }
+    }
+    else if (beh === 'rusher') {
+        if (!enemy._strafeDir) enemy._strafeDir = Phaser.Math.RND.pick([-1, 1]);
+        if (!enemy._strafeFlipTime) enemy._strafeFlipTime = time + 1500 + Math.random() * 2000;
+        if (time > enemy._strafeFlipTime) {
+            enemy._strafeDir *= -1;
+            enemy._strafeFlipTime = time + 1500 + Math.random() * 2000;
+        }
+        if (dist > 260) {
+            vx = Math.cos(angle) * speed;
+            vy = Math.sin(angle) * speed;
+        } else if (dist < 160) {
+            vx = -Math.cos(angle) * speed * 0.8;
+            vy = -Math.sin(angle) * speed * 0.8;
+        } else {
+            const strafe = angle + (Math.PI / 2) * enemy._strafeDir;
+            // Rushers add forward bias to keep closing in
+            vx = Math.cos(strafe) * speed * 0.6 + Math.cos(angle) * speed * 0.4;
+            vy = Math.sin(strafe) * speed * 0.6 + Math.sin(angle) * speed * 0.4;
+        }
+    }
+    else if (beh === 'sniper') {
+        if (!enemy._strafeDir) enemy._strafeDir = Phaser.Math.RND.pick([-1, 1]);
+        if (!enemy._strafeFlipTime) enemy._strafeFlipTime = time + 3000 + Math.random() * 4000;
+        if (time > enemy._strafeFlipTime) {
+            enemy._strafeDir *= -1;
+            enemy._strafeFlipTime = time + 3000 + Math.random() * 4000;
+        }
+        if (dist > 480) {
+            vx = Math.cos(angle) * speed * 0.5;
+            vy = Math.sin(angle) * speed * 0.5;
+        } else if (dist < 400) {
+            vx = -Math.cos(angle) * speed * 0.6;
+            vy = -Math.sin(angle) * speed * 0.6;
+        } else {
+            const strafe = angle + (Math.PI / 2) * enemy._strafeDir;
+            vx = Math.cos(strafe) * speed * 0.3;
+            vy = Math.sin(strafe) * speed * 0.3;
+        }
+    }
+    else if (beh === 'flanker') {
+        // Arcs wide to get behind the player
+        if (!enemy.flankDir) enemy.flankDir = Phaser.Math.RND.pick([-1, 1]);
+        if (dist > 500) {
+            vx = Math.cos(angle) * speed;
+            vy = Math.sin(angle) * speed;
+        } else {
+            const fa = angle + (Math.PI / 2) * enemy.flankDir;
+            vx = Math.cos(fa) * speed * 0.75 + Math.cos(angle) * speed * 0.25;
+            vy = Math.sin(fa) * speed * 0.75 + Math.sin(angle) * speed * 0.25;
+        }
+    }
+    else if (beh === 'ambusher') {
+        // Stays still or creeps slowly until player is close, then rushes in
+        if (dist > 350) {
+            // Creep toward player slowly — ambush positioning
+            vx = Math.cos(angle) * speed * 0.2;
+            vy = Math.sin(angle) * speed * 0.2;
+        } else if (dist > 150) {
+            // Close enough — spring the ambush, rush in fast
+            vx = Math.cos(angle) * speed * 1.1;
+            vy = Math.sin(angle) * speed * 1.1;
+        } else {
+            // Point-blank — strafe to avoid return fire
+            const strafe = angle + Math.PI / 2 * (enemy.flankDir || 1);
+            vx = Math.cos(strafe) * speed * 0.9;
+            vy = Math.sin(strafe) * speed * 0.9;
+        }
+    }
+    else if (beh === 'guardian') {
+        // Holds ground — only moves to maintain optimal range, prioritizes staying near spawn
+        if (!enemy._guardPos) enemy._guardPos = { x: enemy.x, y: enemy.y };
+        const guardDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._guardPos.x, enemy._guardPos.y);
+        if (dist < 250) {
+            // Player too close — back away
+            vx = -Math.cos(angle) * speed * 0.7;
+            vy = -Math.sin(angle) * speed * 0.7;
+        } else if (guardDist > 300) {
+            // Drifted too far from guard position — return
+            const gAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, enemy._guardPos.x, enemy._guardPos.y);
+            vx = Math.cos(gAngle) * speed * 0.6;
+            vy = Math.sin(gAngle) * speed * 0.6;
+        } else if (dist > 500) {
+            // Player far away — slowly advance
+            vx = Math.cos(angle) * speed * 0.3;
+            vy = Math.sin(angle) * speed * 0.3;
+        } else {
+            // Optimal range — strafe slowly
+            const strafe = angle + Math.PI / 2;
+            vx = Math.cos(strafe) * speed * 0.25;
+            vy = Math.sin(strafe) * speed * 0.25;
+        }
+    }
+
+    return {vx, vy};
+}
+
+function _handleEnemyFiringDecision(scene, enemy, dist, time) {
+    if (enemy._aiState !== 'combat' && enemy._aiState !== 'chase') return; // no shooting in patrol/search
+    const _pWep = enemy.loadout?.primary || 'smg';
+    const fireRange  = (_pWep === 'fth' || _pWep === 'sg') ? 320
+                     : enemy.behavior === 'sniper' ? 1000 : 750;
+    const wepReload  = WEAPONS[_pWep]?.reload || 300;
+    const reloadMult = enemy.behavior === 'sniper' ? 1.4
+                     : enemy.behavior === 'rusher' ? 0.85
+                     : enemy.behavior === 'flanker' ? 1.0 : 1.1;
+    const _eliteFireMult = (enemy._swiftFireRateMult || 1);
+    if (!enemy._fireGrace && dist < fireRange && time > (enemy.lastFireTime || 0) + wepReload * reloadMult * _eliteFireMult) {
+        enemyFire(scene, enemy, time);
+        enemy.lastFireTime = time;
+        // Sniper Elite: cloak after firing
+        if (enemy.enemyType === 'sniperElite' && enemy._onFire) enemy._onFire();
+    }
+
+    // Secondary weapon — fires less frequently, with per-weapon range gates
+    const secKey = enemy.loadout?.secondary;
+    if (secKey && secKey !== 'none') {
+        const secW    = WEAPONS[secKey];
+        const secCd   = (secW?.reload || 3500) * 1.2;
+        const secRange = secKey === 'emp'  ? WEAPONS.emp.radius
+                     : secKey === 'gl'   ? 700
+                     : secKey === 'fth'  ? 320
+                     : secKey === 'rail' ? 1200
+                     : secKey === 'sr'   ? 1000
+                     : fireRange;
+        if (!enemy._fireGrace && dist < secRange && time > enemy.lastSecTime + secCd) {
+            enemyFireSecondary(scene, enemy, secKey, time);
+            enemy.lastSecTime = time;
+        }
+    }
+
+    // Enemy mod activation
+    const eMod = enemy.loadout?.mod;
+    if (eMod && eMod !== 'none' && !enemy.isModActive) {
+        const modDef   = WEAPONS[eMod];
+        const cooldown = (modDef?.cooldown || 8000) * 1.5;
+        const lastMT   = enemy.lastModTime ?? -99999;
+        if (time > lastMT + cooldown) {
+            activateEnemyMod(scene, enemy, eMod, time);
+        }
+    }
+}
+
+
+
+function _syncEnemyVisuals(scene, enemy, time) {
+    // Always sync visual container to physics body
+    enemy.visuals.setPosition(enemy.x, enemy.y);
+
+    // Torso rotation: in combat/chase → aim at player. In patrol/search → follow body direction.
+    if (enemy.torso && player && !enemy.isStunned) {
+        enemy.torso.setPosition(enemy.x, enemy.y);
+        const _state = enemy._aiState || 'patrol';
+        if (_state === 'combat' || _state === 'chase') {
+            // Lock onto player
+            const aimAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+            enemy.torso.rotation = Phaser.Math.Angle.RotateTo(enemy.torso.rotation, aimAngle, 0.1);
+        } else {
+            // Follow legs direction — torso matches body facing
+            const bodyAngle = enemy.visuals?.rotation ?? enemy.torso.rotation;
+            enemy.torso.rotation = Phaser.Math.Angle.RotateTo(enemy.torso.rotation, bodyAngle, 0.06);
+        }
+    } else if (enemy.torso) {
+        enemy.torso.setPosition(enemy.x, enemy.y);
+    }
+    // Sync shield ring to enemy position
+    if (enemy.shieldRing?.active) enemy.shieldRing.setPosition(enemy.x, enemy.y);
+    // Sync commander/medic labels
+    if (enemy.cmdLabel?.active)   enemy.cmdLabel.setPosition(enemy.x, enemy.y - 70);
+    if (enemy.medicLabel?.active) enemy.medicLabel.setPosition(enemy.x, enemy.y - 52);
+    if (enemy.medicCross?.active) enemy.medicCross.setPosition(enemy.x, enemy.y - 64);
+    // Commander buff aura — boost nearby standard enemies
+    if (enemy.isCommander && player) {
+        enemies.getChildren().forEach(other => {
+            if (other === enemy || !other.active) return;
+            const d = Phaser.Math.Distance.Between(enemy.x, enemy.y, other.x, other.y);
+            if (d < 300) {
+                const base = CHASSIS[other.loadout?.chassis]?.spd || 250;
+                other.speed = base * 1.2;
+            } else {
+                const base = CHASSIS[other.loadout?.chassis]?.spd || 250;
+                if (other.speed > base) other.speed = base;
+            }    // Chassis movement FX
+    syncEnemyChassisEffect(scene, time, enemy);
+}
+
+nction _applyEnemyObstacleAvoidance(enemy, angle, speed, time, vx, vy) {
+    // ── OBSTACLE AVOIDANCE STEERING ──────────────────────
+    // ── OBSTACLE AVOIDANCE STEERING ──────────────────────
+    // Cast feeler rays ahead of travel direction; steer away from nearby cover
+    if ((vx !== 0 || vy !== 0) && coverObjects) {
+        const _travelAngle = Math.atan2(vy, vx);
+        const _feelerDist  = 90;   // how far ahead to sense
+        const _avoidRadius = 70;   // cover objects within this dist trigger avoidance
+        let _avoidX = 0, _avoidY = 0;
+
+        // Three feelers: straight, left-20°, right-20° (module-level constant — no per-frame allocation)
+        for (const _fOffset of _FEELER_OFFSETS) {
+            const _fa  = _travelAngle + _fOffset;
+            const _ftx = enemy.x + Math.cos(_fa) * _feelerDist;
+            const _fty = enemy.y + Math.sin(_fa) * _feelerDist;
+
+            coverObjects.getChildren().forEach(c => {
+                if (!c.active) return;
+                // Use stored center coords (coverCX/CY) for correct distance checks
+                const _cCX = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
+                const _cCY = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
+                const _cdist = Phaser.Math.Distance.Between(_ftx, _fty, _cCX, _cCY);
+                if (_cdist < _avoidRadius + (c.width || 60) * 0.5) {
+                    const _pushAngle = Phaser.Math.Angle.Between(_cCX, _cCY, enemy.x, enemy.y);
+                    const _pushStr   = (_avoidRadius - Math.max(0, _cdist - (c.width||60)*0.5)) / _avoidRadius;
+                    _avoidX += Math.cos(_pushAngle) * _pushStr * speed * 1.2;
+                    _avoidY += Math.sin(_pushAngle) * _pushStr * speed * 1.2;
                 }
             });
         }
 
-        // Chassis movement FX
-        syncEnemyChassisEffect(scene, time, enemy);
-    });
+        // Blend avoidance into desired velocity
+        if (_avoidX !== 0 || _avoidY !== 0) {
+            vx += _avoidX * 0.6;
+            vy += _avoidY * 0.6;
+            // Re-normalise to original speed so avoidance doesn't slow/accelerate
+            const _newSpd = Math.sqrt(vx*vx + vy*vy);
+            if (_newSpd > 0) {
+                const _origSpd = Math.sqrt((vx-_avoidX*0.6)**2 + (vy-_avoidY*0.6)**2) || speed;
+                vx = (vx / _newSpd) * _origSpd;
+                vy = (vy / _newSpd) * _origSpd;
+            }
+        }
+    }
+
+    // Wall-stuck detection: if enemy has barely moved but has velocity, nudge them
+    const _curSpd = Math.sqrt(vx*vx + vy*vy);
+    if (_curSpd > 20) {
+        const _movedSince = enemy._lastPos ? Phaser.Math.Distance.Between(enemy.x, enemy.y, enemy._lastPos.x, enemy._lastPos.y) : 999;
+        if (!enemy._stuckCheckTime) enemy._stuckCheckTime = time;
+        if (time - enemy._stuckCheckTime > 800) {
+            if (_movedSince < 15) {
+                // Stuck against wall — pick a new random patrol target and add a perpendicular nudge
+                enemy._patrolTarget = { x: Phaser.Math.Between(300, 3700), y: Phaser.Math.Between(300, 3700) };
+                if (enemy._aiState === 'combat' || enemy._aiState === 'chase') enemy._aiState = 'patrol';
+                vx += (Math.random() - 0.5) * speed * 2;
+                vy += (Math.random() - 0.5) * speed * 2;
+            }
+            enemy._stuckCheckTime = time;
+            // Mutate in-place to avoid per-frame heap allocation
+            if (!enemy._lastPos) enemy._lastPos = { x: enemy.x, y: enemy.y };
+            else { enemy._lastPos.x = enemy.x; enemy._lastPos.y = enemy.y; }
+        }
+
+    // Tank locomotion: rotate legs toward travel direction, drive forward/back only
+    const desiredAngle = (vx !== 0 || vy !== 0)
+        ? Math.atan2(vy, vx)
+        : enemy.visuals.rotation;
+    const _turnRate = (enemy._aiState === 'patrol' || enemy._aiState === 'search') ? 0.14 : 0.08;
+    enemy.visuals.rotation = Phaser.Math.Angle.RotateTo(
+        enemy.visuals.rotation, desiredAngle, _turnRate);
+    const _angleMismatch = Math.abs(Phaser.Math.Angle.Wrap(desiredAngle - enemy.visuals.rotation));
+    const _turnBrake = _angleMismatch > 1.2 ? 0.25 : _angleMismatch > 0.6 ? 0.55 : 1.0;
+    const spd = Math.sqrt(vx*vx + vy*vy) * _turnBrake;
+    enemy.body.setVelocity(
+        Math.cos(enemy.visuals.rotation) * spd,
+        Math.sin(enemy.visuals.rotation) * spd
+    );
+    enemy.body.setImmovable(false);
 }
 
 /** WASD movement and SPACE mod activation. */
@@ -4139,91 +4173,94 @@ function syncEnemyChassisEffect(scene, time, enemy) {
     const chassis = enemy.loadout.chassis;
     const vx = enemy.body?.velocity?.x || 0;
     const vy = enemy.body?.velocity?.y || 0;
-    const speed   = Math.sqrt(vx*vx + vy*vy);
-    const moving  = speed > 10;
-    const rot     = enemy.visuals.rotation;
-    const ex      = enemy.x;
-    const ey      = enemy.y;
-    const scale   = CHASSIS[chassis].scale;
+    const speed  = Math.sqrt(vx*vx + vy*vy);
+    const moving = speed > 10;
+    const rot    = enemy.visuals.rotation;
+    const scale  = CHASSIS[chassis].scale;
 
-    if (chassis === 'light') {
-        // Ghost trail
-        if (moving) {
-            const dist = Phaser.Math.Distance.Between(ex, ey, enemy.fxLastX, enemy.fxLastY);
-            if (dist >= 12) {
-                enemy.fxLastX = ex; enemy.fxLastY = ey;
-                const colors = ENEMY_COLORS[chassis];
-                const ghost  = buildEnemyTorso(scene, chassis, colors);
-                ghost.setPosition(ex, ey).setRotation(rot).setScale(scale);
-                ghost.setAlpha(0.3).setDepth(8);
-                scene.tweens.add({ targets: ghost, alpha: 0, duration: 220, onComplete: () => ghost.destroy() });
-            }
-        }
-        // Footprints
-        if (moving && time >= enemy.fxFootTimer) {
-            const interval = Math.max(90, 260 - speed * 0.5);
-            enemy.fxFootTimer = time + interval;
-            const perp = rot + Math.PI / 2;
-            const rear = rot + Math.PI;
-            const rx = ex + Math.cos(rear) * 12 * scale;
-            const ry = ey + Math.sin(rear) * 12 * scale;
-            spawnFootprint(scene,
-                rx + Math.cos(perp) * 8 * scale * enemy.fxFootSide,
-                ry + Math.sin(perp) * 8 * scale * enemy.fxFootSide,
-                rot, 12 * scale, 6 * scale, 1200, 0xcc2200);
-            enemy.fxFootSide *= -1;
+    if      (chassis === 'light')  _syncEnemyLightFX(scene, time, enemy, scale, rot, enemy.x, enemy.y, speed, moving);
+    else if (chassis === 'medium') _syncEnemyMediumFX(scene, time, enemy, scale, rot, enemy.x, enemy.y, speed, moving);
+    else if (chassis === 'heavy')  _syncEnemyHeavyFX(scene, time, enemy, scale, rot, enemy.x, enemy.y, speed, moving);
+}
+
+// ── syncEnemyChassisEffect sub-functions ────────────────────────────────
+
+/** Light enemy: ghost trail every 12px of movement + alternating quick footprints. */
+function _syncEnemyLightFX(scene, time, enemy, scale, rot, ex, ey, speed, moving) {
+    if (moving) {
+        const dist = Phaser.Math.Distance.Between(ex, ey, enemy.fxLastX, enemy.fxLastY);
+        if (dist >= 12) {
+            enemy.fxLastX = ex; enemy.fxLastY = ey;
+            const colors = ENEMY_COLORS['light'];
+            const ghost  = buildEnemyTorso(scene, 'light', colors);
+            ghost.setPosition(ex, ey).setRotation(rot).setScale(scale);
+            ghost.setAlpha(0.3).setDepth(8);
+            scene.tweens.add({ targets: ghost, alpha: 0, duration: 220, onComplete: () => ghost.destroy() });
         }
     }
-    else if (chassis === 'medium') {
-        // Motion blur
-        if (moving) {
-            const dist = Phaser.Math.Distance.Between(ex, ey, enemy.fxLastMX, enemy.fxLastMY);
-            if (dist >= 16) {
-                enemy.fxLastMX = ex; enemy.fxLastMY = ey;
-                const colors = ENEMY_COLORS[chassis];
-                const ghost  = buildEnemyTorso(scene, chassis, colors);
-                ghost.setPosition(ex, ey).setRotation(rot).setScale(scale);
-                ghost.setAlpha(0.22).setDepth(8);
-                scene.tweens.add({ targets: ghost, alpha: 0, duration: 180, onComplete: () => ghost.destroy() });
-            }
-        }
-        // Footprints
-        if (moving && time >= enemy.fxFootTimer) {
-            const interval = Math.max(140, 340 - speed * 0.6);
-            enemy.fxFootTimer = time + interval;
-            const perp = rot + Math.PI / 2;
-            const rear = rot + Math.PI;
-            const rx = ex + Math.cos(rear) * 16 * scale;
-            const ry = ey + Math.sin(rear) * 16 * scale;
-            spawnFootprint(scene,
-                rx + Math.cos(perp) * 12 * scale * enemy.fxFootSide,
-                ry + Math.sin(perp) * 12 * scale * enemy.fxFootSide,
-                rot, 16 * scale, 8 * scale, 1800, 0xcc2200);
-            enemy.fxFootSide *= -1;
+    if (moving && time >= enemy.fxFootTimer) {
+        const interval = Math.max(90, 260 - speed * 0.5);
+        enemy.fxFootTimer = time + interval;
+        const perp = rot + Math.PI / 2;
+        const rear = rot + Math.PI;
+        const rx = ex + Math.cos(rear) * 12 * scale;
+        const ry = ey + Math.sin(rear) * 12 * scale;
+        spawnFootprint(scene,
+            rx + Math.cos(perp) * 8 * scale * enemy.fxFootSide,
+            ry + Math.sin(perp) * 8 * scale * enemy.fxFootSide,
+            rot, 12 * scale, 6 * scale, 1200, 0xcc2200);
+        enemy.fxFootSide *= -1;
+    }
+}
+
+/** Medium enemy: motion-blur ghost every 16px of movement + alternating footprints. */
+function _syncEnemyMediumFX(scene, time, enemy, scale, rot, ex, ey, speed, moving) {
+    if (moving) {
+        const dist = Phaser.Math.Distance.Between(ex, ey, enemy.fxLastMX, enemy.fxLastMY);
+        if (dist >= 16) {
+            enemy.fxLastMX = ex; enemy.fxLastMY = ey;
+            const colors = ENEMY_COLORS['medium'];
+            const ghost  = buildEnemyTorso(scene, 'medium', colors);
+            ghost.setPosition(ex, ey).setRotation(rot).setScale(scale);
+            ghost.setAlpha(0.22).setDepth(8);
+            scene.tweens.add({ targets: ghost, alpha: 0, duration: 180, onComplete: () => ghost.destroy() });
         }
     }
-    else if (chassis === 'heavy') {
-        if (moving && time >= enemy.fxShockTimer) {
-            const interval = Math.max(320, 700 - speed * 1.2);
-            enemy.fxShockTimer = time + interval;
-            const perp = rot + Math.PI / 2;
-            const rear = rot + Math.PI;
-            const rx = ex + Math.cos(rear) * 24 * scale;
-            const ry = ey + Math.sin(rear) * 24 * scale;
-            [-1, 1].forEach(side => {
-                spawnFootprint(scene,
-                    rx + Math.cos(perp) * 20 * scale * side,
-                    ry + Math.sin(perp) * 20 * scale * side,
-                    rot, 22 * scale, 11 * scale, 2500, 0xcc2200);
-            });
-            // Shockwave ring (uses enemy head color)
-            const col = ENEMY_COLORS[chassis].head;
-            const ring = scene.add.circle(ex, ey, 10, col, 0)
-                .setStrokeStyle(3, col, 0.9).setDepth(3);
-            scene.tweens.add({ targets: ring, radius: 70 * scale, alpha: 0, duration: 500,
-                ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
-        }
+    if (moving && time >= enemy.fxFootTimer) {
+        const interval = Math.max(140, 340 - speed * 0.6);
+        enemy.fxFootTimer = time + interval;
+        const perp = rot + Math.PI / 2;
+        const rear = rot + Math.PI;
+        const rx = ex + Math.cos(rear) * 16 * scale;
+        const ry = ey + Math.sin(rear) * 16 * scale;
+        spawnFootprint(scene,
+            rx + Math.cos(perp) * 12 * scale * enemy.fxFootSide,
+            ry + Math.sin(perp) * 12 * scale * enemy.fxFootSide,
+            rot, 16 * scale, 8 * scale, 1800, 0xcc2200);
+        enemy.fxFootSide *= -1;
     }
+}
+
+/** Heavy enemy: wide dual footprints + expanding shockwave ring on each step. */
+function _syncEnemyHeavyFX(scene, time, enemy, scale, rot, ex, ey, speed, moving) {
+    if (!moving || time < enemy.fxShockTimer) return;
+    const interval = Math.max(320, 700 - speed * 1.2);
+    enemy.fxShockTimer = time + interval;
+    const perp = rot + Math.PI / 2;
+    const rear = rot + Math.PI;
+    const rx = ex + Math.cos(rear) * 24 * scale;
+    const ry = ey + Math.sin(rear) * 24 * scale;
+    [-1, 1].forEach(side => {
+        spawnFootprint(scene,
+            rx + Math.cos(perp) * 20 * scale * side,
+            ry + Math.sin(perp) * 20 * scale * side,
+            rot, 22 * scale, 11 * scale, 2500, 0xcc2200);
+    });
+    const col = ENEMY_COLORS['heavy'].head;
+    const ring = scene.add.circle(ex, ey, 10, col, 0)
+        .setStrokeStyle(3, col, 0.9).setDepth(3);
+    scene.tweens.add({ targets: ring, radius: 70 * scale, alpha: 0, duration: 500,
+        ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
 }
 
 /**
@@ -4874,25 +4911,7 @@ function startRound(roundNum) {
     if (roundNum > 1) _clearMapForRound(scene);
 
     // ── Phase 6: Arena & Objective selection ──
-    if (typeof selectArena === 'function') {
-        // Campaign mode: use mission's arena and objective
-        const arenaKey = campaignMission ? campaignMission.arena : selectArena(roundNum);
-        const objKey   = campaignMission ? campaignMission.objective : selectObjective(roundNum, arenaKey);
-        _arenaState.currentArena = arenaKey;
-        _arenaState.currentObjective = objKey;
-        // Cleanup previous objective state
-        if (typeof cleanupObjective === 'function') cleanupObjective(scene);
-        // Regenerate cover for new arena layout (only on round 2+)
-        if (roundNum > 1) generateCover(scene, arenaKey);
-        // Init pit zone if pit arena
-        if (arenaKey === 'pit' && typeof _initPitZone === 'function') _initPitZone(scene);
-        // Init objective
-        if (typeof initObjective === 'function') initObjective(scene, roundNum, objKey);
-        // Show arena + objective banner
-        const aLabel = typeof getArenaLabel === 'function' ? getArenaLabel() : '';
-        const oLabel = typeof getObjectiveLabel === 'function' ? getObjectiveLabel() : '';
-        if (typeof _showArenaLabel === 'function') _showArenaLabel(scene, aLabel, oLabel);
-    }
+    _setupArenaAndObjective(scene, roundNum, campaignMission);
 
     // Boss every 5th round (simulation), or hasBoss flag (campaign)
     const isBossRound = campaignMission ? campaignMission.hasBoss : (roundNum > 0 && roundNum % 5 === 0);
@@ -4902,131 +4921,154 @@ function startRound(roundNum) {
         _roundTotal = 1;
         setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, roundNum); }, 800);
     } else if (campaignMission && campaignEnemy) {
-        // ── CAMPAIGN MODE: use variable enemy composition ──
-        const comp = campaignEnemy.composition;
-        let spawnIdx = 0;
-        let elitesApplied = 0;
-
-        for (let i = 0; i < comp.length; i++) {
-            const typeKey = comp[i];
-            const delay = spawnIdx * 400;
-            setTimeout(() => {
-                if (!isDeployed || !_roundActive) return;
-                let spawned;
-                if (typeKey === 'normal') {
-                    spawned = spawnEnemy(scene);
-                } else if (typeof spawnSpecialEnemy === 'function') {
-                    spawned = spawnSpecialEnemy(scene, typeKey);
-                } else {
-                    spawned = spawnEnemy(scene);
-                }
-                // Apply elite modifier based on campaign config
-                if (spawned && elitesApplied < campaignEnemy.maxElites && Math.random() < campaignEnemy.eliteChance) {
-                    const mod1 = (typeof _rollEliteModifier === 'function') ? _rollEliteModifier([]) : null;
-                    if (mod1) {
-                        applyEliteModifier(scene, spawned, mod1);
-                        elitesApplied++;
-                    }
-                }
-            }, delay);
-            spawnIdx++;
-        }
-
-        // Boss fight at end of boss missions (after normal enemies)
-        if (campaignMission.hasBoss) {
-            setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, campaignEnemy.enemyLevel); }, spawnIdx * 400 + 600);
-        }
-
-        // Commander in higher-level campaign missions (add to total)
-        if (campaignEnemy.enemyLevel >= 6) {
-            _roundTotal++;
-            updateRoundHUD();
-            setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 800);
-        }
+        _spawnCampaignEnemies(scene, campaignMission, campaignEnemy);
     } else {
-        // ── SIMULATION MODE: original round-based spawning ──
-        // Normal round — commanders from round 4+, medic from round 3+
-        // Phase 4: special enemy types and elite modifiers
-        const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
-        const spawnCfg = (typeof _getEnemySpawnConfig === 'function') ? _getEnemySpawnConfig(roundNum) : { specialTypes:[], eliteChance:0, maxElites:0 };
-
-        // Determine how many specials to spawn (replace some normal enemies)
-        let specialCount = 0;
-        if (spawnCfg.specialTypes.length > 0 && roundNum > 5) {
-            // 1 special per 4 normal enemies, minimum 1 if types are available
-            specialCount = Math.min(Math.floor(_roundTotal / 4) + 1, spawnCfg.specialTypes.length, Math.floor(_roundTotal * 0.4));
-            specialCount = Math.max(1, specialCount);
-        }
-
-        const normalCount = Math.max(1, (spawnCmd ? _roundTotal - 1 : _roundTotal) - specialCount);
-        let spawnIdx = 0;
-
-        // Spawn normal enemies
-        for (let i = 0; i < normalCount; i++) {
-            const delay = spawnIdx * 400;
-            setTimeout(() => { if (isDeployed && _roundActive) spawnEnemy(scene); }, delay);
-            spawnIdx++;
-        }
-
-        // Spawn special enemy types
-        let elitesApplied = 0;
-        for (let i = 0; i < specialCount; i++) {
-            const typeKey = Phaser.Math.RND.pick(spawnCfg.specialTypes);
-            const delay = spawnIdx * 400;
-            setTimeout(() => {
-                if (!isDeployed || !_roundActive) return;
-                const se = spawnSpecialEnemy(scene, typeKey);
-                // Possibly apply elite modifier
-                if (se && elitesApplied < spawnCfg.maxElites && Math.random() < spawnCfg.eliteChance) {
-                    const mod1 = _rollEliteModifier([]);
-                    if (mod1) {
-                        applyEliteModifier(scene, se, mod1);
-                        elitesApplied++;
-                        // Double modifier chance (round 20+)
-                        if ((spawnCfg.doubleModChance || 0) > 0 && Math.random() < spawnCfg.doubleModChance) {
-                            const mod2 = _rollEliteModifier([mod1]);
-                            if (mod2) applyEliteModifier(scene, se, mod2);
-                        }
-                    }
-                }
-            }, delay);
-            spawnIdx++;
-        }
-
-        // Also apply elite modifiers to some normal enemies (round 11+)
-        if (roundNum >= 11 && spawnCfg.maxElites > 0) {
-            // Pick random normal enemies to make elite after they spawn
-            const normalEliteCount = Math.min(spawnCfg.maxElites - specialCount, Math.floor(normalCount * 0.3));
-            if (normalEliteCount > 0) {
-                setTimeout(() => {
-                    if (!isDeployed || !_roundActive || !enemies) return;
-                    const normals = enemies.getChildren().filter(en =>
-                        en.active && !en.isElite && !en.isCommander && !en.isMedic && !en.isBoss && !en.enemyType
-                    );
-                    const toElite = Phaser.Utils.Array.Shuffle(normals).slice(0, normalEliteCount);
-                    toElite.forEach(en => {
-                        if (elitesApplied >= spawnCfg.maxElites) return;
-                        const mod1 = _rollEliteModifier([]);
-                        if (mod1) {
-                            applyEliteModifier(scene, en, mod1);
-                            elitesApplied++;
-                        }
-                    });
-                }, spawnIdx * 400 + 200);
-            }
-        }
-
-        if (spawnCmd) {
-            setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 600);
-        }
-        if (roundNum >= 3 && Math.random() < 0.40) {
-            _roundTotal++; // medic counts toward the kill total
-            setTimeout(() => { if (isDeployed && _roundActive) spawnMedic(scene); }, spawnIdx * 400 + 1000);
-        }
+        _spawnSimulationEnemies(scene, roundNum);
     }
+
     // Autonomous Unit: auto-deploy drone at round start (after short delay)
     if (_perkState.autonomousUnit && loadout.mod === 'atk_drone' && !_perkState._autoDroneActive) {
         setTimeout(() => { if (isDeployed && _roundActive) activateAutoDrone(scene); }, 600);
+    }
+}
+
+// ── startRound sub-functions ───────────────────────────────────────────────────────────────────────
+
+function _setupArenaAndObjective(scene, roundNum, campaignMission) {
+    if (typeof selectArena !== 'function') return;
+    const arenaKey = campaignMission ? campaignMission.arena : selectArena(roundNum);
+    const objKey   = campaignMission ? campaignMission.objective : selectObjective(roundNum, arenaKey);
+    _arenaState.currentArena = arenaKey;
+    _arenaState.currentObjective = objKey;
+    if (typeof cleanupObjective === 'function') cleanupObjective(scene);
+    if (roundNum > 1) generateCover(scene, arenaKey);
+    if (arenaKey === 'pit' && typeof _initPitZone === 'function') _initPitZone(scene);
+    if (typeof initObjective === 'function') initObjective(scene, roundNum, objKey);
+    const aLabel = typeof getArenaLabel === 'function' ? getArenaLabel() : '';
+    const oLabel = typeof getObjectiveLabel === 'function' ? getObjectiveLabel() : '';
+    if (typeof _showArenaLabel === 'function') _showArenaLabel(scene, aLabel, oLabel);
+}
+
+function _spawnCampaignEnemies(scene, campaignMission, campaignEnemy) {
+    const comp = campaignEnemy.composition;
+    let spawnIdx = 0;
+    let elitesApplied = 0;
+
+    for (let i = 0; i < comp.length; i++) {
+        const typeKey = comp[i];
+        const delay = spawnIdx * 400;
+        setTimeout(() => {
+            if (!isDeployed || !_roundActive) return;
+            let spawned;
+            if (typeKey === 'normal') {
+                spawned = spawnEnemy(scene);
+            } else if (typeof spawnSpecialEnemy === 'function') {
+                spawned = spawnSpecialEnemy(scene, typeKey);
+            } else {
+                spawned = spawnEnemy(scene);
+            }
+            // Apply elite modifier based on campaign config
+            if (spawned && elitesApplied < campaignEnemy.maxElites && Math.random() < campaignEnemy.eliteChance) {
+                const mod1 = (typeof _rollEliteModifier === 'function') ? _rollEliteModifier([]) : null;
+                if (mod1) {
+                    applyEliteModifier(scene, spawned, mod1);
+                    elitesApplied++;
+                }
+            }
+        }, delay);
+        spawnIdx++;
+    }
+
+    // Boss fight at end of boss missions (after normal enemies)
+    if (campaignMission.hasBoss) {
+        setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, campaignEnemy.enemyLevel); }, spawnIdx * 400 + 600);
+    }
+
+    // Commander in higher-level campaign missions (add to total)
+    if (campaignEnemy.enemyLevel >= 6) {
+        _roundTotal++;
+        updateRoundHUD();
+        setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 800);
+    }
+}
+
+function _spawnSimulationEnemies(scene, roundNum) {
+    // Normal round — commanders from round 4+, medic from round 3+
+    const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
+    const spawnCfg = (typeof _getEnemySpawnConfig === 'function') ? _getEnemySpawnConfig(roundNum) : { specialTypes:[], eliteChance:0, maxElites:0 };
+
+    // Determine how many specials to spawn (replace some normal enemies)
+    let specialCount = 0;
+    if (spawnCfg.specialTypes.length > 0 && roundNum > 5) {
+        // 1 special per 4 normal enemies, minimum 1 if types are available
+        specialCount = Math.min(Math.floor(_roundTotal / 4) + 1, spawnCfg.specialTypes.length, Math.floor(_roundTotal * 0.4));
+        specialCount = Math.max(1, specialCount);
+    }
+
+    const normalCount = Math.max(1, (spawnCmd ? _roundTotal - 1 : _roundTotal) - specialCount);
+    let spawnIdx = 0;
+
+    // Spawn normal enemies
+    for (let i = 0; i < normalCount; i++) {
+        const delay = spawnIdx * 400;
+        setTimeout(() => { if (isDeployed && _roundActive) spawnEnemy(scene); }, delay);
+        spawnIdx++;
+    }
+
+    // Spawn special enemy types
+    let elitesApplied = 0;
+    for (let i = 0; i < specialCount; i++) {
+        const typeKey = Phaser.Math.RND.pick(spawnCfg.specialTypes);
+        const delay = spawnIdx * 400;
+        setTimeout(() => {
+            if (!isDeployed || !_roundActive) return;
+            const se = spawnSpecialEnemy(scene, typeKey);
+            // Possibly apply elite modifier
+            if (se && elitesApplied < spawnCfg.maxElites && Math.random() < spawnCfg.eliteChance) {
+                const mod1 = _rollEliteModifier([]);
+                if (mod1) {
+                    applyEliteModifier(scene, se, mod1);
+                    elitesApplied++;
+                    // Double modifier chance (round 20+)
+                    if ((spawnCfg.doubleModChance || 0) > 0 && Math.random() < spawnCfg.doubleModChance) {
+                        const mod2 = _rollEliteModifier([mod1]);
+                        if (mod2) applyEliteModifier(scene, se, mod2);
+                    }
+                }
+            }
+        }, delay);
+        spawnIdx++;
+    }
+
+    // Also apply elite modifiers to some normal enemies (round 11+)
+    if (roundNum >= 11 && spawnCfg.maxElites > 0) {
+        // Pick random normal enemies to make elite after they spawn
+        const normalEliteCount = Math.min(spawnCfg.maxElites - specialCount, Math.floor(normalCount * 0.3));
+        if (normalEliteCount > 0) {
+            setTimeout(() => {
+                if (!isDeployed || !_roundActive || !enemies) return;
+                const normals = enemies.getChildren().filter(en =>
+                    en.active && !en.isElite && !en.isCommander && !en.isMedic && !en.isBoss && !en.enemyType
+                );
+                const toElite = Phaser.Utils.Array.Shuffle(normals).slice(0, normalEliteCount);
+                toElite.forEach(en => {
+                    if (elitesApplied >= spawnCfg.maxElites) return;
+                    const mod1 = _rollEliteModifier([]);
+                    if (mod1) {
+                        applyEliteModifier(scene, en, mod1);
+                        elitesApplied++;
+                    }
+                });
+            }, spawnIdx * 400 + 200);
+        }
+    }
+
+    if (spawnCmd) {
+        setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 600);
+    }
+    if (roundNum >= 3 && Math.random() < 0.40) {
+        _roundTotal++; // medic counts toward the kill total
+        setTimeout(() => { if (isDeployed && _roundActive) spawnMedic(scene); }, spawnIdx * 400 + 1000);
     }
 }
 
@@ -6119,83 +6161,10 @@ function deployMech() {
     scene.cameras.main.startFollow(player, true, 0.5, 0.5);
 
     // Enemy bullet overlap — stored so it can be destroyed on cleanup
-    _playerBulletOverlap = scene.physics.add.overlap(enemyBullets, player, (p, bullet) => {
-        if (!bullet || !bullet.active) return;
-        if (!isDeployed || !player?.active) { if (bullet?.active) bullet.destroy(); return; }
+    _registerEnemyBulletOverlap(scene);
 
-        const bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
-
-        if (isShieldActive) {
-            sndShieldBlock();
-            createShieldSparks(scene, bullet.x, bullet.y);
-            showDamageText(scene, bullet.x, bullet.y, 0, true);
-            bullet.destroy();
-            return;
-        }
-
-        if (player.shield > 0 && player.shield - 7.5 <= 0) {
-            createShieldBreak(scene, p.x, p.y);
-        }
-
-        createImpactSparks(scene, p.x, p.y);
-        const _hitDmg = bullet.damageValue || 15;
-        showDamageText(scene, p.x, p.y, _hitDmg, player.shield > 0);
-        // Vampiric elite: heal shooter on hit
-        if (bullet._shooter && typeof handleVampiricHeal === 'function') {
-            handleVampiricHeal(bullet._shooter, _hitDmg);
-        }
-        bullet.destroy();
-        processPlayerDamage(_hitDmg, bulletAngle);
-    });
-
-    // Component HP — initialize first, then immediately reset doll so it always shows green
-    // Apply gear HP bonuses from equipped items.
-    // recalcGearStats() lives in loot-system.js and reads _equipped (not loadout).
-    // Key distinction: _equipped.shield  (loot gear slot)
-    //                  loadout.shld      (loadout shield selection)
-    recalcGearStats();
-    const _gCoreHP = (_gearState?.coreHP || 0) + (_gearState?.allHP || 0);
-    const _gArmHP  = (_gearState?.armHP  || 0) + (_gearState?.allHP || 0);
-    const _gLegHP  = (_gearState?.legHP  || 0) + (_gearState?.allHP || 0);
-    player.comp = {
-        core: { hp: s.coreHP + _gCoreHP, max: s.coreHP + _gCoreHP },
-        lArm: { hp: s.armHP  + _gArmHP,  max: s.armHP  + _gArmHP  },
-        rArm: { hp: s.armHP  + _gArmHP,  max: s.armHP  + _gArmHP  },
-        legs: { hp: s.legHP  + _gLegHP,  max: s.legHP  + _gLegHP  }
-    };
-    // Force doll to green now — updatePaperDoll() won't run until isDeployed=true
-    // (set inside the drop-in tween), so we reset directly here to avoid showing
-    // stale damage colors from the previous session during the drop animation.
-    _resetHUDState();
-    player.maxHp     = getTotalHP(loadout.chassis);
-    player.hp        = player.maxHp;
-    // Shield comes from equipped shield system — 0 if none
-    const _shldSys = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
-    const _gShieldHP = (_gearState?.shieldHP || 0);
-    player.maxShield = _shldSys.maxShield + _gShieldHP;
-    player.shield    = _shldSys.maxShield + _gShieldHP;
-    player._shieldRegenRate  = _shldSys.regenRate;
-    player._shieldRegenDelay = _shldSys.regenDelay;
-    // Absorb from shield definition; medium chassis gets +10% absorb bonus on top.
-    // _gearState.absorbPct (from absorb_matrix base stat or shield affixes) stacks additively.
-    const _shldAbsorbBase = _shldSys.absorb ?? 0.50;
-    const _chassisBonus   = loadout.chassis === 'medium' ? 0.10 : 0;
-    const _gearAbsorb     = ((_gearState?.absorbPct || 0) / 100);
-    player._shieldAbsorb  = Math.min(0.90, _shldAbsorbBase + _chassisBonus + _gearAbsorb);
-    // Per-shield state
-    player._shieldFlickerHit  = false;  // flicker_shield: tracks odd/even hits
-    player._shieldAdaptStack  = 0;      // adaptive_shield: consecutive hit count
-    player._shieldCounterChg  = 0;      // counter_shield: stored charge
-    player._shieldRetribChg   = 0;      // retribution: stored charge
-    player._shieldLayerHP     = [       // layered_shield: [layer1, layer2]
-        _shldSys.layer1Max || 0, _shldSys.layer2Max || 0
-    ];
-    // Titan shield: add core HP bonus
-    if (loadout.shld === 'titan_shield' && _shldSys.coreBonus) {
-        player.maxHp  += _shldSys.coreBonus;
-        player.hp     += _shldSys.coreBonus;
-        if (player.comp?.core) { player.comp.core.max += _shldSys.coreBonus; player.comp.core.hp += _shldSys.coreBonus; }
-    }
+    // Component HP + shield — initialize from chassis stats and gear bonuses
+    _initPlayerHP(scene, s);
 
     refreshMechColor();
     scene.time.delayedCall(10, () => refreshMechColor()); // One-frame safety flush
@@ -6240,12 +6209,92 @@ function deployMech() {
     _savedLeg = loadout.leg;
 
     // ── DROP-IN SEQUENCE ──────────────────────────────────────────
-    // Mech starts large (close to camera / high altitude) then shrinks
-    // as it falls, landing with a shockwave. Controls locked until landed.
     const normalScale = CHASSIS[loadout.chassis].scale;
+    _execDropInTween(scene, normalScale);
+}
 
-    // Drop-in: start mech at spawn position, scale down from large to signal
-    // a drop from altitude. Moving the physics body up causes camera lag.
+
+// ── deployMech sub-functions ─────────────────────────────────────────────────────────────────────
+function _registerEnemyBulletOverlap(scene) {
+    _playerBulletOverlap = scene.physics.add.overlap(enemyBullets, player, (p, bullet) => {
+        if (!bullet || !bullet.active) return;
+        if (!isDeployed || !player?.active) { if (bullet?.active) bullet.destroy(); return; }
+
+        const bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
+
+        if (isShieldActive) {
+            sndShieldBlock();
+            createShieldSparks(scene, bullet.x, bullet.y);
+            showDamageText(scene, bullet.x, bullet.y, 0, true);
+            bullet.destroy();
+            return;
+        }
+
+        if (player.shield > 0 && player.shield - 7.5 <= 0) {
+            createShieldBreak(scene, p.x, p.y);
+        }
+
+        createImpactSparks(scene, p.x, p.y);
+        const _hitDmg = bullet.damageValue || 15;
+        showDamageText(scene, p.x, p.y, _hitDmg, player.shield > 0);
+        // Vampiric elite: heal shooter on hit
+        if (bullet._shooter && typeof handleVampiricHeal === 'function') {
+            handleVampiricHeal(bullet._shooter, _hitDmg);
+        }
+        bullet.destroy();
+        processPlayerDamage(_hitDmg, bulletAngle);
+    });
+}
+
+function _initPlayerHP(scene, s) {
+    // Apply gear HP bonuses from equipped items.
+    // recalcGearStats() lives in loot-system.js and reads _equipped (not loadout).
+    // Key distinction: _equipped.shield  (loot gear slot)
+    //                  loadout.shld      (loadout shield selection)
+    recalcGearStats();
+    const _gCoreHP = (_gearState?.coreHP || 0) + (_gearState?.allHP || 0);
+    const _gArmHP  = (_gearState?.armHP  || 0) + (_gearState?.allHP || 0);
+    const _gLegHP  = (_gearState?.legHP  || 0) + (_gearState?.allHP || 0);
+    player.comp = {
+        core: { hp: s.coreHP + _gCoreHP, max: s.coreHP + _gCoreHP },
+        lArm: { hp: s.armHP  + _gArmHP,  max: s.armHP  + _gArmHP  },
+        rArm: { hp: s.armHP  + _gArmHP,  max: s.armHP  + _gArmHP  },
+        legs: { hp: s.legHP  + _gLegHP,  max: s.legHP  + _gLegHP  }
+    };
+    // Force doll to green now — updatePaperDoll() won't run until isDeployed=true
+    _resetHUDState();
+    player.maxHp     = getTotalHP(loadout.chassis);
+    player.hp        = player.maxHp;
+    // Shield comes from equipped shield system — 0 if none
+    const _shldSys = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
+    const _gShieldHP = (_gearState?.shieldHP || 0);
+    player.maxShield = _shldSys.maxShield + _gShieldHP;
+    player.shield    = _shldSys.maxShield + _gShieldHP;
+    player._shieldRegenRate  = _shldSys.regenRate;
+    player._shieldRegenDelay = _shldSys.regenDelay;
+    // Absorb from shield definition; medium chassis gets +10% absorb bonus on top.
+    const _shldAbsorbBase = _shldSys.absorb ?? 0.50;
+    const _chassisBonus   = loadout.chassis === 'medium' ? 0.10 : 0;
+    const _gearAbsorb     = ((_gearState?.absorbPct || 0) / 100);
+    player._shieldAbsorb  = Math.min(0.90, _shldAbsorbBase + _chassisBonus + _gearAbsorb);
+    // Per-shield state
+    player._shieldFlickerHit  = false;  // flicker_shield: tracks odd/even hits
+    player._shieldAdaptStack  = 0;      // adaptive_shield: consecutive hit count
+    player._shieldCounterChg  = 0;      // counter_shield: stored charge
+    player._shieldRetribChg   = 0;      // retribution: stored charge
+    player._shieldLayerHP     = [       // layered_shield: [layer1, layer2]
+        _shldSys.layer1Max || 0, _shldSys.layer2Max || 0
+    ];
+    // Titan shield: add core HP bonus
+    if (loadout.shld === 'titan_shield' && _shldSys.coreBonus) {
+        player.maxHp  += _shldSys.coreBonus;
+        player.hp     += _shldSys.coreBonus;
+        if (player.comp?.core) { player.comp.core.max += _shldSys.coreBonus; player.comp.core.hp += _shldSys.coreBonus; }
+    }
+}
+
+function _execDropInTween(scene, normalScale) {
+    // Drop-in: mech starts above (offset up), tweens down to land with shockwave
     player.setAlpha(1);
     torso.setAlpha(1);
     if (glowWedge) glowWedge.setVisible(false);
@@ -6256,7 +6305,6 @@ function deployMech() {
     document.getElementById('top-left-btns').style.display = 'flex';
     const _mm = document.getElementById('minimap-wrap'); if (_mm) _mm.style.display = 'block';
 
-    // ── DROP-IN: Y-axis fall with instant camera follow ──
     // Set camera lerp to instant so it tracks the mech even while offset above
     scene.cameras.main.setLerp(1.0, 1.0);
     const dropOffsetY = 280;
@@ -6306,9 +6354,9 @@ function deployMech() {
 
             // Unlock movement + spawn enemies now that scene is ready
             // Guard: if player was destroyed during drop (bullet hit during tween), abort
-                    if (!player?.active) { console.log('[DEPLOY] player not active, aborting'); return; }
+            if (!player?.active) { console.log('[DEPLOY] player not active, aborting'); return; }
             isDeployed = true;
-                    _isPaused = false;
+            _isPaused = false;
             // Ensure physics and time are running (could be paused from death/stats)
             try { GAME.scene.scenes[0].physics.resume(); } catch(e) {}
             try { GAME.scene.scenes[0].time.paused = false; } catch(e) {}
@@ -6350,7 +6398,6 @@ function deployMech() {
         }
     });
 }
-
 
 // ================================================================
 // MOD ACTIVATION
@@ -9062,31 +9109,7 @@ function spawnEnemy(scene) {
     e._visionConeGfx = scene.add.graphics().setDepth(3);
 
     // Squad system: assign to an existing squad or start a new one
-    e._squadLeader = null;
-    e._squadId = null;
-    const _activeEnemies = enemies ? enemies.getChildren().filter(en => en.active && en !== e) : [];
-    // Try to join a squad that has <3 members and is the same chassis
-    const _squads = {};
-    _activeEnemies.forEach(en => {
-        if (en._squadId != null) {
-            if (!_squads[en._squadId]) _squads[en._squadId] = [];
-            _squads[en._squadId].push(en);
-        }
-    });
-    let _joined = false;
-    for (const [sid, members] of Object.entries(_squads)) {
-        if (members.length < 3 && members[0].loadout?.chassis === loadoutE.chassis) {
-            e._squadId = parseInt(sid);
-            e._squadLeader = members.find(m => m._squadLeader === m) || members[0];
-            _joined = true;
-            break;
-        }
-    }
-    if (!_joined) {
-        // Start a new squad — this enemy is the leader
-        e._squadId = Math.floor(Math.random() * 100000);
-        e._squadLeader = e; // leader references itself
-    }
+    _assignEnemyToSquad(e, loadoutE);
 
     enemies.add(e);
     // Collide new enemy with all existing cover objects
@@ -9175,6 +9198,34 @@ function spawnCommander(scene) {
     sndCommanderSpawn();
 }
 
+// ── spawnEnemy sub-functions ─────────────────────────────────────────────────────────────────────
+function _assignEnemyToSquad(e, loadoutE) {
+    e._squadLeader = null;
+    e._squadId = null;
+    const _activeEnemies = enemies ? enemies.getChildren().filter(en => en.active && en !== e) : [];
+    const _squads = {};
+    _activeEnemies.forEach(en => {
+        if (en._squadId != null) {
+            if (!_squads[en._squadId]) _squads[en._squadId] = [];
+            _squads[en._squadId].push(en);
+        }
+    });
+    let _joined = false;
+    for (const [sid, members] of Object.entries(_squads)) {
+        if (members.length < 3 && members[0].loadout?.chassis === loadoutE.chassis) {
+            e._squadId = parseInt(sid);
+            e._squadLeader = members.find(m => m._squadLeader === m) || members[0];
+            _joined = true;
+            break;
+        }
+    }
+    if (!_joined) {
+        // Start a new squad — this enemy is the leader
+        e._squadId = Math.floor(Math.random() * 100000);
+        e._squadLeader = e;
+    }
+}
+
 function enemyFire(scene, enemy, time) {
     if (!isDeployed || !player?.active || enemy.isStunned) return;
 
@@ -9215,10 +9266,14 @@ function enemyFire(scene, enemy, time) {
     dmg = Math.round(dmg * (1.0 + (_eLvl - 1) * 0.03));
     // Berserker enrage: 1.5x damage
     if (enemy._enrageDmgMult) dmg = Math.round(dmg * enemy._enrageDmgMult);
-    // Helper: tag bullets with shooter ref for vampiric healing
+    // Dispatch by weapon type — mirrors player fire functions
+    _dispatchEnemyWeapon(scene, enemy, wKey, weapon, dmg, angle, ex, ey, bSize, bSpeed);
+}
+
+// ── enemyFire sub-functions ──────────────────────────────────────────────────────────────────────
+function _dispatchEnemyWeapon(scene, enemy, wKey, weapon, dmg, angle, ex, ey, bSize, bSpeed) {
     const _tagBullet = (b) => { b._shooter = enemy; return b; };
 
-    // Dispatch by weapon type — mirrors player fire functions
     if (wKey === 'sg') {
         for (let i = 0; i < (weapon.pellets || 5); i++) {
             const spread = (Math.random() - 0.5) * 0.35;
@@ -9306,7 +9361,6 @@ function enemyFire(scene, enemy, time) {
         const dist = 900;
         const endX = ex + Math.cos(angle) * dist;
         const endY = ey + Math.sin(angle) * dist;
-        // Check hit
         if (player?.active) {
             const dx = player.x - ex, dy = player.y - ey;
             const dot = dx * Math.cos(angle) + dy * Math.sin(angle);
@@ -10187,39 +10241,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         _perkState.fortress += 0.10 * _perkState.adaptiveArmor;
     }
     if (explosive) {
-        // Explosive: split evenly across all 4 parts
-        const share = amt / 4;
-        Object.values(player.comp).forEach(c => { c.hp = Math.max(0, c.hp - share); });
-        player.hp = Object.values(player.comp).reduce((s,c) => s + c.hp, 0);
-        updateBars(); updatePaperDoll();
-        if (player.comp.lArm.hp <= 0 && !_lArmDestroyed) {
-            loadout.L = 'none'; _lArmDestroyed = true; updateHUD();
-            if (_perkState.scrapShield > 0) { _perkState._scrapAbsorb = (_perkState._scrapAbsorb||0) + _perkState.scrapShield; }
-        }
-        if (player.comp.rArm.hp <= 0 && !_rArmDestroyed) {
-            loadout.R = 'none'; _rArmDestroyed = true; updateHUD();
-            if (_perkState.scrapShield > 0) { _perkState._scrapAbsorb = (_perkState._scrapAbsorb||0) + _perkState.scrapShield; }
-        }
-        if (loadout.leg === 'hydraulic_boost' && _perkState.legSystemActive && player.comp.legs.hp > 0)
-            player.comp.legs.hp = Math.min(player.comp.legs.max, player.comp.legs.hp + share * 0.15);
-        if (player.comp.legs.hp <= 0 && !_legsDestroyed) { _legsDestroyed = true; player.comp.legs.hp = 0; _perkState.legSystemActive = false; updateHUD(); }
-        // Iron Will: survive to 1 HP once per round
-        if (player.comp.core.hp <= 0 && _perkState.ironWill && !_perkState._ironWillUsed) {
-            player.comp.core.hp = 1;
-            _perkState._ironWillUsed = true;
-            const _sc2 = GAME.scene.scenes[0];
-            const iwTxt = _sc2.add.text(player.x, player.y - 40, 'IRON WILL!', {
-                font:'bold 20px monospace', fill:'#ff8844', stroke:'#000', strokeThickness:3
-            }).setDepth(20);
-            _sc2.tweens.add({ targets:iwTxt, y:iwTxt.y-40, alpha:0, duration:1200, onComplete:()=>iwTxt.destroy() });
-            updateBars(); updatePaperDoll();
-        }
-        if (player.comp.core.hp <= 0) {
-            player.isProcessingDamage = false;
-            showDeathScreen();
-        } else {
-            GAME.scene.scenes[0].time.delayedCall(50, () => { if (player) player.isProcessingDamage = false; });
-        }
+        _applyExplosivePlayerDamage(amt);
         return;
     }
     // Weighted random hit — legs 35%, core 25%, lArm 20%, rArm 20%
@@ -10232,116 +10254,9 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
 
     // Passive shield absorbs a portion of damage (mechanics vary by shield type)
     if (player.maxShield > 0 && player.shield > 0) {
-        const _ss = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
-        let absorb = player._shieldAbsorb ?? 0.50;
-
-        // ── Flicker Shield: block every other hit entirely ──
-        if (_ss.flickerBlock) {
-            player._shieldFlickerHit = !player._shieldFlickerHit;
-            if (player._shieldFlickerHit) { player.isProcessingDamage = false; return; } // blocked hit — no damage at all
-        }
-
-        // ── Phase Shield: brief invuln on each hit ──
-        if (_ss.phaseInvuln && !player._phaseInvulnActive) {
-            player._phaseInvulnActive = true;
-            const _sc = GAME.scene.scenes[0];
-            _sc?.time.delayedCall(_ss.phaseInvuln * 1000, () => { player._phaseInvulnActive = false; });
-        }
-        if (player._phaseInvulnActive) { player.isProcessingDamage = false; return; }
-
-        // ── Adaptive Shield: scale absorb with consecutive hits (reset on regen) ──
-        if (_ss.adaptiveMax) {
-            player._shieldAdaptStack = Math.min(6, (player._shieldAdaptStack || 0) + 1);
-            absorb = Math.min(_ss.adaptiveMax, 0.50 + player._shieldAdaptStack * 0.05);
-        }
-
-        // ── Mirror Shield: reflect 35% of absorbed damage back ──
-        if (_ss.reflectPct && enemies) {
-            const _reflected = amt * absorb * _ss.reflectPct;
-            let _nearest = null, _nd = Infinity;
-            enemies.getChildren().forEach(e => {
-                if (!e.active) return;
-                const _d = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
-                if (_d < _nd) { _nd = _d; _nearest = e; }
-            });
-            if (_nearest) {
-                const _sc = GAME.scene.scenes[0];
-                damageEnemy(_nearest, Math.round(_reflected), 0);
-                if (_sc) showDamageText(_sc, _nearest.x, _nearest.y, Math.round(_reflected));
-            }
-        }
-
-        // ── Counter Shield: charge on every hit ──
-        if (_ss.counterCharge) {
-            player._shieldCounterChg = (player._shieldCounterChg || 0) + amt * absorb;
-        }
-
-        // ── Retribution: charge on absorbed hits ──
-        if (_ss.retributionBreak) {
-            player._shieldRetribChg = (player._shieldRetribChg || 0) + amt * absorb;
-        }
-
-        const _prevShield = player.shield;
-        const _shieldFloor = _perkState.shieldIndestructible ? 1 : 0;
-        player.shield = Math.max(_shieldFloor, player.shield - amt * absorb);
-        amt *= (1 - absorb);
-
-        // ── On-break effects ──
-        if (_prevShield > 0 && player.shield <= 0) {
-            const _sc = GAME.scene.scenes[0];
-
-            // Reactive Shield: invuln window on break
-            if (loadout.shld === 'reactive_shield' && !player._reactInvulnActive) {
-                player._reactInvulnActive = true;
-                _sc?.time.delayedCall(300, () => { player._reactInvulnActive = false; });
-            }
-
-            // Smoke Burst: speed burst on break
-            if (_ss.breakSpeedBurst && player.body) {
-                player._smokeBurstActive = true;
-                player.body.maxVelocity = new Phaser.Math.Vector2(9999, 9999);
-                _sc?.time.delayedCall(2000, () => { player._smokeBurstActive = false; });
-            }
-
-            // Pulse Shield: EMP on break
-            if (_ss.breakEMP && enemies) {
-                enemies.getChildren().forEach(e => {
-                    if (!e.active) return;
-                    if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < 250) {
-                        e.isStunned = true;
-                        e.body?.setVelocity(0, 0);
-                        _sc?.time.delayedCall(1800, () => { if (e.active) e.isStunned = false; });
-                    }
-                });
-                if (_sc) createExplosion(_sc, player.x, player.y, 0, 0); // visual only
-            }
-
-            // Matrix Shield: invulnerability bubble on shield break
-            if (typeof triggerMatrixBarrier === 'function') {
-                if (triggerMatrixBarrier(_sc, _sc?.time?.now || Date.now())) {
-                    amt = 0; // remaining damage blocked by bubble
-                }
-            }
-
-            // Retribution: AoE on break scaled to charge
-            if (_ss.retributionBreak && player._shieldRetribChg > 0 && enemies) {
-                const _rdmg = Math.min(Math.round(player._shieldRetribChg * 0.6), 120);
-                enemies.getChildren().forEach(e => {
-                    if (!e.active) return;
-                    if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < 200) {
-                        damageEnemy(e, _rdmg, 0);
-                    }
-                });
-                if (_sc) createExplosion(_sc, player.x, player.y, 200, 0);
-                player._shieldRetribChg = 0;
-            }
-        }
-
-        // ── Reactive invuln window blocks further damage ──
-        if (player._reactInvulnActive) { amt = 0; }
-
-        // ── Smoke burst: speed multiplier applied in movement section ──
-        // (handled in update loop via player._smokeBurstActive flag)
+        const _shieldResult = _applyPassiveShieldAbsorption(amt);
+        if (_shieldResult === null) return;
+        amt = _shieldResult;
     }
 
     component.hp = Math.max(0, component.hp - amt);
@@ -10380,6 +10295,156 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
             setTimeout(() => { if (player) player.isProcessingDamage = false; }, 60);
         }
     }
+}
+
+// ── processPlayerDamage sub-functions ───────────────────────────────────────────────────────────────
+
+function _applyExplosivePlayerDamage(amt) {
+    // Explosive: split evenly across all 4 parts
+    const share = amt / 4;
+    Object.values(player.comp).forEach(c => { c.hp = Math.max(0, c.hp - share); });
+    player.hp = Object.values(player.comp).reduce((s,c) => s + c.hp, 0);
+    updateBars(); updatePaperDoll();
+    if (player.comp.lArm.hp <= 0 && !_lArmDestroyed) {
+        loadout.L = 'none'; _lArmDestroyed = true; updateHUD();
+        if (_perkState.scrapShield > 0) { _perkState._scrapAbsorb = (_perkState._scrapAbsorb||0) + _perkState.scrapShield; }
+    }
+    if (player.comp.rArm.hp <= 0 && !_rArmDestroyed) {
+        loadout.R = 'none'; _rArmDestroyed = true; updateHUD();
+        if (_perkState.scrapShield > 0) { _perkState._scrapAbsorb = (_perkState._scrapAbsorb||0) + _perkState.scrapShield; }
+    }
+    if (loadout.leg === 'hydraulic_boost' && _perkState.legSystemActive && player.comp.legs.hp > 0)
+        player.comp.legs.hp = Math.min(player.comp.legs.max, player.comp.legs.hp + share * 0.15);
+    if (player.comp.legs.hp <= 0 && !_legsDestroyed) { _legsDestroyed = true; player.comp.legs.hp = 0; _perkState.legSystemActive = false; updateHUD(); }
+    // Iron Will: survive to 1 HP once per round
+    if (player.comp.core.hp <= 0 && _perkState.ironWill && !_perkState._ironWillUsed) {
+        player.comp.core.hp = 1;
+        _perkState._ironWillUsed = true;
+        const _sc2 = GAME.scene.scenes[0];
+        const iwTxt = _sc2.add.text(player.x, player.y - 40, 'IRON WILL!', {
+            font:'bold 20px monospace', fill:'#ff8844', stroke:'#000', strokeThickness:3
+        }).setDepth(20);
+        _sc2.tweens.add({ targets:iwTxt, y:iwTxt.y-40, alpha:0, duration:1200, onComplete:()=>iwTxt.destroy() });
+        updateBars(); updatePaperDoll();
+    }
+    if (player.comp.core.hp <= 0) {
+        player.isProcessingDamage = false;
+        showDeathScreen();
+    } else {
+        GAME.scene.scenes[0].time.delayedCall(50, () => { if (player) player.isProcessingDamage = false; });
+    }
+}
+
+function _applyPassiveShieldAbsorption(amt) {
+    const _ss = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
+    let absorb = player._shieldAbsorb ?? 0.50;
+
+    // ── Flicker Shield: block every other hit entirely ──
+    if (_ss.flickerBlock) {
+        player._shieldFlickerHit = !player._shieldFlickerHit;
+        if (player._shieldFlickerHit) { player.isProcessingDamage = false; return null; } // blocked hit
+    }
+
+    // ── Phase Shield: brief invuln on each hit ──
+    if (_ss.phaseInvuln && !player._phaseInvulnActive) {
+        player._phaseInvulnActive = true;
+        const _sc = GAME.scene.scenes[0];
+        _sc?.time.delayedCall(_ss.phaseInvuln * 1000, () => { player._phaseInvulnActive = false; });
+    }
+    if (player._phaseInvulnActive) { player.isProcessingDamage = false; return null; }
+
+    // ── Adaptive Shield: scale absorb with consecutive hits (reset on regen) ──
+    if (_ss.adaptiveMax) {
+        player._shieldAdaptStack = Math.min(6, (player._shieldAdaptStack || 0) + 1);
+        absorb = Math.min(_ss.adaptiveMax, 0.50 + player._shieldAdaptStack * 0.05);
+    }
+
+    // ── Mirror Shield: reflect 35% of absorbed damage back ──
+    if (_ss.reflectPct && enemies) {
+        const _reflected = amt * absorb * _ss.reflectPct;
+        let _nearest = null, _nd = Infinity;
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            const _d = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+            if (_d < _nd) { _nd = _d; _nearest = e; }
+        });
+        if (_nearest) {
+            const _sc = GAME.scene.scenes[0];
+            damageEnemy(_nearest, Math.round(_reflected), 0);
+            if (_sc) showDamageText(_sc, _nearest.x, _nearest.y, Math.round(_reflected));
+        }
+    }
+
+    // ── Counter Shield: charge on every hit ──
+    if (_ss.counterCharge) {
+        player._shieldCounterChg = (player._shieldCounterChg || 0) + amt * absorb;
+    }
+
+    // ── Retribution: charge on absorbed hits ──
+    if (_ss.retributionBreak) {
+        player._shieldRetribChg = (player._shieldRetribChg || 0) + amt * absorb;
+    }
+
+    const _prevShield = player.shield;
+    const _shieldFloor = _perkState.shieldIndestructible ? 1 : 0;
+    player.shield = Math.max(_shieldFloor, player.shield - amt * absorb);
+    amt *= (1 - absorb);
+
+    // ── On-break effects ──
+    if (_prevShield > 0 && player.shield <= 0) {
+        const _sc = GAME.scene.scenes[0];
+
+        // Reactive Shield: invuln window on break
+        if (loadout.shld === 'reactive_shield' && !player._reactInvulnActive) {
+            player._reactInvulnActive = true;
+            _sc?.time.delayedCall(300, () => { player._reactInvulnActive = false; });
+        }
+
+        // Smoke Burst: speed burst on break
+        if (_ss.breakSpeedBurst && player.body) {
+            player._smokeBurstActive = true;
+            player.body.maxVelocity = new Phaser.Math.Vector2(9999, 9999);
+            _sc?.time.delayedCall(2000, () => { player._smokeBurstActive = false; });
+        }
+
+        // Pulse Shield: EMP on break
+        if (_ss.breakEMP && enemies) {
+            enemies.getChildren().forEach(e => {
+                if (!e.active) return;
+                if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < 250) {
+                    e.isStunned = true;
+                    e.body?.setVelocity(0, 0);
+                    _sc?.time.delayedCall(1800, () => { if (e.active) e.isStunned = false; });
+                }
+            });
+            if (_sc) createExplosion(_sc, player.x, player.y, 0, 0); // visual only
+        }
+
+        // Matrix Shield: invulnerability bubble on shield break
+        if (typeof triggerMatrixBarrier === 'function') {
+            if (triggerMatrixBarrier(_sc, _sc?.time?.now || Date.now())) {
+                amt = 0; // remaining damage blocked by bubble
+            }
+        }
+
+        // Retribution: AoE on break scaled to charge
+        if (_ss.retributionBreak && player._shieldRetribChg > 0 && enemies) {
+            const _rdmg = Math.min(Math.round(player._shieldRetribChg * 0.6), 120);
+            enemies.getChildren().forEach(e => {
+                if (!e.active) return;
+                if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < 200) {
+                    damageEnemy(e, _rdmg, 0);
+                }
+            });
+            if (_sc) createExplosion(_sc, player.x, player.y, 200, 0);
+            player._shieldRetribChg = 0;
+        }
+    }
+
+    // ── Reactive invuln window blocks further damage ──
+    if (player._reactInvulnActive) { amt = 0; }
+
+    return amt; // return modified amt (caller updates its local variable)
 }
 
 function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce = false) {
@@ -10597,117 +10662,121 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     }
     // Die when core is destroyed (same logic as player)
     const _coreDead = e.comp ? e.comp.core.hp <= 0 : e.health <= 0;
-    if (_coreDead) {
-        const scene = GAME.scene.scenes[0];
-        // Capture position before any cleanup destroys it
-        const _deadRef = { x: e.x, y: e.y };
-        try {
-        if (e.isCommander) {
-            sndEnemyDeath(true);
-            scene.cameras.main.shake(500, 0.02);
-            createExplosion(scene, e.x, e.y, 120, 0);
-            scene.time.delayedCall(150, () => createExplosion(scene, e.x + Phaser.Math.Between(-30,30), e.y + Phaser.Math.Between(-30,30), 80, 0));
-            spawnDebris(scene, e.x, e.y, 0xddaa00);
-            spawnLoot(scene, e.x, e.y, true);
-            spawnEquipmentLoot(scene, e.x, e.y, { isCommander: true });
-            showRoundBanner('COMMANDER DESTROYED', '', 1500, null);
-            if (_perkState.commanderBounty && player) { player.shield = player.maxShield; updateBars(); }
-            if (_perkState.chainReaction > 0 && e._chainReactionCheck && Math.random() < _perkState.chainReaction) {
-                const sc2 = GAME.scene.scenes[0];
-                createExplosion(sc2, e.x, e.y, 45, 20);
-            }
-        } else {
-            sndEnemyDeath(false);
-            scene.cameras.main.shake(250, 0.008);
-            createExplosion(scene, e.x, e.y, 60, 0);
-            if (_perkState.pyromaniacChip && e._burning) {
-                let _nearestUnburned = null, _nDist = Infinity;
-                enemies.getChildren().forEach(e2 => {
-                    if (!e2.active || e2 === e || e2._burning) return;
-                    const d2 = Phaser.Math.Distance.Between(e.x, e.y, e2.x, e2.y);
-                    if (d2 < 300 && d2 < _nDist) { _nDist = d2; _nearestUnburned = e2; }
-                });
-                if (_nearestUnburned) {
-                    _nearestUnburned._burning = true;
-                    let _fbt = 0;
-                    const _fbTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
-                        if (!_nearestUnburned.active || _fbt >= 5) { _nearestUnburned._burning = false; _fbTimer.remove(); return; }
-                        damageEnemy(_nearestUnburned, 5, 0);
-                        _fbt++;
-                        const fs = scene.add.circle(_nearestUnburned.x+(Math.random()-0.5)*16, _nearestUnburned.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
-                        scene.tweens.add({ targets: fs, alpha:0, y:fs.y-8, duration:300, onComplete:()=>fs.destroy() });
-                    }});
-                    const fireArc = scene.add.graphics().setDepth(12);
-                    fireArc.lineStyle(3, 0xff6600, 0.8);
-                    fireArc.lineBetween(e.x, e.y, _nearestUnburned.x, _nearestUnburned.y);
-                    scene.tweens.add({ targets: fireArc, alpha: 0, duration: 300, onComplete: () => fireArc.destroy() });
-                }
-            }
-            if (_perkState.inferno && e._burning && !_perkState.pyromaniacChip) {
-                let _iTarget = null, _iDist = Infinity;
-                enemies.getChildren().forEach(e2 => {
-                    if (!e2.active || e2 === e || e2._burning) return;
-                    const id2 = Phaser.Math.Distance.Between(e.x, e.y, e2.x, e2.y);
-                    if (id2 < 300 && id2 < _iDist) { _iDist = id2; _iTarget = e2; }
-                });
-                if (_iTarget) {
-                    _iTarget._burning = true;
-                    let _ibt = 0;
-                    const _ibTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
-                        if (!_iTarget.active || _ibt >= 5) { _iTarget._burning = false; _ibTimer.remove(); return; }
-                        damageEnemy(_iTarget, 5, 0);
-                        _ibt++;
-                    }});
-                }
-            }
-            if (_perkState.reactorCore && e.lastDamageWasExplosive) {
-                scene.time.delayedCall(150, () => createExplosion(scene, e.x + Phaser.Math.Between(-40,40), e.y + Phaser.Math.Between(-40,40), 45, 25));
-            }
-            const debrisCol = e.loadout ? ENEMY_COLORS[e.loadout.chassis].head : 0x664400;
-            spawnDebris(scene, e.x, e.y, debrisCol);
-            if (_perkState.chainReaction > 0 && Math.random() < _perkState.chainReaction) {
-                scene.time.delayedCall(80, () => createExplosion(scene, e.x, e.y, 50, 20));
-            }
-            spawnLoot(scene, e.x, e.y, false);
-            if (e.isBoss && typeof sndBossDefeat === 'function') sndBossDefeat();
-            spawnEquipmentLoot(scene, e.x, e.y, { isMedic: !!e.isMedic, isBoss: !!e.isBoss, bossType: e.bossType || null, isElite: !!e.isElite, enemyType: e.enemyType || null });
+    if (_coreDead) _resolveEnemyDeath(e);
+}
+
+// ── damageEnemy sub-functions ───────────────────────────────────────────────────────────────────────
+
+function _resolveEnemyDeath(e) {
+    const scene = GAME.scene.scenes[0];
+    // Capture position before any cleanup destroys it
+    const _deadRef = { x: e.x, y: e.y };
+    try {
+    if (e.isCommander) {
+        sndEnemyDeath(true);
+        scene.cameras.main.shake(500, 0.02);
+        createExplosion(scene, e.x, e.y, 120, 0);
+        scene.time.delayedCall(150, () => createExplosion(scene, e.x + Phaser.Math.Between(-30,30), e.y + Phaser.Math.Between(-30,30), 80, 0));
+        spawnDebris(scene, e.x, e.y, 0xddaa00);
+        spawnLoot(scene, e.x, e.y, true);
+        spawnEquipmentLoot(scene, e.x, e.y, { isCommander: true });
+        showRoundBanner('COMMANDER DESTROYED', '', 1500, null);
+        if (_perkState.commanderBounty && player) { player.shield = player.maxShield; updateBars(); }
+        if (_perkState.chainReaction > 0 && e._chainReactionCheck && Math.random() < _perkState.chainReaction) {
+            const sc2 = GAME.scene.scenes[0];
+            createExplosion(sc2, e.x, e.y, 45, 20);
         }
-        // All enemies move toward ally death location
-        const _diedX = e.x, _diedY = e.y;
-        if (enemies) {
-            enemies.getChildren().forEach(nearby => {
-                if (!nearby.active || nearby === e) return;
-                const _nd = Phaser.Math.Distance.Between(nearby.x, nearby.y, _diedX, _diedY);
-                if (_nd < 400 && (nearby._aiState === 'patrol' || nearby._aiState === 'search')) {
-                    nearby._aiState = 'search';
-                    nearby._lastKnownPlayer = { x: _diedX, y: _diedY };
-                    nearby._stateTimer = GAME?.loop?.time || 0;
-                } else if (nearby._aiState === 'patrol') {
-                    nearby._patrolTarget = { x: _diedX + (Math.random()-0.5)*80, y: _diedY + (Math.random()-0.5)*80 };
-                    nearby._patrolSet = false;
-                }
+    } else {
+        sndEnemyDeath(false);
+        scene.cameras.main.shake(250, 0.008);
+        createExplosion(scene, e.x, e.y, 60, 0);
+        if (_perkState.pyromaniacChip && e._burning) {
+            let _nearestUnburned = null, _nDist = Infinity;
+            enemies.getChildren().forEach(e2 => {
+                if (!e2.active || e2 === e || e2._burning) return;
+                const d2 = Phaser.Math.Distance.Between(e.x, e.y, e2.x, e2.y);
+                if (d2 < 300 && d2 < _nDist) { _nDist = d2; _nearestUnburned = e2; }
             });
+            if (_nearestUnburned) {
+                _nearestUnburned._burning = true;
+                let _fbt = 0;
+                const _fbTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
+                    if (!_nearestUnburned.active || _fbt >= 5) { _nearestUnburned._burning = false; _fbTimer.remove(); return; }
+                    damageEnemy(_nearestUnburned, 5, 0);
+                    _fbt++;
+                    const fs = scene.add.circle(_nearestUnburned.x+(Math.random()-0.5)*16, _nearestUnburned.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
+                    scene.tweens.add({ targets: fs, alpha:0, y:fs.y-8, duration:300, onComplete:()=>fs.destroy() });
+                }});
+                const fireArc = scene.add.graphics().setDepth(12);
+                fireArc.lineStyle(3, 0xff6600, 0.8);
+                fireArc.lineBetween(e.x, e.y, _nearestUnburned.x, _nearestUnburned.y);
+                scene.tweens.add({ targets: fireArc, alpha: 0, duration: 300, onComplete: () => fireArc.destroy() });
+            }
         }
-        if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) {
-            handleEliteDeath(scene, e);
+        if (_perkState.inferno && e._burning && !_perkState.pyromaniacChip) {
+            let _iTarget = null, _iDist = Infinity;
+            enemies.getChildren().forEach(e2 => {
+                if (!e2.active || e2 === e || e2._burning) return;
+                const id2 = Phaser.Math.Distance.Between(e.x, e.y, e2.x, e2.y);
+                if (id2 < 300 && id2 < _iDist) { _iDist = id2; _iTarget = e2; }
+            });
+            if (_iTarget) {
+                _iTarget._burning = true;
+                let _ibt = 0;
+                const _ibTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
+                    if (!_iTarget.active || _ibt >= 5) { _iTarget._burning = false; _ibTimer.remove(); return; }
+                    damageEnemy(_iTarget, 5, 0);
+                    _ibt++;
+                }});
+            }
         }
-        } catch(deathErr) { /* ensure onEnemyKilled fires even if death effects fail */ }
-        // Cleanup visuals — always runs
-        try {
-        if (e.visuals)  e.visuals.destroy();
-        if (e.torso)    e.torso.destroy();
-        if (e.cmdLabel)    e.cmdLabel.destroy();
-        if (e.medicLabel)  e.medicLabel.destroy();
-        if (e.medicCross)  e.medicCross.destroy();
-        if (e._healTimer)  e._healTimer.remove();
-        if (e._onDestroy)  { try { e._onDestroy(); } catch(ex){} }
-        if (e.shieldRing?.active) e.shieldRing.destroy();
-        if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
-        if (e._splitLabel?.active) e._splitLabel.destroy();
-        } catch(cleanErr) { /* non-fatal */ }
-        e.destroy();
-        onEnemyKilled(_deadRef);
+        if (_perkState.reactorCore && e.lastDamageWasExplosive) {
+            scene.time.delayedCall(150, () => createExplosion(scene, e.x + Phaser.Math.Between(-40,40), e.y + Phaser.Math.Between(-40,40), 45, 25));
+        }
+        const debrisCol = e.loadout ? ENEMY_COLORS[e.loadout.chassis].head : 0x664400;
+        spawnDebris(scene, e.x, e.y, debrisCol);
+        if (_perkState.chainReaction > 0 && Math.random() < _perkState.chainReaction) {
+            scene.time.delayedCall(80, () => createExplosion(scene, e.x, e.y, 50, 20));
+        }
+        spawnLoot(scene, e.x, e.y, false);
+        if (e.isBoss && typeof sndBossDefeat === 'function') sndBossDefeat();
+        spawnEquipmentLoot(scene, e.x, e.y, { isMedic: !!e.isMedic, isBoss: !!e.isBoss, bossType: e.bossType || null, isElite: !!e.isElite, enemyType: e.enemyType || null });
     }
+    // All enemies move toward ally death location
+    const _diedX = e.x, _diedY = e.y;
+    if (enemies) {
+        enemies.getChildren().forEach(nearby => {
+            if (!nearby.active || nearby === e) return;
+            const _nd = Phaser.Math.Distance.Between(nearby.x, nearby.y, _diedX, _diedY);
+            if (_nd < 400 && (nearby._aiState === 'patrol' || nearby._aiState === 'search')) {
+                nearby._aiState = 'search';
+                nearby._lastKnownPlayer = { x: _diedX, y: _diedY };
+                nearby._stateTimer = GAME?.loop?.time || 0;
+            } else if (nearby._aiState === 'patrol') {
+                nearby._patrolTarget = { x: _diedX + (Math.random()-0.5)*80, y: _diedY + (Math.random()-0.5)*80 };
+                nearby._patrolSet = false;
+            }
+        });
+    }
+    if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) {
+        handleEliteDeath(scene, e);
+    }
+    } catch(deathErr) { /* ensure onEnemyKilled fires even if death effects fail */ }
+    // Cleanup visuals — always runs
+    try {
+    if (e.visuals)  e.visuals.destroy();
+    if (e.torso)    e.torso.destroy();
+    if (e.cmdLabel)    e.cmdLabel.destroy();
+    if (e.medicLabel)  e.medicLabel.destroy();
+    if (e.medicCross)  e.medicCross.destroy();
+    if (e._healTimer)  e._healTimer.remove();
+    if (e._onDestroy)  { try { e._onDestroy(); } catch(ex){} }
+    if (e.shieldRing?.active) e.shieldRing.destroy();
+    if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
+    if (e._splitLabel?.active) e._splitLabel.destroy();
+    } catch(cleanErr) { /* non-fatal */ }
+    e.destroy();
+    onEnemyKilled(_deadRef);
 }
 
 // ── Shared mine drawing helper ────────────────────────────
@@ -12417,59 +12486,61 @@ function _showItemDetail(source, key) {
     }
 
     // ── Item Comparison (backpack item vs equipped) ──
-    if (source === 'backpack') {
-        let compareSlot = _getSlotForItem(item);
-        if (item.baseType === 'weapon') compareSlot = _equipped.L ? 'L' : 'R';
-        const equipped = compareSlot ? _equipped[compareSlot] : null;
-        if (equipped) {
-            const eqRd = RARITY_DEFS[equipped.rarity];
-            html += `<div style="border-top:2px solid rgba(255,215,0,0.15);margin-top:14px;padding-top:12px;">`;
-            html += `<div style="font-size:10px;letter-spacing:3px;color:rgba(255,215,0,0.45);margin-bottom:10px;">CURRENTLY EQUIPPED (${compareSlot.toUpperCase()})</div>`;
-            html += `<div style="font-size:13px;letter-spacing:1px;color:${eqRd.colorStr};margin-bottom:8px;text-shadow:0 0 8px ${eqRd.colorStr}33;">${equipped.name} <span style="font-size:10px;color:rgba(200,210,220,0.4);">iLvl ${equipped.level}</span></div>`;
-
-            // Collect all stat keys from both items for diff
-            const _cmpNames = { dmg:'Damage', reload:'Reload (ms)', pellets:'Pellets', speed:'Proj Speed',
-                coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', dr:'Dmg Reduction', shieldHP:'Shield HP',
-                shieldRegen:'Shield Regen %', speedPct:'Move Speed %', reloadPct:'Reload Speed %',
-                dmgPct:'Damage %', modCdPct:'Mod CD %', modEffPct:'Mod Eff %', dodgePct:'Dodge %',
-                accuracy:'Accuracy', lootMult:'Loot Quality %', absorbPct:'Shield Absorb %',
-                critChance:'Crit Chance %', critDmg:'Crit Damage %', splashRadius:'Blast Radius %',
-                allHP:'All Part HP', autoRepair:'HP/sec Regen' };
-            // Build stat totals for each item (baseStats + affixes)
-            const _itemTotal = (it) => {
-                const t = {};
-                if (it.baseStats) Object.entries(it.baseStats).forEach(([k,v]) => { if (typeof v === 'number') t[k] = (t[k]||0) + v; });
-                if (it.affixes) it.affixes.forEach(a => { t[a.stat] = (t[a.stat]||0) + a.value; });
-                return t;
-            };
-            const newStats = _itemTotal(item);
-            const oldStats = _itemTotal(equipped);
-            const allKeys = new Set([...Object.keys(newStats), ...Object.keys(oldStats)]);
-
-            html += `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:2px 10px;font-size:11px;">`;
-            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;">STAT</div>`;
-            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">EQUIPPED</div>`;
-            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">NEW</div>`;
-            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">DIFF</div>`;
-            allKeys.forEach(k => {
-                const o = oldStats[k] || 0;
-                const n = newStats[k] || 0;
-                const diff = n - o;
-                if (o === 0 && n === 0) return;
-                const diffColor = diff > 0 ? '#44ff88' : diff < 0 ? '#ff5050' : 'rgba(200,210,220,0.5)';
-                const diffStr = diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : '—';
-                html += `<div style="color:rgba(200,210,220,0.6);">${_cmpNames[k] || k}</div>`;
-                html += `<div style="text-align:right;color:rgba(200,210,220,0.5);">${o}</div>`;
-                html += `<div style="text-align:right;color:rgba(200,210,220,0.9);">${n}</div>`;
-                html += `<div style="text-align:right;color:${diffColor};font-weight:bold;">${diffStr}</div>`;
-            });
-            html += `</div></div>`;
-        }
-    }
+    if (source === 'backpack') html += _buildItemComparisonHTML(item);
 
     dc.innerHTML = html;
     dp.style.display = 'block';
 }
+// ── _showItemDetail sub-functions ─────────────────────────────────────────────────────────────────
+function _buildItemComparisonHTML(item) {
+    let compareSlot = _getSlotForItem(item);
+    if (item.baseType === 'weapon') compareSlot = _equipped.L ? 'L' : 'R';
+    const equipped = compareSlot ? _equipped[compareSlot] : null;
+    if (!equipped) return '';
+
+    const eqRd = RARITY_DEFS[equipped.rarity];
+    let html = `<div style="border-top:2px solid rgba(255,215,0,0.15);margin-top:14px;padding-top:12px;">`;
+    html += `<div style="font-size:10px;letter-spacing:3px;color:rgba(255,215,0,0.45);margin-bottom:10px;">CURRENTLY EQUIPPED (${compareSlot.toUpperCase()})</div>`;
+    html += `<div style="font-size:13px;letter-spacing:1px;color:${eqRd.colorStr};margin-bottom:8px;text-shadow:0 0 8px ${eqRd.colorStr}33;">${equipped.name} <span style="font-size:10px;color:rgba(200,210,220,0.4);">iLvl ${equipped.level}</span></div>`;
+
+    const _cmpNames = { dmg:'Damage', reload:'Reload (ms)', pellets:'Pellets', speed:'Proj Speed',
+        coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', dr:'Dmg Reduction', shieldHP:'Shield HP',
+        shieldRegen:'Shield Regen %', speedPct:'Move Speed %', reloadPct:'Reload Speed %',
+        dmgPct:'Damage %', modCdPct:'Mod CD %', modEffPct:'Mod Eff %', dodgePct:'Dodge %',
+        accuracy:'Accuracy', lootMult:'Loot Quality %', absorbPct:'Shield Absorb %',
+        critChance:'Crit Chance %', critDmg:'Crit Damage %', splashRadius:'Blast Radius %',
+        allHP:'All Part HP', autoRepair:'HP/sec Regen' };
+    const _itemTotal = (it) => {
+        const t = {};
+        if (it.baseStats) Object.entries(it.baseStats).forEach(([k,v]) => { if (typeof v === 'number') t[k] = (t[k]||0) + v; });
+        if (it.affixes) it.affixes.forEach(a => { t[a.stat] = (t[a.stat]||0) + a.value; });
+        return t;
+    };
+    const newStats = _itemTotal(item);
+    const oldStats = _itemTotal(equipped);
+    const allKeys = new Set([...Object.keys(newStats), ...Object.keys(oldStats)]);
+
+    html += `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:2px 10px;font-size:11px;">`;
+    html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;">STAT</div>`;
+    html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">EQUIPPED</div>`;
+    html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">NEW</div>`;
+    html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">DIFF</div>`;
+    allKeys.forEach(k => {
+        const o = oldStats[k] || 0;
+        const n = newStats[k] || 0;
+        const diff = n - o;
+        if (o === 0 && n === 0) return;
+        const diffColor = diff > 0 ? '#44ff88' : diff < 0 ? '#ff5050' : 'rgba(200,210,220,0.5)';
+        const diffStr = diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : '—';
+        html += `<div style="color:rgba(200,210,220,0.6);">${_cmpNames[k] || k}</div>`;
+        html += `<div style="text-align:right;color:rgba(200,210,220,0.5);">${o}</div>`;
+        html += `<div style="text-align:right;color:rgba(200,210,220,0.9);">${n}</div>`;
+        html += `<div style="text-align:right;color:${diffColor};font-weight:bold;">${diffStr}</div>`;
+    });
+    html += `</div></div>`;
+    return html;
+}
+
 
 function _getSlotForItem(item) {
     if (item.baseType === 'weapon') return null; // weapon needs L or R choice
@@ -12653,12 +12724,20 @@ function _perkReduction(value, base) {
 
 
 function populateStats() {
-    // Update campaign XP bar if in campaign mode
     if (typeof _updateCampaignXPBar === 'function') _updateCampaignXPBar();
+    _renderChassisPanel();
+    _renderWeaponPanel();
+    _renderMobilityPanel();
+    _renderRunStatsPanel();
+    _renderActivePerksPanel();
+    _renderGearBonusesPanel();
+}
 
+// ── populateStats sub-functions ───────────────────────────────────────────────────────────────────
+
+function _renderChassisPanel() {
     const ch = loadout.chassis;
     const chassisData = CHASSIS[ch];
-
     // ── CHASSIS & HP ──────────────────────────────────────────
     const _inGame = !!(player?.comp); // true when actually deployed in-GAME
     const baseShield = chassisData?.max || 75;
@@ -12678,42 +12757,42 @@ function populateStats() {
     chassisHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple${shieldBonusCls}"${shieldBonusData}>${_curShield} / ${_maxShield}</span></div>`;
     chassisHtml += '<div style="margin-top:12px;margin-bottom:6px;font-size:12px;letter-spacing:2px;color:rgba(0,255,255,0.35);">HULL INTEGRITY</div>';
     {
-        const baseHP = { core: chassisData?.coreHP||212, lArm: chassisData?.armHP||120, rArm: chassisData?.armHP||120, legs: chassisData?.legHP||152 };
-        if (_inGame) {
-            chassisHtml += _hpBarBoosted('Core',  player.comp.core.hp,  player.comp.core.max,  baseHP.core);
-            chassisHtml += _hpBarBoosted('L.Arm', player.comp.lArm.hp,  player.comp.lArm.max,  baseHP.lArm);
-            chassisHtml += _hpBarBoosted('R.Arm', player.comp.rArm.hp,  player.comp.rArm.max,  baseHP.rArm);
-            chassisHtml += _hpBarBoosted('Legs',  player.comp.legs.hp,  player.comp.legs.max,  baseHP.legs);
-            const totalHp  = Object.values(player.comp).reduce((s,c)=>s+c.hp,0);
-            const totalMax = Object.values(player.comp).reduce((s,c)=>s+c.max,0);
-            const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
-            const totalBonusHp = Math.round(totalMax - totalBase);
-            const totalBonusData = totalBonusHp > 0 ? ` data-bonus="+${totalBonusHp} from perks/gear"` : '';
-            const totalBonusCls = totalBonusHp > 0 ? ' stat-has-bonus' : '';
-            chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
-        } else {
-            // Not in-GAME: show base HP values at full
-            chassisHtml += _hpBarBoosted('Core',  baseHP.core,  baseHP.core,  baseHP.core);
-            chassisHtml += _hpBarBoosted('L.Arm', baseHP.lArm,  baseHP.lArm,  baseHP.lArm);
-            chassisHtml += _hpBarBoosted('R.Arm', baseHP.rArm,  baseHP.rArm,  baseHP.rArm);
-            chassisHtml += _hpBarBoosted('Legs',  baseHP.legs,  baseHP.legs,  baseHP.legs);
-            const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
-            chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalBase} / ${totalBase}</span></div></div>`;
-        }
+    const baseHP = { core: chassisData?.coreHP||212, lArm: chassisData?.armHP||120, rArm: chassisData?.armHP||120, legs: chassisData?.legHP||152 };
+    if (_inGame) {
+        chassisHtml += _hpBarBoosted('Core',  player.comp.core.hp,  player.comp.core.max,  baseHP.core);
+        chassisHtml += _hpBarBoosted('L.Arm', player.comp.lArm.hp,  player.comp.lArm.max,  baseHP.lArm);
+        chassisHtml += _hpBarBoosted('R.Arm', player.comp.rArm.hp,  player.comp.rArm.max,  baseHP.rArm);
+        chassisHtml += _hpBarBoosted('Legs',  player.comp.legs.hp,  player.comp.legs.max,  baseHP.legs);
+        const totalHp  = Object.values(player.comp).reduce((s,c)=>s+c.hp,0);
+        const totalMax = Object.values(player.comp).reduce((s,c)=>s+c.max,0);
+        const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
+        const totalBonusHp = Math.round(totalMax - totalBase);
+        const totalBonusData = totalBonusHp > 0 ? ` data-bonus="+${totalBonusHp} from perks/gear"` : '';
+        const totalBonusCls = totalBonusHp > 0 ? ' stat-has-bonus' : '';
+        chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
+    } else {
+        // Not in-GAME: show base HP values at full
+        chassisHtml += _hpBarBoosted('Core',  baseHP.core,  baseHP.core,  baseHP.core);
+        chassisHtml += _hpBarBoosted('L.Arm', baseHP.lArm,  baseHP.lArm,  baseHP.lArm);
+        chassisHtml += _hpBarBoosted('R.Arm', baseHP.rArm,  baseHP.rArm,  baseHP.rArm);
+        chassisHtml += _hpBarBoosted('Legs',  baseHP.legs,  baseHP.legs,  baseHP.legs);
+        const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
+        chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalBase} / ${totalBase}</span></div></div>`;
+    }
     }
     // ── Chassis traits & arm mode — rendered full-width below the grid ──
     const _chColor = ch==='light'?'#88ff88':ch==='medium'?'#ffcc44':'#ff8844';
     const _cTraits = ch === 'light'
-        ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped (−15% dmg per arm)'],
-           ['Reload Speed','+20% passive reload speed on all weapons'],
-           ['Fragile Arms','Arms have 30% less base HP than Medium chassis']]
-        : ch === 'medium'
-        ? [['Mod Cooldowns','All mod cooldowns reduced by −15%'],
-           ['Kill Reduction','Each kill shaves 0.5s off active mod cooldowns'],
-           ['Shield Absorb','Shield absorbs 60% of incoming damage (vs 50%)']]
-        : [['Passive DR','15% damage reduction at all times'],
-           ['Restrictions','Cannot equip JUMP mod or AFTERLEG legs'],
-           ['Attrition','Built for sustained punishment — high HP across all parts']];
+    ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped (−15% dmg per arm)'],
+       ['Reload Speed','+20% passive reload speed on all weapons'],
+       ['Fragile Arms','Arms have 30% less base HP than Medium chassis']]
+    : ch === 'medium'
+    ? [['Mod Cooldowns','All mod cooldowns reduced by −15%'],
+       ['Kill Reduction','Each kill shaves 0.5s off active mod cooldowns'],
+       ['Shield Absorb','Shield absorbs 60% of incoming damage (vs 50%)']]
+    : [['Passive DR','15% damage reduction at all times'],
+       ['Restrictions','Cannot equip JUMP mod or AFTERLEG legs'],
+       ['Attrition','Built for sustained punishment — high HP across all parts']];
 
     const _sIs2H   = WEAPONS[loadout?.L]?.twoHanded;
     const _sLEmpty = !loadout?.L || loadout.L === 'none';
@@ -12722,10 +12801,10 @@ function populateStats() {
     const _sDualW  = !_sIs2H && loadout?.L !== 'none' && loadout?.R !== 'none' && loadout?.L === loadout?.R;
     const _sBothDiff = !_sIs2H && !_sLEmpty && !_sREmpty && !_sDualW;
     const _armMode = _sIs2H   ? ['TWO-HANDED',  'Both arms locked to same weapon. Weight counted once.', '#ff8844']
-                   : _sBrace  ? ['BRACE MODE',   '+25% damage and +15% reload when only one arm is equipped.', '#88ff88']
-                   : _sDualW  ? ['DUAL WIELD',   'Same weapon in both arms. Left-click fires both simultaneously.', '#ffcc44']
-                   : _sBothDiff ? ['INDEPENDENT', 'Different weapons in each arm. Left-click fires L arm, right-click fires R arm.', '#c0c8d0']
-                   : null;
+               : _sBrace  ? ['BRACE MODE',   '+25% damage and +15% reload when only one arm is equipped.', '#88ff88']
+               : _sDualW  ? ['DUAL WIELD',   'Same weapon in both arms. Left-click fires both simultaneously.', '#ffcc44']
+               : _sBothDiff ? ['INDEPENDENT', 'Different weapons in each arm. Left-click fires L arm, right-click fires R arm.', '#c0c8d0']
+               : null;
 
     // Build the full-width traits+armmode block separately
     let traitHtml = '';
@@ -12734,33 +12813,33 @@ function populateStats() {
     traitHtml += `<div>`;
     traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.45);margin-bottom:10px;border-bottom:1px solid rgba(0,255,255,0.10);padding-bottom:6px;">CHASSIS TRAITS</div>`;
     _cTraits.forEach(([tLabel, tDesc]) => {
-        traitHtml += `<div style="margin-bottom:10px;">
-            <div style="font-size:11px;letter-spacing:1.5px;color:${_chColor};margin-bottom:3px;">${tLabel}</div>
-            <div style="font-size:12px;color:rgba(200,210,220,0.75);line-height:1.5;">${tDesc}</div>
-        </div>`;
+    traitHtml += `<div style="margin-bottom:10px;">
+        <div style="font-size:11px;letter-spacing:1.5px;color:${_chColor};margin-bottom:3px;">${tLabel}</div>
+        <div style="font-size:12px;color:rgba(200,210,220,0.75);line-height:1.5;">${tDesc}</div>
+    </div>`;
     });
     traitHtml += `</div>`;
     // Right col: arm mode + additional context
     traitHtml += `<div>`;
     traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.45);margin-bottom:10px;border-bottom:1px solid rgba(0,255,255,0.10);padding-bottom:6px;">ARM CONFIGURATION</div>`;
     if (_armMode) {
-        traitHtml += `<div style="margin-bottom:10px;">
-            <div style="font-size:11px;letter-spacing:1.5px;color:${_armMode[2]};margin-bottom:3px;">${_armMode[0]}</div>
-            <div style="font-size:12px;color:rgba(200,210,220,0.75);line-height:1.5;">${_armMode[1]}</div>
-        </div>`;
+    traitHtml += `<div style="margin-bottom:10px;">
+        <div style="font-size:11px;letter-spacing:1.5px;color:${_armMode[2]};margin-bottom:3px;">${_armMode[0]}</div>
+        <div style="font-size:12px;color:rgba(200,210,220,0.75);line-height:1.5;">${_armMode[1]}</div>
+    </div>`;
     }
     // Show L and R arm weapon names for quick reference
     const _lName = WEAPONS[loadout?.L]?.name || loadout?.L || '—';
     const _rName = WEAPONS[loadout?.R]?.name || loadout?.R || '—';
     traitHtml += `<div style="margin-top:6px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;">
-            <span style="color:rgba(200,210,220,0.5);letter-spacing:1px;">L ARM</span>
-            <span style="color:#c0c8d0;letter-spacing:1px;">${_lName !== 'none' && _lName !== '—' ? _lName : '—'}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;">
-            <span style="color:rgba(200,210,220,0.5);letter-spacing:1px;">R ARM</span>
-            <span style="color:#c0c8d0;letter-spacing:1px;">${_rName !== 'none' && _rName !== '—' ? _rName : '—'}</span>
-        </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;">
+        <span style="color:rgba(200,210,220,0.5);letter-spacing:1px;">L ARM</span>
+        <span style="color:#c0c8d0;letter-spacing:1px;">${_lName !== 'none' && _lName !== '—' ? _lName : '—'}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;">
+        <span style="color:rgba(200,210,220,0.5);letter-spacing:1px;">R ARM</span>
+        <span style="color:#c0c8d0;letter-spacing:1px;">${_rName !== 'none' && _rName !== '—' ? _rName : '—'}</span>
+    </div>
     </div>`;
     traitHtml += `</div>`;
     traitHtml += `</div>`;
@@ -12768,6 +12847,9 @@ function populateStats() {
     document.getElementById('stat-chassis-info').innerHTML = chassisHtml;
     document.getElementById('stat-traits-info').innerHTML  = traitHtml;
 
+}
+
+function _renderWeaponPanel() {
     // ── WEAPONS & DPS ────────────────────────────────────────
     let wHtml = '';
     const sides = [['L', loadout.L], ['R', loadout.R], ['CORE', loadout.mod]];
@@ -12775,56 +12857,60 @@ function populateStats() {
     const _gDmgPct  = (_gearState?.dmgPct || 0);
     const _gReloadPct = (_gearState?.reloadPct || 0);
     sides.forEach(([side, key]) => {
-        if (!key || key === 'none') return;
-        const w = WEAPONS[key];
-        if (!w) return;
-        wHtml += `<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(0,255,255,0.1);">`;
-        wHtml += `<div style="font-size:13px;letter-spacing:2px;color:rgba(0,255,255,0.7);margin-bottom:8px;">${side}: ${w.name}</div>`;
-        if (w.dmg) {
-            const baseDmg  = w.dmg;
-            const perkDmg  = Math.round(baseDmg * (_perkState.dmgMult||1));
-            const effDmg   = Math.round((baseDmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100));
-            const baseRld  = w.reload || 0;
-            const perkRld  = Math.round(baseRld * (_perkState.reloadMult||1));
-            const effRld   = Math.round(baseRld * (_perkState.reloadMult||1) * (1 - _gReloadPct/100));
-            const baseDps  = baseRld > 0 ? Math.round(baseDmg / baseRld * 1000) : 0;
-            const effDps   = effRld  > 0 ? Math.round(effDmg  / effRld  * 1000) : 0;
-            const dmgSuffix = w.pellets ? ` x ${w.pellets} pellets` : '';
-            // Build tooltip strings for gear+perk breakdowns
-            const _dmgGearDiff = Math.round(effDmg - perkDmg);
-            const _dmgPerkDiff = Math.round(perkDmg - baseDmg);
-            let dmgTip = '';
-            if (_dmgPerkDiff > 0) dmgTip += `+${_dmgPerkDiff} perks`;
-            if (_dmgGearDiff > 0) dmgTip += (dmgTip ? ', ' : '') + `+${_dmgGearDiff} gear`;
-            const dmgBonusData = dmgTip ? ` data-bonus="${dmgTip}"` : '';
-            const dmgBonusCls = dmgTip ? ' stat-has-bonus' : '';
-            const _rldGearDiff = Math.round(perkRld - effRld);
-            const _rldPerkDiff = Math.round(baseRld - perkRld);
-            let rldTip = '';
-            if (_rldPerkDiff > 0) rldTip += `-${_rldPerkDiff} perks`;
-            if (_rldGearDiff > 0) rldTip += (rldTip ? ', ' : '') + `-${_rldGearDiff} gear`;
-            const rldBonusData = rldTip ? ` data-bonus="${rldTip}"` : '';
-            const rldBonusCls = rldTip ? ' stat-has-bonus' : '';
-            wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value${dmgBonusCls}"${dmgBonusData}>${Math.round(effDmg)}${dmgSuffix}</span></div>`;
-            wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}${rldBonusCls}"${rldBonusData}>${Math.round(effRld)}</span></div>`;
-            const dpsTip = effDps > baseDps ? `+${effDps - baseDps} from perks/gear` : '';
-            const dpsBonusData = dpsTip ? ` data-bonus="${dpsTip}"` : '';
-            const dpsBonusCls = dpsTip ? ' stat-has-bonus' : '';
-            wHtml += `<div class="stats-row"><span class="stats-label">DPS (est.)</span><span class="stats-value ${effDps>200?'green':effDps>80?'yellow':'orange'}${dpsBonusCls}"${dpsBonusData}>${Math.round(effDps)}</span></div>`;
-        }
-        if (w.radius) {
-            const effRad = Math.round(w.radius * (_perkState.blastMult||1));
-            const radDiff = effRad - w.radius;
-            const radData = radDiff > 0 ? ` data-bonus="+${radDiff} from perks"` : '';
-            const radCls = radDiff > 0 ? ' stat-has-bonus' : '';
-            wHtml += `<div class="stats-row"><span class="stats-label">Blast Radius</span><span class="stats-value${radCls}"${radData}>${effRad}</span></div>`;
-        }
-        if (w.cooldown) wHtml += _statRow('Mod Cooldown', w.cooldown + 'ms');
-        wHtml += '</div>';
+    if (!key || key === 'none') return;
+    const w = WEAPONS[key];
+    if (!w) return;
+    wHtml += `<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(0,255,255,0.1);">`;
+    wHtml += `<div style="font-size:13px;letter-spacing:2px;color:rgba(0,255,255,0.7);margin-bottom:8px;">${side}: ${w.name}</div>`;
+    if (w.dmg) {
+        const baseDmg  = w.dmg;
+        const perkDmg  = Math.round(baseDmg * (_perkState.dmgMult||1));
+        const effDmg   = Math.round((baseDmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100));
+        const baseRld  = w.reload || 0;
+        const perkRld  = Math.round(baseRld * (_perkState.reloadMult||1));
+        const effRld   = Math.round(baseRld * (_perkState.reloadMult||1) * (1 - _gReloadPct/100));
+        const baseDps  = baseRld > 0 ? Math.round(baseDmg / baseRld * 1000) : 0;
+        const effDps   = effRld  > 0 ? Math.round(effDmg  / effRld  * 1000) : 0;
+        const dmgSuffix = w.pellets ? ` x ${w.pellets} pellets` : '';
+        // Build tooltip strings for gear+perk breakdowns
+        const _dmgGearDiff = Math.round(effDmg - perkDmg);
+        const _dmgPerkDiff = Math.round(perkDmg - baseDmg);
+        let dmgTip = '';
+        if (_dmgPerkDiff > 0) dmgTip += `+${_dmgPerkDiff} perks`;
+        if (_dmgGearDiff > 0) dmgTip += (dmgTip ? ', ' : '') + `+${_dmgGearDiff} gear`;
+        const dmgBonusData = dmgTip ? ` data-bonus="${dmgTip}"` : '';
+        const dmgBonusCls = dmgTip ? ' stat-has-bonus' : '';
+        const _rldGearDiff = Math.round(perkRld - effRld);
+        const _rldPerkDiff = Math.round(baseRld - perkRld);
+        let rldTip = '';
+        if (_rldPerkDiff > 0) rldTip += `-${_rldPerkDiff} perks`;
+        if (_rldGearDiff > 0) rldTip += (rldTip ? ', ' : '') + `-${_rldGearDiff} gear`;
+        const rldBonusData = rldTip ? ` data-bonus="${rldTip}"` : '';
+        const rldBonusCls = rldTip ? ' stat-has-bonus' : '';
+        wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value${dmgBonusCls}"${dmgBonusData}>${Math.round(effDmg)}${dmgSuffix}</span></div>`;
+        wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}${rldBonusCls}"${rldBonusData}>${Math.round(effRld)}</span></div>`;
+        const dpsTip = effDps > baseDps ? `+${effDps - baseDps} from perks/gear` : '';
+        const dpsBonusData = dpsTip ? ` data-bonus="${dpsTip}"` : '';
+        const dpsBonusCls = dpsTip ? ' stat-has-bonus' : '';
+        wHtml += `<div class="stats-row"><span class="stats-label">DPS (est.)</span><span class="stats-value ${effDps>200?'green':effDps>80?'yellow':'orange'}${dpsBonusCls}"${dpsBonusData}>${Math.round(effDps)}</span></div>`;
+    }
+    if (w.radius) {
+        const effRad = Math.round(w.radius * (_perkState.blastMult||1));
+        const radDiff = effRad - w.radius;
+        const radData = radDiff > 0 ? ` data-bonus="+${radDiff} from perks"` : '';
+        const radCls = radDiff > 0 ? ' stat-has-bonus' : '';
+        wHtml += `<div class="stats-row"><span class="stats-label">Blast Radius</span><span class="stats-value${radCls}"${radData}>${effRad}</span></div>`;
+    }
+    if (w.cooldown) wHtml += _statRow('Mod Cooldown', w.cooldown + 'ms');
+    wHtml += '</div>';
     });
     if (!wHtml) wHtml = '<div class="stats-label" style="opacity:0.4;font-size:13px;">No weapons armed</div>';
     document.getElementById('stat-weapons-info').innerHTML = wHtml;
 
+}
+
+function _renderMobilityPanel() {
+    const chassisData = CHASSIS[loadout.chassis];
     // ── MOBILITY & SHIELD ─────────────────────────────────────
     let mobHtml = '';
     const baseSpd = chassisData?.spd || 200;
@@ -12834,10 +12920,10 @@ function populateStats() {
     const legsOk  = _inGame ? (player?.comp?.legs?.hp > 0) : true;
     // Helper: build tooltip string from perk + gear contributions
     const _bonusTip = (perkVal, gearVal, perkLabel='perks', gearLabel='gear') => {
-        let tip = '';
-        if (perkVal > 0) tip += `+${perkVal} ${perkLabel}`;
-        if (gearVal > 0) tip += (tip ? ', ' : '') + `+${gearVal} ${gearLabel}`;
-        return tip;
+    let tip = '';
+    if (perkVal > 0) tip += `+${perkVal} ${perkLabel}`;
+    if (gearVal > 0) tip += (tip ? ', ' : '') + `+${gearVal} ${gearLabel}`;
+    return tip;
     };
     const _bonusCls = (tip) => tip ? ' stat-has-bonus' : '';
     const _bonusData = (tip) => tip ? ` data-bonus="${tip}"` : '';
@@ -12889,6 +12975,9 @@ function populateStats() {
     if (gearLoot > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Loot Quality</span><span class="stats-value stat-has-bonus" data-bonus="+${gearLoot}% gear">+${gearLoot}%</span></div>`;
     document.getElementById('stat-mobility-info').innerHTML = mobHtml;
 
+}
+
+function _renderRunStatsPanel() {
     // ── RUN STATS ─────────────────────────────────────────────
     const acc = _shotsFired > 0 ? Math.round(_shotsHit/_shotsFired*100) : 0;
     let runHtml = '';
@@ -12902,98 +12991,104 @@ function populateStats() {
     runHtml += _statRow('Perks Earned', _perksEarned, 'purple');
     document.getElementById('stat-run-info').innerHTML = runHtml;
 
+}
+
+function _renderActivePerksPanel() {
     // ── ACTIVE PERKS ──────────────────────────────────────────
     const perksEl = document.getElementById('stat-perks-info');
     perksEl.innerHTML = '';
     if (_pickedPerks.length === 0) {
-        perksEl.innerHTML = '<span class="stats-label" style="opacity:0.4;font-size:13px;">No perks selected yet</span>';
+    perksEl.innerHTML = '<span class="stats-label" style="opacity:0.4;font-size:13px;">No perks selected yet</span>';
     } else {
-        // Count and group
-        const perkCounts = {};
-        _pickedPerks.forEach(k => { perkCounts[k] = (perkCounts[k]||0)+1; });
-        Object.entries(perkCounts).forEach(([k, n]) => {
-            const p = _perks[k];
-            if (!p) return;
-            const chip = document.createElement('div');
-            chip.className = 'stats-perk-chip';
-            chip.style.position = 'relative';
-            chip.style.cursor = 'default';
-            const catColor = p.cat==='universal'?'#00ffff':p.cat==='light'?'#88ff88':p.cat==='medium'?'#ffcc00':p.cat==='heavy'?'#ff8844':'#cc88ff';
-            chip.style.borderColor = catColor + '66';
-            chip.style.color = catColor;
-            if (p.legendary) {
-                chip.style.borderColor = '#ffd700';
-                chip.style.background = 'rgba(255,215,0,0.10)';
-                chip.style.color = '#ffd700';
-                chip.style.boxShadow = '0 0 8px rgba(255,215,0,0.25)';
-            }
-            chip.title = p.desc; // native tooltip fallback
-            const legendBadge = p.legendary ? '<span style="font-size:9px;letter-spacing:1px;color:#ffd700;opacity:0.7;margin-left:6px;">★ LEGENDARY</span>' : '';
-            chip.innerHTML = `${p.label}${n>1?` <span style="opacity:0.6">×${n}</span>`:''}${legendBadge}`;
-            // Custom tooltip
-            const tip = document.createElement('div');
-            tip.style.cssText = `display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:rgba(5,10,18,0.97);border:1px solid ${catColor}66;border-radius:6px;padding:8px 12px;font-size:11px;letter-spacing:1px;color:rgba(200,210,217,0.85);white-space:nowrap;z-index:20000;pointer-events:none;box-shadow:0 0 12px rgba(0,0,0,0.6);`;
-            tip.textContent = p.desc;
-            chip.appendChild(tip);
-            chip.addEventListener('mouseenter', () => tip.style.display = 'block');
-            chip.addEventListener('mouseleave', () => tip.style.display = 'none');
-            perksEl.appendChild(chip);
-        });
-    }
+    // Count and group
+    const perkCounts = {};
+    _pickedPerks.forEach(k => { perkCounts[k] = (perkCounts[k]||0)+1; });
+    Object.entries(perkCounts).forEach(([k, n]) => {
+        const p = _perks[k];
+        if (!p) return;
+        const chip = document.createElement('div');
+        chip.className = 'stats-perk-chip';
+        chip.style.position = 'relative';
+        chip.style.cursor = 'default';
+        const catColor = p.cat==='universal'?'#00ffff':p.cat==='light'?'#88ff88':p.cat==='medium'?'#ffcc00':p.cat==='heavy'?'#ff8844':'#cc88ff';
+        chip.style.borderColor = catColor + '66';
+        chip.style.color = catColor;
+        if (p.legendary) {
+            chip.style.borderColor = '#ffd700';
+            chip.style.background = 'rgba(255,215,0,0.10)';
+            chip.style.color = '#ffd700';
+            chip.style.boxShadow = '0 0 8px rgba(255,215,0,0.25)';
+        }
+        chip.title = p.desc; // native tooltip fallback
+        const legendBadge = p.legendary ? '<span style="font-size:9px;letter-spacing:1px;color:#ffd700;opacity:0.7;margin-left:6px;">★ LEGENDARY</span>' : '';
+        chip.innerHTML = `${p.label}${n>1?` <span style="opacity:0.6">×${n}</span>`:''}${legendBadge}`;
+        // Custom tooltip
+        const tip = document.createElement('div');
+        tip.style.cssText = `display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:rgba(5,10,18,0.97);border:1px solid ${catColor}66;border-radius:6px;padding:8px 12px;font-size:11px;letter-spacing:1px;color:rgba(200,210,217,0.85);white-space:nowrap;z-index:20000;pointer-events:none;box-shadow:0 0 12px rgba(0,0,0,0.6);`;
+        tip.textContent = p.desc;
+        chip.appendChild(tip);
+        chip.addEventListener('mouseenter', () => tip.style.display = 'block');
+        chip.addEventListener('mouseleave', () => tip.style.display = 'none');
+        perksEl.appendChild(chip);
+    });
+}
 
+}
+
+function _renderGearBonusesPanel() {
     // ── GEAR BONUSES SUMMARY ──────────────────────────────────
     const gearPanel = document.getElementById('stat-gear-panel');
     const gearInfo  = document.getElementById('stat-gear-info');
     if (gearPanel && gearInfo) {
-        const gs = typeof _gearState !== 'undefined' ? _gearState : {};
-        const hasAnyGear = Object.values(gs).some(v => v > 0);
-        if (!hasAnyGear) {
-            gearPanel.style.display = 'none';
-        } else {
-            gearPanel.style.display = 'block';
-            const _gsLabels = {
-                dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
-                reloadPct:'Reload Speed %', pellets:'Bonus Pellets', splashRadius:'Blast Radius %',
-                coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All Part HP',
-                dr:'Damage Reduction %', shieldHP:'Shield Capacity', shieldRegen:'Shield Regen %',
-                dodgePct:'Dodge Chance %', speedPct:'Move Speed %', modCdPct:'Mod Cooldown %',
-                modEffPct:'Mod Effectiveness %', lootMult:'Loot Quality %', autoRepair:'HP/sec Regen',
-                absorbPct:'Shield Absorb %'
-            };
-            // Group into offensive / defensive / utility
-            const offKeys = ['dmgFlat','dmgPct','critChance','critDmg','reloadPct','pellets','splashRadius'];
-            const defKeys = ['coreHP','armHP','legHP','allHP','dr','shieldHP','shieldRegen','dodgePct','absorbPct'];
-            const utilKeys = ['speedPct','modCdPct','modEffPct','lootMult','autoRepair'];
-            const _renderGroup = (title, keys) => {
-                const active = keys.filter(k => (gs[k] || 0) > 0);
-                if (active.length === 0) return '';
-                let h = `<div style="font-size:10px;letter-spacing:2px;color:rgba(255,215,0,0.4);margin-top:10px;margin-bottom:6px;">${title}</div>`;
-                active.forEach(k => {
-                    const v = gs[k];
-                    const prefix = ['reloadPct','modCdPct'].includes(k) ? '−' : '+';
-                    h += `<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:3px;font-size:13px;">
-                        <span style="color:rgba(200,210,220,0.6);">${_gsLabels[k] || k}</span>
-                        <span style="color:#ffd700;letter-spacing:1px;">${prefix}${v}</span>
-                    </div>`;
-                });
-                return h;
-            };
-            // Show equipped item names at the top
-            const slotLabels = [['L','L Arm'],['R','R Arm'],['chest','Chest'],['arms','Arms'],['legs','Legs'],['shield','Shield'],['mod','Mod'],['augment','Augment']];
-            let gHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
-            slotLabels.forEach(([sk, sl]) => {
-                const it = typeof _equipped !== 'undefined' ? _equipped[sk] : null;
-                if (!it) return;
-                const rd = typeof RARITY_DEFS !== 'undefined' ? RARITY_DEFS[it.rarity] : null;
-                const c = rd ? rd.colorStr : '#888';
-                gHtml += `<span style="padding:3px 8px;border:1px solid ${c}44;border-radius:3px;font-size:10px;letter-spacing:1px;color:${c};background:rgba(0,0,0,0.3);">${sl}: ${it.shortName || it.name}</span>`;
+    const gs = typeof _gearState !== 'undefined' ? _gearState : {};
+    const hasAnyGear = Object.values(gs).some(v => v > 0);
+    if (!hasAnyGear) {
+        gearPanel.style.display = 'none';
+    } else {
+        gearPanel.style.display = 'block';
+        const _gsLabels = {
+            dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
+            reloadPct:'Reload Speed %', pellets:'Bonus Pellets', splashRadius:'Blast Radius %',
+            coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All Part HP',
+            dr:'Damage Reduction %', shieldHP:'Shield Capacity', shieldRegen:'Shield Regen %',
+            dodgePct:'Dodge Chance %', speedPct:'Move Speed %', modCdPct:'Mod Cooldown %',
+            modEffPct:'Mod Effectiveness %', lootMult:'Loot Quality %', autoRepair:'HP/sec Regen',
+            absorbPct:'Shield Absorb %'
+        };
+        // Group into offensive / defensive / utility
+        const offKeys = ['dmgFlat','dmgPct','critChance','critDmg','reloadPct','pellets','splashRadius'];
+        const defKeys = ['coreHP','armHP','legHP','allHP','dr','shieldHP','shieldRegen','dodgePct','absorbPct'];
+        const utilKeys = ['speedPct','modCdPct','modEffPct','lootMult','autoRepair'];
+        const _renderGroup = (title, keys) => {
+            const active = keys.filter(k => (gs[k] || 0) > 0);
+            if (active.length === 0) return '';
+            let h = `<div style="font-size:10px;letter-spacing:2px;color:rgba(255,215,0,0.4);margin-top:10px;margin-bottom:6px;">${title}</div>`;
+            active.forEach(k => {
+                const v = gs[k];
+                const prefix = ['reloadPct','modCdPct'].includes(k) ? '−' : '+';
+                h += `<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:3px;font-size:13px;">
+                    <span style="color:rgba(200,210,220,0.6);">${_gsLabels[k] || k}</span>
+                    <span style="color:#ffd700;letter-spacing:1px;">${prefix}${v}</span>
+                </div>`;
             });
-            gHtml += '</div>';
-            gHtml += _renderGroup('OFFENSIVE', offKeys);
-            gHtml += _renderGroup('DEFENSIVE', defKeys);
-            gHtml += _renderGroup('UTILITY', utilKeys);
-            gearInfo.innerHTML = gHtml;
-        }
+            return h;
+        };
+        // Show equipped item names at the top
+        const slotLabels = [['L','L Arm'],['R','R Arm'],['chest','Chest'],['arms','Arms'],['legs','Legs'],['shield','Shield'],['mod','Mod'],['augment','Augment']];
+        let gHtml = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
+        slotLabels.forEach(([sk, sl]) => {
+            const it = typeof _equipped !== 'undefined' ? _equipped[sk] : null;
+            if (!it) return;
+            const rd = typeof RARITY_DEFS !== 'undefined' ? RARITY_DEFS[it.rarity] : null;
+            const c = rd ? rd.colorStr : '#888';
+            gHtml += `<span style="padding:3px 8px;border:1px solid ${c}44;border-radius:3px;font-size:10px;letter-spacing:1px;color:${c};background:rgba(0,0,0,0.3);">${sl}: ${it.shortName || it.name}</span>`;
+        });
+        gHtml += '</div>';
+        gHtml += _renderGroup('OFFENSIVE', offKeys);
+        gHtml += _renderGroup('DEFENSIVE', defKeys);
+        gHtml += _renderGroup('UTILITY', utilKeys);
+        gearInfo.innerHTML = gHtml;
+    }
     }
 }
 
