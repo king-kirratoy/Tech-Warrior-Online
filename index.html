@@ -3211,7 +3211,7 @@ function handleShieldRegen(time) {
     }
     // Auto-repair: regenerate core HP slowly
     if (_perkState.autoRepair > 0 && player?.comp?.core && player.comp.core.hp < player.comp.core.max) {
-        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 0.016 * _perkState.autoRepair);
+        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + (game.loop.delta / 1000) * _perkState.autoRepair);
         updateBars(); updatePaperDoll();
     }
     // Hit-and-run timer expiry
@@ -9845,7 +9845,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         if (_spd > 20) amt = Math.round(amt * 0.88);
     }
     // HEAVY passive: 15% damage reduction always active
-    if (loadout.chassis === 'heavy') amt = amt * (1 - (CHASSIS.heavy.passiveDR || 0.15));
+    if (loadout.chassis === 'heavy') amt = Math.round(amt * (1 - (CHASSIS.heavy.passiveDR || 0.15)));
     // Bulwark Shield: 12% DR always active (even when shield depleted)
     const _bwSys2 = SHIELD_SYSTEMS[loadout.shld];
     if (_bwSys2?.passiveDR) amt = Math.round(amt * (1 - _bwSys2.passiveDR));
@@ -9856,28 +9856,11 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         const _absorbed = Math.min(_perkState._scrapAbsorb, amt);
         _perkState._scrapAbsorb -= _absorbed;
         amt -= _absorbed;
-        if (amt <= 0) { player.isProcessingDamage = false; return; }
+        if (amt <= 0) return;
     }
     // Flicker invincibility
     if (_perkState._flickerActive) return;
-    // Kill streak broken on taking damage
-    if (_perkState.killStreak > 0 && _perkState._killStreakActive) {
-        _perkState._killStreakActive = false;
-        _perkState.dmgMult = (_perkState.dmgMult || 1) / (1 + 0.25 * _perkState.killStreak);
-    }
-    _perkState._killStreakCount = 0;
-    // Glass Step: first hit per round always dodged
-    if (_perkState.glassStep && !_perkState._glassStepUsed) {
-        _perkState._glassStepUsed = true;
-        return;
-    }
-    // Scrap Shield: absorb damage on next hit after limb destruction
-    if ((_perkState.scrapShield || 0) > 0) {
-        const absorbed = Math.min(_perkState.scrapShield, amt);
-        amt -= absorbed;
-        _perkState.scrapShield -= absorbed;
-        if (amt <= 0) return;
-    }
+    // (Kill streak and Glass Step are handled below after isProcessingDamage is set)
     // Titan Core: cap single-hit damage to 30% of core max
     if (_perkState.titanCore && player?.comp?.core) {
         const cap = player.comp.core.max * 0.30;
@@ -9913,6 +9896,16 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
         scene.tweens.add({ targets:dodgeTxt, y:dodgeTxt.y-30, alpha:0, duration:700, onComplete:()=>dodgeTxt.destroy() });
         return;
     }
+    // Glass Step: first hit per round is always dodged
+    if (_perkState.glassStep && !_perkState._glassStepUsed) {
+        _perkState._glassStepUsed = true;
+        const scene3 = game.scene.scenes[0];
+        const dodgeTxt = scene3.add.text(player.x, player.y-30, 'GLASS STEP', {
+            font:'bold 16px monospace', fill:'#88ffff', stroke:'#000', strokeThickness:3
+        }).setOrigin(0.5).setDepth(20);
+        scene3.tweens.add({ targets:dodgeTxt, y:dodgeTxt.y-28, alpha:0, duration:700, onComplete:()=>dodgeTxt.destroy() });
+        return;
+    }
     player.isProcessingDamage = true;
     sndPlayerHit();
     // Kill Streak: reset on taking damage
@@ -9922,17 +9915,6 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
             _perkState._killStreakActive = false;
         }
         _perkState._killStreakCount = 0;
-    }
-    // Glass Step: first hit per round is always dodged
-    if (_perkState.glassStep && !_perkState._glassStepUsed) {
-        _perkState._glassStepUsed = true;
-        player.isProcessingDamage = false;
-        const scene3 = game.scene.scenes[0];
-        const dodgeTxt = scene3.add.text(player.x, player.y-30, 'GLASS STEP', {
-            font:'bold 16px monospace', fill:'#88ffff', stroke:'#000', strokeThickness:3
-        }).setOrigin(0.5).setDepth(20);
-        scene3.tweens.add({ targets:dodgeTxt, y:dodgeTxt.y-28, alpha:0, duration:700, onComplete:()=>dodgeTxt.destroy() });
-        return;
     }
 
     const now = game.scene.scenes[0].time.now;
@@ -10356,11 +10338,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
                 e.speed = Math.round(e.speed * 0.50); // legs destroyed = half speed
             }
         }
-        // Salvage Protocol: limb destruction guarantees loot drop
-        if (_perkState.salvageProtocol && e.comp[target].hp <= 0 && e.active) {
-            const scene = game.scene.scenes[0];
-            if (e.active) spawnLoot(scene, e.x, e.y, true); // forced drop
-        }
+        // (Salvage Protocol loot drop already handled above via _salvageDrop_ flag)
         // Enemy Scrap Cannon augment
         if (e._augState?.scrapCannon && e.comp[target].hp <= 0 && !e["_eScrapFired_" + target]) {
             e["_eScrapFired_" + target] = true;
@@ -10368,13 +10346,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             createExplosion(scene, e.x, e.y, 40, 0);
             processPlayerDamage(25, 0, true);
         }
-        // Enemy own Scrap Cannon augment
-        if (e._augState?.scrapCannon && e.comp[target].hp <= 0 && !e["_eScrapFired_" + target]) {
-            e["_eScrapFired_" + target] = true;
-            const scene = game.scene.scenes[0];
-            createExplosion(scene, e.x, e.y, 40, 0);
-            processPlayerDamage(25, 0, true);
-        }
+        // (Duplicate enemy Scrap Cannon block removed — already handled above)
     }
 
     // Incendiary Rounds: chance to ignite on hit
@@ -10393,16 +10365,14 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             }});
         }
     }
-    // Resonance: dealing damage charges shield per hit
-    if (_perkState.resonance > 0 && player && e.active) {
-        player.shield = Math.min(player.maxShield || 0, (player.shield || 0) + _perkState.resonance);
-    }
-    // Threat Analyzer: hit enemy takes 15% more damage for 3 s
+    // (Resonance shield charge is applied above — single application only)
+    // Threat Analyzer: hit enemy takes 15% (or 25% with Deep Scan) more damage for 3 s
     if (_perkState.threatAnalyzer && !e._analyzed) {
         e._analyzed = true;
-        e._dmgMult = (e._dmgMult || 1) / 0.85;
+        const _analyzerResist = _perkState.analyzerDepth ? 0.75 : 0.85;
+        e._dmgMult = (e._dmgMult || 1) / _analyzerResist;
         game.scene.scenes[0].time.delayedCall(3000, () => {
-            if (e?.active) { e._dmgMult = (e._dmgMult || 1) * 0.85; e._analyzed = false; }
+            if (e?.active) { e._dmgMult = (e._dmgMult || 1) * _analyzerResist; e._analyzed = false; }
         });
     }
     // Die when core is destroyed (same logic as player)
