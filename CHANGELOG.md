@@ -5,6 +5,49 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v4.5 — Duplicate Logic Audit
+
+**Date:** 2026-03-20
+
+Full duplicate-logic audit of all ~14,200 lines of `index.html`, scanning in ~500-line sections. Any logic implemented more than once — either twice inside `index.html`, or once in `index.html` and once in an external file — was identified and collapsed into a single canonical implementation.
+
+### Duplicates Found and Fixed
+
+**`drawMine()` closure — duplicated in `dropMine()` and `dropEnemyMine()`**
+- Lines ~10721–10734 (inside `dropMine`) and ~10769–10782 (inside `dropEnemyMine`) contained a byte-for-byte identical 14-line inline closure for drawing mine graphics (flat disc, crosshair, pulsing danger ring). The comment in `dropEnemyMine` even noted "identical to player mine."
+- Fix: Extracted shared module-level helper `_drawMineGraphic(g, mx, my, glowAlpha)` immediately before `dropMine()`.
+- Both closures replaced with `const drawMine = () => _drawMineGraphic(g, mx, my, _glowAlpha);`.
+- No `typeof` guard needed — helper lives in the same inline `<script>`.
+
+**`_perkState` reset object — duplicated three times**
+- Identical ~100-field perk state reset object appeared in three functions:
+  - `respawnMech()` — single-line version
+  - `goToMainMenu()` — 39-line formatted version
+  - `returnToHangar()` — 39-line formatted version
+- Comments in the code explicitly warned "must match the shape in returnToHangar() exactly" — acknowledging the duplication.
+- Fix: Extracted shared factory function `_resetPerkState()` immediately before `respawnMech()`.
+- All three `_perkState = { ... }` assignments replaced with `_perkState = _resetPerkState();`.
+- No `typeof` guard needed — factory lives in the same inline `<script>`.
+
+### Sections Scanned — No Other Duplicates Found
+
+- Lines 1–4500 (prior session): CSS, HTML, constants, chassis/weapon/perk data, audio engine, state vars, `handleEnemyAI()`, movement/visual functions
+- Lines 4500–10712: perk menu, round management, cloud saves, scene helpers, boss spawners, enemy AI, all `fireXxx()` functions, `processPlayerDamage()`, `damageEnemy()`
+- Lines 10712–10806: `dropMine()` / `dropEnemyMine()` — **DUPLICATE FOUND AND FIXED** ✓
+- Lines 10807–11309: visual FX helpers, mech building, utility functions, HUD update functions
+- Lines 11310–12041: garage option arrays, `SLOT_DESCS`, dropdown system, `updateGarageStats()`, `showDeathScreen()`, `_cleanupGame()`
+- Lines 12041–12309: `respawnMech()`, `toggleStats()`, `toggleInventory()`, `_switchLoadoutTab()`
+- Lines 12310–12809: inventory/item UI, drag-and-drop handlers, `populateStats()` start
+- Lines 12810–13309: `populateStats()` completion, `togglePause()`, ESC key handler, `goToMainMenu()` — **DUPLICATE FOUND** (perk reset)
+- Lines 13310–end: `returnToHangar()` — **DUPLICATE FOUND** (perk reset); entry points, campaign flow, `startGame()`, `startMultiplayer()`
+- All perk reset duplicates **FIXED** in a single pass ✓
+
+### Files Changed
+
+- `index.html` — `_drawMineGraphic()` helper added; both `drawMine` closures replaced; `_resetPerkState()` factory added; three `_perkState = { ... }` blocks replaced with `_resetPerkState()` calls
+
+---
+
 ## v4.4 — Misplaced Function Audit
 
 **Date:** 2026-03-20

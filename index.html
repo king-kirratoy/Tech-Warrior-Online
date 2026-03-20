@@ -10710,6 +10710,22 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     }
 }
 
+// ── Shared mine drawing helper ────────────────────────────
+function _drawMineGraphic(g, mx, my, glowAlpha) {
+    g.clear();
+    g.lineStyle(2, 0xff2200, 0.45 * glowAlpha);
+    g.strokeCircle(mx, my, 18);
+    g.fillStyle(0x222222, 1);
+    g.fillCircle(mx, my, 8);
+    g.lineStyle(2, 0xcc2200, 1);
+    g.strokeCircle(mx, my, 8);
+    g.lineStyle(2, 0xff3300, 1);
+    g.lineBetween(mx-8, my, mx+8, my);
+    g.lineBetween(mx, my-8, mx, my+8);
+    g.fillStyle(0xff4400, 1);
+    g.fillCircle(mx, my, 2.5);
+}
+
 function dropMine(scene) {
     if (!player?.active) return;
     const mx = player.x + (Math.random()-0.5)*8;
@@ -10718,20 +10734,7 @@ function dropMine(scene) {
     // Mine visual: flat disc + crosshair + pulsing danger ring
     const g = scene.add.graphics().setDepth(8);
     let _glowAlpha = 1.0;
-    const drawMine = () => {
-        g.clear();
-        g.lineStyle(2, 0xff2200, 0.45 * _glowAlpha);
-        g.strokeCircle(mx, my, 18);
-        g.fillStyle(0x222222, 1);
-        g.fillCircle(mx, my, 8);
-        g.lineStyle(2, 0xcc2200, 1);
-        g.strokeCircle(mx, my, 8);
-        g.lineStyle(2, 0xff3300, 1);
-        g.lineBetween(mx-8, my, mx+8, my);
-        g.lineBetween(mx, my-8, mx, my+8);
-        g.fillStyle(0xff4400, 1);
-        g.fillCircle(mx, my, 2.5);
-    };
+    const drawMine = () => _drawMineGraphic(g, mx, my, _glowAlpha);
     drawMine();
     let _pulseUp = false;
     const _pulseTick = scene.time.addEvent({ delay: 500, loop: true, callback: () => {
@@ -10763,23 +10766,10 @@ function dropEnemyMine(scene, enemy) {
     const mx = enemy.x + (Math.random()-0.5)*8;
     const my = enemy.y + (Math.random()-0.5)*8;
 
-    // Mine visual: identical to player mine (flat disc + crosshair + pulsing ring)
+    // Mine visual: identical to player mine — uses shared _drawMineGraphic helper
     const g = scene.add.graphics().setDepth(8);
     let _glowAlpha = 1.0;
-    const drawMine = () => {
-        g.clear();
-        g.lineStyle(2, 0xff2200, 0.45 * _glowAlpha);
-        g.strokeCircle(mx, my, 18);
-        g.fillStyle(0x222222, 1);
-        g.fillCircle(mx, my, 8);
-        g.lineStyle(2, 0xcc2200, 1);
-        g.strokeCircle(mx, my, 8);
-        g.lineStyle(2, 0xff3300, 1);
-        g.lineBetween(mx-8, my, mx+8, my);
-        g.lineBetween(mx, my-8, mx, my+8);
-        g.fillStyle(0xff4400, 1);
-        g.fillCircle(mx, my, 2.5);
-    };
+    const drawMine = () => _drawMineGraphic(g, mx, my, _glowAlpha);
     drawMine();
     let _pulseUp = false;
     const _pulseTick = scene.time.addEvent({ delay: 500, loop: true, callback: () => {
@@ -12048,6 +12038,14 @@ function _cleanupGame() {
     _lastTorsoX = 0; _lastTorsoY = 0; _lastTorsoMX = 0; _lastTorsoMY = 0;
 }
 
+// ── Shared perk state factory ────────────────────────────────────────────────
+// Single source of truth for the default _perkState shape.
+// Called by respawnMech(), returnToHangar(), and goToMainMenu() to avoid
+// three identical giant object literals.
+function _resetPerkState() {
+    return { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
+}
+
 function respawnMech() {
     document.getElementById('death-screen').style.display = 'none';
     // Fully clear all pause/stats state before resuming
@@ -12081,7 +12079,7 @@ function respawnMech() {
     } else {
         _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
     }
-    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
+    _perkState = _resetPerkState();
     window._spectreClones = [];
     _pickedPerks = [];
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
@@ -13211,46 +13209,7 @@ function goToMainMenu() {
     _extractionActive = false; _extractionPoint = null; _extractionVisuals = null; _extractionPromptShown = false;
     _lArmDestroyed = false; _rArmDestroyed = false; _legsDestroyed = false;
     CHASSIS.medium.modCooldownMult = 0.85; // restore from tactical_uplink modification
-    // Full perk state reset — must match the shape in returnToHangar() exactly
-    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1,
-        ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1,
-        armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0,
-        empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1,
-        flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false,
-        adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false,
-        reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false,
-        coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0,
-        rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1,
-        _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0,
-        _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false,
-        _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0,
-        targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false,
-        reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false,
-        railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0,
-        _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0,
-        hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0,
-        _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0,
-        _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0,
-        _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0,
-        titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0,
-        mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false,
-        groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false,
-        rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false,
-        anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false,
-        platingMaxStacks:5, scrapChain:false, gyroCounter:false,
-        droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0,
-        overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false,
-        _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1,
-        _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false,
-        piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false,
-        _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0,
-        pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0,
-        _capacitorCharge:0, meltdownCore:false, fthNapalm:false,
-        lightSpectre:false, lightGhostMech:false, mediumCommand:false,
-        mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false,
-        adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false,
-        heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false,
-        apexPredator:false, _apexPredatorActive:false };
+    _perkState = _resetPerkState(); // shared factory — see _resetPerkState()
     _pickedPerks = [];
     _lastOfferedPerks = [];
     window._spectreClones = [];
@@ -13364,46 +13323,7 @@ function returnToHangar() {
     _perksEarned  = (_gameMode === 'campaign') ? _perksEarned : 0;
     _shotsFired   = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0;
     _lastOfferedPerks = [];
-    // Full perk state reset (same object shape as deploy reset)
-    _perkState = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1,
-        ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1,
-        armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0,
-        empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1,
-        flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false,
-        adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false,
-        reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false,
-        coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0,
-        rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1,
-        _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0,
-        _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false,
-        _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0,
-        targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false,
-        reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false,
-        railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0,
-        _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0,
-        hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0,
-        _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0,
-        _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0,
-        _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0,
-        titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0,
-        mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false,
-        groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false,
-        rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false,
-        anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false,
-        platingMaxStacks:5, scrapChain:false, gyroCounter:false,
-        droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0,
-        overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false,
-        _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1,
-        _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false,
-        piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false,
-        _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0,
-        pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0,
-        _capacitorCharge:0, meltdownCore:false, fthNapalm:false,
-        lightSpectre:false, lightGhostMech:false, mediumCommand:false,
-        mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false,
-        adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false,
-        heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false,
-        apexPredator:false, _apexPredatorActive:false };
+    _perkState = _resetPerkState(); // shared factory — see _resetPerkState()
     window._spectreClones = [];
     _lastKillTime = 0;
     window._missionStartTime = null;
