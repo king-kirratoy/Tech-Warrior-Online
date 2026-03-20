@@ -2573,7 +2573,8 @@ const _perks = {
 };
 
 let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
-window._spectreClones = [];
+let _spectreClones = [];
+let _lastKillTime  = 0;   // timestamp of last enemy kill — used for multi-kill tracking
 let _pickedPerks = [];
 let _lastOfferedPerks = [];
 let reloadL         = 0;
@@ -2907,6 +2908,129 @@ function preload() {
 
 }
 
+// ── Player bullet ↔ enemy impact ─────────────────────────────────
+// Named handler extracted from the anonymous overlap callback in
+// create(). Called as:  (bullet, enemy) => handleBulletEnemyOverlap(this, bullet, enemy)
+function handleBulletEnemyOverlap(scene, bullet, enemy) {
+    if (bullet.isGLBall) return;
+    // Capture position and damage BEFORE destroying bullet (velocity zeroes on destroy)
+    const bAngle          = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
+    let dmg               = bullet.damageValue || 2;
+    // SMG range dropoff: calculate from spawn origin if tracked
+    if (bullet.rangeDropoff && bullet._originX !== undefined) {
+        const tDist = Phaser.Math.Distance.Between(bullet._originX, bullet._originY, bullet.x, bullet.y);
+        if (tDist > bullet.rangeDropoff) {
+            dmg = Math.max(1, Math.round(dmg * Math.max(0.40, 1 - (tDist - bullet.rangeDropoff) / 800)));
+        }
+    }
+    const bulletShieldPierce = bullet.shieldPierce || false;
+    _shotsHit++; _damageDealt += dmg;
+    const bx = bullet.x, by = bullet.y;   // cached before destroy
+    bullet.destroy();
+
+    if (enemy.isShielded && !bulletShieldPierce) {
+        // Shield absorbs hit — impact sparks + BLOCK text
+        try { createShieldSparks(scene, bx, by); } catch(ex) {}
+        const blockTxt = scene.add.text(bx, by - 20, 'BLOCK', {
+            font: 'bold 22px monospace', fill: '#00ffff',
+            stroke: '#000000', strokeThickness: 4
+        }).setOrigin(0.5).setDepth(100);
+        blockTxt.setShadow(0, 0, '#00ffff', 8, true, true);
+        scene.tweens.add({ targets: blockTxt, y: by - 100, alpha: 0,
+            duration: 1500, hold: 500, ease: 'Back.easeOut',
+            onComplete: () => blockTxt.destroy() });
+        return;
+    }
+    createImpactSparks(scene, enemy.x, enemy.y);
+    showDamageText(scene, enemy.x, enemy.y, dmg);
+
+    // Incendiary: chance to ignite on hit
+    if (_perkState.incendiary > 0 && Math.random() < _perkState.incendiary && !enemy._burning) {
+        enemy._burning = true;
+        let burnTicks = 0;
+        const burnTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
+            if (!enemy.active || burnTicks >= 5) { enemy._burning = false; burnTimer.remove(); return; }
+            damageEnemy(enemy, 5, 0);
+            burnTicks++;
+            const sp = scene.add.circle(enemy.x + (Math.random()-0.5)*16, enemy.y + (Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
+            scene.tweens.add({ targets: sp, alpha: 0, y: sp.y - 8, duration: 300, onComplete: () => sp.destroy() });
+        }});
+    }
+    // Chain Reaction: flag for explosion on kill
+    if (_perkState.chainReaction > 0) enemy._chainReactionCheck = true;
+    // One Shot: SR-magnitude hit → halve reload on kill
+    if (_perkState.oneShot && bullet?.damageValue >= (WEAPONS.sr?.dmg || 0) * 0.8) {
+        enemy._oneShotCandidate = true;
+    }
+    if (_perkState.targetPainter && !enemy._painted) {
+        enemy._painted = true;
+        _perkState._paintedEnemy = enemy;
+        enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(2, 0xffaa00); });
+    }
+    damageEnemy(enemy, dmg, bAngle, false, bulletShieldPierce);
+
+    // Titan Smash: every 5th shot AoE shockwave
+    if (typeof checkTitanSmash === 'function' && checkTitanSmash()) {
+        triggerTitanSmash(scene, bx, by, dmg);
+    }
+    // Chain Plasma: chain to nearest other enemy on plasma-sized hit
+    if (_perkState.plsmChain && dmg >= 200) {
+        let chainTarget = null, chainDist = Infinity;
+        enemies.getChildren().forEach(e2 => {
+            if (!e2.active || e2 === enemy) return;
+            const d2 = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
+            if (d2 < 150 && d2 < chainDist) { chainDist = d2; chainTarget = e2; }
+        });
+        if (chainTarget) {
+            damageEnemy(chainTarget, Math.round(dmg * 0.55), 0, true);
+            showDamageText(scene, chainTarget.x, chainTarget.y, Math.round(dmg * 0.55));
+            const cg = scene.add.graphics().setDepth(13);
+            cg.lineStyle(3, 0x00ffff, 0.85);
+            cg.lineBetween(enemy.x, enemy.y, chainTarget.x, chainTarget.y);
+            scene.tweens.add({ targets: cg, alpha: 0, duration: 180, onComplete: () => cg.destroy() });
+        }
+    }
+    // Thermal Core / Melt Armor / Pressure Spray — FTH flame bullet effects
+    if (bullet._flame) {
+        const igniteChance = _perkState.thermalCore ? 1.0 : (_perkState.incendiary || 0);
+        if (igniteChance > 0 && (igniteChance >= 1 || Math.random() < igniteChance) && !enemy._burning) {
+            const burnDur = _perkState.thermalCore ? 7 : 5;
+            enemy._burning = true;
+            let bt = 0;
+            const bTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
+                if (!enemy.active || bt >= burnDur) { enemy._burning = false; bTimer.remove(); return; }
+                damageEnemy(enemy, 5, 0);
+                bt++;
+                const sp = scene.add.circle(enemy.x+(Math.random()-0.5)*16, enemy.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
+                scene.tweens.add({ targets: sp, alpha:0, y:sp.y-8, duration:300, onComplete:()=>sp.destroy() });
+            }});
+        }
+        if (_perkState.meltArmor > 0) {
+            const stacks = Math.min(3, (enemy._meltArmorStacks||0) + 1);
+            enemy._meltArmorStacks = stacks;
+            enemy._dmgMult = (enemy._dmgMult || 1) / Math.max(0.1, 1 - stacks * 0.10);
+            clearTimeout(enemy._meltArmorTimer);
+            enemy._meltArmorTimer = setTimeout(() => {
+                if (enemy.active) { enemy._meltArmorStacks = 0; enemy._dmgMult = 1; }
+            }, 4000);
+        }
+        if (_perkState.pressureSpray && !enemy._fthSlowed) {
+            enemy._fthSlowed = true;
+            enemy._baseSpeed = enemy._baseSpeed || enemy.speed;
+            enemy.speed = Math.round(enemy.speed * 0.80);
+            clearTimeout(enemy._fthSlowTimer);
+            enemy._fthSlowTimer = setTimeout(() => {
+                if (enemy.active) { enemy.speed = enemy._baseSpeed; enemy._fthSlowed = false; }
+            }, 300);
+        }
+    }
+    // Phantom Protocol: 4× pierce shot consumed on hit
+    if (_perkState._phantomShotReady) {
+        _perkState._phantomShotReady = false;
+        _perkState._phantomActive = false;
+    }
+}
+
 function create() {
     // Battlefield grid — hidden until deployed
     const _bfGrid = this.add.grid(2000, 2000, 4000, 4000, 64, 64, 0, 0, 0x004400, 0.3);
@@ -2943,132 +3067,8 @@ function create() {
         if (cover.coverHp > 0) damageCover(this, cover, bullet.damageValue || 10);
     });
 
-    // Player bullet ↔ enemy overlap
-    this.physics.add.overlap(bullets, enemies, (bullet, enemy) => {
-        if (bullet.isGLBall) return;
-        // Capture angle and damage BEFORE destroying bullet (velocity zeroes on destroy)
-        const _bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
-        let dmg = bullet.damageValue || 2;
-        // SMG range dropoff: calculate from origin if tracked
-        if (bullet.rangeDropoff && bullet._originX !== undefined) {
-            const _tDist = Phaser.Math.Distance.Between(bullet._originX, bullet._originY, bullet.x, bullet.y);
-            if (_tDist > bullet.rangeDropoff) {
-                dmg = Math.max(1, Math.round(dmg * Math.max(0.40, 1 - (_tDist - bullet.rangeDropoff) / 800)));
-            }
-        }
-        const _bPierce = bullet.shieldPierce || false;
-        _shotsHit++; _damageDealt += dmg;
-        const _bx2 = bullet.x, _by2 = bullet.y;
-        bullet.destroy();
-        if (enemy.isShielded && !_bPierce) {
-            // Shield absorbs hit — sparks at bullet pos + BLOCK text
-            const _sc = game.scene.scenes[0];
-            const _bx = bullet.x !== undefined ? bullet.x : enemy.x;
-            const _by = bullet.y !== undefined ? bullet.y : enemy.y;
-            try { createShieldSparks(_sc, _bx, _by); } catch(e2) {}
-            const _bt = _sc.add.text(_bx, _by - 20, 'BLOCK', {
-                font: 'bold 22px monospace', fill: '#00ffff',
-                stroke: '#000000', strokeThickness: 4
-            }).setOrigin(0.5).setDepth(100);
-            _bt.setShadow(0, 0, '#00ffff', 8, true, true);
-            _sc.tweens.add({ targets: _bt, y: _by - 100, alpha: 0,
-                duration: 1500, hold: 500, ease: 'Back.easeOut',
-                onComplete: () => _bt.destroy() });
-            return;
-        }
-        createImpactSparks(this, enemy.x, enemy.y);
-        showDamageText(this, enemy.x, enemy.y, dmg);
-        // Incendiary: chance to ignite on hit
-        if (_perkState.incendiary > 0 && Math.random() < _perkState.incendiary && !enemy._burning) {
-            enemy._burning = true;
-            let _burnTicks = 0;
-            const _burnTimer = this.time.addEvent({ delay: 400, loop: true, callback: () => {
-                if (!enemy.active || _burnTicks >= 5) { enemy._burning = false; _burnTimer.remove(); return; }
-                damageEnemy(enemy, 5, 0);
-                _burnTicks++;
-                // Small orange spark
-                const sp = this.add.circle(enemy.x + (Math.random()-0.5)*16, enemy.y + (Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
-                this.tweens.add({ targets: sp, alpha: 0, y: sp.y - 8, duration: 300, onComplete: () => sp.destroy() });
-            }});
-        }
-        // Chain Reaction: chance to explode on kill (tracked in handleEnemyDeath)
-        if (_perkState.chainReaction > 0) enemy._chainReactionCheck = true;
-        // One Shot: SR kill → halve reload timer
-        if (_perkState.oneShot && (wKey === 'sr' || (bullet?.damageValue >= WEAPONS.sr?.dmg * 0.8))) {
-            enemy._oneShotCandidate = true;
-        }
-        if (_perkState.targetPainter && !enemy._painted) {
-            enemy._painted = true;
-            _perkState._paintedEnemy = enemy;
-            enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(2, 0xffaa00); });
-        }
-        damageEnemy(enemy, dmg, _bAngle, false, _bPierce);
-        // Titan Smash: every 5th shot AoE shockwave
-        if (typeof checkTitanSmash === 'function' && checkTitanSmash()) {
-            triggerTitanSmash(this, _bx2, _by2, dmg);
-        }
-        // Chain Plasma: chain to nearest other enemy if this was a plasma-sized hit
-        if (_perkState.plsmChain && dmg >= 200) {
-            let _chainTarget = null, _chainDist = Infinity;
-            enemies.getChildren().forEach(e2 => {
-                if (!e2.active || e2 === enemy) return;
-                const d2 = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
-                if (d2 < 150 && d2 < _chainDist) { _chainDist = d2; _chainTarget = e2; }
-            });
-            if (_chainTarget) {
-                damageEnemy(_chainTarget, Math.round(dmg * 0.55), 0, true);
-                showDamageText(this, _chainTarget.x, _chainTarget.y, Math.round(dmg * 0.55));
-                const cg = this.add.graphics().setDepth(13);
-                cg.lineStyle(3, 0x00ffff, 0.85);
-                cg.lineBetween(enemy.x, enemy.y, _chainTarget.x, _chainTarget.y);
-                this.tweens.add({ targets: cg, alpha: 0, duration: 180, onComplete: () => cg.destroy() });
-            }
-        }
-        // Thermal Core: FTH always ignites; Melt Armor: reduce enemy DR
-        if (bullet._flame) {
-            const igniteChance = _perkState.thermalCore ? 1.0 : (_perkState.incendiary || 0);
-            if (igniteChance > 0 && (igniteChance >= 1 || Math.random() < igniteChance) && !enemy._burning) {
-                const burnDur = _perkState.thermalCore ? 7 : 5; // thermal core +2 ticks
-                enemy._burning = true;
-                let _bt = 0;
-                const _bTimer = this.time.addEvent({ delay: 400, loop: true, callback: () => {
-                    if (!enemy.active || _bt >= burnDur) { enemy._burning = false; _bTimer.remove(); return; }
-                    damageEnemy(enemy, 5, 0);
-                    _bt++;
-                    const sp = this.add.circle(enemy.x+(Math.random()-0.5)*16, enemy.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
-                    this.tweens.add({ targets: sp, alpha:0, y:sp.y-8, duration:300, onComplete:()=>sp.destroy() });
-                }});
-            }
-            // Melt Armor: reduce DR on FTH hit
-            if (_perkState.meltArmor > 0) {
-                const stacks = Math.min(3, (enemy._meltArmorStacks||0) + 1);
-                enemy._meltArmorStacks = stacks;
-                enemy._dmgMult = (enemy._dmgMult || 1) / Math.max(0.1, 1 - stacks * 0.10);
-                clearTimeout(enemy._meltArmorTimer);
-                enemy._meltArmorTimer = setTimeout(() => {
-                    if (enemy.active) { enemy._meltArmorStacks = 0; enemy._dmgMult = 1; }
-                }, 4000);
-            }
-            // Pressure Spray: slow enemies in FTH cone
-            if (_perkState.pressureSpray && !enemy._fthSlowed) {
-                enemy._fthSlowed = true;
-                enemy._baseSpeed = enemy._baseSpeed || enemy.speed;
-                enemy.speed = Math.round(enemy.speed * 0.80);
-                clearTimeout(enemy._fthSlowTimer);
-                enemy._fthSlowTimer = setTimeout(() => {
-                    if (enemy.active) { enemy.speed = enemy._baseSpeed; enemy._fthSlowed = false; }
-                }, 300);
-            }
-        }
-        // Phantom Protocol: 4× pierce shot consumed on hit
-        if (_perkState._phantomShotReady) {
-            _perkState._phantomShotReady = false;
-            _perkState._phantomActive = false;
-            // The 4× mult was already applied during fire() — mark as consumed
-        }
-        // Ballistic Weave: ignore 20% of shield (applied pre-damageEnemy above) — handled in damageEnemy
-        // Targeting Scope: distance-based bonus — applied in fire() at shot creation
-    });
+    // Player bullet ↔ enemy overlap — logic lives in handleBulletEnemyOverlap()
+    this.physics.add.overlap(bullets, enemies, (bullet, enemy) => handleBulletEnemyOverlap(this, bullet, enemy));
 
     // (enemies spawned on deploy, not at scene creation)
 
@@ -3112,34 +3112,7 @@ function update(time) {
         checkEquipmentPickups(this);                                                   // → js/loot-system.js
         if (_extractionActive) _updateExtraction(this);                                // extraction point check
         // Check for objective-based round end between kills (e.g., survival timer expires)
-        // Skip on boss rounds — boss spawn has an 800ms delay and shouldn't be pre-empted
-        const _isBossRound = _round > 0 && _round % 5 === 0;
-        if (!_extractionActive && _roundActive && !_isBossRound && typeof shouldEndRound === 'function' && shouldEndRound()) {
-            const _scene = this;
-            _roundActive = false;
-            if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
-            // Destroy remaining enemies with full visual cleanup
-            enemies?.getChildren().slice().forEach(e => {
-                try {
-                    if (!e.active) return;
-                    if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) handleEliteDeath(_scene, e);
-                    if (e.visuals?.active) e.visuals.destroy();
-                    if (e.torso?.active) e.torso.destroy();
-                    if (e.cmdLabel?.active) e.cmdLabel.destroy();
-                    if (e.medicLabel?.active) e.medicLabel.destroy();
-                    if (e.medicCross?.active) e.medicCross.destroy();
-                    if (e._healTimer) e._healTimer.remove();
-                    if (e.shieldRing?.active) e.shieldRing.destroy();
-                    if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
-                    if (e._splitLabel?.active) e._splitLabel.destroy();
-                    if (e._onDestroy) e._onDestroy();
-                    e.destroy();
-                } catch(ex){}
-            });
-            _roundKills = _roundTotal;
-            _spawnExtractionPoint(_scene);
-            showRoundBanner('OBJECTIVE COMPLETE', 'REACH EXTRACTION POINT', 2500, null);
-        }
+        handleObjectiveRoundEnd(this);
         if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
         if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
     }
@@ -3150,6 +3123,25 @@ function update(time) {
 // ================================================================
 // UPDATE SUB-SYSTEMS (called each frame from update())
 // ================================================================
+
+// ── Objective-based round end ─────────────────────────────────────
+// Called each frame from update() when NOT in extraction.
+// Triggers when shouldEndRound() returns true (survival timer, etc.).
+// Skipped on boss rounds — boss spawn has an 800ms delay.
+function handleObjectiveRoundEnd(scene) {
+    if (_extractionActive || !_roundActive) return;
+    const isBossRound = _round > 0 && _round % 5 === 0;
+    if (isBossRound) return;
+    if (typeof shouldEndRound !== 'function' || !shouldEndRound()) return;
+    _roundActive = false;
+    if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+    enemies?.getChildren().slice().forEach(e => {
+        try { destroyEnemyWithCleanup(scene, e); } catch(ex) {}
+    });
+    _roundKills = _roundTotal;
+    _spawnExtractionPoint(scene);
+    showRoundBanner('OBJECTIVE COMPLETE', 'REACH EXTRACTION POINT', 2500, null);
+}
 
 /** Passive shield regeneration — kicks in 5 s after last hit. */
 function handleShieldRegen(time) {
@@ -4496,57 +4488,59 @@ function _pickFrom(pool, n, exclude) {
     return [...src2].sort(() => Math.random() - 0.5).slice(0, n);
 }
 
+// ── Perk selection logic ──────────────────────────────────────────
+// Returns { chosen, slotLabels, slotColors } — pure selection with no
+// DOM side-effects. showPerkMenu() calls this then handles rendering.
+function selectPerks() {
+    const ch  = loadout.chassis;
+    const mod = loadout.mod || 'none';
+    const wL  = loadout.L   || 'none';
+    const wR  = loadout.R   || 'none';
+    const aug = loadout.aug || 'none';
+    const leg = loadout.leg || 'none';
+    const shld = loadout.shld || 'none';
+
+    // Build per-pool filtered lists
+    const universalPool = Object.keys(_perks).filter(k => _perks[k].cat === 'universal');
+    const chassisPool   = Object.keys(_perks).filter(k => _perks[k].cat === ch);
+    // Slot 4: weapon/mod/aug/leg/shield specific
+    const specCats = [wL, wR, mod, aug, leg].filter(c => c && c !== 'none');
+    // Shield perks use cat:'shield' but loadout.shld is e.g. 'light_shield' — map it
+    if (shld && shld !== 'none') specCats.push('shield');
+    const weaponPool = Object.keys(_perks).filter(k => specCats.includes(_perks[k].cat));
+
+    const chosen = [];
+    // Slots 1 & 2 — universal
+    chosen.push(..._pickFrom(universalPool, 2, chosen));
+    // Slot 3 — chassis (fallback to universal)
+    chosen.push(...(chassisPool.length > 0 ? _pickFrom(chassisPool, 1, chosen) : _pickFrom(universalPool, 1, chosen)));
+
+    // Slot 4 — legendary if eligible (round 5+, 2+ same-cat perks, 10% chance)
+    const legendaryKeys = Object.keys(_perks).filter(k => _perks[k].legendary && !_pickedPerks.includes(k));
+    const eligibleLeg   = legendaryKeys.filter(k => {
+        const cat      = _perks[k].cat;
+        const catCount = _pickedPerks.filter(pk => _perks[pk]?.cat === cat).length;
+        return catCount >= 2 && _round >= 5;
+    });
+    const offerLegendary = eligibleLeg.length > 0 && Math.random() < 0.10 && !chosen.includes(eligibleLeg[0]);
+    if (offerLegendary) {
+        chosen.push(eligibleLeg[Math.floor(Math.random() * eligibleLeg.length)]);
+    } else {
+        chosen.push(...(weaponPool.length > 0 ? _pickFrom(weaponPool, 1, chosen) : _pickFrom(universalPool, 1, chosen)));
+    }
+
+    const specLabel  = specCats.length > 0 ? specCats[specCats.length-1].replace(/_/g,' ').toUpperCase() : 'WEAPON / CORE';
+    const slotLabels = ['UNIVERSAL', 'UNIVERSAL', ch.toUpperCase(), specLabel];
+    const slotColors = ['#00ffff', '#00ffff', ch==='light'?'#88ff88':ch==='medium'?'#ffcc00':'#ff8844', '#cc88ff'];
+
+    return { chosen, slotLabels, slotColors };
+}
+
 function showPerkMenu(nextRound) {
     const menu = document.getElementById('perk-menu');
     if (!menu) return;
 
-    const ch  = loadout.chassis;           // 'light' | 'medium' | 'heavy'
-    const mod = loadout.mod || 'none';
-    const wL  = loadout.L  || 'none';
-    const wR  = loadout.R  || 'none';
-    const aug = loadout.aug || 'none';
-    const leg = loadout.leg || 'none';
-
-    // Slot pools
-    const universalPool = Object.keys(_perks).filter(k => _perks[k].cat === 'universal');
-    const chassisPool   = Object.keys(_perks).filter(k => _perks[k].cat === ch);
-    // Slot 4: weapon/mod/aug/leg specific — combine all equipped categories
-    const shld = loadout.shld || 'none';
-    const specCats = [wL, wR, mod, aug, leg].filter(c => c && c !== 'none');
-    // Shield perks use cat:'shield' but loadout.shld is e.g. 'light_shield' — map it
-    if (shld && shld !== 'none') specCats.push('shield');
-    const weaponPool    = Object.keys(_perks).filter(k => specCats.includes(_perks[k].cat));
-
-    const chosen = [];
-    // Slots 1 & 2 — universal
-    const u = _pickFrom(universalPool, 2, chosen);
-    chosen.push(...u);
-    // Slot 3 — chassis
-    const c = chassisPool.length > 0 ? _pickFrom(chassisPool, 1, chosen) : _pickFrom(universalPool, 1, chosen);
-    chosen.push(...c);
-    // ── Legendary: offered in slot 4 if conditions met ──
-    // Conditions: round 5+, 2+ perks from that legendary's category, not yet picked
-    const _legendaryKeys = Object.keys(_perks).filter(k => _perks[k].legendary && !_pickedPerks.includes(k));
-    const _eligibleLeg = _legendaryKeys.filter(k => {
-        const cat = _perks[k].cat;
-        const catCount = _pickedPerks.filter(pk => _perks[pk]?.cat === cat).length;
-        return catCount >= 2 && _round >= 5;
-    });
-    const _offerLegendary = _eligibleLeg.length > 0 && Math.random() < 0.10 && !chosen.includes(_eligibleLeg[0]);
-
-    // Slot 4 — legendary (if eligible) or weapon/mod/aug/leg specific
-    let w;
-    if (_offerLegendary) {
-        const legKey = _eligibleLeg[Math.floor(Math.random() * _eligibleLeg.length)];
-        w = [legKey];
-    } else {
-        w = weaponPool.length > 0 ? _pickFrom(weaponPool, 1, chosen) : _pickFrom(universalPool, 1, chosen);
-    }
-    chosen.push(...w);
-
-    const _specLabel = specCats.length > 0 ? specCats[specCats.length-1].replace(/_/g,' ').toUpperCase() : 'WEAPON / CORE';
-    const SLOT_LABELS = ['UNIVERSAL', 'UNIVERSAL', ch.toUpperCase(), _specLabel];
-    const SLOT_COLORS = ['#00ffff', '#00ffff', ch==='light'?'#88ff88':ch==='medium'?'#ffcc00':'#ff8844', '#cc88ff'];
+    const { chosen, slotLabels, slotColors } = selectPerks();
 
     const cards = document.getElementById('perk-cards');
     cards.innerHTML = '';
@@ -4560,7 +4554,7 @@ function showPerkMenu(nextRound) {
         const legendaryBadge = p.legendary ? `<div class="perk-legendary-badge">✦ LEGENDARY</div>` : '';
         if (p.legendary) card.classList.add('legendary');
         card.innerHTML = `
-            <div class="perk-slot-label" style="color:${p.legendary ? '#ffd700' : SLOT_COLORS[idx]}">${p.legendary ? 'LEGENDARY' : SLOT_LABELS[idx]}</div>
+            <div class="perk-slot-label" style="color:${p.legendary ? '#ffd700' : slotColors[idx]}">${p.legendary ? 'LEGENDARY' : slotLabels[idx]}</div>
             ${stackBadge}
             ${legendaryBadge}
             <div class="perk-card-title" style="${p.legendary ? 'color:#ffd700;' : ''}">${p.label}</div>
@@ -4718,59 +4712,63 @@ function _clearMapForRound(scene) {
     } catch(e) {}
 }
 
-function startRound(roundNum) {
-    _round      = roundNum;
-    _roundKills = 0;
-    // Resilience: restore destroyed arms at 50% HP each new round
-    // Reset per-round perk states
-    if (_perkState.glassStep) _perkState._glassStepUsed = false;
-    _perkState._killStreakCount = 0;
-    _perkState._killStreakActive = false;
-    _perkState._pressureTarget = null;
-    _perkState._pressureStacks = 0;
+// ── Per-round perk state reset ────────────────────────────────────
+// Called at the top of startRound(). Resets any _perkState flags
+// that are scoped to a single round (activation cooldowns, counters,
+// Resilience arm restore, Autonomous Unit drone teardown).
+function resetRoundPerks() {
+    // Resilience: restore destroyed arms at 50% HP
     if (_perkState.resilience && player?.comp) {
         if (_lArmDestroyed) { _lArmDestroyed = false; loadout.L = _savedL || loadout.L || 'none'; player.comp.lArm.hp = Math.round(player.comp.lArm.max*0.5); updateHUD(); }
         if (_rArmDestroyed) { _rArmDestroyed = false; loadout.R = _savedR || loadout.R || 'none'; player.comp.rArm.hp = Math.round(player.comp.rArm.max*0.5); updateHUD(); }
     }
-    // Iron Will resets each round
-    if (_perkState.ironWill)   _perkState._ironWillUsed  = false;
-    if (_perkState.glassStep)  _perkState._glassStepUsed = false;
-    if (_perkState.killStreak > 0) { _perkState._killStreakCount = 0; _perkState._killStreakActive = false; }
-    // Per-round build perk resets
-    _perkState.overwatchKills    = 0;
-    _perkState._neuralAccelActive = false;
-    _perkState._phantomActive    = false;
-    _perkState._phantomShotReady = false;
-    _perkState._capacitorCharge  = 0;
-    _perkState._capacitorReady   = false;
-    if (_perkState.snapCharge) _perkState._snapChargeReady = true;
+    // One-shot activation flags
+    if (_perkState.ironWill)    _perkState._ironWillUsed   = false;
+    if (_perkState.glassStep)   _perkState._glassStepUsed  = false;
+    if (_perkState.snapCharge)  _perkState._snapChargeReady = true;
     if (_perkState.jumpCharges > 1) _perkState._jumpChargesLeft = _perkState.jumpCharges;
+    // Kill-based counters
+    _perkState._killStreakCount   = 0;
+    _perkState._killStreakActive  = false;
+    _perkState._pressureTarget   = null;
+    _perkState._pressureStacks   = 0;
+    _perkState.overwatchKills     = 0;
+    // Activation-state flags
+    _perkState._neuralAccelActive  = false;
+    _perkState._phantomActive      = false;
+    _perkState._phantomShotReady   = false;
+    _perkState._capacitorCharge    = 0;
+    _perkState._capacitorReady     = false;
+    // Autonomous Unit: destroy existing auto-drone before next round
     if (_perkState.autonomousUnit) {
-        // Destroy existing auto-drone if still alive before resetting flag
         try {
-            if (_perkState._autoDroneRef?.active) {
-                _perkState._autoDroneRef.destroy();
-            }
+            if (_perkState._autoDroneRef?.active) _perkState._autoDroneRef.destroy();
         } catch(e) {}
         _perkState._autoDroneActive = false;
-        _perkState._autoDroneRef = null;
+        _perkState._autoDroneRef    = null;
         if (_perkState._autoDroneRespawnTimer) {
             _perkState._autoDroneRespawnTimer.remove?.();
             _perkState._autoDroneRespawnTimer = null;
         }
     }
+}
+
+function startRound(roundNum) {
+    _round      = roundNum;
+    _roundKills = 0;
+    resetRoundPerks();
     _roundActive = true;
     const scene = game.scene.scenes[0];
 
     // ── Campaign mode: use mission config ──
-    const _isCampaignMode = _gameMode === 'campaign' && typeof getCampaignMission === 'function';
-    const _campaignMission = _isCampaignMode ? getCampaignMission() : null;
-    const _campaignEnemy = (_isCampaignMode && typeof getCampaignEnemyConfig === 'function') ? getCampaignEnemyConfig() : null;
+    const isCampaignMode  = _gameMode === 'campaign' && typeof getCampaignMission === 'function';
+    const campaignMission = isCampaignMode ? getCampaignMission() : null;
+    const campaignEnemy   = (isCampaignMode && typeof getCampaignEnemyConfig === 'function') ? getCampaignEnemyConfig() : null;
 
-    if (_campaignMission && _campaignEnemy) {
-        _roundTotal = _campaignEnemy.totalEnemies + (_campaignMission.hasBoss ? 1 : 0);
+    if (campaignMission && campaignEnemy) {
+        _roundTotal = campaignEnemy.totalEnemies + (campaignMission.hasBoss ? 1 : 0);
         // Store campaign enemy config for HP/speed scaling in spawnEnemy
-        window._activeCampaignConfig = _campaignEnemy;
+        window._activeCampaignConfig = campaignEnemy;
         // Record mission start time for speed-run bonus objective
         window._missionStartTime = scene.time?.now || Date.now();
     } else {
@@ -4785,8 +4783,8 @@ function startRound(roundNum) {
     // ── Phase 6: Arena & Objective selection ──
     if (typeof selectArena === 'function') {
         // Campaign mode: use mission's arena and objective
-        const arenaKey = _campaignMission ? _campaignMission.arena : selectArena(roundNum);
-        const objKey = _campaignMission ? _campaignMission.objective : selectObjective(roundNum, arenaKey);
+        const arenaKey = campaignMission ? campaignMission.arena : selectArena(roundNum);
+        const objKey   = campaignMission ? campaignMission.objective : selectObjective(roundNum, arenaKey);
         _arenaState.currentArena = arenaKey;
         _arenaState.currentObjective = objKey;
         // Cleanup previous objective state
@@ -4804,17 +4802,17 @@ function startRound(roundNum) {
     }
 
     // Boss every 5th round (simulation), or hasBoss flag (campaign)
-    const isBossRound = _campaignMission ? _campaignMission.hasBoss : (roundNum > 0 && roundNum % 5 === 0);
+    const isBossRound = campaignMission ? campaignMission.hasBoss : (roundNum > 0 && roundNum % 5 === 0);
 
-    if (isBossRound && !(_campaignMission && _campaignEnemy && _campaignEnemy.totalEnemies > 0)) {
+    if (isBossRound && !(campaignMission && campaignEnemy && campaignEnemy.totalEnemies > 0)) {
         // BOSS-ONLY ROUND — only the boss spawns; it counts as 1 kill to end the round
         _roundTotal = 1;
         setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, roundNum); }, 800);
-    } else if (_campaignMission && _campaignEnemy) {
+    } else if (campaignMission && campaignEnemy) {
         // ── CAMPAIGN MODE: use variable enemy composition ──
-        const comp = _campaignEnemy.composition;
+        const comp = campaignEnemy.composition;
         let spawnIdx = 0;
-        let _elitesApplied = 0;
+        let elitesApplied = 0;
 
         for (let i = 0; i < comp.length; i++) {
             const typeKey = comp[i];
@@ -4830,11 +4828,11 @@ function startRound(roundNum) {
                     spawned = spawnEnemy(scene);
                 }
                 // Apply elite modifier based on campaign config
-                if (spawned && _elitesApplied < _campaignEnemy.maxElites && Math.random() < _campaignEnemy.eliteChance) {
+                if (spawned && elitesApplied < campaignEnemy.maxElites && Math.random() < campaignEnemy.eliteChance) {
                     const mod1 = (typeof _rollEliteModifier === 'function') ? _rollEliteModifier([]) : null;
                     if (mod1) {
                         applyEliteModifier(scene, spawned, mod1);
-                        _elitesApplied++;
+                        elitesApplied++;
                     }
                 }
             }, delay);
@@ -4842,12 +4840,12 @@ function startRound(roundNum) {
         }
 
         // Boss fight at end of boss missions (after normal enemies)
-        if (_campaignMission.hasBoss) {
-            setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, _campaignEnemy.enemyLevel); }, spawnIdx * 400 + 600);
+        if (campaignMission.hasBoss) {
+            setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, campaignEnemy.enemyLevel); }, spawnIdx * 400 + 600);
         }
 
         // Commander in higher-level campaign missions (add to total)
-        if (_campaignEnemy.enemyLevel >= 6) {
+        if (campaignEnemy.enemyLevel >= 6) {
             _roundTotal++;
             updateRoundHUD();
             setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 800);
@@ -4857,13 +4855,13 @@ function startRound(roundNum) {
         // Normal round — commanders from round 4+, medic from round 3+
         // Phase 4: special enemy types and elite modifiers
         const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
-        const _spawnCfg = (typeof _getEnemySpawnConfig === 'function') ? _getEnemySpawnConfig(roundNum) : { specialTypes:[], eliteChance:0, maxElites:0 };
+        const spawnCfg = (typeof _getEnemySpawnConfig === 'function') ? _getEnemySpawnConfig(roundNum) : { specialTypes:[], eliteChance:0, maxElites:0 };
 
         // Determine how many specials to spawn (replace some normal enemies)
         let specialCount = 0;
-        if (_spawnCfg.specialTypes.length > 0 && roundNum > 5) {
+        if (spawnCfg.specialTypes.length > 0 && roundNum > 5) {
             // 1 special per 4 normal enemies, minimum 1 if types are available
-            specialCount = Math.min(Math.floor(_roundTotal / 4) + 1, _spawnCfg.specialTypes.length, Math.floor(_roundTotal * 0.4));
+            specialCount = Math.min(Math.floor(_roundTotal / 4) + 1, spawnCfg.specialTypes.length, Math.floor(_roundTotal * 0.4));
             specialCount = Math.max(1, specialCount);
         }
 
@@ -4878,21 +4876,21 @@ function startRound(roundNum) {
         }
 
         // Spawn special enemy types
-        let _elitesApplied = 0;
+        let elitesApplied = 0;
         for (let i = 0; i < specialCount; i++) {
-            const typeKey = Phaser.Math.RND.pick(_spawnCfg.specialTypes);
+            const typeKey = Phaser.Math.RND.pick(spawnCfg.specialTypes);
             const delay = spawnIdx * 400;
             setTimeout(() => {
                 if (!isDeployed || !_roundActive) return;
                 const se = spawnSpecialEnemy(scene, typeKey);
                 // Possibly apply elite modifier
-                if (se && _elitesApplied < _spawnCfg.maxElites && Math.random() < _spawnCfg.eliteChance) {
+                if (se && elitesApplied < spawnCfg.maxElites && Math.random() < spawnCfg.eliteChance) {
                     const mod1 = _rollEliteModifier([]);
                     if (mod1) {
                         applyEliteModifier(scene, se, mod1);
-                        _elitesApplied++;
+                        elitesApplied++;
                         // Double modifier chance (round 20+)
-                        if ((_spawnCfg.doubleModChance || 0) > 0 && Math.random() < _spawnCfg.doubleModChance) {
+                        if ((spawnCfg.doubleModChance || 0) > 0 && Math.random() < spawnCfg.doubleModChance) {
                             const mod2 = _rollEliteModifier([mod1]);
                             if (mod2) applyEliteModifier(scene, se, mod2);
                         }
@@ -4903,9 +4901,9 @@ function startRound(roundNum) {
         }
 
         // Also apply elite modifiers to some normal enemies (round 11+)
-        if (roundNum >= 11 && _spawnCfg.maxElites > 0) {
+        if (roundNum >= 11 && spawnCfg.maxElites > 0) {
             // Pick random normal enemies to make elite after they spawn
-            const normalEliteCount = Math.min(_spawnCfg.maxElites - specialCount, Math.floor(normalCount * 0.3));
+            const normalEliteCount = Math.min(spawnCfg.maxElites - specialCount, Math.floor(normalCount * 0.3));
             if (normalEliteCount > 0) {
                 setTimeout(() => {
                     if (!isDeployed || !_roundActive || !enemies) return;
@@ -4914,11 +4912,11 @@ function startRound(roundNum) {
                     );
                     const toElite = Phaser.Utils.Array.Shuffle(normals).slice(0, normalEliteCount);
                     toElite.forEach(en => {
-                        if (_elitesApplied >= _spawnCfg.maxElites) return;
+                        if (elitesApplied >= spawnCfg.maxElites) return;
                         const mod1 = _rollEliteModifier([]);
                         if (mod1) {
                             applyEliteModifier(scene, en, mod1);
-                            _elitesApplied++;
+                            elitesApplied++;
                         }
                     });
                 }, spawnIdx * 400 + 200);
@@ -5333,15 +5331,13 @@ function returnToMainMenu() {
 function _spawnSpectreClone() {
     const scene = game?.scene?.scenes[0];
     if (!scene || !player?.active) return;
-    if (!window._spectreClones) window._spectreClones = [];
-
     // Remove expired/destroyed clones from tracking
-    window._spectreClones = window._spectreClones.filter(c => c.torso?.active);
+    _spectreClones = _spectreClones.filter(c => c.torso?.active);
 
     // Max 2 clones at a time
-    if (window._spectreClones.length >= 2) {
+    if (_spectreClones.length >= 2) {
         // Destroy oldest to make room
-        const oldest = window._spectreClones.shift();
+        const oldest = _spectreClones.shift();
         try { oldest.torso.destroy(); oldest.label.destroy(); oldest.fire.remove(); oldest.drift.remove(); } catch(ex) {}
     }
 
@@ -5406,7 +5402,7 @@ function _spawnSpectreClone() {
     }});
 
     // Track the clone
-    window._spectreClones.push({ torso: cloneTorso, label: cloneLabel, fire: cloneFireEvent, drift: driftEvent });
+    _spectreClones.push({ torso: cloneTorso, label: cloneLabel, fire: cloneFireEvent, drift: driftEvent });
 
     // Clone expires after 4s
     scene.time.delayedCall(4000, () => {
@@ -5421,8 +5417,28 @@ function _spawnSpectreClone() {
         } else {
             try { cloneLabel.destroy(); cloneFireEvent.remove(); driftEvent.remove(); } catch(ex) {}
         }
-        window._spectreClones = window._spectreClones.filter(c => c.torso?.active);
+        _spectreClones = _spectreClones.filter(c => c.torso?.active);
     });
+}
+
+// ── Enemy teardown helper ─────────────────────────────────────────
+// Destroys all visual/physics sub-objects on an enemy and calls its
+// _onDestroy callback. Used wherever enemies are forcibly cleared
+// (objective end, swarm defeat, extraction trigger).
+function destroyEnemyWithCleanup(scene, e) {
+    if (!e.active) return;
+    if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) handleEliteDeath(scene, e);
+    if (e.visuals?.active)       e.visuals.destroy();
+    if (e.torso?.active)         e.torso.destroy();
+    if (e.cmdLabel?.active)      e.cmdLabel.destroy();
+    if (e.medicLabel?.active)    e.medicLabel.destroy();
+    if (e.medicCross?.active)    e.medicCross.destroy();
+    if (e._healTimer)            e._healTimer.remove();
+    if (e.shieldRing?.active)    e.shieldRing.destroy();
+    if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
+    if (e._splitLabel?.active)   e._splitLabel.destroy();
+    if (e._onDestroy) e._onDestroy();
+    e.destroy();
 }
 
 function onEnemyKilled(deadEnemy) {
@@ -5453,25 +5469,11 @@ function onEnemyKilled(deadEnemy) {
             if (_killDist <= 150) trackBonusObjective('close_kill', 1);
         }
         // Multi-kill tracking (2 kills within 2s)
-        if (!window._lastKillTime) window._lastKillTime = 0;
         const now = Date.now();
-        if (now - window._lastKillTime < 2000) {
+        if (now - _lastKillTime < 2000) {
             trackBonusObjective('multi_kill', 1);
         }
-        window._lastKillTime = now;
-    }
-    // Kill Streak: count kills without taking damage
-    if (_perkState.killStreak > 0) {
-        _perkState._killStreakCount = (_perkState._killStreakCount || 0) + 1;
-        if (_perkState._killStreakCount >= 3 && !_perkState._killStreakActive) {
-            _perkState._killStreakActive = true;
-            _perkState.dmgMult = (_perkState.dmgMult || 1) * (1 + 0.25 * _perkState.killStreak);
-            const scene = game.scene.scenes[0];
-            const txt = scene.add.text(player?.x||2000, (player?.y||2000)-50, '★ KILL STREAK', {
-                font:'bold 18px monospace', fill:'#ffff44', stroke:'#000', strokeThickness:3
-            }).setOrigin(0.5).setDepth(20);
-            scene.tweens.add({ targets:txt, y:txt.y-30, alpha:0, duration:1200, onComplete:()=>txt.destroy() });
-        }
+        _lastKillTime = now;
     }
     // MEDIUM: each kill reduces active mod cooldown by 0.5s
     if (loadout.chassis === 'medium' && lastModTime > 0) {
@@ -5531,23 +5533,7 @@ function onEnemyKilled(deadEnemy) {
         // Destroy remaining enemies if objective ended the round early
         if (_objEnd && _roundKills < _roundTotal) {
             enemies?.getChildren().slice().forEach(e => {
-                try {
-                    if (!e.active) return;
-                    if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) {
-                        handleEliteDeath(scene, e);
-                    }
-                    if (e.visuals?.active)      e.visuals.destroy();
-                    if (e.torso?.active)         e.torso.destroy();
-                    if (e.cmdLabel?.active)       e.cmdLabel.destroy();
-                    if (e.medicLabel?.active)     e.medicLabel.destroy();
-                    if (e.medicCross?.active)     e.medicCross.destroy();
-                    if (e._healTimer)            e._healTimer.remove();
-                    if (e.shieldRing?.active)     e.shieldRing.destroy();
-                    if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
-                    if (e._splitLabel?.active)    e._splitLabel.destroy();
-                    if (e._onDestroy) e._onDestroy();
-                    e.destroy();
-                } catch(ex){}
+                try { destroyEnemyWithCleanup(scene, e); } catch(ex) {}
             });
             _roundKills = _roundTotal;
         }
@@ -5889,9 +5875,9 @@ function deployMech() {
 
     // Regenerate cover map — visual rects are wiped by _cleanupGame each session
     // so we must rebuild them every deploy to keep both visuals and physics in sync
-    const _deployScene = game.scene.scenes[0];
-    if (_deployScene) {
-        try { generateCover(_deployScene); } catch(e) { console.warn('generateCover error', e); }
+    const deployScene = game.scene.scenes[0];
+    if (deployScene) {
+        try { generateCover(deployScene); } catch(e) { console.warn('generateCover error', e); }
     }
 
     document.getElementById('ui-layer').style.display = 'none';
@@ -5915,10 +5901,10 @@ function deployMech() {
         .setDepth(5);
     scene.physics.add.existing(player);
     // Hitbox circle sized to match each chassis's core visual
-    const _hitR   = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
-    const _hitOff = loadout.chassis === 'light' ? -8  : loadout.chassis === 'medium' ? -10 : -12;
-    player.body.setCircle(_hitR);
-    player.body.setOffset(-_hitR, _hitOff);
+    const hitR   = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
+    const hitOff = loadout.chassis === 'light' ? -8  : loadout.chassis === 'medium' ? -10 : -12;
+    player.body.setCircle(hitR);
+    player.body.setOffset(-hitR, hitOff);
     player.setScale(s.scale);
     player.body.setCollideWorldBounds(true);
 
@@ -5969,7 +5955,10 @@ function deployMech() {
     });
 
     // Component HP — initialize first, then immediately reset doll so it always shows green
-    // Apply gear HP bonuses from equipped items
+    // Apply gear HP bonuses from equipped items.
+    // recalcGearStats() lives in loot-system.js and reads _equipped (not loadout).
+    // Key distinction: _equipped.shield  (loot gear slot)
+    //                  loadout.shld      (loadout shield selection)
     recalcGearStats();
     const _gCoreHP = (_gearState?.coreHP || 0) + (_gearState?.allHP || 0);
     const _gArmHP  = (_gearState?.armHP  || 0) + (_gearState?.allHP || 0);
@@ -10183,14 +10172,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
             // Destroy remaining swarm units with visual cleanup
             enemies?.getChildren().slice().forEach(u => {
-                try {
-                    if (!u.active) return;
-                    if (u.visuals?.active) u.visuals.destroy();
-                    if (u.torso?.active) u.torso.destroy();
-                    if (u._visionConeGfx?.active) u._visionConeGfx.destroy();
-                    if (u._onDestroy) u._onDestroy();
-                    u.destroy();
-                } catch(ex) {}
+                try { destroyEnemyWithCleanup(scene, u); } catch(ex) {}
             });
             _spawnExtractionPoint(scene);
             showRoundBanner('SWARM ELIMINATED', 'REACH EXTRACTION POINT', 2500, null);
@@ -11052,6 +11034,20 @@ function updatePaperDoll() {
 // GARAGE DROPDOWN SYSTEM
 // ================================================================
 
+// ── Slot ID → loadout key mapping ─────────────────────────────────
+// Garage dropdown IDs (L R M A G S) differ from loadout object keys.
+// Always use this map when translating between the two systems.
+// NOTE: _equipped (loot-system.js) uses yet another key set:
+//   { L, R, chest, arms, legs, shield, mod, augment }
+const SLOT_ID_MAP = {
+    L: 'L',
+    R: 'R',
+    M: 'mod',
+    A: 'aug',
+    G: 'leg',
+    S: 'shld',
+};
+
 // All weapons available to both arms (free slot assignment)
 const WEAPON_OPTIONS = [
     { key:'none', label:'NONE',           weight:0  },
@@ -11351,9 +11347,7 @@ function buildDD(slotId, options) {
         // If a two-handed weapon is equipped, hide the R arm slot options (except the locked weapon)
         const activeTwoHanded = WEAPONS[loadout.L]?.twoHanded;
         if (activeTwoHanded && slotId === 'R' && opt.key !== loadout.L && opt.key !== 'none') return;
-        const slotKey = slotId === 'L' ? loadout.L : slotId === 'R' ? loadout.R
-                      : slotId === 'M' ? loadout.mod : slotId === 'A' ? loadout.aug
-                      : slotId === 'S' ? loadout.shld : loadout.leg;
+        const slotKey = loadout[SLOT_ID_MAP[slotId]];
         // Weight cap only applies to weapon arm slots
         const _isWeaponSlot = (slotId === 'L' || slotId === 'R');
         const currentSlotW = _isWeaponSlot ? (WEAPONS[slotKey]?.weight ?? 0) : 0;
@@ -11419,11 +11413,8 @@ function toggleDD(slotId) {
     if (slotId === 'C') {
         buildColorDD();
     } else {
-        buildDD(slotId, slotId==='L'||slotId==='R' ? WEAPON_OPTIONS
-                      : slotId==='M' ? MOD_OPTIONS
-                      : slotId==='G' ? LEG_OPTIONS
-                      : slotId==='S' ? SHIELD_OPTIONS
-                      : slotId==='A' ? AUG_OPTIONS : LEG_OPTIONS);
+        const DD_OPTIONS = { L: WEAPON_OPTIONS, R: WEAPON_OPTIONS, M: MOD_OPTIONS, A: AUG_OPTIONS, G: LEG_OPTIONS, S: SHIELD_OPTIONS };
+        buildDD(slotId, DD_OPTIONS[slotId] ?? LEG_OPTIONS);
     }
     document.getElementById('dds-' + slotId)?.classList.add('dd-open');
     document.getElementById('ddl-' + slotId)?.classList.add('dd-list-open');
@@ -11460,14 +11451,10 @@ function selectSlot(slotId, key) {
                 if (loadout.chassis !== 'light' && key !== 'none' && loadout.L === key) loadout.L = 'none';
             }
         }
-    } else if (slotId === 'M') {
-        loadout.mod = key;
-    } else if (slotId === 'A') {
-        loadout.aug = key;
-    } else if (slotId === 'G') {
-        loadout.leg = key;
-    } else if (slotId === 'S') {
-        loadout.shld = key;
+    } else {
+        // Non-arm slots: use SLOT_ID_MAP to resolve the loadout property
+        const loadoutKey = SLOT_ID_MAP[slotId];
+        if (loadoutKey) loadout[loadoutKey] = key;
     }
     refreshGarage();
 }
