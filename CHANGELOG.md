@@ -5,6 +5,66 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v4.0 — Audio System Audit
+
+**Date:** 2026-03-20 (Central Time)
+
+Hardened the entire Web Audio engine against node leaks, unbounded `_activeNodes` growth, unthrottled high-frequency sound calls, premature AudioContext creation, and missing tab-visibility handling.
+
+### Area 1 — Node Cleanup & `_activeNodes` Accuracy
+
+- **Added `_lastNodeStartTime` tracking to `_tone()` and `_noise()` (index.html):** Both functions now set `_lastNodeStartTime = performance.now()` immediately after incrementing `_activeNodes`. This timestamp is used by the periodic audit (see next bullet) to detect when all in-flight nodes must have completed.
+
+- **Added periodic audit `_auditActiveNodes` inside `_getAC()` (index.html):** A `setInterval` (2000 ms) is registered the first time the AudioContext is created. On each tick it checks two conditions: (1) if `_ac.state === 'closed'`, `_activeNodes` is reset to `0` immediately — closed-context nodes never fire `onended` so the counter would otherwise be stuck; (2) if `_activeNodes > 0` but more than `1500 ms` have elapsed since the last node was started (longer than the longest possible sound), the counter is also reset to `0`. This prevents the `_MAX_NODES` cap from permanently silencing audio after a rare `onended` dropout.
+
+- **Added `if (!ac) return;` guard to `_tone()` and `_noise()` (index.html):** `_getAC()` now returns `null` before the first user gesture and when the context is closed. Both synthesis functions bail out immediately on a `null` return rather than relying on the outer `try/catch` to swallow a `TypeError`. This makes the early-exit explicit and avoids an unnecessary exception being generated and silently eaten on every call before the player has interacted.
+
+- **`_activeNodes` safety floor already present — confirmed correct (index.html):** Both `onended` handlers use `Math.max(0, _activeNodes - 1)`, ensuring the counter can never go negative. No change needed here; documented as verified.
+
+### Area 2 — Throttle Gaps
+
+- **`sndShieldDeactivate()` — added `_canPlay('sdact', 300)` guard (index.html):** This function had no throttle at all. It is called via `activateShield()` expiry and could fire in rapid succession if the barrier mod cycled quickly.
+
+- **`sndRage()` — added `_canPlay('rage', 500)` guard (index.html):** No throttle existed. Multiple rage stacks, the Titan boss rage effect, and the secondary rage mod path all call this function independently.
+
+- **`sndJump()` — added `_canPlay('jump', 250)` guard (index.html):** No throttle existed. Rapid jump key presses (or the sprint-boosters perk reducing cooldown) could fire nodes faster than they complete.
+
+- **`sndLoot(type)` — added `_canPlay('loot_' + type, 200)` guard (index.html):** No throttle existed. Walking over a cluster of loot orbs triggers one call per orb per frame until each is consumed, potentially stacking many simultaneous nodes.
+
+- **`sndCommanderSpawn()` — added `_canPlay('cmdsn', 300)` guard (index.html):** No throttle existed. Squad-based spawns can produce multiple commanders in the same tick, particularly in campaign mode with staggered spawning.
+
+- **`sndRoundClear()` — added `_canPlay('rclr', 500)` guard (index.html):** No throttle existed. While typically a one-shot event, the guard protects against double-fire if the round-end path is re-entered during the perk-menu transition.
+
+- **`sndRoundStart()` — added `_canPlay('rstrt', 500)` guard (index.html):** No throttle existed. Same rationale as `sndRoundClear()`.
+
+- **Drone fire sound (line in `_spawnDrone` fire callback) — wrapped with `_canPlay('drone_fire', 150)` (index.html):** The Overwatch perk can activate two drones simultaneously, each firing on independent 1000 ms timers. The two fire events can coincide within the same frame, doubling the node cost with no throttle. Throttled at 150 ms to allow distinct sounds for near-simultaneous hits while preventing duplicates.
+
+- **Missile impact sound (in `activateMissiles()` tween onComplete) — wrapped with `_canPlay('mslimp', 100)` (index.html):** Up to 3 missiles land within 150 ms of each other (150 ms stagger × 3), all calling `_noise()` directly with no throttle. Added 100 ms minimum gap so the first impact is always audible.
+
+- **Medic heal sound (in `spawnMedic()` heal-aura timer) — wrapped with `_canPlay('medic_heal', 500)` (index.html):** Multiple medics share the same 2500 ms heal timer but their callbacks are not synchronized. In a round with several medics, multiple `_tone()` calls could arrive in the same frame with no throttle.
+
+- **Titan artillery impact sound (in `spawnTitan()` phase-1 artillery timer) — wrapped with `_canPlay('art_imp', 100)` (index.html):** Phase 1 fires 3 mortar rounds every 2000 ms; phase 3 fires additional alternating attacks every 2500 ms. Each mortar's tween `onComplete` called `_tone()` directly, producing up to 3 concurrent unthrottled nodes every 2 seconds.
+
+### Area 3 — AudioContext Lifecycle
+
+- **Added `_audioReady` flag and `_onFirstUserGesture` handler (index.html):** `_getAC()` now returns `null` and skips context creation until `_audioReady` is `true`. The flag is set by a one-shot `mousedown`/`keydown` listener (`_onFirstUserGesture`) that removes itself after the first event. This satisfies the browser autoplay policy, which requires an AudioContext to be created or resumed within a user-gesture handler, and prevents a silent suspended-context from being constructed during script evaluation or Phaser init.
+
+- **Added `_onVisibilityChange` handler (index.html):** `document.addEventListener('visibilitychange', ...)` calls `_ac.suspend()` when `document.hidden` is `true` and `_ac.resume()` when the tab becomes visible again (only if the state is `'suspended'`, to avoid calling `resume()` on a running or closed context). This stops audio processing while the game is in the background, reducing CPU usage and preventing sounds from playing into an unlistened-to context.
+
+- **Both lifecycle handlers registered in an IIFE `_initAudioLifecycle()` (index.html):** Wrapped in an immediately-invoked function expression to keep the listener references contained and avoid polluting the module-level scope with one-shot helper functions.
+
+### Version Bump
+
+- **Version display updated to v4.0 in `#main-menu` subtitle and OVERVIEW.md.**
+
+### Files Changed
+
+- `index.html` — audio globals (added `_lastNodeStartTime`, `_audioReady`); `_getAC()` (added `_audioReady` guard, `_auditActiveNodes` setInterval); `_tone()` (added `if (!ac) return`, `_lastNodeStartTime` update); `_noise()` (added `if (!ac) return`, `_lastNodeStartTime` update); `sndShieldDeactivate()` (added throttle); `sndRage()` (added throttle); `sndJump()` (added throttle); `sndLoot()` (added per-type throttle); `sndCommanderSpawn()` (added throttle); `sndRoundClear()` (added throttle); `sndRoundStart()` (added throttle); `_spawnDrone()` drone fire callback (added throttle); `activateMissiles()` impact callback (added throttle); `spawnMedic()` heal-aura callback (added throttle); `spawnTitan()` artillery impact callback (added throttle); `_initAudioLifecycle()` IIFE (new — user-gesture guard + visibility handler); version bump to v4.0
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v4.0
+
+---
+
 ## v3.9 — Accessibility & UX Audit
 
 **Date:** 2026-03-20 (Central Time)

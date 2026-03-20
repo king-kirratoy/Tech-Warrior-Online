@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 20, 2026 (v3.9)
+Last updated: March 20, 2026 (v4.0)
 
 ---
 
@@ -89,7 +89,8 @@ loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js
 ### Audio Engine
 **Lives in:** `index.html` — `_tone()`, `_noise()`, `sndFire()`, `sndExplosion()`, `sndEnemyDeath()`, etc.
 **What it does:** Web Audio API synthesizer — no audio files required. Oscillators + noise buffers for all sounds. Throttled via `_sndThrottle{}` (per-sound last-played timestamps). Node count capped at `_MAX_NODES=48`.
-**Key globals:** `let _ac` (AudioContext), `let _masterVol=0.32`, `let _activeNodes=0`
+**Key globals:** `let _ac` (AudioContext), `let _masterVol=0.32`, `let _activeNodes=0`, `let _lastNodeStartTime=0`, `let _audioReady=false`
+**Lifecycle:** AudioContext is created only after the first user gesture (`_audioReady` flag). Tab-visibility changes suspend/resume the context. A 2000 ms `setInterval` audit resets `_activeNodes` if the context is closed or all nodes must have expired.
 
 ### HUD System
 **Lives in:** `index.html` — `updateHUD()`, `updateBars()`, `updatePaperDoll()`, `updateRoundHUD()`, `updateCooldownOverlays()`, `drawMinimap()`
