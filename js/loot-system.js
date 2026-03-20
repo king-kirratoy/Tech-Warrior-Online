@@ -1737,7 +1737,7 @@ function loadCampaignInventory() {
                 const validSlots = ['L','R','chest','arms','legs','shield','mod','augment'];
                 const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
                 validSlots.forEach(s => {
-                    if (parsed[s] && typeof parsed[s] === 'object' && parsed[s].name) clean[s] = parsed[s];
+                    if (parsed[s] && typeof parsed[s] === 'object' && parsed[s].name && parsed[s].rarity && parsed[s].baseType) clean[s] = parsed[s];
                 });
                 _equipped = clean;
             }
@@ -1768,7 +1768,8 @@ function saveCampaignProgress() {
             leg: loadout.leg,
             shld: loadout.shld,
             totalKills: (typeof _totalKills !== 'undefined') ? _totalKills : 0,
-            perksEarned: (typeof _perksEarned !== 'undefined') ? _perksEarned : 0
+            perksEarned: (typeof _perksEarned !== 'undefined') ? _perksEarned : 0,
+            savedAt: Date.now()
         };
         localStorage.setItem('tw_campaign_progress', JSON.stringify(progress));
     } catch(e) {}

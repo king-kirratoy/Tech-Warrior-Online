@@ -5,6 +5,41 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v3.6 — Save & Persistence Audit
+
+**Date:** 2026-03-20 (Central Time)
+
+Audited all save/load paths, corrupt-save handling, cloud vs local sync logic, and state-bleed between runs; fixed every asymmetry and bleed found.
+
+### Area 1 — Save/Load Symmetry
+
+- **`saveCampaignProgress()` (loot-system.js) missing timestamp field:** `tw_campaign_progress` was saved without a time marker, so `_loadCampaignData()` had no basis for choosing between an older cloud record and a newer local one. Fixed: added `savedAt: Date.now()` to the progress object. This field is now read in `_loadCampaignData()` for cloud vs local comparison (see Area 3).
+
+### Area 2 — Corrupt Save Handling
+
+- **Equipped-item validation only checked `name`, not `rarity`/`baseType`:** `loadCampaignInventory()` and `_restoreFromCloudData()` both filtered inventory items by `name && rarity && baseType` but validated equipped-slot objects only by `name`. A saved equipped item with a `name` but corrupt or missing `rarity`/`baseType` fields would pass into `_equipped` and could cause `recalcGearStats()` errors or silent stat miscalculations. Fixed: both load paths now require `name && rarity && baseType` before accepting an equipped item — matching the existing inventory filter in both functions.
+
+### Area 3 — Cloud vs Local Sync
+
+- **`_loadCampaignData()` always preferred cloud over local with no timestamp check:** If a cloud save succeeded at time T but the player then played more missions (saving locally at T+N) before the cloud sync timer fired, a page reload would restore the older cloud record and silently roll back T+N of progress. Fixed: `_loadCampaignData()` now reads `localSavedAt` from the local progress before hitting the network, compares it against `cloudData.updated_at`, and only restores from cloud when `cloudTs >= localSavedAt`. When local is newer (e.g. cloud sync failed), the localStorage path is used instead, preserving the player's most recent state.
+
+### Area 4 — State Bleed Between Runs
+
+- **`goToMainMenu()` did not reset inventory for simulation mode:** If a player deployed a simulation run (accumulating inventory drops, scrap, and gear state), then quit directly to main menu via pause or death screen (bypassing `returnToHangar()`), `_inventory`, `_equipped`, `_scrap`, and `_gearState` were left intact. The next simulation deploy would start with the previous run's gear already in `_equipped`, causing incorrect `recalcGearStats()` values at `deployMech()`. Fixed: `goToMainMenu()` now calls `resetInventory()` when `_gameMode !== 'campaign'`, clearing all four state variables and equipping fresh starter gear before the player can deploy again.
+
+- **`confirmNewCampaign()` did not reset `_campaignState.chassis`:** Starting a new campaign via the menu wiped `playerLevel`, `playerXP`, `completedMissions`, `skillsChosen`, `claimedRewards`, and `loadoutSlots` but left `_campaignState.chassis` set to the previous campaign's locked chassis. The subsequent chassis selection screen would immediately re-lock to the old value in `_loadCampaignData()` because `if (_campaignState.chassis) loadout.chassis = _campaignState.chassis` runs after every load. Fixed: added `_campaignState.chassis = null` to the reset block in `confirmNewCampaign()`.
+
+- **`respawnMech()` duplicated the stat-counter reset line:** `_shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;` appeared twice in sequence (lines 11901 and 11904 in the original file), with only `_roundClearing = false` and the extraction reset between them. The duplicate was dead code but masked a subtle ordering question. Removed the second copy; the single reset at line 11901 is authoritative.
+
+### Files Changed
+
+- `js/loot-system.js` — `saveCampaignProgress()` (added `savedAt` field); `loadCampaignInventory()` (equipped item validation requires `rarity && baseType`)
+- `index.html` — `_restoreFromCloudData()` (equipped item validation requires `rarity && baseType`); `_loadCampaignData()` (timestamp comparison before restoring cloud); `goToMainMenu()` (call `resetInventory()` for simulation mode); `confirmNewCampaign()` (reset `_campaignState.chassis = null`); `respawnMech()` (removed duplicate stat reset line)
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v3.6
+
+---
+
 ## v3.5 — Performance & Memory Audit
 
 **Date:** 2026-03-20
