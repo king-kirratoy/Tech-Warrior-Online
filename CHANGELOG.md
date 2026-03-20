@@ -5,6 +5,46 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v3.7 — Security & Input Validation Audit
+
+**Date:** 2026-03-20 (Central Time)
+
+Hardened all leaderboard submission paths, callsign handling, and external-data DOM rendering against score manipulation, filter bypass via paste, and XSS from Supabase-fetched strings.
+
+### Area 1 — Leaderboard Score Integrity
+
+- **Added validation constants `SCORE_MAX_ROUND`, `SCORE_MAX_KILLS`, `SCORE_MAX_DAMAGE` (index.html):** Defined upper bounds for submitted values — round cap 999, kills cap 30,000 (~30/round × 999 rounds), damage cap 100,000,000. These are used by `_validateScoreEntry()` to clamp all numeric fields.
+
+- **Added `_validateScoreEntry(entry)` helper (index.html):** New function that clamps every numeric field via `Math.min/max/round(Number(...))`, restricts `chassis` to the known enum `['light','medium','heavy']`, and sanitizes `name` through `_sanitizeCallsign()`. Returns a safe, type-coerced copy of the entry.
+
+- **`_capturePendingRun()` now passes raw values through `_validateScoreEntry()` (index.html):** All fields — round, kills, accuracy, damage, and name — are validated and clamped before being stored in `_pendingRun`. Accuracy was already computed as a ratio but is now also hard-clamped to 0–100.
+
+- **`_insertScore()` validates entry before any Supabase or localStorage write (index.html):** First line of `_insertScore()` now calls `entry = _validateScoreEntry(entry)`, ensuring values are clamped even if called directly with unvalidated data.
+
+### Area 2 — Callsign Sanitization
+
+- **Added `_sanitizeCallsign(raw)` helper (index.html):** Single source of truth for callsign normalization — uppercases, strips all characters not in `[A-Z0-9 _.\-]` (matching the `_csKeyDown` allowlist), and slices to 16 characters. Falls back to `'ANONYMOUS'` if the result is empty.
+
+- **`proceedToMainMenu()` now runs callsign through `_sanitizeCallsign()` before storing (index.html):** Previously the raw `.trim().toUpperCase()` value was stored directly, allowing characters inserted via paste (Ctrl+V) to bypass the `_csKeyDown` key filter. Fixed: `_playerCallsign = _sanitizeCallsign(val)` and the localStorage write uses the sanitized value.
+
+- **`startGame()` sanitizes the localStorage/input fallback callsign (index.html):** The fallback path that reads `menu-callsign` or `localStorage.getItem('tw_callsign')` now wraps the result in `_sanitizeCallsign()` before assigning to `_playerCallsign`.
+
+- **`startMultiplayer()` sanitizes the localStorage/input fallback callsign (index.html):** Same fix applied to the PVP entry path.
+
+### Area 3 — External Data Rendering
+
+- **Added `_escapeHtml(str)` helper (index.html):** Escapes `&`, `<`, `>`, `"`, and `'` for safe use in `innerHTML` contexts. Available for future use wherever fetched strings must be injected as HTML.
+
+- **`_renderScores()` rewritten to use DOM construction instead of `innerHTML` for all fetched data (index.html):** The previous implementation built a template-literal string containing `e.name`, `e.chassis`, and numeric fields and injected it via `table.innerHTML = header + rows`. A malicious or corrupt Supabase record with HTML in the `name` field would have been executed as markup. Fixed: each row is now built with `document.createElement('div')` / `document.createElement('span')` and all cell content is assigned via `span.textContent`, which the browser always treats as plain text. Numeric fields are coerced with `Number()` before display. String fields (`name`, `chassis`) pass through `_sanitizeCallsign()`. The static header row (no fetched data) retains `innerHTML` for its fixed template.
+
+### Files Changed
+
+- `index.html` — added `SCORE_MAX_ROUND`, `SCORE_MAX_KILLS`, `SCORE_MAX_DAMAGE` constants; added `_sanitizeCallsign()`, `_escapeHtml()`, `_validateScoreEntry()` helpers; updated `_capturePendingRun()`, `_insertScore()`, `proceedToMainMenu()`, `startGame()`, `startMultiplayer()`, `_renderScores()`; version bump to v3.7
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v3.7
+
+---
+
 ## v3.6 — Save & Persistence Audit
 
 **Date:** 2026-03-20 (Central Time)

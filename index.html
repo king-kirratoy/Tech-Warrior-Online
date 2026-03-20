@@ -811,7 +811,7 @@ button.active {
         <button id="new-campaign-btn" class="menu-start-btn" onclick="confirmNewCampaign()">&#9733;&nbsp;&nbsp;NEW CAMPAIGN</button>
         <button class="menu-start-btn menu-btn-red" onclick="hideCampaignSubMenu()" style="margin-top:8px;">&#9664;&nbsp;&nbsp;BACK</button>
     </div>
-    <div class="menu-version">v3.0 // ALPHA BUILD</div>
+    <div class="menu-version">v3.7 // ALPHA BUILD</div>
 </div>
 <script>
 // Pre-fill callsign and update button state on page load
@@ -5124,6 +5124,39 @@ function _restoreFromCloudData(data) {
 const LB_KEY    = 'tw_leaderboard_v1';
 const LB_MAX    = 20;
 
+// ── Score submission validation limits ───────────────────────────────────
+const SCORE_MAX_ROUND  = 999;      // no realistic run exceeds this
+const SCORE_MAX_KILLS  = 30000;    // ~30 enemies/round × 999 rounds
+const SCORE_MAX_DAMAGE = 100000000; // 100 million — generous ceiling
+
+/** Strip disallowed chars and enforce length on a callsign string. */
+function _sanitizeCallsign(raw) {
+    return String(raw || '').toUpperCase().replace(/[^A-Z0-9 _.\-]/g, '').slice(0, 16) || 'ANONYMOUS';
+}
+
+/** Escape HTML special characters in a string before DOM insertion. */
+function _escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/** Clamp and type-coerce all fields in a score entry before submission. */
+function _validateScoreEntry(entry) {
+    return {
+        name:     _sanitizeCallsign(entry.name || 'ANONYMOUS'),
+        round:    Math.min(Math.max(Math.round(Number(entry.round)    || 0), 0), SCORE_MAX_ROUND),
+        kills:    Math.min(Math.max(Math.round(Number(entry.kills)    || 0), 0), SCORE_MAX_KILLS),
+        accuracy: Math.min(Math.max(Math.round(Number(entry.accuracy) || 0), 0), 100),
+        damage:   Math.min(Math.max(Math.round(Number(entry.damage)   || 0), 0), SCORE_MAX_DAMAGE),
+        chassis:  ['light', 'medium', 'heavy'].includes(entry.chassis) ? entry.chassis : 'unknown',
+        ts:       Number(entry.ts) || Date.now(),
+    };
+}
+
 let _pendingRun     = null;
 let _playerCallsign = 'ANONYMOUS';
 
@@ -5132,16 +5165,16 @@ function _supabaseEnabled() {
 }
 
 function _capturePendingRun() {
-    const acc = _shotsFired > 0 ? Math.round((_shotsHit / _shotsFired) * 100) : 0;
-    _pendingRun = {
+    const rawAcc = _shotsFired > 0 ? Math.round((_shotsHit / _shotsFired) * 100) : 0;
+    _pendingRun = _validateScoreEntry({
         name:     _playerCallsign || 'ANONYMOUS',
         round:    _round,
         kills:    _totalKills,
-        accuracy: acc,
+        accuracy: rawAcc,
         damage:   _damageDealt,
         chassis:  loadout.chassis || 'unknown',
         ts:       Date.now(),
-    };
+    });
     // Auto-submit immediately — no manual step needed
     _autoSubmitRun(_pendingRun);
 }
@@ -5176,6 +5209,7 @@ async function _saveScores(scores) {
 }
 
 async function _insertScore(entry) {
+    entry = _validateScoreEntry(entry);
     if (_supabaseEnabled()) {
         try {
             await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
@@ -5258,27 +5292,12 @@ function _renderScores(scores) {
     const sorted = _sortScores([...scores]);
     const chassisColor = { light: '#88ff88', medium: '#ffcc44', heavy: '#ff8844' };
 
-    const rows = sorted.map((e, i) => {
-        const rank    = i + 1;
-        const medal   = rank === 1 ? '◈' : rank === 2 ? '◇' : rank === 3 ? '◆' : `${rank}.`;
-        const rankCol = rank === 1 ? '#ffd700' : rank === 2 ? '#c0c0c0' : rank === 3 ? '#cd7f32' : 'rgba(0,210,255,0.4)';
-        const cc      = chassisColor[e.chassis] || '#aaa';
-        const date    = new Date(e.ts).toLocaleDateString('en-US', { month:'short', day:'numeric' });
-        const name    = (e.name || 'UNKNOWN').toUpperCase().slice(0, 16);
-        const bg      = rank <= 3 ? 'rgba(0,210,255,0.04)' : 'transparent';
-        return `
-        <div style="display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:9px 12px;border-bottom:1px solid rgba(0,210,255,0.08);background:${bg};gap:0 6px;">
-            <span style="color:${rankCol};font-size:12px;font-weight:bold;">${medal}</span>
-            <span style="color:#e8f0e8;font-size:12px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span>
-            <span style="color:#00e0ff;font-size:11px;text-align:right;">R${e.round}</span>
-            <span style="color:rgba(0,210,255,0.75);font-size:11px;text-align:right;">${e.kills}K</span>
-            <span style="color:rgba(0,210,255,0.6);font-size:11px;text-align:right;">${e.accuracy}%</span>
-            <span style="color:rgba(0,210,255,0.55);font-size:10px;text-align:right;">${e.damage.toLocaleString()}</span>
-            <span style="color:${cc};font-size:9px;text-align:right;letter-spacing:1px;opacity:0.8;">${(e.chassis||'?').toUpperCase()}</span>
-        </div>`;
-    }).join('');
+    // Build rows using DOM elements so fetched string values are never treated as HTML
+    const frag = document.createDocumentFragment();
 
-    const header = `
+    // Header row (static strings only — innerHTML is safe here)
+    const headerDiv = document.createElement('div');
+    headerDiv.innerHTML = `
         <div style="display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:6px 12px 10px;gap:0 6px;border-bottom:1px solid rgba(0,210,255,0.25);margin-bottom:4px;">
             <span style="color:rgba(0,210,255,0.35);font-size:9px;">#</span>
             <span style="color:rgba(0,210,255,0.35);font-size:9px;letter-spacing:2px;">CALLSIGN</span>
@@ -5288,8 +5307,50 @@ function _renderScores(scores) {
             <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">DAMAGE</span>
             <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">CHASSIS</span>
         </div>`;
+    frag.appendChild(headerDiv);
 
-    table.innerHTML = header + rows;
+    sorted.forEach((e, i) => {
+        const rank    = i + 1;
+        const medal   = rank === 1 ? '◈' : rank === 2 ? '◇' : rank === 3 ? '◆' : `${rank}.`;
+        const rankCol = rank === 1 ? '#ffd700' : rank === 2 ? '#c0c0c0' : rank === 3 ? '#cd7f32' : 'rgba(0,210,255,0.4)';
+        const cc      = chassisColor[e.chassis] || '#aaa';
+        const bg      = rank <= 3 ? 'rgba(0,210,255,0.04)' : 'transparent';
+
+        // Coerce numeric fields — never interpolate raw DB values as HTML
+        const safeRound    = Math.round(Number(e.round)    || 0);
+        const safeKills    = Math.round(Number(e.kills)    || 0);
+        const safeAccuracy = Math.round(Number(e.accuracy) || 0);
+        const safeDamage   = Math.round(Number(e.damage)   || 0);
+
+        // Sanitize string fields with textContent assignment (not innerHTML)
+        const safeName    = _sanitizeCallsign(e.name || 'UNKNOWN');
+        const safeChassis = _sanitizeCallsign(e.chassis || '?');
+
+        const row = document.createElement('div');
+        row.style.cssText = `display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:9px 12px;border-bottom:1px solid rgba(0,210,255,0.08);background:${bg};gap:0 6px;`;
+
+        const cells = [
+            { text: medal,                              style: `color:${rankCol};font-size:12px;font-weight:bold;` },
+            { text: safeName,                           style: 'color:#e8f0e8;font-size:12px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' },
+            { text: `R${safeRound}`,                   style: 'color:#00e0ff;font-size:11px;text-align:right;' },
+            { text: `${safeKills}K`,                   style: 'color:rgba(0,210,255,0.75);font-size:11px;text-align:right;' },
+            { text: `${safeAccuracy}%`,                style: 'color:rgba(0,210,255,0.6);font-size:11px;text-align:right;' },
+            { text: safeDamage.toLocaleString(),        style: 'color:rgba(0,210,255,0.55);font-size:10px;text-align:right;' },
+            { text: safeChassis,                        style: `color:${cc};font-size:9px;text-align:right;letter-spacing:1px;opacity:0.8;` },
+        ];
+
+        cells.forEach(({ text, style }) => {
+            const span = document.createElement('span');
+            span.style.cssText = style;
+            span.textContent = text;
+            row.appendChild(span);
+        });
+
+        frag.appendChild(row);
+    });
+
+    table.innerHTML = '';
+    table.appendChild(frag);
     table.style.display = 'block';
 }
 
@@ -13260,8 +13321,8 @@ function proceedToMainMenu() {
     const csInput = document.getElementById('menu-callsign');
     const val = (csInput?.value || '').trim().toUpperCase();
     if (!val) return; // guard: should not be reachable with disabled btn
-    _playerCallsign = val;
-    try { localStorage.setItem('tw_callsign', val); } catch(e) {}
+    _playerCallsign = _sanitizeCallsign(val);
+    try { localStorage.setItem('tw_callsign', _playerCallsign); } catch(e) {}
 
     // Fade out callsign screen, fade in main menu
     const cs = document.getElementById('callsign-screen');
@@ -13474,7 +13535,7 @@ function startGame(mode) {
     if (!_playerCallsign || _playerCallsign === 'ANONYMOUS') {
         const _csInput = document.getElementById('menu-callsign');
         const _csVal   = (_csInput?.value || '').trim().toUpperCase();
-        _playerCallsign = _csVal || (localStorage.getItem ? (localStorage.getItem('tw_callsign') || 'ANONYMOUS') : 'ANONYMOUS');
+        _playerCallsign = _sanitizeCallsign(_csVal || (localStorage.getItem ? (localStorage.getItem('tw_callsign') || 'ANONYMOUS') : 'ANONYMOUS'));
         if (_playerCallsign && localStorage.setItem) localStorage.setItem('tw_callsign', _playerCallsign);
     }
     // Campaign mode: restore saved progress, then show mission select
@@ -13520,7 +13581,7 @@ function startMultiplayer() {
     if (!_playerCallsign || _playerCallsign === 'ANONYMOUS') {
         const csInput = document.getElementById('menu-callsign');
         const csVal = (csInput?.value || '').trim().toUpperCase();
-        _playerCallsign = csVal || (localStorage.getItem ? (localStorage.getItem('tw_callsign') || 'ANONYMOUS') : 'ANONYMOUS');
+        _playerCallsign = _sanitizeCallsign(csVal || (localStorage.getItem ? (localStorage.getItem('tw_callsign') || 'ANONYMOUS') : 'ANONYMOUS'));
         if (_playerCallsign && localStorage.setItem) localStorage.setItem('tw_callsign', _playerCallsign);
     }
     // Fade out main menu → show PVP hangar for loadout configuration
