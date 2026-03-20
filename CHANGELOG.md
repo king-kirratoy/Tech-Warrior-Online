@@ -5,6 +5,32 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v4.8 — Fix Callsign Screen Syntax Error
+
+**Date:** 2026-03-20
+
+Fixed a syntax error that crashed the entire inline `<script>` block, preventing all functions below it (including `proceedToMainMenu`) from being defined.
+
+### Root Cause
+
+Line 3898 of `index.html` read `nction _applyEnemyObstacleAvoidance(...)` — the `fu` prefix was missing, making `nction` a bare identifier followed by a function-call expression and a stray `{`, which the JS parser reported as "missing ) after argument list" (line ~3896).
+
+### Effect
+
+The script parse error killed the entire inline `<script>` block. `proceedToMainMenu` (defined at line 13613) was never registered, so clicking Proceed on the callsign screen threw `ReferenceError: proceedToMainMenu is not defined` — making the game unlaunchable.
+
+### Fix
+
+Restored `fu` so the declaration reads `function _applyEnemyObstacleAvoidance(...)`. No other changes.
+
+### Files Changed
+
+- `index.html` — line 3898: `nction` → `function`
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v4.8
+
+---
+
 ## v4.7 — Final Consistency Check
 
 **Date:** 2026-03-20
