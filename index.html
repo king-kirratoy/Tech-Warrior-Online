@@ -5106,7 +5106,7 @@ function _restoreFromCloudData(data) {
     if (data.equipped && typeof data.equipped === 'object') {
         const validSlots = ['L','R','chest','arms','legs','shield','mod','augment'];
         const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
-        validSlots.forEach(s => { if (data.equipped[s] && typeof data.equipped[s] === 'object' && data.equipped[s].name) clean[s] = data.equipped[s]; });
+        validSlots.forEach(s => { if (data.equipped[s] && typeof data.equipped[s] === 'object' && data.equipped[s].name && data.equipped[s].rarity && data.equipped[s].baseType) clean[s] = data.equipped[s]; });
         _equipped = clean;
     }
     if (typeof data.scrap === 'number') _scrap = Math.max(0, data.scrap);
@@ -11901,7 +11901,6 @@ function respawnMech() {
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     _roundClearing = false;
     _extractionActive = false; _extractionPoint = null; _extractionVisuals = null; _extractionPromptShown = false;
-    _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     CHASSIS.medium.modCooldownMult = 0.85;
     const scene = game.scene.scenes[0];
     deployMech();
@@ -12922,6 +12921,9 @@ function goToMainMenu() {
     _lastOfferedPerks = [];
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     _roundClearing = false;
+    // Simulation: wipe inventory/gear so the previous run's drops don't carry into the next run.
+    // Campaign: keep inventory intact — it will be reloaded from localStorage on resume.
+    if (_gameMode !== 'campaign' && typeof resetInventory === 'function') resetInventory();
     resetLoadout(); // reset gear when returning to main menu
     // Restore cursor (Phaser hides it on deploy)
     const sc = game?.scene?.scenes[0];
@@ -13073,14 +13075,28 @@ function returnToHangar() {
     updateHUD();
 }
 
-/** Load campaign data: try cloud first, fall back to localStorage. */
+/** Load campaign data: try cloud first, fall back to localStorage.
+ *  If both exist, the newer save wins (cloud.updated_at vs local progress.savedAt). */
 async function _loadCampaignData() {
+    // Read local timestamp before hitting the network so we can compare
+    let localSavedAt = 0;
+    try {
+        const localProgress = loadCampaignProgress();
+        if (localProgress && localProgress.savedAt) localSavedAt = localProgress.savedAt;
+    } catch(e) {}
+
     // Try cloud load
     let cloudLoaded = false;
     try {
         const cloudData = await loadFromCloud();
         if (cloudData) {
-            cloudLoaded = _restoreFromCloudData(cloudData);
+            // Only restore from cloud if it is at least as recent as the local save.
+            // This prevents a stale cloud record from overwriting a newer local save
+            // that was written after the last successful cloud sync.
+            const cloudTs = cloudData.updated_at ? new Date(cloudData.updated_at).getTime() : 0;
+            if (cloudTs >= localSavedAt) {
+                cloudLoaded = _restoreFromCloudData(cloudData);
+            }
         }
     } catch(e) { console.warn('Cloud load attempt failed', e); }
 
@@ -13341,6 +13357,7 @@ function confirmNewCampaign() {
     _campaignState.currentChapter = 0;
     _campaignState.currentMission = 0;
     _campaignState.completedMissions = {};
+    _campaignState.chassis = null;
     _campaignState.claimedRewards = {};
     _campaignState.loadoutSlots = [];
     _campaignState.skillsChosen = [];
