@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 19, 2025 12:00 PM CT
+Last updated: March 20, 2026
 
 ---
 
@@ -46,7 +46,7 @@ loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js
 **Connects to:** `handlePlayerFiring()` (called each frame), `_perkState` (all damage/reload multipliers), `_gearState` (gear bonuses), bullet ↔ enemy overlap registered in `create()`
 
 ### Perk System
-**Lives in:** `index.html` — `const _perks`, `let _perkState`, `_pickedPerks[]`, `showPerkMenu()`, `pickPerk()`
+**Lives in:** `index.html` — `const _perks`, `let _perkState`, `_pickedPerks[]`, `selectPerks()`, `showPerkMenu()`, `pickPerk()`
 **What it does:** ~400+ perks organized by category (universal, chassis, weapon/mod-specific, legendary). Offered in a 4-slot menu after each round's extraction. Perks apply immediately on pick via `p.apply()` which mutates `_perkState`. Legendaries require 2+ perks in their category and round 5+.
 **Key state:** `_perkState.dmgMult`, `_perkState.reloadMult`, `_perkState.speedMult`, `_perkState.fortress` (DR), `_perkState.critChance`
 **Connects to:** `damageEnemy()` and `processPlayerDamage()` read `_perkState` for all combat math, `handleShieldRegen()` checks `_perkState.noShieldRegen`
@@ -58,9 +58,10 @@ loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js
 **Connects to:** `processPlayerDamage()` (absorb logic, on-break effects), `activateShield()` (barrier mod), `updateBars()` (HUD display)
 
 ### Round & Extraction System
-**Lives in:** `index.html` — `startRound()`, `onEnemyKilled()`, `_spawnExtractionPoint()`, `_updateExtraction()`, `_triggerExtraction()`
+**Lives in:** `index.html` — `startRound()`, `resetRoundPerks()`, `onEnemyKilled()`, `handleObjectiveRoundEnd()`, `destroyEnemyWithCleanup()`, `_spawnExtractionPoint()`, `_updateExtraction()`, `_triggerExtraction()`
 **What it does:** Enemies spawn on a staggered timer at round start. When all enemies die, an extraction zone spawns at a random map location. Player must reach it and press E to end the round, triggering perk selection. Bosses spawn every 5th round. Campaign mode uses `_activeCampaignConfig` for enemy composition instead of the default formula.
 **Key variables:** `_round`, `_roundKills`, `_roundTotal`, `_roundActive`, `_extractionActive`, `_extractionPoint`
+**Key helpers:** `resetRoundPerks()` — called at round start to clear all per-round perk state. `handleObjectiveRoundEnd(scene)` — called each frame from `update()` to detect survival/assassination objective endings. `destroyEnemyWithCleanup(scene, e)` — shared teardown for forced enemy removal (objective end, swarm defeat).
 **Connects to:** `damageEnemy()` → `onEnemyKilled()`, `showPerkMenu()` → `pickPerk()` → `startRound(nextRound)`
 
 ### Enemy AI System
@@ -108,6 +109,9 @@ loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js
 - **Slot IDs in code:** single uppercase letter — `L` `R` `M` (mod) `A` (aug) `G` (leg) `S` (shield) `C` (color)
 - **Slot keys in `_equipped`:** different — `L` `R` `chest` `arms` `legs` `shield` `mod` `augment`
 - **Shield field on loadout:** `shld` (not `shield`) — `loadout.shld = 'light_shield'`
+- **Garage slot ID → loadout key:** use `SLOT_ID_MAP` constant: `{ L:'L', R:'R', M:'mod', A:'aug', G:'leg', S:'shld' }`. `_equipped` (loot-system.js) uses yet another set: `{ L, R, chest, arms, legs, shield, mod, augment }`.
+- **`selectPerks()`:** pure perk selection (no DOM). Call before `showPerkMenu()` renders cards. Returns `{ chosen, slotLabels, slotColors }`.
+- **`destroyEnemyWithCleanup(scene, e)`:** centralised enemy teardown. Use wherever enemies are force-removed outside the normal damage path.
 - **Enemy color palettes:** `ENEMY_COLORS`, `COMMANDER_COLORS`, `MEDIC_COLORS`, `BOSS_COLORS` (all keyed by chassis/type)
 - **typeof guards:** External JS functions are always called with `typeof fn === 'function'` guards to survive file load failures
 
