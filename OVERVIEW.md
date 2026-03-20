@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 20, 2026 (v4.9 — Fixed two additional structural brace errors in _syncEnemyVisuals and _applyEnemyObstacleAvoidance; script block now parses cleanly)
+Last updated: March 20, 2026 (v5.0 — Fixed _inGame ReferenceError in _renderMobilityPanel; Loadout menu no longer crashes on open)
 
 ---
 

@@ -5,6 +5,26 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.0 — Fix _inGame ReferenceError in Loadout Menu
+
+**Date:** 2026-03-20
+
+### Root Cause
+
+`_inGame` was declared as a `const` local to `_renderChassisPanel()` during the v4.6 function decomposition pass. `_renderMobilityPanel()` (a separate function) also referenced `_inGame` at line 12924, but the variable was out of scope there, causing `ReferenceError: _inGame is not defined` whenever the LOADOUT/Stats overlay was opened.
+
+### Fix
+
+Added `const _inGame = !!(player?.comp);` at the top of `_renderMobilityPanel()`, matching the identical declaration already in `_renderChassisPanel()`.
+
+### Files Changed
+
+- `index.html` — `_renderMobilityPanel()`: added `_inGame` local declaration
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v5.0
+
+---
+
 ## v4.9 — Fix Remaining Syntax Errors in _syncEnemyVisuals and _applyEnemyObstacleAvoidance
 
 **Date:** 2026-03-20
