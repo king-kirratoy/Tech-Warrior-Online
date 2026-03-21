@@ -5,6 +5,33 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.16 — Extract Cover System into js/cover.js
+
+**Date:** 2026-03-21
+
+Moved all cover and battlefield generation functions out of `index.html` and `js/combat.js` into a new file `js/cover.js` (408 lines). The file is organised under one section banner: `COVER / BATTLEFIELD OBJECTS`, with three functions: `placeBuilding` (renders building geometry via Phaser Graphics and registers the invisible static physics body), `generateCover` (clears previous round's cover, dispatches to arena-specific generators or the default city-block layout, force-syncs all static bodies), and `damageCover` (darkens cover as HP falls, triggers explosion+debris on destruction). The `_buildingGraphics` array declaration was also moved from `js/state.js` into `js/cover.js` since it is exclusively owned by `placeBuilding` and `generateCover`.
+
+The `<script src="js/cover.js">` tag was inserted in `index.html` after `mods.js` and before `enemies.js` (load position 22 of 33). This placement satisfies all dependencies: `cover.js` needs `createExplosion` from `combat.js` (load 20) and `spawnDebris` from `utils.js` (load 17), both of which load earlier. Call-site audit:
+
+- `index.html` inline `create()` calls `generateCover(this)` — resolves at runtime after all scripts load ✓
+- `index.html` bullet ↔ cover collider callbacks call `damageCover(this, cover, ...)` — resolves at runtime ✓
+- `index.html` `startRound` flow calls `generateCover(scene, arenaKey)` — resolves at runtime ✓
+- `js/garage.js` calls `generateCover(deployScene)` inside `deployMech()` — loads after `cover.js` (position 26) ✓
+- `js/multiplayer.js` calls `generateCover(scene)` and `placeBuilding(scene, x, y, def)` — loads last ✓
+- `js/loot-system.js`, `js/enemy-types.js`, `js/arena-objectives.js`, `js/campaign-system.js` — zero references to moved functions ✓
+
+No broken references remain.
+
+### Files Changed
+
+- `js/cover.js` — new file, 3 functions + `_buildingGraphics` declaration (408 lines)
+- `index.html` — `<script src="js/cover.js">` tag added after `mods.js`; `placeBuilding` and `generateCover` bodies removed; cover section comment updated
+- `js/combat.js` — `damageCover` body removed, replaced with redirect comment
+- `js/state.js` — `_buildingGraphics` declaration removed, replaced with redirect comment
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.15 — Extract Mech Visual System into js/mechs.js
 
 **Date:** 2026-03-21

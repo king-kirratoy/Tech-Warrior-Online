@@ -1232,23 +1232,7 @@ function createExplosion(scene, x, y, radius, damage) {
     });
 }
 
-function damageCover(scene, cover, amt) {
-    if (!cover?.active || cover.coverHp <= 0) return;
-    cover.coverHp -= amt;
-    // Darken toward charred black as damage increases
-    const pct = Math.max(0, cover.coverHp / cover.coverMaxHp);
-    const base = cover.coverDef.color;
-    const r = Math.floor(((base >> 16) & 0xff) * pct);
-    const g = Math.floor(((base >>  8) & 0xff) * pct);
-    const b = Math.floor(( base        & 0xff) * pct);
-    cover.setFillStyle((r << 16) | (g << 8) | b);
-
-    if (cover.coverHp <= 0) {
-        createExplosion(scene, cover.x, cover.y, 50, 0);
-        spawnDebris(scene, cover.x, cover.y, cover.coverDef.stroke);
-        cover.destroy();
-    }
-}
+// damageCover() — moved to js/cover.js
 
 // ── Shared mine drawing helper ────────────────────────────
 function _drawMineGraphic(g, mx, my, glowAlpha) {
