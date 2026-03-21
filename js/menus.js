@@ -665,7 +665,7 @@ function _renderChassisSelect(overlay) {
         const bgColor = isSelected ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.03)';
         const borderColor = isSelected ? info.color : (info.color + '40');
         const shadowStyle = isSelected ? 'box-shadow:0 0 16px ' + info.color + '33,inset 0 0 12px ' + info.color + '11;' : '';
-        html += `<button onclick="_highlightChassis('${ch}')" style="flex:1;padding:24px 16px;background:${bgColor};border:1px solid ${borderColor};border-top:3px solid ${info.color};border-radius:6px;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Courier New',monospace;${shadowStyle}" onmouseover="this.style.background='rgba(255,215,0,0.06)'" onmouseout="this.style.background='${bgColor}'">`;
+        html += `<button onclick="_highlightChassis('${ch}')" style="background:${bgColor};border:1px solid ${borderColor};border-radius:6px;border-top:3px solid ${info.color};cursor:pointer;flex:1;font-family:'Courier New',monospace;padding:24px 16px;text-align:center;transition:all 0.2s;${shadowStyle}">`;
         html += `<div style="font-size:18px;letter-spacing:4px;color:${info.color};margin-bottom:8px;">${ch.toUpperCase()}</div>`;
         html += `<div style="font-size:10px;color:${info.color};opacity:0.7;margin-bottom:8px;">${info.hp} // ${info.speed}</div>`;
         html += `<div style="font-size:9px;color:rgba(200,210,217,0.5);line-height:1.5;">${info.desc}</div>`;
@@ -677,9 +677,9 @@ function _renderChassisSelect(overlay) {
     html += '<div style="display:flex;gap:16px;margin-top:24px;align-items:center;">';
     if (_selectedNewChassis) {
         const selInfo = chassisInfo[_selectedNewChassis];
-        html += `<button onclick="_startNewCampaignWithChassis('${_selectedNewChassis}')" style="padding:14px 48px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:13px;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)';this.style.color='#fff';this.style.letterSpacing='6px';this.style.boxShadow='0 0 24px rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.08)';this.style.color='#ffd700';this.style.letterSpacing='4px';this.style.boxShadow='none'">START CAMPAIGN</button>`;
+        html += `<button onclick="_startNewCampaignWithChassis('${_selectedNewChassis}')" class="tw-btn tw-btn--gold">START CAMPAIGN</button>`;
     }
-    html += `<button onclick="_cancelNewCampaign()" style="padding:12px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:12px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.85)';this.style.letterSpacing='3px';this.style.boxShadow='none'">BACK</button>`;
+    html += `<button onclick="_cancelNewCampaign()" class="tw-btn tw-btn--danger">BACK</button>`;
     html += '</div>';
 
     overlay.innerHTML = html;
@@ -860,11 +860,11 @@ function _showItemDetail(source, key) {
     if (source === 'backpack') {
         const slotKey = _getSlotForItem(item);
         if (slotKey || item.baseType === 'weapon') {
-            html += `<button onclick="_equipItem(${key})" style="padding:6px 14px;background:rgba(0,255,100,0.12);border:1px solid rgba(0,255,100,0.4);border-radius:4px;color:#00ff66;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;">EQUIP</button>`;
+            html += `<button onclick="_equipItem(${key})" class="tw-btn tw-btn--green tw-btn--sm">EQUIP</button>`;
         }
-        html += `<button onclick="_scrapItem(${key})" style="padding:6px 14px;background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.4);border-radius:4px;color:#ff5050;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;">SCRAP (+${rd.scrapValue})</button>`;
+        html += `<button onclick="_scrapItem(${key})" class="tw-btn tw-btn--danger tw-btn--sm">SCRAP (+${rd.scrapValue})</button>`;
     } else if (source === 'equipped') {
-        html += `<button onclick="_unequipItem('${key}')" style="padding:6px 14px;background:rgba(255,200,0,0.12);border:1px solid rgba(255,200,0,0.4);border-radius:4px;color:#ffc800;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;">UNEQUIP</button>`;
+        html += `<button onclick="_unequipItem('${key}')" class="tw-btn tw-btn--gold tw-btn--sm">UNEQUIP</button>`;
     }
     html += `</div></div>`;
 

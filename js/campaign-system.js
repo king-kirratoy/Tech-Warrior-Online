@@ -750,7 +750,7 @@ function showMissionSelect() {
     // ── Header row: centered CAMPAIGN title + small QUIT button on far right ──
     html += '<div style="position:relative;width:100%;max-width:700px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;">';
     html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);">CAMPAIGN</div>';
-    html += `<button onclick="_closeMissionSelect()" style="position:absolute;right:0;padding:8px 18px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.25);color:rgba(255,100,100,0.7);font-size:10px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;overflow:hidden;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.7)';this.style.letterSpacing='3px';this.style.boxShadow='none'">QUIT</button>`;
+    html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--danger tw-btn--sm" style="position:absolute;right:0;">QUIT</button>`;
     html += '</div>';
 
     // ── Player level / XP bar + scrap ──
@@ -768,10 +768,10 @@ function showMissionSelect() {
 
     // ── Action buttons: Supply Shop, Upgrades, Loadout, Loadout Slots ──
     html += '<div style="display:flex;gap:10px;margin-bottom:16px;width:100%;max-width:700px;">';
-    html += `<button onclick="_openShopFromMission()" style="flex:1;padding:10px 16px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.3);color:rgba(255,215,0,0.8);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(255,215,0,0.14)';this.style.color='#fff';this.style.letterSpacing='3px';this.style.boxShadow='0 0 12px rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.06)';this.style.color='rgba(255,215,0,0.8)';this.style.letterSpacing='2px';this.style.boxShadow='none'">SUPPLY SHOP</button>`;
-    html += `<button onclick="_showUpgradesPanel()" style="flex:1;padding:10px 16px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.3);color:rgba(0,255,136,0.7);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(0,255,136,0.12)';this.style.color='#fff';this.style.letterSpacing='3px';this.style.boxShadow='0 0 12px rgba(0,255,136,0.2)'" onmouseout="this.style.background='rgba(0,255,136,0.04)';this.style.color='rgba(0,255,136,0.7)';this.style.letterSpacing='2px';this.style.boxShadow='none'">UPGRADES</button>`;
-    html += `<button onclick="_openLoadoutFromMission()" style="flex:1;padding:10px 16px;background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.3);color:rgba(0,200,255,0.7);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(0,200,255,0.12)';this.style.color='#fff';this.style.letterSpacing='3px';this.style.boxShadow='0 0 12px rgba(0,200,255,0.2)'" onmouseout="this.style.background='rgba(0,200,255,0.04)';this.style.color='rgba(0,200,255,0.7)';this.style.letterSpacing='2px';this.style.boxShadow='none'">LOADOUT</button>`;
-    html += `<button onclick="showLoadoutSlots()" style="flex:1;padding:10px 16px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.3);color:rgba(0,255,255,0.7);font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.color='#fff';this.style.letterSpacing='3px';this.style.boxShadow='0 0 12px rgba(0,255,255,0.2)'" onmouseout="this.style.background='rgba(0,255,255,0.04)';this.style.color='rgba(0,255,255,0.7)';this.style.letterSpacing='2px';this.style.boxShadow='none'">LOADOUT SLOTS</button>`;
+    html += `<button onclick="_openShopFromMission()" class="tw-btn tw-btn--gold tw-btn--sm" style="flex:1;">SUPPLY SHOP</button>`;
+    html += `<button onclick="_showUpgradesPanel()" class="tw-btn tw-btn--green tw-btn--sm" style="flex:1;">UPGRADES</button>`;
+    html += `<button onclick="_openLoadoutFromMission()" class="tw-btn tw-btn--sm" style="flex:1;">LOADOUT</button>`;
+    html += `<button onclick="showLoadoutSlots()" class="tw-btn tw-btn--sm" style="flex:1;">LOADOUT SLOTS</button>`;
     html += '</div>';
 
     // ── Chapter tabs ──
@@ -784,7 +784,7 @@ function showMissionSelect() {
         const cls = active ? 'background:rgba(255,215,0,0.12);color:#ffd700;border-color:rgba(255,215,0,0.5);' :
                     unlocked ? 'background:rgba(255,255,255,0.04);color:rgba(200,210,217,0.7);border-color:rgba(255,255,255,0.1);' :
                     'background:rgba(0,0,0,0.3);color:rgba(200,210,217,0.25);border-color:rgba(255,255,255,0.05);cursor:not-allowed;';
-        html += `<button onclick="${unlocked ? `_selectChapter(${idx})` : ''}" style="flex:1;padding:10px 8px;border:1px solid;font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;text-transform:uppercase;transition:all 0.2s;outline:none;${cls}${idx===0?'border-radius:6px 0 0 6px;':''}${idx===CAMPAIGN_CHAPTERS.length-1?'border-radius:0 6px 6px 0;':''}">`;
+        html += `<button onclick="${unlocked ? `_selectChapter(${idx})` : ''}" style="border:1px solid;flex:1;padding:10px 8px;${cls}${idx===0?'border-radius:6px 0 0 6px;':''}${idx===CAMPAIGN_CHAPTERS.length-1?'border-radius:0 6px 6px 0;':''}">`;
         html += `CH.${idx + 1}`;
         if (unlocked) html += ` <span style="font-size:8px;opacity:0.5;">${completed}/${total}</span>`;
         if (!unlocked) html += ` <span style="font-size:7px;opacity:0.4;">🔒</span>`;
@@ -812,7 +812,7 @@ function showMissionSelect() {
         const blBase = isSelected ? '#ffd700' : (completed ? '#00ff88' : 'rgba(255,215,0,0.4)');
         const shadowStyle = isSelected ? 'box-shadow:0 0 12px rgba(255,215,0,0.15),inset 0 0 12px rgba(255,215,0,0.05);' : '';
 
-        html += '<button onclick="_selectMission(' + idx + ')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;min-height:54px;background:' + bgBase + ';border:1px solid ' + bdBase + ';border-left:3px solid ' + blBase + ';border-radius:4px;font-family:Courier New,monospace;cursor:pointer;transition:all 0.2s;text-align:left;outline:none;width:100%;' + shadowStyle + '">';
+        html += '<button onclick="_selectMission(' + idx + ')" style="align-items:center;background:' + bgBase + ';border:1px solid ' + bdBase + ';border-left:3px solid ' + blBase + ';border-radius:4px;cursor:pointer;display:flex;gap:12px;min-height:54px;padding:12px 16px;text-align:left;width:100%;' + shadowStyle + '">';
 
         // Mission number
         html += `<div style="font-size:18px;letter-spacing:2px;color:${completed ? '#00ff88' : 'rgba(255,215,0,0.6)'};min-width:30px;text-align:center;">${completed ? '✓' : (idx + 1)}</div>`;
@@ -861,7 +861,7 @@ function showMissionSelect() {
 
         // ── Deploy button — right-aligned with action buttons above ──
         html += '<div style="display:flex;justify-content:flex-end;margin-top:16px;width:100%;max-width:700px;">';
-        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" style="padding:10px 32px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;" onmouseover="this.style.background='rgba(255,215,0,0.15)';this.style.color='#fff';this.style.letterSpacing='5px';this.style.boxShadow='0 0 24px rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.08)';this.style.color='#ffd700';this.style.letterSpacing='3px';this.style.boxShadow='none'">DEPLOY</button>`;
+        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" class="tw-btn tw-btn--gold">DEPLOY</button>`;
         html += '</div>';
     }
 
@@ -1446,7 +1446,7 @@ function showShop() {
         const bgBase = isSelected ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.03)';
         const bdBase = isSelected ? `${rc}` : `${rc}40`;
         const shadowStyle = isSelected ? `box-shadow:0 0 12px ${rc}33;` : '';
-        html += `<button onclick="_shopSelect(${idx})" style="width:155px;padding:10px;background:${bgBase};border:1px solid ${bdBase};border-left:3px solid ${rc};border-radius:4px;font-family:'Courier New',monospace;cursor:pointer;text-align:left;transition:all 0.2s;${shadowStyle}" onmouseover="this.style.background='rgba(255,215,0,0.06)'" onmouseout="this.style.background='${bgBase}'">`;
+        html += `<button onclick="_shopSelect(${idx})" style="background:${bgBase};border:1px solid ${bdBase};border-left:3px solid ${rc};border-radius:4px;cursor:pointer;font-family:'Courier New',monospace;padding:10px;text-align:left;width:155px;${shadowStyle}">`;
         html += `<div style="font-size:10px;letter-spacing:1px;color:${rc};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
         html += `<div style="font-size:9px;color:rgba(200,210,217,0.5);margin-bottom:4px;">${(item.rarity||'').toUpperCase()} LV.${item.level||1}</div>`;
         // Show key stats
@@ -1508,7 +1508,7 @@ function showShop() {
 
         // BUY button
         if (canBuy) {
-            html += `<button onclick="_shopBuy(${_selectedShopIdx})" style="padding:8px 28px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.08)';this.style.color='#ffd700';this.style.letterSpacing='3px';this.style.boxShadow='none'">BUY — ⬡ ${selItem._shopPrice}</button>`;
+            html += `<button onclick="_shopBuy(${_selectedShopIdx})" class="tw-btn tw-btn--gold">BUY — ⬡ ${selItem._shopPrice}</button>`;
         } else {
             const reason = _scrap < selItem._shopPrice ? 'Not enough scrap' : 'Inventory full';
             html += `<div style="font-size:10px;color:rgba(255,100,100,0.6);letter-spacing:1px;">${reason}</div>`;
@@ -1523,7 +1523,7 @@ function showShop() {
         _inventory.forEach((item, idx) => {
             const rc = rarityColors[item.rarity] || '#c0c8d0';
             const sellPrice = getItemSellPrice(item);
-            html += `<button onclick="_shopSell(${idx})" style="width:145px;padding:8px;background:rgba(255,255,255,0.03);border:1px solid ${rc}30;border-left:2px solid ${rc};border-radius:4px;font-family:'Courier New',monospace;cursor:pointer;text-align:left;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">`;
+            html += `<button onclick="_shopSell(${idx})" style="background:rgba(255,255,255,0.03);border:1px solid ${rc}30;border-left:2px solid ${rc};border-radius:4px;cursor:pointer;font-family:'Courier New',monospace;padding:8px;text-align:left;width:145px;">`;
             html += `<div style="font-size:9px;letter-spacing:1px;color:${rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
             html += `<div style="font-size:10px;color:#ff8844;">⬡ ${sellPrice}</div>`;
             html += '</button>';
@@ -1537,8 +1537,8 @@ function showShop() {
     const restockCost = Math.max(10, Math.round(_campaignState.playerLevel * 5));
     const canRestock = _scrap >= restockCost;
     html += '<div style="display:flex;gap:16px;margin-top:8px;">';
-    html += `<button onclick="${canRestock ? '_shopRestock()' : ''}" style="padding:10px 24px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,${canRestock?'0.4':'0.15'});color:${canRestock?'rgba(0,255,255,0.85)':'rgba(0,255,255,0.3)'};font-size:11px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:${canRestock?'pointer':'not-allowed'};transition:all 0.2s;" ${canRestock?`onmouseover="this.style.background='rgba(0,255,255,0.1)';this.style.color='#fff';this.style.letterSpacing='3px';this.style.boxShadow='0 0 12px rgba(0,255,255,0.2)'" onmouseout="this.style.background='rgba(0,255,255,0.04)';this.style.color='rgba(0,255,255,0.85)';this.style.letterSpacing='2px';this.style.boxShadow='none'"`:''}>RESTOCK ⬡ ${restockCost}</button>`;
-    html += `<button onclick="_closeShop()" style="padding:10px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:11px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.85)';this.style.letterSpacing='3px';this.style.boxShadow='none'">BACK</button>`;
+    html += `<button onclick="${canRestock ? '_shopRestock()' : ''}" class="tw-btn tw-btn--sm${canRestock ? '' : ' tw-btn--disabled'}">RESTOCK ⬡ ${restockCost}</button>`;
+    html += `<button onclick="_closeShop()" class="tw-btn tw-btn--danger">BACK</button>`;
     html += '</div>';
 
     overlay.innerHTML = html;
@@ -1670,11 +1670,11 @@ function showLoadoutSlots() {
             html += `<div style="font-size:11px;letter-spacing:2px;color:#c8d2d9;margin-bottom:2px;">${slot.name}</div>`;
             html += `<div style="font-size:9px;color:rgba(200,210,217,0.4);">${(slot.chassis||'').toUpperCase()} // L:${(slot.L||'none').toUpperCase()} R:${(slot.R||'none').toUpperCase()}</div>`;
             html += '</div>';
-            html += `<button onclick="_loadSlot(${i})" style="padding:6px 14px;background:rgba(0,255,255,0.06);border:1px solid rgba(0,255,255,0.3);color:rgba(0,255,255,0.8);font-size:10px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;border-radius:3px;transition:all 0.2s;" onmouseover="this.style.background='rgba(0,255,255,0.15)'" onmouseout="this.style.background='rgba(0,255,255,0.06)'">LOAD</button>`;
-            html += `<button onclick="_deleteSlot(${i})" style="padding:6px 10px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.2);color:rgba(255,100,100,0.6);font-size:10px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;border-radius:3px;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)'" onmouseout="this.style.background='rgba(255,60,60,0.04)'">✕</button>`;
+            html += `<button onclick="_loadSlot(${i})" class="tw-btn tw-btn--sm">LOAD</button>`;
+            html += `<button onclick="_deleteSlot(${i})" class="tw-btn tw-btn--danger tw-btn--sm">✕</button>`;
             html += '</div>';
         } else {
-            html += `<button onclick="_saveSlot(${i})" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.1);border-radius:4px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.background='rgba(0,255,255,0.04)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">`;
+            html += `<button onclick="_saveSlot(${i})" class="tw-btn" style="align-items:center;display:flex;gap:8px;text-align:left;width:100%;">`;
             html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(200,210,217,0.3);">SLOT ${i+1} — EMPTY</div>`;
             html += `<div style="margin-left:auto;font-size:10px;letter-spacing:2px;color:rgba(0,255,255,0.4);">SAVE</div>`;
             html += '</button>';
@@ -1684,7 +1684,7 @@ function showLoadoutSlots() {
 
     // Close button
     html += '<div style="margin-top:20px;">';
-    html += `<button onclick="_closeLoadoutSlots()" style="padding:12px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:12px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.85)';this.style.letterSpacing='3px';this.style.boxShadow='none'">BACK</button>`;
+    html += `<button onclick="_closeLoadoutSlots()" class="tw-btn tw-btn--danger">BACK</button>`;
     html += '</div>';
 
     overlay.innerHTML = html;
@@ -1859,7 +1859,7 @@ function _showUpgradesPanel() {
     }
 
     html += '<div style="margin-top:8px;">';
-    html += `<button onclick="_closeUpgrades()" style="padding:12px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:12px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.85)';this.style.letterSpacing='3px';this.style.boxShadow='none'">BACK</button>`;
+    html += `<button onclick="_closeUpgrades()" class="tw-btn tw-btn--danger">BACK</button>`;
     html += '</div>';
 
     overlay.innerHTML = html;

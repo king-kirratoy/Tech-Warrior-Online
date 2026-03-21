@@ -5,6 +5,25 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.24 — CSS design system + button migration
+
+**Date:** 2026-03-21
+
+Introduced a CSS design token system in `css/base.css`: a `:root` block groups all brand colors (cyan, red, gold, green, orange, purple), surface levels, border variants, font stacks, button geometry constants, and named glow shadow values. A canonical `.tw-btn` component with five colour variants (`--danger`, `--gold`, `--green`, and the base cyan), three utility modifiers (`--sm`, `--block`, `--disabled`), and an `--error` overweight state replaces all ad-hoc button styling across the project; CSS hover handles letter-spacing and colour transitions so no `onmouseover`/`onmouseout` attributes are needed. All static buttons in `index.html` were migrated: the callsign Proceed button, chassis selector tabs, hangar Back and Deploy buttons, death-screen Hangar and Main Menu buttons, the in-game pause/MENU button, and the stats-overlay CLOSE button — all inline appearance styles and JS hover handlers removed. Dynamic buttons in `js/campaign-system.js` were migrated (showMissionSelect QUIT, action row, DEPLOY, shop BUY/RESTOCK/BACK, loadout slot LOAD/DELETE/SAVE/BACK, upgrades BACK) and `js/menus.js` (chassis-select START CAMPAIGN and BACK, item detail EQUIP/SCRAP/UNEQUIP); the equip-prompt OPEN INVENTORY and CONTINUE buttons in `js/perks.js` were also migrated. Item cards using dynamic rarity colours retain a minimal inline style for the border-left accent while dropping hover handlers. `css/menus.css` and `css/garage.css` were fully rewritten to consume the new design tokens via CSS variables.
+
+### Files Changed
+
+- `css/base.css` — complete rewrite: `:root` tokens, `.tw-btn` component with all variants, legacy `button` fallback
+- `css/menus.css` — complete rewrite: all rules now consume CSS variables from base.css; no duplicate button rules
+- `css/garage.css` — complete rewrite: all rules now consume CSS variables; `#deploy-btn` and `#hangar-mm-btn` reduced to layout-only overrides
+- `index.html` — 8 buttons migrated to `.tw-btn` class system; inline appearance styles and onmouseover/onmouseout removed
+- `js/campaign-system.js` — all dynamic buttons in showMissionSelect, showShop, showLoadoutSlots, _showUpgradesPanel, _renderChassisSelect migrated
+- `js/menus.js` — _renderChassisSelect and _showItemDetail buttons migrated
+- `js/perks.js` — equip-prompt OPEN INVENTORY and CONTINUE buttons migrated
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.23 — 7 UI fixes: background path, version display, button hover & layout
 
 **Date:** 2026-03-21

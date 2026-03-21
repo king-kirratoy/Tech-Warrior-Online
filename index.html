@@ -27,9 +27,7 @@
             style="background:rgba(0,0,0,0.6);border:none;border-bottom:2px solid rgba(0,210,255,0.6);color:#00e0ff;padding:10px 16px;font-family:'Courier New',monospace;font-size:20px;letter-spacing:5px;outline:none;text-align:center;width:260px;display:block;margin:0 auto 32px;"
             onkeydown="_csKeyDown(event,this)" />
 
-        <button id="callsign-proceed-btn" onclick="proceedToMainMenu()" disabled
-            style="padding:14px 48px;background:rgba(0,210,255,0.04);border:1px solid rgba(0,210,255,0.2);color:rgba(0,210,255,0.3);font-family:'Courier New',monospace;font-size:13px;letter-spacing:4px;cursor:not-allowed;text-transform:uppercase;transition:all 0.2s;opacity:0.4;"
-            >&#9654;&nbsp; PROCEED</button>
+        <button id="callsign-proceed-btn" class="tw-btn" onclick="proceedToMainMenu()" disabled>&#9654;&nbsp; PROCEED</button>
 
         <div style="margin-top:16px;font-size:9px;letter-spacing:2px;color:rgba(0,210,255,0.25);">CALLSIGN REQUIRED TO CONTINUE</div>
     </div>
@@ -73,9 +71,9 @@
                 <div id="chassis-select-row" class="dd-row">
                     <span class="dd-label">■ CHASSIS</span>
                     <div style="display:flex;gap:6px;flex:1;">
-                        <button id="c-light"  onclick="setChassis('light')"  style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">LIGHT</button>
-                        <button id="c-medium" onclick="setChassis('medium')" style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">MEDIUM</button>
-                        <button id="c-heavy"  onclick="setChassis('heavy')"  style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">HEAVY</button>
+                        <button id="c-light"  onclick="setChassis('light')">LIGHT</button>
+                        <button id="c-medium" onclick="setChassis('medium')">MEDIUM</button>
+                        <button id="c-heavy"  onclick="setChassis('heavy')">HEAVY</button>
                     </div>
                 </div>
 
@@ -114,8 +112,8 @@
                 </div>
 
                 <div style="width:100%;margin-top:auto;display:flex;flex-direction:column;gap:8px;">
-                    <button id="hangar-mm-btn" onclick="returnToMainMenu()">&#9664;&nbsp; BACK</button>
-                    <button id="deploy-btn" onclick="deployMech()">DEPLOY MECH</button>
+                    <button id="hangar-mm-btn" class="tw-btn tw-btn--danger tw-btn--sm" onclick="returnToMainMenu()">&#9664;&nbsp; BACK</button>
+                    <button id="deploy-btn" class="tw-btn tw-btn--block" onclick="deployMech()">DEPLOY MECH</button>
                 </div>
 
             </div><!-- /right -->
@@ -347,16 +345,10 @@
         </div>
         <br>
         <div id="death-buttons" style="display:flex;gap:20px;justify-content:center;">
-            <button id="death-btn-primary" onclick="_gameMode==='campaign' ? campaignDeathToMissionSelect() : returnToHangar()"
-                style="width:220px;padding:16px;background:rgba(0,255,255,0.05);border:1px solid rgba(0,255,255,0.35);border-left:3px solid #00ffff;color:#00ffff;font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
-                onmouseover="this.style.background='rgba(0,255,255,0.15)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.25)';this.style.letterSpacing='4px';"
-                onmouseout="this.style.background='rgba(0,255,255,0.05)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
+            <button id="death-btn-primary" class="tw-btn" onclick="_gameMode==='campaign' ? campaignDeathToMissionSelect() : returnToHangar()" style="width:220px;">
                 &#8962; MECH HANGAR
             </button>
-            <button onclick="returnToMainMenu()"
-                style="width:220px;padding:16px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);border-left:3px solid rgba(255,60,60,0.7);color:rgba(255,100,100,0.85);font-size:15px;letter-spacing:2px;font-family:inherit;cursor:pointer;text-transform:uppercase;transition:all 0.2s;text-align:center;outline:none;"
-                onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.boxShadow='0 0 20px rgba(255,60,60,0.2)';this.style.letterSpacing='4px';"
-                onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.boxShadow='none';this.style.letterSpacing='2px';">
+            <button class="tw-btn tw-btn--danger" onclick="returnToMainMenu()" style="width:220px;">
                 &#9632; MAIN MENU
             </button>
         </div>
@@ -364,7 +356,7 @@
 </div>
 <!-- IN-GAME PAUSE BUTTON -->
 <div id="top-left-btns" style="display:none;position:fixed;top:20px;left:24px;z-index:9999;gap:10px;align-items:center;">
-    <button id="pause-btn" onclick="togglePause()" style="padding:10px 20px;min-width:100px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">MENU</button>
+    <button id="pause-btn" class="tw-btn tw-btn--sm" onclick="togglePause()">MENU</button>
 </div>
 <!-- ============================================================
      GAME SCRIPT
@@ -419,7 +411,7 @@
     <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(0,255,255,0.2);">
       <div style="font-size:26px;letter-spacing:6px;color:#00ffff;text-shadow:0 0 20px rgba(0,255,255,0.5);">LOADOUT</div>
       <div id="inv-header-count" style="position:absolute;left:0;font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);"></div>
-      <button onclick="toggleStats()" style="position:absolute;right:0;padding:10px 20px;min-width:120px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-left:3px solid #00ffff;border-radius:6px;color:#00ffff;font-size:11px;letter-spacing:2px;font-family:'Verdana',sans-serif;cursor:pointer;text-transform:uppercase;box-shadow:0 0 10px rgba(0,255,255,0.15);transition:all 0.2s;text-align:center;outline:none;" onmouseover="this.style.background='rgba(0,255,255,0.12)';this.style.boxShadow='0 0 20px rgba(0,255,255,0.35)';this.style.letterSpacing='3px';" onmouseout="this.style.background='rgba(12,16,20,0.85)';this.style.boxShadow='0 0 10px rgba(0,255,255,0.15)';this.style.letterSpacing='2px';">CLOSE</button>
+      <button onclick="toggleStats()" class="tw-btn tw-btn--sm" style="position:absolute;right:0;">CLOSE</button>
     </div>
     <!-- Campaign XP Bar (only visible in campaign mode) -->
     <div id="campaign-xp-bar" style="display:none;margin-bottom:16px;padding:10px 16px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-radius:6px;">
