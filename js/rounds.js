@@ -412,3 +412,4 @@ function _overlapsAnyCover(px, py, radius) {
         return Math.abs(px - cx) < hw && Math.abs(py - cy) < hh;
     });
 }
+

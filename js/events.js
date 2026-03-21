@@ -194,3 +194,166 @@ document.addEventListener('keydown', function _mainMenuKeyNav(e) {
         btns[cur].focus();
     }
 });
+
+// ── Player movement and firing handlers ───────────────────────────
+
+/** Handle WASD movement, mod activation, and chassis-specific leg effects. */
+function handlePlayerMovement(scene, time) {
+    if (!player?.active || !isDeployed) return;
+    const _gyroOn = loadout.leg === 'gyro_stabilizer' && _perkState.legSystemActive;
+    const _legHpPct = (player?.comp?.legs?.hp ?? 1) / (player?.comp?.legs?.max ?? 1);
+    // Use _legsDestroyed flag (set in processPlayerDamage) for consistent penalty timing
+    const _legMult = _gyroOn ? 1.0
+        : _legsDestroyed ? 0.5
+        : _legHpPct < 0.5 ? (0.5 + _legHpPct) : 1.0;
+    // Warlord Stride: +8% speed while leg HP > 50%
+    const _warlordSpeedMult = (loadout.leg === 'warlord_stride' && _perkState.legSystemActive &&
+        player.comp?.legs?.hp > player.comp.legs.max * 0.5) ? 1.08 : 1.0;
+    const _shldSpdMult = (() => {
+        const _ss2 = SHIELD_SYSTEMS[loadout.shld];
+        if (!_ss2) return 1;
+        if (_ss2.breakSpeedBurst && player._smokeBurstActive) return 1.70;
+        if (_ss2.activeSpeedPenalty && player.shield > 0) return 1 - _ss2.activeSpeedPenalty;
+        return 1;
+    })();
+    const _gearSpdMult = 1 + ((_gearState?.speedPct || 0) / 100);
+    const _unstoppableSpdMult = 1 + (typeof getUnstoppableSpeedBonus === 'function' ? getUnstoppableSpeedBonus() : 0);
+    const speed = CHASSIS[loadout.chassis].spd
+        * (isRageActive ? 1.75 : 1)
+        * _legMult
+        * (_perkState.speedMult || 1)
+        * _gearSpdMult
+        * _warlordSpeedMult
+        * _shldSpdMult
+        * _unstoppableSpdMult;
+    const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod]?.cooldown || 0 : 0;
+
+    // Mod activation (SPACE)
+    const _gearModCdMult = 1 - ((_gearState?.modCdPct || 0) / 100);
+    const effectiveModCooldown = (isChargeActive ? modCooldown * 0.5
+        : (loadout.chassis === 'medium' ? modCooldown * (CHASSIS.medium.modCooldownMult || 0.85) : modCooldown))
+        * _gearModCdMult
+        * (loadout.mod === 'jump' ? (_perkState.jumpCdMult || 1) * (_perkState.jumpCooldownMult || 1) : 1);
+    if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + effectiveModCooldown) {
+        activateMod(scene, time);
+    }
+
+    // Movement
+    if (!isJumping) {
+        player.body.setVelocity(0);
+        if (keys.W.isDown) scene.physics.velocityFromRotation(player.rotation, speed,      player.body.velocity);
+        if (keys.S.isDown) scene.physics.velocityFromRotation(player.rotation, -speed / 2, player.body.velocity);
+
+        if      (keys.A.isDown) player.body.setAngularVelocity(-200);
+        else if (keys.D.isDown) player.body.setAngularVelocity(200);
+        else                    player.body.setAngularVelocity(0);
+    }
+
+    // Mine Layer: drop a mine every 8 s while moving
+    if (loadout.leg === 'mine_layer' && _perkState.legSystemActive) {
+        const vel = player.body.velocity;
+        if (Math.abs(vel.x) + Math.abs(vel.y) > 20) {
+            _perkState.mineLayerTimer = (_perkState.mineLayerTimer || 0) + scene.game.loop.delta;
+            if (_perkState.mineLayerTimer >= 8000) {
+                _perkState.mineLayerTimer = 0;
+                dropMine(scene);
+            }
+        }
+    }
+
+    // Mag Anchors: flag stationary state for use in damage calculations
+    _perkState._magAnchorsActive = (loadout.leg === 'mag_anchors' && _perkState.legSystemActive &&
+        Math.abs(player.body.velocity.x) + Math.abs(player.body.velocity.y) < 15);
+
+    // Iron Fortress aug: track stationary duration → grant DR+dmg bonus after 1.5s
+    if (_perkState.ironFortress) {
+        const _ifMoving = Math.abs(player.body.velocity.x) + Math.abs(player.body.velocity.y) > 15;
+        if (_ifMoving) {
+            _perkState._ironFortressTimer = 0;
+            _perkState._ironFortressActive = false;
+        } else {
+            _perkState._ironFortressTimer = (_perkState._ironFortressTimer || 0) + GAME.loop.delta;
+            _perkState._ironFortressActive = _perkState._ironFortressTimer > 1500;
+        }
+    }
+}
+
+/** Primary (M1) and secondary (RMB) weapon firing. */
+function handlePlayerFiring(scene) {
+    if (!player?.active || !isDeployed) return;
+    const ptr = scene.input.activePointer;
+
+    // Reset chaingun spin-up when not firing
+    if (!ptr.isDown && !ptr.rightButtonDown()) {
+        _chaingunSpinStart = 0;
+        _chaingunReady = false;
+    }
+
+    // Left-click: fire L arm (and R arm too if Light with matching weapons)
+    if (ptr.isDown && ptr.leftButtonDown()) {
+        const _target = document.elementFromPoint(ptr.x, ptr.y);
+        const _canvas = scene.sys.canvas;
+        if (_target && _canvas && _target !== _canvas) return;
+        fire(scene, 'L');
+        // Dual-fire: Light chassis only — fires both arms simultaneously when same weapon equipped
+        if (loadout.chassis === 'light' && loadout.R && loadout.R !== 'none' && loadout.L === loadout.R) {
+            fire(scene, 'R');
+        }
+    }
+
+    // Right-click (held): fire R arm every frame (sustained weapons need this)
+    if (ptr.rightButtonDown()) {
+        // Don't double-fire R if left-click dual-fire already handled it this frame
+        const isDualFiring = loadout.chassis === 'light' && loadout.L === loadout.R && loadout.R !== 'none' && ptr.leftButtonDown();
+        if (!isDualFiring) fire(scene, 'R');
+    }
+}
+
+// ── Drag-and-drop handlers for equip slots ──────────────────────
+
+function _onEquipDragStart(ev) {
+    const slotKey = ev.currentTarget.dataset.slot;
+    if (!_equipped[slotKey]) { ev.preventDefault(); return; }
+    ev.dataTransfer.setData('text/plain', 'equipped:' + slotKey);
+}
+function _onSlotDragOver(ev) {
+    ev.preventDefault();
+    ev.currentTarget.classList.add('drag-over');
+}
+function _onSlotDragLeave(ev) {
+    ev.currentTarget.classList.remove('drag-over');
+}
+function _onSlotDrop(ev) {
+    ev.preventDefault();
+    ev.currentTarget.classList.remove('drag-over');
+    const slotKey = ev.currentTarget.dataset.slot;
+    const data = ev.dataTransfer.getData('text/plain');
+    if (data.startsWith('backpack:')) {
+        const idx = parseInt(data.split(':')[1]);
+        const item = _inventory[idx];
+        if (!item) return;
+        // Validate: weapon can go to L or R, other items must match slot type
+        if (item.baseType === 'weapon') {
+            if (slotKey !== 'L' && slotKey !== 'R') return;
+            _equipItemToSlot(idx, slotKey);
+        } else {
+            const expectedSlot = _getSlotForItem(item);
+            if (expectedSlot !== slotKey) return;
+            _equipItemToSlot(idx, slotKey);
+        }
+    } else if (data.startsWith('equipped:')) {
+        const fromSlot = data.split(':')[1];
+        if (fromSlot === slotKey) return;
+        // Weapon L↔R swap
+        if ((fromSlot === 'L' || fromSlot === 'R') && (slotKey === 'L' || slotKey === 'R')) {
+            const temp = _equipped[fromSlot];
+            _equipped[fromSlot] = _equipped[slotKey];
+            _equipped[slotKey] = temp;
+            if (typeof loadout !== 'undefined') {
+                loadout[fromSlot] = _equipped[fromSlot]?.subType || 'none';
+                loadout[slotKey]  = _equipped[slotKey]?.subType || 'none';
+            }
+            recalcGearStats(); saveInventory(); populateInventory(); _updateInvCount();
+        }
+    }
+}

@@ -1318,3 +1318,296 @@ function dropEnemyMine(scene, enemy) {
         if (!armed && g.active) { _pulseTick.remove(); g.destroy(); tick.remove(); }
     });
 }
+
+// ═══════════ BULLET IMPACT & SHIELD HANDLERS ═══════════
+
+// ── Player bullet ↔ enemy impact ─────────────────────────────────
+// Named handler extracted from the anonymous overlap callback in
+// create(). Called as:  (bullet, enemy) => handleBulletEnemyOverlap(this, bullet, enemy)
+function handleBulletEnemyOverlap(scene, bullet, enemy) {
+    if (bullet.isGLBall) return;
+    // Capture position and damage BEFORE destroying bullet (velocity zeroes on destroy)
+    const bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
+    const dmg = _calcBulletDamage(bullet);
+    const bulletShieldPierce = bullet.shieldPierce || false;
+    _shotsHit++; _damageDealt += dmg;
+    const bx = bullet.x, by = bullet.y;   // cached before destroy
+    bullet.destroy();
+
+    if (enemy.isShielded && !bulletShieldPierce) {
+        _handleShieldedHit(scene, bx, by);
+        return;
+    }
+    createImpactSparks(scene, enemy.x, enemy.y);
+    showDamageText(scene, enemy.x, enemy.y, dmg);
+
+    _applyIncendiaryProc(scene, enemy);
+
+    // Chain Reaction: flag for explosion on kill
+    if (_perkState.chainReaction > 0) enemy._chainReactionCheck = true;
+    // One Shot: SR-magnitude hit → halve reload on kill
+    if (_perkState.oneShot && bullet?.damageValue >= (WEAPONS.sr?.dmg || 0) * 0.8) {
+        enemy._oneShotCandidate = true;
+    }
+    if (_perkState.targetPainter && !enemy._painted) {
+        enemy._painted = true;
+        _perkState._paintedEnemy = enemy;
+        enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(2, 0xffaa00); });
+    }
+    damageEnemy(enemy, dmg, bAngle, false, bulletShieldPierce);
+
+    // Titan Smash: every 5th shot AoE shockwave
+    if (typeof checkTitanSmash === 'function' && checkTitanSmash()) {
+        triggerTitanSmash(scene, bx, by, dmg);
+    }
+    _applyChainPlasma(scene, enemy, dmg);
+    _applyFlameBulletEffects(scene, bullet, enemy);
+
+    // Phantom Protocol: 4× pierce shot consumed on hit
+    if (_perkState._phantomShotReady) {
+        _perkState._phantomShotReady = false;
+        _perkState._phantomActive = false;
+    }
+}
+
+// ── handleBulletEnemyOverlap sub-functions ───────────────────────────────
+
+/** Apply SMG/bullet range dropoff to base damage. Returns adjusted dmg value. */
+function _calcBulletDamage(bullet) {
+    let dmg = bullet.damageValue || 2;
+    if (bullet.rangeDropoff && bullet._originX !== undefined) {
+        const tDist = Phaser.Math.Distance.Between(bullet._originX, bullet._originY, bullet.x, bullet.y);
+        if (tDist > bullet.rangeDropoff) {
+            dmg = Math.max(1, Math.round(dmg * Math.max(0.40, 1 - (tDist - bullet.rangeDropoff) / 800)));
+        }
+    }
+    return dmg;
+}
+
+/** Show shield-block sparks and BLOCK floating text when enemy shield absorbs the hit. */
+function _handleShieldedHit(scene, bx, by) {
+    try { createShieldSparks(scene, bx, by); } catch(ex) {}
+    const blockTxt = scene.add.text(bx, by - 20, 'BLOCK', {
+        font: 'bold 22px monospace', fill: '#00ffff',
+        stroke: '#000000', strokeThickness: 4
+    }).setOrigin(0.5).setDepth(100);
+    blockTxt.setShadow(0, 0, '#00ffff', 8, true, true);
+    scene.tweens.add({ targets: blockTxt, y: by - 100, alpha: 0,
+        duration: 1500, hold: 500, ease: 'Back.easeOut',
+        onComplete: () => blockTxt.destroy() });
+}
+
+/** Chance to ignite enemy from the Incendiary Rounds perk on bullet impact. */
+function _applyIncendiaryProc(scene, enemy) {
+    if (!(_perkState.incendiary > 0 && Math.random() < _perkState.incendiary && !enemy._burning)) return;
+    enemy._burning = true;
+    let burnTicks = 0;
+    const burnTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
+        if (!enemy.active || burnTicks >= 5) { enemy._burning = false; burnTimer.remove(); return; }
+        damageEnemy(enemy, 5, 0);
+        burnTicks++;
+        const sp = scene.add.circle(enemy.x + (Math.random()-0.5)*16, enemy.y + (Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
+        scene.tweens.add({ targets: sp, alpha: 0, y: sp.y - 8, duration: 300, onComplete: () => sp.destroy() });
+    }});
+}
+
+/** Chain Plasma: bolt chains to nearest enemy within 150px on a plasma-sized hit. */
+function _applyChainPlasma(scene, enemy, dmg) {
+    if (!(_perkState.plsmChain && dmg >= 200)) return;
+    let chainTarget = null, chainDist = Infinity;
+    enemies.getChildren().forEach(e2 => {
+        if (!e2.active || e2 === enemy) return;
+        const d2 = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
+        if (d2 < 150 && d2 < chainDist) { chainDist = d2; chainTarget = e2; }
+    });
+    if (!chainTarget) return;
+    damageEnemy(chainTarget, Math.round(dmg * 0.55), 0, true);
+    showDamageText(scene, chainTarget.x, chainTarget.y, Math.round(dmg * 0.55));
+    const cg = scene.add.graphics().setDepth(13);
+    cg.lineStyle(3, 0x00ffff, 0.85);
+    cg.lineBetween(enemy.x, enemy.y, chainTarget.x, chainTarget.y);
+    scene.tweens.add({ targets: cg, alpha: 0, duration: 180, onComplete: () => cg.destroy() });
+}
+
+/** FTH flame bullet procs: ignite (Thermal Core), Melt Armor stacks, Pressure Spray slow. */
+function _applyFlameBulletEffects(scene, bullet, enemy) {
+    if (!bullet._flame) return;
+    const igniteChance = _perkState.thermalCore ? 1.0 : (_perkState.incendiary || 0);
+    if (igniteChance > 0 && (igniteChance >= 1 || Math.random() < igniteChance) && !enemy._burning) {
+        const burnDur = _perkState.thermalCore ? 7 : 5;
+        enemy._burning = true;
+        let bt = 0;
+        const bTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
+            if (!enemy.active || bt >= burnDur) { enemy._burning = false; bTimer.remove(); return; }
+            damageEnemy(enemy, 5, 0);
+            bt++;
+            const sp = scene.add.circle(enemy.x+(Math.random()-0.5)*16, enemy.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
+            scene.tweens.add({ targets: sp, alpha:0, y:sp.y-8, duration:300, onComplete:()=>sp.destroy() });
+        }});
+    }
+    if (_perkState.meltArmor > 0) {
+        const stacks = Math.min(3, (enemy._meltArmorStacks||0) + 1);
+        enemy._meltArmorStacks = stacks;
+        enemy._dmgMult = (enemy._dmgMult || 1) / Math.max(0.1, 1 - stacks * 0.10);
+        clearTimeout(enemy._meltArmorTimer);
+        enemy._meltArmorTimer = setTimeout(() => {
+            if (enemy.active) { enemy._meltArmorStacks = 0; enemy._dmgMult = 1; }
+        }, 4000);
+    }
+    if (_perkState.pressureSpray && !enemy._fthSlowed) {
+        enemy._fthSlowed = true;
+        enemy._baseSpeed = enemy._baseSpeed || enemy.speed;
+        enemy.speed = Math.round(enemy.speed * 0.80);
+        clearTimeout(enemy._fthSlowTimer);
+        enemy._fthSlowTimer = setTimeout(() => {
+            if (enemy.active) { enemy.speed = enemy._baseSpeed; enemy._fthSlowed = false; }
+        }, 300);
+    }
+}
+
+// ═══════════ SHIELD REGEN & PASSIVE SYSTEMS ═══════════
+
+/** Passive shield regeneration — kicks in 5 s after last hit. */
+function handleShieldRegen(time) {
+    if (!player?.active || !isDeployed) return;
+    _applyPassiveAuras();
+    _applyHeavyChassisRegen();
+    _applyShieldRegen(time);
+    _applyAutoRepair();
+    _tickPerkExpiries(time);
+}
+
+// ── handleShieldRegen sub-functions ──────────────────────────────────────
+
+/** Damage auras that tick every frame: thermal shield, barrier spike, meltdown core. */
+function _applyPassiveAuras() {
+    // Thermal Shield: burn enemies near player while shield is active
+    const _thermSys = SHIELD_SYSTEMS[loadout.shld];
+    if (_thermSys?.thermalAura && player.shield > 0 && enemies) {
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < (_thermSys.thermalRange || 160)) {
+                e._thermalTickTimer = (e._thermalTickTimer || 0) + (GAME.loop.delta || 16);
+                if (e._thermalTickTimer >= 500) {
+                    e._thermalTickTimer = 0;
+                    damageEnemy(e, Math.round(_thermSys.thermalAura * 0.5), 0);
+                }
+            } else { e._thermalTickTimer = 0; }
+        });
+    }
+    // Barrier spike: damage aura while shield mod is active
+    if (_perkState.barrierSpike && isShieldActive) {
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            const _bsd = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+            if (_bsd < 140) damageEnemy(e, 15 * (GAME.loop.delta / 1000), 0);
+        });
+    }
+    // Meltdown Core: passive heat aura — 8 dmg/s within 180px
+    if (_perkState.meltdownCore) {
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            const _md = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+            if (_md < 180) damageEnemy(e, 8 * (GAME.loop.delta / 1000), 0);
+        });
+    }
+}
+
+/** Heavy chassis passive: 2 HP/s core regen after 4s without taking damage. */
+function _applyHeavyChassisRegen() {
+    if (loadout.chassis === 'heavy' && player?.comp?.core) {
+        const _timeSinceDmg = (GAME.loop.time - (_lastPlayerDamageTime || 0));
+        if (_timeSinceDmg > 4000 && player.comp.core.hp > 0 && player.comp.core.hp < player.comp.core.max) {
+            player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 2 * (GAME.loop.delta / 1000));
+            updateHUD();
+        }
+    }
+}
+
+/** Tick shield HP upward once the regen delay has elapsed since last damage. */
+function _applyShieldRegen(time) {
+    if (_perkState.noShieldRegen) return;
+    const secondsSinceHit = (time - lastDamageTime) / 1000;
+    const playerSpeed = player?.body ? Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2) : 999;
+    const immovableBonus = (_perkState.immovable && playerSpeed < 10) ? 3 : 1;
+    const regenDelay = player._shieldRegenDelay ?? 5;
+    const regenRate  = player._shieldRegenRate  ?? 1.0;
+    if (player.maxShield > 0 && lastDamageTime > 0 && secondsSinceHit >= regenDelay && player.shield < player.maxShield) {
+        const _gearRegenMult = 1 + ((_gearState?.shieldRegen || 0) / 100);
+        player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult * immovableBonus);
+        if (player.shield >= player.maxShield) {
+            player._shieldAdaptStack = 0;  // adaptive_shield: reset on full regen
+            player._shieldRetribChg  = 0;  // retribution: reset charge on full regen
+        }
+        updateBars();
+    }
+}
+
+/** Auto-repair: regenerate core HP slowly from perk + gear combined rate. */
+function _applyAutoRepair() {
+    const _totalAutoRepair = (_perkState.autoRepair || 0) + (_gearState?.autoRepair || 0);
+    if (_totalAutoRepair > 0 && player?.comp?.core && player.comp.core.hp < player.comp.core.max) {
+        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + (GAME.loop.delta / 1000) * _totalAutoRepair);
+        updateBars(); updatePaperDoll();
+    }
+}
+
+// ═══════════ ENEMY BULLET OVERLAP ═══════════
+
+function _registerEnemyBulletOverlap(scene) {
+    _playerBulletOverlap = scene.physics.add.overlap(enemyBullets, player, (p, bullet) => {
+        if (!bullet || !bullet.active) return;
+        if (!isDeployed || !player?.active) { if (bullet?.active) bullet.destroy(); return; }
+
+        const bulletAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
+
+        if (isShieldActive) {
+            sndShieldBlock();
+            createShieldSparks(scene, bullet.x, bullet.y);
+            showDamageText(scene, bullet.x, bullet.y, 0, true);
+            bullet.destroy();
+            return;
+        }
+
+        if (player.shield > 0 && player.shield - 7.5 <= 0) {
+            createShieldBreak(scene, p.x, p.y);
+        }
+
+        createImpactSparks(scene, p.x, p.y);
+        const _hitDmg = bullet.damageValue || 15;
+        showDamageText(scene, p.x, p.y, _hitDmg, player.shield > 0);
+        // Vampiric elite: heal shooter on hit
+        if (bullet._shooter && typeof handleVampiricHeal === 'function') {
+            handleVampiricHeal(bullet._shooter, _hitDmg);
+        }
+        bullet.destroy();
+        processPlayerDamage(_hitDmg, bulletAngle);
+    });
+}
+
+// ═══════════ FIELD EFFECTS ═══════════
+
+function _applyFieldEngineer() {
+    if (!_perkState.fieldEngineer || !player?.comp) return;
+    const parts = Object.entries(player.comp);
+    parts.sort((a,b) => (a[1].hp/a[1].max) - (b[1].hp/b[1].max));
+    const [, part] = parts[0];
+    const heal = Math.round(part.max * 0.10 * _perkState.fieldEngineer);
+    part.hp = Math.min(part.max, part.hp + heal);
+    updateBars(); updatePaperDoll();
+}
+function _createAfterburn(scene, x, y) {
+    const zone = scene.add.circle(x, y, 40, 0xff4400, 0.35).setDepth(10);
+    let ticks = 0;
+    scene.time.addEvent({ delay:400, repeat:9, callback: () => {
+        if (!zone.active) return;
+        enemies.getChildren().forEach(e => {
+            if (Phaser.Math.Distance.Between(e.x, e.y, x, y) < 45) damageEnemy(e, 5, undefined, false);
+        });
+        ticks++;
+        if (ticks >= 10 && zone.active) zone.destroy();
+    }});
+    scene.tweens.add({ targets:zone, alpha:0, duration:4000, onComplete:()=>{ if(zone.active) zone.destroy(); } });
+}
+
+

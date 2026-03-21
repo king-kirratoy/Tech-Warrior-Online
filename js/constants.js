@@ -379,3 +379,280 @@ const ENEMY_2H_WEAPONS  = ['siege','chain'];
 // ── Combat utility sets ───────────────────────────────────────────
 // Explosive keys for dual-explosive warning
 const EXPLOSIVE_KEYS = new Set(['gl','rl','plsm','rail']);
+
+// ═══════════ WORLD DIMENSIONS ═══════════
+
+const WORLD_SIZE   = 4000; // map width and height (square world)
+const WORLD_CENTER = 2000; // world center X and Y; also the player spawn point
+
+const SLOT_ID_MAP = {
+    L: 'L',
+    R: 'R',
+    M: 'mod',
+    A: 'aug',
+    G: 'leg',
+    S: 'shld',
+};
+
+// All weapons available to both arms (free slot assignment)
+const WEAPON_OPTIONS = [
+    { key:'none', label:'NONE',           weight:0  },
+    { key:'smg',  label:'SUBMACHINE GUN', weight:15 },
+    { key:'mg',   label:'MACHINE GUN',    weight:25 },
+    { key:'br',   label:'BATTLE RIFLE',   weight:30 },
+    { key:'sg',   label:'SHOTGUN',        weight:30 },
+    { key:'fth',  label:'FLAMETHROWER',   weight:30 },
+    { key:'hr',   label:'HEAVY RIFLE',    weight:45 },
+    { key:'sr',   label:'SNIPER RIFLE',   weight:50 },
+    { key:'gl',   label:'GRENADE LAUNCHER',   weight:55 },
+    { key:'rl',   label:'ROCKET LAUNCHER',    weight:65 },
+    { key:'plsm', label:'PLASMA CANNON',  weight:60 },
+    { key:'rail',  label:'RAILGUN',        weight:70 },
+    // ── TWO-HANDED ──
+    { key:'siege', label:'SIEGE CANNON ⬡', weight:90, twoHanded:true },
+    { key:'chain', label:'CHAINGUN ⬡',     weight:80, twoHanded:true },
+];
+
+const MOD_OPTIONS = [
+    { key:'none',      label:'NONE',         weight:0  },
+    { key:'jump',      label:'JUMP JETS',    weight:15 },
+    { key:'decoy',     label:'DECOY',        weight:15 },
+    { key:'barrier',   label:'BARRIER',      weight:20 },
+    { key:'repair',    label:'REPAIR DRONE', weight:20 },
+    { key:'emp',       label:'EMP BURST',    weight:30 },
+    { key:'rage',      label:'RAGE',         weight:30 },
+    { key:'atk_drone', label:'ATTACK DRONE', weight:35 },
+    { key:'missile',   label:'MISSILE POD',  weight:35 },
+    // Chassis unique
+    { key:'ghost_step',       label:'GHOST STEP',       weight:20 },
+    { key:'overclock_burst',  label:'OVERCLOCK BURST',  weight:25 },
+    { key:'fortress_mode',    label:'FORTRESS MODE',    weight:30 },
+];
+
+const AUG_OPTIONS = [
+    { key:'none',              label:'NONE',              weight:0   },
+    // Universal
+    { key:'target_painter',    label:'TARGET PAINTER',    weight:20  },
+    { key:'threat_analyzer',   label:'THREAT ANALYZER',   weight:20  },
+    { key:'ballistic_weave',   label:'BALLISTIC WEAVE',   weight:25  },
+    { key:'combat_ai',         label:'COMBAT AI',         weight:25  },
+    { key:'thermal_core',      label:'THERMAL CORE',      weight:25  },
+    { key:'overclock_cpu',     label:'OVERCLOCK CPU',     weight:30  },
+    { key:'drone_relay',       label:'DRONE RELAY',       weight:30  },
+    { key:'fuel_injector',     label:'FUEL INJECTOR',     weight:30  },
+    { key:'targeting_scope',   label:'TARGETING SCOPE',   weight:30  },
+    { key:'reactive_plating',  label:'REACTIVE PLATING',  weight:30  },
+    { key:'neural_accel',      label:'NEURAL ACCEL.',     weight:35  },
+    { key:'pyromaniac_chip',   label:'PYRO CHIP',         weight:35  },
+    { key:'scrap_cannon',      label:'SCRAP CANNON',      weight:40  },
+    { key:'multi_drone',       label:'MULTI-DRONE',       weight:50  },
+    // Light unique
+    { key:'ghost_circuit',     label:'GHOST CIRCUIT',     weight:25  },
+    { key:'reflex_amp',        label:'REFLEX AMP',        weight:20  },
+    { key:'kill_sprint',       label:'KILL SPRINT',       weight:22  },
+    { key:'predator_lens',     label:'PREDATOR LENS',     weight:28  },
+    { key:'shadow_core',       label:'SHADOW CORE',       weight:30  },
+    // Medium unique
+    { key:'tactical_uplink',   label:'TACTICAL UPLINK',   weight:28  },
+    { key:'field_processor',   label:'FIELD PROCESSOR',   weight:25  },
+    { key:'system_sync',       label:'SYSTEM SYNC',       weight:30  },
+    { key:'adaptive_core',     label:'ADAPTIVE CORE',     weight:32  },
+    { key:'echo_targeting',    label:'ECHO TARGETING',    weight:26  },
+    // Heavy unique
+    { key:'war_machine',       label:'WAR MACHINE',       weight:35  },
+    { key:'iron_fortress',     label:'IRON FORTRESS',     weight:40  },
+    { key:'suppressor_aura',   label:'SUPPRESSOR AURA',   weight:38  },
+    { key:'colossus_frame',    label:'COLOSSUS FRAME',    weight:45  },
+    { key:'impact_core',       label:'IMPACT CORE',       weight:32  },
+    // Heavy weapon mastery
+    { key:'blast_dampener',    label:'BLAST DAMPENER',    weight:30  },
+    { key:'heavy_loader',      label:'HEAVY LOADER',      weight:35  },
+    { key:'chain_drive',       label:'CHAIN DRIVE',       weight:32  },
+];
+
+const LEG_OPTIONS = [
+    { key:'none',              label:'NONE',              weight:0   },
+    // Universal
+    { key:'hydraulic_boost',   label:'HYDRO BOOST',       weight:25  },
+    { key:'gyro_stabilizer',   label:'GYRO STABILIZER',   weight:25  },
+    { key:'mag_anchors',       label:'MAG ANCHORS',       weight:30  },
+    { key:'mine_layer',        label:'MINE LAYER',        weight:35  },
+    { key:'afterleg',          label:'AFTERLEG',          weight:40  },
+    // Light unique
+    { key:'sprint_boosters',   label:'SPRINT BOOSTERS',   weight:28  },
+    { key:'featherweight',     label:'FEATHERWEIGHT',     weight:15  },
+    { key:'ghost_legs',        label:'GHOST LEGS',        weight:22  },
+    { key:'silent_step',       label:'SILENT STEP',       weight:20  },
+    { key:'reactive_dash',     label:'REACTIVE DASH',     weight:30  },
+    // Medium unique
+    { key:'stabilizer_gyros',  label:'STABILIZER GYROS',  weight:28  },
+    { key:'jump_jets',         label:'JUMP JETS',         weight:32  },
+    { key:'adaptive_stride',   label:'ADAPTIVE STRIDE',   weight:25  },
+    { key:'seismic_dampener',  label:'SEISMIC DAMPENER',  weight:30  },
+    { key:'reactor_legs',      label:'REACTOR LEGS',      weight:35  },
+    // Heavy unique
+    { key:'tremor_legs',       label:'TREMOR LEGS',       weight:45  },
+    { key:'siege_stance',      label:'SIEGE STANCE',      weight:40  },
+    { key:'ironclad_legs',     label:'IRONCLAD LEGS',     weight:38  },
+    { key:'suppressor_legs',   label:'SUPPRESSOR LEGS',   weight:35  },
+    { key:'warlord_stride',    label:'WARLORD STRIDE',    weight:38  },
+    // Medium unique (replacing jump-dependent legs)
+    { key:'power_stride',      label:'POWER STRIDE',      weight:28  },
+    { key:'evasion_coils',     label:'EVASION COILS',      weight:30  },
+];
+
+const SHIELD_OPTIONS = [
+    { key:'none',             label:'NONE',             weight:0   },
+    // Universal
+    { key:'light_shield',     label:'LIGHT SHIELD',     weight:15  },
+    { key:'standard_shield',  label:'STD. SHIELD',      weight:25  },
+    { key:'heavy_shield',     label:'HEAVY SHIELD',     weight:40  },
+    { key:'reactive_shield',  label:'REACTIVE SHIELD',  weight:45  },
+    { key:'fortress_shield',  label:'FORTRESS SHIELD',  weight:60  },
+    // Light unique
+    { key:'phase_shield',     label:'PHASE SHIELD',     weight:20  },
+    { key:'smoke_burst',      label:'SMOKE BURST',      weight:18  },
+    { key:'micro_shield',     label:'MICRO SHIELD',     weight:12  },
+    { key:'flicker_shield',   label:'FLICKER SHIELD',   weight:22  },
+    { key:'mirror_shield',    label:'MIRROR SHIELD',    weight:28  },
+    // Medium unique
+    { key:'adaptive_shield',  label:'ADAPTIVE SHIELD',  weight:30  },
+    { key:'counter_shield',   label:'COUNTER SHIELD',   weight:35  },
+    { key:'pulse_shield',     label:'PULSE SHIELD',     weight:28  },
+    { key:'layered_shield',   label:'LAYERED SHIELD',   weight:38  },
+    { key:'overcharge_shld',  label:'OVERCHARGE SHLD',  weight:32  },
+    // Heavy unique
+    { key:'siege_wall',       label:'SIEGE WALL',       weight:70  },
+    { key:'bulwark_shield',   label:'BULWARK SHIELD',   weight:55  },
+    { key:'retribution_shld', label:'RETRIBUTION',      weight:50  },
+    { key:'thermal_shield',   label:'THERMAL SHIELD',   weight:45  },
+    { key:'titan_shield',     label:'TITAN SHIELD',     weight:65  },
+];
+
+// Descriptions for every key
+const SLOT_DESCS = {
+    none:             { title:'NONE', desc:'Slot is empty.' },
+    smg:              { title:'SMG — SUBMACHINE GUN', desc:'High fire rate, low damage per shot. Best for sustained suppression and harassment at medium range.' },
+    mg:               { title:'MG — MACHINE GUN', desc:'Reliable workhorse. Strong sustained damage with moderate fire rate. Consistent at all ranges.' },
+    br:               { title:'BR — BATTLE RIFLE', desc:'3-shot burst. First shot always accurate. Reward deliberate aiming at mid-range.' },
+    sg:               { title:'SG — SHOTGUN', desc:'6 pellets per shot. Devastating at close range. Significant damage falloff beyond 500px.' },
+    fth:              { title:'FTH — FLAMETHROWER', desc:'Short-range fire cone. Multiple flame particles per burst. Effective up to ~350px.' },
+    hr:               { title:'HR — HEAVY RIFLE', desc:'High-damage single shots. Bonus damage vs shielded and heavy-chassis enemies. Strong anti-armor identity.' },
+    sr:               { title:'SR — SNIPER RIFLE', desc:'Extreme single-target damage. Pierces all enemies in a line. Very slow reload — use deliberately.' },
+    gl:               { title:'GL — GRENADE LAUNCHER', desc:'Arcing explosive shot with large AoE. Has minimum arm distance — safe to use at range.' },
+    rl:               { title:'RL — ROCKET LAUNCHER', desc:'Massive damage and blast radius. Can self-damage. High risk, high reward.' },
+    plsm:             { title:'PLSM — PLASMA CANNON', desc:'Large slow plasma orb. AoE on impact. Deals high damage to clustered enemies.' },
+    rail:             { title:'RAIL — RAILGUN', desc:'Instant hitscan beam. Extreme damage. Pierces every enemy in the line. Long reload.' },
+    siege:            { title:'SIEGE CANNON ⬡', desc:'Two-handed. Massive slow cannonball with 160px blast radius. Locks both arms. Medium/Heavy only.' },
+    chain:            { title:'CHAINGUN ⬡',     desc:'Two-handed. 1.5s spin-up then fires at extreme rate. Locks both arms. Medium/Heavy only.' },
+    jump:             { title:'JUMP JETS', desc:'Dash forward at high speed. Deals slam AoE damage (40 dmg, 120px) on landing. Afterleg boosts both.' },
+    barrier:          { title:'BARRIER', desc:'4 seconds of full damage immunity. Energy barrier absorbs all incoming fire. 3-second lockout after deactivation.' },
+    rage:             { title:'RAGE', desc:'3.5s damage boost + brief invincibility frames on activation. Higher cooldown.' },
+    emp:              { title:'EMP BURST', desc:'Expanding ring stuns all enemies within 380px for 2.4 seconds. Great vs groups.' },
+    repair:           { title:'REPAIR DRONE', desc:'Heals your most-damaged limb for 40 HP delivered over 5 ticks. Pulse visual confirms activation.' },
+    atk_drone:        { title:'ATTACK DRONE', desc:'Deploys an auto-turret that fires 24 dmg bolts at the nearest enemy every 0.6s for 8 seconds.' },
+    missile:          { title:'MISSILE POD', desc:'Launches 6 homing micro-missiles split across up to 3 nearest enemies. 55 dmg per hit.' },
+    decoy:            { title:'DECOY', desc:'Deploys a hologram at your position. Nearby enemies redirect targeting to the decoy for 6 seconds.' },
+    ghost_step:       { title:'GHOST STEP', desc:'Cloak for 1.5s — enemies lose targeting lock and will not fire. Deactivates if you fire a weapon.' },
+    overclock_burst:  { title:'OVERCLOCK BURST', desc:'3-second burst: +25% fire rate and +20% movement speed. Long 12s cooldown.' },
+    fortress_mode:    { title:'FORTRESS MODE', desc:'4 seconds: +30% damage reduction and 5 HP/s core regeneration. Stand your ground.' },
+    target_painter:   { title:'TARGET PAINTER', desc:'Hitting an enemy marks them. Marked enemies take +20% damage from all sources until they die or the mark expires.' },
+    threat_analyzer:  { title:'THREAT ANALYZER', desc:'Damaging an enemy reduces their resistance by 15% for 3 seconds. Rewards continuous aggression.' },
+    overclock_cpu:    { title:'OVERCLOCK CPU', desc:'Reduces all weapon reload times and mod cooldowns by 12%. Applied passively on deploy.' },
+    reactive_plating: { title:'REACTIVE PLATING', desc:'Each hit you receive adds a 5% damage reduction stack, up to 5 stacks max. Resets at round start.' },
+    scrap_cannon:     { title:'SCRAP CANNON', desc:'When an enemy part is destroyed, it explodes for 30 AoE damage to nearby enemies.' },
+    drone_relay:      { title:'DRONE RELAY',      desc:'Attack Drone fires 40% faster and has +60 bonus HP before being destroyed.' },
+    combat_ai:        { title:'COMBAT AI',         desc:'Drone focuses your current painted/attacked target for coordinated fire.' },
+    multi_drone:      { title:'MULTI-DRONE',       desc:'Deploy 2 attack drones simultaneously instead of 1. High weight cost.' },
+    targeting_scope:  { title:'TARGETING SCOPE',   desc:'SR and RAIL gain +15% damage per 200px distance to the target.' },
+    ballistic_weave:  { title:'BALLISTIC WEAVE',   desc:'All bullets travel 10% faster and ignore 20% of enemy shield absorption.' },
+    neural_accel:     { title:'NEURAL ACCEL.',     desc:'For 3 seconds after landing from JUMP, all weapons deal 2x damage.' },
+    fuel_injector:    { title:'FUEL INJECTOR',     desc:'FTH range +40%, flame cone width +30%. More particles per burst.' },
+    thermal_core:     { title:'THERMAL CORE',      desc:'FTH hits always ignite enemies (100% chance). Ignite duration +1s.' },
+    pyromaniac_chip:  { title:'PYROMANIAC CHIP',   desc:'Ignited enemies spread fire to nearest non-burning enemy within 300px on death.' },
+    hydraulic_boost:  { title:'HYDRO BOOST', desc:'+20% movement speed. Legs take 15% less damage. Disabled if legs are destroyed.' },
+    gyro_stabilizer:  { title:'GYRO STABILIZER', desc:'Eliminates the speed penalty from damaged legs. Improves aim stability. Disabled if legs destroyed.' },
+    mag_anchors:      { title:'MAG ANCHORS', desc:'While stationary: take 20% less damage and deal 15% more damage. Rewards positional play.' },
+    mine_layer:       { title:'MINE LAYER', desc:'Drops a proximity mine every 8 seconds while moving. Each mine deals 80 AoE damage on trigger.' },
+    afterleg:         { title:'AFTERLEG', desc:'JUMP mod travels 50% farther. Landing shockwave deals 60 dmg in 150px. Disabled if legs destroyed.' },
+    light_shield:    { title:'LIGHT SHIELD',    desc:'60 HP / 50% absorb. Regens in ~1s. Burn it freely — it comes right back. Best for aggressive play.' },
+    standard_shield: { title:'STD. SHIELD',     desc:'100 HP / 50% absorb / 4s regen. No gimmick, no weakness. The dependable baseline.' },
+    heavy_shield:    { title:'HEAVY SHIELD',    desc:'100 HP but 70% absorb — each hit does 30% less. Slow 7s regen is the tradeoff.' },
+    reactive_shield: { title:'REACTIVE SHIELD', desc:'80 HP, 2s regen. On break: 0.3s invulnerability window. Designed to break and recover fast.' },
+    fortress_shield: { title:'FORTRESS SHIELD', desc:'240 HP but only 25% absorb — most damage bleeds through. A speed bump, not a wall.' },
+    col_00ff00: { title:'GREEN',         desc:'Head: bright green. Torso and shoulders: dark green.' },
+    col_00ccff: { title:'ELECTRIC BLUE', desc:'Head: electric cyan-blue. Torso and shoulders: deep navy.' },
+    col_ff3300: { title:'RED',           desc:'Head: bright red. Torso and shoulders: dark crimson.' },
+    col_ffff00: { title:'YELLOW',        desc:'Head: bright yellow. Torso and shoulders: dark olive.' },
+    col_ff8800: { title:'ORANGE',        desc:'Head: vivid orange. Torso and shoulders: burnt amber.' },
+    col_cc44ff: { title:'PURPLE',        desc:'Head: electric purple. Torso and shoulders: deep violet.' },
+    col_ffffff: { title:'WHITE',         desc:'Head: clean white. Torso and shoulders: steel grey.' },
+    col_00ffcc: { title:'TEAL',          desc:'Head: bright teal. Torso and shoulders: deep seafoam.' },
+    col_ff44cc: { title:'PINK',          desc:'Head: hot pink. Torso and shoulders: dark magenta.' },
+    col_ffcc00: { title:'GOLD',          desc:'Head: bright gold. Torso and shoulders: dark bronze.' },
+    // ── CHASSIS-UNIQUE SHIELD SLOT DESCS ─────────────────────────
+    // Light unique
+    micro_shield:     { title:'MICRO SHIELD',     desc:'30 HP / instant 1s regen. Paper thin but always cycling. Best with max mobility.' },
+    flicker_shield:   { title:'FLICKER SHIELD',   desc:'80 HP. Blocks every other hit completely — HP never changes. Beats rapid-fire enemies.' },
+    phase_shield:     { title:'PHASE SHIELD',     desc:'70 HP. Each hit that lands gives 0.25s invulnerability. Consistent hit mitigation.' },
+    smoke_burst:      { title:'SMOKE BURST',      desc:'60 HP. Shield break triggers +70% speed for 2s. Converts being overwhelmed into escape.' },
+    mirror_shield:    { title:'MIRROR SHIELD',    desc:'70 HP. Reflects 35% of absorbed damage back at the attacker.' },
+    // Medium unique
+    adaptive_shield:  { title:'ADAPTIVE SHIELD',  desc:'90 HP. Each consecutive hit raises absorb by 10% (cap 80%). Rewards staying in the fight.' },
+    counter_shield:   { title:'COUNTER SHIELD',   desc:'90 HP. Every 40 shield damage charges a counter. On mod activation: 80 AoE damage.' },
+    pulse_shield:     { title:'PULSE SHIELD',     desc:'80 HP / 2s regen. On break: EMP stuns all enemies within 250px for 1.8s.' },
+    layered_shield:   { title:'LAYERED SHIELD',   desc:'130 HP in two 65 HP layers. Each regen independently — you always have at least one up.' },
+    overcharge_shld:  { title:'OVERCHARGE SHLD',  desc:'90 HP. Damage absorbed beyond shield HP temporarily adds as core HP buffer.' },
+    // Heavy unique
+    siege_wall:       { title:'SIEGE WALL',        desc:'280 HP. While active: -20% incoming damage, -20% speed. Plant yourself and hold the line.' },
+    bulwark_shield:   { title:'BULWARK SHIELD',    desc:'140 HP. Passive 12% DR always active — even when shield is fully depleted.' },
+    retribution_shld: { title:'RETRIBUTION',       desc:'110 HP. Absorbed hits charge retribution. On break: AoE explosion scaled to charge.' },
+    thermal_shield:   { title:'THERMAL SHIELD',    desc:'120 HP. Enemies within 160px take 8 dmg/s while your shield is active.' },
+    titan_shield:     { title:'TITAN SHIELD',      desc:'200 HP / 60% absorb / +20 core HP bonus. Very slow regen. Pure staying power.' },
+    // ── NEW LEG SLOT DESCS ────────────────────────────────────────
+    sprint_boosters:  { title:'SPRINT BOOSTERS',  desc:'Double-tap W for 0.8s speed burst (+80%). 4s cooldown.' },
+    featherweight:    { title:'FEATHERWEIGHT',    desc:'+15% reload speed and +10% move speed. Light frame optimization — faster in every way.' },
+    ghost_legs:       { title:'GHOST LEGS',       desc:'Taking damage while moving triggers a 0.2s speed burst. Hard to pin down.' },
+    silent_step:      { title:'SILENT STEP',      desc:'Enemies lose vision 40% faster when you are moving. Wider flanking window.' },
+    reactive_dash:    { title:'REACTIVE DASH',    desc:'Auto-dash when legs drop below 50% HP. Survive the first hit.' },
+    stabilizer_gyros: { title:'STABILIZER GYROS',   desc:'While stationary: +15% accuracy and +8% damage. Reward holding position.' },
+    jump_jets:        { title:'JUMP JETS',       desc:'JUMP mod gains a second charge. Two repositions per cooldown.' },
+    adaptive_stride:  { title:'ADAPTIVE STRIDE',    desc:'+15% speed when retreating. Better kiting tool for medium builds.' },
+    seismic_dampener: { title:'SEISMIC DAMPENER',   desc:'Legs take 25% less damage. Landing slams deal +30% more.' },
+    reactor_legs:     { title:'REACTOR LEGS',    desc:'Mod cooldowns reduce 1s per 300px moved. Rewards constant movement.' },
+    tremor_legs:      { title:'TREMOR LEGS',      desc:'After 2s stationary, next movement creates 40 AoE dmg tremor at 120px.' },
+    siege_stance:     { title:'SIEGE STANCE',     desc:'While stationary: +25% damage, +20% DR. A true fortress build.' },
+    ironclad_legs:    { title:'IRONCLAD LEGS',    desc:'Leg HP +80. Legs take 30% less damage. Near-impossible to cripple.' },
+    ground_slam:      { title:'GROUND SLAM',      desc:'JUMP landing AoE doubled in radius and damage. Use landing as a weapon.' },
+    suppressor_legs:  { title:'SUPPRESSOR LEGS',  desc:'Enemies within 220px move 20% slower. Passive suppression from heavy frame.' },
+    // ── NEW AUG SLOT DESCS ────────────────────────────────────────
+    ghost_circuit:    { title:'GHOST CIRCUIT',    desc:'After JUMP landing: invisible to enemies for 2s.' },
+    reflex_amp:       { title:'REFLEX AMP',       desc:'First shot after a dodge or JUMP landing deals +40% damage.' },
+    kill_sprint:      { title:'KILL SPRINT',      desc:'Each kill: +8% speed for 4s, stacks up to 3×.' },
+    predator_lens:    { title:'PREDATOR LENS',    desc:'Enemies >400px away are highlighted. +10% damage vs highlighted.' },
+    shadow_core:      { title:'SHADOW CORE',      desc:'While moving: all incoming damage reduced by 12%.' },
+    tactical_uplink:  { title:'TACTICAL UPLINK',    desc:'Mod cooldowns reduced additional 10%. Stacks with Cooldown Mastery.' },
+    field_processor:  { title:'FIELD PROCESSOR',    desc:'3 hits on same enemy: +15% damage to that target permanently.' },
+    system_sync:      { title:'SYSTEM SYNC',     desc:'Activating any mod heals 20 HP to most-damaged limb.' },
+    adaptive_core:    { title:'ADAPTIVE CORE',   desc:'Each round survived: +3% base DR (max +15%).' },
+    echo_targeting:   { title:'ECHO TARGETING',  desc:'Hitting an enemy reveals all enemies within 300px for 3s.' },
+    war_machine:      { title:'WAR MACHINE',      desc:'Passive core regen 2 HP/s after 4s without taking damage.' },
+    iron_fortress:    { title:'IRON FORTRESS',    desc:'Stationary 1.5s+: +15% DR and +10% damage bonus.' },
+    suppressor_aura:  { title:'SUPPRESSOR AURA',  desc:'Enemies within 200px move 15% slower. Passive intimidation field.' },
+    colossus_frame:   { title:'COLOSSUS FRAME',   desc:'Core HP +60. Arm HP +40. Leg HP +40. Massive HP boost.' },
+    impact_core:      { title:'IMPACT CORE',      desc:'Close kills (<200px): restore 15 core HP and stun nearby enemies 0.5s.' },
+};
+
+// Colour options — head gets the selected colour, torso/body gets darkenColor(colour, 0.4)
+const COLOR_OPTIONS = [
+    { key:'00ff00', hex:0x00ff00, label:'GREEN',         hex6:'#00ff00' },
+    { key:'00ccff', hex:0x00ccff, label:'ELECTRIC BLUE', hex6:'#00ccff' },
+    { key:'ff3300', hex:0xff3300, label:'RED',           hex6:'#ff3300' },
+    { key:'ffff00', hex:0xffff00, label:'YELLOW',        hex6:'#ffff00' },
+    { key:'ff8800', hex:0xff8800, label:'ORANGE',        hex6:'#ff8800' },
+    { key:'cc44ff', hex:0xcc44ff, label:'PURPLE',        hex6:'#cc44ff' },
+    { key:'ffffff', hex:0xffffff, label:'WHITE',         hex6:'#ffffff' },
+    { key:'00ffcc', hex:0x00ffcc, label:'TEAL',          hex6:'#00ffcc' },
+    { key:'ff44cc', hex:0xff44cc, label:'PINK',          hex6:'#ff44cc' },
+    { key:'ffcc00', hex:0xffcc00, label:'GOLD',          hex6:'#ffcc00' },
+];

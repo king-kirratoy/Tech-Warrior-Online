@@ -1794,3 +1794,109 @@ function loadCampaignProgress() {
         return JSON.parse(raw);
     } catch(e) { return null; }
 }
+
+// ═══════════ CONSUMABLE LOOT ORBS ═══════════
+
+function spawnLoot(scene, x, y, forced) {
+    // Drop chance: 30% normal, 100% commander
+    if (!forced && Math.random() > 0.30) return;
+
+    // Weighted type: repair 15%, ammo/charge split the rest
+    const _tr = Math.random();
+    const type = _tr < 0.15 ? 'repair' : _tr < 0.575 ? 'ammo' : 'charge';
+    const def   = LOOT_TYPES[type];
+
+    const orb = scene.add.circle(x, y, def.size, def.color, 0.9)
+        .setStrokeStyle(2, 0xffffff).setDepth(8);
+    scene.physics.add.existing(orb, true);
+
+    // Label
+    const label = scene.add.text(x, y - 18, def.label, {
+        font: 'bold 9px monospace', fill: def.glow
+    }).setOrigin(0.5).setDepth(9);
+
+    // Pulse tween
+    scene.tweens.add({
+        targets: orb, scaleX: 1.25, scaleY: 1.25,
+        duration: 500, yoyo: true, repeat: -1
+    });
+
+    const pickup = { orb, label, type, x, y };
+    lootPickups.push(pickup);
+
+    // Expire after 15s
+    scene.time.delayedCall(15000, () => removeLoot(pickup));
+}
+
+function removeLoot(pickup) {
+    if (pickup.orb?.active)   pickup.orb.destroy();
+    if (pickup.label?.active) pickup.label.destroy();
+    lootPickups = lootPickups.filter(p => p !== pickup);
+}
+
+function checkLootPickups(scene) {
+    if (!player?.active || !isDeployed) return;
+    lootPickups.slice().forEach(pickup => {
+        if (!pickup.orb?.active) { lootPickups = lootPickups.filter(p => p !== pickup); return; }
+        const dist = Phaser.Math.Distance.Between(player.x, player.y, pickup.x, pickup.y);
+        if (dist < 40) {
+            applyLoot(scene, pickup.type);
+            removeLoot(pickup);
+        }
+        // Sync label
+        if (pickup.label?.active) pickup.label.setPosition(pickup.x, pickup.y - 18);
+    });
+}
+
+function applyLoot(scene, type) {
+    sndLoot(type);
+    const def = LOOT_TYPES[type];
+    // Flash text
+    const fx = scene.add.text(player.x, player.y - 40, def.label + ' PICKED UP', {
+        font: 'bold 13px monospace', fill: def.glow,
+        stroke: '#000000', strokeThickness: 3
+    }).setOrigin(0.5).setDepth(100).setScrollFactor(0)
+      .setPosition(GAME.config.width/2, GAME.config.height * 0.35);
+    scene.tweens.add({ targets: fx, y: fx.y - 40, alpha: 0, duration: 1800,
+        onComplete: () => fx.destroy() });
+
+    switch (type) {
+        case 'repair': {
+            // Full heal + restore broken arms
+            _healPlayerFull();
+            _applyFieldEngineer();
+            break;
+        }
+        case 'ammo': {
+            // 50% faster reload for 8s — mirrors rage mode
+            isAmmoActive = true;
+            _applyFieldEngineer();
+            ['slot-L','slot-R'].forEach(id => {
+                const el = document.getElementById(id);
+                const bar = el?.querySelector('.wr-bar-bg');
+                if (bar) { bar.style.boxShadow = '0 0 12px #ffdd00, 0 0 4px #ffaa00'; bar.style.borderColor = 'rgba(255,210,0,0.7)'; }
+            });
+            scene.time.delayedCall(8000, () => {
+                isAmmoActive = false;
+                ['slot-L','slot-R'].forEach(id => {
+                    const el = document.getElementById(id);
+                    const bar = el?.querySelector('.wr-bar-bg');
+                    if (bar) { bar.style.boxShadow = ''; bar.style.borderColor = ''; }
+                });
+            });
+            break;
+        }
+        case 'charge': {
+            // 50% reduced mod cooldown for 10s
+            isChargeActive = true;
+            const el = document.getElementById('slot-M');
+            const bar = el?.querySelector('.wr-bar-bg');
+            if (bar) { bar.style.boxShadow = '0 0 12px #00ffff, 0 0 4px #00ddff'; bar.style.borderColor = 'rgba(0,220,255,0.8)'; }
+            scene.time.delayedCall(10000, () => {
+                isChargeActive = false;
+                if (bar) { bar.style.boxShadow = ''; bar.style.borderColor = ''; }
+            });
+            break;
+        }
+    }
+}

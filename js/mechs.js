@@ -382,3 +382,53 @@ function _spawnSpectreClone() {
     _spectreClones = _spectreClones.filter(c => c.torso?.active);
   });
 }
+
+// ═══════════ PLAYER HP INIT ═══════════
+
+function _initPlayerHP(scene, s) {
+    // Apply gear HP bonuses from equipped items.
+    // recalcGearStats() lives in loot-system.js and reads _equipped (not loadout).
+    // Key distinction: _equipped.shield  (loot gear slot)
+    //                  loadout.shld      (loadout shield selection)
+    recalcGearStats();
+    const _gCoreHP = (_gearState?.coreHP || 0) + (_gearState?.allHP || 0);
+    const _gArmHP  = (_gearState?.armHP  || 0) + (_gearState?.allHP || 0);
+    const _gLegHP  = (_gearState?.legHP  || 0) + (_gearState?.allHP || 0);
+    player.comp = {
+        core: { hp: s.coreHP + _gCoreHP, max: s.coreHP + _gCoreHP },
+        lArm: { hp: s.armHP  + _gArmHP,  max: s.armHP  + _gArmHP  },
+        rArm: { hp: s.armHP  + _gArmHP,  max: s.armHP  + _gArmHP  },
+        legs: { hp: s.legHP  + _gLegHP,  max: s.legHP  + _gLegHP  }
+    };
+    // Force doll to green now — updatePaperDoll() won't run until isDeployed=true
+    _resetHUDState();
+    player.maxHp     = getTotalHP(loadout.chassis);
+    player.hp        = player.maxHp;
+    // Shield comes from equipped shield system — 0 if none
+    const _shldSys = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
+    const _gShieldHP = (_gearState?.shieldHP || 0);
+    player.maxShield = _shldSys.maxShield + _gShieldHP;
+    player.shield    = _shldSys.maxShield + _gShieldHP;
+    player._shieldRegenRate  = _shldSys.regenRate;
+    player._shieldRegenDelay = _shldSys.regenDelay;
+    // Absorb from shield definition; medium chassis gets +10% absorb bonus on top.
+    const _shldAbsorbBase = _shldSys.absorb ?? 0.50;
+    const _chassisBonus   = loadout.chassis === 'medium' ? 0.10 : 0;
+    const _gearAbsorb     = ((_gearState?.absorbPct || 0) / 100);
+    player._shieldAbsorb  = Math.min(0.90, _shldAbsorbBase + _chassisBonus + _gearAbsorb);
+    // Per-shield state
+    player._shieldFlickerHit  = false;  // flicker_shield: tracks odd/even hits
+    player._shieldAdaptStack  = 0;      // adaptive_shield: consecutive hit count
+    player._shieldCounterChg  = 0;      // counter_shield: stored charge
+    player._shieldRetribChg   = 0;      // retribution: stored charge
+    player._shieldLayerHP     = [       // layered_shield: [layer1, layer2]
+        _shldSys.layer1Max || 0, _shldSys.layer2Max || 0
+    ];
+    // Titan shield: add core HP bonus
+    if (loadout.shld === 'titan_shield' && _shldSys.coreBonus) {
+        player.maxHp  += _shldSys.coreBonus;
+        player.hp     += _shldSys.coreBonus;
+        if (player.comp?.core) { player.comp.core.max += _shldSys.coreBonus; player.comp.core.hp += _shldSys.coreBonus; }
+    }
+}
+
