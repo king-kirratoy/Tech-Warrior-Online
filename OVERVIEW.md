@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 21, 2026 (v5.4 — entire Web Audio engine extracted from index.html into js/audio.js; script tag added after state.js)
+Last updated: March 21, 2026 (v5.5 — 10 pure helper functions extracted from index.html into js/utils.js; script tag added after audio.js)
 
 ---
 
@@ -13,6 +13,7 @@ Last updated: March 21, 2026 (v5.4 — entire Web Audio engine extracted from in
 | `index.html` | Main entry point. Contains the full Phaser game config, all core game logic (chassis, weapons, mods, perks, shields, legs, augments, cover, bosses, loot orbs, HUD, garage, menus, round system, extraction, audio engine, death screen, leaderboard). All inline JS in a single `<script>` block at the bottom. Mutable globals and constants have been split out into `js/state.js` and `js/constants.js`. |
 | `js/state.js` | All mutable runtime globals shared across systems — Phaser object references (`player`, `torso`, `enemies`, `bullets`, etc.), game mode flags (`_gameMode`, `isDeployed`, `_isPaused`), round state (`_round`, `_roundKills`, etc.), combat state (`reloadL/R`, `lastDamageTime`, mod-active flags), `loadout`, `_perkState`, extraction state, loot pickups, leaderboard run state, and chassis movement-effect trackers. |
 | `js/audio.js` | Web Audio API synthesizer — no audio files required. Audio state variables (`_ac`, `_masterVol`, `_activeNodes`, `_sndThrottle`, `_MAX_NODES`, `_audioReady`), core engine functions (`_getAC()`, `_canPlay()`, `_tone()`, `_noise()`), all 23 `snd*` sound functions, and the `_initAudioLifecycle` IIFE for first-gesture gate and tab visibility handling. |
+| `js/utils.js` | Pure helper functions with no side effects on global game state. Colour utilities (`darkenColor`), chassis stats (`getTotalHP`), HUD name lookup (`HUD_NAMES` const + `_hudName`), and visual FX helpers (`showDamageText`, `createImpactSparks`, `createShieldSparks`, `createShieldBreak`, `createMuzzleFlash`, `spawnDebris`, `spawnFootprint`). |
 | `js/loot-system.js` | ARPG loot layer. Item generation (`generateItem`, `rollRarity`, `rollAffixes`), rarity definitions (`RARITY_DEFS`), affix pool (`AFFIX_POOL`), inventory management (`_inventory`, `_equipped`, `_gearState`, `recalcGearStats`), equipment ground drops (`spawnEquipmentLoot`, `checkEquipmentPickups`), unique boss items, scrapping. |
 | `js/enemy-types.js` | Special enemy types (Scout, Enforcer, Technician, Berserker, Sniper Elite, Drone Carrier) and elite modifier system (Vampiric, Shielded, Explosive, Swift, Armored, Splitting). Functions: `spawnSpecialEnemy`, `applyEliteModifier`, `_rollEliteModifier`, `handleEliteDamage`, `handleEliteDeath`, `updateSpecialEnemies`, `_getEnemySpawnConfig`. |
 | `js/arena-objectives.js` | Arena layout generator (`ARENA_DEFS`, `selectArena`, `generateCover` variants), objective system (`selectObjective`, `initObjective`, `updateObjectives`, `cleanupObjective`, `shouldEndRound`, `getArenaLabel`, `getObjectiveLabel`). Exports `_arenaState` object — mutate properties only, never reassign. |
@@ -22,7 +23,7 @@ Last updated: March 21, 2026 (v5.4 — entire Web Audio engine extracted from in
 
 **Load order in `<head>`:**
 ```
-constants.js → state.js → audio.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → multiplayer.js → inline <script>
+constants.js → state.js → audio.js → utils.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → multiplayer.js → inline <script>
 ```
 
 ---

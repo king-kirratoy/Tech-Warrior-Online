@@ -5,6 +5,31 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.5 — Extract Pure Helpers into js/utils.js
+
+**Date:** 2026-03-21
+
+Moved 10 pure helper functions (plus the `HUD_NAMES` constant) out of the inline `<script>` block in `index.html` into the new dedicated file `js/utils.js`.
+
+**Colour utilities:** `darkenColor(hex, amount)`
+
+**Chassis stats:** `getTotalHP(type)`
+
+**HUD name lookup:** `HUD_NAMES` (const), `_hudName(key)`
+
+**Visual FX helpers:** `showDamageText(scene, x, y, amount, hasShield)`, `createImpactSparks(scene, x, y)`, `createShieldSparks(scene, x, y)`, `createShieldBreak(scene, x, y)`, `createMuzzleFlash(scene, x, y, angle, distance, color)`, `spawnDebris(scene, x, y, color)`, `spawnFootprint(scene, x, y, rotation, w, h, fadeTime, color)`
+
+Each function body in `index.html` was replaced with a single `// <name>() — moved to js/utils.js` comment. A `<script src="js/utils.js"></script>` tag was inserted after `audio.js` and before `loot-system.js`. All call sites in `index.html`, `js/loot-system.js`, and `js/multiplayer.js` continue to resolve via the shared `window` global scope — no references are broken.
+
+### Files Changed
+
+- `js/utils.js` — created (10 functions + 1 constant moved from index.html)
+- `index.html` — function bodies replaced with comments; `<script src="js/utils.js">` tag added
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v5.5; `utils.js` added to file map and load order
+
+---
+
 ## v5.4 — Extract Web Audio Engine into js/audio.js
 
 **Date:** 2026-03-21
