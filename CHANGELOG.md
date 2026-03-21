@@ -5,6 +5,38 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.22 — Restore 6 missing stats panel render functions to `js/menus.js`
+
+**Date:** 2026-03-21
+
+### Bug Fixed
+
+Opening the LOADOUT screen from either the HUD button (`toggleStats`) or the campaign mission select (`_openLoadoutFromMission`) threw `ReferenceError: _renderChassisPanel is not defined` at `populateStats` (menus.js). The same crash affected all 6 panel renderers that `populateStats` calls — none of them had been migrated from `index.html` to `js/menus.js` during the refactor.
+
+**Functions restored to `js/menus.js`** (recovered from git commit `dcd9c82`, the v4.6 pass that originally named them):
+
+| Function | What it renders |
+|---|---|
+| `_renderChassisPanel()` | Chassis type, shield, HP bars per part, chassis traits, arm configuration |
+| `_renderWeaponPanel()` | Per-weapon damage/shot, reload time, DPS with perk+gear tooltips |
+| `_renderMobilityPanel()` | Speed, legs status, shield regen, dodge/DR/crit/auto-repair/mod-cd/loot stats |
+| `_renderRunStatsPanel()` | Round, kills, accuracy, damage dealt/taken, perks earned |
+| `_renderActivePerksPanel()` | Picked perks as clickable chips with inline description tooltips |
+| `_renderGearBonusesPanel()` | Equipped item names + grouped gear stat bonuses (offensive/defensive/utility) |
+
+**`_inGame` bug also fixed:** In the original v4.6 code `_renderMobilityPanel` referenced `_inGame` (declared as `const` in `_renderChassisPanel`) without a local declaration — a latent `ReferenceError`. The fix from commit `e8ba2e0` is included: `const _inGame = !!(player?.comp)` is now declared at the top of `_renderMobilityPanel` as well.
+
+**Both call paths verified clean:**
+- `toggleStats()` (menus.js:451) → `populateStats()` → all 6 render functions ✓
+- `_openLoadoutFromMission()` (campaign-system.js:889) → `populateStats()` → all 6 render functions ✓
+
+### Files Changed
+
+- `js/menus.js` — added 6 missing `_renderXxxPanel` functions (~355 lines) above `populateStats`
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.21 — Restore missing `handleObjectiveRoundEnd` to `js/init.js`
 
 **Date:** 2026-03-21
