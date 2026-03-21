@@ -5,6 +5,42 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.18 — Extract Startup / Phaser Init into js/init.js
+
+**Date:** 2026-03-21
+
+Created `js/init.js` (97 lines) and moved all startup and Phaser initialization code out of `index.html`'s inline `<script>` block into it. The file is organised under one section banner `ENTRY POINT` with three sub-sections:
+
+- **Animated grid** (`_startGridCanvas`, `startMenuGrid`) — draws the scrolling cyan grid on the callsign and main-menu canvases.
+- **Callsign input handlers** (`_csKeyDown`, `_updateCallsignBtn`) — keyboard handler for the callsign entry field and the button enable/disable logic.
+- **Game bootstrap** (`window.onload`) — deferred to `window.onload` so that `preload`, `create`, and `update` (function declarations hoisted within the inline `<script>` at the bottom of `<body>`) are globally defined before Phaser receives them. On load: assigns `GAME_CONFIG.scene = { preload, create, update }`, instantiates `GAME = new Phaser.Game(GAME_CONFIG)`, calls `resetInventory()`, starts the menu grid animation, calls `refreshGarage()` and `updateHUD()`, and hides `#ui-layer`.
+
+A related fix was applied to `js/constants.js`: `GAME_CONFIG.scene` was previously set to `{ preload, create, update }` at parse time (head load), when those functions are not yet defined in the global scope. The property is now initialised as `{}` and filled in by `init.js` at `window.onload` time.
+
+The `<script src="js/init.js"></script>` tag was inserted in `index.html` after `events.js` (load position 35, last script tag). This placement satisfies all dependencies — every function called from `init.js` is defined in an earlier-loading file or in the inline script (resolved at `window.onload` runtime):
+
+| Function / Variable | Defined in |
+|---|---|
+| `GAME_CONFIG` | `js/constants.js` (pos 1) |
+| `GAME` | `js/state.js` (pos 2) |
+| `resetInventory()` | `js/loot-system.js` (pos 15) |
+| `refreshGarage()` | `js/garage.js` (pos 13) |
+| `updateHUD()` | `js/hud.js` (pos 12) |
+| `proceedToMainMenu()` | `js/menus.js` (pos 14) |
+| `preload`, `create`, `update` | `index.html` inline `<script>` (body) — available at `window.onload` |
+
+The inline `<script>` block in `index.html` no longer contains any startup or init code — only the Phaser lifecycle functions (`preload`, `create`, `update`) and the remaining game logic that has not yet been extracted.
+
+### Files Changed
+
+- `js/init.js` — new file, 5 functions + `window.onload` bootstrap (97 lines)
+- `js/constants.js` — `GAME_CONFIG.scene` changed from `{ preload, create, update }` to `{}` (assigned at runtime by `init.js`)
+- `index.html` — `<script src="js/init.js">` tag added after `events.js`; `GAME` instantiation, `resetInventory()` call, `_startGridCanvas`, `startMenuGrid`, `_csKeyDown`, `_updateCallsignBtn`, and `window.onload` block replaced with redirect comments
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — `js/init.js` added to file map and load order
+
+---
+
 ## v5.17 — Extract Global Event Listeners into js/events.js
 
 **Date:** 2026-03-21
