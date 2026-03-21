@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.11 — Extract Round Flow System into js/rounds.js
+
+**Date:** 2026-03-21
+
+Moved the full round flow and extraction system out of the inline `<script>` block in `index.html` into a new file `js/rounds.js` (414 lines). The file is organised under two section banners: `ROUND FLOW` (`updateRoundHUD`, `_healPlayerFull`, `showRoundBanner`, `_clearMapForRound`, `startRound`, `onEnemyKilled`) and `EXTRACTION SYSTEM` (`_spawnExtractionPoint`, `_updateExtraction`, `_triggerExtraction`, `_cleanupExtraction`, `_overlapsAnyCover`). The `<script src="js/rounds.js">` tag was added to `index.html` after `enemies.js` and before `loot-system.js`. All 6 call sites in `index.html` resolve correctly (`_updateExtraction` in `update()`, `_spawnExtractionPoint` + `showRoundBanner` in `handleObjectiveRoundEnd()`, `updateRoundHUD` in `_spawnCampaignEnemies()`, `showRoundBanner` × 2 + `startRound` in `deployMech()`, `_healPlayerFull` in the loot orb repair handler, `_cleanupExtraction` in the death handler). `multiplayer.js` calls `showRoundBanner` with a `typeof` guard and loads after `rounds.js` — no broken references. The remaining external files (`loot-system.js`, `enemy-types.js`, `arena-objectives.js`, `campaign-system.js`) reference the moved functions only in comments.
+
+### Files Changed
+
+- `js/rounds.js` — new file, 11 functions (414 lines)
+- `index.html` — script tag added; all 11 function bodies removed
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.10 — Extract Enemy System into js/enemies.js
 
 **Date:** 2026-03-21
