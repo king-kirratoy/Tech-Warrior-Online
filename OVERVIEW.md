@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 21, 2026 (v5.15 — mech visual system extracted into js/mechs.js)
+Last updated: March 21, 2026 (v5.17 — global event listeners extracted into js/events.js)
 
 ---
 
@@ -22,11 +22,12 @@ Last updated: March 21, 2026 (v5.15 — mech visual system extracted into js/mec
 | `js/arena-objectives.js` | Arena layout generator (`ARENA_DEFS`, `selectArena`, arena-specific cover generators invoked via `window[arenaDef.generator]` by `generateCover`), objective system (`selectObjective`, `initObjective`, `updateObjectives`, `cleanupObjective`, `shouldEndRound`, `getArenaLabel`, `getObjectiveLabel`). Exports `_arenaState` object — mutate properties only, never reassign. |
 | `js/campaign-system.js` | Campaign missions, chapter/mission data, XP curve (`getXPForLevel`, `getXPToNextLevel`), level-up, skill tree, chassis upgrades (`applyChassisUpgrades`), shop (`refreshShopStock`), mission rewards (`awardMissionReward`), bonus objectives (`trackBonusObjective`, `finalizeBonusObjective`), cloud save integration (`saveToCloud`, `loadFromCloud`, `_restoreFromCloudData`), mission select overlay (`showMissionSelect`). |
 | `js/multiplayer.js` | PVP matchmaking via Socket.IO, remote player rendering, bullet sync, PVP HUD, PVP hangar (`mpShowPvpHangar`), in-game chat, respawn system. Exports `mpUpdate`, `mpBroadcastBullet`, `mpDrawMinimapPlayers`, `mpIsPvpMenuOpen`, `mpShowPvpMenu`, `mpClosePvpMenu`. |
+| `js/events.js` | All top-level global event listeners: window resize (`_onWindowResize`), document click (dropdown close via `closeAllDD`), main keydown handler (perk menu 1–4 pick, death screen Enter/ESC, equip-prompt Enter/ESC, chassis-select overlay, leaderboard close, campaign overlay closes, stats overlay, pause toggle, PVP chat T key), and `_mainMenuKeyNav` (main menu arrow-key focus, ESC closes campaign sub-menu). Loaded last — after `multiplayer.js` — so all referenced functions are defined. |
 | `LOOT_SYSTEM_DESIGN.md` | Design document for the ARPG loot overhaul. Full spec for item categories, rarity tiers, affix system, equipment slots, drop tables, inventory UI, enemy expansion, boss loot, arena/objective system, and 8-phase implementation plan. Reference document — not loaded at runtime. |
 
 **Load order in `<head>`:**
 ```
-constants.js → state.js → audio.js → utils.js → mechs.js → perks.js → combat.js → mods.js → cover.js → enemies.js → rounds.js → hud.js → garage.js → menus.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → multiplayer.js → inline <script>
+constants.js → state.js → audio.js → utils.js → mechs.js → perks.js → combat.js → mods.js → cover.js → enemies.js → rounds.js → hud.js → garage.js → menus.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → multiplayer.js → events.js → inline <script>
 ```
 
 ---

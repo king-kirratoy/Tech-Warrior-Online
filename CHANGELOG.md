@@ -5,6 +5,44 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.17 — Extract Global Event Listeners into js/events.js
+
+**Date:** 2026-03-21
+
+Moved all four top-level `addEventListener` calls out of the inline `<script>` block in `index.html` into a new file `js/events.js` (174 lines). The file is organised under one section banner `GLOBAL EVENT LISTENERS` with four sub-sections:
+
+- **Window resize** (`_onWindowResize`) — resizes the Phaser canvas on browser window resize via `GAME.scale.resize()`.
+- **Document click** (dropdown close) — calls `closeAllDD()` when the user clicks outside any `.dd-wrap`, `.pvp-dd-wrap`, or `#pvp-hangar` element.
+- **Main keydown handler** — handles perk menu (number keys 1–4, arrow focus, Enter confirm), death screen (Enter/ESC), equip-prompt (Enter/ESC), chassis select overlay (ESC/Arrow/Enter), leaderboard close (ESC), campaign overlay closes (shop/slots/upgrades via ESC), stats overlay close (ESC), pause toggle (ESC when deployed), and PVP chat toggle (T key).
+- **`_mainMenuKeyNav`** — moves focus between main menu and campaign sub-menu buttons using Arrow keys; ESC closes the sub-menu when open.
+
+The `<script src="js/events.js">` tag was inserted in `index.html` after `multiplayer.js` (load position 34). This placement satisfies all dependencies — every function referenced in `events.js` is defined in an earlier-loading file:
+
+| Function / Variable | Defined in |
+|---|---|
+| `GAME` | `js/state.js` (pos 2) |
+| `closeAllDD()` | `js/garage.js` (pos 13) |
+| `pickPerk()`, `_currentPerkKeys`, `_currentPerkNextRound` | `js/perks.js` (pos 6) |
+| `returnToMainMenu()`, `togglePause()`, `toggleStats()`, `hideCampaignSubMenu()`, `_cancelNewCampaign()`, `_highlightChassis()`, `_startNewCampaignWithChassis()`, `closeLeaderboard()`, `_selectedNewChassis` | `js/menus.js` (pos 14) |
+| `_closeShop()`, `_closeLoadoutSlots()`, `_closeUpgrades()` | `js/campaign-system.js` (pos 18) |
+| `mpIsPvpMenuOpen()`, `mpClosePvpMenu()`, `mpShowPvpMenu()`, `mpToggleInGameChat()`, `_mpChatOpen`, `_mpMatchActive`, `_pvpHangarOpen`, `_pvpHangarInMatch`, `_pvpDeployFromHangar()` | `js/multiplayer.js` (pos 20) |
+| `_gameMode`, `_isStats`, `isDeployed` | `js/state.js` (pos 2) |
+
+Three `addEventListener` calls that remain in `index.html` are legitimately inside functions (not top-level) and were not moved:
+- `_canvas.addEventListener('contextmenu', ...)` — inside the Phaser canvas setup path (~line 689).
+- Two `chip.addEventListener('mouseenter/mouseleave', ...)` — inside the affix-chip tooltip rendering loop (~lines 2876–2877).
+
+No broken references remain.
+
+### Files Changed
+
+- `js/events.js` — new file, 4 event listeners (174 lines)
+- `index.html` — `<script src="js/events.js">` tag added after `multiplayer.js`; 4 top-level listener blocks replaced with redirect comments
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — `js/events.js` added to file map and load order
+
+---
+
 ## v5.16 — Extract Cover System into js/cover.js
 
 **Date:** 2026-03-21
