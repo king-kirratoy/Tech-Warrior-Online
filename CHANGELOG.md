@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.2 — Extract Constants into js/constants.js
+
+**Date:** 2026-03-21
+
+Extracted 31 constants from the inline `<script>` block in `index.html` into the new dedicated file `js/constants.js`, covering chassis definitions (`CHASSIS`), weapon definitions (`WEAPONS`), shield systems (`SHIELD_SYSTEMS`), augments (`AUGMENTS`), leg systems (`LEG_SYSTEMS`), cover definitions (`COVER_DEFS`), and loot types (`LOOT_TYPES`). A `<script src="js/constants.js">` tag was added to `index.html` before the other JS files so all downstream code retains access to these values via the shared `window` global scope.
+
+### Files Changed
+
+- `js/constants.js` — created (31 top-level constants moved from index.html)
+- `index.html` — constants block removed; `<script src="js/constants.js">` tag added
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v5.2
+
+---
+
 ## v5.1 — CSS Extraction into Separate Files
 
 **Date:** 2026-03-20
