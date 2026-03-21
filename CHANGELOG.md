@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.15 — Extract Mech Visual System into js/mechs.js
+
+**Date:** 2026-03-21
+
+Moved all mech building, visual syncing, and chassis effect functions out of the inline `<script>` block in `index.html` into a new file `js/mechs.js` (290 lines). The file is organised under three section banners: `MECH BUILDING` (`buildPlayerMech`, `buildEnemyMech`, `buildEnemyTorso`, `refreshMechColor`), `VISUAL SYNC & CHASSIS EFFECTS` (`syncVisuals`, `syncChassisEffect`, `syncLightTrail`, `syncMediumFootsteps`, `syncHeavyShockwave`), and `RAGE GHOSTS / SPECTRE CLONE` (`handleRageGhosts`, `_spawnSpectreClone`). The `<script src="js/mechs.js">` tag was added to `index.html` after `utils.js` and before `perks.js`/`combat.js`. A full call-site audit confirmed all references resolve correctly: `index.html` inline `update()` calls `handleRageGhosts` and `syncVisuals` at runtime after all scripts load; `mods.js` calls `buildPlayerMech` (decoy) and `refreshMechColor` ×2 directly (loads after `mechs.js`); `garage.js` calls `buildPlayerMech` and `refreshMechColor` ×2 (loads after `mechs.js`); `rounds.js` calls `_spawnSpectreClone` inside a timer callback (runtime-only, resolves after all scripts load); `enemies.js` calls `buildEnemyMech` and `buildEnemyTorso` ×6 (loads after `mechs.js`); `enemy-types.js` calls `buildEnemyMech` and `buildEnemyTorso` ×3 (loads after `mechs.js`); `multiplayer.js` calls `buildPlayerMech` ×2 directly and `refreshMechColor` behind a `typeof` guard (loads after `mechs.js`). No broken references remain.
+
+### Files Changed
+
+- `js/mechs.js` — new file, 11 functions (290 lines)
+- `index.html` — `<script src="js/mechs.js">` tag added after `utils.js`; all 11 function bodies removed
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.14 — Wire js/menus.js and Audit Call Sites
 
 **Date:** 2026-03-21
