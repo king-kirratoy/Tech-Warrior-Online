@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.3 — Extract Mutable State into js/state.js
+
+**Date:** 2026-03-21
+
+Extracted 74 mutable runtime globals from the inline `<script>` block in `index.html` into the new dedicated file `js/state.js`. Variables moved cover all shared runtime state: Phaser scene objects (`player`, `torso`, `keys`, `enemies`, `bullets`, `enemyBullets`, `shieldGraphic`, `coverObjects`, `speedStreakLine`, `crosshair`, `glowWedge`, `GAME`, and the three stored Phaser Collider references); game mode and overlay flags (`_gameMode`, `isDeployed`, `_isPaused`, `_isStats`, `_isInventory`, `_pendingLoadoutTab`); the `loadout` object and its saved-loadout snapshots (`_savedL/R/Mod/Aug/Leg`) and per-limb destruction flags; the full round-state suite (`_round`, `_bestRound`, `_roundKills`, `_roundTotal`, `_totalKills`, `_shotsFired`, `_shotsHit`, `_damageDealt`, `_damageTaken`, `_perksEarned`, `_roundActive`, `_roundClearing`, extraction state); chassis movement-effect trackers; combat/cooldown state (`reloadL`, `reloadR`, `lastDamageTime`, `lastModTime`, `_chaingunSpinStart`, `_chaingunReady`, mod-active flags); the `_perkState` object and associated perk-run arrays; and loot/leaderboard globals (`lootPickups`, `_buildingGraphics`, `_pendingRun`, `_playerCallsign`). Audio state (`_ac`, `_masterVol`, etc.) was intentionally left in index.html pending creation of `audio.js`. A `<script src="js/state.js">` tag was added after `constants.js` and before all other scripts. `GAME` was converted from `const` declaration to a bare assignment since its declaration now lives in `state.js`.
+
+### Files Changed
+
+- `js/state.js` — created (74 top-level mutable variables moved from index.html)
+- `index.html` — state variable declarations replaced with comments; `<script src="js/state.js">` tag added; `const GAME = …` changed to `GAME = …`
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v5.3
+
+---
+
 ## v5.2 — Extract Constants into js/constants.js
 
 **Date:** 2026-03-21

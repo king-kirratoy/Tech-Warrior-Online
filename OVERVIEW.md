@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 20, 2026 (v5.1 — CSS extracted into css/base.css, css/hud.css, css/garage.css, css/menus.css; <style> blocks removed from index.html)
+Last updated: March 21, 2026 (v5.3 — 74 mutable state variables extracted from index.html into js/state.js; script tag added after constants.js)
 
 ---
 
@@ -10,7 +10,8 @@ Last updated: March 20, 2026 (v5.1 — CSS extracted into css/base.css, css/hud.
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Main entry point. Contains the full Phaser game config, all core game logic (chassis, weapons, mods, perks, shields, legs, augments, cover, bosses, loot orbs, HUD, garage, menus, round system, extraction, audio engine, death screen, leaderboard). All inline JS in a single `<script>` block at the bottom. |
+| `index.html` | Main entry point. Contains the full Phaser game config, all core game logic (chassis, weapons, mods, perks, shields, legs, augments, cover, bosses, loot orbs, HUD, garage, menus, round system, extraction, audio engine, death screen, leaderboard). All inline JS in a single `<script>` block at the bottom. Mutable globals and constants have been split out into `js/state.js` and `js/constants.js`. |
+| `js/state.js` | All mutable runtime globals shared across systems — Phaser object references (`player`, `torso`, `enemies`, `bullets`, etc.), game mode flags (`_gameMode`, `isDeployed`, `_isPaused`), round state (`_round`, `_roundKills`, etc.), combat state (`reloadL/R`, `lastDamageTime`, mod-active flags), `loadout`, `_perkState`, extraction state, loot pickups, leaderboard run state, and chassis movement-effect trackers. Audio state (`_ac` etc.) remains in index.html pending `audio.js`. |
 | `js/loot-system.js` | ARPG loot layer. Item generation (`generateItem`, `rollRarity`, `rollAffixes`), rarity definitions (`RARITY_DEFS`), affix pool (`AFFIX_POOL`), inventory management (`_inventory`, `_equipped`, `_gearState`, `recalcGearStats`), equipment ground drops (`spawnEquipmentLoot`, `checkEquipmentPickups`), unique boss items, scrapping. |
 | `js/enemy-types.js` | Special enemy types (Scout, Enforcer, Technician, Berserker, Sniper Elite, Drone Carrier) and elite modifier system (Vampiric, Shielded, Explosive, Swift, Armored, Splitting). Functions: `spawnSpecialEnemy`, `applyEliteModifier`, `_rollEliteModifier`, `handleEliteDamage`, `handleEliteDeath`, `updateSpecialEnemies`, `_getEnemySpawnConfig`. |
 | `js/arena-objectives.js` | Arena layout generator (`ARENA_DEFS`, `selectArena`, `generateCover` variants), objective system (`selectObjective`, `initObjective`, `updateObjectives`, `cleanupObjective`, `shouldEndRound`, `getArenaLabel`, `getObjectiveLabel`). Exports `_arenaState` object — mutate properties only, never reassign. |
@@ -20,7 +21,7 @@ Last updated: March 20, 2026 (v5.1 — CSS extracted into css/base.css, css/hud.
 
 **Load order in `<head>`:**
 ```
-loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → multiplayer.js → inline <script>
+constants.js → state.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → multiplayer.js → inline <script>
 ```
 
 ---
