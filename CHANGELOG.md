@@ -5,6 +5,19 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.14 — Wire js/menus.js and Audit Call Sites
+
+**Date:** 2026-03-21
+
+The menu system extracted in the previous sessions was wired up by adding `<script src="js/menus.js">` to `index.html` after `garage.js` and before `loot-system.js`. A full call-site audit confirmed all references in `index.html` resolve correctly: HTML `onclick` attributes for `proceedToMainMenu`, `startGame`, `startMultiplayer`, `showCampaignSubMenu`, `confirmNewCampaign`, `hideCampaignSubMenu`, `showLeaderboard`, `closeLeaderboard`, `returnToMainMenu`, `campaignDeathToMissionSelect`, `returnToHangar`, `togglePause`, `toggleStats`, `goToMainMenu`, `_switchLoadoutTab`; and inline-script call sites for `_equipItemToSlot`, `_getSlotForItem`, `populateInventory`, `_updateInvCount`, `_statRow`, `_hpBarBoosted`, `_sortScores`, `_loadScores`, `_saveScores`, `_renderScores`, `_cancelNewCampaign`, `_highlightChassis`, `_startNewCampaignWithChassis`, `hideCampaignSubMenu`, `togglePause`, `proceedToMainMenu`, `returnToMainMenu`. All five external files were scanned: `enemy-types.js` and `arena-objectives.js` have zero references; `loot-system.js` calls `_updateInvCount` behind a `typeof` guard and loads after `menus.js`; `campaign-system.js` calls `populateStats`, `populateInventory`, `_updateInvCount`, `_switchLoadoutTab`, and `_getSlotForItem` all behind `typeof` guards and loads after `menus.js`; `multiplayer.js` calls `goToMainMenu` behind a `typeof` guard and loads after `menus.js`. `rounds.js` calls `returnToHangarForMissionSelect()` inside a tween callback (runtime-only), and `combat.js` calls `showDeathScreen()` inside function bodies — both resolve at runtime after all scripts are loaded. No broken references remain.
+
+### Files Changed
+
+- `index.html` — `<script src="js/menus.js">` tag added after `garage.js`
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.13 — Extract Garage System into js/garage.js
 
 **Date:** 2026-03-21
