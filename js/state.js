@@ -126,8 +126,7 @@ let _lastOfferedPerks = [];
 // Active consumable loot-orb scene objects (repair / ammo / charge).
 let lootPickups = [];
 
-// Array of Phaser Graphics objects for building/structure cover visuals.
-let _buildingGraphics = [];
+// _buildingGraphics — moved to js/cover.js
 
 // ── LEADERBOARD / RUN STATE ──────────────────────────────────────
 // Captured run stats held between death and leaderboard submission.
