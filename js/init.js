@@ -115,6 +115,25 @@ function _updateCallsignBtn() {
     } catch(e) {}
 })();
 
+// ── Objective round-end handler ────────────────────────────────────
+// Called every frame from update(). Detects when a non-boss objective
+// (survival timer, assassination) reports completion via shouldEndRound()
+// and triggers the extraction sequence in place of a kill-based ending.
+function handleObjectiveRoundEnd(scene) {
+    if (_extractionActive || !_roundActive) return;
+    const isBossRound = _round > 0 && _round % 5 === 0;
+    if (isBossRound) return;
+    if (typeof shouldEndRound !== 'function' || !shouldEndRound()) return;
+    _roundActive = false;
+    if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+    enemies?.getChildren().slice().forEach(e => {
+        try { destroyEnemyWithCleanup(scene, e); } catch(ex) {}
+    });
+    _roundKills = _roundTotal;
+    _spawnExtractionPoint(scene);
+    showRoundBanner('OBJECTIVE COMPLETE', 'REACH EXTRACTION POINT', 2500, null);
+}
+
 // ── Phaser scene lifecycle ─────────────────────────────────────────
 
 function preload() {
@@ -215,7 +234,7 @@ function update(time) {
         checkEquipmentPickups(this);                                                   // → js/loot-system.js
         if (_extractionActive) _updateExtraction(this);                                // extraction point check
         // Check for objective-based round end between kills (e.g., survival timer expires)
-        handleObjectiveRoundEnd(this);
+        if (typeof handleObjectiveRoundEnd === 'function') handleObjectiveRoundEnd(this);
         if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
         if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
         if (typeof updateColossusStand === 'function') updateColossusStand(time);         // → js/loot-system.js (Colossus Frame unique)

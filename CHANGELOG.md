@@ -5,6 +5,31 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.21 — Restore missing `handleObjectiveRoundEnd` to `js/init.js`
+
+**Date:** 2026-03-21
+
+### Bug Fixed
+
+`handleObjectiveRoundEnd(scene)` was called every frame in `update()` (line 218 of `js/init.js`) but was not defined anywhere in the codebase. This caused an uncaught `TypeError` every frame after deploying in simulation mode, crashing the game loop and preventing the mech from appearing.
+
+The function was recovered from git commit `35533ca` (`index.html` at v3.2), where it lived inline before the refactor. It was never migrated to an external JS file during the extraction sessions.
+
+**What the function does:** Detects when a non-boss objective (e.g., survival timer, assassination) signals completion via `shouldEndRound()` (from `arena-objectives.js`). It then sets `_roundActive = false`, clears all active enemy bullets, destroys remaining enemies via `destroyEnemyWithCleanup()`, equalises the kill counter, spawns the extraction point, and shows the `OBJECTIVE COMPLETE` banner. Boss rounds are intentionally skipped — they use a different end condition.
+
+**Where restored:** Added to `js/init.js` above the Phaser scene lifecycle functions, consistent with the OVERVIEW.md file map entry.
+
+**Guard added:** The bare call `handleObjectiveRoundEnd(this)` at line 218 was wrapped in a `typeof` guard (`if (typeof handleObjectiveRoundEnd === 'function')`) following the pattern used for all other external-function calls in the same file.
+
+**Other update-loop functions verified:** All other functions called from `update()` — `handleShieldRegen`, `handleEnemyAI`, `handlePlayerMovement`, `handlePlayerFiring`, `handleRageGhosts`, `syncVisuals`, `updateCooldownOverlays`, `drawMinimap`, `checkLootPickups`, `checkEquipmentPickups`, `_updateExtraction`, `handleBulletEnemyOverlap`, `mpUpdate`, `updateSpecialEnemies`, `updateObjectives`, `updateColossusStand` — are all present in their respective files.
+
+### Files Changed
+
+- `js/init.js` — added `handleObjectiveRoundEnd()` function (~17 lines); added `typeof` guard on its call site
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.20 — Final Pre-Merge Verification
 
 **Date:** 2026-03-21
