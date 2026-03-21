@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.9 — Extract Mod System into js/mods.js
+
+**Date:** 2026-03-21
+
+Moved all 18 mod-activation and support functions out of the inline `<script>` block in `index.html` into a new file `js/mods.js`. The file is organised under three section banners: `MOD ACTIVATIONS` (`activateMod`, `activateDecoy`, `activateMissiles`, `activateDrone`, `activateRepair`, `activateEMP`, `activateRage`, `activateShield`, `activateJump`), `DRONE HELPERS` (`activateGhostStep`, `activateOverclockBurst`, `activateFortressMode`, `activateEnemyMod`, `activateAutoDrone`, `_buildDroneGraphic`, `_spawnDrone`), and `AUGMENTS AND LEGS` (`applyAugment`, `applyLegSystem`). The `<script src="js/mods.js">` tag was added to `index.html` after `combat.js` and before `loot-system.js`. All five call sites in `index.html` (`activateEnemyMod`, `activateMod`, `activateAutoDrone`, `applyAugment`, `applyLegSystem`) resolve correctly from the inline script block. `multiplayer.js` calls `applyAugment` and `applyLegSystem` with `typeof` guards and loads after `mods.js` — no broken references.
+
+### Files Changed
+
+- `js/mods.js` — new file, 18 functions (899 lines)
+- `index.html` — script tag added; all 18 function bodies removed
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.8 — Audit and Confirm js/combat.js Extraction
 
 **Date:** 2026-03-21
