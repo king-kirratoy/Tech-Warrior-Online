@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.6 — Extract Perk Functions into js/perks.js
+
+**Date:** 2026-03-21
+
+Moved four perk-system functions out of the inline `<script>` block in `index.html` into the existing `js/perks.js` file (which previously held only the `_perks` data object). The functions moved are `_pickFrom(pool, n, exclude)` (pool sampling helper), `showPerkMenu(nextRound)` (renders perk cards and opens the menu overlay), `pickPerk(key, nextRound)` (applies a chosen perk and advances to the next round or equip prompt), and `_showEquipPrompt(nextRound)` (shows the LOOT AVAILABLE overlay when inventory has items after perk pick). Two module-level variables used by the keyboard handler — `_currentPerkKeys` and `_currentPerkNextRound` — were moved alongside `showPerkMenu`. All four function bodies in `index.html` were replaced with single-line comments. The `<script src="js/perks.js">` tag was already present at the correct position (after `utils.js`, before `loot-system.js`). All call sites in `index.html` (`showPerkMenu` at the extraction callback, `pickPerk` and `_currentPerk*` in the keydown handler) continue to resolve via the shared `window` global scope — no references are broken.
+
+### Files Changed
+
+- `js/perks.js` — four functions + two module-level vars appended after the `_perks` data object
+- `index.html` — function bodies replaced with comments
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v5.6; Perk System entry updated to reflect new home
+
+---
+
 ## v5.5 — Extract Pure Helpers into js/utils.js
 
 **Date:** 2026-03-21
