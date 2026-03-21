@@ -5,6 +5,19 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.12 — Wire js/hud.js and Audit Call Sites
+
+**Date:** 2026-03-21
+
+The HUD system extracted in the previous session was wired up by adding `<script src="js/hud.js">` to `index.html` after `rounds.js` and before `loot-system.js`. A full call-site audit confirmed all 15 call sites in `index.html` (`updateCooldownOverlays`, `drawMinimap`, `updateHUD` ×5, `updateBars` ×4, `updatePaperDoll` ×2, `syncGlowWedge`, `syncCrosshair`, `drawCrosshair`) are in the inline `<script>` block and resolve correctly from `hud.js`. All five external files were scanned: `loot-system.js`, `enemy-types.js`, `arena-objectives.js`, and `campaign-system.js` have zero references to the moved functions; `multiplayer.js` calls `updateBars`, `updatePaperDoll`, `updateHUD` inside `try/catch` blocks and `drawCrosshair`/`updateEnemyDoll` behind `typeof` guards — all safe, as `hud.js` loads before `multiplayer.js` in the script order. No broken references remain.
+
+### Files Changed
+
+- `index.html` — `<script src="js/hud.js">` tag added
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.11 — Extract Round Flow System into js/rounds.js
 
 **Date:** 2026-03-21
