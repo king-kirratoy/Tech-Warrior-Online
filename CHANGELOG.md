@@ -5,6 +5,27 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.8 — Audit and Confirm js/combat.js Extraction
+
+**Date:** 2026-03-21
+
+Performed a full session audit of the `js/combat.js` extraction to confirm the work is complete and no broken references exist. All 10 firing functions (`fire`, `fireFTH`, `fireRAIL`, `fireGL`, `fireRL`, `fireSIEGE`, `fireSG`, `firePLSM`, `fireSR`, `fireStandard`) and all 6 damage functions (`processPlayerDamage`, `damageEnemy`, `createExplosion`, `damageCover`, `dropMine`, `dropEnemyMine`) plus helpers (`_applyExplosivePlayerDamage`, `_applyPassiveShieldAbsorption`, `_resolveEnemyDeath`, `_drawMineGraphic`) are present in `js/combat.js` (1 336 lines). Verified:
+
+- No function definitions remain in `index.html` — only call sites
+- `<script src="js/combat.js">` is at the correct load-order position (after `perks.js`, before `loot-system.js`)
+- `js/loot-system.js` calls `damageEnemy` with `typeof` guard ✓
+- `js/arena-objectives.js` calls `processPlayerDamage` with `typeof` guard ✓
+- `js/multiplayer.js` calls `createExplosion` (loads after `combat.js`, always defined) ✓
+- `_mpMatchActive` referenced in `fire()` resolves via the shared global environment record from `multiplayer.js` ✓
+
+No code changes were required — the extraction and script tag were already in place from v5.7 and prior sessions.
+
+### Files Changed
+
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.7 — Add Script Tag for js/combat.js
 
 **Date:** 2026-03-21
