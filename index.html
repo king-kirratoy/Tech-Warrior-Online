@@ -6,11 +6,13 @@
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 <!-- LOAD ORDER MATTERS: each file depends on the ones above it.
      constants.js    — CHASSIS, WEAPONS, SHIELD_SYSTEMS, AUGMENTS, LEG_SYSTEMS, COVER_DEFS, LOOT_TYPES
+     state.js        — all mutable runtime globals (player, torso, _round, _perkState, loadout, etc.)
      loot-system.js  — items, rarity, affixes, inventory, unique effects (Phases 1-3, 5, 7-8)
      enemy-types.js  — enemy variants, elite modifiers (Phase 4, balanced in Phase 8)
      arena-objectives.js — arena layouts, objectives (Phase 6, tuned in Phase 8)
      All three files share globals with index.html. See each file's header for dependency details. -->
 <script src="js/constants.js"></script>
+<script src="js/state.js"></script>
 <script src="js/loot-system.js"></script>
 <script src="js/enemy-types.js"></script>
 <script src="js/arena-objectives.js"></script>
@@ -420,17 +422,7 @@ const WORLD_CENTER = 2000; // world center X and Y; also the player spawn point
 // ================================================================
 
 
-/** Current loadout selected in the garage. */
-let loadout = {
-    chassis: 'light',
-    L: 'smg',
-    R: 'none',
-    mod: 'none',
-    aug: 'none',
-    leg: 'none',
-    shld: 'light_shield',
-    color: 0x00ff00
-};
+// loadout — declared in js/state.js
 
 function resetLoadout() {
     loadout.chassis = 'light';
@@ -450,52 +442,25 @@ function _applyStarterLoadout(ch) {
     loadout.shld = starter.shld;
 }
 
-// Game mode: 'simulation' (roguelike rounds) or 'campaign' (persistent progression)
-let _gameMode = 'simulation';
+// _gameMode — declared in js/state.js
 
-// Phaser object references
-let player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic;
-let coverObjects;
-let speedStreakLine, crosshair;
-let glowWedge;
+// Phaser object references — declared in js/state.js
+// (player, torso, keys, enemies, bullets, enemyBullets, shieldGraphic,
+//  coverObjects, speedStreakLine, crosshair, glowWedge)
 
-// Saved loadout for respawn (module-level so player.destroy() does not wipe it)
-let _savedL   = null;
-let _savedR   = null;
-let _savedMod = null;
-let _savedAug = null;
-let _savedLeg = null;
-let _lArmDestroyed = false, _rArmDestroyed = false, _legsDestroyed = false;
-let _lastPlayerDamageTime = 0;
-// Round system
-let _round          = 1;
-let _bestRound      = 1;
-let _roundKills     = 0;   // kills this round
-let _roundTotal     = 0;   // enemies in this round
-let _totalKills     = 0;
-let _shotsFired     = 0;   // total shots fired this run
-let _shotsHit       = 0;   // player bullets that hit an enemy this run
-let _damageDealt    = 0;   // total damage dealt to enemies this run
-let _damageTaken    = 0;   // total damage taken by player this run
-let _perksEarned    = 0;   // perks picked this run
-let _roundActive    = false;
-let _roundClearing  = false; // freeze movement during round-clear banner + perk menu
-let _extractionActive = false;  // true after all enemies killed, waiting for player to extract
-let _extractionPoint  = null;   // { x, y } world coords of extraction zone
-let _extractionVisuals = null;  // scene objects for the extraction zone
-let _extractionPromptShown = false; // whether "PRESS E" prompt is visible
+// _savedL/R/Mod/Aug/Leg, _lArmDestroyed, _rArmDestroyed, _legsDestroyed,
+// _lastPlayerDamageTime — declared in js/state.js
+// Round system — declared in js/state.js
+// (_round, _bestRound, _roundKills, _roundTotal, _totalKills,
+//  _shotsFired, _shotsHit, _damageDealt, _damageTaken, _perksEarned)
+// _roundActive, _roundClearing, _extractionActive, _extractionPoint,
+// _extractionVisuals, _extractionPromptShown — declared in js/state.js
 
-// Chassis-specific movement effect state
-let _footstepTimer  = 0;
-let _footstepSide   = 1;
-let _shockwaveTimer = 0;
-let _lastTorsoX     = 0;  // light trail tracking
-let _lastTorsoY     = 0;
-let _lastTorsoMX    = 0;  // medium blur tracking
-let _lastTorsoMY    = 0;
+// Chassis-specific movement effect state — declared in js/state.js
+// (_footstepTimer, _footstepSide, _shockwaveTimer,
+//  _lastTorsoX, _lastTorsoY, _lastTorsoMX, _lastTorsoMY)
 
-// Combat / cooldown state
-let isDeployed      = false;
+// isDeployed — declared in js/state.js
 
 // ── Perk system state ────────────────────────────────────────────
 const _perks = {
@@ -1565,24 +1530,12 @@ const _perks = {
 
 };
 
-let _perkState   = { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
-let _spectreClones = [];
-let _lastKillTime  = 0;   // timestamp of last enemy kill — used for multi-kill tracking
-let _pickedPerks = [];
-let _lastOfferedPerks = [];
-let reloadL         = 0;
-let reloadR         = 0;
-let _chaingunSpinStart = 0;   // when chaingun started spinning up
-let _chaingunReady     = false; // true once spin-up complete
-let lastDamageTime  = -99999;
-let lastModTime     = 0;
+// _perkState, _spectreClones, _lastKillTime, _pickedPerks, _lastOfferedPerks,
+// reloadL, reloadR, _chaingunSpinStart, _chaingunReady,
+// lastDamageTime, lastModTime — declared in js/state.js
 
-// Modification active flags
-let isJumping       = false;
-let isShieldActive  = false;
-let isRageActive    = false;
-let isAmmoActive    = false;  // loot: 50% reload reduction for 8s
-let isChargeActive  = false;  // loot: 50% mod cooldown reduction for 10s
+// Modification active flags — declared in js/state.js
+// (isJumping, isShieldActive, isRageActive, isAmmoActive, isChargeActive)
 
 // ================================================================
 // SYNTHESIZED SOUND ENGINE  (Web Audio API — no asset files needed)
@@ -1914,7 +1867,8 @@ function sndBossDefeat() {
 // ================================================================
 
 
-const GAME = new Phaser.Game(GAME_CONFIG);
+// GAME declared in js/state.js; assigned here after GAME_CONFIG is built.
+GAME = new Phaser.Game(GAME_CONFIG);
 
 // Resize the Phaser canvas whenever the browser window size changes.
 // Without this the canvas stays at its initial dimensions after any resize.
@@ -4272,8 +4226,7 @@ function _validateScoreEntry(entry) {
     };
 }
 
-let _pendingRun     = null;
-let _playerCallsign = 'ANONYMOUS';
+// _pendingRun, _playerCallsign — declared in js/state.js
 
 function _supabaseEnabled() {
     return SUPABASE_URL.length > 0 && SUPABASE_KEY.length > 0;
@@ -6272,8 +6225,7 @@ function activateEnemyMod(scene, enemy, mod, time) {
 // ================================================================
 // COVER / BATTLEFIELD OBJECTS
 // ================================================================
-// Track building graphics objects so they can be cleaned up between rounds
-let _buildingGraphics = [];
+// _buildingGraphics — declared in js/state.js
 
 
 
@@ -7721,10 +7673,8 @@ function damageCover(scene, cover, amt) {
 // LOOT DROP SYSTEM
 // ================================================================
 
-let lootPickups = [];
-let _playerBulletOverlap  = null;   // destroyed and re-registered each deploy
-let _playerEnemyCollider  = null;
-let _enemyEnemyCollider   = null;
+// lootPickups, _playerBulletOverlap, _playerEnemyCollider, _enemyEnemyCollider
+// — declared in js/state.js
 
 function spawnLoot(scene, x, y, forced) {
     // Drop chance: 30% normal, 100% commander
@@ -11078,7 +11028,7 @@ function respawnMech() {
 }
 
 
-let _isStats = false;
+// _isStats — declared in js/state.js
 
 function toggleStats() {
     const overlay = document.getElementById('stats-overlay');
@@ -11123,7 +11073,7 @@ function toggleStats() {
 }
 
 // ── INVENTORY OVERLAY ──────────────────────────────────────────
-let _isInventory = false;
+// _isInventory — declared in js/state.js
 
 // toggleInventory now opens the LOADOUT overlay on the GEAR tab
 function toggleInventory() {
@@ -11139,7 +11089,7 @@ function toggleInventory() {
 }
 
 // Tab switcher for the combined loadout overlay
-let _pendingLoadoutTab = null;
+// _pendingLoadoutTab — declared in js/state.js
 function _switchLoadoutTab(tab) {
     const statsContent = document.getElementById('loadout-stats-content');
     const gearContent  = document.getElementById('loadout-gear-content');
@@ -12011,7 +11961,7 @@ function _renderGearBonusesPanel() {
     }
 }
 
-let _isPaused = false;
+// _isPaused — declared in js/state.js
 
 function togglePause() {
     const scene = GAME.scene.scenes[0];
