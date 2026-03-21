@@ -1067,3 +1067,147 @@ const _perks = {
         apply: () => { _perkState.heavyTitan=true; } },
 
 };
+
+// ═══════════ PERK MENU ═══════════
+
+// Module-level: track perk menu state for keyboard selection (keys 1-4)
+let _currentPerkKeys = [];
+let _currentPerkNextRound = 1;
+
+function showPerkMenu(nextRound) {
+    const menu = document.getElementById('perk-menu');
+    if (!menu) return;
+
+    const { chosen, slotLabels, slotColors } = selectPerks();
+
+    // Store for keyboard handler
+    _currentPerkKeys = chosen;
+    _currentPerkNextRound = nextRound;
+
+    const cards = document.getElementById('perk-cards');
+    cards.innerHTML = '';
+    chosen.forEach((key, idx) => {
+        const p    = _perks[key];
+        const card = document.createElement('div');
+        card.className = 'perk-card';
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `Perk ${idx + 1}: ${p.label}`);
+        const timesHeld = _pickedPerks.filter(k=>k===key).length;
+        const stackBadge = timesHeld > 0 ? `<div class="perk-stack-badge">×${timesHeld+1}</div>` : '';
+        const onceBadge      = (p.once && !p.legendary) ? `<div class="perk-once-badge">ONE-TIME</div>` : '';
+        const legendaryBadge = p.legendary ? `<div class="perk-legendary-badge">✦ LEGENDARY</div>` : '';
+        if (p.legendary) card.classList.add('legendary');
+        card.innerHTML = `
+            <div class="perk-slot-label" style="color:${p.legendary ? '#ffd700' : slotColors[idx]}">${p.legendary ? 'LEGENDARY' : slotLabels[idx]} <span style="color:rgba(255,255,255,0.3);font-size:9px;">[${idx+1}]</span></div>
+            ${stackBadge}
+            ${legendaryBadge}
+            <div class="perk-card-title" style="${p.legendary ? 'color:#ffd700;' : ''}">${p.label}</div>
+            <div class="perk-card-desc">${p.desc}</div>
+            ${onceBadge}`;
+        card.onclick = () => pickPerk(key, nextRound);
+        card.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pickPerk(key, nextRound); } };
+        cards.appendChild(card);
+    });
+    _lastOfferedPerks = [...chosen];
+    menu.style.display = 'flex';
+    const _psc = GAME?.scene?.scenes[0];
+    if (_psc) { try { _psc.input.setDefaultCursor('default'); } catch(e){} }
+    document.body.style.cursor = 'default';
+    // Focus first card so keyboard users can immediately interact
+    const firstCard = cards.querySelector('.perk-card');
+    if (firstCard) firstCard.focus();
+}
+
+function pickPerk(key, nextRound) {
+    if (!_perks[key]) return;
+    _pickedPerks.push(key);
+    _perksEarned++;
+    _perks[key].apply();
+    updateBars(); updatePaperDoll();
+    const menu = document.getElementById('perk-menu');
+    if (menu) menu.style.display = 'none';
+    _roundClearing = false;
+
+    // If player has unequipped loot, show brief equip prompt before next round
+    if (_inventory.length > 0) {
+        _showEquipPrompt(nextRound);
+        return;
+    }
+
+    const _rsc = GAME?.scene?.scenes[0];
+    if (_rsc) { try { _rsc.input.setDefaultCursor('none'); } catch(e){} }
+    document.body.style.cursor = 'none';
+    sndRoundStart();
+    startRound(nextRound);
+}
+
+function _showEquipPrompt(nextRound) {
+    let overlay = document.getElementById('equip-prompt-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'equip-prompt-overlay';
+        overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:10000;background:rgba(3,6,10,0.92);font-family:"Courier New",monospace;flex-direction:column;align-items:center;justify-content:center;';
+        overlay.innerHTML = `
+            <div style="text-align:center;">
+                <div style="font-size:14px;letter-spacing:4px;color:#ffd700;margin-bottom:8px;text-shadow:0 0 12px rgba(255,215,0,0.4);">LOOT AVAILABLE</div>
+                <div id="equip-prompt-count" style="font-size:12px;letter-spacing:2px;color:rgba(200,210,220,0.6);margin-bottom:28px;"></div>
+                <div style="display:flex;gap:16px;justify-content:center;">
+                    <button id="equip-prompt-open" style="padding:12px 28px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.4);border-left:3px solid #ffd700;border-radius:6px;color:#ffd700;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;">OPEN INVENTORY</button>
+                    <button id="equip-prompt-skip" style="padding:12px 28px;background:rgba(200,210,220,0.06);border:1px solid rgba(200,210,220,0.2);border-radius:6px;color:rgba(200,210,220,0.6);font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;">CONTINUE →</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+    }
+
+    document.getElementById('equip-prompt-count').textContent = `${_inventory.length} item${_inventory.length > 1 ? 's' : ''} in backpack`;
+    overlay.style.display = 'flex';
+    // Ensure cursor is visible so the player can click the prompt buttons
+    const _epScene = GAME?.scene?.scenes[0];
+    if (_epScene) { try { _epScene.input.setDefaultCursor('default'); } catch(e){} }
+    document.body.style.cursor = 'default';
+
+    const openBtn = document.getElementById('equip-prompt-open');
+    const skipBtn = document.getElementById('equip-prompt-skip');
+
+    const _dismissAndStart = () => {
+        overlay.style.display = 'none';
+        const _rsc = GAME?.scene?.scenes[0];
+        if (_rsc) { try { _rsc.input.setDefaultCursor('none'); } catch(e){} }
+        document.body.style.cursor = 'none';
+        sndRoundStart();
+        startRound(nextRound);
+    };
+
+    // Clone buttons to remove old listeners
+    const newOpen = openBtn.cloneNode(true);
+    const newSkip = skipBtn.cloneNode(true);
+    openBtn.parentNode.replaceChild(newOpen, openBtn);
+    skipBtn.parentNode.replaceChild(newSkip, skipBtn);
+
+    newOpen.addEventListener('click', () => {
+        overlay.style.display = 'none';
+        // Store callback so inventory close triggers round start
+        window._equipPromptCallback = _dismissAndStart;
+        toggleInventory();
+    });
+    newSkip.addEventListener('click', _dismissAndStart);
+}
+
+// ═══════════ PERK SELECTION HELPERS ═══════════
+
+function _pickFrom(pool, n, exclude) {
+    const avail = pool.filter(k => {
+        if (exclude.includes(k)) return false;
+        if (_perks[k].once && _pickedPerks.includes(k)) return false;
+        if (_lastOfferedPerks.includes(k)) return false;
+        return true;
+    });
+    const fallback = pool.filter(k => {
+        if (exclude.includes(k)) return false;
+        if (_perks[k].once && _pickedPerks.includes(k)) return false;
+        return true;
+    });
+    const src2 = avail.length >= n ? avail : fallback;
+    return [...src2].sort(() => Math.random() - 0.5).slice(0, n);
+}

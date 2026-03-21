@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 21, 2026 (v5.5 — 10 pure helper functions extracted from index.html into js/utils.js; script tag added after audio.js)
+Last updated: March 21, 2026 (v5.6 — perk menu functions extracted from index.html into js/perks.js)
 
 ---
 
@@ -49,7 +49,7 @@ constants.js → state.js → audio.js → utils.js → loot-system.js → enemy
 **Connects to:** `handlePlayerFiring()` (called each frame), `_perkState` (all damage/reload multipliers), `_gearState` (gear bonuses), bullet ↔ enemy overlap registered in `create()`
 
 ### Perk System
-**Lives in:** `index.html` — `const _perks`, `let _perkState`, `_pickedPerks[]`, `selectPerks()`, `showPerkMenu()`, `pickPerk()`
+**Lives in:** `js/perks.js` — `const _perks`, `showPerkMenu()`, `pickPerk()`, `_pickFrom()`, `_showEquipPrompt()`, `_currentPerkKeys`, `_currentPerkNextRound`; `let _perkState`, `_pickedPerks[]`, `_lastOfferedPerks[]` in `js/state.js`; `selectPerks()` in `index.html`
 **What it does:** ~400+ perks organized by category (universal, chassis, weapon/mod-specific, legendary). Offered in a 4-slot menu after each round's extraction. Perks apply immediately on pick via `p.apply()` which mutates `_perkState`. Legendaries require 2+ perks in their category and round 5+.
 **Key state:** `_perkState.dmgMult`, `_perkState.reloadMult`, `_perkState.speedMult`, `_perkState.fortress` (DR), `_perkState.critChance`
 **Connects to:** `damageEnemy()` and `processPlayerDamage()` read `_perkState` for all combat math, `handleShieldRegen()` checks `_perkState.noShieldRegen`
