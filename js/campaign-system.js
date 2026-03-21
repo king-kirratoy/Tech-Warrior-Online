@@ -1880,3 +1880,203 @@ function _closeUpgrades() {
     // Return to mission select
     if (typeof showMissionSelect === 'function') showMissionSelect();
 }
+
+// ── Cloud save / load ─────────────────────────────────────────────
+
+/** Save all campaign data to Supabase (upsert by callsign). */
+async function saveToCloud() {
+    if (!_supabaseEnabled() || _gameMode !== 'campaign') return;
+    const callsign = _playerCallsign || 'ANONYMOUS';
+    if (callsign === 'ANONYMOUS') return;
+
+    try {
+        const campaignState = {
+            playerLevel: _campaignState.playerLevel,
+            playerXP: _campaignState.playerXP,
+            currentChapter: _campaignState.currentChapter,
+            currentMission: _campaignState.currentMission,
+            completedMissions: _campaignState.completedMissions,
+            chassis: _campaignState.chassis || null,
+            claimedRewards: _campaignState.claimedRewards || {},
+            loadoutSlots: _campaignState.loadoutSlots || [],
+            skillsChosen: _campaignState.skillsChosen || []
+        };
+
+        const campaignProgress = {
+            round: (typeof _round !== 'undefined') ? _round : 1,
+            chassis: loadout.chassis,
+            color: loadout.color,
+            L: loadout.L, R: loadout.R,
+            mod: loadout.mod, aug: loadout.aug,
+            leg: loadout.leg, shld: loadout.shld,
+            totalKills: (typeof _totalKills !== 'undefined') ? _totalKills : 0,
+            perksEarned: (typeof _perksEarned !== 'undefined') ? _perksEarned : 0
+        };
+
+        const payload = {
+            callsign: callsign,
+            campaign_state: campaignState,
+            campaign_progress: campaignProgress,
+            inventory: (typeof _inventory !== 'undefined') ? _inventory : [],
+            equipped: (typeof _equipped !== 'undefined') ? _equipped : {},
+            scrap: (typeof _scrap !== 'undefined') ? _scrap : 0,
+            item_counter: (typeof _lootItemIdCounter !== 'undefined') ? _lootItemIdCounter : 0,
+            updated_at: new Date().toISOString()
+        };
+
+        const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_CAMPAIGN_TABLE}`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates,return=minimal'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (saveRes.ok) {
+            _showCloudStatusToast('CLOUD SAVE SYNCED', false);
+        } else {
+            _showCloudStatusToast('CLOUD SAVE FAILED — SAVED LOCALLY', true);
+        }
+    } catch(e) {
+        console.warn('Cloud save failed', e);
+        _showCloudStatusToast('CLOUD SAVE FAILED — SAVED LOCALLY', true);
+    }
+}
+
+/** Load campaign data from Supabase by callsign. Returns data object or null. */
+async function loadFromCloud() {
+    if (!_supabaseEnabled()) return null;
+    const callsign = _playerCallsign || 'ANONYMOUS';
+    if (callsign === 'ANONYMOUS') return null;
+
+    try {
+        const res = await fetch(
+            `${SUPABASE_URL}/rest/v1/${SUPABASE_CAMPAIGN_TABLE}?callsign=eq.${encodeURIComponent(callsign)}&limit=1`,
+            { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+        );
+        if (!res.ok) return null;
+        const rows = await res.json();
+        if (!rows || rows.length === 0) return null;
+        return rows[0];
+    } catch(e) { console.warn('Cloud load failed', e); return null; }
+}
+
+/** Delete cloud save for current player. */
+async function deleteCloudSave() {
+    if (!_supabaseEnabled()) return;
+    const callsign = _playerCallsign || 'ANONYMOUS';
+    if (callsign === 'ANONYMOUS') return;
+    try {
+        await fetch(
+            `${SUPABASE_URL}/rest/v1/${SUPABASE_CAMPAIGN_TABLE}?callsign=eq.${encodeURIComponent(callsign)}`,
+            {
+                method: 'DELETE',
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+            }
+        );
+    } catch(e) { console.warn('Cloud delete failed', e); }
+}
+
+/** Restore campaign state from cloud data object. */
+function _restoreFromCloudData(data) {
+    if (!data) return false;
+    // Restore campaign state
+    if (data.campaign_state) {
+        const cs = data.campaign_state;
+        _campaignState.playerLevel = cs.playerLevel || 1;
+        _campaignState.playerXP = cs.playerXP || 0;
+        _campaignState.currentChapter = cs.currentChapter || 0;
+        _campaignState.currentMission = cs.currentMission || 0;
+        _campaignState.completedMissions = cs.completedMissions || {};
+        _campaignState.chassis = cs.chassis || null;
+        _campaignState.claimedRewards = cs.claimedRewards || {};
+        _campaignState.loadoutSlots = cs.loadoutSlots || [];
+        _campaignState.skillsChosen = cs.skillsChosen || [];
+    }
+    // Restore campaign progress (loadout)
+    if (data.campaign_progress) {
+        const cp = data.campaign_progress;
+        loadout.chassis = cp.chassis || 'light';
+        loadout.color = cp.color || 0x00ff00;
+        loadout.L = cp.L || 'smg';
+        loadout.R = cp.R || 'none';
+        loadout.mod = cp.mod || 'none';
+        loadout.aug = cp.aug || 'none';
+        loadout.leg = cp.leg || 'none';
+        loadout.shld = cp.shld || 'light_shield';
+        _round = cp.round || 1;
+        _totalKills = cp.totalKills || 0;
+        _perksEarned = cp.perksEarned || 0;
+    }
+    // Restore inventory
+    if (data.inventory && Array.isArray(data.inventory)) {
+        _inventory = data.inventory.filter(it => it && typeof it === 'object' && it.name && it.rarity && it.baseType);
+    }
+    if (data.equipped && typeof data.equipped === 'object') {
+        const validSlots = ['L','R','chest','arms','legs','shield','mod','augment'];
+        const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
+        validSlots.forEach(s => { if (data.equipped[s] && typeof data.equipped[s] === 'object' && data.equipped[s].name && data.equipped[s].rarity && data.equipped[s].baseType) clean[s] = data.equipped[s]; });
+        _equipped = clean;
+    }
+    if (typeof data.scrap === 'number') _scrap = Math.max(0, data.scrap);
+    if (typeof data.item_counter === 'number') _lootItemIdCounter = Math.max(_lootItemIdCounter, data.item_counter);
+    if (typeof recalcGearStats === 'function') recalcGearStats();
+    // Also save to localStorage as local cache
+    try {
+        saveCampaignProgress();
+        if (typeof saveCampaignState === 'function') saveCampaignState();
+        saveInventory();
+    } catch(e) {}
+    return true;
+}
+
+/** Load campaign data: cloud first, then local fallback. */
+async function _loadCampaignData() {
+    // Read local timestamp before hitting the network so we can compare
+    let localSavedAt = 0;
+    try {
+        const localProgress = loadCampaignProgress();
+        if (localProgress && localProgress.savedAt) localSavedAt = localProgress.savedAt;
+    } catch(e) {}
+
+    // Try cloud load
+    let cloudLoaded = false;
+    try {
+        const cloudData = await loadFromCloud();
+        if (cloudData) {
+            // Only restore from cloud if it is at least as recent as the local save.
+            // This prevents a stale cloud record from overwriting a newer local save
+            // that was written after the last successful cloud sync.
+            const cloudTs = cloudData.updated_at ? new Date(cloudData.updated_at).getTime() : 0;
+            if (cloudTs >= localSavedAt) {
+                cloudLoaded = _restoreFromCloudData(cloudData);
+            }
+        }
+    } catch(e) { console.warn('Cloud load attempt failed', e); }
+
+    if (!cloudLoaded) {
+        // Fall back to localStorage
+        const saved = loadCampaignProgress();
+        if (saved) {
+            loadout.chassis = saved.chassis || 'light';
+            loadout.color   = saved.color   || 0x00ff00;
+            loadout.L       = saved.L       || 'smg';
+            loadout.R       = saved.R       || 'none';
+            loadout.mod     = saved.mod     || 'none';
+            loadout.aug     = saved.aug     || 'none';
+            loadout.leg     = saved.leg     || 'none';
+            loadout.shld    = saved.shld    || 'light_shield';
+            _round          = saved.round   || 1;
+            _totalKills     = saved.totalKills || 0;
+            _perksEarned    = saved.perksEarned || 0;
+            loadCampaignInventory();
+        }
+        if (typeof loadCampaignState === 'function') loadCampaignState();
+    }
+    // Enforce locked chassis from campaign state
+    if (_campaignState.chassis) {
+        loadout.chassis = _campaignState.chassis;
+    }
+}

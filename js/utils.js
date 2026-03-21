@@ -184,3 +184,21 @@ function spawnFootprint(scene, x, y, rotation, w, h, fadeTime, color) {
     onComplete: () => print.destroy()
   });
 }
+
+
+// ═══════════ STRING SANITIZATION HELPERS ═══════════
+
+/** Strip disallowed chars and enforce length on a callsign string. */
+function _sanitizeCallsign(raw) {
+    return String(raw || '').toUpperCase().replace(/[^A-Z0-9 _.\-]/g, '').slice(0, 16) || 'ANONYMOUS';
+}
+
+/** Escape HTML special characters in a string before DOM insertion. */
+function _escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}

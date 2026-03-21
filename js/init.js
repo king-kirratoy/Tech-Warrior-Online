@@ -93,6 +93,135 @@ function _updateCallsignBtn() {
 // Deferred to window.onload so that preload/create/update (defined in the
 // inline <script> at the bottom of <body>) are fully parsed and added to
 // the global scope before Phaser receives them as scene callbacks.
+// ── Callsign pre-fill ──────────────────────────────────────────────
+// Pre-fill the callsign input and update button state from localStorage.
+(function() {
+    try {
+        const saved = localStorage.getItem('tw_callsign');
+        const el = document.getElementById('menu-callsign');
+        if (saved && el) {
+            el.value = saved;
+            const btn = document.getElementById('callsign-proceed-btn');
+            if (btn) {
+                btn.disabled = false;
+                btn.style.background    = 'rgba(0,210,255,0.08)';
+                btn.style.border        = '1px solid rgba(0,210,255,0.6)';
+                btn.style.borderLeft    = '3px solid #00e0ff';
+                btn.style.color         = '#00e0ff';
+                btn.style.cursor        = 'pointer';
+                btn.style.opacity       = '1';
+            }
+        }
+    } catch(e) {}
+})();
+
+// ── Phaser scene lifecycle ─────────────────────────────────────────
+
+function preload() {
+    // Soft white circle — used by damage smoke particles
+    let g = this.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffffff, 1);
+    g.fillCircle(10, 10, 10);
+    g.generateTexture('smoke', 20, 20);
+
+    // Bright radial bloom — used exclusively by the thrust exhaust emitter.
+    // Concentric circles from opaque centre to transparent edge give a
+    // convincing glow that responds well to tinting + ADD blend mode.
+    let tg = this.make.graphics({ x: 0, y: 0, add: false });
+    for (let i = 8; i >= 0; i--) {
+        tg.fillStyle(0xffffff, (i / 8));
+        tg.fillCircle(16, 16, (8 - i + 1) * 2);
+    }
+    tg.generateTexture('thrust', 32, 32);
+}
+
+function create() {
+    // Battlefield grid — hidden until deployed
+    const _bfGrid = this.add.grid(WORLD_CENTER, WORLD_CENTER, WORLD_SIZE, WORLD_SIZE, 64, 64, 0, 0, 0x004400, 0.3);
+    _bfGrid.setVisible(false);
+    this._bfGrid = _bfGrid;
+
+    // Input
+    keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,E');
+
+    // Prevent right-click context menu on the GAME canvas so RMB can fire R arm
+    const _canvas = this.sys.canvas;
+    if (_canvas) _canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    // Right mouse button fires R arm — handled in handlePlayerFiring each frame
+
+    // Physics groups
+    bullets      = this.physics.add.group();
+    enemies      = this.physics.add.group();
+    enemyBullets = this.physics.add.group();
+    coverObjects = this.physics.add.staticGroup();
+    generateCover(this);
+
+    // Bullet ↔ cover — registered ONCE against the group reference (generateCover regenerates
+    // the group's children on each deploy but these colliders stay valid)
+    this.physics.add.collider(bullets, coverObjects, (bullet, cover) => {
+        if (!bullet?.active) return;
+        createImpactSparks(this, bullet.x, bullet.y);
+        bullet.destroy();
+        if (cover.coverHp > 0) damageCover(this, cover, bullet.damageValue || 10);
+    });
+    this.physics.add.collider(enemyBullets, coverObjects, (bullet, cover) => {
+        if (!bullet?.active) return;
+        bullet.destroy();
+        if (cover.coverHp > 0) damageCover(this, cover, bullet.damageValue || 10);
+    });
+
+    // Player bullet ↔ enemy overlap — logic lives in handleBulletEnemyOverlap()
+    this.physics.add.overlap(bullets, enemies, (bullet, enemy) => handleBulletEnemyOverlap(this, bullet, enemy));
+
+    // (enemies spawned on deploy, not at scene creation)
+
+    // Hangar overlay (hidden once deployed)
+    this.hangarOverlay = this.add.rectangle(
+        window.innerWidth / 2, window.innerHeight / 2,
+        window.innerWidth, window.innerHeight,
+        0x0c1014, 1.0
+    ).setScrollFactor(0).setDepth(1000);
+}
+
+function update(time) {
+    // PVP multiplayer: always interpolate remote players, even when dead/paused
+    if (typeof mpUpdate === 'function') mpUpdate(time);
+
+    if (!isDeployed || _isPaused || _roundClearing) return;
+
+    // Safety: clear stuck damage processing lock (prevents permanent freeze)
+    if (player?.isProcessingDamage && player._dmgLockTime && time - player._dmgLockTime > 200) {
+        player.isProcessingDamage = false;
+    }
+    if (player?.isProcessingDamage && !player._dmgLockTime) {
+        player._dmgLockTime = time;
+    } else if (!player?.isProcessingDamage) {
+        if (player) player._dmgLockTime = 0;
+    }
+
+    handleShieldRegen(time);
+    // Skip PvE enemy AI in PVP (enemies group is empty but avoid any edge cases)
+    if (_gameMode !== 'pvp') handleEnemyAI(this, time);
+    handlePlayerMovement(this, time);
+    handlePlayerFiring(this);
+    handleRageGhosts(this, time);
+    syncVisuals(this, time);
+    updateCooldownOverlays(time);
+    drawMinimap();
+    // Skip PvE-only per-frame systems in PVP
+    if (_gameMode !== 'pvp') {
+        checkLootPickups(this);
+        checkEquipmentPickups(this);                                                   // → js/loot-system.js
+        if (_extractionActive) _updateExtraction(this);                                // extraction point check
+        // Check for objective-based round end between kills (e.g., survival timer expires)
+        handleObjectiveRoundEnd(this);
+        if (typeof updateSpecialEnemies === 'function') updateSpecialEnemies(this, time); // → js/enemy-types.js
+        if (typeof updateObjectives === 'function') updateObjectives(this, time);         // → js/arena-objectives.js
+        if (typeof updateColossusStand === 'function') updateColossusStand(time);         // → js/loot-system.js (Colossus Frame unique)
+    }
+}
+
 window.onload = () => {
   // Wire the Phaser scene now that preload/create/update are globally defined.
   GAME_CONFIG.scene = { preload, create, update };

@@ -463,3 +463,30 @@ function syncGlowWedge() {
     glowWedge.closePath();
     glowWedge.strokePath();
 }
+
+
+// ═══════════ HUD STATE RESET ═══════════
+
+/** Resets all HUD elements to their initial clean state. Called before any redeploy or hangar return. */
+function _resetHUDState() {
+    // Paper doll — all green
+    ['doll-head','doll-core','doll-lArm','doll-lShoulder',
+     'doll-rArm','doll-rShoulder','doll-lLeg','doll-rLeg'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.background = '#00ff00';
+    });
+    // Reset HUD accent border
+    const hudAcc = document.getElementById('hud-accent');
+    if (hudAcc) hudAcc.style.borderColor = '';
+    // Weapon slot opacity + clear destroyed state
+    _lArmDestroyed = false; _rArmDestroyed = false; _legsDestroyed = false;
+    ['slot-L','slot-R','slot-M'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.opacity = '1'; el.style.borderColor = '#00ffff'; el.classList.remove('arm-destroyed'); }
+    });
+    // Reset weapon name text
+    const txtL = document.getElementById('txt-L');
+    const txtR = document.getElementById('txt-R');
+    if (txtL) { txtL.innerText = (loadout.L || 'none').toUpperCase(); txtL.style.fontSize = ''; }
+    if (txtR) { txtR.innerText = (loadout.R || 'none').toUpperCase(); txtR.style.fontSize = ''; }
+}

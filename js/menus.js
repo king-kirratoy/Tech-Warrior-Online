@@ -1314,3 +1314,269 @@ async function _autoSubmitRun(entry) {
         _pendingRun = null;
     } catch(e) { console.error('Auto-submit failed', e); }
 }
+
+// ── Cloud status toast ────────────────────────────────────────────
+
+function _showCloudStatusToast(msg, isError) {
+    let toast = document.getElementById('tw-cloud-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'tw-cloud-toast';
+        toast.style.cssText = 'position:fixed;top:16px;right:16px;z-index:99990;font-family:"Courier New",monospace;font-size:10px;letter-spacing:2px;padding:6px 12px;border-radius:4px;pointer-events:none;transition:opacity 0.4s ease;opacity:0;';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.background = isError ? 'rgba(255,40,40,0.18)' : 'rgba(0,255,200,0.12)';
+    toast.style.border = isError ? '1px solid rgba(255,40,40,0.5)' : '1px solid rgba(0,255,200,0.4)';
+    toast.style.color  = isError ? '#ff6666' : '#00ffc8';
+    toast.style.opacity = '1';
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2400);
+}
+
+// ── Score validation and submission ──────────────────────────────
+
+function _supabaseEnabled() {
+    return SUPABASE_URL.length > 0 && SUPABASE_KEY.length > 0;
+}
+
+/** Clamp and type-coerce all fields in a score entry before submission. */
+function _validateScoreEntry(entry) {
+    return {
+        name:     _sanitizeCallsign(entry.name || 'ANONYMOUS'),
+        round:    Math.min(Math.max(Math.round(Number(entry.round)    || 0), 0), SCORE_MAX_ROUND),
+        kills:    Math.min(Math.max(Math.round(Number(entry.kills)    || 0), 0), SCORE_MAX_KILLS),
+        accuracy: Math.min(Math.max(Math.round(Number(entry.accuracy) || 0), 0), 100),
+        damage:   Math.min(Math.max(Math.round(Number(entry.damage)   || 0), 0), SCORE_MAX_DAMAGE),
+        chassis:  ['light', 'medium', 'heavy'].includes(entry.chassis) ? entry.chassis : 'unknown',
+        ts:       Number(entry.ts) || Date.now(),
+    };
+}
+
+async function submitLeaderboardEntry() {
+    if (!_pendingRun) return;
+    const nameEl = document.getElementById('lb-name-input');
+    const name   = (nameEl?.value || '').trim().toUpperCase().replace(/[^A-Z0-9 _\-\.]/g, '') || 'ANONYMOUS';
+
+    // Remember callsign
+    try { localStorage.setItem('tw_callsign', name); } catch(e) {}
+
+    const entry = { ...(_pendingRun), name };
+    const scores = await _loadScores();
+    scores.push(entry);
+    _sortScores(scores);
+    const trimmed = scores.slice(0, LB_MAX);
+    await _saveScores(trimmed);
+
+    _pendingRun = null;
+    document.getElementById('lb-submit-panel').style.display = 'none';
+    await _renderScores();
+}
+
+function skipLeaderboardSubmit() {
+    _pendingRun = null;
+    document.getElementById('lb-submit-panel').style.display = 'none';
+}
+
+// ── Deploy tween ─────────────────────────────────────────────────
+
+function _execDropInTween(scene, normalScale) {
+    // Drop-in: mech starts above (offset up), tweens down to land with shockwave
+    player.setAlpha(1);
+    torso.setAlpha(1);
+    if (glowWedge) glowWedge.setVisible(false);
+
+    // Remove cover — mech is about to drop in
+    document.getElementById('deploy-cover').style.display = 'none';
+    document.getElementById('hud-container').style.display = 'flex';
+    document.getElementById('top-left-btns').style.display = 'flex';
+    const _mm = document.getElementById('minimap-wrap'); if (_mm) _mm.style.display = 'block';
+
+    // Set camera lerp to instant so it tracks the mech even while offset above
+    scene.cameras.main.setLerp(1.0, 1.0);
+    const dropOffsetY = 280;
+    player.y -= dropOffsetY;
+    torso.y  -= dropOffsetY;
+
+    // Lock movement during drop
+    isDeployed = false;
+
+    scene.tweens.add({
+        targets:  [player, torso],
+        y:        `+=${dropOffsetY}`,
+        duration: 750,
+        ease:     'Cubic.easeIn',
+        onComplete: () => {
+            // Restore smooth camera lerp after landing
+            scene.cameras.main.setLerp(0.5, 0.5);
+            if (glowWedge) glowWedge.setVisible(true);
+
+            // White shockwave ring
+            const w1 = scene.add.circle(player.x, player.y, 8, 0xffffff, 0)
+                .setStrokeStyle(4, 0xffffff, 1.0).setDepth(15);
+            scene.tweens.add({ targets: w1, radius: 120 * normalScale, alpha: 0,
+                duration: 600, ease: 'Cubic.easeOut', onComplete: () => w1.destroy() });
+
+            // Armour-coloured ring
+            const w2 = scene.add.circle(player.x, player.y, 8, loadout.color, 0)
+                .setStrokeStyle(2.5, loadout.color, 0.85).setDepth(14);
+            scene.tweens.add({ targets: w2, radius: 90 * normalScale, alpha: 0,
+                duration: 500, ease: 'Cubic.easeOut', onComplete: () => w2.destroy() });
+
+            // Dust/debris burst
+            const dust = scene.add.particles(player.x, player.y, 'smoke', {
+                lifespan:  { min: 400, max: 700 },
+                scale:     { start: 1.4, end: 0 },
+                alpha:     { start: 0.7, end: 0 },
+                speed:     { min: 80, max: 220 },
+                angle:     { min: 0, max: 360 },
+                tint:      0xaaaaaa,
+                quantity:  24,
+                frequency: -1
+            }).setDepth(6);
+            scene.time.delayedCall(900, () => dust.destroy());
+
+            // Camera shake on landing
+            scene.cameras.main.shake(300, 0.018);
+
+            // Unlock movement + spawn enemies now that scene is ready
+            // Guard: if player was destroyed during drop (bullet hit during tween), abort
+            if (!player?.active) { console.log('[DEPLOY] player not active, aborting'); return; }
+            isDeployed = true;
+            _isPaused = false;
+            // Ensure physics and time are running (could be paused from death/stats)
+            try { GAME.scene.scenes[0].physics.resume(); } catch(e) {}
+            try { GAME.scene.scenes[0].time.paused = false; } catch(e) {}
+            applyAugment();
+            applyLegSystem();
+            // Apply skill tree combat bonuses to perkState
+            if (_gameMode === 'campaign' && typeof getSkillTreeBonuses === 'function') {
+                const stb = getSkillTreeBonuses(_campaignState.chassis);
+                if (stb.dmgMult)     _perkState.dmgMult = (_perkState.dmgMult || 1) * (1 + stb.dmgMult);
+                if (stb.reloadMult)  _perkState.reloadMult = (_perkState.reloadMult || 1) * (1 - stb.reloadMult);
+                if (stb.critChance)  _perkState.critChance = (_perkState.critChance || 0) + stb.critChance;
+                if (stb.shieldRegen) _perkState.shieldRegenMult = (_perkState.shieldRegenMult || 1) * (1 + stb.shieldRegen);
+                if (stb.blastMult)   _perkState.blastMult = (_perkState.blastMult || 1) * (1 + stb.blastMult);
+                if (stb.dodgeChance) _perkState.dodgeChance = (_perkState.dodgeChance || 0) + stb.dodgeChance;
+                if (stb.dr)          _perkState.fortress = (_perkState.fortress || 0) + stb.dr;
+                if (stb.critDmg)     _perkState.critDmg = (_perkState.critDmg || 0) + stb.critDmg;
+                if (stb.autoRepair)  _perkState.autoRepair = (_perkState.autoRepair || 0) + stb.autoRepair;
+                if (stb.modCdMult && typeof CHASSIS !== 'undefined' && CHASSIS.medium) {
+                    CHASSIS.medium.modCooldownMult = (CHASSIS.medium.modCooldownMult || 0.85) * (1 - stb.modCdMult);
+                }
+            }
+            const sc = GAME.scene.scenes[0];
+            // PVP uses its own deploy path (mpDeployPVP) — skip PvE round system entirely
+            if (_gameMode !== 'pvp') {
+                // Kick off round system on first deploy / respawn
+                document.getElementById('round-hud').style.display = 'flex';
+                if (_gameMode === 'campaign' && typeof getCampaignMission === 'function') {
+                    const _cm = getCampaignMission();
+                    if (_cm) {
+                        const _campEnemy = (typeof getCampaignEnemyConfig === 'function') ? getCampaignEnemyConfig() : null;
+                        const _enemyCount = _campEnemy ? _campEnemy.totalEnemies + (_cm.hasBoss ? 1 : 0) : '?';
+                        showRoundBanner(_cm.name.toUpperCase(), _enemyCount + ' HOSTILES // LV.' + _cm.enemyLevel, 2200, null);
+                    }
+                } else {
+                    showRoundBanner('ROUND ' + _round, (_round + 2) + ' ENEMY MECHS', 2000, null);
+                }
+                startRound(_round);
+            }
+        }
+    });
+}
+
+// ── Game cleanup (pre-death / respawn) ────────────────────────────
+
+function _cleanupGame() {
+    const scene = GAME.scene.scenes[0];
+    // Destroy per-deploy physics overlap/colliders so they don't accumulate across respawns
+    if (_playerBulletOverlap) { try { scene.physics.world.removeCollider(_playerBulletOverlap); } catch(e){} _playerBulletOverlap = null; }
+    if (_playerEnemyCollider) { try { scene.physics.world.removeCollider(_playerEnemyCollider); } catch(e){} _playerEnemyCollider = null; }
+    if (_enemyEnemyCollider)  { try { scene.physics.world.removeCollider(_enemyEnemyCollider);  } catch(e){} _enemyEnemyCollider  = null; }
+    // Kill all tweens
+    try { scene.tweens.killAll(); } catch(e) {}
+    // Clear loot tracking array (objects destroyed below with scene wipe)
+    lootPickups = [];
+    cleanupEquipmentDrops();
+    // ── Nuclear scene wipe: destroy every display object EXCEPT persistent
+    //    scene infrastructure: hangarOverlay, _bfGrid, and the physics groups
+    //    (bullets, enemyBullets, enemies, coverObjects) which are registered once
+    //    in create() and must survive. Everything else — particles, text, circles,
+    //    mine visuals, explosion rings, drones, ghosts — gets destroyed.
+    try {
+        const keep = [
+            scene.hangarOverlay, scene._bfGrid,
+            bullets, enemyBullets, enemies, coverObjects
+        ].filter(Boolean);
+        // In PVP, also keep the local player, torso, shield, remote players, and bullet group
+        if (_gameMode === 'pvp') {
+            if (player) keep.push(player);
+            if (torso) keep.push(torso);
+            if (typeof shieldGraphic !== 'undefined' && shieldGraphic) keep.push(shieldGraphic);
+            if (typeof glowWedge !== 'undefined' && glowWedge) keep.push(glowWedge);
+            if (typeof crosshair !== 'undefined' && crosshair) keep.push(crosshair);
+            if (typeof _mpPlayers !== 'undefined') {
+                try {
+                    _mpPlayers.forEach(rp => {
+                        if (rp.body) keep.push(rp.body);
+                        if (rp.torso) keep.push(rp.torso);
+                        if (rp.nameTag) keep.push(rp.nameTag);
+                        if (rp.hpBarBg) keep.push(rp.hpBarBg);
+                        if (rp.hpBar) keep.push(rp.hpBar);
+                    });
+                } catch(e) {}
+            }
+            if (typeof _mpPvpBullets !== 'undefined' && _mpPvpBullets) keep.push(_mpPvpBullets);
+            if (typeof _mpRemoteBodies !== 'undefined' && _mpRemoteBodies) keep.push(_mpRemoteBodies);
+        }
+        scene.children.list.slice().forEach(obj => {
+            if (keep.includes(obj)) return;
+            try { obj.destroy(); } catch(e) {}
+        });
+    } catch(e) {}
+    player = torso = shieldGraphic = glowWedge = crosshair = speedStreakLine = null;
+    // Clear group contents (the groups themselves survive)
+    if (bullets)      bullets.clear(true, true);
+    if (enemyBullets) enemyBullets.clear(true, true);
+    if (enemies) {
+        enemies.getChildren().forEach(e => {
+            if (e.cmdLabel)   try { e.cmdLabel.destroy();   } catch(ex){}
+            if (e.medicLabel) try { e.medicLabel.destroy(); } catch(ex){}
+            if (e.medicCross) try { e.medicCross.destroy(); } catch(ex){}
+            if (e._healTimer) try { e._healTimer.remove();  } catch(ex){}
+            if (e.visuals)  try { e.visuals.destroy();  } catch(ex){}
+            if (e.torso)    try { e.torso.destroy();    } catch(ex){}
+            if (e._onDestroy) try { e._onDestroy(); } catch(ex){}
+        });
+        enemies.clear(true, true);
+    }
+    // Restore weapons/mod destroyed during play
+    if (_savedL   !== null) { loadout.L   = _savedL;   _savedL   = null; }
+    if (_savedR   !== null) { loadout.R   = _savedR;   _savedR   = null; }
+    if (_savedMod !== null) { loadout.mod = _savedMod; _savedMod = null; }
+    if (_savedAug !== null) { loadout.aug = _savedAug; _savedAug = null; }
+    if (_savedLeg !== null) { loadout.leg = _savedLeg; _savedLeg = null; }
+    _chaingunSpinStart = 0; _chaingunReady = false;
+    isJumping = false;
+    // Reset visual scales — jump tween may have left torso/player at non-base scale
+    if (torso?.active) {
+        const _baseS = CHASSIS[loadout.chassis]?.scale || 1.0;
+        torso.setScale(_baseS);
+    }
+    if (player?.active) player.setScale(1.0);
+    isDeployed = false; isJumping = false; isShieldActive = false; isRageActive = false; isAmmoActive = false; isChargeActive = false;
+    _roundClearing = false; _roundActive = false;
+    _lArmDestroyed = false; _rArmDestroyed = false; _legsDestroyed = false;
+    // Window globals — destroy stale live objects and null refs so no cross-session bleed
+    if (window._activeDecoy) { try { window._activeDecoy.destroy(); } catch(e){} window._activeDecoy = null; }
+    if (window._phantomDecoys) {
+        window._phantomDecoys.forEach(p => { try { p.drift?.remove(); p.fire?.remove(); } catch(e){} });
+        window._phantomDecoys = [];
+    }
+    if (window._activeSwarm) { try { if (window._activeSwarm._tick) window._activeSwarm._tick.remove(); } catch(e){} window._activeSwarm = null; }
+    window._equipPromptCallback = null;
+    reloadL = 0; reloadR = 0; lastDamageTime = -99999; lastModTime = -10000;
+    _footstepTimer = 0; _footstepSide = 1; _shockwaveTimer = 0;
+    _lastTorsoX = 0; _lastTorsoY = 0; _lastTorsoMX = 0; _lastTorsoMY = 0;
+}

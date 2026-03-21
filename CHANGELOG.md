@@ -5,6 +5,50 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.19 — index.html is now a pure HTML shell
+
+**Date:** 2026-03-21
+
+Completed the full extraction of all inline JavaScript and CSS from `index.html`. The file is now a pure HTML shell containing only structural markup and `<link>`/`<script>` tags.
+
+### Changes
+
+**`index.html`**
+- Removed both inline `<script>` blocks (callsign IIFE at lines 86–107; main game logic at lines 423–3021)
+- Moved CSS `<link>` tags to the top of `<head>` (before any scripts)
+- Moved all `<script src>` tags to the bottom of `<body>` in the canonical load order:
+  `phaser → constants → state → utils → audio → mechs → cover → combat → mods → perks → enemies → rounds → hud → garage → menus → loot-system → enemy-types → arena-objectives → campaign-system → socket.io → multiplayer → events → init`
+- Fixed `perks.js` position (was before `combat.js`, now correctly after `mods.js`)
+- Updated version badge to `v5.19`
+
+**`js/init.js`** (+140 lines)
+- Added callsign pre-fill IIFE (from `index.html` lines 86–107)
+- Added `preload()`, `create()`, `update()` Phaser scene lifecycle functions
+
+**`js/events.js`** (+145 lines)
+- Added `handlePlayerMovement()` — WASD movement, mod activation, chassis leg effects
+- Added `handlePlayerFiring()` — M1/RMB weapon fire dispatch
+- Added `_onEquipDragStart()`, `_onSlotDragOver()`, `_onSlotDragLeave()`, `_onSlotDrop()` — inventory drag-and-drop handlers
+
+**`js/menus.js`** (+240 lines)
+- Added `_showCloudStatusToast()` — HUD toast for cloud save feedback
+- Added `_supabaseEnabled()`, `_validateScoreEntry()`, `submitLeaderboardEntry()`, `skipLeaderboardSubmit()` — leaderboard submission flow
+- Added `_execDropInTween()` — deploy drop-in animation and round start logic
+- Added `_cleanupGame()` — full scene wipe on death/respawn
+
+**`js/campaign-system.js`** (+165 lines)
+- Added `saveToCloud()`, `loadFromCloud()`, `deleteCloudSave()`, `_restoreFromCloudData()` — Supabase cloud save/load
+- Added `_loadCampaignData()` — cloud-first, local-fallback campaign data loader
+
+**Duplicate removal** — prior-session agents had appended duplicate function blocks to several files; all duplicates removed:
+- `js/combat.js` — removed 291-line duplicate (lines 1614–1904)
+- `js/perks.js` — removed 127-line duplicate (lines 1325–1452)
+- `js/rounds.js` — removed 314-line duplicate (lines 415–729)
+- `js/enemies.js` — removed 22-line duplicate (lines 2452–2473)
+- `js/mechs.js` — removed 49-line duplicate (lines 434–483)
+
+---
+
 ## v5.18 — Extract Startup / Phaser Init into js/init.js
 
 **Date:** 2026-03-21

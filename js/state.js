@@ -134,3 +134,11 @@ let _pendingRun = null;
 
 // Player's chosen callsign (sanitized, uppercased).
 let _playerCallsign = 'ANONYMOUS';
+
+// ── ENEMY DOLL STATE ─────────────────────────────────────────────
+let _eDollTarget   = null;
+let _eDollHideTimer = null;
+
+// ── GARAGE DROPDOWN STATE ────────────────────────────────────────
+let _openDD = null; // currently open dropdown slot key
+

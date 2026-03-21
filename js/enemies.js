@@ -2430,3 +2430,22 @@ function spawnCore(scene) {
         _hideBossHPBar();
     };
 }
+
+// ═══════════ ENEMY TEARDOWN ═══════════
+
+function destroyEnemyWithCleanup(scene, e) {
+    if (!e.active) return;
+    if (typeof handleEliteDeath === 'function' && (e.isElite || e.enemyType)) handleEliteDeath(scene, e);
+    if (e.visuals?.active)       e.visuals.destroy();
+    if (e.torso?.active)         e.torso.destroy();
+    if (e.cmdLabel?.active)      e.cmdLabel.destroy();
+    if (e.medicLabel?.active)    { scene.tweens.killTweensOf(e.medicLabel); e.medicLabel.destroy(); }
+    if (e.medicCross?.active)    e.medicCross.destroy();
+    if (e._healTimer)            e._healTimer.remove();
+    if (e.shieldRing?.active)    e.shieldRing.destroy();
+    if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
+    if (e._splitLabel?.active)   e._splitLabel.destroy();
+    if (e._onDestroy) e._onDestroy();
+    e.destroy();
+}
+

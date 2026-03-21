@@ -461,3 +461,23 @@ function startHangarGrid() {
     }
     draw();
 }
+
+// ═══════════ LOADOUT HELPERS ═══════════
+
+function resetLoadout() {
+    loadout.chassis = 'light';
+    _applyStarterLoadout('light');
+    loadout.color   = 0x00ff00;
+    closeAllDD();
+}
+
+/** Apply the starter loadout for the given chassis type. */
+function _applyStarterLoadout(ch) {
+    const starter = STARTER_LOADOUTS[ch] || STARTER_LOADOUTS.medium;
+    loadout.L    = starter.L;
+    loadout.R    = starter.R;
+    loadout.mod  = starter.mod;
+    loadout.aug  = starter.aug;
+    loadout.leg  = starter.leg;
+    loadout.shld = starter.shld;
+}

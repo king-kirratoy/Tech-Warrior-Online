@@ -1211,3 +1211,114 @@ function _pickFrom(pool, n, exclude) {
     const src2 = avail.length >= n ? avail : fallback;
     return [...src2].sort(() => Math.random() - 0.5).slice(0, n);
 }
+
+// ═══════════ PERK LIFECYCLE HELPERS ═══════════
+
+function _tickPerkExpiries(time) {
+    // Hit-and-run speed bonus expiry
+    if (_perkState._hitRunActive && time > _perkState._hitRunTimer) {
+        _perkState._hitRunActive = false;
+        _perkState.speedMult = Math.max(1, _perkState.speedMult / (1 + 0.25 * _perkState.hitRunStacks));
+    }
+    // Adaptive armor DR bonus expiry
+    if (_perkState._adaptiveActive && time > _perkState._adaptiveTimer) {
+        _perkState._adaptiveActive = false;
+        _perkState.fortress = Math.max(0, _perkState.fortress - 0.10 * _perkState.adaptiveArmor);
+    }
+    // Battle rhythm bonus (recalculate each frame based on kills this round)
+    if (_perkState.battleRhythm > 0) {
+        _perkState._battleRhythmBonus = Math.floor(_roundKills / 5) * 0.10 * _perkState.battleRhythm;
+    }
+    // Flicker invincibility expiry
+    if (_perkState._flickerActive && time > _perkState._flickerLastTrigger + 300) {
+        _perkState._flickerActive = false;
+    }
+}
+
+function selectPerks() {
+    const ch  = loadout.chassis;
+    const mod = loadout.mod || 'none';
+    const wL  = loadout.L   || 'none';
+    const wR  = loadout.R   || 'none';
+    const aug = loadout.aug || 'none';
+    const leg = loadout.leg || 'none';
+    const shld = loadout.shld || 'none';
+
+    // Build per-pool filtered lists
+    const universalPool = Object.keys(_perks).filter(k => _perks[k].cat === 'universal');
+    const chassisPool   = Object.keys(_perks).filter(k => _perks[k].cat === ch);
+    // Slot 4: weapon/mod/aug/leg/shield specific
+    const specCats = [wL, wR, mod, aug, leg].filter(c => c && c !== 'none');
+    // Shield perks use cat:'shield' but loadout.shld is e.g. 'light_shield' — map it
+    if (shld && shld !== 'none') specCats.push('shield');
+    const weaponPool = Object.keys(_perks).filter(k => specCats.includes(_perks[k].cat));
+
+    const chosen = [];
+    // Slots 1 & 2 — universal
+    chosen.push(..._pickFrom(universalPool, 2, chosen));
+    // Slot 3 — chassis (fallback to universal)
+    chosen.push(...(chassisPool.length > 0 ? _pickFrom(chassisPool, 1, chosen) : _pickFrom(universalPool, 1, chosen)));
+
+    // Slot 4 — legendary if eligible (round 5+, 2+ same-cat perks, 10% chance)
+    const legendaryKeys = Object.keys(_perks).filter(k => _perks[k].legendary && !_pickedPerks.includes(k));
+    const eligibleLeg   = legendaryKeys.filter(k => {
+        const cat      = _perks[k].cat;
+        const catCount = _pickedPerks.filter(pk => _perks[pk]?.cat === cat).length;
+        return catCount >= 2 && _round >= 5;
+    });
+    const offerLegendary = eligibleLeg.length > 0 && Math.random() < 0.10 && !chosen.includes(eligibleLeg[0]);
+    if (offerLegendary) {
+        chosen.push(eligibleLeg[Math.floor(Math.random() * eligibleLeg.length)]);
+    } else {
+        chosen.push(...(weaponPool.length > 0 ? _pickFrom(weaponPool, 1, chosen) : _pickFrom(universalPool, 1, chosen)));
+    }
+
+    const specLabel  = specCats.length > 0 ? specCats[specCats.length-1].replace(/_/g,' ').toUpperCase() : 'WEAPON / CORE';
+    const slotLabels = ['UNIVERSAL', 'UNIVERSAL', ch.toUpperCase(), specLabel];
+    const slotColors = ['#00ffff', '#00ffff', ch==='light'?'#88ff88':ch==='medium'?'#ffcc00':'#ff8844', '#cc88ff'];
+
+    return { chosen, slotLabels, slotColors };
+}
+
+function resetRoundPerks() {
+    // Resilience: restore destroyed arms at 50% HP
+    if (_perkState.resilience && player?.comp) {
+        if (_lArmDestroyed) { _lArmDestroyed = false; loadout.L = _savedL || loadout.L || 'none'; player.comp.lArm.hp = Math.round(player.comp.lArm.max*0.5); updateHUD(); }
+        if (_rArmDestroyed) { _rArmDestroyed = false; loadout.R = _savedR || loadout.R || 'none'; player.comp.rArm.hp = Math.round(player.comp.rArm.max*0.5); updateHUD(); }
+    }
+    // One-shot activation flags
+    if (_perkState.ironWill)      _perkState._ironWillUsed     = false;
+    if (_perkState.glassStep)     _perkState._glassStepUsed    = false;
+    if (_perkState.heavyCoreTank) _perkState._heavyCoreTankUsed = false;
+    if (_perkState.snapCharge)  _perkState._snapChargeReady = true;
+    if (_perkState.jumpCharges > 1) _perkState._jumpChargesLeft = _perkState.jumpCharges;
+    // Kill-based counters
+    _perkState._killStreakCount   = 0;
+    _perkState._killStreakActive  = false;
+    _perkState._pressureTarget   = null;
+    _perkState._pressureStacks   = 0;
+    _perkState.overwatchKills     = 0;
+    // Activation-state flags
+    _perkState._neuralAccelActive  = false;
+    _perkState._phantomActive      = false;
+    _perkState._phantomShotReady   = false;
+    _perkState._capacitorCharge    = 0;
+    _perkState._capacitorReady     = false;
+    // Autonomous Unit: destroy existing auto-drone before next round
+    if (_perkState.autonomousUnit) {
+        try {
+            if (_perkState._autoDroneRef?.active) _perkState._autoDroneRef.destroy();
+        } catch(e) {}
+        _perkState._autoDroneActive = false;
+        _perkState._autoDroneRef    = null;
+        if (_perkState._autoDroneRespawnTimer) {
+            _perkState._autoDroneRespawnTimer.remove?.();
+            _perkState._autoDroneRespawnTimer = null;
+        }
+    }
+}
+
+function _resetPerkState() {
+    return { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, ammoCache:false, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, immovable:false, siegeMode:0, ironWill:false, reactorCore:false, perfectAccuracy:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, scrapCannon:false, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, fthDmg:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, reinforcedCore:false, anchorFortress:false, afterlegBoost:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, scrapChain:false, gyroCounter:false, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
+}
+

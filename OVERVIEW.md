@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 21, 2026 (v5.18 — startup and Phaser initialization extracted into js/init.js)
+Last updated: March 21, 2026 (v5.19 — index.html is now a pure HTML shell; all JS migrated to external files)
 
 ---
 
@@ -10,7 +10,7 @@ Last updated: March 21, 2026 (v5.18 — startup and Phaser initialization extrac
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Main entry point. Contains the full Phaser game config, all core game logic (chassis, weapons, mods, perks, shields, legs, augments, cover, bosses, loot orbs, HUD, garage, menus, round system, extraction, audio engine, death screen, leaderboard). All inline JS in a single `<script>` block at the bottom. Mutable globals and constants have been split out into `js/state.js` and `js/constants.js`. |
+| `index.html` | Pure HTML shell. Contains only structural markup, four CSS `<link>` tags in `<head>`, and `<script src>` tags at the bottom of `<body>` in canonical load order. No inline `<script>` or `<style>` blocks. |
 | `js/state.js` | All mutable runtime globals shared across systems — Phaser object references (`player`, `torso`, `enemies`, `bullets`, etc.), game mode flags (`_gameMode`, `isDeployed`, `_isPaused`), round state (`_round`, `_roundKills`, etc.), combat state (`reloadL/R`, `lastDamageTime`, mod-active flags), `loadout`, `_perkState`, extraction state, loot pickups, leaderboard run state, and chassis movement-effect trackers. |
 | `js/audio.js` | Web Audio API synthesizer — no audio files required. Audio state variables (`_ac`, `_masterVol`, `_activeNodes`, `_sndThrottle`, `_MAX_NODES`, `_audioReady`), core engine functions (`_getAC()`, `_canPlay()`, `_tone()`, `_noise()`), all 23 `snd*` sound functions, and the `_initAudioLifecycle` IIFE for first-gesture gate and tab visibility handling. |
 | `js/utils.js` | Pure helper functions with no side effects on global game state. Colour utilities (`darkenColor`), chassis stats (`getTotalHP`), HUD name lookup (`HUD_NAMES` const + `_hudName`), and visual FX helpers (`showDamageText`, `createImpactSparks`, `createShieldSparks`, `createShieldBreak`, `createMuzzleFlash`, `spawnDebris`, `spawnFootprint`). |
@@ -22,13 +22,13 @@ Last updated: March 21, 2026 (v5.18 — startup and Phaser initialization extrac
 | `js/arena-objectives.js` | Arena layout generator (`ARENA_DEFS`, `selectArena`, arena-specific cover generators invoked via `window[arenaDef.generator]` by `generateCover`), objective system (`selectObjective`, `initObjective`, `updateObjectives`, `cleanupObjective`, `shouldEndRound`, `getArenaLabel`, `getObjectiveLabel`). Exports `_arenaState` object — mutate properties only, never reassign. |
 | `js/campaign-system.js` | Campaign missions, chapter/mission data, XP curve (`getXPForLevel`, `getXPToNextLevel`), level-up, skill tree, chassis upgrades (`applyChassisUpgrades`), shop (`refreshShopStock`), mission rewards (`awardMissionReward`), bonus objectives (`trackBonusObjective`, `finalizeBonusObjective`), cloud save integration (`saveToCloud`, `loadFromCloud`, `_restoreFromCloudData`), mission select overlay (`showMissionSelect`). |
 | `js/multiplayer.js` | PVP matchmaking via Socket.IO, remote player rendering, bullet sync, PVP HUD, PVP hangar (`mpShowPvpHangar`), in-game chat, respawn system. Exports `mpUpdate`, `mpBroadcastBullet`, `mpDrawMinimapPlayers`, `mpIsPvpMenuOpen`, `mpShowPvpMenu`, `mpClosePvpMenu`. |
-| `js/events.js` | All top-level global event listeners: window resize (`_onWindowResize`), document click (dropdown close via `closeAllDD`), main keydown handler (perk menu 1–4 pick, death screen Enter/ESC, equip-prompt Enter/ESC, chassis-select overlay, leaderboard close, campaign overlay closes, stats overlay, pause toggle, PVP chat T key), and `_mainMenuKeyNav` (main menu arrow-key focus, ESC closes campaign sub-menu). Loaded last — after `multiplayer.js` — so all referenced functions are defined. |
-| `js/init.js` | Game startup and Phaser initialization. Animated grid canvas (`_startGridCanvas`, `startMenuGrid`), callsign input handlers (`_csKeyDown`, `_updateCallsignBtn`), and `window.onload` bootstrap (wires `GAME_CONFIG.scene` with the Phaser lifecycle callbacks, instantiates `GAME = new Phaser.Game(GAME_CONFIG)`, calls `resetInventory()`, starts the menu grid, refreshes the garage, and hides the hangar UI). Loaded after `events.js` as the final script tag. |
+| `js/events.js` | All top-level global event listeners: window resize (`_onWindowResize`), document click (dropdown close via `closeAllDD`), main keydown handler (perk menu 1–4 pick, death screen Enter/ESC, equip-prompt Enter/ESC, chassis-select overlay, leaderboard close, campaign overlay closes, stats overlay, pause toggle, PVP chat T key), `_mainMenuKeyNav` (main menu arrow-key focus, ESC closes campaign sub-menu), `handlePlayerMovement`, `handlePlayerFiring`, and inventory drag-and-drop handlers (`_onEquipDragStart`, `_onSlotDragOver`, `_onSlotDragLeave`, `_onSlotDrop`). |
+| `js/init.js` | Game startup and Phaser initialization. Animated grid canvas (`_startGridCanvas`, `startMenuGrid`), callsign input handlers (`_csKeyDown`, `_updateCallsignBtn`), callsign pre-fill IIFE, Phaser scene lifecycle functions (`preload`, `create`, `update`), and `window.onload` bootstrap. Loaded last — after `events.js`. |
 | `LOOT_SYSTEM_DESIGN.md` | Design document for the ARPG loot overhaul. Full spec for item categories, rarity tiers, affix system, equipment slots, drop tables, inventory UI, enemy expansion, boss loot, arena/objective system, and 8-phase implementation plan. Reference document — not loaded at runtime. |
 
-**Load order in `<head>`:**
+**Script load order (bottom of `<body>`):**
 ```
-constants.js → state.js → audio.js → utils.js → mechs.js → perks.js → combat.js → mods.js → cover.js → enemies.js → rounds.js → hud.js → garage.js → menus.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → multiplayer.js → events.js → init.js → inline <script>
+phaser.min.js → constants.js → state.js → utils.js → audio.js → mechs.js → cover.js → combat.js → mods.js → perks.js → enemies.js → rounds.js → hud.js → garage.js → menus.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → socket.io.min.js → multiplayer.js → events.js → init.js
 ```
 
 ---
