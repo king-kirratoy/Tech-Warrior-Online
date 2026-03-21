@@ -5,6 +5,67 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.20 — Final Pre-Merge Verification
+
+**Date:** 2026-03-21
+
+Ran a full 7-step pre-merge verification pass across all JS and CSS files produced by the refactor. One critical bug was found and fixed; documentation was brought fully up to date.
+
+### Checks Performed
+
+| Step | Result | Notes |
+|------|--------|-------|
+| 1 — Reference Check | **FIXED** | 3 broken function calls in `rounds.js` |
+| 2 — Load Order Check | PASS | No parse-time violations; `window.onload` defers Phaser init correctly |
+| 3 — typeof Guard Check | PASS | All guards reference existing functions; `genFn` is a local var (not a broken guard) |
+| 4 — CSS Check | PASS | All functional CSS from the original `<style>` block is present across the 4 CSS files |
+| 5 — Documentation Update | DONE | `OVERVIEW.md` file map and Systems Overview updated |
+| 6 — CHANGELOG Entry | DONE | This entry |
+| 7 — Merge Ready | CONFIRMED | See summary below |
+
+### Bug Fixed — Three Missing Spawn Functions in `js/rounds.js`
+
+During the v5.19 extraction of the inline `<script>` block, three private helper functions were inadvertently omitted from `js/rounds.js`. They were defined in `index.html` inline script and called by `startRound()` in `rounds.js`. Without them, any round start (simulation or campaign) would crash with `ReferenceError`.
+
+Functions restored to `js/rounds.js` (recovered from git history of the v5.18 commit):
+
+- **`_setupArenaAndObjective(scene, roundNum, campaignMission)`** — selects arena, sets `_arenaState`, cleans up previous objective, generates cover, initializes new objective, shows arena/objective label.
+- **`_spawnCampaignEnemies(scene, campaignMission, campaignEnemy)`** — spawns enemies from campaign composition array with staggered timers; applies elite modifiers per campaign config; spawns commander at level 6+; triggers boss if `hasBoss`.
+- **`_spawnSimulationEnemies(scene, roundNum)`** — spawns normal enemies, special enemy types (from `_getEnemySpawnConfig`), and applies elite modifiers for simulation mode; commanders spawn round 4+; medics spawn round 3+.
+
+Both `_spawnCampaignEnemies` and `_spawnSimulationEnemies` received minor hardening: `typeof` guards were added to the `spawnSpecialEnemy`, `_rollEliteModifier`, and `applyEliteModifier` calls inside their `setTimeout` callbacks (matching the architecture rules for external-file function calls).
+
+### Additional Fix — Incorrect Load Order Comment in `index.html`
+
+The `<!-- Load order: ... -->` comment above the script tags was incorrect — it said "events → init, then external files" but the actual order places external files (loot-system, enemy-types, arena-objectives, campaign-system, multiplayer) before events and init. The comment was rewritten to match the actual `<script>` tag order.
+
+### OVERVIEW.md Updates
+
+- **File Map** — added 13 previously unlisted files: `css/base.css`, `css/hud.css`, `css/garage.css`, `css/menus.css`, `js/constants.js`, `js/mods.js`, `js/perks.js`, `js/enemies.js`, `js/rounds.js`, `js/hud.js`, `js/garage.js`, `js/menus.js`
+- **Systems Overview** — all "Lives in: `index.html`" entries updated to point to the correct external files for: Chassis System, Loadout System, Combat & Firing System, Perk System, Shield System, Round & Extraction System, Enemy AI System, Boss System, HUD System
+
+### Files Changed
+
+- `js/rounds.js` — added `_setupArenaAndObjective`, `_spawnCampaignEnemies`, `_spawnSimulationEnemies` (~130 lines)
+- `index.html` — corrected load order comment
+- `OVERVIEW.md` — file map and systems overview updated; last-updated date bumped to v5.20
+- `CHANGELOG.md` — this entry
+
+### Refactor Summary (v4.1 → v5.20)
+
+The full refactor extracted all inline `<script>` and `<style>` content from `index.html` across ~20 sessions:
+
+| Metric | Value |
+|--------|-------|
+| Total new JS files created | 15 (`constants`, `state`, `utils`, `audio`, `mechs`, `cover`, `combat`, `mods`, `perks`, `enemies`, `rounds`, `hud`, `garage`, `menus`, `events`, `init`) |
+| Total new CSS files created | 4 (`base`, `hud`, `garage`, `menus`) |
+| `index.html` inline `<script>` lines removed | ~2,600 (lines 423–3021 of the v4.x monolith) |
+| `index.html` inline `<style>` lines removed | ~800 |
+| `index.html` final state | Pure HTML shell (~530 lines of markup + link/script tags only) |
+| Broken references found and fixed this session | 3 |
+
+---
+
 ## v5.19 — index.html is now a pure HTML shell
 
 **Date:** 2026-03-21

@@ -125,6 +125,146 @@ function startRound(roundNum) {
     }
 }
 
+// ── Arena & Objective setup ───────────────────────────────────────
+function _setupArenaAndObjective(scene, roundNum, campaignMission) {
+    if (typeof selectArena !== 'function') return;
+    const arenaKey = campaignMission ? campaignMission.arena : selectArena(roundNum);
+    const objKey   = campaignMission ? campaignMission.objective : selectObjective(roundNum, arenaKey);
+    _arenaState.currentArena = arenaKey;
+    _arenaState.currentObjective = objKey;
+    if (typeof cleanupObjective === 'function') cleanupObjective(scene);
+    if (roundNum > 1) generateCover(scene, arenaKey);
+    if (arenaKey === 'pit' && typeof _initPitZone === 'function') _initPitZone(scene);
+    if (typeof initObjective === 'function') initObjective(scene, roundNum, objKey);
+    const aLabel = typeof getArenaLabel === 'function' ? getArenaLabel() : '';
+    const oLabel = typeof getObjectiveLabel === 'function' ? getObjectiveLabel() : '';
+    if (typeof _showArenaLabel === 'function') _showArenaLabel(scene, aLabel, oLabel);
+}
+
+// ── Campaign enemy spawning ───────────────────────────────────────
+function _spawnCampaignEnemies(scene, campaignMission, campaignEnemy) {
+    const comp = campaignEnemy.composition;
+    let spawnIdx = 0;
+    let elitesApplied = 0;
+
+    for (let i = 0; i < comp.length; i++) {
+        const typeKey = comp[i];
+        const delay = spawnIdx * 400;
+        setTimeout(() => {
+            if (!isDeployed || !_roundActive) return;
+            let spawned;
+            if (typeKey === 'normal') {
+                spawned = spawnEnemy(scene);
+            } else if (typeof spawnSpecialEnemy === 'function') {
+                spawned = spawnSpecialEnemy(scene, typeKey);
+            } else {
+                spawned = spawnEnemy(scene);
+            }
+            // Apply elite modifier based on campaign config
+            if (spawned && elitesApplied < campaignEnemy.maxElites && Math.random() < campaignEnemy.eliteChance) {
+                const mod1 = (typeof _rollEliteModifier === 'function') ? _rollEliteModifier([]) : null;
+                if (mod1 && typeof applyEliteModifier === 'function') {
+                    applyEliteModifier(scene, spawned, mod1);
+                    elitesApplied++;
+                }
+            }
+        }, delay);
+        spawnIdx++;
+    }
+
+    // Boss fight at end of boss missions (after normal enemies)
+    if (campaignMission.hasBoss) {
+        setTimeout(() => { if (isDeployed && _roundActive) spawnBoss(scene, campaignEnemy.enemyLevel); }, spawnIdx * 400 + 600);
+    }
+
+    // Commander in higher-level campaign missions (add to total)
+    if (campaignEnemy.enemyLevel >= 6) {
+        _roundTotal++;
+        updateRoundHUD();
+        setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 800);
+    }
+}
+
+// ── Simulation enemy spawning ─────────────────────────────────────
+function _spawnSimulationEnemies(scene, roundNum) {
+    // Normal round — commanders from round 4+, medic from round 3+
+    const spawnCmd = roundNum >= 6 || (roundNum >= 4 && Math.random() < 0.5);
+    const spawnCfg = (typeof _getEnemySpawnConfig === 'function') ? _getEnemySpawnConfig(roundNum) : { specialTypes:[], eliteChance:0, maxElites:0 };
+
+    // Determine how many specials to spawn (replace some normal enemies)
+    let specialCount = 0;
+    if (spawnCfg.specialTypes.length > 0 && roundNum > 5) {
+        specialCount = Math.min(Math.floor(_roundTotal / 4) + 1, spawnCfg.specialTypes.length, Math.floor(_roundTotal * 0.4));
+        specialCount = Math.max(1, specialCount);
+    }
+
+    const normalCount = Math.max(1, (spawnCmd ? _roundTotal - 1 : _roundTotal) - specialCount);
+    let spawnIdx = 0;
+
+    // Spawn normal enemies
+    for (let i = 0; i < normalCount; i++) {
+        const delay = spawnIdx * 400;
+        setTimeout(() => { if (isDeployed && _roundActive) spawnEnemy(scene); }, delay);
+        spawnIdx++;
+    }
+
+    // Spawn special enemy types
+    let elitesApplied = 0;
+    for (let i = 0; i < specialCount; i++) {
+        const typeKey = Phaser.Math.RND.pick(spawnCfg.specialTypes);
+        const delay = spawnIdx * 400;
+        setTimeout(() => {
+            if (!isDeployed || !_roundActive) return;
+            if (typeof spawnSpecialEnemy !== 'function') { spawnEnemy(scene); return; }
+            const se = spawnSpecialEnemy(scene, typeKey);
+            // Possibly apply elite modifier
+            if (se && elitesApplied < spawnCfg.maxElites && Math.random() < spawnCfg.eliteChance) {
+                if (typeof _rollEliteModifier !== 'function' || typeof applyEliteModifier !== 'function') return;
+                const mod1 = _rollEliteModifier([]);
+                if (mod1) {
+                    applyEliteModifier(scene, se, mod1);
+                    elitesApplied++;
+                    // Double modifier chance (round 20+)
+                    if ((spawnCfg.doubleModChance || 0) > 0 && Math.random() < spawnCfg.doubleModChance) {
+                        const mod2 = _rollEliteModifier([mod1]);
+                        if (mod2) applyEliteModifier(scene, se, mod2);
+                    }
+                }
+            }
+        }, delay);
+        spawnIdx++;
+    }
+
+    // Apply elite modifiers to some normal enemies (round 11+)
+    if (roundNum >= 11 && spawnCfg.maxElites > 0) {
+        const normalEliteCount = Math.min(spawnCfg.maxElites - specialCount, Math.floor(normalCount * 0.3));
+        if (normalEliteCount > 0) {
+            setTimeout(() => {
+                if (!isDeployed || !_roundActive || !enemies) return;
+                if (typeof _rollEliteModifier !== 'function' || typeof applyEliteModifier !== 'function') return;
+                const normals = enemies.getChildren().filter(en =>
+                    en.active && !en.isElite && !en.isCommander && !en.isMedic && !en.isBoss && !en.enemyType
+                );
+                const toElite = Phaser.Utils.Array.Shuffle(normals).slice(0, normalEliteCount);
+                toElite.forEach(en => {
+                    if (elitesApplied >= spawnCfg.maxElites) return;
+                    const mod1 = _rollEliteModifier([]);
+                    if (mod1) { applyEliteModifier(scene, en, mod1); elitesApplied++; }
+                });
+            }, spawnIdx * 400 + 200);
+        }
+    }
+
+    if (spawnCmd) {
+        setTimeout(() => { if (isDeployed && _roundActive) spawnCommander(scene); }, spawnIdx * 400 + 600);
+    }
+    if (roundNum >= 3 && Math.random() < 0.40) {
+        _roundTotal++; // medic counts toward the kill total
+        updateRoundHUD();
+        setTimeout(() => { if (isDeployed && _roundActive) spawnMedic(scene); }, spawnIdx * 400 + 1000);
+    }
+}
+
 function onEnemyKilled(deadEnemy) {
     // PVP has no PvE enemy kills, extraction, or round progression — skip entirely
     if (_gameMode === 'pvp') return;

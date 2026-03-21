@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 21, 2026 (v5.19 — index.html is now a pure HTML shell; all JS migrated to external files)
+Last updated: March 21, 2026 (v5.20 — final verification; three missing spawn functions restored to rounds.js)
 
 ---
 
@@ -11,12 +11,24 @@ Last updated: March 21, 2026 (v5.19 — index.html is now a pure HTML shell; all
 | File | Purpose |
 |------|---------|
 | `index.html` | Pure HTML shell. Contains only structural markup, four CSS `<link>` tags in `<head>`, and `<script src>` tags at the bottom of `<body>` in canonical load order. No inline `<script>` or `<style>` blocks. |
+| `css/base.css` | Universal reset, scrollbar styling, and base `button` styles shared across all UI screens. |
+| `css/hud.css` | In-game HUD styles — `#hud-container`, `.hud-background`, `.console-frame`, `.paper-doll`, `.doll-row`, `.part` (and size variants: `.head`, `.core`, `.shoulder`, `.arm`, `.leg`), `.weapon-row`, `.wr-fill`, `.wr-status`, and arm-destroyed / active-firing state variants. |
+| `css/garage.css` | Hangar/garage UI and perk menu — `.stat-readout`, `.dd-row`, `.dd-wrap`, `.dd-selected`, `.dd-list`, `.dd-option` (full dropdown system with all states), `.perk-card` (and badge variants: `.perk-stack-badge`, `.perk-once-badge`, `.perk-legendary-badge`), `.stats-panel`, `.stats-panel-title`, `.stats-row`, `.stats-value` (color variants), HP bar display, color swatch, and garage stats rows. |
+| `css/menus.css` | Main menu, death screen, pause, and overlay styles — `.menu-title`, `.menu-subtitle`, `.menu-start-btn` (and variants `.menu-btn-red`, `.disabled-mode`), `.menu-version`, `.pause-menu-btn`, `.loadout-tab`, inventory drag-and-drop styles (`.mech-equip-slot`, `.bp-cell`, `.arm-picker-*`), and keyframes: `titleFlicker`, `pulse`, `pausePulse`. |
+| `js/constants.js` | All immutable game data. `CHASSIS`, `WEAPONS`, `SHIELD_SYSTEMS`, `AUGMENTS`, `LEG_SYSTEMS`, `COVER_DEFS`, `ARENA_DEFS`, `ENEMY_COLORS`, `COMMANDER_COLORS`, `MEDIC_COLORS`, `BOSS_COLORS`, `CHASSIS_WEAPONS/MODS/SHIELDS/LEGS/AUGS` (chassis restriction Sets), `STARTER_LOADOUTS`, `SLOT_ID_MAP`, `GAME_CONFIG`, Supabase config constants, leaderboard constants. Defines `window.TW = {}` namespace. |
 | `js/state.js` | All mutable runtime globals shared across systems — Phaser object references (`player`, `torso`, `enemies`, `bullets`, etc.), game mode flags (`_gameMode`, `isDeployed`, `_isPaused`), round state (`_round`, `_roundKills`, etc.), combat state (`reloadL/R`, `lastDamageTime`, mod-active flags), `loadout`, `_perkState`, extraction state, loot pickups, leaderboard run state, and chassis movement-effect trackers. |
-| `js/audio.js` | Web Audio API synthesizer — no audio files required. Audio state variables (`_ac`, `_masterVol`, `_activeNodes`, `_sndThrottle`, `_MAX_NODES`, `_audioReady`), core engine functions (`_getAC()`, `_canPlay()`, `_tone()`, `_noise()`), all 23 `snd*` sound functions, and the `_initAudioLifecycle` IIFE for first-gesture gate and tab visibility handling. |
 | `js/utils.js` | Pure helper functions with no side effects on global game state. Colour utilities (`darkenColor`), chassis stats (`getTotalHP`), HUD name lookup (`HUD_NAMES` const + `_hudName`), and visual FX helpers (`showDamageText`, `createImpactSparks`, `createShieldSparks`, `createShieldBreak`, `createMuzzleFlash`, `spawnDebris`, `spawnFootprint`). |
+| `js/audio.js` | Web Audio API synthesizer — no audio files required. Audio state variables (`_ac`, `_masterVol`, `_activeNodes`, `_sndThrottle`, `_MAX_NODES`, `_audioReady`), core engine functions (`_getAC()`, `_canPlay()`, `_tone()`, `_noise()`), all 23 `snd*` sound functions, and the `_initAudioLifecycle` IIFE for first-gesture gate and tab visibility handling. |
 | `js/mechs.js` | Mech building and visual systems. Player mech construction (`buildPlayerMech`), enemy mech construction (`buildEnemyMech`, `buildEnemyTorso`), color refresh (`refreshMechColor`), per-frame visual sync (`syncVisuals`, `syncChassisEffect`), chassis movement effects (`syncLightTrail`, `syncMediumFootsteps`, `syncHeavyShockwave`), rage ghost FX (`handleRageGhosts`), and spectre clone perk logic (`_spawnSpectreClone`). |
-| `js/combat.js` | All weapon firing functions (`fire`, `fireFTH`, `fireRAIL`, `fireGL`, `fireRL`, `fireSIEGE`, `fireSG`, `firePLSM`, `fireSR`, `fireStandard`), damage processing (`processPlayerDamage`, `damageEnemy`, `_resolveEnemyDeath`), shield absorption helpers (`_applyPassiveShieldAbsorption`, `_applyExplosivePlayerDamage`), area effects (`createExplosion`), and mine mechanics (`dropMine`, `dropEnemyMine`, `_drawMineGraphic`). |
 | `js/cover.js` | Cover and battlefield generation. `placeBuilding` (renders building geometry, registers static physics body), `generateCover` (clears old cover, dispatches to arena generator or default city-block layout, force-syncs static bodies), `damageCover` (darkens cover by HP percentage, destroys on zero HP). Also owns `_buildingGraphics` array. |
+| `js/combat.js` | All weapon firing functions (`fire`, `fireFTH`, `fireRAIL`, `fireGL`, `fireRL`, `fireSIEGE`, `fireSG`, `firePLSM`, `fireSR`, `fireStandard`), damage processing (`processPlayerDamage`, `damageEnemy`, `_resolveEnemyDeath`), shield absorption helpers (`_applyPassiveShieldAbsorption`, `_applyExplosivePlayerDamage`), area effects (`createExplosion`), and mine mechanics (`dropMine`, `dropEnemyMine`, `_drawMineGraphic`). |
+| `js/mods.js` | All 18 mod-activation functions: `activateMod` (dispatcher), `activateJump`, `activateDecoy`, `activateMissiles`, `activateDrone`, `activateRepair`, `activateEMP`, `activateRage`, `activateShield`, `activateGhostStep`, `activateOverclockBurst`, `activateFortressMode`, `activateEnemyMod`, `activateAutoDrone`, drone builder helpers (`_buildDroneGraphic`, `_spawnDrone`), and augment/leg application (`applyAugment`, `applyLegSystem`). |
+| `js/perks.js` | `const _perks` — master perk definition dictionary (~400+ entries, each with `cat`, `label`, `desc`, `apply()`). `selectPerks()` (perk pool selection, no DOM), `showPerkMenu()` (renders 4 perk cards), `pickPerk()` (applies chosen perk, advances round), `_showEquipPrompt()` (gear equip flow after extraction), `resetRoundPerks()` (clears per-round perk state at round start). |
+| `js/enemies.js` | Enemy spawning (`spawnEnemy`, `spawnCommander`, `spawnMedic`, `randomEnemyLoadout`), full enemy AI (`handleEnemyAI` and all private helpers: state machine, vision cone, squad system, obstacle avoidance, behavior dispatch), enemy firing (`enemyFire`, `enemyFireSecondary`), and all 8 boss variant spawners (`spawnWarden`, `spawnTwinRazors`, `spawnArchitect`, `spawnJuggernaut`, `spawnSwarm`, `spawnMirror`, `spawnTitan`, `spawnCore`) plus boss HP bar helpers (`_addBossHPBar`, `_updateBossHPBar`, `_hideBossHPBar`). |
+| `js/rounds.js` | Round flow and extraction system. `startRound` (round init, arena setup, enemy spawning dispatch), `onEnemyKilled` (kill tracking, extraction trigger, perk/campaign bonus logic), `_setupArenaAndObjective` (arena + cover + objective init), `_spawnSimulationEnemies` (staggered normal/special/elite spawn for simulation mode), `_spawnCampaignEnemies` (campaign composition spawn), `showRoundBanner`, `_healPlayerFull`, `_clearMapForRound`, extraction point system (`_spawnExtractionPoint`, `_updateExtraction`, `_triggerExtraction`, `_cleanupExtraction`). |
+| `js/hud.js` | All HUD update functions: `updateHUD()` (weapon slot names/states), `updateBars()` (HP and shield bar fills), `updatePaperDoll()` (part HP colors for player and enemy dolls), `drawMinimap()` (160×160 canvas radar), `updateCooldownOverlays()` (weapon-row fill animations), `syncGlowWedge()`, `syncCrosshair()`, `_resetHUDState()` (blanks all HUD elements on death/return). |
+| `js/garage.js` | Hangar UI and loadout management. `toggleDD()`, `buildDD()`, `closeAllDD()` (custom dropdown system), `selectSlot()` (slot selection with 2H weapon locking), `refreshGarage()` (rebuilds all dropdowns filtered by chassis), `updateGarageStats()` (recalculates and displays build stats panel), `setChassis()`, `buildColorDD()`, `_calcWeight()`, `_updateStarterPanel()`. |
+| `js/menus.js` | All menu screen logic: main menu nav (`proceedToMainMenu`, `showCampaignSubMenu`, `hideCampaignSubMenu`, `returnToMainMenu`), hangar nav (`returnToHangar`, `returnToHangarForMissionSelect`, `deployMech`, `startGame`, `startMultiplayer`, `goToMainMenu`), death screen (`showDeathScreen`, `respawnMech`), pause (`togglePause`), stats overlay (`toggleStats`, `_switchLoadoutTab`, `populateStats`, `populateInventory`, `_updateInvCount`), leaderboard (`showLeaderboard`, `closeLeaderboard`, `submitLeaderboardEntry`), and campaign chassis select flow. |
 | `js/loot-system.js` | ARPG loot layer. Item generation (`generateItem`, `rollRarity`, `rollAffixes`), rarity definitions (`RARITY_DEFS`), affix pool (`AFFIX_POOL`), inventory management (`_inventory`, `_equipped`, `_gearState`, `recalcGearStats`), equipment ground drops (`spawnEquipmentLoot`, `checkEquipmentPickups`), unique boss items, scrapping. |
 | `js/enemy-types.js` | Special enemy types (Scout, Enforcer, Technician, Berserker, Sniper Elite, Drone Carrier) and elite modifier system (Vampiric, Shielded, Explosive, Swift, Armored, Splitting). Functions: `spawnSpecialEnemy`, `applyEliteModifier`, `_rollEliteModifier`, `handleEliteDamage`, `handleEliteDeath`, `updateSpecialEnemies`, `_getEnemySpawnConfig`. |
 | `js/arena-objectives.js` | Arena layout generator (`ARENA_DEFS`, `selectArena`, arena-specific cover generators invoked via `window[arenaDef.generator]` by `generateCover`), objective system (`selectObjective`, `initObjective`, `updateObjectives`, `cleanupObjective`, `shouldEndRound`, `getArenaLabel`, `getObjectiveLabel`). Exports `_arenaState` object — mutate properties only, never reassign. |
@@ -36,50 +48,50 @@ phaser.min.js → constants.js → state.js → utils.js → audio.js → mechs.
 ## Systems Overview
 
 ### Chassis System
-**Lives in:** `index.html` — `const CHASSIS`, `const CHASSIS_WEAPONS`, `const CHASSIS_MODS`, `const CHASSIS_SHIELDS`, `const CHASSIS_LEGS`, `const CHASSIS_AUGS`
+**Lives in:** `js/constants.js` — `const CHASSIS`, `const CHASSIS_WEAPONS`, `const CHASSIS_MODS`, `const CHASSIS_SHIELDS`, `const CHASSIS_LEGS`, `const CHASSIS_AUGS`
 **What it does:** Defines the three playable chassis types (Light/Medium/Heavy) with HP pools, speed, scale, and passive traits. Each chassis has weapon/mod/shield/leg/aug restrictions enforced by `Set` lookups. Chassis choice is locked in Campaign mode once selected.
 **Key constants:** `CHASSIS.light.spd=250`, `CHASSIS.medium.modCooldownMult=0.85`, `CHASSIS.heavy.passiveDR=0.15`
 **Connects to:** `deployMech()` (initializes `player.comp` from chassis HP values), `refreshGarage()` (filters dropdown options), `randomEnemyLoadout()` (enemies also roll chassis)
 
 ### Loadout System
-**Lives in:** `index.html` — `let loadout`, `const STARTER_LOADOUTS`, `selectSlot()`, `refreshGarage()`
+**Lives in:** `js/constants.js` — `const STARTER_LOADOUTS`; `js/state.js` — `let loadout`; `js/garage.js` — `selectSlot()`, `refreshGarage()`
 **What it does:** Tracks the player's current build across 7 slots (chassis, L, R, mod, aug, leg, shld, color). The garage UI uses a custom dropdown system (`toggleDD`, `buildDD`, `closeAllDD`). Two-handed weapons (`siege`, `chain`) lock both arms to the same key. Starter loadouts are applied per chassis on new game or chassis switch.
 **Loadout slot keys:** `L` `R` `mod` `aug` `leg` `shld` (not `shield` — it's `shld`)
 **Connects to:** `deployMech()` reads loadout to set up player, `updateHUD()` displays slot names, `processPlayerDamage()` checks `_lArmDestroyed`/`_rArmDestroyed`
 
 ### Combat & Firing System
-**Lives in:** `index.html` — `fire()`, `fireFTH()`, `fireRAIL()`, `fireGL()`, `fireRL()`, `fireSG()`, `fireSR()`, `firePLSM()`, `fireSIEGE()`, `fireStandard()`
+**Lives in:** `js/combat.js` — `fire()`, `fireFTH()`, `fireRAIL()`, `fireGL()`, `fireRL()`, `fireSG()`, `fireSR()`, `firePLSM()`, `fireSIEGE()`, `fireStandard()`
 **What it does:** Handles weapon firing from arm offset origins (bullets spawn from the arm, not torso center). Dispatches per weapon type. Single-arm brace gives +25% damage / +15% reload. Dual-wield gives −15% damage per arm. Critical hits, overcharge rounds, phantom protocol, and targeting scope bonuses all applied here.
 **Key variables:** `reloadL`, `reloadR` (timestamps), `_shotsFired`, `_shotsHit`, `_damageDealt`
 **Connects to:** `handlePlayerFiring()` (called each frame), `_perkState` (all damage/reload multipliers), `_gearState` (gear bonuses), bullet ↔ enemy overlap registered in `create()`
 
 ### Perk System
-**Lives in:** `js/perks.js` — `const _perks`, `showPerkMenu()`, `pickPerk()`, `_pickFrom()`, `_showEquipPrompt()`, `_currentPerkKeys`, `_currentPerkNextRound`; `let _perkState`, `_pickedPerks[]`, `_lastOfferedPerks[]` in `js/state.js`; `selectPerks()` in `index.html`
+**Lives in:** `js/perks.js` — `const _perks`, `showPerkMenu()`, `pickPerk()`, `selectPerks()`, `_pickFrom()`, `_showEquipPrompt()`, `_currentPerkKeys`, `_currentPerkNextRound`; `let _perkState`, `_pickedPerks[]`, `_lastOfferedPerks[]` in `js/state.js`
 **What it does:** ~400+ perks organized by category (universal, chassis, weapon/mod-specific, legendary). Offered in a 4-slot menu after each round's extraction. Perks apply immediately on pick via `p.apply()` which mutates `_perkState`. Legendaries require 2+ perks in their category and round 5+.
 **Key state:** `_perkState.dmgMult`, `_perkState.reloadMult`, `_perkState.speedMult`, `_perkState.fortress` (DR), `_perkState.critChance`
 **Connects to:** `damageEnemy()` and `processPlayerDamage()` read `_perkState` for all combat math, `handleShieldRegen()` checks `_perkState.noShieldRegen`
 
 ### Shield System
-**Lives in:** `index.html` — `const SHIELD_SYSTEMS`, `handleShieldRegen()`, `processPlayerDamage()`
+**Lives in:** `js/constants.js` — `const SHIELD_SYSTEMS`; `js/combat.js` — `processPlayerDamage()`; `js/init.js` — `handleShieldRegen()` (called each frame in `update()`)
 **What it does:** 20 shield types (5 universal + 5 per chassis) each with unique passive mechanics. Shield is initialized on `player` at deploy time. Absorbs a portion of incoming damage based on `absorb` value (50% default, 60% for Medium). Regens after `regenDelay` seconds with no damage taken.
 **Key player properties:** `player.shield`, `player.maxShield`, `player._shieldAbsorb`, `player._shieldRegenRate`, `player._shieldRegenDelay`
 **Connects to:** `processPlayerDamage()` (absorb logic, on-break effects), `activateShield()` (barrier mod), `updateBars()` (HUD display)
 
 ### Round & Extraction System
-**Lives in:** `index.html` — `startRound()`, `resetRoundPerks()`, `onEnemyKilled()`, `handleObjectiveRoundEnd()`, `destroyEnemyWithCleanup()`, `_spawnExtractionPoint()`, `_updateExtraction()`, `_triggerExtraction()`
+**Lives in:** `js/rounds.js` — `startRound()`, `onEnemyKilled()`, `_setupArenaAndObjective()`, `_spawnSimulationEnemies()`, `_spawnCampaignEnemies()`, `_spawnExtractionPoint()`, `_updateExtraction()`, `_triggerExtraction()`; `js/perks.js` — `resetRoundPerks()`; `js/combat.js` — `destroyEnemyWithCleanup()`; `js/init.js` — `handleObjectiveRoundEnd()` (called each frame in `update()`)
 **What it does:** Enemies spawn on a staggered timer at round start. When all enemies die, an extraction zone spawns at a random map location. Player must reach it and press E to end the round, triggering perk selection. Bosses spawn every 5th round. Campaign mode uses `_activeCampaignConfig` for enemy composition instead of the default formula.
 **Key variables:** `_round`, `_roundKills`, `_roundTotal`, `_roundActive`, `_extractionActive`, `_extractionPoint`
 **Key helpers:** `resetRoundPerks()` — called at round start to clear all per-round perk state. `handleObjectiveRoundEnd(scene)` — called each frame from `update()` to detect survival/assassination objective endings. `destroyEnemyWithCleanup(scene, e)` — shared teardown for forced enemy removal (objective end, swarm defeat).
 **Connects to:** `damageEnemy()` → `onEnemyKilled()`, `showPerkMenu()` → `pickPerk()` → `startRound(nextRound)`
 
 ### Enemy AI System
-**Lives in:** `index.html` — `handleEnemyAI()`, `spawnEnemy()`, `spawnCommander()`, `spawnMedic()`, `enemyFire()`, `enemyFireSecondary()`
+**Lives in:** `js/enemies.js` — `handleEnemyAI()`, `spawnEnemy()`, `spawnCommander()`, `spawnMedic()`, `enemyFire()`, `enemyFireSecondary()`
 **What it does:** State machine per enemy: `patrol` → `search` → `chase` → `combat`. Vision cone detection (patrol/search), wide pursuit radius (chase/combat). Squad system groups enemies by chassis. Behaviors: `circle`, `rusher`, `flanker`, `ambusher`, `guardian`, `sniper`. Obstacle avoidance via feeler rays. Separation force prevents stacking.
 **Key enemy properties:** `e.comp` (HP parts), `e.loadout` (chassis/weapons/mod), `e._aiState`, `e._squadId`, `e.behavior`, `e.speed`, `e.isStunned`, `e._fireGrace`
 **Connects to:** `enemies` (Phaser group), `damageEnemy()`, `enemyFire()`, `handleEnemyAI()` called each frame
 
 ### Boss System
-**Lives in:** `index.html` — `spawnBoss()`, `spawnWarden()`, `spawnTwinRazors()`, `spawnArchitect()`, `spawnJuggernaut()`, `spawnSwarm()`, `spawnMirror()`, `spawnTitan()`, `spawnCore()`
+**Lives in:** `js/enemies.js` — `spawnBoss()`, `spawnWarden()`, `spawnTwinRazors()`, `spawnArchitect()`, `spawnJuggernaut()`, `spawnSwarm()`, `spawnMirror()`, `spawnTitan()`, `spawnCore()`
 **What it does:** 8 bosses cycle every 5 rounds (R5=Warden, R10=Razors, R15=Architect, R20=Juggernaut, R25=Swarm, R30=Mirror, R35=Titan, R40=Core). Each boss has unique phase mechanics, a DOM-based HP bar (`boss-hud`), and an `e._onDestroy` callback for cleanup. Swarm boss uses shared `_swarmState.hp` pool — damage bypasses individual enemy HP.
 **Key pattern:** Every boss must call `_hideBossHPBar()` in `e._onDestroy`. Boss HP bar is DOM-based, not Phaser.
 **Connects to:** `startRound()` (detects boss round), `damageEnemy()` (swarm check via `e._isSwarmUnit`), `spawnEquipmentLoot()` (boss drops)
@@ -101,7 +113,7 @@ phaser.min.js → constants.js → state.js → utils.js → audio.js → mechs.
 **Lifecycle:** AudioContext is created only after the first user gesture (`_audioReady` flag). Tab-visibility changes suspend/resume the context. A 2000 ms `setInterval` audit resets `_activeNodes` if the context is closed or all nodes must have expired.
 
 ### HUD System
-**Lives in:** `index.html` — `updateHUD()`, `updateBars()`, `updatePaperDoll()`, `updateRoundHUD()`, `updateCooldownOverlays()`, `drawMinimap()`
+**Lives in:** `js/hud.js` — `updateHUD()`, `updateBars()`, `updatePaperDoll()`, `updateCooldownOverlays()`, `drawMinimap()`; `js/rounds.js` — `updateRoundHUD()`
 **What it does:** Bottom-left console frame with paper doll (part HP colors) and 4 weapon bar rows (L/R/CORE/DEFENSE). Reload progress bars fill right-to-left as weapons cool down. Round HUD shows current round, remaining enemies, total kills. Minimap (160×160 canvas) shows enemies, loot, extraction point, player.
 **DOM element IDs:** `hud-container`, `slot-L/R/M/S`, `wr-fill-L/R/M/S`, `wr-st-L/R/M/S`, `round-hud`, `round-num`, `minimap-canvas`
 
