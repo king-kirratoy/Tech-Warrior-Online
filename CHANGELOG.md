@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.13 — Extract Garage System into js/garage.js
+
+**Date:** 2026-03-21
+
+The garage and dropdown system was extracted from the inline `<script>` block in `index.html` into a new file `js/garage.js` (463 lines). The file is organised under two section banners: `DROPDOWN SYSTEM` (`toggleDD`, `closeAllDD`, `buildDD`, `buildColorDD`, `selectSlot`, `setChassis`) and `GARAGE UI` (`refreshGarage`, `updateGarageStats`, `_updateStarterPanel`, `_calcWeight`, `deployMech`, `startHangarGrid`). The `<script src="js/garage.js">` tag was added to `index.html` after `hud.js` and before `loot-system.js`. A full call-site audit confirmed all references in `index.html` (3 `setChassis` and 1 `toggleDD` and 1 `deployMech` HTML onclick attrs; `closeAllDD` ×2, `deployMech` ×1, `refreshGarage` ×4, `startHangarGrid` ×2 in the inline script) resolve correctly. `loot-system.js`, `enemy-types.js`, `arena-objectives.js`, and `multiplayer.js` have zero references to the moved functions; `campaign-system.js` calls `deployMech` and `refreshGarage` behind `typeof` guards and loads after `garage.js` — no broken references remain.
+
+### Files Changed
+
+- `js/garage.js` — new file, 12 functions (463 lines)
+- `index.html` — `<script src="js/garage.js">` tag added; all 12 function bodies removed
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.12 — Wire js/hud.js and Audit Call Sites
 
 **Date:** 2026-03-21
