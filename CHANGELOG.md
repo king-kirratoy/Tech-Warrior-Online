@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.7 — Add Script Tag for js/combat.js
+
+**Date:** 2026-03-21
+
+The combat system was extracted into `js/combat.js` in a prior session but the `<script>` tag was missing from `index.html`. This session adds `<script src="js/combat.js"></script>` in the correct load-order position — after `js/perks.js` and before `js/loot-system.js` — making the 20 combat functions (`fire`, `fireFTH`, `fireRAIL`, `fireGL`, `fireRL`, `fireSIEGE`, `fireSG`, `firePLSM`, `fireSR`, `fireStandard`, `processPlayerDamage`, `_applyExplosivePlayerDamage`, `_applyPassiveShieldAbsorption`, `damageEnemy`, `_resolveEnemyDeath`, `createExplosion`, `damageCover`, `_drawMineGraphic`, `dropMine`, `dropEnemyMine`) available to all downstream scripts and the inline game loop. All call sites in `index.html`, `js/loot-system.js`, `js/enemy-types.js`, `js/arena-objectives.js`, and `js/multiplayer.js` were verified — no broken references.
+
+### Files Changed
+
+- `index.html` — `<script src="js/combat.js">` tag added after `perks.js`
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v5.7; load order updated
+
+---
+
 ## v5.6 — Extract Perk Functions into js/perks.js
 
 **Date:** 2026-03-21
