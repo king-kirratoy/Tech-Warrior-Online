@@ -623,3 +623,102 @@ function confirmNewCampaign() {
     // Show chassis selection for new campaign
     _showNewCampaignChassisSelect();
 }
+
+// ═══════════ CAMPAIGN CHASSIS SELECT ═══════════
+
+/** Track which chassis is highlighted in the selection screen. */
+let _selectedNewChassis = null;
+
+/** Show chassis selection screen for new campaign. */
+function _showNewCampaignChassisSelect() {
+    _selectedNewChassis = null;
+    const menu = document.getElementById('main-menu');
+    if (menu) { menu.style.transition = 'opacity 0.6s ease'; menu.style.opacity = '0'; }
+    setTimeout(() => {
+        if (menu) menu.style.display = 'none';
+        const overlay = document.getElementById('mission-select-overlay');
+        if (!overlay) return;
+        overlay.dataset.mode = 'chassis-select';  // flag for ESC handler
+        _renderChassisSelect(overlay);
+    }, 600);
+}
+
+/** Render the chassis selection UI. */
+function _renderChassisSelect(overlay) {
+    if (!overlay) overlay = document.getElementById('mission-select-overlay');
+    if (!overlay) return;
+
+    let html = '';
+    html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);margin-bottom:6px;">NEW CAMPAIGN</div>';
+    html += '<div style="font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);margin-bottom:32px;">SELECT YOUR CHASSIS CLASS</div>';
+
+    const chassisInfo = {
+        light: { color: '#88ff88', desc: 'Fast and agile. Access to SMGs, Battle Rifles, Shotguns, Snipers. Mods: Jump, Decoy, Barrier, EMP, Ghost Step.', hp: 'Low HP', speed: 'High Speed' },
+        medium: { color: '#ffcc44', desc: 'Balanced all-rounder. Access to Machine Guns, Battle Rifles, Heavy Rifles, Grenade Launchers, Plasma, Snipers. Mods: Barrier, Repair, Missile, Drone, Overclock.', hp: 'Medium HP', speed: 'Medium Speed' },
+        heavy: { color: '#ff8844', desc: 'Slow but powerful tank. Access to Machine Guns, Heavy Rifles, Rocket Launchers, Plasma, Siege, Chain Gun. Mods: Barrier, Repair, Rage, Siege Mode, Anchor.', hp: 'High HP', speed: 'Low Speed' }
+    };
+
+    html += '<div style="display:flex;gap:16px;max-width:800px;width:100%;">';
+    for (const ch of ['light', 'medium', 'heavy']) {
+        const info = chassisInfo[ch];
+        const isSelected = (_selectedNewChassis === ch);
+        const bgColor = isSelected ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.03)';
+        const borderColor = isSelected ? info.color : (info.color + '40');
+        const shadowStyle = isSelected ? 'box-shadow:0 0 16px ' + info.color + '33,inset 0 0 12px ' + info.color + '11;' : '';
+        html += `<button onclick="_highlightChassis('${ch}')" style="flex:1;padding:24px 16px;background:${bgColor};border:1px solid ${borderColor};border-top:3px solid ${info.color};border-radius:6px;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'Courier New',monospace;${shadowStyle}" onmouseover="this.style.background='rgba(255,215,0,0.06)'" onmouseout="this.style.background='${bgColor}'">`;
+        html += `<div style="font-size:18px;letter-spacing:4px;color:${info.color};margin-bottom:8px;">${ch.toUpperCase()}</div>`;
+        html += `<div style="font-size:10px;color:${info.color};opacity:0.7;margin-bottom:8px;">${info.hp} // ${info.speed}</div>`;
+        html += `<div style="font-size:9px;color:rgba(200,210,217,0.5);line-height:1.5;">${info.desc}</div>`;
+        html += '</button>';
+    }
+    html += '</div>';
+
+    // Start Campaign button — only visible when a chassis is selected
+    html += '<div style="display:flex;gap:16px;margin-top:24px;align-items:center;">';
+    if (_selectedNewChassis) {
+        const selInfo = chassisInfo[_selectedNewChassis];
+        html += `<button onclick="_startNewCampaignWithChassis('${_selectedNewChassis}')" style="padding:14px 48px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.4);border-top:2px solid rgba(255,215,0,0.7);border-bottom:2px solid rgba(255,215,0,0.7);color:#ffd700;font-size:13px;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,215,0,0.15)';this.style.color='#fff';this.style.letterSpacing='6px';this.style.boxShadow='0 0 24px rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.08)';this.style.color='#ffd700';this.style.letterSpacing='4px';this.style.boxShadow='none'">START CAMPAIGN</button>`;
+    }
+    html += `<button onclick="_cancelNewCampaign()" style="padding:12px 32px;background:rgba(255,60,60,0.04);border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.85);font-size:12px;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;text-transform:uppercase;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,60,60,0.12)';this.style.color='#fff';this.style.letterSpacing='4px';this.style.boxShadow='0 0 16px rgba(255,60,60,0.2)'" onmouseout="this.style.background='rgba(255,60,60,0.04)';this.style.color='rgba(255,100,100,0.85)';this.style.letterSpacing='3px';this.style.boxShadow='none'">BACK</button>`;
+    html += '</div>';
+
+    overlay.innerHTML = html;
+    overlay.style.display = 'flex';
+}
+
+/** Highlight a chassis without starting the campaign. */
+function _highlightChassis(chassisType) {
+    _selectedNewChassis = chassisType;
+    _renderChassisSelect();
+}
+
+/** Start campaign with the selected chassis. */
+function _startNewCampaignWithChassis(chassisType) {
+    loadout.chassis = chassisType;
+    _applyStarterLoadout(chassisType);
+    resetInventory();
+    _round = 1;
+    _totalKills = 0;
+    _perksEarned = 0;
+    // Lock chassis choice in campaign state
+    _campaignState.chassis = chassisType;
+    // Save the chassis choice
+    saveCampaignProgress();
+    if (typeof saveCampaignState === 'function') saveCampaignState();
+    // Hide chassis select, show mission select
+    const overlay = document.getElementById('mission-select-overlay');
+    if (overlay) overlay.style.display = 'none';
+    _gameMode = 'campaign';
+    if (typeof applyChassisUpgrades === 'function') applyChassisUpgrades();
+    if (typeof refreshShopStock === 'function') refreshShopStock();
+    if (typeof showMissionSelect === 'function') showMissionSelect();
+}
+
+/** Cancel new campaign chassis selection — return to main menu. */
+function _cancelNewCampaign() {
+    const overlay = document.getElementById('mission-select-overlay');
+    if (overlay) { overlay.style.display = 'none'; delete overlay.dataset.mode; }
+    const menu = document.getElementById('main-menu');
+    if (menu) { menu.style.display = 'flex'; menu.style.opacity = '1'; }
+    hideCampaignSubMenu();
+}
