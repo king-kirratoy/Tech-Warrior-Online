@@ -295,9 +295,11 @@ const GAME_CONFIG = {
     fps:    { target: 60, forceSetTimeOut: true },
     physics: {
         default: 'arcade',
-        arcade:  { debug: false, fps: 60 }
+        arcade:  { debug: false, fps: 60 },
     },
-    scene: { preload, create, update }
+    // scene callbacks (preload, create, update) are assigned by js/init.js
+    // inside window.onload, after the inline <script> block has been parsed.
+    scene: {},
 };
 
 // ── Supabase infrastructure ───────────────────────────────────────
