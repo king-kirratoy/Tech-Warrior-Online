@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. Combat Simulation is a roguelike run-and-die loop; Campaign is persistent with XP/levels/missions/shop; PVP is real-time via Socket.IO.
 
-Last updated: March 21, 2026 (v5.3 — 74 mutable state variables extracted from index.html into js/state.js; script tag added after constants.js)
+Last updated: March 21, 2026 (v5.4 — entire Web Audio engine extracted from index.html into js/audio.js; script tag added after state.js)
 
 ---
 
@@ -11,7 +11,8 @@ Last updated: March 21, 2026 (v5.3 — 74 mutable state variables extracted from
 | File | Purpose |
 |------|---------|
 | `index.html` | Main entry point. Contains the full Phaser game config, all core game logic (chassis, weapons, mods, perks, shields, legs, augments, cover, bosses, loot orbs, HUD, garage, menus, round system, extraction, audio engine, death screen, leaderboard). All inline JS in a single `<script>` block at the bottom. Mutable globals and constants have been split out into `js/state.js` and `js/constants.js`. |
-| `js/state.js` | All mutable runtime globals shared across systems — Phaser object references (`player`, `torso`, `enemies`, `bullets`, etc.), game mode flags (`_gameMode`, `isDeployed`, `_isPaused`), round state (`_round`, `_roundKills`, etc.), combat state (`reloadL/R`, `lastDamageTime`, mod-active flags), `loadout`, `_perkState`, extraction state, loot pickups, leaderboard run state, and chassis movement-effect trackers. Audio state (`_ac` etc.) remains in index.html pending `audio.js`. |
+| `js/state.js` | All mutable runtime globals shared across systems — Phaser object references (`player`, `torso`, `enemies`, `bullets`, etc.), game mode flags (`_gameMode`, `isDeployed`, `_isPaused`), round state (`_round`, `_roundKills`, etc.), combat state (`reloadL/R`, `lastDamageTime`, mod-active flags), `loadout`, `_perkState`, extraction state, loot pickups, leaderboard run state, and chassis movement-effect trackers. |
+| `js/audio.js` | Web Audio API synthesizer — no audio files required. Audio state variables (`_ac`, `_masterVol`, `_activeNodes`, `_sndThrottle`, `_MAX_NODES`, `_audioReady`), core engine functions (`_getAC()`, `_canPlay()`, `_tone()`, `_noise()`), all 23 `snd*` sound functions, and the `_initAudioLifecycle` IIFE for first-gesture gate and tab visibility handling. |
 | `js/loot-system.js` | ARPG loot layer. Item generation (`generateItem`, `rollRarity`, `rollAffixes`), rarity definitions (`RARITY_DEFS`), affix pool (`AFFIX_POOL`), inventory management (`_inventory`, `_equipped`, `_gearState`, `recalcGearStats`), equipment ground drops (`spawnEquipmentLoot`, `checkEquipmentPickups`), unique boss items, scrapping. |
 | `js/enemy-types.js` | Special enemy types (Scout, Enforcer, Technician, Berserker, Sniper Elite, Drone Carrier) and elite modifier system (Vampiric, Shielded, Explosive, Swift, Armored, Splitting). Functions: `spawnSpecialEnemy`, `applyEliteModifier`, `_rollEliteModifier`, `handleEliteDamage`, `handleEliteDeath`, `updateSpecialEnemies`, `_getEnemySpawnConfig`. |
 | `js/arena-objectives.js` | Arena layout generator (`ARENA_DEFS`, `selectArena`, `generateCover` variants), objective system (`selectObjective`, `initObjective`, `updateObjectives`, `cleanupObjective`, `shouldEndRound`, `getArenaLabel`, `getObjectiveLabel`). Exports `_arenaState` object — mutate properties only, never reassign. |
@@ -21,7 +22,7 @@ Last updated: March 21, 2026 (v5.3 — 74 mutable state variables extracted from
 
 **Load order in `<head>`:**
 ```
-constants.js → state.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → multiplayer.js → inline <script>
+constants.js → state.js → audio.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → multiplayer.js → inline <script>
 ```
 
 ---
@@ -88,7 +89,7 @@ constants.js → state.js → loot-system.js → enemy-types.js → arena-object
 **Connects to:** `damageEnemy()` → death triggers `spawnEquipmentLoot()`, `deployMech()` calls `recalcGearStats()` to apply gear HP/shield bonuses, `populateInventory()` renders the GEAR tab
 
 ### Audio Engine
-**Lives in:** `index.html` — `_tone()`, `_noise()`, `sndFire()`, `sndExplosion()`, `sndEnemyDeath()`, etc.
+**Lives in:** `js/audio.js` — `_tone()`, `_noise()`, `sndFire()`, `sndExplosion()`, `sndEnemyDeath()`, etc.
 **What it does:** Web Audio API synthesizer — no audio files required. Oscillators + noise buffers for all sounds. Throttled via `_sndThrottle{}` (per-sound last-played timestamps). Node count capped at `_MAX_NODES=48`.
 **Key globals:** `let _ac` (AudioContext), `let _masterVol=0.32`, `let _activeNodes=0`, `let _lastNodeStartTime=0`, `let _audioReady=false`
 **Lifecycle:** AudioContext is created only after the first user gesture (`_audioReady` flag). Tab-visibility changes suspend/resume the context. A 2000 ms `setInterval` audit resets `_activeNodes` if the context is closed or all nodes must have expired.

@@ -5,6 +5,31 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.4 — Extract Web Audio Engine into js/audio.js
+
+**Date:** 2026-03-21
+
+Moved the entire synthesized sound engine out of the inline `<script>` block in `index.html` into the new dedicated file `js/audio.js`. The move covers all audio state variables, core engine functions, and all named sound functions, in five groups:
+
+**Audio state variables:** `_ac`, `_masterVol`, `_activeNodes`, `_lastNodeStartTime`, `_MAX_NODES`, `_sndThrottle`, `_audioReady`.
+
+**Core engine functions:** `_getAC()`, `_canPlay()`, `_tone()`, `_noise()`.
+
+**snd\* functions (26 total):** `sndFire()`, `sndEnemyFire()`, `sndExplosion()`, `sndShieldBlock()`, `sndShieldActivate()`, `sndShieldDeactivate()`, `sndEMP()`, `sndRage()`, `sndJump()`, `sndPlayerHit()`, `sndLoot()`, `sndEnemyDeath()`, `sndCommanderSpawn()`, `sndRoundClear()`, `sndRoundStart()`, `sndEquipDrop()`, `sndEquipPickup()`, `sndObjectiveStart()`, `sndObjectiveComplete()`, `sndObjectiveFail()`, `sndArenaTransition()`, `sndBossSpawn()`, `sndBossDefeat()`.
+
+**AudioContext lifecycle IIFE** (`_initAudioLifecycle`): first-user-gesture gate and tab visibility suspend/resume handlers.
+
+The audio block in `index.html` was replaced with a single comment. A `<script src="js/audio.js"></script>` tag was inserted after `state.js` and before `loot-system.js`. All call sites for `snd*`, `_tone`, `_noise`, and `_canPlay` in `index.html` and external files continue to resolve via the shared `window` global scope — no references are broken.
+
+### Files Changed
+
+- `js/audio.js` — created (all audio state, engine, and sound functions moved from index.html)
+- `index.html` — audio block replaced with comment; `<script src="js/audio.js">` tag added
+- `CHANGELOG.md` — this entry
+- `OVERVIEW.md` — version updated to v5.4
+
+---
+
 ## v5.3 — Extract Mutable State into js/state.js
 
 **Date:** 2026-03-21
