@@ -1118,3 +1118,199 @@ function populateStats() {
     _renderActivePerksPanel();
     _renderGearBonusesPanel();
 }
+
+// ═══════════ LEADERBOARD ═══════════
+
+async function showLeaderboard() {
+    const overlay = document.getElementById('leaderboard-overlay');
+    overlay.style.display = 'block';
+
+    // Show loading spinner while fetching
+    document.getElementById('lb-loading').style.display = 'block';
+    document.getElementById('lb-table').style.display   = 'none';
+    document.getElementById('lb-empty').style.display   = 'none';
+
+    // Load once, use for both the notice and the table
+    const scores = await _loadScores();
+
+    // Show last-run notice if a run was just submitted
+    const submitPanel = document.getElementById('lb-submit-panel');
+    const lastMine = scores.filter(s => s.name === _playerCallsign).sort((a,b) => b.ts - a.ts)[0];
+    if (lastMine && Date.now() - lastMine.ts < 60000) {
+        submitPanel.style.display = 'block';
+        const prev = document.getElementById('lb-run-preview');
+        const ch = (lastMine.chassis || '?').toUpperCase();
+        prev.textContent = `${lastMine.name}  ·  ${ch}  ·  ROUND ${lastMine.round}  ·  ${lastMine.kills} KILLS  ·  ${lastMine.accuracy}% ACC  ·  ${(lastMine.damage||0).toLocaleString()} DMG`;
+    } else {
+        submitPanel.style.display = 'none';
+    }
+
+    _renderScores(scores);
+}
+
+function closeLeaderboard() {
+    document.getElementById('leaderboard-overlay').style.display = 'none';
+}
+
+async function _loadScores() {
+    if (_supabaseEnabled()) {
+        try {
+            const res = await fetch(
+                `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*&order=round.desc,kills.desc,accuracy.desc&limit=${LB_MAX}`,
+                { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+            );
+            if (res.ok) return await res.json();
+        } catch(e) { console.warn('Supabase load failed, using local', e); }
+    }
+    // Fallback: localStorage
+    try {
+        const raw = localStorage.getItem(LB_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch(e) { return []; }
+}
+
+async function _saveScores(scores) {
+    // localStorage always kept as local backup
+    try { localStorage.setItem(LB_KEY, JSON.stringify(scores)); } catch(e) {}
+}
+
+async function _insertScore(entry) {
+    entry = _validateScoreEntry(entry);
+    if (_supabaseEnabled()) {
+        try {
+            await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify({
+                    name:     entry.name,
+                    round:    entry.round,
+                    kills:    entry.kills,
+                    accuracy: entry.accuracy,
+                    damage:   entry.damage,
+                    chassis:  entry.chassis,
+                    ts:       entry.ts
+                })
+            });
+            return; // Supabase handles its own sorting/limiting
+        } catch(e) { console.warn('Supabase insert failed, saving locally', e); }
+    }
+    // Fallback: localStorage
+    const scores = await _loadScores();
+    scores.push(entry);
+    _sortScores(scores);
+    await _saveScores(scores.slice(0, LB_MAX));
+}
+
+function _sortScores(scores) {
+    return scores.sort((a, b) => {
+        if (b.round !== a.round) return b.round - a.round;
+        if (b.kills !== a.kills) return b.kills - a.kills;
+        return b.accuracy - a.accuracy;
+    });
+}
+
+function _renderScores(scores) {
+    const loading = document.getElementById('lb-loading');
+    const table   = document.getElementById('lb-table');
+    const empty   = document.getElementById('lb-empty');
+
+    loading.style.display = 'none';
+    table.style.display   = 'none';
+    empty.style.display   = 'none';
+
+    if (!scores || scores.length === 0) {
+        empty.style.display = 'block';
+        return;
+    }
+
+    const sorted = _sortScores([...scores]);
+    const chassisColor = { light: '#88ff88', medium: '#ffcc44', heavy: '#ff8844' };
+
+    // Build rows using DOM elements so fetched string values are never treated as HTML
+    const frag = document.createDocumentFragment();
+
+    // Header row (static strings only — innerHTML is safe here)
+    const headerDiv = document.createElement('div');
+    headerDiv.innerHTML = `
+        <div style="display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:6px 12px 10px;gap:0 6px;border-bottom:1px solid rgba(0,210,255,0.25);margin-bottom:4px;">
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;">#</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;letter-spacing:2px;">CALLSIGN</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">ROUND</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">KILLS</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">ACC</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">DAMAGE</span>
+            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">CHASSIS</span>
+        </div>`;
+    frag.appendChild(headerDiv);
+
+    sorted.forEach((e, i) => {
+        const rank    = i + 1;
+        const medal   = rank === 1 ? '◈' : rank === 2 ? '◇' : rank === 3 ? '◆' : `${rank}.`;
+        const rankCol = rank === 1 ? '#ffd700' : rank === 2 ? '#c0c0c0' : rank === 3 ? '#cd7f32' : 'rgba(0,210,255,0.4)';
+        const cc      = chassisColor[e.chassis] || '#aaa';
+        const bg      = rank <= 3 ? 'rgba(0,210,255,0.04)' : 'transparent';
+
+        // Coerce numeric fields — never interpolate raw DB values as HTML
+        const safeRound    = Math.round(Number(e.round)    || 0);
+        const safeKills    = Math.round(Number(e.kills)    || 0);
+        const safeAccuracy = Math.round(Number(e.accuracy) || 0);
+        const safeDamage   = Math.round(Number(e.damage)   || 0);
+
+        // Sanitize string fields with textContent assignment (not innerHTML)
+        const safeName    = _sanitizeCallsign(e.name || 'UNKNOWN');
+        const safeChassis = _sanitizeCallsign(e.chassis || '?');
+
+        const row = document.createElement('div');
+        row.style.cssText = `display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:9px 12px;border-bottom:1px solid rgba(0,210,255,0.08);background:${bg};gap:0 6px;`;
+
+        const cells = [
+            { text: medal,                              style: `color:${rankCol};font-size:12px;font-weight:bold;` },
+            { text: safeName,                           style: 'color:#e8f0e8;font-size:12px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' },
+            { text: `R${safeRound}`,                   style: 'color:#00e0ff;font-size:11px;text-align:right;' },
+            { text: `${safeKills}K`,                   style: 'color:rgba(0,210,255,0.75);font-size:11px;text-align:right;' },
+            { text: `${safeAccuracy}%`,                style: 'color:rgba(0,210,255,0.6);font-size:11px;text-align:right;' },
+            { text: safeDamage.toLocaleString(),        style: 'color:rgba(0,210,255,0.55);font-size:10px;text-align:right;' },
+            { text: safeChassis,                        style: `color:${cc};font-size:9px;text-align:right;letter-spacing:1px;opacity:0.8;` },
+        ];
+
+        cells.forEach(({ text, style }) => {
+            const span = document.createElement('span');
+            span.style.cssText = style;
+            span.textContent = text;
+            row.appendChild(span);
+        });
+
+        frag.appendChild(row);
+    });
+
+    table.innerHTML = '';
+    table.appendChild(frag);
+    table.style.display = 'block';
+}
+
+function _capturePendingRun() {
+    const rawAcc = _shotsFired > 0 ? Math.round((_shotsHit / _shotsFired) * 100) : 0;
+    _pendingRun = _validateScoreEntry({
+        name:     _playerCallsign || 'ANONYMOUS',
+        round:    _round,
+        kills:    _totalKills,
+        accuracy: rawAcc,
+        damage:   _damageDealt,
+        chassis:  loadout.chassis || 'unknown',
+        ts:       Date.now(),
+    });
+    // Auto-submit immediately — no manual step needed
+    _autoSubmitRun(_pendingRun);
+}
+
+async function _autoSubmitRun(entry) {
+    try {
+        await _insertScore(entry);
+        _pendingRun = null;
+    } catch(e) { console.error('Auto-submit failed', e); }
+}
