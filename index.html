@@ -3460,111 +3460,13 @@ function generateCover(scene, arenaKey) {
 // BOSS SPAWN SYSTEM
 // ================================================================
 
-function _bossSpawnPos() {
-    let x, y, att = 0;
-    do {
-        x = Phaser.Math.Between(300, 3700);
-        y = Phaser.Math.Between(300, 3700);
-        att++;
-    } while (player && Phaser.Math.Distance.Between(x, y, player.x, player.y) < 1100 && att < 25);
-    return { x, y };
-}
 
-function _showBossTitle(scene, name, subtitle, color) {
-    const tx = scene.add.text(window.innerWidth/2, window.innerHeight*0.18, name, {
-        font: 'bold 28px monospace', fill: '#' + color.toString(16).padStart(6,'0'),
-        stroke: '#000000', strokeThickness: 5
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(9000).setAlpha(0);
-    const sub = scene.add.text(window.innerWidth/2, window.innerHeight*0.18 + 38, subtitle, {
-        font: '13px monospace', fill: '#ffffff', stroke: '#000000', strokeThickness: 3
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(9000).setAlpha(0);
-    scene.tweens.add({ targets: [tx, sub], alpha: 1, duration: 400, hold: 2200,
-        onComplete: () => { scene.tweens.add({ targets:[tx,sub], alpha:0, duration:500, onComplete:()=>{ tx.destroy(); sub.destroy(); }}); }
-    });
-    _tone(60, 'sawtooth', 0.5, 0.4, 40);
-    _tone(90, 'square',   0.4, 0.25, 70, 0.1);
-    _noise(0.4, 0.35, 0.05, 0, 300);
-    _tone(220, 'sine', 0.15, 0.08, 180, 0.3);
-}
 
-function _buildBossEnemy(scene, x, y, chassisKey, colorSet, hpMult, speedMult) {
-    const chassisS = CHASSIS[chassisKey];
-    const sz = chassisKey === 'heavy' ? 60 : chassisKey === 'light' ? 38 : 50;
-    const e = scene.add.rectangle(x, y, sz, sz, 0x000000, 0);
-    scene.physics.add.existing(e);
-    e.body.setCircle(sz * 0.7);
-    const scl = chassisKey === 'heavy' ? 1.7 : chassisKey === 'light' ? 0.85 : 1.15;
-    e.visuals = buildEnemyMech(scene, chassisKey, colorSet);
-    e.visuals.setPosition(x, y).setScale(scl);
-    e.torso = buildEnemyTorso(scene, chassisKey, colorSet);
-    e.torso.setPosition(x, y).setScale(scl).setDepth(6);
-    e.speed = chassisS.spd * (speedMult || 1.0);
-    const _bossLvl = (window._activeCampaignConfig?.enemyLevel) || _round;
-    const bm = hpMult * (1 + (_bossLvl - 1) * 0.10);
-    e.comp = {
-        core: { hp: Math.round(chassisS.coreHP * bm), max: Math.round(chassisS.coreHP * bm) },
-        lArm: { hp: Math.round(chassisS.armHP  * bm), max: Math.round(chassisS.armHP  * bm) },
-        rArm: { hp: Math.round(chassisS.armHP  * bm), max: Math.round(chassisS.armHP  * bm) },
-        legs: { hp: Math.round(chassisS.legHP  * bm), max: Math.round(chassisS.legHP  * bm) },
-    };
-    e.health    = Object.values(e.comp).reduce((s,c) => s+c.hp, 0);
-    e.maxHealth = e.health;
-    e.reloadL = 0; e.reloadR = 0;
-    e.lastSecTime = -99999; e.lastModTime = -99999; e.isModActive = false;
-    e._passiveDR  = chassisKey === 'heavy' ? 0.15 : 0;
-    e._reloadMult = 1.0; e._augState = {};
-    e.fxFootTimer = 0; e.fxFootSide = 1; e.fxShockTimer = 0;
-    e.fxLastX = x; e.fxLastY = y; e.fxLastMX = x; e.fxLastMY = y;
-    e._fireGrace = true;
-    setTimeout(() => { if (e && e.active) e._fireGrace = false; }, 2000);
-    e.lastFireTime = 0; e.lastSecTime = 0;
-    e._shieldHP = 0; e._shieldMax = 0; e._shieldAbsorb = 0;
-    e._visionConeGfx = scene.add.graphics().setDepth(3);
-    enemies.add(e);
-    if (coverObjects) scene.physics.add.collider(e, coverObjects);
-    return e;
-}
 
-function _addBossLabel(scene, e, text, color, yOff) {
-    e.bossLabel = scene.add.text(e.x, e.y - (yOff||75), text, {
-        font: 'bold 11px monospace', fill: '#' + color.toString(16).padStart(6,'0'),
-        stroke: '#000000', strokeThickness: 3
-    }).setOrigin(0.5).setDepth(10);
-    // Store tween reference so _onDestroy can stop it before destroying the target.
-    e._bossLabelTween = scene.tweens.add({ targets: e.bossLabel, alpha: 0.45, duration: 600, yoyo: true, repeat: -1 });
-}
 
-function _addBossHPBar(scene, e, color, bossName) {
-    // Store color as CSS hex string for DOM bar; no Phaser objects needed
-    e._bossBarColor = '#' + color.toString(16).padStart(6, '0');
-    e._bossBarName  = bossName || e.bossType || 'BOSS';
-    // Show the DOM boss bar
-    const hud  = document.getElementById('boss-hud');
-    const fill = document.getElementById('boss-bar-fill');
-    const name = document.getElementById('boss-bar-name');
-    if (hud)  hud.style.display = 'block';
-    if (fill) {
-        fill.style.background = 'linear-gradient(90deg,' + e._bossBarColor + 'aa,' + e._bossBarColor + ')';
-        fill.style.boxShadow  = '0 0 12px ' + e._bossBarColor + '99';
-        fill.style.width = '100%';
-    }
-    if (name) name.style.color = e._bossBarColor;
-    _updateBossHPBar(e);
-}
 
-function _updateBossHPBar(e) {
-    const fill = document.getElementById('boss-bar-fill');
-    const name = document.getElementById('boss-bar-name');
-    if (!fill) return;
-    const pct = Math.max(0, e.health / e.maxHealth);
-    fill.style.width = (pct * 100).toFixed(1) + '%';
-    if (name && e._bossBarName) name.textContent = e._bossBarName;
-}
 
-function _hideBossHPBar() {
-    const hud = document.getElementById('boss-hud');
-    if (hud) hud.style.display = 'none';
-}
+
 
 // BOSS 1: THE WARDEN (Round 5)
 function spawnWarden(scene) {
@@ -4378,22 +4280,7 @@ function spawnCore(scene) {
     };
 }
 
-// Boss cycle: 8 bosses, one every 5 rounds starting at R5, cycling after R40.
-// R5=Warden, R10=Razors, R15=Architect, R20=Juggernaut,
-// R25=Swarm, R30=Mirror, R35=Titan, R40=Core, R45=Warden again...
-// Boss definitions are in this file. Boss LOOT is in js/loot-system.js (BOSS_DROP_TABLE).
-function spawnBoss(scene, roundNum) {
-    if (typeof sndBossSpawn === 'function') sndBossSpawn(); // → Phase 8 sound (defined above)
-    const bossCycle = (Math.floor(roundNum / 5) - 1) % 8;
-    if (bossCycle === 0) spawnWarden(scene);
-    else if (bossCycle === 1) spawnTwinRazors(scene);
-    else if (bossCycle === 2) spawnArchitect(scene);
-    else if (bossCycle === 3) spawnJuggernaut(scene);
-    else if (bossCycle === 4) spawnSwarm(scene);
-    else if (bossCycle === 5) spawnMirror(scene);
-    else if (bossCycle === 6) spawnTitan(scene);
-    else spawnCore(scene);
-}
+
 
 
 
