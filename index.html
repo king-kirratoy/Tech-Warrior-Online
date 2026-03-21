@@ -16,10 +16,11 @@
 <!-- CALLSIGN ENTRY SCREEN (shown first) -->
 <div id="callsign-screen" style="position:fixed;inset:0;background:#0c1014;z-index:10000;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;">
     <canvas id="callsign-canvas" style="position:absolute;inset:0;pointer-events:none;"></canvas>
+    <div class="menu-version" id="callsign-version" style="z-index:2;"></div>
     <div style="position:relative;z-index:1;text-align:center;">
         <div style="font-size:11px;letter-spacing:6px;color:rgba(0,210,255,0.4);margin-bottom:12px;">TECH WARRIOR ONLINE</div>
         <div style="font-size:28px;letter-spacing:8px;color:#00e0ff;font-weight:bold;text-shadow:0 0 24px rgba(0,210,255,0.7);margin-bottom:6px;">IDENTIFY YOURSELF</div>
-        <div style="font-size:10px;letter-spacing:3px;color:rgba(0,210,255,0.35);margin-bottom:40px;">COMBAT SIMULATION ALPHA 3.0</div>
+        <div style="margin-bottom:40px;"></div>
 
         <div style="font-size:9px;letter-spacing:4px;color:rgba(0,210,255,0.5);margin-bottom:10px;">ENTER CALLSIGN</div>
         <input id="menu-callsign" type="text" maxlength="16" placeholder="_ _ _ _ _ _" autocomplete="off" spellcheck="false"
@@ -51,7 +52,7 @@
         <button id="new-campaign-btn" class="menu-start-btn" onclick="confirmNewCampaign()">&#9733;&nbsp;&nbsp;NEW CAMPAIGN</button>
         <button class="menu-start-btn menu-btn-red" onclick="hideCampaignSubMenu()" style="margin-top:8px;">&#9664;&nbsp;&nbsp;BACK</button>
     </div>
-    <div class="menu-version">v5.19 // ALPHA BUILD</div>
+    <div class="menu-version" id="main-menu-version">v5.23 // ALPHA BUILD</div>
 </div>
 
 <!-- ============================================================
@@ -113,7 +114,7 @@
                 </div>
 
                 <div style="width:100%;margin-top:auto;display:flex;flex-direction:column;gap:8px;">
-                    <button id="hangar-mm-btn" onclick="returnToMainMenu()">MAIN MENU</button>
+                    <button id="hangar-mm-btn" onclick="returnToMainMenu()">&#9664;&nbsp; BACK</button>
                     <button id="deploy-btn" onclick="deployMech()">DEPLOY MECH</button>
                 </div>
 
@@ -148,7 +149,7 @@
 
         <!-- Footer -->
         <div style="text-align:center;margin-top:32px;">
-            <button onclick="closeLeaderboard()" class="menu-start-btn" style="width:220px;text-align:center;">MAIN MENU</button>
+            <button onclick="closeLeaderboard()" class="menu-start-btn menu-btn-red" style="width:220px;text-align:center;">&#9664;&nbsp;&nbsp;BACK</button>
         </div>
 
     </div>

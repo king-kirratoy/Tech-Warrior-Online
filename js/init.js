@@ -77,6 +77,21 @@ function _updateCallsignBtn() {
     btn.style.cursor     = 'pointer';
     btn.style.opacity    = '1';
     btn.style.boxShadow  = '0 0 12px rgba(0,210,255,0.15)';
+    btn.style.letterSpacing = '4px';
+    btn.onmouseover = function() {
+      this.style.background    = 'rgba(0,210,255,0.15)';
+      this.style.borderColor   = 'rgba(0,210,255,0.9)';
+      this.style.color         = '#fff';
+      this.style.letterSpacing = '6px';
+      this.style.boxShadow     = '0 0 30px rgba(0,210,255,0.3)';
+    };
+    btn.onmouseout = function() {
+      this.style.background    = 'rgba(0,210,255,0.08)';
+      this.style.borderColor   = 'rgba(0,210,255,0.6)';
+      this.style.color         = '#00e0ff';
+      this.style.letterSpacing = '4px';
+      this.style.boxShadow     = '0 0 12px rgba(0,210,255,0.15)';
+    };
   } else {
     btn.disabled         = true;
     btn.style.background = 'rgba(0,210,255,0.04)';
@@ -86,8 +101,19 @@ function _updateCallsignBtn() {
     btn.style.cursor     = 'not-allowed';
     btn.style.opacity    = '0.4';
     btn.style.boxShadow  = 'none';
+    btn.onmouseover = null;
+    btn.onmouseout  = null;
   }
 }
+
+// ── Version display ────────────────────────────────────────────────
+// Populate all .menu-version elements from the GAME_VERSION constant.
+(function() {
+    const ver = (typeof GAME_VERSION !== 'undefined') ? GAME_VERSION : '';
+    const label = ver + ' // ALPHA BUILD';
+    const els = document.querySelectorAll('.menu-version');
+    els.forEach(function(el) { el.textContent = label; });
+})();
 
 // ── Game bootstrap ─────────────────────────────────────────────────
 // Deferred to window.onload so that preload/create/update (defined in the

@@ -5,6 +5,24 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.23 — 7 UI fixes: background path, version display, button hover & layout
+
+**Date:** 2026-03-21
+
+Fixed a 404 on `hangar-bg.jpg` by correcting the relative path in `css/garage.css` from `assets/…` to `../assets/…`. Removed the hardcoded "Combat Simulation Alpha 3.0" subtitle from the callsign screen; added a `GAME_VERSION` constant (`v5.23`) to `js/constants.js` and a JS IIFE in `js/init.js` that populates all `.menu-version` elements dynamically — the version now appears at the bottom-right of both the callsign screen and main menu. Added hover effects (`onmouseover`/`onmouseout`) to the callsign Proceed button in `_updateCallsignBtn()`, matching the `.menu-start-btn` hover pattern. Changed the leaderboard "Main Menu" button to a red "Back" button using the existing `.menu-btn-red` class. Moved the hangar's red "Main Menu" button to an absolute top-right position within `.stat-readout` (now `position:relative` in `css/garage.css`) and relabelled it "Back". In the PVP hangar, moved the "Main Menu" button to the top-right corner as "Back", changed "Join Lobby" from green to blue, and added `cursor:pointer` to `.dd-option` dropdown items. Removed the level number appended to the "Resume Campaign" button label in `js/menus.js`; the red Quit button on the campaign mission select screen was already present from a prior session.
+
+### Files Changed
+
+- `css/garage.css` — fix `../assets/hangar-bg.jpg` path; add `position:relative` to `.stat-readout`; reposition `#hangar-mm-btn` to absolute top-right; add `cursor:pointer` to `.dd-option`
+- `js/constants.js` — add `const GAME_VERSION = 'v5.23'`
+- `js/init.js` — IIFE to populate `.menu-version` from `GAME_VERSION`; hover handlers on Proceed button
+- `index.html` — remove "Alpha 3.0" from callsign screen; add `#callsign-version` div; add `id` to main-menu version div; update leaderboard button to red Back; relabel hangar button to Back
+- `js/multiplayer.js` — PVP hangar: absolute Back button at top-right, Join Lobby changed to blue
+- `js/menus.js` — remove level suffix from Resume Campaign label
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.22 — Restore 6 missing stats panel render functions to `js/menus.js`
 
 **Date:** 2026-03-21

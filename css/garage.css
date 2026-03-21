@@ -12,6 +12,7 @@
 }
 
 .stat-readout {
+    position: relative;
     width: 820px;
     max-width: 98vw;
     padding: 24px 28px;
@@ -19,7 +20,7 @@
     pointer-events: auto;
     background:
         linear-gradient(rgba(12,16,20,0.92), rgba(12,16,20,0.92)),
-        url('assets/hangar-bg.jpg') center / cover;
+        url('../assets/hangar-bg.jpg') center / cover;
     border: 1px solid rgba(0,255,255,0.35);
     box-shadow: 0 0 40px rgba(0,0,0,0.7), 0 0 20px rgba(0,255,255,0.1);
 }
@@ -86,10 +87,13 @@
 }
 
 #hangar-mm-btn {
-    width: 100%;
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: auto;
     box-sizing: border-box;
-    font-size: 13px;
-    padding: 12px;
+    font-size: 11px;
+    padding: 7px 18px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -100,7 +104,7 @@
     border-bottom: 2px solid rgba(255,80,80,0.7);
     color: rgba(255,100,100,0.9);
     text-transform: uppercase;
-    letter-spacing: 4px;
+    letter-spacing: 3px;
     font-family: 'Courier New', monospace;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -266,6 +270,7 @@
 }
 .dd-list.dd-list-open { display: block; }
 .dd-option {
+    cursor: pointer;
     display: flex;
     flex-direction: column;
     padding: 9px 12px 8px;

@@ -570,7 +570,7 @@ async function showCampaignSubMenu() {
     if (resumeBtn) {
         if (hasSave) {
             resumeBtn.style.display = 'inline-block';
-            resumeBtn.innerHTML = '&#9733;&nbsp;&nbsp;RESUME CAMPAIGN' + (levelInfo ? ' <span style="font-size:9px;letter-spacing:2px;color:rgba(255,215,0,0.45);margin-left:6px;">' + levelInfo + '</span>' : '');
+            resumeBtn.innerHTML = '&#9733;&nbsp;&nbsp;RESUME CAMPAIGN';
         } else {
             resumeBtn.style.display = 'none';
         }
