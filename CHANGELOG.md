@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.10 — Extract Enemy System into js/enemies.js
+
+**Date:** 2026-03-21
+
+Moved all enemy spawning, AI, and boss logic out of the inline `<script>` block in `index.html` into a new file `js/enemies.js` (2 432 lines). The file is organised under four section banners: `ENEMY SPAWNING` (`randomEnemyLoadout`, `spawnEnemy`, `spawnCommander`, `spawnMedic`), `ENEMY AI` (`enemyFire`, `enemyFireSecondary`, `handleEnemyAI` and all private helpers), `BOSS SYSTEM` (`spawnBoss`, `_bossSpawnPos`, `_showBossTitle`, `_buildBossEnemy`, `_addBossLabel`, `_addBossHPBar`, `_updateBossHPBar`, `_hideBossHPBar`), and `BOSS VARIANTS` (`spawnWarden`, `spawnTwinRazors`, `spawnArchitect`, `spawnJuggernaut`, `spawnSwarm`, `spawnMirror`, `spawnTitan`, `spawnCore`). The `<script src="js/enemies.js">` tag was added to `index.html` after `mods.js` and before `loot-system.js`. All 11 call sites in `index.html` resolve correctly. None of the five external JS files (`loot-system.js`, `enemy-types.js`, `arena-objectives.js`, `campaign-system.js`, `multiplayer.js`) reference any function now in `enemies.js`, so no broken references exist.
+
+### Files Changed
+
+- `js/enemies.js` — new file, 34 functions (2 432 lines)
+- `index.html` — script tag added; all function bodies removed
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.9 — Extract Mod System into js/mods.js
 
 **Date:** 2026-03-21
