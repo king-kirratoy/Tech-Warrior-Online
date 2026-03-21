@@ -374,6 +374,509 @@ function activateJump(scene) {
     });
 }
 
+// ═══════════ AUGMENTS AND LEGS ═══════════
+
+function applyAugment() {
+    if (!loadout.aug || loadout.aug === 'none') return;
+    switch (loadout.aug) {
+        case 'overclock_cpu':
+            // 12% reduction on all reloads and cooldowns — baked into multipliers
+            _perkState.reloadMult = (_perkState.reloadMult||1) * 0.88;
+            break;
+        case 'target_painter':    _perkState.targetPainter = true; break;
+        case 'threat_analyzer':   _perkState.threatAnalyzer = true; break;
+        case 'reactive_plating':  _perkState.reactivePlating = true; break;
+        case 'scrap_cannon':      _perkState.scrapCannon = true; break;
+        // ── Drone Commander augments ──
+        case 'drone_relay':       _perkState.droneRelay = true; break;
+        case 'combat_ai':         _perkState.combatAI = true; break;
+        case 'multi_drone':       _perkState.multiDrone = true; break;
+        // ── Ghost Assassin augments ──
+        case 'targeting_scope':   _perkState.targetingScope = true; break;
+        case 'ballistic_weave':   _perkState.ballisticWeave = true; break;
+        case 'neural_accel':      _perkState.neuralAccel = true; break;
+        // ── Inferno Wall augments ──
+        case 'fuel_injector':
+            _perkState.fuelInjector = true;
+            _perkState.fthCone = (_perkState.fthCone || 0) + 0.30;
+            break;
+        case 'thermal_core':      _perkState.thermalCore = true; break;
+        case 'pyromaniac_chip':   _perkState.pyromaniacChip = true; break;
+        // ── LIGHT CHASSIS UNIQUE ───────────────────────────────────
+        case 'ghost_circuit':     _perkState.ghostCircuit   = true; break;
+        case 'reflex_amp':        _perkState.reflexAmp      = true; break;
+        case 'kill_sprint':       _perkState.killSprint     = true; break;
+        case 'predator_lens':     _perkState.predatorLens   = true; break;
+        case 'shadow_core':       _perkState.shadowCore     = true; break;
+        // ── MEDIUM CHASSIS UNIQUE ──────────────────────────────────
+        case 'tactical_uplink':
+            CHASSIS.medium.modCooldownMult = Math.max(0.60, (CHASSIS.medium.modCooldownMult||0.85) * 0.90);
+            break;
+        case 'field_processor':   _perkState.fieldProcessor = true; break;
+        case 'system_sync':       _perkState.systemSync     = true; break;
+        case 'adaptive_core':     _perkState.adaptiveCoreAug = true; break;
+        case 'echo_targeting':    _perkState.echoTargeting  = true; break;
+        // ── HEAVY CHASSIS UNIQUE ───────────────────────────────────
+        case 'war_machine':       _perkState.warMachine     = true; break;
+        case 'iron_fortress':     _perkState.ironFortress   = true; break;
+        case 'suppressor_aura':   _perkState.suppressorAura = true; break;
+        case 'colossus_frame':
+            if (player?.comp) {
+                player.comp.core.hp  = Math.min(player.comp.core.max + 60, player.comp.core.hp + 60);
+                player.comp.core.max += 60;
+                player.comp.lArm.hp  = Math.min(player.comp.lArm.max + 40, player.comp.lArm.hp + 40);
+                player.comp.lArm.max += 40;
+                player.comp.rArm.hp  = Math.min(player.comp.rArm.max + 40, player.comp.rArm.hp + 40);
+                player.comp.rArm.max += 40;
+                player.comp.legs.hp  = Math.min(player.comp.legs.max + 40, player.comp.legs.hp + 40);
+                player.comp.legs.max += 40;
+            }
+            break;
+        case 'impact_core':       _perkState.impactCore     = true; break;
+        // ── HEAVY WEAPON MASTERY ──────────────────────────────────
+        case 'blast_dampener':
+            _perkState.blastDampener = true;
+            break;
+        case 'heavy_loader':
+            _perkState.heavyLoader = true;
+            _perkState.reloadMult  = (_perkState.reloadMult || 1) * 0.80;
+            break;
+        case 'chain_drive':
+            _perkState.chainDrive = true;
+            if (loadout.L === 'chain' || loadout.L === 'siege' || loadout.R === 'chain' || loadout.R === 'siege') {
+                _perkState.dmgMult = (_perkState.dmgMult || 1) * 1.15;
+            }
+            break;
+    }
+}
+
+// ── Apply leg system passive effects on deploy ───────────────────
+function applyLegSystem() {
+    if (!loadout.leg || loadout.leg === 'none') return;
+    switch (loadout.leg) {
+        case 'hydraulic_boost':
+            _perkState.speedMult = (_perkState.speedMult||1) * 1.20;
+            break;
+        case 'gyro_stabilizer':
+            // Handled in movement — no leg speed penalty applied
+            break;
+        case 'mag_anchors':
+            // Handled in update loop — stat changes when player still
+            break;
+        case 'afterleg':
+            // Handled in activateJump — extended distance
+            break;
+        case 'mine_layer':
+            _perkState.mineLayerTimer = 0;
+            break;
+        case 'featherweight':
+            // +15% reload speed (via reloadMult) + +10% speed (via speedMult)
+            _perkState.reloadMult = (_perkState.reloadMult || 1) * 0.85;
+            _perkState.speedMult  = (_perkState.speedMult  || 1) * 1.10;
+            break;
+        case 'ghost_legs':
+            // Passive: speed burst on taking damage — handled in processPlayerDamage
+            break;
+        case 'silent_step':
+            // Passive: handled in enemy vision detection — no apply needed
+            break;
+        case 'sprint_boosters':
+            // Double-tap handled in input detection
+            break;
+        case 'reactive_dash':
+            // Threshold trigger — handled in processPlayerDamage leg check
+            break;
+        case 'stabilizer_gyros':
+            // Stationary bonus — handled in update loop like mag_anchors
+            break;
+        case 'jump_jets':
+            // Only reachable on light chassis (where jump mod is available)
+            _perkState.jumpCharges = (_perkState.jumpCharges || 1) + 1;
+            _perkState._jumpChargesLeft = _perkState.jumpCharges;
+            break;
+        case 'adaptive_stride':
+        case 'seismic_dampener':
+        case 'reactor_legs':
+        case 'tremor_legs':
+        case 'siege_stance':
+        case 'ironclad_legs':
+        case 'suppressor_legs':
+            // Handled in update loop
+            break;
+        // ── NEW MEDIUM LEGS ──────────────────────────────────────
+        case 'power_stride':
+            // Kill-triggered speed stack — handled in onEnemyKilled
+            _perkState._powerStrideStacks = 0;
+            _perkState._powerStrideTimer  = 0;
+            break;
+        case 'evasion_coils':
+            // Passive: dodge distance/cooldown boost — handled in dodge logic
+            break;
+        // ── NEW HEAVY LEG ────────────────────────────────────────
+        case 'warlord_stride':
+            // Passive: speed/dmg when legs healthy — handled in update loop
+            break;
+    }
+}
+
+// ═══════════ DRONE HELPERS ═══════════
+
+function _spawnDrone(scene, offsetX, offsetY, isAuto) {
+    const mod = WEAPONS.atk_drone;
+    // Drone Relay: fires 40% faster, +60 HP (tracked as _droneHP)
+    const fireDelay  = _perkState.droneRelay ? Math.round(mod.droneReload * 0.60) : mod.droneReload;
+    const droneHP    = _perkState.droneRelay ? 60 : 0; // 0 = invincible timer-based (original)
+    const droneColor = isAuto ? 0x00ffcc : 0xffaa00;
+
+    let droneX = (player?.x || 400) + (offsetX || 0);
+    let droneY = (player?.y || 300) + (offsetY || -60);
+    const drone = _buildDroneGraphic(scene, droneX, droneY, droneColor);
+    drone._hp = droneHP > 0 ? droneHP : 9999;
+    // Hardened Frame: drone takes less damage
+    drone._armorMult = 1 - Math.min(0.80, _perkState.droneArmor || 0);
+    // Mark so enemy bullets can damage it (for Autonomous Unit)
+    if (isAuto) drone._isAutoDrone = true;
+
+    const followEvent = scene.time.addEvent({ delay: 16, loop: true, callback: () => {
+        if (!drone.active || !player?.active) return;
+        const side = (offsetX > 0) ? 1 : -1;
+        const targetX = player.x + Math.sin(scene.time.now * 0.002) * 25 + side * Math.abs(offsetX || 0) * 0.5;
+        const targetY = player.y - 55 + Math.cos(scene.time.now * 0.003) * 10;
+        droneX += (targetX - droneX) * 0.08;
+        droneY += (targetY - droneY) * 0.08;
+        drone._drawDrone(droneX, droneY);
+        // Shield indicator if low HP
+        if (isAuto && drone._hp < 20) drone._drawDrone(droneX, droneY, 0xff4400);
+    }});
+
+    const droneTicker = scene.time.addEvent({ delay: fireDelay, loop: true, callback: () => {
+        if (!drone.active || !enemies || !player?.active) return;
+        // Combat AI: prefer target you're shooting (painted/attacked)
+        let target = null;
+        if (_perkState.combatAI && _perkState._paintedEnemy?.active) {
+            target = _perkState._paintedEnemy;
+        } else {
+            const DRONE_RANGE = 550;
+            let nearDist = DRONE_RANGE;
+            enemies.getChildren().forEach(e => {
+                if (!e.active) return;
+                const d = Phaser.Math.Distance.Between(droneX, droneY, e.x, e.y);
+                if (d < nearDist) { nearDist = d; target = e; }
+            });
+        }
+        if (target) {
+            const baseDmg = mod.droneDmg;
+            const uplink  = 1 + (_perkState.droneUplink || 0);
+            const overw   = 1 + (_perkState.overwatchStacks > 0 ? (_perkState.overwatchKills || 0) * 0.20 * _perkState.overwatchStacks : 0);
+            const dmg     = Math.round(baseDmg * uplink * overw);
+            damageEnemy(target, dmg, 0);
+            showDamageText(scene, target.x, target.y, dmg);
+            const zap = scene.add.graphics().setDepth(13);
+            zap.lineStyle(2, droneColor, 0.9);
+            zap.lineBetween(droneX, droneY, target.x, target.y);
+            scene.tweens.add({ targets: zap, alpha: 0, duration: 100, onComplete: () => zap.destroy() });
+            // Drone fire sound — quiet electric zap (throttled: dual-drone can fire twice per second)
+            if (_canPlay('drone_fire', 150)) {
+                _tone(1800, 'square', 0.04, 0.025, 900);
+                _noise(0.03, 0.04, 0, 1200, 0);
+            }
+            drone._drawDrone(droneX, droneY, 0xffffff);
+            scene.time.delayedCall(80, () => { if (drone.active) drone._drawDrone(droneX, droneY); });
+        }
+    }});
+
+    // Neural Link: reload boost while drone is active
+    if (_perkState.neuralLink > 0) {
+        _perkState.reloadMult = (_perkState.reloadMult || 1) * (1 - _perkState.neuralLink);
+    }
+
+    function destroyDrone() {
+        if (!drone.active) return;
+        drone.destroy(); droneTicker.remove(); followEvent.remove();
+        // Neural Link: remove reload boost
+        if (_perkState.neuralLink > 0) {
+            _perkState.reloadMult = (_perkState.reloadMult || 1) / (1 - _perkState.neuralLink);
+        }
+        if (isAuto) {
+            _perkState._autoDroneActive = false;
+            // Respawn after 12s (kills reduce timer via swarmLogic)
+            const respawnMs = 12000;
+            _perkState._autoDroneRespawnTimer = scene.time.delayedCall(respawnMs, () => {
+                if (isDeployed && _roundActive && !_perkState._autoDroneActive)
+                    activateAutoDrone(scene);
+            });
+            // Flash destroyed indicator
+            const flash = scene.add.circle(droneX, droneY, 20, 0xff0000, 0.6).setDepth(15);
+            scene.tweens.add({ targets: flash, alpha: 0, scale: 2, duration: 400, onComplete: () => flash.destroy() });
+        } else {
+            _perkState._droneActive = false;
+            lastModTime = scene.time.now;
+        }
+    }
+
+    // Duration-based destroy (non-auto) or HP-based (auto / drone_relay)
+    if (!isAuto) {
+        scene.time.delayedCall(mod.droneDuration, destroyDrone);
+    } else {
+        // Auto drone: destroyed by HP (bullet collisions tracked externally)
+        drone._destroyDrone = destroyDrone;
+    }
+
+    return drone;
+}
+
+function _buildDroneGraphic(scene, x, y, color) {
+    // Redesigned: angular square combat drone with sensor array and weapon pod
+    const g = scene.add.graphics().setDepth(14);
+    const drawDrone = (gx, gy, tint) => {
+        g.clear();
+        const c = tint || color;
+        const dark = 0x0a0a12;
+        // === Main body — square chassis ===
+        g.fillStyle(dark, 1);
+        g.fillRect(gx-9, gy-9, 18, 18);
+        g.fillStyle(c, 0.88);
+        g.fillRect(gx-8, gy-8, 16, 16);
+        // Inner panel detail
+        g.fillStyle(dark, 0.6);
+        g.fillRect(gx-5, gy-5, 10, 10);
+        // Corner cut detail (diagonal trim top-left and bottom-right)
+        g.fillStyle(dark, 1);
+        g.fillTriangle(gx-8, gy-8, gx-4, gy-8, gx-8, gy-4);
+        g.fillTriangle(gx+8, gy+8, gx+4, gy+8, gx+8, gy+4);
+        // === Sensor eye — front center ===
+        g.fillStyle(0xffffff, 0.95);
+        g.fillRect(gx+2, gy-2, 6, 4);
+        g.fillStyle(c, 1);
+        g.fillRect(gx+3, gy-1, 4, 2);
+        // === Weapon pod — bottom protrusion ===
+        g.fillStyle(dark, 1);
+        g.fillRect(gx-3, gy+8, 6, 5);
+        g.fillStyle(c, 0.7);
+        g.fillRect(gx-2, gy+9, 4, 3);
+        // === Rotor arms — four short diagonal struts ===
+        g.lineStyle(1.5, c, 0.7);
+        g.lineBetween(gx-8, gy-8,  gx-14, gy-14);
+        g.lineBetween(gx+8, gy-8,  gx+14, gy-14);
+        g.lineBetween(gx-8, gy+8,  gx-14, gy+14);
+        g.lineBetween(gx+8, gy+8,  gx+14, gy+14);
+        // Rotor hubs
+        g.fillStyle(c, 0.9);
+        g.fillCircle(gx-14, gy-14, 3);
+        g.fillCircle(gx+14, gy-14, 3);
+        g.fillCircle(gx-14, gy+14, 3);
+        g.fillCircle(gx+14, gy+14, 3);
+        // Glow halo (faint)
+        g.lineStyle(1, c, 0.18);
+        g.strokeRect(gx-11, gy-11, 22, 22);
+    };
+    drawDrone(x, y);
+    g._drawDrone = drawDrone;
+    return g;
+}
+
+function activateAutoDrone(scene) {
+    if (_perkState._autoDroneActive || !isDeployed) return;
+    _perkState._autoDroneActive = true;
+    if (_perkState.multiDrone) {
+        // Two auto-drones spread apart — left and right flanks
+        _spawnDrone(scene, -45, -55, true);
+        const drone = _spawnDrone(scene,  45, -55, true);
+        _perkState._autoDroneRef = drone; // track right one for HP-based destroy
+    } else {
+        const drone = _spawnDrone(scene, 0, -62, true);
+        _perkState._autoDroneRef = drone;
+    }
+}
+
+function activateEnemyMod(scene, enemy, mod, time) {
+    enemy.isModActive = true;
+    enemy.lastModTime = time;
+
+    switch (mod) {
+        case 'jump': {
+            // Lunge toward player — lock AI movement so velocity isn't overwritten
+            const jSpeed = WEAPONS.jump.jumpSpeed;
+            const jAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y);
+            enemy.isJumping = true;
+            scene.physics.velocityFromRotation(jAngle, jSpeed, enemy.body.velocity);
+            // Scale pulse like player jump
+            const baseScaleX = enemy.visuals.scaleX;
+            const baseScaleY = enemy.visuals.scaleY;
+            scene.tweens.add({
+                targets: [enemy.visuals, enemy.torso],
+                scaleX: baseScaleX + 0.2,
+                scaleY: baseScaleY + 0.2,
+                duration: WEAPONS.jump.airTime,
+                yoyo: true,
+                onComplete: () => {
+                    enemy.isJumping = false;
+                    enemy.isModActive = false;
+                    enemy.lastModTime = scene.time.now; // cooldown starts after jump ends
+                }
+            });
+            break;
+        }
+        case 'barrier': {
+            // Temporarily immune to damage — mirrors player shield exactly
+            enemy.isShielded = true;
+            const shieldRadius = 72 * (CHASSIS[enemy.loadout.chassis]?.scale || 1);
+            const sr = scene.add.circle(enemy.x, enemy.y, shieldRadius, 0x00ffff, 0.15)
+                .setStrokeStyle(2, 0x00ffff).setDepth(7);
+            enemy.shieldRing = sr;
+            scene.time.delayedCall(WEAPONS.barrier.shieldTime, () => {
+                if (sr?.active) sr.destroy();
+                enemy.shieldRing = null;
+                enemy.isShielded = false;
+                enemy.isModActive = false;
+                enemy.lastModTime = scene.time.now; // cooldown starts after shield ends
+            });
+            break;
+        }
+        case 'rage': {
+            // Speed and fire-rate boost, tint red
+            const origSpeed = enemy.speed;
+            enemy.speed *= 1.6;
+            if (enemy.torso) enemy.torso.list?.forEach(s => s.setTint?.(0xff2200));
+            scene.time.delayedCall(WEAPONS.rage.rageTime, () => {
+                enemy.speed = origSpeed;
+                if (enemy.torso) enemy.torso.list?.forEach(s => s.clearTint?.());
+                enemy.isModActive = false;
+                enemy.lastModTime = scene.time.now; // cooldown starts after rage ends
+            });
+            break;
+        }
+        case 'emp': {
+            sndEMP();
+            const ring = scene.add.circle(enemy.x, enemy.y, 10, 0xff6600, 0.2)
+                .setStrokeStyle(2, 0xff6600).setDepth(12);
+            scene.tweens.add({ targets: ring, radius: WEAPONS.emp.radius, alpha: 0,
+                duration: WEAPONS.emp.empSpeed,
+                onComplete: () => { ring.destroy(); enemy.isModActive = false; }
+            });
+            if (player && Phaser.Math.Distance.Between(enemy.x, enemy.y, player.x, player.y) < WEAPONS.emp.radius) {
+                scene.cameras.main.shake(300, 0.005);
+                player.body.setVelocity(0, 0);
+            }
+            enemy.lastModTime = scene.time.now;
+            break;
+        }
+        case 'repair': {
+            // Self-repair: heal most-damaged component
+            if (enemy.comp) {
+                let worst = null, worstPct = Infinity;
+                Object.entries(enemy.comp).forEach(([k,c]) => {
+                    const pct = c.hp / c.max;
+                    if (pct < worstPct) { worstPct = pct; worst = k; }
+                });
+                if (worst) {
+                    const heal = Math.round(enemy.comp[worst].max * 0.30);
+                    for (let t = 0; t < 4; t++) {
+                        scene.time.delayedCall(t * 400, () => {
+                            if (!enemy.active) return;
+                            enemy.comp[worst].hp = Math.min(enemy.comp[worst].max, enemy.comp[worst].hp + heal/4);
+                            enemy.health = Object.values(enemy.comp).reduce((s,c)=>s+c.hp, 0);
+                            const healTxt = scene.add.text(enemy.x, enemy.y - 28 - t*10, `+${Math.round(heal/4)}`, {
+                                font: 'bold 11px Courier New', fill: '#00ff88', stroke:'#000', strokeThickness:2
+                            }).setOrigin(0.5).setDepth(20);
+                            scene.tweens.add({ targets: healTxt, y: healTxt.y - 18, alpha: 0, duration: 600, onComplete: () => healTxt.destroy() });
+                        });
+                    }
+                }
+            }
+            scene.time.delayedCall(WEAPONS.repair.cooldown * 0.4, () => { enemy.isModActive = false; });
+            enemy.lastModTime = scene.time.now;
+            break;
+        }
+        case 'missile': case 'atk_drone': {
+            // Missile/drone: fire 3 fast projectiles at player
+            const mCount = mod === 'missile' ? 3 : 2;
+            for (let i = 0; i < mCount; i++) {
+                scene.time.delayedCall(i * 250, () => {
+                    if (!enemy.active || !player?.active) return;
+                    const mAng = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y) + (Math.random()-0.5)*0.3;
+                    const m = scene.add.circle(enemy.x, enemy.y, 5, 0xff4400).setDepth(14);
+                    scene.physics.add.existing(m);
+                    m.body.setAllowGravity(false);
+                    m.damageValue = WEAPONS.missile?.missileDmg || 55;
+                    enemyBullets.add(m);
+                    scene.physics.velocityFromRotation(mAng, 900, m.body.velocity);
+                    scene.time.delayedCall(1800, () => { if (m.active) m.destroy(); });
+                });
+            }
+            scene.time.delayedCall(1500, () => { enemy.isModActive = false; });
+            enemy.lastModTime = scene.time.now;
+            break;
+        }
+        case 'decoy': {
+            // Decoy: enemy briefly stands still with visual flash, then moves again
+            const origSpeed = enemy.speed;
+            enemy.speed = 0;
+            const flash = scene.add.circle(enemy.x, enemy.y, 40, 0x00ffff, 0.25).setDepth(9);
+            scene.tweens.add({ targets: flash, alpha: 0, scaleX: 2, scaleY: 2, duration: 600,
+                onComplete: () => flash.destroy() });
+            scene.time.delayedCall(WEAPONS.decoy.decoyDuration * 0.5, () => {
+                enemy.speed = origSpeed;
+                enemy.isModActive = false;
+            });
+            enemy.lastModTime = scene.time.now;
+            break;
+        }
+    }
+}
+
+function activateFortressMode(scene, time) {
+    if (!player?.active) return;
+    _perkState._fortressMode = true;
+    _perkState._fortressDR = 0.30; // 30% DR
+    const _fTick = scene.time.addEvent({ delay: 200, loop: true, callback: () => {
+        if (!_perkState._fortressMode || !player?.comp?.core) { _fTick.remove(); return; }
+        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + Math.round(1 * (1 + (_perkState.fmHeal || 0)))); // 5 HP/s base; fmHeal perk scales this
+        updateHUD();
+    }});
+    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _fmDur = WEAPONS.fortress_mode.modeTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
+    scene.time.delayedCall(_fmDur, () => {
+        _perkState._fortressMode = false;
+        _perkState._fortressDR = 0;
+        _fTick.remove();
+    });
+    lastModTime = time;
+    sndBarrier?.();
+}
+
+function activateOverclockBurst(scene, time) {
+    if (!player?.active) return;
+    _perkState._overclockBurst = true;
+    _perkState.speedMult = (_perkState.speedMult || 1) * 1.20;
+    _perkState._overclockReloadMult = 0.75; // 25% faster fire rate
+    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _obDur = WEAPONS.overclock_burst.boostTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
+    scene.time.delayedCall(_obDur, () => {
+        _perkState._overclockBurst = false;
+        _perkState.speedMult = (_perkState.speedMult || 1.20) / 1.20;
+        _perkState._overclockReloadMult = 1.0;
+    });
+    lastModTime = time;
+    sndRage?.();
+}
+
+function activateGhostStep(scene, time) {
+    if (!player?.active) return;
+    _perkState._ghostStepActive = true;
+    // Make player sprite semi-transparent
+    if (torso) torso.setAlpha(0.15);
+    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _gsCloakDur = WEAPONS.ghost_step.cloakTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
+    const _gTimer = scene.time.delayedCall(_gsCloakDur, () => {
+        _perkState._ghostStepActive = false;
+        if (torso?.active) torso.setAlpha(1);
+    });
+    // End early if player fires (checked in handlePlayerFiring)
+    lastModTime = time;
+    sndEMP?.();
+}
+
 function activateMod(scene, time) {
     // Blueprint Core: spawn temporary cover wall on any mod activation
     if (typeof spawnModCover === 'function') spawnModCover(scene);
