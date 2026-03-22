@@ -5,6 +5,19 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.48 — Hangar panel widths, chassis button text, stat value wrapping
+
+**Date:** 2026-03-22
+
+Five targeted CSS edits in `css/garage.css`. `.hg-sidebar` width increased 200px → 220px to give chassis buttons more room. `.hg-right` width increased 260px → 280px and `flex-shrink:0` added so the stats panel never collapses. `.hg-chassis-btn` updated: `justify-content` changed from `space-between` to `flex-start`, `font-size` bumped to 11px, `gap:8px` and `flex-wrap:nowrap` added. `.hg-chassis-sub` updated: `font-size` 8px → 9px, `margin-left:6px` and `white-space:nowrap` added. `.hg-center` changed to `flex:1 1 auto` with `min-width:0`. `.hg-stat-val` changed to `font-size:11px`, `white-space:normal`, `word-break:break-word` (removing the old `overflow:hidden; text-overflow:ellipsis` that was cutting off values). The `#resume-campaign-btn` in `index.html` was already correct — no change needed.
+
+### Files Changed
+
+- `css/garage.css` — hg-sidebar, hg-right, hg-chassis-btn, hg-chassis-sub, hg-center, hg-stat-val
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.47 — Verified hangar top bar inline styles (no-op)
 
 **Date:** 2026-03-22
