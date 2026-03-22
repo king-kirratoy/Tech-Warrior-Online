@@ -777,7 +777,7 @@
 }
 
 .cm-chapter.active .cm-chapter-prog {
-  color: rgba(0,212,255,0.5);
+  color: rgba(255,255,255,0.45);
 }
 
 /* --- Right panel: missions --- */
@@ -828,14 +828,14 @@
 }
 
 .cm-mission-brief {
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.45);
   font-size: 9px;
   margin-top: 2px;
 }
 
 .cm-mission-lv {
   border: 1px solid var(--sci-line);
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.45);
   font-size: 9px;
   letter-spacing: 1px;
   padding: 2px 8px;
@@ -1167,7 +1167,7 @@
 }
 
 .mp-dd-label {
-  color: rgba(0,212,255,0.6);
+  color: rgba(255,255,255,0.45);
   flex-shrink: 0;
   font-size: 9px;
   letter-spacing: 1px;

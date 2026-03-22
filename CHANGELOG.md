@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.69 — Text color readability pass across menus
+
+**Date:** 2026-03-22
+
+CSS-only pass to fix text elements rendering in dim cyan/teal that were hard to read against the dark background. All `var(--sci-txt3)` (rgba(255,255,255,0.18)) and cyan-tinted color values on labels were replaced with `rgba(255,255,255,0.45)` (the standard muted-label color). `menus.css`: `.cm-chapter.active .cm-chapter-prog` changed from `rgba(0,212,255,0.5)` → `rgba(255,255,255,0.45)`; `.mp-dd-label` changed from `rgba(0,212,255,0.6)` → `rgba(255,255,255,0.45)`; `.cm-mission-brief` changed from `var(--sci-txt3)` → `rgba(255,255,255,0.45)`; `.cm-mission-lv` changed from `var(--sci-txt3)` → `rgba(255,255,255,0.45)`. `index.html` pilot panel: "Pilot status" divider label, "Callsign" label, "Campaign level" label, and `#mm-xp-text` all changed from `var(--sci-txt3)` → `rgba(255,255,255,0.45)`. Accent values (`#mm-callsign`, active chapter/mission names) left unchanged at `var(--sci-cyan)`.
+
+---
+
 ## v5.68 — Loadout overlay: full layout restructure
 
 **Date:** 2026-03-22
