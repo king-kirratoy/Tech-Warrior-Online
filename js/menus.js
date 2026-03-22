@@ -695,7 +695,7 @@ async function showCampaignSubMenu() {
 
     // If no local save, do a cloud check with a visible loading state
     if (!hasSave && resumeBtn) {
-        resumeBtn.style.display = 'inline-block';
+        resumeBtn.style.display = 'flex';
         resumeBtn.disabled = true;
         resumeBtn.innerHTML = '&#9733;&nbsp;&nbsp;CHECKING SAVE DATA...';
         try {
@@ -715,7 +715,7 @@ async function showCampaignSubMenu() {
 
     if (resumeBtn) {
         if (hasSave) {
-            resumeBtn.style.display = 'inline-block';
+            resumeBtn.style.display = 'flex';
             resumeBtn.innerHTML = '&#9733;&nbsp;&nbsp;RESUME CAMPAIGN';
         } else {
             resumeBtn.style.display = 'none';

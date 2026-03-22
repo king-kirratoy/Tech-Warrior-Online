@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.41 — Three layout fixes: main menu active state, campaign sub-menu size, mission select button widths
+
+**Date:** 2026-03-22
+
+Fixed three layout regressions from the recent sci-fi UI redesign. In `index.html`: removed the hardcoded `active` class from the Campaign `.sci-nav-item` so no item is highlighted on page load — hover state is CSS-only. In `js/menus.js`: changed `resumeBtn.style.display` from `'inline-block'` to `'flex'` at both show-points in `showCampaignSubMenu()` so that Resume Campaign renders as a flex row matching the `.sci-nav-item` CSS rule and stays the same height as New Campaign. In `js/campaign-system.js`: added `style="width:auto;flex-shrink:0;"` inline to the Back, Supply Shop, and Loadout buttons in the `.cm-top` bar of `showMissionSelect()`, and to the Deploy button in `.cm-bottom`, preventing all four from stretching across the flex container.
+
+### Files Changed
+
+- `index.html` — removed hardcoded `active` from Campaign nav item
+- `js/menus.js` — resumeBtn.style.display changed to 'flex'
+- `js/campaign-system.js` — width:auto;flex-shrink:0 added to Back, Supply Shop, Loadout, Deploy buttons
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.40 — Sci-fi pause screen rebuild
 
 **Date:** 2026-03-22
