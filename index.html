@@ -125,17 +125,13 @@
       <div class="hg-body">
         <div class="hg-left">
           <div class="hg-left-top">
-            <div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:8px;">Chassis</div>
-            <button id="c-light"  class="hg-chassis-btn" onclick="setChassis('light')">
-              <span>Light</span><span class="hg-chassis-sub">Fast / Agile</span>
-            </button>
-            <button id="c-medium" class="hg-chassis-btn" onclick="setChassis('medium')">
-              <span>Medium</span><span class="hg-chassis-sub">Balanced</span>
-            </button>
-            <button id="c-heavy"  class="hg-chassis-btn" onclick="setChassis('heavy')">
-              <span>Heavy</span><span class="hg-chassis-sub">Tank / Brawler</span>
-            </button>
-            <div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-top:12px;margin-bottom:8px;">Colour</div>
+            <div class="mp-sec-label">Chassis</div>
+            <div class="mp-chassis-row">
+              <button id="c-light"  class="hg-chassis-btn" onclick="setChassis('light')">Light</button>
+              <button id="c-medium" class="hg-chassis-btn" onclick="setChassis('medium')">Medium</button>
+              <button id="c-heavy"  class="hg-chassis-btn" onclick="setChassis('heavy')">Heavy</button>
+            </div>
+            <div class="mp-sec-label" style="margin-top:12px;">Colour</div>
             <div id="ddw-C" class="dd-wrap">
               <div class="dd-selected" id="dds-C" onclick="toggleDD('C')">
                 <span id="dd-color-swatch-C" class="dd-color-swatch-header"></span>

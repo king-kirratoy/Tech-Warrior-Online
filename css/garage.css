@@ -550,19 +550,16 @@
 
 /* --- Chassis selector buttons --- */
 .hg-chassis-btn {
-  align-items: center;
   background: transparent;
   border: 1px solid var(--sci-line);
   color: var(--sci-txt2);
   cursor: pointer;
-  display: flex;
-  flex-wrap: nowrap;
+  flex: 1;
   font-family: var(--font-mono);
-  font-size: 11px;
-  gap: 8px;
-  justify-content: flex-start;
-  letter-spacing: 2px;
-  padding: 10px 14px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 8px 10px;
+  text-align: center;
   text-transform: uppercase;
   transition: all 0.15s;
 }
@@ -576,17 +573,6 @@
   background: var(--sci-cyan-dim);
   border-color: var(--sci-cyan-border);
   color: var(--sci-cyan);
-}
-
-.hg-chassis-sub {
-  color: var(--sci-txt3);
-  font-size: 9px;
-  margin-left: 6px;
-  white-space: nowrap;
-}
-
-.hg-chassis-btn.active .hg-chassis-sub {
-  color: rgba(0,212,255,0.5);
 }
 
 /* --- Right panel (stats + deploy) --- */

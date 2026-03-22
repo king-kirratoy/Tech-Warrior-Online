@@ -679,7 +679,7 @@ function _updateMainMenuStats() {
             fillEl.style.width = pct + '%';
             if (textEl) textEl.textContent = 'LVL ' + level + ' — ' + xpCur + ' / ' + xpNext + ' XP';
         }
-    }, 100);
+    }, 200);
 }
 
 async function showCampaignSubMenu() {
