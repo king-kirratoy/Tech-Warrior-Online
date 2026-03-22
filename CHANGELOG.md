@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.37 — Sci-fi split-panel main menu
+
+**Date:** 2026-03-22
+
+Rebuilt the main menu with a two-column sci-fi layout. Left panel (`.mm-left`, 52% width): sci-corner bracket accents, `// System online` eyebrow, stacked TECH / WARRIOR / ONLINE title with a cyan accent span, and a `.mm-nav` block using `.sci-nav-item` rows for Campaign, Warzone, Multiplayer, and Leaderboard. Campaign sub-menu (Resume / New / Back) sits directly below the nav, toggled by `showCampaignSubMenu` / `hideCampaignSubMenu`. Right panel (`.mm-right`): sci-corner brackets, mission count and best-round stat blocks with 44px cyan numerals, a `.sci-divider` labelled "Pilot status", callsign display, a 3px XP progress bar, and the version label at `margin-top:auto`. In `css/menus.css`: replaced the old centred `#main-menu` block and added `.mm-left`, `.mm-right`, `.mm-eyebrow`, `.mm-title`, `.mm-title-accent`, `.mm-nav`, `.mm-stat-num`, `.mm-stat-label`, `.mm-stats-row`, `.mm-stat-divider`, `.mm-xp-bar`, and `.mm-xp-fill`. In `js/menus.js`: added `_updateMainMenuStats()` (populates callsign, mission count, best round, and XP bar from live state), called from `proceedToMainMenu`, `returnToMainMenu`, and `_cancelNewCampaign`.
+
+### Files Changed
+
+- `css/menus.css` — new #main-menu split-panel layout classes
+- `index.html` — #main-menu div rebuilt with new structure
+- `js/menus.js` — _updateMainMenuStats() added; called at all main menu entry points
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.36 — Sci-fi .tw-btn system overhaul
 
 **Date:** 2026-03-22
