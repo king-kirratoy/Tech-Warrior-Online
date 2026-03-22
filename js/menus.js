@@ -960,12 +960,20 @@ function populateInventory() {
                 const cell = document.createElement('div');
                 cell.className = 'bp-cell';
                 const _uBorder = item.isUnique ? `border:2px solid ${rd.colorStr};box-shadow:0 0 6px ${rd.colorStr}44;` : `border:1px solid ${rd.colorStr}44;`;
-                cell.style.cssText = `width:88px;height:76px;${_uBorder}border-radius:5px;background:${UI_COLORS.bgDark30};display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;`;
+                cell.style.cssText = `width:88px;height:84px;${_uBorder}border-radius:5px;background:${UI_COLORS.bgDark30};display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;`;
                 cell.draggable = true;
                 cell.dataset.invIdx = idx;
                 cell.title = `${item.name}\n${item.affixes.map(a => a.label).join('\n')}${item.uniqueLabel ? '\n★ ' + item.uniqueLabel : ''}`;
                 const _starBadge = item.isUnique ? `<div style="position:absolute;top:1px;right:3px;font-size:9px;color:${UI_COLORS.gold};">★</div>` : '';
-                cell.innerHTML = `${_starBadge}<div style="font-size:9px;letter-spacing:0.5px;color:${rd.colorStr};text-align:center;line-height:1.3;overflow:hidden;max-width:80px;">${item.shortName}</div>
+                const _bpSlotNames = {
+                    weapon:'L ARM / R ARM', mod_system:'CPU', aug_system:'AUGMENT',
+                    shield_system:'SHIELD', leg_system:'LEGS', armor:'ARMOR', arms:'ARMS',
+                    legs:'LEGS', shield:'SHIELD', mod:'CPU', augment:'AUGMENT'
+                };
+                const _bpSlotLbl = _bpSlotNames[item.baseType] || '';
+                cell.innerHTML = `${_starBadge}
+                    ${_bpSlotLbl ? `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3,rgba(160,180,200,0.55));text-transform:uppercase;margin-bottom:1px;">${_bpSlotLbl}</div>` : ''}
+                    <div style="font-size:9px;letter-spacing:0.5px;color:${rd.colorStr};text-align:center;line-height:1.3;overflow:hidden;max-width:80px;">${item.shortName}</div>
                     <div style="width:7px;height:7px;border-radius:50%;background:${rd.colorStr};margin-top:4px;opacity:0.7;"></div>`;
                 cell.addEventListener('mouseover', () => { cell.style.borderColor = rd.colorStr + 'aa'; cell.style.boxShadow = `0 0 8px ${rd.colorStr}33`; });
                 cell.addEventListener('mouseout', () => { cell.style.borderColor = rd.colorStr + '44'; cell.style.boxShadow = 'none'; });
@@ -995,15 +1003,31 @@ function populateInventory() {
         }
     }
 
-    // Hide detail panel initially
+    // Hide detail panel and clear selection state on re-render
+    _invSelectedSource = null;
+    _invSelectedKey    = null;
     const dp = document.getElementById('inv-detail-panel');
     if (dp) dp.style.display = 'none';
 }
+
+/** Track currently selected item in the detail panel (for toggle behaviour). */
+let _invSelectedSource = null;
+let _invSelectedKey    = null;
 
 function _showItemDetail(source, key) {
     const dp = document.getElementById('inv-detail-panel');
     const dc = document.getElementById('inv-detail-content');
     if (!dp || !dc) return;
+
+    // Toggle: clicking the same item again hides the panel
+    if (_invSelectedSource === source && _invSelectedKey === key) {
+        _invSelectedSource = null;
+        _invSelectedKey    = null;
+        dp.style.display   = 'none';
+        return;
+    }
+    _invSelectedSource = source;
+    _invSelectedKey    = key;
 
     const item = source === 'equipped' ? _equipped[key] : _inventory[key];
     if (!item) return;
