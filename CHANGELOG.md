@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.51 — Callsign screen and leaderboard overlay redesign
+
+**Date:** 2026-03-22
+
+Full visual redesign of the callsign entry screen and leaderboard overlay. In `css/menus.css`: added two new sections at the end of the file — Callsign screen styles (`.cs-inner`, `.cs-eyebrow`, `.cs-title`, `.cs-field-label`, `.cs-input-wrap`) giving the entry screen a centred two-line title with a `<span>` accent, a bottom-bordered input strip, and a transparent monospaced input; Leaderboard overlay styles (`.lb-top`, `.lb-title`, `.lb-filters`, `.lb-filter-tab`, `.lb-table-wrap`, `.lb-table-header`, `.lb-th`, `.lb-row`, `.lb-row.lb-me`, `.lb-rank`, `.lb-callsign`, `.lb-val`, `.lb-you-tag`) giving the overlay an edge-to-edge panel layout with filter tabs and a five-column grid table. In `index.html`: `#callsign-screen` rebuilt using the new CSS classes — added sci-corner decorators, `.cs-inner` wrapper with eyebrow/title/field-label/input-wrap/proceed-btn structure, version tag positioned absolute bottom-right; `#leaderboard-overlay` rebuilt with `.lb-top` (back button + centred title), `.lb-filters` (All time / Warzone / Campaign tabs), and `.lb-table-wrap` containing a static header row plus `#lb-loading`, `#lb-table`, `#lb-empty` slots. In `js/menus.js`: `_renderScores()` completely rewritten to build five-column rows using DOM elements with new CSS classes, highlighting the current player's row with `.lb-me` and their callsign with `.lb-you-tag`; added module-level `_lbAllScores` and `_lbCurrentFilter` variables; added `_lbSetFilter(type, el)` which updates tab active state and re-renders the table filtered by mode field ('all', 'warzone', 'campaign'); updated `showLeaderboard()` to reset filter state to 'all' on open and removed the now-absent `lb-submit-panel` references.
+
+### Files Changed
+
+- `css/menus.css` — callsign screen classes; leaderboard overlay classes
+- `index.html` — #callsign-screen rebuilt; #leaderboard-overlay rebuilt
+- `js/menus.js` — _renderScores rewritten with CSS classes; _lbSetFilter added; showLeaderboard filter reset
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.50 — Hangar layout redesign: two-column split with left chassis/preview column and full-width stats panel
 
 **Date:** 2026-03-22

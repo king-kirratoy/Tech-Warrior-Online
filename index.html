@@ -14,22 +14,25 @@
      MAIN MENU
      ============================================================ -->
 <!-- CALLSIGN ENTRY SCREEN (shown first) -->
-<div id="callsign-screen" style="position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:var(--font-mono);">
-    <canvas id="callsign-canvas" style="position:absolute;inset:0;pointer-events:none;"></canvas>
-    <div class="menu-version" id="callsign-version" style="z-index:2;"></div>
-    <div style="position:relative;z-index:1;text-align:center;">
-        <div style="font-size:11px;letter-spacing:6px;color:rgba(0,210,255,0.4);margin-bottom:12px;">TECH WARRIOR ONLINE</div>
-        <div style="font-size:28px;letter-spacing:8px;color:#00e0ff;font-weight:bold;text-shadow:0 0 24px var(--hud-cyan-status);margin-bottom:6px;">IDENTIFY YOURSELF</div>
-        <div style="margin-bottom:40px;"></div>
-
-        <div style="font-size:9px;letter-spacing:4px;color:rgba(0,210,255,0.5);margin-bottom:10px;">ENTER CALLSIGN</div>
-        <input id="menu-callsign" type="text" maxlength="16" placeholder="_ _ _ _ _ _" autocomplete="off" spellcheck="false"
-            style="background:rgba(0,0,0,0.6);border:none;border-bottom:2px solid rgba(0,210,255,0.6);color:#00e0ff;padding:10px 16px;font-family:var(--font-mono);font-size:20px;letter-spacing:5px;outline:none;text-align:center;width:260px;display:block;margin:0 auto 32px;"
-            onkeydown="_csKeyDown(event,this)" />
-
-        <button id="callsign-proceed-btn" class="tw-btn" onclick="proceedToMainMenu()" disabled>&#9654;&nbsp; PROCEED</button>
-
+<div id="callsign-screen" style="position:fixed;inset:0;z-index:10000;">
+  <canvas id="callsign-canvas" style="position:absolute;inset:0;pointer-events:none;"></canvas>
+  <div class="sci-corner sci-corner-tl"></div>
+  <div class="sci-corner sci-corner-tr"></div>
+  <div class="sci-corner sci-corner-bl"></div>
+  <div class="sci-corner sci-corner-br"></div>
+  <div class="cs-inner">
+    <div class="cs-eyebrow">// Tech Warrior Online</div>
+    <div class="cs-title">IDENTIFY<br><span>YOURSELF</span></div>
+    <div class="cs-field-label">Enter callsign</div>
+    <div class="cs-input-wrap">
+      <input id="menu-callsign" type="text" maxlength="16" placeholder="_ _ _ _ _ _"
+        autocomplete="off" spellcheck="false"
+        style="background:transparent;border:none;color:var(--sci-cyan);padding:10px 0;font-family:var(--font-mono);font-size:20px;letter-spacing:5px;outline:none;text-align:center;width:100%;display:block;"
+        onkeydown="_csKeyDown(event,this)" />
     </div>
+    <button id="callsign-proceed-btn" class="tw-btn tw-btn--solid" onclick="proceedToMainMenu()" disabled>▶ &nbsp; Proceed</button>
+  </div>
+  <div class="menu-version" id="callsign-version" style="position:absolute;bottom:20px;right:24px;z-index:2;"></div>
 </div>
 
 <!-- MAIN MENU (shown after callsign) -->
@@ -169,32 +172,30 @@
 <!-- ============================================================
      LEADERBOARD OVERLAY
      ============================================================ -->
-<div id="leaderboard-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,5,15,0.96);z-index:10001;font-family:var(--font-mono);overflow-y:auto;">
-    <div style="max-width:700px;margin:0 auto;padding:40px 20px;">
-
-        <div style="display:flex;justify-content:flex-start;margin-bottom:24px;">
-            <button onclick="closeLeaderboard()" class="tw-btn tw-btn--danger tw-btn--sm menu-start-btn">&#9664;&nbsp;&nbsp;BACK</button>
-        </div>
-
-        <!-- Header -->
-        <div style="text-align:center;margin-bottom:32px;">
-            <div style="font-size:11px;letter-spacing:4px;color:rgba(0,210,255,0.5);margin-bottom:8px;">TECH WARRIOR</div>
-            <div style="font-size:22px;letter-spacing:6px;color:#00e0ff;font-weight:bold;text-shadow:0 0 20px rgba(0,210,255,0.6);">LEADERBOARD</div>
-            <div style="width:200px;height:1px;background:linear-gradient(90deg,transparent,rgba(0,210,255,0.6),transparent);margin:12px auto 0;"></div>
-        </div>
-
-        <!-- Last run auto-submitted notice -->
-        <div id="lb-submit-panel" style="display:none;background:rgba(0,210,255,0.05);border:1px solid rgba(0,210,255,0.2);border-left:3px solid rgba(0,210,255,0.5);padding:12px 20px;margin-bottom:20px;">
-            <div style="font-size:9px;letter-spacing:3px;color:rgba(0,210,255,0.5);margin-bottom:4px;">LAST RUN AUTO-SUBMITTED</div>
-            <div id="lb-run-preview" style="font-size:11px;color:rgba(0,210,255,0.8);letter-spacing:1px;"></div>
-        </div>
-
-        <!-- Scores table -->
-        <div id="lb-loading" style="text-align:center;color:rgba(0,210,255,0.4);font-size:11px;letter-spacing:3px;padding:40px 0;">LOADING SCORES...</div>
-        <div id="lb-table" style="display:none;"></div>
-        <div id="lb-empty" style="display:none;text-align:center;color:rgba(0,210,255,0.3);font-size:11px;letter-spacing:3px;padding:40px 0;">NO RUNS SUBMITTED YET.<br><br>BE THE FIRST.</div>
-
+<div id="leaderboard-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,5,15,0.96);z-index:10001;font-family:var(--font-mono);">
+  <div style="display:flex;flex-direction:column;height:100%;max-height:100vh;">
+    <div class="lb-top">
+      <button onclick="closeLeaderboard()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">‹ Back</button>
+      <div class="lb-title">Leaderboard</div>
     </div>
+    <div class="lb-filters">
+      <div class="lb-filter-tab active" onclick="_lbSetFilter('all',this)">All time</div>
+      <div class="lb-filter-tab" onclick="_lbSetFilter('warzone',this)">Warzone</div>
+      <div class="lb-filter-tab" onclick="_lbSetFilter('campaign',this)">Campaign</div>
+    </div>
+    <div class="lb-table-wrap" style="display:flex;flex-direction:column;">
+      <div class="lb-table-header">
+        <div class="lb-th">#</div>
+        <div class="lb-th">Callsign</div>
+        <div class="lb-th" style="text-align:right;">Round</div>
+        <div class="lb-th" style="text-align:right;">Kills</div>
+        <div class="lb-th" style="text-align:right;">Mode</div>
+      </div>
+      <div id="lb-loading" style="padding:40px 0;text-align:center;font-size:11px;letter-spacing:3px;color:var(--sci-txt3);">Loading scores...</div>
+      <div id="lb-table"></div>
+      <div id="lb-empty" style="display:none;padding:40px 0;text-align:center;font-size:11px;letter-spacing:3px;color:var(--sci-txt3);">No runs submitted yet.<br><br>Be the first.</div>
+    </div>
+  </div>
 </div>
 
 <!-- ============================================================
