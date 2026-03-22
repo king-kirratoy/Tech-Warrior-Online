@@ -34,22 +34,77 @@
 
 <!-- MAIN MENU (shown after callsign) -->
 <div id="main-menu" style="display:none;">
-    <canvas id="menu-canvas"></canvas>
-    <div class="menu-title">TECH WARRIOR ONLINE</div>
-    <div class="menu-subtitle">Combat Simulation Alpha 3.0</div>
-    <div id="main-menu-buttons" style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
-        <button id="campaign-btn" class="tw-btn menu-start-btn" onclick="showCampaignSubMenu()">&#9733;&nbsp;&nbsp;CAMPAIGN</button>
-        <button class="tw-btn menu-start-btn" onclick="startGame('simulation')">&#9654;&nbsp;&nbsp;WARZONE</button>
-        <button class="tw-btn menu-start-btn" onclick="startMultiplayer()">&#9670;&nbsp;&nbsp;MULTIPLAYER</button>
-        <button class="tw-btn menu-start-btn" onclick="showLeaderboard()">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
+  <canvas id="menu-canvas"></canvas>
+  <div class="mm-left">
+    <div class="sci-corner sci-corner-tl"></div>
+    <div class="sci-corner sci-corner-bl"></div>
+    <div class="mm-eyebrow">// System online</div>
+    <div class="mm-title">TECH<br><span class="mm-title-accent">WARRIOR</span><br>ONLINE</div>
+    <nav class="mm-nav" id="main-menu-buttons">
+      <div class="sci-nav-item active" onclick="showCampaignSubMenu()">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">01</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Campaign</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+      <div class="sci-nav-item" onclick="startGame('simulation')">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">02</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Warzone</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+      <div class="sci-nav-item" onclick="startMultiplayer()">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">03</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Multiplayer</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+      <div class="sci-nav-item" onclick="showLeaderboard()">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">04</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Leaderboard</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+    </nav>
+    <div id="campaign-sub-menu" style="display:none;flex-direction:column;gap:2px;margin-top:2px;">
+      <div class="sci-nav-item" id="resume-campaign-btn" onclick="startGame('campaign')" style="display:none;">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">01</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Resume Campaign</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+      <div class="sci-nav-item" id="new-campaign-btn" onclick="confirmNewCampaign()">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">01</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">New Campaign</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+      <div class="sci-nav-item" onclick="hideCampaignSubMenu()" style="color:var(--sci-red);border-left-color:transparent;">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">←</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Back</span>
+      </div>
     </div>
-    <!-- Campaign sub-menu (Resume / New) -->
-    <div id="campaign-sub-menu" style="display:none;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
-        <button id="resume-campaign-btn" class="tw-btn menu-start-btn" onclick="startGame('campaign')" style="display:none;">&#9733;&nbsp;&nbsp;RESUME CAMPAIGN</button>
-        <button id="new-campaign-btn" class="tw-btn menu-start-btn" onclick="confirmNewCampaign()">&#9733;&nbsp;&nbsp;NEW CAMPAIGN</button>
-        <button class="tw-btn tw-btn--danger menu-start-btn" onclick="hideCampaignSubMenu()" style="margin-top:8px;">&#9664;&nbsp;&nbsp;BACK</button>
+  </div>
+  <div class="mm-right">
+    <div class="sci-corner sci-corner-tr"></div>
+    <div class="sci-corner sci-corner-br"></div>
+    <div class="mm-stats-row">
+      <div>
+        <div class="mm-stat-num" id="mm-stat-missions">—</div>
+        <div class="mm-stat-label">Missions</div>
+      </div>
+      <div class="mm-stat-divider"></div>
+      <div>
+        <div class="mm-stat-num" id="mm-stat-round">—</div>
+        <div class="mm-stat-label">Best round</div>
+      </div>
     </div>
-    <div class="menu-version" id="main-menu-version">v5.23 // ALPHA BUILD</div>
+    <div class="sci-divider" style="width:100%;"><span style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">Pilot status</span></div>
+    <div style="margin-top:20px;">
+      <div style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:6px;">Callsign</div>
+      <div id="mm-callsign" style="font-size:16px;letter-spacing:4px;color:var(--sci-cyan);">—</div>
+    </div>
+    <div style="margin-top:24px;">
+      <div style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:6px;">Campaign level</div>
+      <div class="mm-xp-bar"><div class="mm-xp-fill" id="mm-xp-fill" style="width:0%;"></div></div>
+      <div id="mm-xp-text" style="font-size:9px;color:var(--sci-txt3);margin-top:4px;">—</div>
+    </div>
+    <div id="main-menu-version" class="menu-version" style="margin-top:auto;"></div>
+  </div>
 </div>
 
 <!-- ============================================================
