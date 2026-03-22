@@ -889,7 +889,7 @@ function populateInventory() {
             const nameColor = rd ? rd.colorStr : UI_COLORS.text35;
             const itemName = item ? (item.isUnique ? '★ ' + (item.shortName || item.name) : (item.shortName || item.name)) : '';
             const borderColor = rd ? rd.colorStr + '55' : UI_COLORS.gold20;
-            let posStyle = `top:${pos.top};position:absolute;width:90px;`;
+            let posStyle = `top:${pos.top};position:absolute;`;
             if (pos.left) posStyle += `left:${pos.left};`;
             if (pos.right) posStyle += `right:${pos.right};`;
 
