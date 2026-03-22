@@ -580,6 +580,7 @@
 
 .hg-stat-label {
   color: rgba(255,255,255,0.45);
+  font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -588,6 +589,7 @@
 
 .hg-stat-val {
   color: var(--sci-cyan);
+  font-family: var(--font-mono);
   font-size: 11px;
   word-break: break-word;
 }

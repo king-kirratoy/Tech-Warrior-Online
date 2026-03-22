@@ -1232,6 +1232,7 @@
   border-bottom: 1px solid var(--sci-line);
   color: rgba(255,255,255,0.45);
   flex-shrink: 0;
+  font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 2px;
   padding: 10px 20px;
