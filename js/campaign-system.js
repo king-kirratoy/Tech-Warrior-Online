@@ -781,10 +781,8 @@ function showMissionSelect() {
         const active = idx === _campaignState.currentChapter;
         const completed = getChapterCompletionCount(idx);
         const total = ch.missions.length;
-        const cls = active ? `background:${UI_COLORS.gold12};color:${UI_COLORS.gold};border-color:${UI_COLORS.goldGlow};` :
-                    unlocked ? `background:${UI_COLORS.surface};color:${UI_COLORS.text70};border-color:${UI_COLORS.surface10};` :
-                    `background:${UI_COLORS.bgDark30};color:${UI_COLORS.text25};border-color:${UI_COLORS.surface05};cursor:not-allowed;`;
-        html += `<button onclick="${unlocked ? `_selectChapter(${idx})` : ''}" class="tw-btn" style="flex:1;${cls}${idx===0?'border-radius:6px 0 0 6px;':''}${idx===CAMPAIGN_CHAPTERS.length-1?'border-radius:0 6px 6px 0;':''}">`;
+        const stateClass = active ? ' active' : (!unlocked ? ' locked' : '');
+        html += `<button onclick="${unlocked ? `_selectChapter(${idx})` : ''}" class="tw-btn tw-btn--sm chapter-tab${stateClass}" style="flex:1;">`;
         html += `CH.${idx + 1}`;
         if (unlocked) html += ` <span style="font-size:8px;opacity:0.5;">${completed}/${total}</span>`;
         if (!unlocked) html += ` <span style="font-size:7px;opacity:0.4;">🔒</span>`;
@@ -806,13 +804,10 @@ function showMissionSelect() {
         const diffColor = levelDiff >= 3 ? UI_COLORS.redHard : levelDiff >= 1 ? UI_COLORS.orange : levelDiff === 0 ? UI_COLORS.greenAccent : levelDiff >= -2 ? UI_COLORS.diffEasy : UI_COLORS.diffTrivial;
         const diffLabel = levelDiff >= 3 ? 'HARD' : levelDiff >= 1 ? 'TOUGH' : levelDiff === 0 ? 'EVEN' : levelDiff >= -2 ? 'EASY' : 'TRIVIAL';
 
-        // Selected state uses gold highlight
-        const bgBase = isSelected ? UI_COLORS.gold12 : (completed ? UI_COLORS.green04 : UI_COLORS.surface03);
-        const bdBase = isSelected ? UI_COLORS.gold60 : (completed ? UI_COLORS.green20 : UI_COLORS.surface10);
         const blBase = isSelected ? UI_COLORS.gold : (completed ? UI_COLORS.greenAccent : UI_COLORS.gold40);
-        const shadowStyle = isSelected ? `box-shadow:0 0 12px ${UI_COLORS.gold15},inset 0 0 12px ${UI_COLORS.gold06};` : '';
+        const stateClasses = (isSelected ? ' selected' : '') + (completed ? ' completed' : '');
 
-        html += '<button onclick="_selectMission(' + idx + ')" class="tw-btn" style="align-items:center;background:' + bgBase + ';border:1px solid ' + bdBase + ';border-left:3px solid ' + blBase + ';border-radius:4px;display:flex;gap:12px;min-height:54px;padding:12px 16px;text-align:left;width:100%;' + shadowStyle + '">';
+        html += `<button onclick="_selectMission(${idx})" class="tw-btn mission-card${stateClasses}" style="--card-color:${blBase};">`;
 
         // Mission number
         html += `<div style="font-size:18px;letter-spacing:2px;color:${completed ? UI_COLORS.greenAccent : UI_COLORS.gold60};min-width:30px;text-align:center;">${completed ? '✓' : (idx + 1)}</div>`;
@@ -1443,10 +1438,7 @@ function showShop() {
     _shopStock.forEach((item, idx) => {
         const rc = rarityColors[item.rarity] || UI_COLORS.rarityCommon;
         const isSelected = (_selectedShopIdx === idx);
-        const bgBase = isSelected ? UI_COLORS.gold12 : UI_COLORS.surface03;
-        const bdBase = isSelected ? `${rc}` : `${rc}40`;
-        const shadowStyle = isSelected ? `box-shadow:0 0 12px ${rc}33;` : '';
-        html += `<button onclick="_shopSelect(${idx})" class="tw-btn" style="background:${bgBase};border:1px solid ${bdBase};border-left:3px solid ${rc};border-radius:4px;padding:10px;text-align:left;width:155px;${shadowStyle}">`;
+        html += `<button onclick="_shopSelect(${idx})" class="tw-btn shop-item-card${isSelected ? ' selected' : ''}" style="--card-color:${rc};">`;
         html += `<div style="font-size:10px;letter-spacing:1px;color:${rc};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
         html += `<div style="font-size:9px;color:${UI_COLORS.text50};margin-bottom:4px;">${(item.rarity||'').toUpperCase()} LV.${item.level||1}</div>`;
         // Show key stats
@@ -1523,7 +1515,7 @@ function showShop() {
         _inventory.forEach((item, idx) => {
             const rc = rarityColors[item.rarity] || UI_COLORS.rarityCommon;
             const sellPrice = getItemSellPrice(item);
-            html += `<button onclick="_shopSell(${idx})" class="tw-btn" style="background:${UI_COLORS.surface03};border:1px solid ${rc}30;border-left:2px solid ${rc};border-radius:4px;padding:8px;text-align:left;width:145px;">`;
+            html += `<button onclick="_shopSell(${idx})" class="tw-btn shop-sell-card" style="--card-color:${rc};">`;
             html += `<div style="font-size:9px;letter-spacing:1px;color:${rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
             html += `<div style="font-size:10px;color:${UI_COLORS.orange};">⬡ ${sellPrice}</div>`;
             html += '</button>';

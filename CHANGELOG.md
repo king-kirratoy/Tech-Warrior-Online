@@ -5,6 +5,36 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.33 — Refactor 5 card-style buttons to CSS custom property system (Findings 3, 7, 8, 9, 10)
+
+**Date:** 2026-03-22
+
+Replaced all inline `background`, `border`, `border-left`, and `box-shadow` color overrides on the five card-style buttons identified in BUTTON_AUDIT.md. Each button's dynamic accent color is now passed as a single CSS custom property (`style="--card-color:${color};"`) and referenced in new CSS modifier classes added to `css/menus.css`: `.chassis-card` (with `.active` and `.locked` states), `.chapter-tab` (with `.active` and `.locked` states), `.mission-card` (with `.selected` and `.completed` states), `.shop-item-card` (with `.selected` state), and `.shop-sell-card`. In `js/menus.js` the chassis card button was simplified to `class="tw-btn chassis-card"` plus `active` state from JS. In `js/campaign-system.js` the chapter tab `cls` string injection was replaced with state classes, and all three shop/mission card buttons were updated to their new modifier classes with `--card-color` only.
+
+### Files Changed
+
+- `css/menus.css` — five new card modifier class sections added
+- `js/menus.js` — chassis card button updated (Finding 3)
+- `js/campaign-system.js` — chapter tab, mission card, shop item card, and shop sell card buttons updated (Findings 7–10)
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.32 — Fix 4 non-compliant buttons (Findings 1, 2, 4, 5)
+
+**Date:** 2026-03-22
+
+Added `tw-btn tw-btn--sm` as base classes to the four buttons identified in BUTTON_AUDIT.md that were missing the design-system base class. The two loadout tab buttons in `index.html` (`#loadout-tab-stats`, `#loadout-tab-gear`) received the new base classes, and `.loadout-tab` in `css/menus.css` was reduced to layout-only overrides (`flex`, border-radius per side), with `.loadout-tab.active` and `.loadout-tab:hover:not(.active)` kept as color-only overrides. The arm picker L and R buttons in `js/menus.js` received `tw-btn tw-btn--sm arm-picker-btn`; the Cancel button received `tw-btn tw-btn--sm arm-picker-btn arm-picker-btn--cancel` with its inline `color`/`border-color` style removed. `.arm-picker-btn` in `css/menus.css` was stripped to layout-only properties (`border-radius`, `margin`, `min-width`), and a new `.arm-picker-btn--cancel` modifier encodes the muted appearance via CSS.
+
+### Files Changed
+
+- `index.html` — `tw-btn tw-btn--sm` added to `#loadout-tab-stats` and `#loadout-tab-gear`
+- `js/menus.js` — `tw-btn tw-btn--sm` added to arm picker L/R buttons; Cancel button updated to `arm-picker-btn--cancel` with inline style removed
+- `css/menus.css` — `.loadout-tab` reduced to layout-only; `.arm-picker-btn` reduced to layout-only; `.arm-picker-btn--cancel` modifier added
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.31 — Remove letter-spacing shift from .tw-btn hover states
 
 **Date:** 2026-03-22
