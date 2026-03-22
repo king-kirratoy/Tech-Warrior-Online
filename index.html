@@ -533,13 +533,30 @@
 <!-- Keep inventory-overlay as hidden alias so equip-prompt and toggleInventory still work -->
 <div id="inventory-overlay" style="display:none;"></div>
 
-<div id="pause-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;flex-direction:column;">
-  <div id="pause-text" style="font-family:var(--font-mono);font-size:36px;letter-spacing:12px;color:var(--cyan);text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);animation:pausePulse 1.2s ease-in-out infinite;margin-bottom:40px;">PAUSED</div>
-  <div style="display:flex;flex-direction:column;gap:14px;align-items:center;">
-    <button onclick="togglePause();toggleStats();" class="tw-btn pause-menu-btn">LOADOUT</button>
-    <button onclick="goToMainMenu();" class="tw-btn tw-btn--danger pause-menu-btn">QUIT GAME</button>
+<div id="pause-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;flex-direction:column;">
+  <div class="ps-panel">
+    <div class="ps-header">
+      <div class="ps-title">Paused</div>
+      <div class="ps-status" id="pause-round-status">Round — active</div>
+    </div>
+    <div class="ps-body">
+      <button class="ps-btn" onclick="togglePause()">
+        <div class="ps-btn-icon"></div>
+        Resume
+      </button>
+      <button class="ps-btn" onclick="togglePause();toggleStats();">
+        <div class="ps-btn-icon"></div>
+        Loadout
+      </button>
+      <button class="ps-btn danger" onclick="goToMainMenu();">
+        <div class="ps-btn-icon"></div>
+        Quit game
+      </button>
+    </div>
+    <div class="ps-footer">
+      <div class="ps-hint">Press ESC to resume</div>
+    </div>
   </div>
-  <div style="margin-top:24px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:rgba(0,255,255,0.35);">PRESS ESC TO CLOSE</div>
 </div>
 
 <!-- ═══ Scripts ═══ -->
