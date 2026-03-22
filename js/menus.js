@@ -991,7 +991,19 @@ function populateInventory() {
                         cell.style.boxShadow   = 'none';
                     }
                 });
-                cell.addEventListener('click', () => _showItemDetail('backpack', idx));
+                cell.addEventListener('click', () => {
+                    _showItemDetail('backpack', idx);
+                    // Refresh selected border on all backpack cards immediately
+                    document.querySelectorAll('#inv-backpack .bp-cell').forEach(c => {
+                        const ci = parseInt(c.dataset.invIdx, 10);
+                        const it = _inventory[ci];
+                        if (!it) return;
+                        const cr = RARITY_DEFS[it.rarity];
+                        const sel = (_invSelectedSource === 'backpack' && _invSelectedKey === ci);
+                        c.style.borderColor = sel ? cr.colorStr + 'ee' : cr.colorStr + '44';
+                        c.style.boxShadow   = sel ? `0 0 10px ${cr.colorStr}55` : 'none';
+                    });
+                });
                 // Drag events
                 cell.addEventListener('dragstart', (ev) => {
                     ev.dataTransfer.setData('text/plain', 'backpack:' + idx);
@@ -1047,9 +1059,16 @@ function _showItemDetail(source, key) {
     if (!item) return;
 
     const rd = RARITY_DEFS[item.rarity];
+    const _invSlotNames = {
+        weapon:'L ARM / R ARM', mod_system:'CPU', aug_system:'AUGMENT',
+        shield_system:'SHIELD', leg_system:'LEGS', armor:'ARMOR', arms:'ARMS',
+        legs:'LEGS', shield:'SHIELD', mod:'CPU', augment:'AUGMENT'
+    };
+    const _slotLabel = _invSlotNames[item.baseType] || '';
     const _uniqueBadge = item.isUnique ? `<span style="font-size:9px;letter-spacing:2px;color:${UI_COLORS.gold};margin-left:10px;background:${UI_COLORS.gold12};padding:2px 6px;border:1px solid ${UI_COLORS.gold30};border-radius:3px;">★ UNIQUE</span>` : '';
     let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`;
     html += `<div>
+        ${_slotLabel ? `<div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:4px;">${_slotLabel}</div>` : ''}
         <span style="font-size:16px;letter-spacing:2px;color:${rd.colorStr};text-shadow:0 0 10px ${rd.colorStr}44;">${item.name}</span>${_uniqueBadge}
         <span style="font-size:10px;letter-spacing:1px;color:${UI_COLORS.text40};margin-left:12px;">iLvl ${item.level}</span>
     </div>`;

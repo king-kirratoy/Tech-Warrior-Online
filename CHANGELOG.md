@@ -5,6 +5,19 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.60 — Gear tab: fix backpack click selected state + add slot label to item detail panel
+
+**Date:** 2026-03-22
+
+Two fixes to the loadout gear tab in `js/menus.js`. Fix 1 (backpack click selected state): the click handler on each backpack item card was calling `_showItemDetail('backpack', idx)` correctly, but the card's visual selected state (bright border + glow) was only applied during the initial `populateInventory()` render and never updated when a card was actually clicked. Expanded the click handler to immediately walk all `#inv-backpack .bp-cell` elements after calling `_showItemDetail`, and update each card's `borderColor` and `boxShadow` based on whether `_invSelectedSource === 'backpack' && _invSelectedKey === that card's idx` — so the selected card highlights instantly on click, previously-selected cards clear, and clicking the same card a second time (which `_showItemDetail` handles as a toggle by setting `_invSelectedSource = null`) correctly dims all cards back to their resting state. Fix 2 (slot label in detail panel): `_showItemDetail()` was rendering item name, rarity, stats, and affixes but had no gear slot label. Added `_invSlotNames` mapping (`weapon → 'L ARM / R ARM'`, `mod_system → 'CPU'`, `aug_system → 'AUGMENT'`, `shield_system → 'SHIELD'`, `leg_system → 'LEGS'`, `armor → 'ARMOR'`, `arms → 'ARMS'`, plus `legs`, `shield`, `mod`, `augment` as aliases) and a `_slotLabel` lookup at the start of the render block; when a label exists, a `<div>` with `font-size:9px; letter-spacing:3px; color:var(--sci-txt3); text-transform:uppercase; margin-bottom:4px;` is injected as the first child of the name wrapper, appearing above the item name for both equipped slot clicks and backpack item clicks since they share the same rendering function.
+
+### Files Changed
+
+- `js/menus.js` — backpack click handler expanded with post-click card state update; _invSlotNames + slot label div added to _showItemDetail()
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.59 — Main menu stat timing fix + warzone hangar visual parity with multiplayer
 
 **Date:** 2026-03-22
