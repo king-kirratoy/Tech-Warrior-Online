@@ -31,31 +31,53 @@
   --border-cyan-bright: rgba(0,255,255,0.9);
   --border-red:         rgba(255,80,80,0.35);
   --border-red-bright:  rgba(255,80,80,0.9);
+  --border-gold:        rgba(255,215,0,0.40);
+  --border-gold-bright: rgba(255,215,0,0.85);
+  --border-green:       rgba(0,255,136,0.35);
+  --border-green-bright:rgba(0,255,136,0.80);
 
   /* Typography */
   --font-mono: 'Courier New', monospace;
   --font-ui:   'Verdana', 'Segoe UI', sans-serif;
 
-  /* Button Geometry */
-  --btn-padding:         11px 32px;
-  --btn-padding-sm:      7px 18px;
-  --btn-letter-spacing:  4px;
-  --btn-font-size:       13px;
-  --btn-font-size-sm:    11px;
+  /* Button Geometry — two tiers
+     default (.tw-btn)     = menu scale: main menu, death screen, pause, leaderboard
+     small   (.tw-btn--sm) = panel scale: hangar, campaign, shop, loadout
+  */
+  --btn-padding:      13px 36px;
+  --btn-font-size:    13px;
+  --btn-ls:           4px;
+  --btn-ls-hover:     5px;   /* only +1px so text never pushes box wider */
 
-  /* Glows */
-  --glow-cyan-sm: 0 0 10px rgba(0,255,255,0.15);
-  --glow-cyan-md: 0 0 20px rgba(0,255,255,0.25);
-  --glow-cyan-lg: 0 0 40px rgba(0,255,255,0.4);
-  --glow-red-sm:  0 0 10px rgba(255,80,80,0.15);
-  --glow-red-md:  0 0 20px rgba(255,80,80,0.25);
-  --glow-red-lg:  0 0 40px rgba(255,80,80,0.4);
+  --btn-padding-sm:   9px 20px;
+  --btn-font-size-sm: 11px;
+  --btn-ls-sm:        3px;
+  --btn-ls-sm-hover:  4px;
 
-  /* ── Text ── */
+  /* Box Glows (used on panels/cards, NOT on button hover) */
+  --glow-cyan-sm: 0 0 8px  rgba(0,255,255,0.15);
+  --glow-cyan-md: 0 0 16px rgba(0,255,255,0.25);
+  --glow-cyan-lg: 0 0 28px rgba(0,255,255,0.35);
+  --glow-red-sm:  0 0 8px  rgba(255,80,80,0.15);
+  --glow-red-md:  0 0 16px rgba(255,80,80,0.25);
+  --glow-red-lg:  0 0 28px rgba(255,80,80,0.35);
+  --glow-gold-sm: 0 0 8px  rgba(255,215,0,0.15);
+  --glow-gold-lg: 0 0 28px rgba(255,215,0,0.35);
+  --glow-green-sm:0 0 8px  rgba(0,255,136,0.15);
+  --glow-green-lg:0 0 28px rgba(0,255,136,0.35);
+
+  /* Text Glows — used on button hover text-shadow */
+  --tg-cyan:  0 0 6px rgba(0,255,255,0.9),  0 0 14px rgba(0,255,255,0.4);
+  --tg-red:   0 0 6px rgba(255,80,80,0.9),  0 0 14px rgba(255,80,80,0.4);
+  --tg-gold:  0 0 6px rgba(255,215,0,0.9),  0 0 14px rgba(255,215,0,0.4);
+  --tg-green: 0 0 6px rgba(0,255,136,0.9),  0 0 14px rgba(0,255,136,0.4);
+  --tg-white: 0 0 6px rgba(255,255,255,0.8), 0 0 14px rgba(255,255,255,0.3);
+
+  /* Text */
   --text:     #c8d2d9;
   --text-dim: rgba(200,210,217,0.5);
 
-  /* ── Extended Brand Colors ── */
+  /* Extended Brand Colors */
   --amber:        #ffaa00;
   --yellow:       #ffdd00;
   --red-alt:      #ff4444;
@@ -66,7 +88,7 @@
   --teal-dim:     rgba(0,255,200,0.12);
   --gold-dim:     rgba(255,215,0,0.35);
 
-  /* ── HUD Cyan Family ── */
+  /* HUD Cyan Family */
   --hud-cyan:        rgba(0,210,255,1);
   --hud-cyan-dim:    rgba(0,210,255,0.65);
   --hud-cyan-status: rgba(0,210,255,0.7);
@@ -74,12 +96,12 @@
   --hud-cyan-fill:   rgba(0,225,255,0.88);
   --hud-cyan-fire:   rgba(0,230,255,0.75);
 
-  /* ── Overlay Surfaces ── */
+  /* Overlay Surfaces */
   --overlay-dark:  rgba(5,8,12,0.96);
   --overlay-pause: rgba(0,0,0,0.7);
   --surface-deep:  rgba(10,14,20,0.98);
 
-  /* ── Font Sizes ── */
+  /* Font Sizes */
   --text-tiny:  8px;
   --text-xs:    9px;
   --text-sm:   10px;
@@ -91,14 +113,14 @@
   --text-h3:   24px;
   --text-h2:   28px;
 
-  /* ── Letter Spacing ── */
+  /* Letter Spacing */
   --ls-1: 1px;
   --ls-2: 2px;
   --ls-3: 3px;
   --ls-4: 4px;
   --ls-6: 6px;
 
-  /* ── Spacing ── */
+  /* Spacing */
   --space-xs:  6px;
   --space-sm:  8px;
   --space-md: 14px;
@@ -106,7 +128,9 @@
   --space-xl: 20px;
 }
 
-/* --- Reset --- */
+/* ============================================================
+   RESET / BASE
+   ============================================================ */
 * { box-sizing: border-box; }
 
 body {
@@ -117,128 +141,157 @@ body {
   overflow: hidden;
 }
 
-/* --- Scrollbar --- */
 ::-webkit-scrollbar       { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--cyan); }
 
 /* ============================================================
    .tw-btn — CANONICAL BUTTON COMPONENT
+   ============================================================
+   Hover contract (ALL variants):
+     ✓ Border color brightens
+     ✓ Text goes white with a color text-shadow glow
+     ✓ Letter-spacing expands by exactly +1px
+     ✓ overflow:hidden locks the box — button NEVER grows
+     ✗ No box-shadow change on hover
    ============================================================ */
 
-/* --- Base cyan variant --- */
 .tw-btn {
-  background: transparent;
-  border: 1px solid var(--border-cyan);
-  border-bottom: 2px solid var(--cyan-mid);
-  border-top: 2px solid var(--cyan-mid);
-  box-shadow: 0 0 20px rgba(0,255,255,0.08), inset 0 0 20px rgba(0,255,255,0.03);
-  color: var(--cyan);
-  cursor: pointer;
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: var(--btn-font-size);
-  letter-spacing: var(--btn-letter-spacing);
-  padding: var(--btn-padding);
+  /* Layout */
+  display:        inline-block;
+  padding:        var(--btn-padding);
+  overflow:       hidden;        /* ← THIS is what prevents size growth */
+  white-space:    nowrap;
+  text-overflow:  ellipsis;
+  text-align:     center;
+
+  /* Typography */
+  font-family:    var(--font-mono);
+  font-size:      var(--btn-font-size);
   text-transform: uppercase;
-  transition: all 0.25s ease;
-  white-space: nowrap;
+  letter-spacing: var(--btn-ls);
+  text-shadow:    none;
+
+  /* Colors — cyan default */
+  color:          var(--cyan);
+  background:     transparent;
+
+  /* Border */
+  border:         1px solid var(--border-cyan);
+  border-top:     2px solid var(--border-cyan-bright);
+  border-bottom:  2px solid var(--border-cyan-bright);
+
+  /* No box glow on default state */
+  box-shadow: none;
+
+  cursor: pointer;
+
+  /* Transition only the properties we actually change */
+  transition:
+    background     0.2s ease,
+    border-color   0.2s ease,
+    color          0.2s ease,
+    letter-spacing 0.2s ease,
+    text-shadow    0.2s ease;
 }
 
 .tw-btn:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-cyan-bright);
-  box-shadow: var(--glow-cyan-lg), inset 0 0 20px rgba(0,255,255,0.08);
-  color: #fff;
-  letter-spacing: var(--ls-6);
+  background:     rgba(0,255,255,0.04);
+  border-color:   rgba(0,255,255,0.85);
+  color:          #fff;
+  letter-spacing: var(--btn-ls-hover);
+  text-shadow:    var(--tg-cyan);
 }
 
-/* --- Danger (red) variant --- */
-.tw-btn--danger {
-  border-color: var(--border-red);
-  border-bottom-color: rgba(255,80,80,0.7);
-  border-top-color: rgba(255,80,80,0.7);
-  box-shadow: 0 0 10px rgba(255,80,80,0.06);
-  color: rgba(255,100,100,0.9);
-}
+.tw-btn:focus { outline: none; }
 
-.tw-btn--danger:hover {
-  background: rgba(255,80,80,0.08);
-  border-color: var(--border-red-bright);
-  box-shadow: var(--glow-red-lg);
-  color: #fff;
-  letter-spacing: var(--ls-6);
-}
-
-/* --- Gold variant --- */
-.tw-btn--gold {
-  border-color: var(--gold-dim);
-  border-bottom-color: rgba(255,215,0,0.7);
-  border-top-color: rgba(255,215,0,0.7);
-  box-shadow: 0 0 10px rgba(255,215,0,0.06);
-  color: var(--gold);
-}
-
-.tw-btn--gold:hover {
-  background: rgba(255,215,0,0.08);
-  border-color: var(--gold);
-  box-shadow: 0 0 40px rgba(255,215,0,0.4);
-  color: #fff;
-  letter-spacing: var(--ls-6);
-}
-
-/* --- Green variant --- */
-.tw-btn--green {
-  border-color: rgba(0,255,136,0.35);
-  border-bottom-color: rgba(0,255,136,0.7);
-  border-top-color: rgba(0,255,136,0.7);
-  box-shadow: 0 0 10px rgba(0,255,136,0.06);
-  color: var(--green-accent);
-}
-
-.tw-btn--green:hover {
-  background: rgba(0,255,136,0.08);
-  border-color: var(--green-accent);
-  box-shadow: 0 0 40px rgba(0,255,136,0.4);
-  color: #fff;
-  letter-spacing: var(--ls-6);
-}
-
-/* --- Small variant --- */
-.tw-btn--sm {
-  font-size: var(--btn-font-size-sm);
-  padding: var(--btn-padding-sm);
-}
-
-/* --- Block variant --- */
-.tw-btn--block {
-  align-items: center;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-/* --- Disabled state --- */
-.tw-btn--disabled {
-  cursor: not-allowed;
-  opacity: 0.35;
+.tw-btn:disabled,
+.tw-btn.tw-btn--disabled {
+  cursor:         not-allowed;
+  opacity:        0.35;
   pointer-events: none;
 }
 
-/* --- Error/overweight state --- */
+/* --- Danger / Red --- */
+.tw-btn--danger {
+  color:               var(--red);
+  border-color:        var(--border-red);
+  border-top-color:    var(--border-red-bright);
+  border-bottom-color: var(--border-red-bright);
+}
+
+.tw-btn--danger:hover {
+  background:     rgba(255,80,80,0.04);
+  border-color:   rgba(255,80,80,0.85);
+  color:          #fff;
+  letter-spacing: var(--btn-ls-hover);
+  text-shadow:    var(--tg-red);
+}
+
+/* --- Gold / Campaign --- */
+.tw-btn--gold {
+  color:               var(--gold);
+  border-color:        var(--border-gold);
+  border-top-color:    var(--border-gold-bright);
+  border-bottom-color: var(--border-gold-bright);
+}
+
+.tw-btn--gold:hover {
+  background:     rgba(255,215,0,0.04);
+  border-color:   rgba(255,215,0,0.85);
+  color:          #fff;
+  letter-spacing: var(--btn-ls-hover);
+  text-shadow:    var(--tg-gold);
+}
+
+/* --- Green / Upgrades --- */
+.tw-btn--green {
+  color:               var(--green-accent);
+  border-color:        var(--border-green);
+  border-top-color:    var(--border-green-bright);
+  border-bottom-color: var(--border-green-bright);
+}
+
+.tw-btn--green:hover {
+  background:     rgba(0,255,136,0.04);
+  border-color:   rgba(0,255,136,0.85);
+  color:          #fff;
+  letter-spacing: var(--btn-ls-hover);
+  text-shadow:    var(--tg-green);
+}
+
+/* --- Small / Panel scale --- */
+.tw-btn--sm {
+  font-size:      var(--btn-font-size-sm);
+  letter-spacing: var(--btn-ls-sm);
+  padding:        var(--btn-padding-sm);
+}
+
+.tw-btn--sm:hover {
+  letter-spacing: var(--btn-ls-sm-hover);
+}
+
+/* --- Full-width block --- */
+.tw-btn--block {
+  display:         flex;
+  justify-content: center;
+  width:           100%;
+}
+
+/* --- Error / overweight state --- */
 .tw-btn--error {
-  background: rgba(255,50,0,0.1) !important;
-  border: 1px solid var(--red-error) !important;
+  background:    rgba(255,50,0,0.1) !important;
+  border:        1px solid var(--red-error) !important;
   border-bottom: 2px solid var(--red-error) !important;
-  border-top: 2px solid var(--red-error) !important;
-  box-shadow: inset 0 0 10px rgba(255,50,0,0.2);
-  color: var(--red-error) !important;
-  cursor: not-allowed;
-  letter-spacing: var(--ls-2) !important;
+  border-top:    2px solid var(--red-error) !important;
+  box-shadow:    inset 0 0 10px rgba(255,50,0,0.2) !important;
+  color:         var(--red-error) !important;
+  cursor:        not-allowed !important;
+  letter-spacing:var(--ls-2) !important;
 }
 
 /* ============================================================
-   LEGACY button FALLBACK — unmigrated buttons
+   LEGACY button FALLBACK — unmigrated <button> elements
    ============================================================ */
 button {
   background: rgba(255,255,255,0.04);

@@ -24,7 +24,7 @@
   position: absolute;
 }
 
-.menu-title { /* uses .tw-heading pattern */
+.menu-title {
   animation: titleFlicker 6s ease-in-out infinite;
   color: var(--cyan);
   font-size: 64px;
@@ -35,8 +35,9 @@
   z-index: 1;
 }
 
-.menu-subtitle { /* uses .tw-subheading pattern */
+.menu-subtitle {
   color: var(--cyan-dim);
+  font-family: var(--font-mono);
   font-size: var(--text-md);
   letter-spacing: var(--ls-6);
   margin-bottom: 70px;
@@ -45,70 +46,28 @@
   z-index: 1;
 }
 
-/* --- Menu start buttons — extend .tw-btn visually, left-aligned, 340px --- */
+/* --- Main menu buttons
+   HTML: <button class="tw-btn menu-start-btn"> or
+         <button class="tw-btn tw-btn--danger menu-start-btn">
+   .menu-start-btn ONLY adds layout — .tw-btn handles all visuals.
+--- */
 .menu-start-btn {
   align-self: center;
-  background: transparent;
-  border: 1px solid var(--border-cyan);
-  border-bottom: 2px solid var(--cyan-mid);
-  border-top: 2px solid var(--cyan-mid);
-  box-shadow: 0 0 20px rgba(0,255,255,0.08), inset 0 0 20px rgba(0,255,255,0.03);
-  color: var(--cyan);
-  cursor: pointer;
-  display: inline-block;
   flex: none !important;
-  font-family: var(--font-mono);
-  font-size: var(--btn-font-size);
-  letter-spacing: var(--btn-letter-spacing);
-  padding: var(--btn-padding);
   position: relative;
   text-align: left;
-  text-transform: uppercase;
-  transition: all 0.25s ease;
-  white-space: nowrap;
   width: 340px;
   z-index: 1;
 }
 
-.menu-start-btn:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-cyan-bright);
-  box-shadow: var(--glow-cyan-lg), inset 0 0 20px rgba(0,255,255,0.08);
-  color: #fff;
-  letter-spacing: var(--ls-6);
-}
-
-/* --- Red variant alias --- */
-.menu-start-btn.menu-btn-red {
-  border-color: var(--border-red);
-  border-bottom-color: rgba(255,80,80,0.7);
-  border-top-color: rgba(255,80,80,0.7);
-  box-shadow: 0 0 10px rgba(255,80,80,0.06);
-  color: rgba(255,100,100,0.9);
-}
-
-.menu-start-btn.menu-btn-red:hover {
-  background: rgba(255,80,80,0.08);
-  border-color: var(--border-red-bright);
-  box-shadow: var(--glow-red-lg);
-  color: #fff;
-  letter-spacing: var(--ls-6);
-}
-
-/* --- Disabled state --- */
+/* Disabled/coming-soon state — layout only, .tw-btn handles opacity */
 .menu-start-btn.disabled-mode {
-  border-color: rgba(0,255,255,0.1);
-  border-bottom-color: rgba(0,255,255,0.2);
-  border-top-color: rgba(0,255,255,0.2);
-  box-shadow: none;
-  color: rgba(0,255,255,0.2);
-  cursor: not-allowed;
   pointer-events: none;
-  position: relative;
+  opacity: 0.25;
 }
 
 .menu-start-btn.disabled-mode .coming-soon {
-  color: rgba(0,255,255,0.25);
+  color: rgba(0,255,255,0.35);
   display: block;
   font-size: var(--text-tiny);
   letter-spacing: var(--ls-3);
@@ -116,9 +75,10 @@
 }
 
 /* --- Version stamp --- */
-.menu-version { /* uses .tw-label--dim pattern */
+.menu-version {
   bottom: 24px;
   color: rgba(200,210,217,0.2);
+  font-family: var(--font-mono);
   font-size: var(--text-sm);
   letter-spacing: var(--ls-2);
   position: absolute;
@@ -135,50 +95,21 @@
   outline: none !important;
 }
 
+/* --- Pause menu buttons
+   HTML: <button class="tw-btn pause-menu-btn"> or
+         <button class="tw-btn tw-btn--danger pause-menu-btn">
+   .pause-menu-btn ONLY adds layout — .tw-btn handles all visuals.
+--- */
 .pause-menu-btn {
-  background: var(--surface-dim);
-  border: 1px solid rgba(0,255,255,0.3);
-  border-left: 3px solid var(--cyan);
   border-radius: 6px;
-  box-shadow: var(--glow-cyan-sm);
-  color: var(--cyan);
-  cursor: pointer;
-  font-family: var(--font-ui);
-  font-size: var(--text-base);
-  letter-spacing: var(--ls-3);
+  border-left-width: 3px;
   min-width: 200px;
-  outline: none;
-  padding: 12px 40px;
-  text-align: center;
-  text-transform: uppercase;
-  transition: all 0.2s;
-}
-
-.pause-menu-btn:hover {
-  background: var(--surface-active);
-  box-shadow: var(--glow-cyan-md);
-  color: #fff;
-  letter-spacing: var(--ls-4);
-}
-
-.pause-menu-btn.pause-btn-red {
-  border-color: rgba(255,68,68,0.3);
-  border-left-color: var(--red-alt);
-  box-shadow: var(--glow-red-sm);
-  color: var(--red-alt);
-}
-
-.pause-menu-btn.pause-btn-red:hover {
-  background: rgba(255,68,68,0.12);
-  box-shadow: var(--glow-red-md);
-  color: #fff;
-  letter-spacing: var(--ls-4);
 }
 
 /* ============================================================
    LOADOUT TABS
    ============================================================ */
-.loadout-tab { /* uses .tw-mono pattern */
+.loadout-tab {
   background: rgba(12,16,20,0.8);
   border: 1px solid rgba(0,255,255,0.2);
   color: rgba(0,255,255,0.5);
@@ -240,7 +171,7 @@
   box-shadow: 0 0 14px rgba(0,255,100,0.4);
 }
 
-.mech-equip-slot .slot-label { /* uses .tw-label pattern (gold tint) */
+.mech-equip-slot .slot-label {
   color: rgba(255,215,0,0.45);
   font-size: var(--text-xs);
   letter-spacing: var(--ls-2);
@@ -335,15 +266,8 @@
 
 /* ============================================================
    TYPOGRAPHY UTILITY CLASSES
-   Shared heading/label patterns extracted from menus, garage,
-   and inline styles. Apply to any element regardless of tag.
    ============================================================ */
 
-/* --- .tw-heading ---
-   Cyan glow screen/overlay title.
-   Example: <div class="tw-heading" style="font-size:28px;letter-spacing:4px">SELECT A PERK</div>
-   (font-size and letter-spacing stay inline — only color/shadow/family are shared)
---- */
 .tw-heading {
   color: var(--cyan);
   font-family: var(--font-mono);
@@ -351,10 +275,6 @@
   text-transform: uppercase;
 }
 
-/* --- .tw-heading--gold ---
-   Gold glow heading for gear/equipment panel titles.
-   Example: <div class="tw-heading--gold" style="font-size:20px;letter-spacing:4px">EQUIPPED GEAR</div>
---- */
 .tw-heading--gold {
   color: var(--gold);
   font-family: var(--font-mono);
@@ -362,10 +282,6 @@
   text-transform: uppercase;
 }
 
-/* --- .tw-subheading ---
-   Medium dim-cyan subtitle / mode label below a main title.
-   Example: <div class="tw-subheading">COMBAT SIMULATION MODE</div>
---- */
 .tw-subheading {
   color: var(--cyan-dim);
   font-family: var(--font-mono);
@@ -374,11 +290,6 @@
   text-transform: uppercase;
 }
 
-/* --- .tw-label ---
-   Small uppercase section label in cyan. Used for loadout section
-   headings and garage category labels.
-   Example: <div class="tw-label">STARTER LOADOUT</div>
---- */
 .tw-label {
   color: rgba(0,255,255,0.7);
   font-family: var(--font-mono);
@@ -387,11 +298,6 @@
   text-transform: uppercase;
 }
 
-/* --- .tw-label--dim ---
-   Tiny muted-cyan uppercase label. Used for HUD stat captions
-   and death screen score field labels.
-   Example: <div class="tw-label--dim">ROUND</div>
---- */
 .tw-label--dim {
   color: rgba(0,255,255,0.5);
   font-family: var(--font-mono);
@@ -400,11 +306,6 @@
   text-transform: uppercase;
 }
 
-/* --- .tw-panel-title ---
-   Small caps panel header with a bottom border separator.
-   Used atop stat panels and gear panels.
-   Example: <div class="tw-panel-title">CHASSIS &amp; HULL</div>
---- */
 .tw-panel-title {
   border-bottom: 1px solid rgba(0,255,255,0.12);
   color: rgba(0,255,255,0.55);
@@ -415,11 +316,6 @@
   text-transform: uppercase;
 }
 
-/* --- .tw-desc ---
-   Muted body / description text for perk descriptions,
-   dropdown option details, and death screen notes.
-   Example: <div class="tw-desc">Increases core HP by 20%.</div>
---- */
 .tw-desc {
   color: var(--text-dim);
   font-size: var(--text-md);
@@ -427,10 +323,6 @@
   line-height: 1.5;
 }
 
-/* --- .tw-stat-value ---
-   Cyan glowing numeric readout for stats and HUD counters.
-   Example: <div class="tw-stat-value">247</div>
---- */
 .tw-stat-value {
   color: var(--cyan);
   font-family: var(--font-mono);
@@ -439,11 +331,6 @@
   text-shadow: 0 0 8px rgba(0,255,255,0.4);
 }
 
-/* --- .tw-mono ---
-   Generic monospace text reset. Applies the project mono font
-   and baseline letter-spacing only — no color override.
-   Example: <span class="tw-mono">0x00FF</span>
---- */
 .tw-mono {
   font-family: var(--font-mono);
   letter-spacing: var(--ls-1);
