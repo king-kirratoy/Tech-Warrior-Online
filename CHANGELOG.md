@@ -5,6 +5,32 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.31 — Remove letter-spacing shift from .tw-btn hover states
+
+**Date:** 2026-03-22
+
+Removed the hover letter-spacing expansion from all `.tw-btn` variants in `css/base.css`. The `--btn-ls-hover` and `--btn-ls-sm-hover` token definitions were deleted from `:root`, and the corresponding `letter-spacing` declarations were removed from the `:hover` rules of `.tw-btn`, `.tw-btn--danger`, `.tw-btn--gold`, `.tw-btn--green`, and `.tw-btn--sm` (the `.tw-btn--sm:hover` block, which contained only that one property, was removed entirely). Button hover effects now only change border color, text color, and text-shadow glow — text size and spacing remain identical to the default state. No other files were modified.
+
+### Files Changed
+
+- `css/base.css` — `--btn-ls-hover` and `--btn-ls-sm-hover` removed from `:root`; `letter-spacing` line removed from all five `.tw-btn` `:hover` rules
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.30 — Add missing tw-btn base class to menu and pause buttons
+
+**Date:** 2026-03-22
+
+Added `tw-btn` as the base class to 10 buttons in `index.html` that were using layout classes (`menu-start-btn`, `pause-menu-btn`) without it. The four main-menu buttons, two campaign sub-menu buttons, the campaign back button, the leaderboard back button, and the two pause-menu buttons all received `tw-btn` as their first class; the two red/danger buttons (`hideCampaignSubMenu`, `closeLeaderboard`, `goToMainMenu`) also had their `menu-btn-red`/`pause-btn-red` variant replaced with `tw-btn--danger` to align with the design system. No other attributes, styles, scripts, or buttons were touched.
+
+### Files Changed
+
+- `index.html` — `tw-btn` added to 10 buttons; `menu-btn-red`/`pause-btn-red` replaced with `tw-btn--danger`
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.29 — Full button migration audit: all buttons on .tw-btn system
 
 **Date:** 2026-03-22

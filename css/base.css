@@ -47,12 +47,10 @@
   --btn-padding:      13px 36px;
   --btn-font-size:    13px;
   --btn-ls:           4px;
-  --btn-ls-hover:     5px;   /* only +1px so text never pushes box wider */
 
   --btn-padding-sm:   9px 20px;
   --btn-font-size-sm: 11px;
   --btn-ls-sm:        3px;
-  --btn-ls-sm-hover:  4px;
 
   /* Box Glows (used on panels/cards, NOT on button hover) */
   --glow-cyan-sm: 0 0 8px  rgba(0,255,255,0.15);
@@ -199,7 +197,6 @@ body {
   background:     rgba(0,255,255,0.04);
   border-color:   rgba(0,255,255,0.85);
   color:          #fff;
-  letter-spacing: var(--btn-ls-hover);
   text-shadow:    var(--tg-cyan);
 }
 
@@ -224,7 +221,6 @@ body {
   background:     rgba(255,80,80,0.04);
   border-color:   rgba(255,80,80,0.85);
   color:          #fff;
-  letter-spacing: var(--btn-ls-hover);
   text-shadow:    var(--tg-red);
 }
 
@@ -240,7 +236,6 @@ body {
   background:     rgba(255,215,0,0.04);
   border-color:   rgba(255,215,0,0.85);
   color:          #fff;
-  letter-spacing: var(--btn-ls-hover);
   text-shadow:    var(--tg-gold);
 }
 
@@ -256,7 +251,6 @@ body {
   background:     rgba(0,255,136,0.04);
   border-color:   rgba(0,255,136,0.85);
   color:          #fff;
-  letter-spacing: var(--btn-ls-hover);
   text-shadow:    var(--tg-green);
 }
 
@@ -265,10 +259,6 @@ body {
   font-size:      var(--btn-font-size-sm);
   letter-spacing: var(--btn-ls-sm);
   padding:        var(--btn-padding-sm);
-}
-
-.tw-btn--sm:hover {
-  letter-spacing: var(--btn-ls-sm-hover);
 }
 
 /* --- Full-width block --- */
