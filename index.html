@@ -117,13 +117,10 @@
 <div id="deploy-cover" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:998;pointer-events:none;"></div>
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu">
-      <div class="hg-top">
+      <div class="hg-top" style="position:relative;">
         <button id="hangar-mm-btn" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;" onclick="returnToMainMenu()">‹ Back</button>
-        <div style="flex:1 1 auto;min-width:0;">
-          <div class="hg-title" id="hangar-title">Mech Hangar</div>
-          <div class="hg-subtitle" id="hangar-mode-label"></div>
-        </div>
-        <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;" onclick="deployMech()">Deploy ›</button>
+        <div id="hangar-title" style="position:absolute;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:4px;color:var(--sci-txt);text-transform:uppercase;pointer-events:none;">WARZONE</div>
+        <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;" onclick="deployMech()">Deploy Mech ›</button>
       </div>
       <div class="hg-body">
         <div class="hg-left">
@@ -400,9 +397,7 @@
     </div>
 </div>
 <!-- IN-GAME PAUSE BUTTON -->
-<div id="top-left-btns" style="display:none;position:fixed;top:20px;left:24px;z-index:9999;gap:10px;align-items:center;">
-    <button id="pause-btn" class="tw-btn tw-btn--sm" onclick="togglePause()">MENU</button>
-</div>
+<div id="top-left-btns" style="display:none;position:fixed;top:20px;left:24px;z-index:9999;gap:10px;align-items:center;"></div>
 <!-- ============================================================
      GAME SCRIPT
      ============================================================ -->

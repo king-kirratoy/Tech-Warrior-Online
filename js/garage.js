@@ -312,6 +312,25 @@ function updateGarageStats() {
         html += row('PASSIVES', passives.join(' · '), 'purple');
     }
 
+    // Group 5 — Slot name summary (matches multiplayer bottom rows)
+    function _slotName(key, dict) {
+        if (!key || key === 'none') return null;
+        const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[key] : null;
+        if (desc) return desc.title;
+        return dict?.[key]?.name || key.replace(/_/g, ' ').toUpperCase();
+    }
+    const _modName  = _slotName(loadout.mod,  WEAPONS);
+    const _shldName = _slotName(loadout.shld, SHIELD_SYSTEMS) || 'NONE';
+    const _legName  = _slotName(loadout.leg,  typeof LEG_SYSTEMS !== 'undefined' ? LEG_SYSTEMS : {});
+    const _augName  = _slotName(loadout.aug,  typeof AUGMENTS    !== 'undefined' ? AUGMENTS    : {});
+    const slotRows = [
+        _modName  ? row('MOD',     _modName,  'dim') : '',
+        row('SHIELD', _shldName, 'dim'),
+        _legName  ? row('LEGS',    _legName,  'dim') : '',
+        _augName  ? row('AUGMENT', _augName,  'dim') : '',
+    ].filter(Boolean).join('');
+    if (slotRows) { html += gap; html += slotRows; }
+
     panel.innerHTML = html;
 }
 

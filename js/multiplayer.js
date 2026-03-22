@@ -1051,7 +1051,7 @@ function mpShowLobby() {
         <div class="mp-top">
             <button onclick="mpLeaveLobby()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">‹ Back</button>
             <div class="mp-screen-title">LOBBY</div>
-            <div style="flex:1;"></div>
+            <button id="mp-start-btn" onclick="mpStartMatch()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;opacity:0.35;pointer-events:none;" disabled>Start Game ›</button>
         </div>
 
         <!-- Body -->
@@ -1092,12 +1092,6 @@ function mpShowLobby() {
             </div>
 
         </div><!-- /mp-body -->
-
-        <!-- Bottom bar -->
-        <div class="mp-bottom" style="justify-content:space-between;align-items:center;">
-            <span id="mp-lobby-bottom-status" style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);">Waiting for all players to ready up...</span>
-            <button id="mp-start-btn" onclick="mpStartMatch()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;opacity:0.35;pointer-events:none;" disabled>Start Game ›</button>
-        </div>
     `;
 
     lobbyEl.style.display = 'flex';

@@ -555,9 +555,8 @@ function togglePause() {
             if (statusEl && typeof _round !== 'undefined') {
                 statusEl.textContent = 'Round ' + String(_round).padStart(2, '0') + ' active';
             }
-            // Move keyboard focus to first pause menu button so Tab/arrows work immediately
-            const firstPauseBtn = po.querySelector('button');
-            if (firstPauseBtn) firstPauseBtn.focus();
+            // Remove focus from in-game elements so no pause button appears pre-selected
+            document.activeElement?.blur();
         }
     } else {
         scene.physics.resume();
@@ -960,7 +959,7 @@ function populateInventory() {
                 const cell = document.createElement('div');
                 cell.className = 'bp-cell';
                 const _uBorder = item.isUnique ? `border:2px solid ${rd.colorStr};box-shadow:0 0 6px ${rd.colorStr}44;` : `border:1px solid ${rd.colorStr}44;`;
-                cell.style.cssText = `width:88px;height:84px;${_uBorder}border-radius:5px;background:${UI_COLORS.bgDark30};display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;`;
+                cell.style.cssText = `width:88px;height:84px;${_uBorder}border-radius:5px;background:${UI_COLORS.bgDark30};display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:0 4px;box-sizing:border-box;`;
                 cell.draggable = true;
                 cell.dataset.invIdx = idx;
                 cell.title = `${item.name}\n${item.affixes.map(a => a.label).join('\n')}${item.uniqueLabel ? '\n★ ' + item.uniqueLabel : ''}`;
@@ -972,11 +971,26 @@ function populateInventory() {
                 };
                 const _bpSlotLbl = _bpSlotNames[item.baseType] || '';
                 cell.innerHTML = `${_starBadge}
-                    ${_bpSlotLbl ? `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3,rgba(160,180,200,0.55));text-transform:uppercase;margin-bottom:1px;">${_bpSlotLbl}</div>` : ''}
-                    <div style="font-size:9px;letter-spacing:0.5px;color:${rd.colorStr};text-align:center;line-height:1.3;overflow:hidden;max-width:80px;">${item.shortName}</div>
-                    <div style="width:7px;height:7px;border-radius:50%;background:${rd.colorStr};margin-top:4px;opacity:0.7;"></div>`;
-                cell.addEventListener('mouseover', () => { cell.style.borderColor = rd.colorStr + 'aa'; cell.style.boxShadow = `0 0 8px ${rd.colorStr}33`; });
-                cell.addEventListener('mouseout', () => { cell.style.borderColor = rd.colorStr + '44'; cell.style.boxShadow = 'none'; });
+                    ${_bpSlotLbl ? `<div style="font-size:8px;letter-spacing:1px;color:var(--sci-txt3,rgba(160,180,200,0.55));text-transform:uppercase;margin-bottom:2px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;">${_bpSlotLbl}</div>` : ''}
+                    <div style="font-size:11px;letter-spacing:0.5px;color:${rd.colorStr};text-align:center;line-height:1.3;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;">${item.shortName}</div>
+                    <div style="width:7px;height:7px;border-radius:50%;background:${rd.colorStr};margin-top:4px;opacity:0.7;flex-shrink:0;"></div>`;
+                // Apply selected state if this item is currently selected
+                if (_invSelectedSource === 'backpack' && _invSelectedKey === idx) {
+                    cell.style.borderColor = rd.colorStr + 'ee';
+                    cell.style.boxShadow   = `0 0 10px ${rd.colorStr}55`;
+                }
+                cell.addEventListener('mouseover', () => {
+                    if (!(_invSelectedSource === 'backpack' && _invSelectedKey === idx)) {
+                        cell.style.borderColor = rd.colorStr + 'aa';
+                        cell.style.boxShadow   = `0 0 8px ${rd.colorStr}33`;
+                    }
+                });
+                cell.addEventListener('mouseout', () => {
+                    if (!(_invSelectedSource === 'backpack' && _invSelectedKey === idx)) {
+                        cell.style.borderColor = rd.colorStr + '44';
+                        cell.style.boxShadow   = 'none';
+                    }
+                });
                 cell.addEventListener('click', () => _showItemDetail('backpack', idx));
                 // Drag events
                 cell.addEventListener('dragstart', (ev) => {

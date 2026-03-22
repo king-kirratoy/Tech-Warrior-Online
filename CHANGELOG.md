@@ -5,6 +5,24 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.58 — Five UI fixes: remove MENU button, pause focus, lobby START GAME position, warzone header parity, backpack card polish
+
+**Date:** 2026-03-22
+
+Five targeted fixes across the in-game HUD, pause menu, multiplayer lobby, warzone hangar, and inventory backpack. Fix 1 (remove MENU button): removed the `<button>` element from `#top-left-btns` in `index.html`; the container div remains (used by other runtime logic) but is now empty so no MENU button appears during gameplay. Fix 2 (pause menu focus): in `js/menus.js` `togglePause()`, replaced `firstPauseBtn.focus()` with `document.activeElement?.blur()` so no pause button appears pre-highlighted when the menu opens; added `.ps-btn:focus` and `.ps-btn:focus-visible` CSS overrides in `css/menus.css` that reset the button to its default unstyled state to prevent browser-default focus rings from appearing. Fix 3 (lobby START GAME position): in `js/multiplayer.js` `mpShowLobby()`, moved the `#mp-start-btn` element from a dedicated `mp-bottom` bar into the `mp-top` bar at the far right using `margin-left:auto`; removed the entire `mp-bottom` section; `mpUpdateLobbyUI()` already uses `if (bottomSt)` guard so the null return is safe. Fix 4 (warzone hangar layout parity): three sub-changes — (4a) in `index.html`, restructured `#garage-menu .hg-top` to remove the old `.hg-title`/`.hg-subtitle`/`#hangar-mode-label` elements and replaced them with a centered "WARZONE" title using `position:absolute; left:50%; transform:translateX(-50%)` on the parent `position:relative` container, matching the multiplayer lobby header pattern; (4b) in `css/garage.css`, removed the border and background from `#garage-stats-panel` (set to `background:transparent; border:none; box-shadow:none`) so the stats panel blends into the hangar surface like the multiplayer build stats; (4c) in `js/garage.js` `updateGarageStats()`, added a Group 5 slot-name summary block at the bottom of the output with rows for MOD, SHIELD, LEGS, and AUGMENT showing the equipped item name via a new `_slotName()` helper that checks `SLOT_DESCS`, then falls back to `dict[key].name` or a formatted key string. Fix 5 (backpack card polish): two sub-changes — (5a) added `overflow:hidden; padding:0 4px; box-sizing:border-box` to the `bp-cell` container style and `white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%` to both the slot label and item name inner divs so long text truncates cleanly within the 88px card width; (5b) after rendering each card, if `_invSelectedSource === 'backpack' && _invSelectedKey === idx` the card immediately receives the full selected border/glow state; hover and mouseout listeners now check the same condition and skip restyling if the card is the active selection, so hovering over a selected card no longer dims it.
+
+### Files Changed
+
+- `index.html` — MENU button removed from #top-left-btns; .hg-top restructured with centered WARZONE title
+- `css/menus.css` — .ps-btn:focus/.ps-btn:focus-visible overrides added
+- `css/garage.css` — #garage-stats-panel border/background removed
+- `js/menus.js` — togglePause() blur fix; bp-cell overflow CSS + ellipsis; backpack selected-state highlight + hover guard
+- `js/multiplayer.js` — mp-start-btn moved to mp-top; mp-bottom section removed
+- `js/garage.js` — Group 5 slot-name summary rows added to updateGarageStats()
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.57 — Six UI fixes: dropdown clipping, page title, weapon stat rows, backpack labels, detail panel toggle
 
 **Date:** 2026-03-22
