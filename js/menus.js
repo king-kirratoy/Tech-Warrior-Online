@@ -574,19 +574,12 @@ function toggleStats() {
     if (!overlay) return;
     _isStats = !_isStats;
     if (_isStats) {
-        populateStats();
         overlay.style.display = 'flex';
         _isPaused = true;
         const scene = GAME?.scene?.scenes[0];
         if (scene) { try { scene.physics.pause(); scene.time.paused = true; scene.input.setDefaultCursor('default'); } catch(e){} }
         document.body.style.cursor = 'default';
-        // Switch to the appropriate tab
-        if (_pendingLoadoutTab === 'gear') {
-            _switchLoadoutTab('gear');
-            _pendingLoadoutTab = null;
-        } else {
-            _switchLoadoutTab('stats');
-        }
+        populateLoadout();
     } else {
         overlay.style.display = 'none';
         _isInventory = false;
@@ -611,39 +604,10 @@ function toggleStats() {
     }
 }
 
-// toggleInventory now opens the LOADOUT overlay on the GEAR tab
 function toggleInventory() {
-    if (_isStats) {
-        // Already in loadout — switch to gear tab
-        _switchLoadoutTab('gear');
-        return;
-    }
-    // Open loadout at gear tab
+    if (_isStats) return; // already open — single unified screen, nothing to switch
     _isInventory = true;
-    _pendingLoadoutTab = 'gear';
     toggleStats();
-}
-
-// Tab switcher for the combined loadout overlay
-// _pendingLoadoutTab — declared in js/state.js
-function _switchLoadoutTab(tab) {
-    const statsContent = document.getElementById('loadout-stats-content');
-    const gearContent  = document.getElementById('loadout-gear-content');
-    const tabStats     = document.getElementById('loadout-tab-stats');
-    const tabGear      = document.getElementById('loadout-tab-gear');
-    if (!statsContent || !gearContent) return;
-    if (tab === 'gear') {
-        statsContent.style.display = 'none';
-        gearContent.style.display  = 'block';
-        if (tabStats) tabStats.classList.remove('active');
-        if (tabGear)  tabGear.classList.add('active');
-        populateInventory();
-    } else {
-        statsContent.style.display = 'block';
-        gearContent.style.display  = 'none';
-        if (tabStats) tabStats.classList.add('active');
-        if (tabGear)  tabGear.classList.remove('active');
-    }
 }
 
 /** Update Campaign button label. */
@@ -875,7 +839,9 @@ function _cancelNewCampaign() {
 function populateInventory() {
     // Update header count
     const hdr = document.getElementById('inv-header-count');
-    if (hdr) hdr.textContent = `${_inventory.length} / ${INVENTORY_MAX} items  |  ${_scrap} scrap`;
+    if (hdr) hdr.textContent = `${_inventory.length} / ${INVENTORY_MAX} items · ${_scrap} scrap`;
+    const bpCount = document.getElementById('lo-bp-count');
+    if (bpCount) bpCount.textContent = `${_inventory.length} / ${INVENTORY_MAX}`;
 
     // ── Mech Silhouette with positioned equip slots ──
     const silEl = document.getElementById('inv-mech-silhouette');
@@ -922,9 +888,10 @@ function populateInventory() {
             if (pos.right) posStyle += `right:${pos.right};`;
             if (pos.transform) posStyle += `transform:${pos.transform};`;
 
-            html += `<div class="mech-equip-slot" style="${posStyle}border-color:${borderColor};"
+            html += `<div class="mech-equip-slot eq-slot" style="${posStyle}border-color:${borderColor};"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
                 ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
+                onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()"
                 onclick="_showItemDetail('equipped','${key}')">
                 <div class="slot-label">${pos.label}</div>
                 <div class="slot-item" style="color:${nameColor};">${itemName}</div>
@@ -1463,52 +1430,42 @@ function _perkReduction(value, base) {
 
 // ── Stats panel renderers ──────────────────────────────────────────
 
-function _renderChassisPanel() {
+/** Renders hull HP bars to #lo-hull-info (new two-column layout). */
+function _renderHullBars() {
+    const el = document.getElementById('lo-hull-info');
+    if (!el) return;
     const ch = loadout.chassis;
     const chassisData = CHASSIS[ch];
-    // ── CHASSIS & HP ──────────────────────────────────────────
-    const _inGame = !!(player?.comp); // true when actually deployed in-game
-    const baseShield = chassisData?.max || 75;
-    let chassisHtml = '';
-    chassisHtml += _statRow('Chassis', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
-    // Shield: show base vs current max, tooltip for gear/perk breakdown
-    const gearShieldHP = (_gearState?.shieldHP || 0);
-    const _curShield = _inGame ? Math.round(player.shield||0) : baseShield;
-    const _maxShield = _inGame ? Math.round(player.maxShield||0) : baseShield;
-    const shieldBonus = Math.round(_maxShield - baseShield);
-    const perkShieldBonus = shieldBonus - gearShieldHP;
-    let shieldTip = '';
-    if (gearShieldHP > 0) shieldTip += `+${gearShieldHP} gear`;
-    if (perkShieldBonus > 0) shieldTip += (shieldTip ? ', ' : '') + `+${perkShieldBonus} perks`;
-    const shieldBonusData = shieldTip ? ` data-bonus="${shieldTip}"` : '';
-    const shieldBonusCls = shieldTip ? ' stat-has-bonus' : '';
-    chassisHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple${shieldBonusCls}"${shieldBonusData}>${_curShield} / ${_maxShield}</span></div>`;
-    chassisHtml += `<div style="margin-top:12px;margin-bottom:6px;font-size:12px;letter-spacing:2px;color:${UI_COLORS.cyan35};">HULL INTEGRITY</div>`;
-    {
+    const _inGame = !!(player?.comp);
     const baseHP = { core: chassisData?.coreHP||212, lArm: chassisData?.armHP||120, rArm: chassisData?.armHP||120, legs: chassisData?.legHP||152 };
+    let html = '';
     if (_inGame) {
-        chassisHtml += _hpBarBoosted('Core',  player.comp.core.hp,  player.comp.core.max,  baseHP.core);
-        chassisHtml += _hpBarBoosted('L.Arm', player.comp.lArm.hp,  player.comp.lArm.max,  baseHP.lArm);
-        chassisHtml += _hpBarBoosted('R.Arm', player.comp.rArm.hp,  player.comp.rArm.max,  baseHP.rArm);
-        chassisHtml += _hpBarBoosted('Legs',  player.comp.legs.hp,  player.comp.legs.max,  baseHP.legs);
+        html += _hpBarBoosted('Core',  player.comp.core.hp,  player.comp.core.max,  baseHP.core);
+        html += _hpBarBoosted('L.Arm', player.comp.lArm.hp,  player.comp.lArm.max,  baseHP.lArm);
+        html += _hpBarBoosted('R.Arm', player.comp.rArm.hp,  player.comp.rArm.max,  baseHP.rArm);
+        html += _hpBarBoosted('Legs',  player.comp.legs.hp,  player.comp.legs.max,  baseHP.legs);
         const totalHp  = Object.values(player.comp).reduce((s,c)=>s+c.hp,0);
         const totalMax = Object.values(player.comp).reduce((s,c)=>s+c.max,0);
         const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
         const totalBonusHp = Math.round(totalMax - totalBase);
         const totalBonusData = totalBonusHp > 0 ? ` data-bonus="+${totalBonusHp} from perks/gear"` : '';
         const totalBonusCls = totalBonusHp > 0 ? ' stat-has-bonus' : '';
-        chassisHtml += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
+        html += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
     } else {
-        // Not in-game: show base HP values at full
-        chassisHtml += _hpBarBoosted('Core',  baseHP.core,  baseHP.core,  baseHP.core);
-        chassisHtml += _hpBarBoosted('L.Arm', baseHP.lArm,  baseHP.lArm,  baseHP.lArm);
-        chassisHtml += _hpBarBoosted('R.Arm', baseHP.rArm,  baseHP.rArm,  baseHP.rArm);
-        chassisHtml += _hpBarBoosted('Legs',  baseHP.legs,  baseHP.legs,  baseHP.legs);
+        html += _hpBarBoosted('Core',  baseHP.core,  baseHP.core,  baseHP.core);
+        html += _hpBarBoosted('L.Arm', baseHP.lArm,  baseHP.lArm,  baseHP.lArm);
+        html += _hpBarBoosted('R.Arm', baseHP.rArm,  baseHP.rArm,  baseHP.rArm);
+        html += _hpBarBoosted('Legs',  baseHP.legs,  baseHP.legs,  baseHP.legs);
         const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
-        chassisHtml += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalBase} / ${totalBase}</span></div></div>`;
+        html += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalBase} / ${totalBase}</span></div></div>`;
     }
-    }
-    // ── Chassis traits & arm mode — rendered full-width below the grid ──
+    el.innerHTML = html;
+}
+
+function _renderChassisPanel() {
+    const ch = loadout.chassis;
+    const chassisData = CHASSIS[ch];
+    // ── Chassis traits & arm mode ──────────────────────────────
     const _chColor = ch === 'light' ? UI_COLORS.chassisLight : ch === 'medium' ? UI_COLORS.chassisMedium : UI_COLORS.chassisHeavy;
     const _cTraits = ch === 'light'
     ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped (−15% dmg per arm)'],
@@ -1572,7 +1529,9 @@ function _renderChassisPanel() {
     traitHtml += `</div>`;
     traitHtml += `</div>`;
 
-    document.getElementById('stat-chassis-info').innerHTML = chassisHtml;
+    // chassisHtml (HP bars + chassis name) is now rendered by _renderHullBars() and _renderMobilityPanel()
+    const chassisInfoEl = document.getElementById('stat-chassis-info');
+    if (chassisInfoEl) chassisInfoEl.innerHTML = chassisHtml;
     document.getElementById('stat-traits-info').innerHTML  = traitHtml;
 }
 
@@ -1636,10 +1595,26 @@ function _renderWeaponPanel() {
 }
 
 function _renderMobilityPanel() {
-    const chassisData = CHASSIS[loadout.chassis];
+    const ch = loadout.chassis;
+    const chassisData = CHASSIS[ch];
     const _inGame = !!(player?.comp); // true when actually deployed in-game
     // ── MOBILITY & SHIELD ─────────────────────────────────────
-    let mobHtml = '';
+    const _chColor = ch === 'light' ? UI_COLORS.chassisLight : ch === 'medium' ? UI_COLORS.chassisMedium : UI_COLORS.chassisHeavy;
+    let mobHtml = _statRow('Chassis', ch.toUpperCase(), ch==='light'?'green':ch==='medium'?'yellow':'orange');
+    // Shield row
+    const baseShield = chassisData?.max || 75;
+    const gearShieldHP = (_gearState?.shieldHP || 0);
+    const _curShield = _inGame ? Math.round(player.shield||0) : baseShield;
+    const _maxShield = _inGame ? Math.round(player.maxShield||0) : baseShield;
+    const shieldBonus = Math.round(_maxShield - baseShield);
+    const perkShieldBonus = shieldBonus - gearShieldHP;
+    let shieldTip = '';
+    if (gearShieldHP > 0) shieldTip += `+${gearShieldHP} gear`;
+    if (perkShieldBonus > 0) shieldTip += (shieldTip ? ', ' : '') + `+${perkShieldBonus} perks`;
+    const shieldBonusData = shieldTip ? ` data-bonus="${shieldTip}"` : '';
+    const shieldBonusCls = shieldTip ? ' stat-has-bonus' : '';
+    mobHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple${shieldBonusCls}"${shieldBonusData}>${_curShield} / ${_maxShield}</span></div>`;
+    mobHtml += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"></div>`;
     const baseSpd = chassisData?.spd || 200;
     const perkSpd = Math.round(baseSpd * (_perkState.speedMult||1));
     const gearSpdBonus = (_gearState?.speedPct || 0);
@@ -1824,6 +1799,97 @@ function populateStats() {
     _renderRunStatsPanel();
     _renderActivePerksPanel();
     _renderGearBonusesPanel();
+}
+
+/** Populates the unified two-column loadout overlay (v5.64). */
+function populateLoadout() {
+    if (typeof _updateCampaignXPBar === 'function') _updateCampaignXPBar();
+    _renderHullBars();
+    _renderMobilityPanel();
+    _renderChassisPanel();
+    _renderGearBonusesPanel();
+    populateInventory();
+    const perksSection = document.getElementById('lo-perks-section');
+    if (_gameMode === 'simulation') {
+        _renderActivePerksPanel();
+        if (perksSection) perksSection.style.display = '';
+    } else {
+        if (perksSection) perksSection.style.display = 'none';
+    }
+    _renderWeaponBar();
+}
+
+/** Populates #lo-weapon-bar with armed weapon stats. */
+function _renderWeaponBar() {
+    const el = document.getElementById('lo-weapon-bar');
+    if (!el) return;
+    const _gDmgFlat = (_gearState?.dmgFlat   || 0);
+    const _gDmgPct  = (_gearState?.dmgPct    || 0);
+    const _gRldPct  = (_gearState?.reloadPct || 0);
+    let html = '';
+    [['L', loadout.L], ['R', loadout.R]].forEach(([side, key]) => {
+        if (!key || key === 'none') return;
+        const w = WEAPONS[key];
+        if (!w) return;
+        const effDmg = w.dmg ? Math.round((w.dmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100)) : 0;
+        const effRld = Math.round((w.reload||0) * (_perkState.reloadMult||1) * (1 - _gRldPct/100));
+        const effDps = effRld > 0 ? Math.round(effDmg / effRld * 1000) : 0;
+        html += `<div style="flex:1;min-width:0;border-right:1px solid var(--sci-line);padding:8px 12px;">`;
+        html += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);margin-bottom:2px;">${side} ARM</div>`;
+        html += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.name}</div>`;
+        html += `<div style="font-size:10px;color:var(--sci-txt3);">DMG <span style="color:var(--sci-txt);">${effDmg}</span> &middot; DPS <span style="color:var(--sci-txt);">${effDps}</span> &middot; RELOAD <span style="color:var(--sci-txt);">${effRld}ms</span></div>`;
+        html += `</div>`;
+    });
+    if (loadout.mod && loadout.mod !== 'none') {
+        const w = WEAPONS[loadout.mod];
+        if (w) {
+            html += `<div style="flex:1;min-width:0;padding:8px 12px;">`;
+            html += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);margin-bottom:2px;">CORE MOD</div>`;
+            html += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.name}</div>`;
+            if (w.cooldown) html += `<div style="font-size:10px;color:var(--sci-txt3);">Cooldown <span style="color:var(--sci-txt);">${w.cooldown}ms</span></div>`;
+            html += `</div>`;
+        }
+    }
+    el.style.display = html ? 'flex' : 'none';
+    el.innerHTML = html;
+}
+
+/** Shows a hover card for an equipment slot in the doll view. */
+function _showSlotHover(el, slotKey) {
+    const card = document.getElementById('eq-hover-card');
+    if (!card) return;
+    const item = _equipped && _equipped[slotKey];
+    if (!item) { card.style.display = 'none'; return; }
+    const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60 };
+    const _slotNames = { L:'L Arm', R:'R Arm', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', mod:'CPU Mod', augment:'Augment' };
+    let html = `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);margin-bottom:3px;">${_slotNames[slotKey]||slotKey}</div>`;
+    html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:6px;">${item.name}</div>`;
+    if (item.baseStats) {
+        const sn = { dmg:'Damage', reload:'Reload', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', reloadPct:'Reload%', dmgPct:'Dmg%' };
+        Object.entries(item.baseStats).forEach(([k, v]) => {
+            if (!v) return;
+            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:var(--sci-txt3);">${sn[k]||k}</span><span style="color:var(--sci-txt);">${v}</span></div>`;
+        });
+    }
+    if (item.affixes && item.affixes.length) {
+        item.affixes.forEach(a => { html += `<div style="font-size:9px;color:#44ff88;margin-top:2px;">&#9679; ${a.label}</div>`; });
+    }
+    card.innerHTML = html;
+    card.style.display = 'block';
+    const wrap = card.parentElement;
+    if (wrap && el) {
+        const wr = wrap.getBoundingClientRect();
+        const er = el.getBoundingClientRect();
+        const top  = er.top  - wr.top;
+        const left = er.right - wr.left + 8;
+        card.style.top  = Math.max(0, top) + 'px';
+        card.style.left = left + 'px';
+    }
+}
+
+function _hideSlotHover() {
+    const card = document.getElementById('eq-hover-card');
+    if (card) card.style.display = 'none';
 }
 
 // ═══════════ LEADERBOARD ═══════════
