@@ -50,6 +50,60 @@
   --glow-red-sm:  0 0 10px rgba(255,80,80,0.15);
   --glow-red-md:  0 0 20px rgba(255,80,80,0.25);
   --glow-red-lg:  0 0 40px rgba(255,80,80,0.4);
+
+  /* ── Text ── */
+  --text:     #c8d2d9;
+  --text-dim: rgba(200,210,217,0.5);
+
+  /* ── Extended Brand Colors ── */
+  --amber:        #ffaa00;
+  --yellow:       #ffdd00;
+  --red-alt:      #ff4444;
+  --red-error:    #ff3300;
+  --red-critical: #ff4466;
+  --green-pos:    #44ff88;
+  --teal:         #00ffcc;
+  --teal-dim:     rgba(0,255,200,0.12);
+  --gold-dim:     rgba(255,215,0,0.35);
+
+  /* ── HUD Cyan Family ── */
+  --hud-cyan:        rgba(0,210,255,1);
+  --hud-cyan-dim:    rgba(0,210,255,0.65);
+  --hud-cyan-status: rgba(0,210,255,0.7);
+  --hud-cyan-border: rgba(0,210,255,0.25);
+  --hud-cyan-fill:   rgba(0,225,255,0.88);
+  --hud-cyan-fire:   rgba(0,230,255,0.75);
+
+  /* ── Overlay Surfaces ── */
+  --overlay-dark:  rgba(5,8,12,0.96);
+  --overlay-pause: rgba(0,0,0,0.7);
+  --surface-deep:  rgba(10,14,20,0.98);
+
+  /* ── Font Sizes ── */
+  --text-tiny:  8px;
+  --text-xs:    9px;
+  --text-sm:   10px;
+  --text-label:11px;
+  --text-md:   12px;
+  --text-base: 13px;
+  --text-lg:   14px;
+  --text-xl:   15px;
+  --text-h3:   24px;
+  --text-h2:   28px;
+
+  /* ── Letter Spacing ── */
+  --ls-1: 1px;
+  --ls-2: 2px;
+  --ls-3: 3px;
+  --ls-4: 4px;
+  --ls-6: 6px;
+
+  /* ── Spacing ── */
+  --space-xs:  6px;
+  --space-sm:  8px;
+  --space-md: 14px;
+  --space-lg: 16px;
+  --space-xl: 20px;
 }
 
 /* --- Reset --- */
@@ -57,7 +111,7 @@
 
 body {
   background: var(--bg);
-  color: #c8d2d9;
+  color: var(--text);
   font-family: var(--font-ui);
   margin: 0;
   overflow: hidden;
@@ -96,7 +150,7 @@ body {
   border-color: var(--border-cyan-bright);
   box-shadow: var(--glow-cyan-lg), inset 0 0 20px rgba(0,255,255,0.08);
   color: #fff;
-  letter-spacing: 6px;
+  letter-spacing: var(--ls-6);
 }
 
 /* --- Danger (red) variant --- */
@@ -113,12 +167,12 @@ body {
   border-color: var(--border-red-bright);
   box-shadow: var(--glow-red-lg);
   color: #fff;
-  letter-spacing: 6px;
+  letter-spacing: var(--ls-6);
 }
 
 /* --- Gold variant --- */
 .tw-btn--gold {
-  border-color: rgba(255,215,0,0.35);
+  border-color: var(--gold-dim);
   border-bottom-color: rgba(255,215,0,0.7);
   border-top-color: rgba(255,215,0,0.7);
   box-shadow: 0 0 10px rgba(255,215,0,0.06);
@@ -130,7 +184,7 @@ body {
   border-color: var(--gold);
   box-shadow: 0 0 40px rgba(255,215,0,0.4);
   color: #fff;
-  letter-spacing: 6px;
+  letter-spacing: var(--ls-6);
 }
 
 /* --- Green variant --- */
@@ -147,7 +201,7 @@ body {
   border-color: var(--green-accent);
   box-shadow: 0 0 40px rgba(0,255,136,0.4);
   color: #fff;
-  letter-spacing: 6px;
+  letter-spacing: var(--ls-6);
 }
 
 /* --- Small variant --- */
@@ -174,13 +228,13 @@ body {
 /* --- Error/overweight state --- */
 .tw-btn--error {
   background: rgba(255,50,0,0.1) !important;
-  border: 1px solid #ff3300 !important;
-  border-bottom: 2px solid #ff3300 !important;
-  border-top: 2px solid #ff3300 !important;
+  border: 1px solid var(--red-error) !important;
+  border-bottom: 2px solid var(--red-error) !important;
+  border-top: 2px solid var(--red-error) !important;
   box-shadow: inset 0 0 10px rgba(255,50,0,0.2);
-  color: #ff3300 !important;
+  color: var(--red-error) !important;
   cursor: not-allowed;
-  letter-spacing: 2px !important;
+  letter-spacing: var(--ls-2) !important;
 }
 
 /* ============================================================
@@ -190,11 +244,11 @@ button {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.1);
   border-left: 3px solid transparent;
-  color: #c8d2d9;
+  color: var(--text);
   cursor: pointer;
   flex: 1;
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--text-base);
   padding: 10px 12px;
   text-align: left;
   transition: all 0.2s ease;

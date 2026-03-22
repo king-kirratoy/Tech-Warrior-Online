@@ -5,6 +5,22 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.25 — CSS token system expansion across all CSS files
+
+**Date:** 2026-03-21
+
+Expanded the CSS design token system established in v5.24 by adding 50 new custom properties to the `:root` block in `css/base.css`, then systematically replacing hardcoded values across all four CSS files. New token groups cover text colors (`--text`, `--text-dim`), extended brand colors (`--amber`, `--yellow`, `--red-alt`, `--red-error`, `--red-critical`, `--green-pos`, `--teal`, `--teal-dim`, `--gold-dim`), a HUD cyan family distinct from the base cyan (`--hud-cyan`, `--hud-cyan-dim`, `--hud-cyan-status`, `--hud-cyan-border`, `--hud-cyan-fill`, `--hud-cyan-fire`), overlay surfaces (`--overlay-dark`, `--overlay-pause`, `--surface-deep`), font size steps (`--text-tiny` through `--text-h2`), letter-spacing steps (`--ls-1` through `--ls-6`), and spacing steps (`--space-xs` through `--space-xl`). All four CSS files were updated: `menus.css` replaces font sizes, letter-spacing values, background surfaces, and semantic colors throughout; `garage.css` replaces font sizes, letter-spacing, color literals (`#ffaa00`, `#ffdd00`, `#ff4466`, `#44ff88`, `#ff3300`, `#c8d2d9`, `rgba(10,14,20,0.98)`), and border token usages; `hud.css` replaces all four `'Courier New', monospace` declarations and all `rgba(0,210,255,…)` / `rgba(0,225,255,…)` literals with the new HUD cyan family tokens; `base.css` non-`:root` rules replace `#c8d2d9`, `13px`, `6px` letter-spacings, `rgba(255,215,0,0.35)`, and `#ff3300` in the `.tw-btn` system and legacy button fallback.
+
+### Files Changed
+
+- `css/base.css` — 50 new `:root` tokens added; non-`:root` rules updated: `body color`, `button color/font-size`, `.tw-btn` hover letter-spacings, `.tw-btn--gold` border-color, `.tw-btn--error` color/border/letter-spacing
+- `css/menus.css` — all font sizes, letter-spacings, surface backgrounds, and semantic colors replaced with tokens
+- `css/garage.css` — all font sizes, letter-spacings, color literals, and surface values replaced with tokens
+- `css/hud.css` — all `font-family: 'Courier New'`, HUD cyan color literals, `--red-alt` usage replaced with tokens
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.24 — CSS design system + button migration
 
 **Date:** 2026-03-21
