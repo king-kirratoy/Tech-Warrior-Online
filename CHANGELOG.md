@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.40 — Sci-fi pause screen rebuild
+
+**Date:** 2026-03-22
+
+Rebuilt the pause screen overlay with a clean sci-fi panel design. In `css/menus.css`: added `.ps-panel` (300px, `--sci-cyan-border` frame, dark bg), `.ps-header` (flex space-between, border-bottom), `.ps-title` (cyan, 5px ls), `.ps-status` (txt3), `.ps-body` (flex column, gap 8px), `.ps-btn` (full-width, sci-surface bg, 3px ls + hover glow), `.ps-btn.danger` (red tint + hover), `.ps-btn-icon` (10×10 border box), `.ps-footer`, and `.ps-hint`. In `index.html`: replaced the old animated `PAUSED` heading and `tw-btn` button list with the new `ps-panel` structure — header shows title + live round status, body has Resume / Loadout / Quit game rows with `ps-btn-icon` accents, footer shows the ESC hint. In `js/menus.js`: `togglePause()` now writes `'Round 01 active'` (zero-padded `_round`) into `#pause-round-status` each time the overlay opens.
+
+### Files Changed
+
+- `css/menus.css` — new pause panel classes
+- `index.html` — #pause-overlay rebuilt with ps-panel structure
+- `js/menus.js` — togglePause() populates #pause-round-status
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.39 — Sci-fi campaign mission select rebuild
 
 **Date:** 2026-03-22
