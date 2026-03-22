@@ -760,7 +760,7 @@ function showMissionSelect() {
     // ── Top bar ──
     html += '<div class="cm-top">';
     html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;flex-shrink:0;">&#8249; Back</button>`;
-    html += '<div class="cm-title">CAMPAIGN</div>';
+    html += '<div class="cm-title" style="flex:1;">CAMPAIGN</div>';
     html += `<span style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);white-space:nowrap;">LVL ${_campaignState.playerLevel} &nbsp;·&nbsp; ${xpCur} / ${xpNeeded} XP</span>`;
     html += `<button onclick="_openShopFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;flex-shrink:0;">Supply Shop</button>`;
     html += `<button onclick="_openLoadoutFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;flex-shrink:0;">Loadout</button>`;
@@ -826,17 +826,6 @@ function showMissionSelect() {
         html += '</div>';
     });
     html += '</div>'; // scrollable missions
-
-    // Mission briefing panel — visible only when a mission is selected
-    if (_selectedMissionIdx !== null) {
-        const sel = ch.missions[_selectedMissionIdx];
-        const lvColor = sel.enemyLevel <= 3 ? 'var(--sci-txt2)' : sel.enemyLevel <= 6 ? 'var(--sci-gold)' : 'var(--sci-red)';
-        html += '<div style="padding:16px 20px;border-top:1px solid var(--sci-line);background:var(--sci-cyan-dim);">';
-        html += `<div style="font-size:13px;letter-spacing:3px;color:var(--sci-cyan);margin-bottom:4px;">${sel.name}</div>`;
-        html += `<div style="font-size:10px;color:var(--sci-txt3);margin-bottom:8px;">${sel.briefing}</div>`;
-        html += `<div style="font-size:10px;letter-spacing:1px;color:${lvColor};">ENEMY LEVEL ${sel.enemyLevel}${sel.hasBoss ? ' &nbsp;·&nbsp; BOSS MISSION' : ''}</div>`;
-        html += '</div>';
-    }
 
     // Deploy bar
     html += '<div class="cm-bottom">';

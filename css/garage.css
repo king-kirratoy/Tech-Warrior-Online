@@ -3,10 +3,10 @@
    ============================================================ */
 
 #ui-layer {
-  align-items: center;
+  align-items: stretch;
   display: flex;
   inset: 0;
-  justify-content: center;
+  justify-content: flex-start;
   pointer-events: none;
   position: fixed;
   z-index: 1000;
@@ -24,6 +24,19 @@
   pointer-events: auto;
   position: relative;
   width: 820px;
+}
+
+#garage-menu {
+  background: #080b0e;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 100%;
+  padding: 0;
+  width: 100%;
 }
 
 /* --- Rows & Labels --- */
@@ -475,8 +488,10 @@
   background: #080b0e;
   border-bottom: 1px solid var(--sci-line);
   display: flex;
+  flex-shrink: 0;
   gap: 16px;
   padding: 14px 24px;
+  width: 100%;
 }
 
 .hg-title {
@@ -497,6 +512,7 @@
 .hg-body {
   display: flex;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
