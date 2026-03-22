@@ -490,6 +490,18 @@
   width: 100%;
 }
 
+.hg-top > button {
+  align-self: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  width: auto;
+}
+
+.hg-top > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .hg-title {
   color: var(--sci-txt);
   font-size: 11px;
