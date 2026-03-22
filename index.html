@@ -119,7 +119,7 @@
     <div class="stat-readout" id="garage-menu">
       <div class="hg-top" style="position:relative;">
         <button id="hangar-mm-btn" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;" onclick="returnToMainMenu()">‹ Back</button>
-        <div id="hangar-title" style="position:absolute;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:4px;color:var(--sci-txt);text-transform:uppercase;pointer-events:none;">WARZONE</div>
+        <div class="mp-screen-title">WARZONE</div>
         <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;" onclick="deployMech()">Deploy Mech ›</button>
       </div>
       <div class="hg-body">
@@ -127,18 +127,21 @@
           <div class="hg-left-top">
             <div class="mp-sec-label">Chassis</div>
             <div class="mp-chassis-row">
-              <button id="c-light"  class="hg-chassis-btn" onclick="setChassis('light')">Light</button>
-              <button id="c-medium" class="hg-chassis-btn" onclick="setChassis('medium')">Medium</button>
-              <button id="c-heavy"  class="hg-chassis-btn" onclick="setChassis('heavy')">Heavy</button>
+              <button id="c-light"  class="mp-chassis-btn" onclick="setChassis('light')">Light</button>
+              <button id="c-medium" class="mp-chassis-btn" onclick="setChassis('medium')">Medium</button>
+              <button id="c-heavy"  class="mp-chassis-btn" onclick="setChassis('heavy')">Heavy</button>
             </div>
             <div class="mp-sec-label" style="margin-top:12px;">Colour</div>
-            <div id="ddw-C" class="dd-wrap">
-              <div class="dd-selected" id="dds-C" onclick="toggleDD('C')">
-                <span id="dd-color-swatch-C" class="dd-color-swatch-header"></span>
-                <span class="dd-name" id="ddn-C">Green</span>
-                <span class="dd-arrow">▼</span>
+            <div class="mp-dd-row">
+              <span class="mp-dd-label">Colour</span>
+              <div id="ddw-C" class="dd-wrap" style="flex:1;">
+                <div class="dd-selected" id="dds-C" onclick="toggleDD('C')">
+                  <span id="dd-color-swatch-C" class="dd-color-swatch-header"></span>
+                  <span class="dd-name" id="ddn-C">Green</span>
+                  <span class="dd-arrow">▼</span>
+                </div>
+                <div class="dd-list" id="ddl-C"></div>
               </div>
-              <div class="dd-list" id="ddl-C"></div>
             </div>
             <div id="dual-explosive-warn" style="font-size:9px;letter-spacing:1px;color:var(--sci-gold);display:none;margin-top:8px;">⚠ Dual explosive — high self-damage risk</div>
           </div>
@@ -154,7 +157,7 @@
           </div>
         </div>
         <div class="hg-right">
-          <div class="hg-stats-header">Build stats</div>
+          <div class="mp-stats-header">Build stats</div>
           <div id="garage-stats-panel"></div>
           <div id="starter-loadout-panel"></div>
         </div>

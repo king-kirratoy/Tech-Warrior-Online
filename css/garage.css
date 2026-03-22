@@ -315,8 +315,8 @@
 .dd-selected {
   align-items: center;
   background: var(--surface);
-  border: 1px solid rgba(0,255,255,0.25);
-  border-left: 3px solid rgba(0,255,255,0.5);
+  border: 1px solid var(--sci-cyan-border);
+  border-left: 3px solid var(--sci-cyan-border);
   color: var(--text);
   cursor: pointer;
   display: flex;
@@ -548,32 +548,6 @@
   padding: 20px;
 }
 
-/* --- Chassis selector buttons --- */
-.hg-chassis-btn {
-  background: transparent;
-  border: 1px solid var(--sci-line);
-  color: var(--sci-txt2);
-  cursor: pointer;
-  flex: 1;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 1px;
-  padding: 8px 10px;
-  text-align: center;
-  text-transform: uppercase;
-  transition: all 0.15s;
-}
-
-.hg-chassis-btn:hover {
-  border-color: var(--sci-cyan-border);
-  color: var(--sci-cyan);
-}
-
-.hg-chassis-btn.active {
-  background: var(--sci-cyan-dim);
-  border-color: var(--sci-cyan-border);
-  color: var(--sci-cyan);
-}
 
 /* --- Right panel (stats + deploy) --- */
 .hg-right {

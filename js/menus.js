@@ -1041,18 +1041,23 @@ function populateInventory() {
 let _invSelectedSource = null;
 let _invSelectedKey    = null;
 
-/** Renders a stat-diff comparison between a backpack item and the currently equipped item
- *  in the matching slot.  Returns an HTML string (empty if no equipped item to compare). */
+/** Current arm used when comparing a weapon from the backpack. Reset to 'L' on each new selection. */
+var _compareArm = 'L';
+
+/** Switch which arm is used for weapon comparison and re-render the detail panel. */
+function _setCompareArm(arm) {
+    _compareArm = arm;
+    if (_invSelectedSource !== null && _invSelectedKey !== null) {
+        _renderItemDetail(_invSelectedSource, _invSelectedKey);
+    }
+}
+
+/** Renders a side-by-side stat comparison between a backpack item and the currently equipped item.
+ *  For weapons, uses _compareArm (L or R) to pick the equipped slot.
+ *  Returns an HTML string (empty string when there is nothing useful to compare). */
 function _buildItemComparisonHTML(newItem) {
     if (!newItem || !newItem.baseStats) return '';
-    let equippedItem = null;
-    if (newItem.baseType === 'weapon') {
-        equippedItem = (_equipped && (_equipped.L || _equipped.R)) || null;
-    } else {
-        const slotKey = (typeof _getSlotForItem === 'function') ? _getSlotForItem(newItem) : null;
-        equippedItem = (slotKey && _equipped) ? _equipped[slotKey] : null;
-    }
-    if (!equippedItem || !equippedItem.baseStats) return '';
+
     const statNames = {
         dmg:'Damage', reload:'Reload (ms)', pellets:'Pellets', speed:'Projectile Speed',
         range:'Range', radius:'Blast Radius', burst:'Burst Count', coreHP:'Core HP', armHP:'Arm HP',
@@ -1061,30 +1066,90 @@ function _buildItemComparisonHTML(newItem) {
         dmgPct:'Damage %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Effectiveness %',
         dodgePct:'Dodge %', accuracy:'Accuracy', lootMult:'Loot Quality %'
     };
-    const allKeys = [...new Set([...Object.keys(newItem.baseStats), ...Object.keys(equippedItem.baseStats)])];
-    const rows = allKeys.map(k => {
-        const nv = newItem.baseStats[k] ?? 0;
-        const ev = equippedItem.baseStats[k] ?? 0;
+
+    function _statCard(item, cardLabel) {
+        const rd = (item && RARITY_DEFS && RARITY_DEFS[item.rarity]) ? RARITY_DEFS[item.rarity] : { colorStr: UI_COLORS.text60 };
+        let h = `<div style="flex:1;min-width:0;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:8px 10px;">`;
+        h += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);margin-bottom:3px;text-transform:uppercase;">${cardLabel}</div>`;
+        h += `<div style="font-size:11px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:6px;line-height:1.3;">${item.name || '?'}</div>`;
+        const entries = Object.entries(item.baseStats || {}).filter(([, v]) => v !== 0);
+        entries.forEach(([k, v]) => {
+            h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
+            h += `<span style="color:var(--sci-txt3);">${statNames[k] || k}</span>`;
+            h += `<span style="color:var(--sci-txt);">${v}</span>`;
+            h += `</div>`;
+        });
+        if (!entries.length) h += `<div style="font-size:9px;color:var(--sci-txt3);">No stats</div>`;
+        h += `</div>`;
+        return h;
+    }
+
+    let equippedItem  = null;
+    let equippedLabel = 'EQUIPPED';
+    let toggleBtn     = '';
+
+    if (newItem.baseType === 'weapon') {
+        const chosenArm = _compareArm || 'L';
+        const otherArm  = chosenArm === 'L' ? 'R' : 'L';
+        equippedItem  = (_equipped && _equipped[chosenArm]) || null;
+        equippedLabel = chosenArm + ' ARM';
+        if (_equipped && _equipped[otherArm]) {
+            toggleBtn = `<button onclick="_setCompareArm('${otherArm}')" class="tw-btn tw-btn--ghost" style="font-size:8px;padding:2px 6px;letter-spacing:1px;">vs ${otherArm} ARM</button>`;
+        }
+    } else {
+        const slotKey = (typeof _getSlotForItem === 'function') ? _getSlotForItem(newItem) : null;
+        equippedItem = (slotKey && _equipped) ? _equipped[slotKey] : null;
+    }
+
+    let html = `<div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:10px;padding-top:10px;">`;
+
+    // Header row: "VS EQUIPPED" label + optional arm-toggle button
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">`;
+    html += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;">vs equipped</div>`;
+    html += toggleBtn;
+    html += `</div>`;
+
+    if (!equippedItem || !equippedItem.baseStats) {
+        const slotLabel = newItem.baseType === 'weapon' ? (_compareArm + ' ARM') : 'this slot';
+        html += `<div style="font-size:10px;color:var(--sci-txt3);font-style:italic;">Nothing equipped in ${slotLabel}</div>`;
+        html += `</div>`;
+        return html;
+    }
+
+    // Side-by-side stat cards
+    html += `<div style="display:flex;gap:8px;margin-bottom:8px;">`;
+    html += _statCard(newItem, 'NEW');
+    html += _statCard(equippedItem, equippedLabel);
+    html += `</div>`;
+
+    // Changes-if-equipped diff section
+    const newStats = newItem.baseStats  || {};
+    const oldStats = equippedItem.baseStats || {};
+    const allKeys  = [...new Set([...Object.keys(newStats), ...Object.keys(oldStats)])];
+    const diffRows = allKeys.map(k => {
+        const nv   = newStats[k] ?? 0;
+        const ev   = oldStats[k] ?? 0;
         const diff = nv - ev;
         if (diff === 0) return '';
-        const label = statNames[k] || k;
-        // Lower is better for reload and mod cooldown
         const isPositive = (k === 'reload' || k === 'modCdPct') ? diff < 0 : diff > 0;
-        const color = isPositive ? '#44ff88' : '#ff4466';
-        const sign = diff > 0 ? '+' : '';
+        const color  = isPositive ? '#44ff88' : '#ff4466';
+        const sign   = diff > 0 ? '+' : '';
         const fmtVal = (diff > -1 && diff < 1 && diff !== 0)
             ? sign + Math.round(diff * 100) + '%'
             : sign + diff;
-        return `<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:11px;">
-            <span style="color:${UI_COLORS.text60};">${label}</span>
+        return `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">
+            <span style="color:var(--sci-txt3);">${statNames[k] || k}</span>
             <span style="color:${color};">${fmtVal}</span>
         </div>`;
     }).filter(Boolean).join('');
-    if (!rows) return '';
-    return `<div style="border-top:1px solid ${UI_COLORS.gold10};margin-top:10px;padding-top:10px;">
-        <div style="font-size:9px;letter-spacing:3px;color:${UI_COLORS.text40};margin-bottom:8px;">VS EQUIPPED: ${equippedItem.name || '?'}</div>
-        ${rows}
-    </div>`;
+
+    if (diffRows) {
+        html += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:4px;">CHANGES IF EQUIPPED:</div>`;
+        html += diffRows;
+    }
+
+    html += `</div>`;
+    return html;
 }
 
 function _showItemDetail(source, key) {
@@ -1101,6 +1166,16 @@ function _showItemDetail(source, key) {
     }
     _invSelectedSource = source;
     _invSelectedKey    = key;
+    _compareArm = 'L'; // reset arm choice whenever a new item is opened
+    _renderItemDetail(source, key);
+}
+
+/** Re-renders the detail panel for the given source/key without toggling.
+ *  Called directly by _showItemDetail and also by _setCompareArm on arm switch. */
+function _renderItemDetail(source, key) {
+    const dp = document.getElementById('inv-detail-panel');
+    const dc = document.getElementById('inv-detail-content');
+    if (!dp || !dc) return;
 
     const item = source === 'equipped' ? _equipped[key] : _inventory[key];
     if (!item) return;
@@ -1125,7 +1200,12 @@ function _showItemDetail(source, key) {
     if (source === 'backpack') {
         const slotKey = _getSlotForItem(item);
         if (slotKey || item.baseType === 'weapon') {
-            html += `<button onclick="_equipItem(${key})" class="tw-btn tw-btn--green tw-btn--sm">EQUIP</button>`;
+            if (item.baseType === 'weapon') {
+                // Equip directly to the currently compared arm (reads _compareArm at click time)
+                html += `<button onclick="_equipItemToSlot(${key}, _compareArm)" class="tw-btn tw-btn--green tw-btn--sm">EQUIP</button>`;
+            } else {
+                html += `<button onclick="_equipItem(${key})" class="tw-btn tw-btn--green tw-btn--sm">EQUIP</button>`;
+            }
         }
         html += `<button onclick="_scrapItem(${key})" class="tw-btn tw-btn--danger tw-btn--sm">SCRAP (+${rd.scrapValue})</button>`;
     } else if (source === 'equipped') {
