@@ -1153,8 +1153,8 @@ function _showEquipPrompt(nextRound) {
                 <div style="font-size:14px;letter-spacing:4px;color:#ffd700;margin-bottom:8px;text-shadow:0 0 12px rgba(255,215,0,0.4);">LOOT AVAILABLE</div>
                 <div id="equip-prompt-count" style="font-size:12px;letter-spacing:2px;color:rgba(200,210,220,0.6);margin-bottom:28px;"></div>
                 <div style="display:flex;gap:16px;justify-content:center;">
-                    <button id="equip-prompt-open" style="padding:12px 28px;background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.4);border-left:3px solid #ffd700;border-radius:6px;color:#ffd700;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;">OPEN INVENTORY</button>
-                    <button id="equip-prompt-skip" style="padding:12px 28px;background:rgba(200,210,220,0.06);border:1px solid rgba(200,210,220,0.2);border-radius:6px;color:rgba(200,210,220,0.6);font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;cursor:pointer;transition:all 0.2s;">CONTINUE →</button>
+                    <button id="equip-prompt-open" class="tw-btn tw-btn--gold">OPEN INVENTORY</button>
+                    <button id="equip-prompt-skip" class="tw-btn">CONTINUE →</button>
                 </div>
             </div>`;
         document.body.appendChild(overlay);

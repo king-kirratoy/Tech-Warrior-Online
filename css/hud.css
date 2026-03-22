@@ -35,7 +35,7 @@
 
 .hud-label {
     font-weight: bold;
-    font-size: 11px;
+    font-size: var(--text-label);
     color: #0f0;
     opacity: 0.8;
     text-transform: uppercase;
@@ -61,12 +61,12 @@
     border-color: rgba(200,0,0,0.4) !important;
     background: rgba(60,0,0,0.5) !important;
 }
-.weapon-row.arm-destroyed .wr-name { color: #ff4444 !important; }
+.weapon-row.arm-destroyed .wr-name { color: var(--red-alt) !important; }
 .weapon-row.arm-destroyed .wr-fill { background: rgba(180,0,0,0.4) !important; box-shadow: none !important; }
 
 /* Active-firing / powerup: glow on the BAR only */
 .weapon-row.active-firing .wr-bar-bg {
-    box-shadow: 0 0 8px rgba(0,230,255,0.75), 0 0 3px rgba(0,230,255,0.5);
+    box-shadow: 0 0 8px var(--hud-cyan-fire), 0 0 3px rgba(0,230,255,0.5);
     border-color: rgba(0,230,255,0.65) !important;
 }
 
@@ -87,11 +87,11 @@
 
 /* Slot prefix: "L.ARM" / "R.ARM" / "CORE" / "DEFENSE" */
 .wr-prefix {
-    font-size: 10px;
+    font-size: var(--text-sm);
     font-weight: bold;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 1px;
-    color: rgba(0,210,255,0.65);
+    font-family: var(--font-mono);
+    letter-spacing: var(--ls-1);
+    color: var(--hud-cyan-dim);
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -112,10 +112,10 @@
 
 /* Weapon / item name — warm off-white contrasts cyan prefix */
 .wr-name {
-    font-size: 11px;
+    font-size: var(--text-label);
     font-weight: bold;
-    font-family: 'Courier New', monospace;
-    letter-spacing: 1px;
+    font-family: var(--font-mono);
+    letter-spacing: var(--ls-1);
     color: rgba(220,235,220,0.88);
     text-transform: uppercase;
     white-space: nowrap;
@@ -131,7 +131,7 @@
     flex: 1;
     height: 13px;
     background: rgba(0,0,0,0.55);
-    border: 1px solid rgba(0,210,255,0.25);
+    border: 1px solid var(--hud-cyan-border);
     border-radius: 2px;
     position: relative;
     overflow: hidden;
@@ -147,19 +147,19 @@
     border-radius: 0;
     pointer-events: none;
     transition: width 0.05s linear;
-    background: rgba(0,225,255,0.88);
+    background: var(--hud-cyan-fill);
     box-shadow: inset 0 0 5px rgba(255,255,255,0.2);
 }
 
 .wr-status {
-    font-size: 10px;
-    font-family: 'Courier New', monospace;
+    font-size: var(--text-sm);
+    font-family: var(--font-mono);
     letter-spacing: 0.5px;
     text-align: right;
     width: 36px;
     flex-shrink: 0;
     padding-left: 6px;
-    color: rgba(0,210,255,0.7);
+    color: var(--hud-cyan-status);
 }
 
 

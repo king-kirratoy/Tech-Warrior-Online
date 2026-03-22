@@ -5,6 +5,79 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.27 — CSS typography utility classes
+
+**Date:** 2026-03-22
+
+Scanned all four CSS files (`base.css`, `hud.css`, `garage.css`, `menus.css`) and `index.html` for repeated heading and label patterns, then consolidated them into nine shared utility classes appended to `css/menus.css`. Classes defined: `.tw-heading` (cyan glow overlay title), `.tw-heading--gold` (gold glow panel title), `.tw-subheading` (dim-cyan subtitle), `.tw-label` (small uppercase section label), `.tw-label--dim` (tiny muted-cyan caption), `.tw-panel-title` (small-caps panel header with bottom border), `.tw-desc` (muted body/description text), `.tw-stat-value` (cyan glowing numeric readout), and `.tw-mono` (generic monospace reset). Every class uses only existing `base.css` design tokens — no new hardcoded values introduced. Migration comments (`/* uses .tw-XYZ pattern */`) were added to 12 candidate rules in `css/menus.css` (5) and `css/garage.css` (7) to mark them for future HTML-side adoption. The three round-HUD caption divs in `index.html` (`Round`, `Remaining`, `Destroyed`) — which were identical exact-match instances of the `.tw-label--dim` pattern — had their inline styles replaced with the utility class. No JS files were changed.
+
+### Files Changed
+
+- `css/menus.css` — 9 utility classes added in new TYPOGRAPHY UTILITY CLASSES section; 5 migration comments added to existing rules
+- `css/garage.css` — 7 migration comments added to existing rules
+- `index.html` — 3 inline style attributes replaced with `class="tw-label--dim"` (round HUD captions)
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.26 — JS UI_COLORS constant + inline style token migration
+
+**Date:** 2026-03-22
+
+Replaced all hardcoded color and font-family strings in JS template literal inline styles with a named `UI_COLORS` constant object, and replaced inline style colors in `index.html` with CSS `var(--token)` references.
+
+**`UI_COLORS` constant** added near the top of `js/campaign-system.js` and `js/menus.js` (identical object in both files). The constant replicates CSS tokens as JS strings since CSS custom properties cannot be read directly from JS without `getComputedStyle`. Names mirror `css/base.css` token names (e.g. `--gold` → `UI_COLORS.gold`, `--hud-cyan-status` → `UI_COLORS.hudCyan` etc.). Covers: gold family (14 alpha steps), cyan family (12 alpha steps), HUD cyan family (9 entries), green/teal family, red/danger family, orange/amber/purple, chassis accent colors, leaderboard-specific colors, text/neutral family (11 alpha steps), and surface/overlay values.
+
+**`js/campaign-system.js`** — All hardcoded color and `'Courier New', monospace` strings replaced with `UI_COLORS.*` references across: `showMissionSelect`, `showShop`, `showLoadoutSlots`, and `_showUpgradesPanel`. The rgba text-color base was normalized from the inconsistent 220-base to the canonical 217-base (`#c8d2d9`) throughout.
+
+**`js/menus.js`** — Same replacement across: `returnToHangar`, `_renderChassisSelect`, `_showItemDetail`, `_unequipItem` arm-picker, `_hpBar` / `_hpBarBoosted`, `renderStatsOverlay` chassis/traits panels, `_renderWeaponPanel`, `_renderMobilityPanel`, perk-chip renderer, `_renderGearBonusesPanel`, leaderboard renderer, and `_showCloudStatusToast`.
+
+**`index.html`** — Inline style attribute token migration: all `font-family:'Courier New',monospace` replaced with `font-family:var(--font-mono)` (21 occurrences); `background:#0c1014` with `var(--bg)`; `color:#00ffff` with `var(--cyan)`; `rgba(0,210,255,0.7)` with `var(--hud-cyan-status)`; `rgba(0,210,255,0.25)` with `var(--hud-cyan-border)`; `rgba(200,210,217,0.5)` with `var(--text-dim)`; `color:#00ff88` with `var(--green-accent)`; `color:#ffaa00` with `var(--amber)`; `color:#cc88ff` with `var(--purple)`; `color:#c8d2d9` with `var(--text)`; `#ffd700` border-left and gradient stops with `var(--gold)` and `var(--amber)`.
+
+### Files Changed
+
+- `js/campaign-system.js` — `UI_COLORS` constant added; all hardcoded color/font strings replaced in `showMissionSelect`, `showShop`, `showLoadoutSlots`, `_showUpgradesPanel`
+- `js/menus.js` — `UI_COLORS` constant added; all hardcoded color/font strings replaced across all rendering functions
+- `index.html` — inline style colors replaced with CSS `var(--token)` references; `font-family` literals replaced with `var(--font-mono)`
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.25 — CSS token system expansion across all CSS files
+
+**Date:** 2026-03-21
+
+Expanded the CSS design token system established in v5.24 by adding 50 new custom properties to the `:root` block in `css/base.css`, then systematically replacing hardcoded values across all four CSS files. New token groups cover text colors (`--text`, `--text-dim`), extended brand colors (`--amber`, `--yellow`, `--red-alt`, `--red-error`, `--red-critical`, `--green-pos`, `--teal`, `--teal-dim`, `--gold-dim`), a HUD cyan family distinct from the base cyan (`--hud-cyan`, `--hud-cyan-dim`, `--hud-cyan-status`, `--hud-cyan-border`, `--hud-cyan-fill`, `--hud-cyan-fire`), overlay surfaces (`--overlay-dark`, `--overlay-pause`, `--surface-deep`), font size steps (`--text-tiny` through `--text-h2`), letter-spacing steps (`--ls-1` through `--ls-6`), and spacing steps (`--space-xs` through `--space-xl`). All four CSS files were updated: `menus.css` replaces font sizes, letter-spacing values, background surfaces, and semantic colors throughout; `garage.css` replaces font sizes, letter-spacing, color literals (`#ffaa00`, `#ffdd00`, `#ff4466`, `#44ff88`, `#ff3300`, `#c8d2d9`, `rgba(10,14,20,0.98)`), and border token usages; `hud.css` replaces all four `'Courier New', monospace` declarations and all `rgba(0,210,255,…)` / `rgba(0,225,255,…)` literals with the new HUD cyan family tokens; `base.css` non-`:root` rules replace `#c8d2d9`, `13px`, `6px` letter-spacings, `rgba(255,215,0,0.35)`, and `#ff3300` in the `.tw-btn` system and legacy button fallback.
+
+### Files Changed
+
+- `css/base.css` — 50 new `:root` tokens added; non-`:root` rules updated: `body color`, `button color/font-size`, `.tw-btn` hover letter-spacings, `.tw-btn--gold` border-color, `.tw-btn--error` color/border/letter-spacing
+- `css/menus.css` — all font sizes, letter-spacings, surface backgrounds, and semantic colors replaced with tokens
+- `css/garage.css` — all font sizes, letter-spacings, color literals, and surface values replaced with tokens
+- `css/hud.css` — all `font-family: 'Courier New'`, HUD cyan color literals, `--red-alt` usage replaced with tokens
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.24 — CSS design system + button migration
+
+**Date:** 2026-03-21
+
+Introduced a CSS design token system in `css/base.css`: a `:root` block groups all brand colors (cyan, red, gold, green, orange, purple), surface levels, border variants, font stacks, button geometry constants, and named glow shadow values. A canonical `.tw-btn` component with five colour variants (`--danger`, `--gold`, `--green`, and the base cyan), three utility modifiers (`--sm`, `--block`, `--disabled`), and an `--error` overweight state replaces all ad-hoc button styling across the project; CSS hover handles letter-spacing and colour transitions so no `onmouseover`/`onmouseout` attributes are needed. All static buttons in `index.html` were migrated: the callsign Proceed button, chassis selector tabs, hangar Back and Deploy buttons, death-screen Hangar and Main Menu buttons, the in-game pause/MENU button, and the stats-overlay CLOSE button — all inline appearance styles and JS hover handlers removed. Dynamic buttons in `js/campaign-system.js` were migrated (showMissionSelect QUIT, action row, DEPLOY, shop BUY/RESTOCK/BACK, loadout slot LOAD/DELETE/SAVE/BACK, upgrades BACK) and `js/menus.js` (chassis-select START CAMPAIGN and BACK, item detail EQUIP/SCRAP/UNEQUIP); the equip-prompt OPEN INVENTORY and CONTINUE buttons in `js/perks.js` were also migrated. Item cards using dynamic rarity colours retain a minimal inline style for the border-left accent while dropping hover handlers. `css/menus.css` and `css/garage.css` were fully rewritten to consume the new design tokens via CSS variables.
+
+### Files Changed
+
+- `css/base.css` — complete rewrite: `:root` tokens, `.tw-btn` component with all variants, legacy `button` fallback
+- `css/menus.css` — complete rewrite: all rules now consume CSS variables from base.css; no duplicate button rules
+- `css/garage.css` — complete rewrite: all rules now consume CSS variables; `#deploy-btn` and `#hangar-mm-btn` reduced to layout-only overrides
+- `index.html` — 8 buttons migrated to `.tw-btn` class system; inline appearance styles and onmouseover/onmouseout removed
+- `js/campaign-system.js` — all dynamic buttons in showMissionSelect, showShop, showLoadoutSlots, _showUpgradesPanel, _renderChassisSelect migrated
+- `js/menus.js` — _renderChassisSelect and _showItemDetail buttons migrated
+- `js/perks.js` — equip-prompt OPEN INVENTORY and CONTINUE buttons migrated
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.23 — 7 UI fixes: background path, version display, button hover & layout
 
 **Date:** 2026-03-21
