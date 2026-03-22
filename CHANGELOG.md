@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.39 — Sci-fi campaign mission select rebuild
+
+**Date:** 2026-03-22
+
+Rebuilt the campaign mission select screen with a sci-fi split-panel layout. In `css/menus.css`: added a new CAMPAIGN MISSION SELECT section with `.cm-top` (top bar), `.cm-title`, `.cm-body` (flex row), `.cm-left` (240px scrollable chapter list) with `.cm-chapter` (`.active`, `.locked`, `-num`, `-name`, `-prog`), `.cm-main` (flex:1 column) with `.cm-mission` (`.selected`, `-num`, `-done`, `-name`, `-brief`, `-lv`, `-lv.boss`) and `.cm-bottom` (deploy bar) with `.cm-xp-bar` / `.cm-xp-fill`. In `js/campaign-system.js`: rewrote `showMissionSelect()` — old gold-themed inline styles replaced entirely with CSS classes; overlay padding/align overridden in JS for full-panel fit; top bar now holds Back, title, LV/XP span, Supply Shop, and Loadout buttons; chapters render as `.cm-chapter` divs with `active`/`locked` classes; missions render as `.cm-mission` divs with `selected` class; deploy button (`.tw-btn--solid`) only rendered when a mission is selected. All onclick handlers preserved.
+
+### Files Changed
+
+- `css/menus.css` — new campaign mission select layout classes
+- `js/campaign-system.js` — showMissionSelect() rewritten with sci-fi layout
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.38 — Sci-fi three-column hangar UI rebuild
 
 **Date:** 2026-03-22
