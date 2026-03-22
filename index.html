@@ -115,12 +115,12 @@
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu">
       <div class="hg-top">
-        <button id="hangar-mm-btn" class="tw-btn tw-btn--ghost tw-btn--sm" onclick="returnToMainMenu()">‹ Back</button>
-        <div style="flex:1;">
+        <button id="hangar-mm-btn" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;" onclick="returnToMainMenu()">‹ Back</button>
+        <div style="flex:1 1 auto;min-width:0;">
           <div class="hg-title" id="hangar-title">Mech Hangar</div>
           <div class="hg-subtitle" id="hangar-mode-label"></div>
         </div>
-        <button id="deploy-btn" class="tw-btn tw-btn--solid" style="width:auto;flex-shrink:0;" onclick="deployMech()">Deploy ›</button>
+        <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;" onclick="deployMech()">Deploy ›</button>
       </div>
       <div class="hg-body">
         <div class="hg-sidebar">

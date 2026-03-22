@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.46 — Inline styles on hangar and campaign top bar buttons to prevent stretching
+
+**Date:** 2026-03-22
+
+Applied explicit inline `style` attributes directly to flex children in the hangar and campaign top bars, since CSS class rules alone were insufficient. In `index.html`: `#hangar-mm-btn` and `#deploy-btn` both get `style="flex:0 0 auto;width:auto;"` so they never grow; the title/subtitle wrapper div gets `style="flex:1 1 auto;min-width:0;"` so it fills remaining space. In `js/campaign-system.js` inside `showMissionSelect()`: Back, Supply Shop, and Loadout buttons in the `.cm-top` HTML string all updated to `style="flex:0 0 auto;width:auto;"`; `.cm-title` div updated to `style="flex:1 1 auto;min-width:0;"`; Deploy button in `.cm-bottom` updated to `style="flex:0 0 auto;width:auto;margin-left:auto;"`. No CSS files were touched.
+
+### Files Changed
+
+- `index.html` — #hangar-mm-btn, title wrapper, #deploy-btn inline styles
+- `js/campaign-system.js` — cm-top and cm-bottom button inline styles
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.45 — CSS child-selector rules to prevent top bar button stretching
 
 **Date:** 2026-03-22
