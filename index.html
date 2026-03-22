@@ -131,7 +131,6 @@
               <button id="c-medium" class="mp-chassis-btn" onclick="setChassis('medium')">Medium</button>
               <button id="c-heavy"  class="mp-chassis-btn" onclick="setChassis('heavy')">Heavy</button>
             </div>
-            <div class="mp-sec-label" style="margin-top:12px;">Colour</div>
             <div class="mp-dd-row">
               <span class="mp-dd-label">Colour</span>
               <div id="ddw-C" class="dd-wrap" style="flex:1;">
@@ -466,33 +465,36 @@
     <!-- ─── LEFT COLUMN (260px, scrollable) ─── -->
     <div class="lo-left">
 
-      <!-- Chassis name row (above Hull Integrity, no section wrapper) -->
+      <!-- Chassis name row -->
       <div id="lo-chassis-row" class="lo-chassis-row"></div>
 
-      <!-- 1. Hull Integrity -->
-      <div class="lo-sec">
-        <div class="lo-sec-title">Hull Integrity</div>
-        <div id="lo-hull-info"></div>
-      </div>
+      <!-- Totals: Total HP + Total Shield -->
+      <div id="lo-totals-block" class="lo-totals-block"></div>
 
-      <!-- 2. Mech Stats -->
-      <div class="lo-sec">
-        <div class="lo-sec-title">Mech Stats</div>
-        <div id="stat-mobility-info"></div>
-      </div>
+      <div class="lo-divider"></div>
+
+      <!-- HP bars: Core, L Arm, R Arm, Legs -->
+      <div id="lo-hull-info" class="lo-block"></div>
+
+      <div class="lo-divider"></div>
+
+      <!-- Mech Stats rows -->
+      <div id="stat-mobility-info" class="lo-block"></div>
+
+      <div class="lo-divider"></div>
 
       <!-- Weapon stats placeholder (written by _renderWeaponPanel, hidden in new layout) -->
       <div id="stat-weapons-info" style="display:none;"></div>
       <!-- Run stats placeholder (written by _renderRunStatsPanel, hidden in new layout) -->
       <div id="stat-run-info" style="display:none;"></div>
 
-      <!-- 4. Gear Bonuses (hidden when no gear equipped) -->
+      <!-- Gear Bonuses (hidden when no gear equipped) -->
       <div id="stat-gear-panel" class="lo-sec" style="display:none;">
         <div class="lo-sec-title">Gear Bonuses</div>
         <div id="stat-gear-info"></div>
       </div>
 
-      <!-- 5. Active Perks (warzone / simulation only) -->
+      <!-- Active Perks (warzone / simulation only) -->
       <div id="lo-perks-section" class="lo-sec">
         <div class="lo-sec-title">Active Perks</div>
         <div id="stat-perks-info" style="display:flex;flex-wrap:wrap;gap:6px;"></div>

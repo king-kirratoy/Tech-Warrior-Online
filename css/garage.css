@@ -544,8 +544,8 @@
   flex: 1;
   flex-direction: column;
   gap: 10px;
-  justify-content: center;
-  padding: 20px;
+  justify-content: flex-start;
+  padding: 10px 20px;
 }
 
 
@@ -641,7 +641,7 @@
 }
 
 .lo-xp-fill {
-  background: #ffd166;
+  background: var(--sci-cyan);
   height: 100%;
 }
 
@@ -689,6 +689,21 @@
   border-bottom: 1px solid rgba(255,255,255,0.07);
   flex-shrink: 0;
   padding: 14px 18px;
+}
+
+.lo-block {
+  flex-shrink: 0;
+  padding: 10px 18px 8px;
+}
+
+.lo-totals-block {
+  flex-shrink: 0;
+  padding: 8px 18px 4px;
+}
+
+.lo-divider {
+  border-bottom: 1px solid var(--sci-line);
+  flex-shrink: 0;
 }
 
 .lo-sec-title {
@@ -1008,9 +1023,9 @@
   top: 2px;
 }
 
-/* Doll slots — absolutely positioned, width matches backpack cell (10-col grid) */
+/* Doll slots — absolutely positioned, square, width matches backpack cell (10-col grid) */
 .lo-doll-wrap .lo-slot {
-  aspect-ratio: unset;
+  aspect-ratio: 1;
   height: auto;
   position: absolute;
   width: calc((100% - 68px) / 10);
