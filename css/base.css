@@ -1,115 +1,138 @@
 /* ============================================================
-   CSS DESIGN TOKENS
+   BASE / RESET — Tech Warrior Online
    ============================================================ */
+
+/* --- CSS Design Tokens --- */
 :root {
-  /* ── Brand Colors ── */
-  --cyan:         #00ffff;
-  --cyan-dim:     rgba(0, 255, 255, 0.35);
-  --cyan-mid:     rgba(0, 255, 255, 0.55);
-  --cyan-glow:    rgba(0, 255, 255, 0.2);
-  --red:          rgba(255, 80, 80, 0.9);
-  --red-dim:      rgba(255, 80, 80, 0.35);
-  --red-glow:     rgba(255, 80, 80, 0.2);
-  --gold:         #ffd700;
-  --gold-glow:    rgba(255, 200, 0, 0.25);
-  --green-accent: #00ff88;
-  --orange:       #ff8844;
-  --purple:       #cc88ff;
+  /* Brand Colors */
+  --cyan:          #00ffff;
+  --cyan-dim:      rgba(0,255,255,0.45);
+  --cyan-mid:      rgba(0,255,255,0.7);
+  --cyan-glow:     rgba(0,255,255,0.25);
+  --red:           #ff5050;
+  --red-dim:       rgba(255,80,80,0.45);
+  --red-glow:      rgba(255,80,80,0.25);
+  --gold:          #ffd700;
+  --gold-glow:     rgba(255,215,0,0.25);
+  --green-accent:  #00ff88;
+  --orange:        #ff8844;
+  --purple:        #cc88ff;
 
-  /* ── Surfaces ── */
-  --bg:           #0c1014;
-  --surface:      rgba(12, 16, 20, 0.85);
-  --surface-dim:  rgba(255, 255, 255, 0.04);
-  --surface-hover:rgba(0, 255, 255, 0.07);
-  --surface-active:rgba(0, 255, 255, 0.10);
+  /* Surfaces */
+  --bg:             #0c1014;
+  --surface:        rgba(255,255,255,0.04);
+  --surface-dim:    rgba(12,16,20,0.92);
+  --surface-hover:  rgba(0,255,255,0.08);
+  --surface-active: rgba(0,255,255,0.12);
 
-  /* ── Borders ── */
-  --border:       rgba(255, 255, 255, 0.10);
-  --border-cyan:  rgba(0, 255, 255, 0.35);
-  --border-cyan-bright: rgba(0, 255, 255, 0.70);
-  --border-red:   rgba(255, 80, 80, 0.35);
-  --border-red-bright: rgba(255, 80, 80, 0.70);
+  /* Borders */
+  --border:             rgba(255,255,255,0.1);
+  --border-cyan:        rgba(0,255,255,0.35);
+  --border-cyan-bright: rgba(0,255,255,0.9);
+  --border-red:         rgba(255,80,80,0.35);
+  --border-red-bright:  rgba(255,80,80,0.9);
 
-  /* ── Typography ── */
-  --font-mono:    'Courier New', monospace;
-  --font-ui:      'Verdana', 'Segoe UI', sans-serif;
+  /* Typography */
+  --font-mono: 'Courier New', monospace;
+  --font-ui:   'Verdana', 'Segoe UI', sans-serif;
 
-  /* ── Button Geometry ── */
-  /* Menu-scale: main menu, death screen, leaderboard, pause */
-  --btn-padding:              13px 36px;
-  --btn-font-size:            13px;
-  --btn-letter-spacing:       4px;
-  --btn-letter-spacing-hover: 6px;
-  /* Panel-scale: hangar, campaign screens, shop, loadout */
-  --btn-padding-sm:              9px 20px;
-  --btn-font-size-sm:            11px;
-  --btn-letter-spacing-sm:       3px;
-  --btn-letter-spacing-sm-hover: 5px;
+  /* Button Geometry */
+  --btn-padding:         11px 32px;
+  --btn-padding-sm:      7px 18px;
+  --btn-letter-spacing:  4px;
+  --btn-font-size:       13px;
+  --btn-font-size-sm:    11px;
 
-  /* ── Glows — sharp and intentional ── */
-  --glow-cyan-sm:   0 0 8px  rgba(0, 255, 255, 0.15);
-  --glow-cyan-md:   0 0 16px rgba(0, 255, 255, 0.25);
-  --glow-cyan-lg:   0 0 28px rgba(0, 255, 255, 0.35);
-  --glow-red-sm:    0 0 8px  rgba(255, 80, 80, 0.15);
-  --glow-red-md:    0 0 16px rgba(255, 80, 80, 0.25);
-  --glow-red-lg:    0 0 28px rgba(255, 80, 80, 0.35);
-  --glow-gold-sm:   0 0 8px  rgba(255, 215, 0, 0.15);
-  --glow-gold-lg:   0 0 28px rgba(255, 215, 0, 0.35);
-  --glow-green-sm:  0 0 8px  rgba(0, 255, 136, 0.15);
-  --glow-green-lg:  0 0 28px rgba(0, 255, 136, 0.35);
+  /* Glows */
+  --glow-cyan-sm: 0 0 10px rgba(0,255,255,0.15);
+  --glow-cyan-md: 0 0 20px rgba(0,255,255,0.25);
+  --glow-cyan-lg: 0 0 40px rgba(0,255,255,0.4);
+  --glow-red-sm:  0 0 10px rgba(255,80,80,0.15);
+  --glow-red-md:  0 0 20px rgba(255,80,80,0.25);
+  --glow-red-lg:  0 0 40px rgba(255,80,80,0.4);
 
-  /* ── Text Glows ── */
-  --text-glow-cyan:  0 0 8px rgba(0, 255, 255, 0.70);
-  --text-glow-red:   0 0 8px rgba(255, 80, 80, 0.70);
-  --text-glow-gold:  0 0 8px rgba(255, 215, 0, 0.70);
-  --text-glow-green: 0 0 8px rgba(0, 255, 136, 0.70);
-  --text-glow-white: 0 0 8px rgba(255, 255, 255, 0.50);
+  /* ── Text ── */
+  --text:     #c8d2d9;
+  --text-dim: rgba(200,210,217,0.5);
 
-  /* ── Extra Border Tokens ── */
-  --border-gold:         rgba(255, 215, 0, 0.40);
-  --border-gold-bright:  rgba(255, 215, 0, 0.80);
-  --border-green:        rgba(0, 255, 136, 0.35);
-  --border-green-bright: rgba(0, 255, 136, 0.75);
+  /* ── Extended Brand Colors ── */
+  --amber:        #ffaa00;
+  --yellow:       #ffdd00;
+  --red-alt:      #ff4444;
+  --red-error:    #ff3300;
+  --red-critical: #ff4466;
+  --green-pos:    #44ff88;
+  --teal:         #00ffcc;
+  --teal-dim:     rgba(0,255,200,0.12);
+  --gold-dim:     rgba(255,215,0,0.35);
 
-/* ============================================================
-   RESET / BASE
-   ============================================================ */
+  /* ── HUD Cyan Family ── */
+  --hud-cyan:        rgba(0,210,255,1);
+  --hud-cyan-dim:    rgba(0,210,255,0.65);
+  --hud-cyan-status: rgba(0,210,255,0.7);
+  --hud-cyan-border: rgba(0,210,255,0.25);
+  --hud-cyan-fill:   rgba(0,225,255,0.88);
+  --hud-cyan-fire:   rgba(0,230,255,0.75);
+
+  /* ── Overlay Surfaces ── */
+  --overlay-dark:  rgba(5,8,12,0.96);
+  --overlay-pause: rgba(0,0,0,0.7);
+  --surface-deep:  rgba(10,14,20,0.98);
+
+  /* ── Font Sizes ── */
+  --text-tiny:  8px;
+  --text-xs:    9px;
+  --text-sm:   10px;
+  --text-label:11px;
+  --text-md:   12px;
+  --text-base: 13px;
+  --text-lg:   14px;
+  --text-xl:   15px;
+  --text-h3:   24px;
+  --text-h2:   28px;
+
+  /* ── Letter Spacing ── */
+  --ls-1: 1px;
+  --ls-2: 2px;
+  --ls-3: 3px;
+  --ls-4: 4px;
+  --ls-6: 6px;
+
+  /* ── Spacing ── */
+  --space-xs:  6px;
+  --space-sm:  8px;
+  --space-md: 14px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+}
+
+/* --- Reset --- */
 * { box-sizing: border-box; }
 
 body {
   background: var(--bg);
-  color: #c8d2d9;
+  color: var(--text);
   font-family: var(--font-ui);
   margin: 0;
   overflow: hidden;
 }
 
+/* --- Scrollbar --- */
 ::-webkit-scrollbar       { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: #0f0; }
+::-webkit-scrollbar-thumb { background: var(--cyan); }
 
 /* ============================================================
-   CANONICAL BUTTON COMPONENT  (.tw-btn)
-   ============================================================
-   Two size tiers:
-     .tw-btn        — menu scale (main menu, death screen, pause)
-     .tw-btn--sm    — panel scale (hangar, campaign, shop, loadout)
-
-   Hover contract (ALL variants):
-     - Border brightens and sharpens
-     - Text glows and expands letter-spacing slightly
-     - Background gets a subtle color wash
-     - Box shadow intensifies
-     - Button box NEVER changes size or position
+   .tw-btn — CANONICAL BUTTON COMPONENT
    ============================================================ */
 
-/* --- Base: menu-scale cyan --- */
+/* --- Base cyan variant --- */
 .tw-btn {
   background: transparent;
   border: 1px solid var(--border-cyan);
-  border-bottom: 2px solid var(--border-cyan-bright);
-  border-top: 2px solid var(--border-cyan-bright);
-  box-shadow: var(--glow-cyan-sm);
+  border-bottom: 2px solid var(--cyan-mid);
+  border-top: 2px solid var(--cyan-mid);
+  box-shadow: 0 0 20px rgba(0,255,255,0.08), inset 0 0 20px rgba(0,255,255,0.03);
   color: var(--cyan);
   cursor: pointer;
   display: inline-block;
@@ -117,214 +140,131 @@ body {
   font-size: var(--btn-font-size);
   letter-spacing: var(--btn-letter-spacing);
   padding: var(--btn-padding);
-  text-align: center;
-  text-shadow: none;
   text-transform: uppercase;
-  transition:
-    background     0.2s ease,
-    border-color   0.2s ease,
-    box-shadow     0.2s ease,
-    color          0.2s ease,
-    letter-spacing 0.2s ease,
-    text-shadow    0.2s ease;
+  transition: all 0.25s ease;
   white-space: nowrap;
 }
 
 .tw-btn:hover {
-  background:     rgba(0, 255, 255, 0.06);
-  border-color:   rgba(0, 255, 255, 0.85);
-  box-shadow:     var(--glow-cyan-lg);
-  color:          #fff;
-  letter-spacing: var(--btn-letter-spacing-hover);
-  text-shadow:    var(--text-glow-white);
+  background: var(--surface-hover);
+  border-color: var(--border-cyan-bright);
+  box-shadow: var(--glow-cyan-lg), inset 0 0 20px rgba(0,255,255,0.08);
+  color: #fff;
+  letter-spacing: var(--ls-6);
 }
 
-.tw-btn:focus        { outline: none; }
-.tw-btn:disabled,
-.tw-btn.tw-btn--disabled {
-  cursor:         not-allowed;
-  opacity:        0.35;
-  pointer-events: none;
-}
-
-/* --- Danger / Red variant --- */
+/* --- Danger (red) variant --- */
 .tw-btn--danger {
-  border-color:        var(--border-red);
-  border-bottom-color: var(--border-red-bright);
-  border-top-color:    var(--border-red-bright);
-  box-shadow:          var(--glow-red-sm);
-  color:               var(--red);
+  border-color: var(--border-red);
+  border-bottom-color: rgba(255,80,80,0.7);
+  border-top-color: rgba(255,80,80,0.7);
+  box-shadow: 0 0 10px rgba(255,80,80,0.06);
+  color: rgba(255,100,100,0.9);
 }
 
 .tw-btn--danger:hover {
-  background:     rgba(255, 80, 80, 0.06);
-  border-color:   rgba(255, 80, 80, 0.85);
-  box-shadow:     var(--glow-red-lg);
-  color:          #fff;
-  letter-spacing: var(--btn-letter-spacing-hover);
-  text-shadow:    var(--text-glow-white);
+  background: rgba(255,80,80,0.08);
+  border-color: var(--border-red-bright);
+  box-shadow: var(--glow-red-lg);
+  color: #fff;
+  letter-spacing: var(--ls-6);
 }
 
-/* --- Gold / Campaign variant --- */
+/* --- Gold variant --- */
 .tw-btn--gold {
-  border-color:        var(--border-gold);
-  border-bottom-color: var(--border-gold-bright);
-  border-top-color:    var(--border-gold-bright);
-  box-shadow:          var(--glow-gold-sm);
-  color:               var(--gold);
+  border-color: var(--gold-dim);
+  border-bottom-color: rgba(255,215,0,0.7);
+  border-top-color: rgba(255,215,0,0.7);
+  box-shadow: 0 0 10px rgba(255,215,0,0.06);
+  color: var(--gold);
 }
 
 .tw-btn--gold:hover {
-  background:     rgba(255, 215, 0, 0.06);
-  border-color:   rgba(255, 215, 0, 0.85);
-  box-shadow:     var(--glow-gold-lg);
-  color:          #fff;
-  letter-spacing: var(--btn-letter-spacing-hover);
-  text-shadow:    var(--text-glow-white);
+  background: rgba(255,215,0,0.08);
+  border-color: var(--gold);
+  box-shadow: 0 0 40px rgba(255,215,0,0.4);
+  color: #fff;
+  letter-spacing: var(--ls-6);
 }
 
-/* --- Green / Upgrades variant --- */
+/* --- Green variant --- */
 .tw-btn--green {
-  border-color:        var(--border-green);
-  border-bottom-color: var(--border-green-bright);
-  border-top-color:    var(--border-green-bright);
-  box-shadow:          var(--glow-green-sm);
-  color:               var(--green-accent);
+  border-color: rgba(0,255,136,0.35);
+  border-bottom-color: rgba(0,255,136,0.7);
+  border-top-color: rgba(0,255,136,0.7);
+  box-shadow: 0 0 10px rgba(0,255,136,0.06);
+  color: var(--green-accent);
 }
 
 .tw-btn--green:hover {
-  background:     rgba(0, 255, 136, 0.06);
-  border-color:   rgba(0, 255, 136, 0.85);
-  box-shadow:     var(--glow-green-lg);
-  color:          #fff;
-  letter-spacing: var(--btn-letter-spacing-hover);
-  text-shadow:    var(--text-glow-white);
+  background: rgba(0,255,136,0.08);
+  border-color: var(--green-accent);
+  box-shadow: 0 0 40px rgba(0,255,136,0.4);
+  color: #fff;
+  letter-spacing: var(--ls-6);
 }
 
-/* --- Small variant: panel-scale --- */
-/* Combine with a color variant: .tw-btn.tw-btn--sm or .tw-btn--danger.tw-btn--sm */
+/* --- Small variant --- */
 .tw-btn--sm {
-  font-size:      var(--btn-font-size-sm);
-  letter-spacing: var(--btn-letter-spacing-sm);
-  padding:        var(--btn-padding-sm);
+  font-size: var(--btn-font-size-sm);
+  padding: var(--btn-padding-sm);
 }
 
-.tw-btn--sm:hover {
-  letter-spacing: var(--btn-letter-spacing-sm-hover);
-}
-
-/* --- Full-width block --- */
+/* --- Block variant --- */
 .tw-btn--block {
-  display:         flex;
-  justify-content: center;
-  width:           100%;
-}
-
-/* --- Left-aligned (main menu list) --- */
-.tw-btn--left {
-  text-align: left;
-  width:      340px;
-}
-
-/* --- Error / overweight state --- */
-.tw-btn--error {
-  border-color:        #ff3300 !important;
-  border-bottom-color: #ff3300 !important;
-  border-top-color:    #ff3300 !important;
-  box-shadow:          inset 0 0 10px rgba(255, 50, 0, 0.2) !important;
-  color:               #ff3300 !important;
-  cursor:              not-allowed !important;
-  letter-spacing:      2px !important;
-}
-
-.tw-btn--error:hover {
-  background:  rgba(255, 50, 0, 0.08) !important;
-  text-shadow: none !important;
-}
-
-/* ============================================================
-   JS-GENERATED DYNAMIC BUTTON NORMALIZATION
-   campaign-system.js, menus.js, etc. build buttons via innerHTML
-   with inline styles. These shared utility classes let JS code
-   apply consistent theming without string-surgery on every call.
-   ============================================================ */
-
-/* Mission-list entry buttons */
-.tw-mission-btn {
-  border-radius: 4px;
-  cursor: pointer;
+  align-items: center;
   display: flex;
-  font-family: var(--font-mono);
-  outline: none;
-  text-align: left;
-  transition: all 0.2s ease;
+  justify-content: center;
   width: 100%;
 }
 
-/* Chapter tab buttons in mission select */
-.tw-chapter-tab {
-  border: 1px solid;
-  cursor: pointer;
-  flex: 1;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 1px;
-  outline: none;
-  padding: 10px 8px;
-  text-transform: uppercase;
-  transition: all 0.2s ease;
+/* --- Disabled state --- */
+.tw-btn--disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+  pointer-events: none;
 }
 
-/* Action row buttons (Supply Shop, Upgrades, Loadout, etc.) */
-.tw-action-btn {
-  border-radius: 2px;
-  cursor: pointer;
-  flex: 1;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 2px;
-  outline: none;
-  padding: 10px 16px;
-  text-align: center;
-  text-transform: uppercase;
-  transition: all 0.2s ease;
-}
-
-.tw-action-btn:hover {
-  color: #fff;
-  letter-spacing: 3px;
+/* --- Error/overweight state --- */
+.tw-btn--error {
+  background: rgba(255,50,0,0.1) !important;
+  border: 1px solid var(--red-error) !important;
+  border-bottom: 2px solid var(--red-error) !important;
+  border-top: 2px solid var(--red-error) !important;
+  box-shadow: inset 0 0 10px rgba(255,50,0,0.2);
+  color: var(--red-error) !important;
+  cursor: not-allowed;
+  letter-spacing: var(--ls-2) !important;
 }
 
 /* ============================================================
-   LEGACY INLINE BUTTON OVERRIDE
-   Keeps old `button` tags that haven't been migrated yet
-   from breaking visually.
+   LEGACY button FALLBACK — unmigrated buttons
    ============================================================ */
 button {
-  background: var(--surface-dim);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
   border-left: 3px solid transparent;
-  color: #c8d2d9;
+  color: var(--text);
   cursor: pointer;
   flex: 1;
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--text-base);
   padding: 10px 12px;
   text-align: left;
   transition: all 0.2s ease;
 }
 
 button:hover {
-  background: var(--surface-hover);
-  border-color: rgba(0, 255, 255, 0.30);
+  background: rgba(0,255,255,0.07);
+  border-color: rgba(0,255,255,0.3);
   color: #fff;
 }
 
 button.active {
-  background: var(--surface-active);
-  border-color: rgba(0, 255, 255, 0.50);
-  border-left: 3px solid var(--cyan);
-  box-shadow: inset 8px 0 15px rgba(0, 255, 255, 0.06), var(--glow-cyan-sm);
+  background: rgba(0,255,255,0.1);
+  border-color: rgba(0,255,255,0.5);
+  border-left: 3px solid #00ffff;
+  box-shadow: inset 8px 0 15px rgba(0,255,255,0.06), 0 0 8px rgba(0,255,255,0.1);
   color: #fff;
-  text-shadow: 0 0 6px rgba(0, 255, 255, 0.40);
+  text-shadow: 0 0 6px rgba(0,255,255,0.4);
 }
