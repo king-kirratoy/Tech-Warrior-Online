@@ -974,8 +974,22 @@ function populateInventory() {
                 cell.addEventListener('dragstart', (ev) => {
                     ev.dataTransfer.setData('text/plain', 'backpack:' + idx);
                     cell.classList.add('dragging');
+                    // Highlight valid/invalid equip slots (Fix 4)
+                    const validSlots = _getDragValidSlots(item);
+                    document.querySelectorAll('.mech-equip-slot').forEach(slot => {
+                        if (validSlots.includes(slot.dataset.slot)) {
+                            slot.classList.add('drag-valid');
+                        } else {
+                            slot.classList.add('drag-invalid');
+                        }
+                    });
                 });
-                cell.addEventListener('dragend', () => cell.classList.remove('dragging'));
+                cell.addEventListener('dragend', () => {
+                    cell.classList.remove('dragging');
+                    document.querySelectorAll('.mech-equip-slot').forEach(slot => {
+                        slot.classList.remove('drag-valid', 'drag-invalid');
+                    });
+                });
                 bpEl.appendChild(cell);
             });
         }
@@ -1082,6 +1096,13 @@ function _getSlotForItem(item) {
         shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment'
     };
     return map[item.baseType] || null;
+}
+
+/** Returns the list of data-slot values that accept this item during drag. */
+function _getDragValidSlots(item) {
+    if (item.baseType === 'weapon') return ['L', 'R'];
+    const slot = _getSlotForItem(item);
+    return slot ? [slot] : [];
 }
 
 function _equipItem(invIdx) {

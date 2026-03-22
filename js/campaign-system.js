@@ -1366,8 +1366,11 @@ function shopSellItem(invIdx) {
     return price;
 }
 
-/** Currently selected shop item index (null = none). */
+/** Currently selected shop buy-item index (null = none). */
 let _selectedShopIdx = null;
+
+/** Currently selected shop sell-item index (null = none). */
+let _selectedSellIdx = null;
 
 /** Rarity colors used throughout the shop renderer. */
 const _shopRarityColors = {
@@ -1409,38 +1412,83 @@ function showShop() {
     if (_shopStock.length === 0) refreshShopStock();
 
     // Reset overlay to full-panel layout
-    overlay.style.padding       = '0';
-    overlay.style.alignItems    = 'stretch';
+    overlay.style.padding        = '0';
+    overlay.style.alignItems     = 'stretch';
     overlay.style.justifyContent = 'flex-start';
-    overlay.style.overflowY     = 'hidden';
+    overlay.style.overflowY      = 'hidden';
 
-    const rc = (item) => _shopRarityColors[item?.rarity] || _shopRarityColors.common;
+    const rc          = (item) => _shopRarityColors[item?.rarity] || _shopRarityColors.common;
     const restockCost = Math.max(10, Math.round(_campaignState.playerLevel * 5));
     const canRestock  = (typeof _scrap !== 'undefined') && _scrap >= restockCost;
     const invMax      = typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30;
     const scrapVal    = typeof _scrap !== 'undefined' ? _scrap : 0;
 
-    // ── Slot mapping: item.baseType → _equipped key ──
+    // ── Slot mappings (Fix 2 + Fix 3) ──
     const _baseTypeToSlot = {
-        armor: 'chest', arms: 'arms', legs: 'legs',
-        shield: 'shield', mod: 'mod', augment: 'augment'
+        armor:         'chest',
+        arms:          'arms',
+        legs:          'legs',
+        shield:        'shield',
+        mod:           'mod',
+        augment:       'augment',
+        shield_system: 'shield',
+        mod_system:    'mod',
+        leg_system:    'legs',
+        aug_system:    'augment'
     };
-    const _slotDisplayNames = {
-        chest: 'Chest', arms: 'Arms', legs: 'Legs',
-        shield: 'Shield', mod: 'Mod', augment: 'Augment'
+    // Friendly slot labels per baseType (Fix 3)
+    const _shopSlotLabels = {
+        weapon:        'L ARM / R ARM',
+        armor:         'ARMOR',
+        arms:          'ARMS',
+        legs:          'LEGS',
+        shield:        'SHIELD',
+        mod:           'CPU',
+        augment:       'AUGMENT',
+        shield_system: 'SHIELD',
+        mod_system:    'CPU',
+        leg_system:    'LEGS',
+        aug_system:    'AUGMENT'
     };
+    const slotLbl = (item) => _shopSlotLabels[item?.baseType] || (item?.baseType || '');
 
-    // ── Build item row HTML ──
+    // ── Stat card helper for side-by-side comparison (Fix 2) ──
+    function _itemStatCard(item, cardLabel) {
+        const itemRc  = rc(item);
+        const typeLbl = slotLbl(item);
+        const meta    = `${item.rarity || 'common'} · ${typeLbl} · LV.${item.level || 1}`;
+        const stats   = _shopItemTotal(item);
+        const entries = Object.entries(stats).filter(([, v]) => v !== 0);
+        let h = `<div style="flex:1;min-width:0;background:rgba(0,0,0,0.25);border:1px solid var(--sci-line);border-radius:3px;padding:10px 12px;">`;
+        if (cardLabel) {
+            h += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);margin-bottom:4px;text-transform:uppercase;">${cardLabel}</div>`;
+        }
+        h += `<div style="font-size:11px;letter-spacing:1px;color:${itemRc};margin-bottom:2px;">${item.name || 'Item'}</div>`;
+        h += `<div style="font-size:9px;color:var(--sci-txt3);margin-bottom:8px;">${meta}</div>`;
+        entries.forEach(([k, v]) => {
+            h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
+            h += `<span style="color:var(--sci-txt2);">${_shopStatNames[k] || k}</span>`;
+            h += `<span style="color:var(--sci-txt);">${v}</span>`;
+            h += `</div>`;
+        });
+        if (!entries.length) {
+            h += `<div style="font-size:9px;color:var(--sci-txt3);">No stats</div>`;
+        }
+        h += `</div>`;
+        return h;
+    }
+
+    // ── Item row builders ──
     function buyRow(item, idx) {
         const isSelected = (_selectedShopIdx === idx);
-        const typeLbl = item.baseType
-            ? (_slotDisplayNames[item.baseType] || item.baseType)
-            : (item.type || '');
-        const meta = `${(item.rarity || 'common')} · ${typeLbl} · LV.${item.level || 1}`;
+        const meta = `${item.rarity || 'common'} · ${slotLbl(item)} · LV.${item.level || 1}`;
+        const soldBadge = item._soldBack
+            ? `<span style="font-size:8px;letter-spacing:1px;color:var(--sci-txt3);background:rgba(255,255,255,0.06);border-radius:2px;padding:1px 4px;margin-left:6px;">SOLD</span>`
+            : '';
         return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelect(${idx})">
             <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
             <div class="shop-item-info">
-                <div class="shop-item-name" style="color:${rc(item)};">${item.name || 'Item'}</div>
+                <div class="shop-item-name" style="color:${rc(item)};">${item.name || 'Item'}${soldBadge}</div>
                 <div class="shop-item-meta">${meta}</div>
             </div>
             <div class="shop-item-price">⬡ ${item._shopPrice}</div>
@@ -1448,11 +1496,9 @@ function showShop() {
     }
 
     function sellRow(item, idx) {
-        const typeLbl = item.baseType
-            ? (_slotDisplayNames[item.baseType] || item.baseType)
-            : (item.type || '');
-        const meta = `${(item.rarity || 'common')} · ${typeLbl} · LV.${item.level || 1}`;
-        return `<div class="shop-item-row" onclick="_shopSell(${idx})">
+        const isSelected = (_selectedSellIdx === idx);
+        const meta = `${item.rarity || 'common'} · ${slotLbl(item)} · LV.${item.level || 1}`;
+        return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelectSell(${idx})">
             <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
             <div class="shop-item-info">
                 <div class="shop-item-name" style="color:${rc(item)};">${item.name || 'Item'}</div>
@@ -1462,57 +1508,65 @@ function showShop() {
         </div>`;
     }
 
-    // ── Detail + comparison panel ──
+    // ── Buy detail panel (Fix 2 + Fix 3) ──
     let detailHtml = '';
     if (_selectedShopIdx !== null && _selectedShopIdx < _shopStock.length) {
-        const selItem = _shopStock[_selectedShopIdx];
-        const itemRc  = rc(selItem);
-        const canBuy  = scrapVal >= selItem._shopPrice && (typeof _inventory === 'undefined' || _inventory.length < invMax);
-
-        const slotKey     = _baseTypeToSlot[selItem.baseType] || null;
+        const selItem      = _shopStock[_selectedShopIdx];
+        const itemRc       = rc(selItem);
+        const canBuy       = scrapVal >= selItem._shopPrice && (typeof _inventory === 'undefined' || _inventory.length < invMax);
+        const slotKey      = _baseTypeToSlot[selItem.baseType] || null;
         const equippedItem = (slotKey && typeof _equipped !== 'undefined') ? (_equipped[slotKey] || null) : null;
-        const newStats    = _shopItemTotal(selItem);
-        const oldStats    = equippedItem ? _shopItemTotal(equippedItem) : {};
-        const allKeys     = [...new Set([...Object.keys(newStats), ...Object.keys(oldStats)])];
-        const hasEquipped = !!equippedItem;
-
-        const typeLbl = selItem.baseType
-            ? (_slotDisplayNames[selItem.baseType] || selItem.baseType)
-            : (selItem.type || '');
-        const meta = `${(selItem.rarity || 'common')} ${typeLbl} · LV.${selItem.level || 1} · ⬡ ${selItem._shopPrice}`;
+        const newStats     = _shopItemTotal(selItem);
+        const oldStats     = equippedItem ? _shopItemTotal(equippedItem) : {};
+        const allKeys      = [...new Set([...Object.keys(newStats), ...Object.keys(oldStats)])];
+        const slotLabel    = slotLbl(selItem);
 
         detailHtml += `<div class="shop-detail-panel">`;
-        detailHtml += `<div class="shop-detail-name" style="color:${itemRc};">${selItem.name || 'Item'}</div>`;
-        detailHtml += `<div class="shop-detail-meta">${meta}</div>`;
 
-        if (allKeys.length > 0) {
-            const gridCls = hasEquipped ? 'shop-compare-grid' : 'shop-compare-grid no-equipped';
-            detailHtml += `<div class="${gridCls}">`;
-            // Header row
-            detailHtml += `<div class="shop-compare-header">Stat</div>`;
-            if (hasEquipped) detailHtml += `<div class="shop-compare-header">Equipped</div>`;
-            detailHtml += `<div class="shop-compare-header">New</div>`;
-            if (hasEquipped) detailHtml += `<div class="shop-compare-header">Diff</div>`;
+        // Slot label (Fix 3)
+        if (slotLabel) {
+            detailHtml += `<div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:4px;">${slotLabel}</div>`;
+        }
 
-            allKeys.forEach(k => {
-                const o = oldStats[k] || 0;
-                const n = newStats[k] || 0;
-                if (o === 0 && n === 0) return;
-                const diff = n - o;
-                const diffCls = diff > 0 ? 'pos' : diff < 0 ? 'neg' : 'neu';
-                const diffStr = diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : '—';
-                detailHtml += `<div class="shop-compare-label">${_shopStatNames[k] || k}</div>`;
-                if (hasEquipped) detailHtml += `<div class="shop-compare-val">${o}</div>`;
-                detailHtml += `<div class="shop-compare-new">${n}</div>`;
-                if (hasEquipped) detailHtml += `<div class="shop-compare-diff ${diffCls}">${diffStr}</div>`;
-            });
+        if (equippedItem) {
+            // Two cards side by side (Fix 2)
+            detailHtml += `<div style="display:flex;gap:12px;margin-bottom:10px;">`;
+            detailHtml += _itemStatCard(selItem, 'New');
+            detailHtml += _itemStatCard(equippedItem, 'Equipped');
             detailHtml += `</div>`;
-
-            if (hasEquipped) {
-                detailHtml += `<div style="font-size:9px;color:var(--sci-txt3);margin-bottom:8px;">Comparing to: ${equippedItem.name || 'equipped item'} (${_slotDisplayNames[slotKey] || slotKey})</div>`;
-            } else if (slotKey) {
-                detailHtml += `<div style="font-size:9px;color:var(--sci-txt3);margin-bottom:8px;">Slot: ${_slotDisplayNames[slotKey] || slotKey} (nothing equipped)</div>`;
+            // Diff section — only show stats that differ
+            const diffKeys = allKeys.filter(k => (newStats[k] || 0) !== (oldStats[k] || 0));
+            if (diffKeys.length > 0) {
+                detailHtml += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:4px;">Changes if equipped:</div>`;
+                diffKeys.forEach(k => {
+                    const diff    = (newStats[k] || 0) - (oldStats[k] || 0);
+                    const diffCls = diff > 0 ? 'pos' : 'neg';
+                    const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+                    detailHtml += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
+                    detailHtml += `<span style="color:var(--sci-txt2);">${_shopStatNames[k] || k}</span>`;
+                    detailHtml += `<span class="shop-compare-diff ${diffCls}">${diffStr}</span>`;
+                    detailHtml += `</div>`;
+                });
             }
+        } else {
+            // Single card, no comparison (Fix 2 no-equipped case)
+            detailHtml += `<div style="margin-bottom:10px;">`;
+            detailHtml += `<div style="font-size:11px;letter-spacing:1px;color:${itemRc};margin-bottom:2px;">${selItem.name || 'Item'}</div>`;
+            detailHtml += `<div style="font-size:9px;color:var(--sci-txt3);margin-bottom:8px;">${selItem.rarity || 'common'} · ${slotLabel} · LV.${selItem.level || 1} · ⬡ ${selItem._shopPrice}</div>`;
+            const entries = Object.entries(newStats).filter(([, v]) => v !== 0);
+            entries.forEach(([k, v]) => {
+                detailHtml += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
+                detailHtml += `<span style="color:var(--sci-txt2);">${_shopStatNames[k] || k}</span>`;
+                detailHtml += `<span style="color:var(--sci-txt);">${v}</span>`;
+                detailHtml += `</div>`;
+            });
+            if (!entries.length) {
+                detailHtml += `<div style="font-size:9px;color:var(--sci-txt3);">No stats</div>`;
+            }
+            if (slotKey) {
+                detailHtml += `<div style="font-size:9px;color:var(--sci-txt3);margin-top:6px;">Slot: ${slotLabel} (nothing equipped)</div>`;
+            }
+            detailHtml += `</div>`;
         }
 
         // Buy action
@@ -1525,6 +1579,26 @@ function showShop() {
         }
         detailHtml += `</div>`;
         detailHtml += `</div>`;
+    }
+
+    // ── Sell detail panel (Fix 1) ──
+    let sellDetailHtml = '';
+    if (_selectedSellIdx !== null && typeof _inventory !== 'undefined' && _selectedSellIdx < _inventory.length) {
+        const sellItem   = _inventory[_selectedSellIdx];
+        const sellItemRc = rc(sellItem);
+        const sellPrice  = getItemSellPrice(sellItem);
+        const slotLabel  = slotLbl(sellItem);
+        sellDetailHtml += `<div class="shop-detail-panel">`;
+        if (slotLabel) {
+            sellDetailHtml += `<div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:4px;">${slotLabel}</div>`;
+        }
+        sellDetailHtml += `<div class="shop-detail-name" style="color:${sellItemRc};">${sellItem.name || 'Item'}</div>`;
+        sellDetailHtml += `<div class="shop-detail-meta">${sellItem.rarity || 'common'} · ${slotLabel} · LV.${sellItem.level || 1}</div>`;
+        sellDetailHtml += `<div class="shop-bottom-bar" style="flex-direction:column;gap:6px;">`;
+        sellDetailHtml += `<button onclick="_shopSell(${_selectedSellIdx})" class="tw-btn tw-btn--danger" style="width:100%;">Sell — ⬡ ${sellPrice}</button>`;
+        sellDetailHtml += `<button onclick="_shopSelectSell(${_selectedSellIdx})" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:100%;">Cancel</button>`;
+        sellDetailHtml += `</div>`;
+        sellDetailHtml += `</div>`;
     }
 
     // ── Buy items list HTML ──
@@ -1543,7 +1617,7 @@ function showShop() {
         sellItemsHtml = _inventory.map((item, idx) => sellRow(item, idx)).join('');
     }
 
-    // ── Restock button label ──
+    // ── Restock button ──
     const restockBtn = `<button onclick="${canRestock ? '_shopRestock()' : ''}"
         class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;${canRestock ? '' : 'opacity:0.4;pointer-events:none;'}"
         ${canRestock ? '' : 'disabled'}>Restock ⬡ ${restockCost}</button>`;
@@ -1572,11 +1646,12 @@ function showShop() {
                 <div class="shop-sell-col">
                     <div class="shop-col-header">
                         <div class="shop-col-title">Sell</div>
-                        <div style="font-size:9px;color:var(--sci-txt3);">Click item to sell</div>
+                        <div style="font-size:9px;color:var(--sci-txt3);">Select item to sell</div>
                     </div>
                     <div class="shop-items-list">
                         ${sellItemsHtml}
                     </div>
+                    ${sellDetailHtml}
                 </div>
             </div>
         </div>
@@ -1584,22 +1659,37 @@ function showShop() {
     overlay.style.display = 'flex';
 }
 
-/** Select a shop item (highlight, show details). */
+/** Select a buy item (highlight, show details). Toggle on second click. */
 function _shopSelect(idx) {
-    _selectedShopIdx = (_selectedShopIdx === idx) ? null : idx; // toggle
+    _selectedShopIdx = (_selectedShopIdx === idx) ? null : idx;
+    showShop();
+}
+
+/** Select a sell item (highlight, show confirm panel). Toggle on second click. */
+function _shopSelectSell(idx) {
+    _selectedSellIdx = (_selectedSellIdx === idx) ? null : idx;
     showShop();
 }
 
 function _shopBuy(idx) {
     if (shopBuyItem(idx)) {
         _selectedShopIdx = null;
-        showShop(); // re-render
+        showShop();
     }
 }
 
-function _shopSell(idx) {
-    shopSellItem(idx);
-    showShop(); // re-render
+/** Sell an inventory item: removes it, adds it to shop stock as a buyable item, awards scrap. */
+function _shopSell(invIdx) {
+    if (typeof _inventory === 'undefined' || invIdx < 0 || invIdx >= _inventory.length) return;
+    const item  = _inventory[invIdx];
+    const price = getItemSellPrice(item);
+    if (typeof _scrap !== 'undefined') _scrap += price;
+    // Add back to buy list so player can repurchase before next restock
+    _shopStock.push({ ...item, _shopPrice: price, _soldBack: true });
+    _inventory.splice(invIdx, 1);
+    if (typeof saveInventory === 'function') saveInventory();
+    _selectedSellIdx = null;
+    showShop();
 }
 
 function _shopRestock() {
@@ -1607,12 +1697,14 @@ function _shopRestock() {
     if (typeof _scrap === 'undefined' || _scrap < cost) return;
     _scrap -= cost;
     _selectedShopIdx = null;
-    refreshShopStock();
+    _selectedSellIdx = null;
+    refreshShopStock(); // replaces _shopStock entirely, clearing sold-back items
     showShop();
 }
 
 function _closeShop() {
     _selectedShopIdx = null;
+    _selectedSellIdx = null;
     const overlay = document.getElementById('shop-overlay');
     if (overlay) overlay.style.display = 'none';
     // Return to mission select
