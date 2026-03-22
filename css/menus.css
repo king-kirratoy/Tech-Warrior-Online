@@ -110,32 +110,18 @@
    LOADOUT TABS
    ============================================================ */
 .loadout-tab {
-  background: rgba(12,16,20,0.8);
-  border: 1px solid rgba(0,255,255,0.2);
-  color: rgba(0,255,255,0.5);
-  cursor: pointer;
   flex: 1;
-  font-family: var(--font-mono);
-  font-size: var(--text-md);
-  letter-spacing: var(--ls-3);
-  outline: none;
-  padding: 10px 24px;
-  text-transform: uppercase;
-  transition: all 0.2s;
 }
 
 .loadout-tab:first-child { border-radius: 6px 0 0 6px; }
 .loadout-tab:last-child  { border-radius: 0 6px 6px 0; }
 
 .loadout-tab.active {
-  background: var(--surface-active);
   border-color: rgba(0,255,255,0.5);
-  box-shadow: 0 0 12px rgba(0,255,255,0.2);
   color: var(--cyan);
 }
 
 .loadout-tab:hover:not(.active) {
-  background: rgba(0,255,255,0.06);
   color: rgba(0,255,255,0.8);
 }
 
@@ -222,22 +208,16 @@
 }
 
 .arm-picker-btn {
-  background: rgba(0,255,255,0.08);
-  border: 1px solid rgba(0,255,255,0.4);
   border-radius: 6px;
-  color: var(--cyan);
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: var(--text-md);
-  letter-spacing: var(--ls-2);
   margin: 0 8px;
-  padding: 10px 28px;
-  transition: all 0.2s;
+  min-width: 90px;
 }
 
-.arm-picker-btn:hover {
-  background: rgba(0,255,255,0.2);
-  box-shadow: 0 0 12px rgba(0,255,255,0.3);
+.arm-picker-btn--cancel {
+  border-bottom-color: rgba(200,210,217,0.35);
+  border-color: rgba(200,210,217,0.2);
+  border-top-color: rgba(200,210,217,0.35);
+  color: rgba(200,210,217,0.45);
 }
 
 /* ============================================================

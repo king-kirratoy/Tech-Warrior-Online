@@ -1164,11 +1164,11 @@ function _showArmPicker(invIdx) {
         <div style="font-size:14px;letter-spacing:3px;color:${UI_COLORS.cyan};margin-bottom:16px;">EQUIP TO WHICH ARM?</div>
         <div style="font-size:11px;color:${UI_COLORS.text60};margin-bottom:16px;letter-spacing:1px;">${item.name}</div>
         <div style="display:flex;gap:12px;justify-content:center;">
-            <button class="arm-picker-btn" id="_arm-pick-L">L ARM<br><span style="font-size:9px;color:${UI_COLORS.text50};">${lLabel}</span></button>
-            <button class="arm-picker-btn" id="_arm-pick-R">R ARM<br><span style="font-size:9px;color:${UI_COLORS.text50};">${rLabel}</span></button>
+            <button class="tw-btn tw-btn--sm arm-picker-btn" id="_arm-pick-L">L ARM<br><span style="font-size:9px;color:${UI_COLORS.text50};">${lLabel}</span></button>
+            <button class="tw-btn tw-btn--sm arm-picker-btn" id="_arm-pick-R">R ARM<br><span style="font-size:9px;color:${UI_COLORS.text50};">${rLabel}</span></button>
         </div>
         <div style="margin-top:14px;">
-            <button class="arm-picker-btn" id="_arm-pick-cancel" style="color:${UI_COLORS.text50};border-color:${UI_COLORS.text25};">CANCEL</button>
+            <button class="tw-btn tw-btn--sm arm-picker-btn arm-picker-btn--cancel" id="_arm-pick-cancel">CANCEL</button>
         </div>
     `;
     overlay.appendChild(box);

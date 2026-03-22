@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.32 — Fix 4 non-compliant buttons (Findings 1, 2, 4, 5)
+
+**Date:** 2026-03-22
+
+Added `tw-btn tw-btn--sm` as base classes to the four buttons identified in BUTTON_AUDIT.md that were missing the design-system base class. The two loadout tab buttons in `index.html` (`#loadout-tab-stats`, `#loadout-tab-gear`) received the new base classes, and `.loadout-tab` in `css/menus.css` was reduced to layout-only overrides (`flex`, border-radius per side), with `.loadout-tab.active` and `.loadout-tab:hover:not(.active)` kept as color-only overrides. The arm picker L and R buttons in `js/menus.js` received `tw-btn tw-btn--sm arm-picker-btn`; the Cancel button received `tw-btn tw-btn--sm arm-picker-btn arm-picker-btn--cancel` with its inline `color`/`border-color` style removed. `.arm-picker-btn` in `css/menus.css` was stripped to layout-only properties (`border-radius`, `margin`, `min-width`), and a new `.arm-picker-btn--cancel` modifier encodes the muted appearance via CSS.
+
+### Files Changed
+
+- `index.html` — `tw-btn tw-btn--sm` added to `#loadout-tab-stats` and `#loadout-tab-gear`
+- `js/menus.js` — `tw-btn tw-btn--sm` added to arm picker L/R buttons; Cancel button updated to `arm-picker-btn--cancel` with inline style removed
+- `css/menus.css` — `.loadout-tab` reduced to layout-only; `.arm-picker-btn` reduced to layout-only; `.arm-picker-btn--cancel` modifier added
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.31 — Remove letter-spacing shift from .tw-btn hover states
 
 **Date:** 2026-03-22
