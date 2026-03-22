@@ -699,24 +699,48 @@
   text-transform: uppercase;
 }
 
+/* --- Chassis name row (above Hull Integrity section) --- */
+.lo-chassis-row {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px 0;
+}
+
+.lo-chassis-lbl {
+  color: rgba(255,255,255,0.22);
+  font-family: 'Courier New', monospace;
+  font-size: 8px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.lo-chassis-val {
+  color: rgba(255,255,255,0.88);
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
 /* --- Hull section — HP bar rows --- */
 .lo-hp-row {
   align-items: center;
   display: flex;
-  gap: 6px;
-  margin-bottom: 5px;
+  gap: 8px;
+  margin: 4px 0;
 }
 
-.lo-hp-label {
-  color: var(--sci-txt3);
+.lo-hp-part {
+  color: rgba(255,255,255,0.22);
+  flex-shrink: 0;
+  font-family: 'Courier New', monospace;
   font-size: 9px;
-  letter-spacing: 1px;
-  min-width: 42px;
-  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: 38px;
 }
 
 .lo-hp-track {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.07);
   flex: 1;
   height: 2px;
 }
@@ -727,10 +751,12 @@
 }
 
 .lo-hp-val {
-  color: var(--sci-txt2);
+  color: rgba(255,255,255,0.22);
+  flex-shrink: 0;
+  font-family: 'Courier New', monospace;
   font-size: 9px;
-  min-width: 56px;
   text-align: right;
+  width: 56px;
 }
 
 /* --- Stats section rows --- */
@@ -778,24 +804,58 @@
 .lo-trait-name {
   color: #ffd166;
   font-family: 'Courier New', monospace;
-  font-size: 10px;
+  font-size: 9px;
   margin-bottom: 2px;
 }
 
 .lo-trait-desc {
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.22);
   font-family: 'Courier New', monospace;
-  font-size: 9px;
-  line-height: 1.5;
+  font-size: 8px;
+  line-height: 1.4;
 }
 
-/* --- Gear bonus pill tags --- */
+/* --- Gear bonus pill tags (legacy, kept for perks panel) --- */
 .tw-bonus-tag {
   border: 1px solid var(--gold-dim);
   color: var(--sci-gold);
   font-family: 'Courier New', monospace;
   font-size: 9px;
   padding: 2px 7px;
+}
+
+/* --- Gear bonuses: plain text rows --- */
+.lo-bonus-row {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.lo-bonus-lbl {
+  color: rgba(255,255,255,0.22);
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+
+.lo-bonus-val {
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+}
+
+.lo-bonus-val.pos { color: #00ff88; }
+.lo-bonus-val.neg { color: #ff4d6a; }
+
+/* --- Gear bonus group sub-header --- */
+.bsub {
+  color: rgba(212,163,0,0.5);
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+  margin-top: 10px;
+  text-transform: uppercase;
 }
 
 /* --- Right column: equipment doll --- */
@@ -853,11 +913,32 @@
 
 /* --- Weapon bar --- */
 .lo-weapon-bar {
+  align-items: flex-start;
   border-top: 1px solid var(--sci-line);
   display: flex;
   flex-shrink: 0;
+  gap: 0;
+  padding: 10px 20px;
+}
+
+.lo-weap-side {
+  align-items: flex-start;
+  border-right: 1px solid var(--sci-line);
+  display: flex;
+  flex: 0 0 auto;
   gap: 20px;
-  padding: 9px 20px;
+  padding-right: 20px;
+}
+
+.lo-trait-side {
+  display: flex;
+  flex: 1;
+  gap: 20px;
+  padding-left: 20px;
+}
+
+.lo-trait-inline {
+  flex: 1;
 }
 
 /* --- Shared slot class (equipment doll + backpack) --- */

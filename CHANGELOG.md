@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.70 — Loadout overlay: left-column restructure + weapon bar chassis traits
+
+**Date:** 2026-03-22
+
+Four-step layout and CSS pass on the loadout overlay. Step 1: added a chassis name row (`#lo-chassis-row`, `.lo-chassis-row/.lo-chassis-lbl/.lo-chassis-val`) above the Hull Integrity section title with no `.lo-sec` wrapper; rewrote `_renderHullBars()` to use new `.lo-hp-row/.lo-hp-part/.lo-hp-track/.lo-hp-fill/.lo-hp-val` structure (replacing `_hpBarBoosted()`), dynamic fill color (green/yellow/red by %), and added Total HP (green `#00ff88`) + Total Shield (purple `#cc88ff`) rows below a thin divider. Step 2: renamed the "Stats" left-column section to "Mech Stats"; rewrote `_renderMobilityPanel()` to render in this exact order — Shield Regen, Dodge Chance, Dmg Reduction, Auto-Repair, Crit Chance, Mod Cooldown, Speed — removing the Chassis name row, Shield capacity row, Legs Status row, and Loot Quality row. Step 3: rewrote `_renderGearBonusesPanel()` to remove equipped gear chip tags and render all bonuses as `.lo-bonus-row` plain text rows with `.lo-bonus-lbl` / `.lo-bonus-val.pos` / `.lo-bonus-val.neg`; group sub-headers switched to new `.bsub` CSS class. Step 4: removed Chassis Traits from the left column entirely; rewrote `_renderWeaponBar()` to render a two-sided flex row — `.lo-weap-side` (L/R/Core weapon stats) separated by a border from `.lo-trait-side` (chassis trait cards as `.lo-trait-inline/.lo-trait-name/.lo-trait-desc`). No game, combat, or round logic changed.
+
+---
+
 ## v5.69 — Text color readability pass across menus
 
 **Date:** 2026-03-22
