@@ -1627,25 +1627,19 @@ async function showLeaderboard() {
     const overlay = document.getElementById('leaderboard-overlay');
     overlay.style.display = 'block';
 
-    // Show loading spinner while fetching
+    // Show loading, hide table/empty while fetching
     document.getElementById('lb-loading').style.display = 'block';
-    document.getElementById('lb-table').style.display   = 'none';
+    document.getElementById('lb-table').innerHTML       = '';
     document.getElementById('lb-empty').style.display   = 'none';
 
     // Load once, use for both the notice and the table
     const scores = await _loadScores();
 
-    // Show last-run notice if a run was just submitted
-    const submitPanel = document.getElementById('lb-submit-panel');
-    const lastMine = scores.filter(s => s.name === _playerCallsign).sort((a,b) => b.ts - a.ts)[0];
-    if (lastMine && Date.now() - lastMine.ts < 60000) {
-        submitPanel.style.display = 'block';
-        const prev = document.getElementById('lb-run-preview');
-        const ch = (lastMine.chassis || '?').toUpperCase();
-        prev.textContent = `${lastMine.name}  ·  ${ch}  ·  ROUND ${lastMine.round}  ·  ${lastMine.kills} KILLS  ·  ${lastMine.accuracy}% ACC  ·  ${(lastMine.damage||0).toLocaleString()} DMG`;
-    } else {
-        submitPanel.style.display = 'none';
-    }
+    // Reset filter tabs to 'all'
+    _lbCurrentFilter = 'all';
+    document.querySelectorAll('.lb-filter-tab').forEach(t => t.classList.remove('active'));
+    const allTab = document.querySelector('.lb-filter-tab');
+    if (allTab) allTab.classList.add('active');
 
     _renderScores(scores);
 }
@@ -1716,83 +1710,112 @@ function _sortScores(scores) {
     });
 }
 
-function _renderScores(scores) {
+let _lbAllScores    = [];
+let _lbCurrentFilter = 'all';
+
+function _renderScores(scores, filtered) {
     const loading = document.getElementById('lb-loading');
     const table   = document.getElementById('lb-table');
     const empty   = document.getElementById('lb-empty');
 
     loading.style.display = 'none';
-    table.style.display   = 'none';
-    empty.style.display   = 'none';
 
-    if (!scores || scores.length === 0) {
+    // Store master list for filter re-renders
+    if (!filtered) _lbAllScores = scores || [];
+
+    const display = filtered || _lbAllScores;
+
+    if (!display || display.length === 0) {
+        table.innerHTML = '';
         empty.style.display = 'block';
         return;
     }
+    empty.style.display = 'none';
 
-    const sorted = _sortScores([...scores]);
-    const chassisColor = { light: UI_COLORS.chassisLight, medium: UI_COLORS.chassisMedium, heavy: UI_COLORS.chassisHeavy };
-
-    // Build rows using DOM elements so fetched string values are never treated as HTML
-    const frag = document.createDocumentFragment();
-
-    // Header row (static strings only — innerHTML is safe here)
-    const headerDiv = document.createElement('div');
-    headerDiv.innerHTML = `
-        <div style="display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:6px 12px 10px;gap:0 6px;border-bottom:1px solid ${UI_COLORS.hudCyan25};margin-bottom:4px;">
-            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;">#</span>
-            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;letter-spacing:2px;">CALLSIGN</span>
-            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;text-align:right;letter-spacing:1px;">ROUND</span>
-            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;text-align:right;letter-spacing:1px;">KILLS</span>
-            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;text-align:right;letter-spacing:1px;">ACC</span>
-            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;text-align:right;letter-spacing:1px;">DAMAGE</span>
-            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;text-align:right;letter-spacing:1px;">CHASSIS</span>
-        </div>`;
-    frag.appendChild(headerDiv);
+    const sorted = _sortScores([...display]);
+    const frag   = document.createDocumentFragment();
 
     sorted.forEach((e, i) => {
-        const rank    = i + 1;
-        const medal   = rank === 1 ? '◈' : rank === 2 ? '◇' : rank === 3 ? '◆' : `${rank}.`;
-        const rankCol = rank === 1 ? UI_COLORS.rankGold : rank === 2 ? UI_COLORS.rankSilver : rank === 3 ? UI_COLORS.rankBronze : UI_COLORS.hudCyan40;
-        const cc      = chassisColor[e.chassis] || '#aaa';
-        const bg      = rank <= 3 ? UI_COLORS.hudCyan04 : 'transparent';
+        const rank   = i + 1;
+        const isMe   = _playerCallsign && e.name === _playerCallsign;
 
         // Coerce numeric fields — never interpolate raw DB values as HTML
-        const safeRound    = Math.round(Number(e.round)    || 0);
-        const safeKills    = Math.round(Number(e.kills)    || 0);
-        const safeAccuracy = Math.round(Number(e.accuracy) || 0);
-        const safeDamage   = Math.round(Number(e.damage)   || 0);
+        const safeRound = Math.round(Number(e.round) || 0);
+        const safeKills = Math.round(Number(e.kills) || 0);
 
-        // Sanitize string fields with textContent assignment (not innerHTML)
-        const safeName    = _sanitizeCallsign(e.name || 'UNKNOWN');
-        const safeChassis = _sanitizeCallsign(e.chassis || '?');
+        // Sanitize string fields with textContent (not innerHTML)
+        const safeName = _sanitizeCallsign(e.name || 'UNKNOWN');
+        const safeMode = _sanitizeCallsign(e.mode || e.chassis || '?');
 
         const row = document.createElement('div');
-        row.style.cssText = `display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:9px 12px;border-bottom:1px solid ${UI_COLORS.hudCyan08};background:${bg};gap:0 6px;`;
+        row.className = 'lb-row' + (isMe ? ' lb-me' : '');
 
-        const cells = [
-            { text: medal,                              style: `color:${rankCol};font-size:12px;font-weight:bold;` },
-            { text: safeName,                           style: `color:${UI_COLORS.leaderName};font-size:12px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;` },
-            { text: `R${safeRound}`,                   style: `color:${UI_COLORS.leaderRound};font-size:11px;text-align:right;` },
-            { text: `${safeKills}K`,                   style: `color:${UI_COLORS.hudCyan75};font-size:11px;text-align:right;` },
-            { text: `${safeAccuracy}%`,                style: `color:${UI_COLORS.hudCyan60};font-size:11px;text-align:right;` },
-            { text: safeDamage.toLocaleString(),        style: `color:${UI_COLORS.hudCyan55};font-size:10px;text-align:right;` },
-            { text: safeChassis,                        style: `color:${cc};font-size:9px;text-align:right;letter-spacing:1px;opacity:0.8;` },
-        ];
+        // Rank cell
+        const rankEl = document.createElement('div');
+        rankEl.className = 'lb-rank' + (rank <= 3 ? ' top' : '');
+        rankEl.textContent = String(rank).padStart(2, '0');
+        row.appendChild(rankEl);
 
-        cells.forEach(({ text, style }) => {
-            const span = document.createElement('span');
-            span.style.cssText = style;
-            span.textContent = text;
-            row.appendChild(span);
-        });
+        // Callsign cell
+        const nameEl = document.createElement('div');
+        nameEl.className = 'lb-callsign';
+        nameEl.textContent = safeName;
+        if (isMe) {
+            const tag = document.createElement('span');
+            tag.className = 'lb-you-tag';
+            tag.textContent = 'YOU';
+            nameEl.appendChild(tag);
+        }
+        row.appendChild(nameEl);
+
+        // Round cell
+        const roundEl = document.createElement('div');
+        roundEl.className = 'lb-val hi';
+        roundEl.style.textAlign = 'right';
+        roundEl.textContent = safeRound;
+        row.appendChild(roundEl);
+
+        // Kills cell
+        const killsEl = document.createElement('div');
+        killsEl.className = 'lb-val';
+        killsEl.style.textAlign = 'right';
+        killsEl.textContent = safeKills;
+        row.appendChild(killsEl);
+
+        // Mode cell
+        const modeEl = document.createElement('div');
+        modeEl.className = 'lb-val';
+        modeEl.style.textAlign = 'right';
+        modeEl.style.fontSize  = '9px';
+        modeEl.textContent = safeMode;
+        row.appendChild(modeEl);
 
         frag.appendChild(row);
     });
 
     table.innerHTML = '';
     table.appendChild(frag);
-    table.style.display = 'block';
+}
+
+function _lbSetFilter(type, el) {
+    // Update tab active state
+    document.querySelectorAll('.lb-filter-tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    _lbCurrentFilter = type;
+
+    // Filter the stored scores
+    let filtered;
+    if (type === 'all') {
+        filtered = _lbAllScores;
+    } else if (type === 'warzone') {
+        filtered = _lbAllScores.filter(s => !s.mode || s.mode === 'simulation' || s.mode === 'warzone');
+    } else if (type === 'campaign') {
+        filtered = _lbAllScores.filter(s => s.mode === 'campaign');
+    } else {
+        filtered = _lbAllScores;
+    }
+
+    _renderScores(null, filtered);
 }
 
 function _capturePendingRun() {

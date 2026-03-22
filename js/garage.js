@@ -149,6 +149,12 @@ function refreshGarage() {
         document.getElementById('c-' + ch)?.classList.toggle('active', loadout.chassis === ch);
     });
 
+    // Preview chassis label
+    const hexStr0 = loadout.color.toString(16).padStart(6,'0').toLowerCase();
+    const colLabel = (COLOR_OPTIONS.find(o => o.key === hexStr0)?.label || '').toUpperCase();
+    const chassisLbl = document.getElementById('preview-chassis-label');
+    if (chassisLbl) chassisLbl.textContent = (loadout.chassis || '').toUpperCase() + ' · ' + colLabel;
+
     // Colour dropdown header
     const hexStr = loadout.color.toString(16).padStart(6,'0').toLowerCase();
     const colOpt = COLOR_OPTIONS.find(o => o.key === hexStr) || COLOR_OPTIONS[0];
@@ -268,21 +274,41 @@ function updateGarageStats() {
         chassisTraits.push('Built for sustained attrition');
     }
 
-    const rows = [
-        ['TOTAL HP',   totalHP + ' HP',     '#00ff88'],
-        ['HP SPLIT',   'C ' + coreHP + ' / A ' + armHP + ' / L ' + legHP, '#55cc88'],
-        ['SPEED',      spdStr,              '#ffdd88'],
-        ['SHIELD HP',  shHp > 0 ? shStr : 'NONE', shHp > 0 ? '#00ffff' : '#445'],
-        lRate ? ['L FIRE RATE', lRate, '#c0c8d0'] : null,
-        rRate ? ['R FIRE RATE', rRate, '#c0c8d0'] : null,
-        modCd ? ['CORE CD',      modCd, '#ffaa44'] : null,
-        chassisTraits.length ? ['CHASSIS', chassisTraits.join(' · '), loadout.chassis==='light'?'#88ff88':loadout.chassis==='medium'?'#ffcc44':'#ff8844'] : null,
-        passives.length ? ['PASSIVES', passives.join(' · '), '#cc88ff'] : null,
-    ].filter(Boolean);
+    function row(lbl, val, cls = '') {
+        return `<div class="hg-stat-row"><span class="hg-stat-label">${lbl}</span><span class="hg-stat-val${cls ? ' ' + cls : ''}">${val}</span></div>`;
+    }
+    const gap = '<div class="hg-gap"></div>';
 
-    panel.innerHTML = rows.map(([lbl,val,col]) =>
-        `<div class="hg-stat-row"><span class="hg-stat-label">${lbl}</span><span class="hg-stat-val" style="color:${col}">${val}</span></div>`
-    ).join('');
+    let html = '';
+
+    // Group 1 — HP
+    html += row('TOTAL HP', totalHP + ' HP', 'green');
+    html += row('HP SPLIT', 'C ' + coreHP + ' / A ' + armHP + ' / L ' + legHP, 'dim');
+    html += gap;
+
+    // Group 2 — Mobility / Defense
+    html += row('SPEED', spdStr, 'warn');
+    html += row('SHIELD HP', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
+    html += gap;
+
+    // Group 3 — Weapons (only rows that exist)
+    const weaponRows = [
+        lRate ? row('L FIRE RATE', lRate, 'dim') : '',
+        rRate ? row('R FIRE RATE', rRate, 'dim') : '',
+        modCd ? row('CORE CD', modCd, 'warn') : '',
+    ].join('');
+    if (weaponRows) { html += weaponRows; html += gap; }
+
+    // Group 4 — Chassis / Passives
+    if (chassisTraits.length) {
+        const chCls = loadout.chassis === 'light' ? 'green' : 'warn';
+        html += row('CHASSIS', chassisTraits.join(' · '), chCls);
+    }
+    if (passives.length) {
+        html += row('PASSIVES', passives.join(' · '), 'purple');
+    }
+
+    panel.innerHTML = html;
 }
 
 function _updateStarterPanel() {
@@ -294,9 +320,10 @@ function _updateStarterPanel() {
     const shName = SHIELD_SYSTEMS[starter.shld]?.name || 'NONE';
     const chColor = ch === 'light' ? '#88ff88' : ch === 'medium' ? '#ffcc44' : '#ff8844';
 
+    const sCls = ch === 'light' ? 'green' : 'warn';
     let html = '';
-    html += `<div class="hg-stat-row"><span class="hg-stat-label">WEAPON</span><span class="hg-stat-val" style="color:${chColor}">${wL?.name || 'NONE'}</span></div>`;
-    html += `<div class="hg-stat-row"><span class="hg-stat-label">SHIELD</span><span class="hg-stat-val" style="color:${chColor}">${shName}</span></div>`;
+    html += `<div class="hg-stat-row"><span class="hg-stat-label">WEAPON</span><span class="hg-stat-val ${sCls}">${wL?.name || 'NONE'}</span></div>`;
+    html += `<div class="hg-stat-row"><span class="hg-stat-label">SHIELD</span><span class="hg-stat-val ${sCls}">${shName}</span></div>`;
     panel.innerHTML = html;
 }
 

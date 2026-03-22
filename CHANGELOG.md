@@ -5,6 +5,51 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.52 — Multiplayer screen redesign, campaign top bar and LVL/XP fixes
+
+**Date:** 2026-03-22
+
+Redesigned the PVP hangar and lobby screens and fixed two campaign UI issues. In `css/menus.css`: added two new sections — Multiplayer loadout screen classes (`.mp-screen`, `.mp-top`, `.mp-screen-title`, `.mp-body`, `.mp-left`, `.mp-sec-label`, `.mp-chassis-row`, `.mp-chassis-btn`, `.mp-dd-row`, `.mp-dd-label`, `.mp-dd-selected`, `.mp-right`, `.mp-preview-zone`, `.mp-preview-box`, `.mp-bottom`) and Lobby screen classes (`.lobby-hdr`, `.lobby-player-row`, `.lobby-dot`, `.lobby-player-name`, `.lobby-player-loadout`, `.lobby-ready-badge`). In `js/multiplayer.js`: `mpShowPvpHangar()` updated to set `el.className = 'mp-screen'` instead of inline styles; `_pvpRenderHangar()` completely rebuilt using the new layout — top bar with centered title, left panel with chassis buttons (`.mp-chassis-btn`), colour and gear slot rows (`.mp-dd-selected`), right panel with mech preview box and build stats using `.hg-stat-row` classes, and a bottom bar with action buttons; weapon slot labels now show clean full names only (no DPS suffix); `mpShowLobby()` completely rebuilt with `.mp-screen` layout — left panel with lobby code, your loadout summary, ready/leave buttons and chat, right panel with four `.lobby-player-row` slots including `.lobby-dot` status and `.lobby-ready-badge`; `mpUpdateLobbyUI()` rewritten to render all four player slots (filled + empty), enable/disable the Start Game button, and update bottom status text; added `_mpToggleReady()` and `_mpLocalReady` state for per-player ready tracking. In `js/campaign-system.js`: `showMissionSelect()` top bar rebuilt — CAMPAIGN title is now `position:absolute;left:50%;transform:translateX(-50%)` so it floats independently of flex items; LVL/XP text placed immediately below also absolute-positioned with `margin-top:22px`; Supply Shop button has `margin-left:auto` to push it flush right; the `.cm-top` container given `position:relative` inline.
+
+### Files Changed
+
+- `css/menus.css` — mp-screen/lobby CSS class blocks
+- `js/multiplayer.js` — mpShowPvpHangar, _pvpRenderHangar, mpShowLobby, mpUpdateLobbyUI, _mpToggleReady rebuilt
+- `js/campaign-system.js` — showMissionSelect top bar layout fixed
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.51 — Callsign screen and leaderboard overlay redesign
+
+**Date:** 2026-03-22
+
+Full visual redesign of the callsign entry screen and leaderboard overlay. In `css/menus.css`: added two new sections at the end of the file — Callsign screen styles (`.cs-inner`, `.cs-eyebrow`, `.cs-title`, `.cs-field-label`, `.cs-input-wrap`) giving the entry screen a centred two-line title with a `<span>` accent, a bottom-bordered input strip, and a transparent monospaced input; Leaderboard overlay styles (`.lb-top`, `.lb-title`, `.lb-filters`, `.lb-filter-tab`, `.lb-table-wrap`, `.lb-table-header`, `.lb-th`, `.lb-row`, `.lb-row.lb-me`, `.lb-rank`, `.lb-callsign`, `.lb-val`, `.lb-you-tag`) giving the overlay an edge-to-edge panel layout with filter tabs and a five-column grid table. In `index.html`: `#callsign-screen` rebuilt using the new CSS classes — added sci-corner decorators, `.cs-inner` wrapper with eyebrow/title/field-label/input-wrap/proceed-btn structure, version tag positioned absolute bottom-right; `#leaderboard-overlay` rebuilt with `.lb-top` (back button + centred title), `.lb-filters` (All time / Warzone / Campaign tabs), and `.lb-table-wrap` containing a static header row plus `#lb-loading`, `#lb-table`, `#lb-empty` slots. In `js/menus.js`: `_renderScores()` completely rewritten to build five-column rows using DOM elements with new CSS classes, highlighting the current player's row with `.lb-me` and their callsign with `.lb-you-tag`; added module-level `_lbAllScores` and `_lbCurrentFilter` variables; added `_lbSetFilter(type, el)` which updates tab active state and re-renders the table filtered by mode field ('all', 'warzone', 'campaign'); updated `showLeaderboard()` to reset filter state to 'all' on open and removed the now-absent `lb-submit-panel` references.
+
+### Files Changed
+
+- `css/menus.css` — callsign screen classes; leaderboard overlay classes
+- `index.html` — #callsign-screen rebuilt; #leaderboard-overlay rebuilt
+- `js/menus.js` — _renderScores rewritten with CSS classes; _lbSetFilter added; showLeaderboard filter reset
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.50 — Hangar layout redesign: two-column split with left chassis/preview column and full-width stats panel
+
+**Date:** 2026-03-22
+
+Full hangar layout overhaul across three files. In `css/garage.css`: removed `.hg-center` and `.hg-sidebar`/`.hg-section-label` (replaced by previous session); added `.hg-left` (260px fixed, border-right, flex column), `.hg-left-top` (chassis buttons + colour dropdown, border-bottom), `.hg-preview-zone` (centered flex column for mech preview image + label); replaced old `.hg-right` (fixed 320px) with new `flex:1` version that takes all remaining width; replaced `.hg-stat-row` grid (120px columns) with new version (130px, `align-items:baseline`); added `.hg-stats-header` for the Build Stats heading row; added `.hg-gap` (6px spacer between stat groups); added CSS class variants `.hg-stat-val.dim`, `.hg-stat-val.green`, `.hg-stat-val.purple`; updated `.hg-deploy-zone` with `border-top` and `padding:16px 20px`. In `index.html`: completely rebuilt `.hg-body` contents — left column (`.hg-left`) holds chassis buttons, colour dropdown and dual-explosive warning in `.hg-left-top`, then mech preview image (160×160) and `#preview-chassis-label` in `.hg-preview-zone`; right column (`.hg-right`) has `.hg-stats-header` then `#garage-stats-panel` then `#starter-loadout-panel` (deploy zone removed from HTML, now CSS-only via `margin-top:auto`). In `js/garage.js`: `updateGarageStats()` rewritten to use CSS class variants (`green`, `dim`, `warn`, `purple`) instead of inline color styles, and to emit `<div class="hg-gap">` dividers between four logical groups (HP / Mobility+Defense / Weapons / Chassis+Passives); `refreshGarage()` now sets `#preview-chassis-label` text to `CHASSIS · COLOUR` after updating chassis button active states; `_updateStarterPanel()` rewritten to use `.hg-stat-val.green` / `.hg-stat-val.warn` class variants instead of `style="color:…"`.
+
+### Files Changed
+
+- `css/garage.css` — new two-column layout classes; hg-gap; class variants; hg-deploy-zone border-top
+- `index.html` — hg-body fully rebuilt with hg-left/hg-right structure
+- `js/garage.js` — updateGarageStats CSS classes + gap groups; refreshGarage chassis label; _updateStarterPanel class variants
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.49 — Five layout and UX fixes: campaign title centring, cloud toast, loading text, hangar stats, WARZONE label
 
 **Date:** 2026-03-22
