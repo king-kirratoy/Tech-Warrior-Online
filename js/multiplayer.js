@@ -1035,51 +1035,69 @@ function mpShowLobby() {
     if (!lobbyEl) {
         lobbyEl = document.createElement('div');
         lobbyEl.id = 'mp-lobby';
-        lobbyEl.style.cssText = `
-            position: fixed; inset: 0; z-index: 2000;
-            display: flex; justify-content: center; align-items: center;
-            background: #0c1014;
-            font-family: 'Courier New', monospace; color: #c8d2d9;
-        `;
-        lobbyEl.innerHTML = `
-            <div style="width:600px;max-width:95vw;padding:32px;border:1px solid rgba(0,255,255,0.35);border-radius:10px;
-                        background:linear-gradient(rgba(12,16,20,0.95),rgba(12,16,20,0.95)),url('assets/hangar-bg.jpg') center/cover;
-                        box-shadow:0 0 40px rgba(0,0,0,0.7),0 0 20px rgba(0,255,255,0.1);">
-                <h2 style="text-align:center;margin:0 0 8px;letter-spacing:8px;color:#00ffff;font-size:22px;
-                           text-shadow:0 0 18px rgba(0,255,255,0.7);font-weight:normal;">PVP ARENA</h2>
-                <div id="mp-lobby-status" style="text-align:center;font-size:10px;letter-spacing:3px;
-                     color:rgba(0,255,255,0.5);margin-bottom:20px;">CONNECTING...</div>
-                <div id="mp-player-list" style="margin-bottom:20px;max-height:300px;overflow-y:auto;"></div>
-                <div style="display:flex;gap:8px;justify-content:center;">
-                    <button id="mp-start-btn" onclick="mpStartMatch()" style="padding:12px 24px;font-size:14px;
-                        letter-spacing:3px;color:#00ff00;border:1px solid rgba(0,255,0,0.4);border-left:3px solid #00ff00;
-                        background:rgba(0,255,0,0.06);cursor:pointer;font-family:'Courier New',monospace;display:none;">
-                        START MATCH</button>
-                    <button id="mp-waiting-btn" style="padding:12px 24px;font-size:12px;letter-spacing:3px;
-                        color:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.1);
-                        background:rgba(255,255,255,0.02);cursor:default;font-family:'Courier New',monospace;">
-                        WAITING FOR HOST...</button>
-                    <button onclick="mpLeaveLobby()" style="padding:12px 24px;font-size:12px;letter-spacing:3px;
-                        color:#ff4444;border:1px solid rgba(255,68,68,0.3);border-left:3px solid #ff4444;
-                        background:rgba(255,68,68,0.06);cursor:pointer;font-family:'Courier New',monospace;">
-                        LEAVE</button>
-                </div>
-                <div id="mp-chat-box" style="margin-top:16px;max-height:120px;overflow-y:auto;font-size:11px;
-                     padding:8px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.05);border-radius:4px;">
-                </div>
-                <div style="display:flex;gap:6px;margin-top:6px;">
-                    <input id="mp-chat-input" type="text" maxlength="200" placeholder="Type a message..."
-                           style="flex:1;padding:6px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
-                                  color:#c8d2d9;font-family:'Courier New',monospace;font-size:11px;border-radius:3px;"
-                           onkeydown="if(event.key==='Enter')mpSendChat()">
-                    <button onclick="mpSendChat()" style="padding:6px 12px;font-size:11px;cursor:pointer;
-                        color:#00ffcc;border:1px solid rgba(0,255,204,0.3);background:rgba(0,255,204,0.06);
-                        font-family:'Courier New',monospace;border-radius:3px;">SEND</button>
-                </div>
-            </div>
-        `;
         document.body.appendChild(lobbyEl);
     }
+    lobbyEl.className = 'mp-screen';
+
+    // Build loadout summary string for the left panel
+    const wL = loadout.L && loadout.L !== 'none' ? (WEAPONS[loadout.L]?.name || loadout.L) : '';
+    const wR = loadout.R && loadout.R !== 'none' && loadout.R !== loadout.L
+        ? (WEAPONS[loadout.R]?.name || loadout.R) : '';
+    const loadoutSummary = [wL, wR].filter(Boolean).join(' / ') || 'Unarmed';
+    const chassisLabel   = (loadout.chassis || 'light');
+
+    lobbyEl.innerHTML = `
+        <!-- Top bar -->
+        <div class="mp-top">
+            <button onclick="mpLeaveLobby()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">‹ Back</button>
+            <div class="mp-screen-title">LOBBY</div>
+            <div style="flex:1;"></div>
+        </div>
+
+        <!-- Body -->
+        <div class="mp-body">
+
+            <!-- Left panel -->
+            <div style="width:300px;flex-shrink:0;border-right:1px solid var(--sci-line);display:flex;flex-direction:column;padding:20px;gap:12px;">
+                <div style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;">Lobby Code</div>
+                <div id="mp-lobby-code" style="font-size:22px;letter-spacing:5px;color:var(--sci-cyan);font-family:var(--font-mono);">— — — —</div>
+                <div id="mp-lobby-status" style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);">Connecting...</div>
+                <div style="border-top:1px solid var(--sci-line);padding-top:12px;">
+                    <div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);margin-bottom:6px;text-transform:uppercase;">Your Loadout</div>
+                    <div style="font-size:11px;letter-spacing:1px;color:var(--sci-txt);text-transform:capitalize;">${chassisLabel}</div>
+                    <div style="font-size:9px;color:var(--sci-txt3);margin-top:3px;">${loadoutSummary}</div>
+                </div>
+                <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;">
+                    <button id="mp-ready-btn" onclick="_mpToggleReady()" class="tw-btn tw-btn--solid" style="width:100%;">Ready Up</button>
+                    <button onclick="mpLeaveLobby()" class="tw-btn tw-btn--ghost" style="width:100%;">Leave Lobby</button>
+                </div>
+                <div id="mp-chat-box" style="max-height:100px;overflow-y:auto;font-size:10px;padding:8px;
+                     background:var(--sci-surface);border:1px solid var(--sci-line);">
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <input id="mp-chat-input" type="text" maxlength="200" placeholder="Message..."
+                           style="flex:1;padding:6px 10px;background:var(--sci-surface);border:1px solid var(--sci-line);
+                                  color:var(--sci-txt);font-family:var(--font-mono);font-size:10px;outline:none;"
+                           onkeydown="if(event.key==='Enter')mpSendChat()">
+                    <button onclick="mpSendChat()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">Send</button>
+                </div>
+            </div>
+
+            <!-- Right panel: player list -->
+            <div style="flex:1;display:flex;flex-direction:column;overflow-y:auto;">
+                <div class="lobby-hdr">Players — <span id="mp-player-count">0</span> / 4</div>
+                <div id="mp-player-list"></div>
+            </div>
+
+        </div><!-- /mp-body -->
+
+        <!-- Bottom bar -->
+        <div class="mp-bottom" style="justify-content:space-between;align-items:center;">
+            <span id="mp-lobby-bottom-status" style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);">Waiting for all players to ready up...</span>
+            <button id="mp-start-btn" onclick="mpStartMatch()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;opacity:0.35;pointer-events:none;" disabled>Start Game ›</button>
+        </div>
+    `;
+
     lobbyEl.style.display = 'flex';
     mpUpdateLobbyUI();
 }
@@ -1089,61 +1107,78 @@ function mpHideLobby() {
     if (el) el.style.display = 'none';
 }
 
+let _mpLocalReady = false;
+
+function _mpToggleReady() {
+    _mpLocalReady = !_mpLocalReady;
+    const btn = document.getElementById('mp-ready-btn');
+    if (btn) btn.textContent = _mpLocalReady ? 'Not Ready' : 'Ready Up';
+    _mpSocket?.emit('lobby-update', { ready: _mpLocalReady });
+    mpUpdateLobbyUI();
+}
+
 function mpUpdateLobbyUI() {
-    const statusEl = document.getElementById('mp-lobby-status');
-    const listEl = document.getElementById('mp-player-list');
-    const startBtn = document.getElementById('mp-start-btn');
-    const waitBtn = document.getElementById('mp-waiting-btn');
+    const statusEl  = document.getElementById('mp-lobby-status');
+    const listEl    = document.getElementById('mp-player-list');
+    const countEl   = document.getElementById('mp-player-count');
+    const startBtn  = document.getElementById('mp-start-btn');
+    const bottomSt  = document.getElementById('mp-lobby-bottom-status');
     if (!listEl) return;
 
+    const connected = !!_mpConnected;
+
     if (statusEl) {
-        statusEl.textContent = _mpConnected
-            ? `${_mpLobbyPlayers.length} PLAYER${_mpLobbyPlayers.length !== 1 ? 'S' : ''} IN LOBBY` +
-              (_mpIsHost ? ' // YOU ARE HOST' : '')
-            : 'CONNECTING...';
-        statusEl.style.color = _mpConnected ? 'rgba(0,255,204,0.7)' : 'rgba(255,200,0,0.7)';
+        statusEl.textContent = connected
+            ? (_mpIsHost ? 'You are host' : 'Connected')
+            : 'Connecting...';
     }
 
-    // Player list — show chassis + weapon loadout summary
-    listEl.innerHTML = _mpLobbyPlayers.map(p => {
-        const isMe = p.id === _mpLocalId;
-        const isHost = p.id && _mpLobbyPlayers[0]?.id === p.id;
-        const chassisLabel = (p.chassis || 'light').toUpperCase();
-        const colorHex = '#' + (p.color || 0x00ff00).toString(16).padStart(6, '0');
-        // Build loadout summary
-        const lo = p.loadout || {};
-        const wL = lo.L && lo.L !== 'none' ? (typeof WEAPONS !== 'undefined' && WEAPONS[lo.L]?.name || lo.L.toUpperCase()) : '';
-        const wR = lo.R && lo.R !== 'none' && lo.R !== lo.L ? (typeof WEAPONS !== 'undefined' && WEAPONS[lo.R]?.name || lo.R.toUpperCase()) : '';
-        const weapons = [wL, wR].filter(Boolean).join(' / ') || 'UNARMED';
-        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:4px;
-                    background:rgba(${isMe?'0,255,255':'255,255,255'},0.04);
-                    border:1px solid rgba(${isMe?'0,255,255':'255,255,255'},${isMe?'0.2':'0.06'});
-                    border-left:3px solid ${isMe?'#00ffff':colorHex};border-radius:4px;">
-            <div style="width:12px;height:12px;background:${colorHex};border-radius:2px;flex-shrink:0;"></div>
-            <div style="flex:1;">
-                <span style="color:${isMe?'#00ffff':'#c8d2d9'};font-size:13px;font-weight:bold;">${p.name}</span>
-                ${isHost?'<span style="color:#ffcc00;font-size:9px;margin-left:6px;">HOST</span>':''}
-                ${isMe?'<span style="color:rgba(0,255,255,0.5);font-size:9px;margin-left:6px;">YOU</span>':''}
-                <div style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:2px;letter-spacing:1px;">${weapons}</div>
-            </div>
-            <span style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.4);">${chassisLabel}</span>
-        </div>`;
-    }).join('');
+    if (countEl) countEl.textContent = _mpLobbyPlayers.length;
 
-    // Show start button only for host with 2+ players
-    if (startBtn && waitBtn) {
-        if (_mpIsHost && _mpLobbyPlayers.length >= 2) {
-            startBtn.style.display = 'block';
-            waitBtn.style.display = 'none';
-        } else if (_mpIsHost) {
-            startBtn.style.display = 'none';
-            waitBtn.style.display = 'block';
-            waitBtn.textContent = 'NEED 2+ PLAYERS';
+    // Build 4 player slots (filled + empty)
+    const MAX_PLAYERS = 4;
+    let rows = '';
+    for (let i = 0; i < MAX_PLAYERS; i++) {
+        const p = _mpLobbyPlayers[i];
+        if (p) {
+            const isMe      = p.id === _mpLocalId;
+            const isHost    = _mpLobbyPlayers[0]?.id === p.id;
+            const lo        = p.loadout || {};
+            const wL = lo.L && lo.L !== 'none' ? (typeof WEAPONS !== 'undefined' && WEAPONS[lo.L]?.name || lo.L) : '';
+            const wR = lo.R && lo.R !== 'none' && lo.R !== lo.L ? (typeof WEAPONS !== 'undefined' && WEAPONS[lo.R]?.name || lo.R) : '';
+            const weapons   = [wL, wR].filter(Boolean).join(' / ') || 'Unarmed';
+            const chassis   = (p.chassis || 'light');
+            const isReady   = p.ready || (isMe && _mpLocalReady);
+            rows += `<div class="lobby-player-row${isMe ? '" style="background:var(--sci-cyan-dim)' : ''}">
+                <div class="lobby-dot"></div>
+                <div style="flex:1;min-width:0;">
+                    <div class="lobby-player-name${isMe ? ' lb-me' : ''}">
+                        ${p.name}${isHost ? '<span style="font-size:8px;color:var(--sci-gold);margin-left:8px;">HOST</span>' : ''}${isMe ? '<span style="font-size:8px;color:var(--sci-cyan-border);margin-left:8px;">YOU</span>' : ''}
+                    </div>
+                    <div class="lobby-player-loadout">${chassis} · ${weapons}</div>
+                </div>
+                <div class="lobby-ready-badge${isReady ? '' : ' waiting'}">${isReady ? 'Ready' : 'Not ready'}</div>
+            </div>`;
         } else {
-            startBtn.style.display = 'none';
-            waitBtn.style.display = 'block';
-            waitBtn.textContent = 'WAITING FOR HOST...';
+            rows += `<div class="lobby-player-row">
+                <div class="lobby-dot empty"></div>
+                <div class="lobby-player-name empty">Waiting for player...</div>
+            </div>`;
         }
+    }
+    listEl.innerHTML = rows;
+
+    // Enable start button for host once 2+ players connected
+    const canStart = _mpIsHost && _mpLobbyPlayers.length >= 2;
+    if (startBtn) {
+        startBtn.disabled          = !canStart;
+        startBtn.style.opacity     = canStart ? '1' : '0.35';
+        startBtn.style.pointerEvents = canStart ? 'auto' : 'none';
+    }
+    if (bottomSt) {
+        bottomSt.textContent = canStart
+            ? (_mpIsHost ? 'All ready — you can start the match.' : 'Waiting for host to start...')
+            : 'Waiting for all players to ready up...';
     }
 }
 
@@ -2096,19 +2131,13 @@ function mpShowPvpHangar(inMatch) {
     if (!el) {
         el = document.createElement('div');
         el.id = 'pvp-hangar';
-        el.style.cssText = `
-            position:fixed;inset:0;z-index:2000;
-            display:flex;justify-content:center;align-items:center;
-            background:#0c1014;
-            font-family:'Courier New',monospace;color:#c8d2d9;
-            overflow-y:auto;
-        `;
         document.body.appendChild(el);
         // Close dropdowns when clicking outside
         el.addEventListener('click', (e) => {
             if (!e.target.closest('.pvp-dd-wrap')) _pvpCloseAllDD();
         });
     }
+    el.className = 'mp-screen';
     el.style.display = 'flex';
     _pvpRenderHangar();
 }
@@ -2243,121 +2272,142 @@ function _pvpRenderHangar() {
     if (!el) return;
 
     const chassis = loadout.chassis;
-    const hexStr = loadout.color.toString(16).padStart(6, '0');
-    const colorOpt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : []).find(o => o.key === hexStr) || { label: 'GREEN', hex6: '#00ff00' };
+    const hexStr  = loadout.color.toString(16).padStart(6, '0');
+    const colorOpt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : [])
+        .find(o => o.key === hexStr) || { label: 'GREEN', hex6: '#00ff00' };
 
-    const is2H = WEAPONS[loadout.L]?.twoHanded;
-    const ch = typeof CHASSIS !== 'undefined' ? CHASSIS[chassis] : {};
-    const totalHP = typeof getTotalHP === 'function' ? getTotalHP(chassis) : (ch.coreHP || 0) + (ch.armHP || 0) * 2 + (ch.legHP || 0);
-    const shld = typeof SHIELD_SYSTEMS !== 'undefined' ? (SHIELD_SYSTEMS[loadout.shld] || { maxShield: 0 }) : { maxShield: 0 };
+    const is2H   = WEAPONS[loadout.L]?.twoHanded;
+    const ch     = typeof CHASSIS !== 'undefined' ? CHASSIS[chassis] : {};
+    const totalHP = typeof getTotalHP === 'function'
+        ? getTotalHP(chassis)
+        : (ch.coreHP || 0) + (ch.armHP || 0) * 2 + (ch.legHP || 0);
+    const shld = typeof SHIELD_SYSTEMS !== 'undefined'
+        ? (SHIELD_SYSTEMS[loadout.shld] || { maxShield: 0 })
+        : { maxShield: 0 };
 
-    // Weapon fire rate helpers
-    const fmtDps = (key) => {
-        const w = WEAPONS[key];
-        if (!w || !w.reload || !w.dmg) return '';
-        const dps = (w.dmg / (w.reload / 1000)).toFixed(1);
-        return `<span style="color:rgba(255,255,255,0.3);font-size:9px;margin-left:6px;">${dps} dps</span>`;
+    // Clean weapon name — full name only, no DPS suffix
+    const weaponName = (key) => {
+        if (!key || key === 'none') return 'NONE';
+        const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[key] : null;
+        if (desc) return desc.title;
+        return WEAPONS[key]?.name || key.toUpperCase();
     };
 
-    function ddRow(slotId, label) {
-        const headerName = _pvpGetSlotLabel(slotId);
-        const dpsTag = (slotId === 'L') ? fmtDps(loadout.L) : (slotId === 'R') ? fmtDps(is2H ? loadout.L : loadout.R) : '';
-        return `<div class="dd-row">
-            <span class="dd-label">${label}</span>
+    // Build an mp-dd-row for each gear slot
+    function ddRow(slotId, labelText) {
+        const name = slotId === 'L' ? weaponName(loadout.L)
+                   : slotId === 'R' ? weaponName(is2H ? loadout.L : loadout.R)
+                   : _pvpGetSlotLabel(slotId);
+        const locked = is2H && slotId === 'R' ? ' style="opacity:0.45;pointer-events:none;"' : '';
+        return `<div class="mp-dd-row"${locked}>
+            <span class="mp-dd-label">${labelText}</span>
             <div class="pvp-dd-wrap" style="position:relative;flex:1;">
-                <div class="dd-selected pvp-dd-selected" id="pvp-dds-${slotId}" onclick="_pvpToggleDD('${slotId}')">
-                    <span class="dd-name">${headerName}${dpsTag}</span>
-                    <span class="dd-arrow">▼</span>
+                <div class="mp-dd-selected pvp-dd-selected" id="pvp-dds-${slotId}" onclick="_pvpToggleDD('${slotId}')">
+                    <span>${name}</span>
+                    <span style="font-size:9px;opacity:0.5;">▼</span>
                 </div>
                 <div class="dd-list pvp-dd-list" id="pvp-ddl-${slotId}"></div>
             </div>
         </div>`;
     }
 
-    // Button section depends on context (pre-match vs in-match)
-    let buttonsHtml;
+    // Right-panel bottom buttons
+    let bottomHtml;
     if (_pvpHangarInMatch) {
-        buttonsHtml = `
-            <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--block">DEPLOY MECH</button>
-            <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--block">QUIT MATCH</button>`;
+        bottomHtml = `
+            <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;">Deploy Mech ›</button>
+            <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="flex:0 0 auto;width:auto;margin-right:auto;">Quit Match</button>`;
     } else {
-        buttonsHtml = `
-            <button onclick="_pvpJoinLobby()" class="tw-btn tw-btn--block">JOIN LOBBY</button>`;
+        bottomHtml = `<button onclick="_pvpJoinLobby()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;">Join Lobby ›</button>`;
     }
 
-    const rArmLabel = is2H ? '■ R.ARM ⬡' : '■ R.ARM';
+    const backBtn = !_pvpHangarInMatch
+        ? `<button onclick="_pvpBackToMenu()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">‹ Back</button>`
+        : '';
 
-    // Build details panel (same as simulation)
-    const chassisTraits = [];
-    if (chassis === 'light') { chassisTraits.push('Dual-fire both arms', '+20% reload speed', 'Fragile arms'); }
-    else if (chassis === 'medium') { chassisTraits.push('Mod cooldowns -15%', 'Kills shave 0.5s off cooldown', 'Shield absorbs 60%'); }
-    else if (chassis === 'heavy') { chassisTraits.push('Passive 15% DR', 'Cannot equip JUMP or AFTERLEG', 'Built for attrition'); }
+    const screenTitle = _pvpHangarInMatch ? 'CHANGE LOADOUT' : 'MULTIPLAYER';
 
     el.innerHTML = `
-        <div class="stat-readout" style="max-height:96vh;overflow-y:auto;">
-            ${!_pvpHangarInMatch ? `<button onclick="_pvpBackToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="position:absolute;top:20px;left:24px;">&#9664;&nbsp; BACK</button>` : ''}
-            <h2 style="text-align:center;margin:0 0 20px;letter-spacing:8px;color:#00ffff;font-family:'Courier New',monospace;font-size:26px;
-                text-shadow:0 0 18px rgba(0,255,255,0.7),0 0 40px rgba(0,255,255,0.2);font-weight:normal;">MECH HANGAR</h2>
-            <div style="text-align:center;margin:-14px 0 16px;font-size:10px;letter-spacing:4px;color:rgba(0,255,255,0.35);font-family:'Courier New',monospace;">
-                ${_pvpHangarInMatch ? 'CHANGE LOADOUT' : 'PVP LOADOUT CONFIGURATION'}</div>
+        <!-- Top bar -->
+        <div class="mp-top">
+            ${backBtn}
+            <div class="mp-screen-title">${screenTitle}</div>
+            <div style="flex:1;"></div>
+        </div>
 
-            <div style="display:flex;gap:28px;align-items:stretch;">
-                <!-- LEFT: BUILD OPTIONS -->
-                <div style="flex:1;min-width:0;">
-                    <!-- Chassis -->
-                    <div class="dd-row">
-                        <span class="dd-label">■ CHASSIS</span>
-                        <div style="display:flex;gap:6px;flex:1;">
-                            <button id="pvp-c-light" onclick="_pvpSetChassis('light')" class="${chassis === 'light' ? 'active' : ''}" style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">LIGHT</button>
-                            <button id="pvp-c-medium" onclick="_pvpSetChassis('medium')" class="${chassis === 'medium' ? 'active' : ''}" style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">MEDIUM</button>
-                            <button id="pvp-c-heavy" onclick="_pvpSetChassis('heavy')" class="${chassis === 'heavy' ? 'active' : ''}" style="flex:1;padding:8px 6px;font-size:12px;letter-spacing:2px;font-family:'Courier New',monospace;">HEAVY</button>
+        <!-- Body -->
+        <div class="mp-body">
+
+            <!-- Left: options -->
+            <div class="mp-left">
+                <div class="mp-sec-label">Chassis</div>
+                <div class="mp-chassis-row">
+                    <button class="mp-chassis-btn${chassis === 'light' ? ' active' : ''}" onclick="_pvpSetChassis('light')">Light</button>
+                    <button class="mp-chassis-btn${chassis === 'medium' ? ' active' : ''}" onclick="_pvpSetChassis('medium')">Medium</button>
+                    <button class="mp-chassis-btn${chassis === 'heavy' ? ' active' : ''}" onclick="_pvpSetChassis('heavy')">Heavy</button>
+                </div>
+
+                <div class="mp-sec-label" style="margin-top:8px;">Colour</div>
+                <div class="mp-dd-row">
+                    <span class="mp-dd-label">Colour</span>
+                    <div class="pvp-dd-wrap" style="position:relative;flex:1;">
+                        <div class="mp-dd-selected pvp-dd-selected" id="pvp-dds-COL" onclick="_pvpToggleColorDD()">
+                            <span style="display:flex;align-items:center;gap:8px;">
+                                <span style="width:10px;height:10px;background:${colorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
+                                ${colorOpt.label}
+                            </span>
+                            <span style="font-size:9px;opacity:0.5;">▼</span>
                         </div>
+                        <div class="dd-list pvp-dd-list" id="pvp-ddl-COL"></div>
                     </div>
+                </div>
 
-                    <!-- Colour -->
-                    <div class="dd-row">
-                        <span class="dd-label">■ COLOUR</span>
-                        <div class="pvp-dd-wrap" style="position:relative;flex:1;">
-                            <div class="dd-selected pvp-dd-selected" id="pvp-dds-COL" onclick="_pvpToggleColorDD()">
-                                <span class="dd-color-swatch-header" style="background:${colorOpt.hex6};box-shadow:0 0 6px ${colorOpt.hex6}55;"></span>
-                                <span class="dd-name">${colorOpt.label}</span>
-                                <span class="dd-arrow">▼</span>
-                            </div>
-                            <div class="dd-list pvp-dd-list" id="pvp-ddl-COL"></div>
-                        </div>
-                    </div>
-
-                    ${ddRow('L', '■ L.ARM')}
-                    ${ddRow('R', rArmLabel)}
-                    ${ddRow('M', '■ CORE MOD')}
-                    ${ddRow('S', '■ SHIELD')}
-                    ${ddRow('G', '■ LEGS')}
-                    ${ddRow('A', '■ AUGMENT')}
-
-                    <!-- Build Details -->
-                    <div style="margin-top:16px;">
-                        <div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);font-family:'Courier New',monospace;margin-bottom:6px;text-transform:uppercase;">■ BUILD DETAILS</div>
-                        <div>
-                            <div class="gs-row"><span class="gs-label">TOTAL HP</span><span class="gs-val" style="color:#00ff88">${totalHP} HP</span></div>
-                            <div class="gs-row"><span class="gs-label">HP SPLIT</span><span class="gs-val" style="color:#55cc88">C ${ch.coreHP||0} / A ${ch.armHP||0} / L ${ch.legHP||0}</span></div>
-                            <div class="gs-row"><span class="gs-label">SPEED</span><span class="gs-val" style="color:#ffdd88">${ch.spd||210} u/s</span></div>
-                            <div class="gs-row"><span class="gs-label">SHIELD</span><span class="gs-val" style="color:#00ffff">${shld.maxShield > 0 ? shld.maxShield + ' HP / ' + Math.round((shld.absorb||0.5)*100) + '% absorb' : 'NONE'}</span></div>
-                            <div class="gs-row"><span class="gs-label">CHASSIS</span><span class="gs-val" style="color:${chassis==='light'?'#88ff88':chassis==='medium'?'#ffcc44':'#ff8844'}">${chassisTraits.join(' · ')}</span></div>
-                        </div>
-                    </div>
-                </div><!-- /left -->
-
-                <!-- RIGHT: PREVIEW + BUTTONS -->
-                <div style="width:210px;flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;gap:0;">
-                    <div style="width:200px;height:140px;border:1px solid rgba(0,255,255,0.4);background:rgba(0,10,20,0.6);
-                        box-shadow:0 0 14px rgba(0,255,255,0.12);display:flex;justify-content:center;align-items:center;">
-                        <img src="assets/${chassis}-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
-                    </div>
-                    <div style="width:100%;margin-top:8px;display:flex;flex-direction:column;gap:8px;">
-                        ${buttonsHtml}
-                    </div>
-                </div><!-- /right -->
+                <div class="mp-sec-label" style="margin-top:8px;">Weapons &amp; Gear</div>
+                ${ddRow('L', 'L.Arm')}
+                ${ddRow('R', 'R.Arm')}
+                ${ddRow('M', 'Core Mod')}
+                ${ddRow('S', 'Shield')}
+                ${ddRow('G', 'Legs')}
+                ${ddRow('A', 'Augment')}
             </div>
+
+            <!-- Right: preview + stats -->
+            <div class="mp-right">
+                <div class="mp-preview-zone">
+                    <div class="mp-preview-box">
+                        <img src="assets/${chassis}-mech.png"
+                            style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
+                    </div>
+                    <div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">
+                        ${chassis} &nbsp;·&nbsp; ${colorOpt.label}
+                    </div>
+                </div>
+
+                <div style="padding:16px 20px;display:flex;flex-direction:column;gap:4px;">
+                    <div class="hg-stat-row">
+                        <span class="hg-stat-label">Total HP</span>
+                        <span class="hg-stat-val green">${totalHP} HP</span>
+                    </div>
+                    <div class="hg-stat-row">
+                        <span class="hg-stat-label">HP Split</span>
+                        <span class="hg-stat-val dim">C ${ch.coreHP||0} / A ${ch.armHP||0} / L ${ch.legHP||0}</span>
+                    </div>
+                    <div class="hg-stat-row">
+                        <span class="hg-stat-label">Speed</span>
+                        <span class="hg-stat-val">${ch.spd||210} u/s</span>
+                    </div>
+                    <div class="hg-stat-row">
+                        <span class="hg-stat-label">Shield</span>
+                        <span class="hg-stat-val">${shld.maxShield > 0 ? shld.maxShield + ' HP / ' + Math.round((shld.absorb||0.5)*100) + '% absorb' : 'None'}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /mp-body -->
+
+        <!-- Bottom bar -->
+        <div class="mp-bottom">
+            ${bottomHtml}
         </div>
     `;
 }

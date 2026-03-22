@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.52 — Multiplayer screen redesign, campaign top bar and LVL/XP fixes
+
+**Date:** 2026-03-22
+
+Redesigned the PVP hangar and lobby screens and fixed two campaign UI issues. In `css/menus.css`: added two new sections — Multiplayer loadout screen classes (`.mp-screen`, `.mp-top`, `.mp-screen-title`, `.mp-body`, `.mp-left`, `.mp-sec-label`, `.mp-chassis-row`, `.mp-chassis-btn`, `.mp-dd-row`, `.mp-dd-label`, `.mp-dd-selected`, `.mp-right`, `.mp-preview-zone`, `.mp-preview-box`, `.mp-bottom`) and Lobby screen classes (`.lobby-hdr`, `.lobby-player-row`, `.lobby-dot`, `.lobby-player-name`, `.lobby-player-loadout`, `.lobby-ready-badge`). In `js/multiplayer.js`: `mpShowPvpHangar()` updated to set `el.className = 'mp-screen'` instead of inline styles; `_pvpRenderHangar()` completely rebuilt using the new layout — top bar with centered title, left panel with chassis buttons (`.mp-chassis-btn`), colour and gear slot rows (`.mp-dd-selected`), right panel with mech preview box and build stats using `.hg-stat-row` classes, and a bottom bar with action buttons; weapon slot labels now show clean full names only (no DPS suffix); `mpShowLobby()` completely rebuilt with `.mp-screen` layout — left panel with lobby code, your loadout summary, ready/leave buttons and chat, right panel with four `.lobby-player-row` slots including `.lobby-dot` status and `.lobby-ready-badge`; `mpUpdateLobbyUI()` rewritten to render all four player slots (filled + empty), enable/disable the Start Game button, and update bottom status text; added `_mpToggleReady()` and `_mpLocalReady` state for per-player ready tracking. In `js/campaign-system.js`: `showMissionSelect()` top bar rebuilt — CAMPAIGN title is now `position:absolute;left:50%;transform:translateX(-50%)` so it floats independently of flex items; LVL/XP text placed immediately below also absolute-positioned with `margin-top:22px`; Supply Shop button has `margin-left:auto` to push it flush right; the `.cm-top` container given `position:relative` inline.
+
+### Files Changed
+
+- `css/menus.css` — mp-screen/lobby CSS class blocks
+- `js/multiplayer.js` — mpShowPvpHangar, _pvpRenderHangar, mpShowLobby, mpUpdateLobbyUI, _mpToggleReady rebuilt
+- `js/campaign-system.js` — showMissionSelect top bar layout fixed
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.51 — Callsign screen and leaderboard overlay redesign
 
 **Date:** 2026-03-22
