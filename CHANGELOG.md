@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.36 — Sci-fi .tw-btn system overhaul
+
+**Date:** 2026-03-22
+
+Replaced the old `.tw-btn` visual system across `css/base.css` and `css/menus.css` with a clean sci-fi design. In `:root`: updated button geometry tokens (smaller padding/font/letter-spacing), removed all `--border-*` and `--tg-*` (text-glow) tokens, and added 13 new `--sci-*` palette tokens (`--sci-cyan`, `--sci-red`, `--sci-gold`, `--sci-line`, `--sci-txt/2/3`, `--sci-surface`, and their dim/border/bright variants). The `.tw-btn` base is now `inline-flex` with a uniform `1px` border and 0.15s transition — no more asymmetric borders or letter-spacing hover expansion; hover simply fills with `--sci-cyan-dim` and brightens the border. Old `--gold` and `--green` variants removed; new `--solid` and `--ghost` variants added. `.tw-btn--error` and `.tw-btn--disabled` updated to use sci tokens. In `menus.css`: `.menu-start-btn` and `.pause-menu-btn` stripped to pure layout (no visual properties), and five new structural utility classes added — `.sci-panel`, `.sci-corner` (with tl/tr/bl/br variants), `.sci-divider`, `.sci-nav-item`, and `.sci-stat-row`.
+
+### Files Changed
+
+- `css/base.css` — new sci-fi button tokens and .tw-btn system; removed --border-* and --tg-* tokens
+- `css/menus.css` — .menu-start-btn and .pause-menu-btn stripped to layout only; sci structural classes added
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.35 — Back button top-left, deploy/join below image, remove loot hint text
 
 **Date:** 2026-03-22
