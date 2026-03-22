@@ -204,7 +204,7 @@ body {
 /* --- Ghost / low-contrast --- */
 .tw-btn--ghost {
   border-color: var(--sci-line);
-  color:        var(--sci-txt2);
+  color:        rgba(255,255,255,0.45);
 }
 
 .tw-btn--ghost:hover {

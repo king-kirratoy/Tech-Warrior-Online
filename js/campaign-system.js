@@ -764,7 +764,7 @@ function showMissionSelect() {
     html += '<div class="cm-top" style="position:relative;">';
     html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">&#8249; Back</button>`;
     html += `<span style="position:absolute;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:4px;color:var(--sci-txt);text-transform:uppercase;pointer-events:none;">CAMPAIGN</span>`;
-    html += `<span style="position:absolute;left:50%;transform:translateX(-50%);margin-top:22px;font-size:9px;letter-spacing:2px;color:var(--sci-txt3);pointer-events:none;">LVL ${_campaignState.playerLevel} &nbsp;·&nbsp; ${xpCur} / ${xpNeeded} XP</span>`;
+    html += `<span style="position:absolute;left:50%;transform:translateX(-50%);margin-top:22px;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);pointer-events:none;">LVL ${_campaignState.playerLevel} &nbsp;·&nbsp; ${xpCur} / ${xpNeeded} XP</span>`;
     html += `<button onclick="_openShopFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;margin-left:auto;">Supply Shop</button>`;
     html += `<button onclick="_openLoadoutFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">Loadout</button>`;
     html += '</div>';
@@ -832,7 +832,7 @@ function showMissionSelect() {
 
     // Deploy bar
     html += '<div class="cm-bottom">';
-    html += `<span style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);white-space:nowrap;">LVL ${_campaignState.playerLevel}</span>`;
+    html += `<span style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);white-space:nowrap;">LVL ${_campaignState.playerLevel}</span>`;
     html += `<div class="cm-xp-bar"><div class="cm-xp-fill" style="width:${Math.round(xpPct * 100)}%"></div></div>`;
     if (_selectedMissionIdx !== null) {
         html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;">Deploy &#8250;</button>`;
@@ -1461,18 +1461,18 @@ function showShop() {
         const entries = Object.entries(stats).filter(([, v]) => v !== 0);
         let h = `<div style="flex:1;min-width:0;background:rgba(0,0,0,0.25);border:1px solid var(--sci-line);border-radius:3px;padding:10px 12px;">`;
         if (cardLabel) {
-            h += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);margin-bottom:4px;text-transform:uppercase;">${cardLabel}</div>`;
+            h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:4px;text-transform:uppercase;">${cardLabel}</div>`;
         }
         h += `<div style="font-size:11px;letter-spacing:1px;color:${itemRc};margin-bottom:2px;">${item.name || 'Item'}</div>`;
-        h += `<div style="font-size:9px;color:var(--sci-txt3);margin-bottom:8px;">${meta}</div>`;
+        h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);margin-bottom:8px;">${meta}</div>`;
         entries.forEach(([k, v]) => {
             h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
-            h += `<span style="color:var(--sci-txt2);">${_shopStatNames[k] || k}</span>`;
+            h += `<span style="color:rgba(255,255,255,0.45);">${_shopStatNames[k] || k}</span>`;
             h += `<span style="color:var(--sci-txt);">${v}</span>`;
             h += `</div>`;
         });
         if (!entries.length) {
-            h += `<div style="font-size:9px;color:var(--sci-txt3);">No stats</div>`;
+            h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">No stats</div>`;
         }
         h += `</div>`;
         return h;
@@ -1483,7 +1483,7 @@ function showShop() {
         const isSelected = (_selectedShopIdx === idx);
         const meta = `${item.rarity || 'common'} · ${slotLbl(item)} · LV.${item.level || 1}`;
         const soldBadge = item._soldBack
-            ? `<span style="font-size:8px;letter-spacing:1px;color:var(--sci-txt3);background:rgba(255,255,255,0.06);border-radius:2px;padding:1px 4px;margin-left:6px;">SOLD</span>`
+            ? `<span style="font-size:8px;letter-spacing:1px;color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.06);border-radius:2px;padding:1px 4px;margin-left:6px;">SOLD</span>`
             : '';
         return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelect(${idx})">
             <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
@@ -1525,7 +1525,7 @@ function showShop() {
 
         // Slot label (Fix 3)
         if (slotLabel) {
-            detailHtml += `<div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:4px;">${slotLabel}</div>`;
+            detailHtml += `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">${slotLabel}</div>`;
         }
 
         if (equippedItem) {
@@ -1537,13 +1537,13 @@ function showShop() {
             // Diff section — only show stats that differ
             const diffKeys = allKeys.filter(k => (newStats[k] || 0) !== (oldStats[k] || 0));
             if (diffKeys.length > 0) {
-                detailHtml += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:4px;">Changes if equipped:</div>`;
+                detailHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">Changes if equipped:</div>`;
                 diffKeys.forEach(k => {
                     const diff    = (newStats[k] || 0) - (oldStats[k] || 0);
                     const diffCls = diff > 0 ? 'pos' : 'neg';
                     const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
                     detailHtml += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
-                    detailHtml += `<span style="color:var(--sci-txt2);">${_shopStatNames[k] || k}</span>`;
+                    detailHtml += `<span style="color:rgba(255,255,255,0.45);">${_shopStatNames[k] || k}</span>`;
                     detailHtml += `<span class="shop-compare-diff ${diffCls}">${diffStr}</span>`;
                     detailHtml += `</div>`;
                 });
@@ -1552,19 +1552,19 @@ function showShop() {
             // Single card, no comparison (Fix 2 no-equipped case)
             detailHtml += `<div style="margin-bottom:10px;">`;
             detailHtml += `<div style="font-size:11px;letter-spacing:1px;color:${itemRc};margin-bottom:2px;">${selItem.name || 'Item'}</div>`;
-            detailHtml += `<div style="font-size:9px;color:var(--sci-txt3);margin-bottom:8px;">${selItem.rarity || 'common'} · ${slotLabel} · LV.${selItem.level || 1} · ⬡ ${selItem._shopPrice}</div>`;
+            detailHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.45);margin-bottom:8px;">${selItem.rarity || 'common'} · ${slotLabel} · LV.${selItem.level || 1} · ⬡ ${selItem._shopPrice}</div>`;
             const entries = Object.entries(newStats).filter(([, v]) => v !== 0);
             entries.forEach(([k, v]) => {
                 detailHtml += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
-                detailHtml += `<span style="color:var(--sci-txt2);">${_shopStatNames[k] || k}</span>`;
+                detailHtml += `<span style="color:rgba(255,255,255,0.45);">${_shopStatNames[k] || k}</span>`;
                 detailHtml += `<span style="color:var(--sci-txt);">${v}</span>`;
                 detailHtml += `</div>`;
             });
             if (!entries.length) {
-                detailHtml += `<div style="font-size:9px;color:var(--sci-txt3);">No stats</div>`;
+                detailHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">No stats</div>`;
             }
             if (slotKey) {
-                detailHtml += `<div style="font-size:9px;color:var(--sci-txt3);margin-top:6px;">Slot: ${slotLabel} (nothing equipped)</div>`;
+                detailHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:6px;">Slot: ${slotLabel} (nothing equipped)</div>`;
             }
             detailHtml += `</div>`;
         }
@@ -1575,7 +1575,7 @@ function showShop() {
             detailHtml += `<button onclick="_shopBuy(${_selectedShopIdx})" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;min-width:160px;">Buy — ⬡ ${selItem._shopPrice}</button>`;
         } else {
             const reason = scrapVal < selItem._shopPrice ? 'Not enough scrap' : 'Inventory full';
-            detailHtml += `<div style="font-size:10px;letter-spacing:1px;color:var(--sci-txt3);">${reason}</div>`;
+            detailHtml += `<div style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.45);">${reason}</div>`;
         }
         detailHtml += `</div>`;
         detailHtml += `</div>`;
@@ -1590,7 +1590,7 @@ function showShop() {
         const slotLabel  = slotLbl(sellItem);
         sellDetailHtml += `<div class="shop-detail-panel">`;
         if (slotLabel) {
-            sellDetailHtml += `<div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:4px;">${slotLabel}</div>`;
+            sellDetailHtml += `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">${slotLabel}</div>`;
         }
         sellDetailHtml += `<div class="shop-detail-name" style="color:${sellItemRc};">${sellItem.name || 'Item'}</div>`;
         sellDetailHtml += `<div class="shop-detail-meta">${sellItem.rarity || 'common'} · ${slotLabel} · LV.${sellItem.level || 1}</div>`;
@@ -1604,7 +1604,7 @@ function showShop() {
     // ── Buy items list HTML ──
     let buyItemsHtml = '';
     if (_shopStock.length === 0) {
-        buyItemsHtml = `<div style="padding:40px 20px;text-align:center;font-size:11px;letter-spacing:2px;color:var(--sci-txt3);">No items in stock</div>`;
+        buyItemsHtml = `<div style="padding:40px 20px;text-align:center;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.45);">No items in stock</div>`;
     } else {
         buyItemsHtml = _shopStock.map((item, idx) => buyRow(item, idx)).join('');
     }
@@ -1612,7 +1612,7 @@ function showShop() {
     // ── Sell items list HTML ──
     let sellItemsHtml = '';
     if (typeof _inventory === 'undefined' || _inventory.length === 0) {
-        sellItemsHtml = `<div style="padding:40px 20px;text-align:center;font-size:11px;letter-spacing:2px;color:var(--sci-txt3);">No items to sell</div>`;
+        sellItemsHtml = `<div style="padding:40px 20px;text-align:center;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.45);">No items to sell</div>`;
     } else {
         sellItemsHtml = _inventory.map((item, idx) => sellRow(item, idx)).join('');
     }
@@ -1646,7 +1646,7 @@ function showShop() {
                 <div class="shop-sell-col">
                     <div class="shop-col-header">
                         <div class="shop-col-title">Sell</div>
-                        <div style="font-size:9px;color:var(--sci-txt3);">Select item to sell</div>
+                        <div style="font-size:9px;color:rgba(255,255,255,0.45);">Select item to sell</div>
                     </div>
                     <div class="shop-items-list">
                         ${sellItemsHtml}
@@ -1785,7 +1785,7 @@ function showLoadoutSlots() {
 
     // Current loadout preview
     html += `<div style="margin-bottom:20px;padding:12px 16px;background:${UI_COLORS.cyanSurface04};border:1px solid ${UI_COLORS.cyan20};border-radius:6px;max-width:500px;">`;
-    html += `<div style="font-size:10px;letter-spacing:2px;color:${UI_COLORS.cyan60};margin-bottom:6px;">CURRENT LOADOUT</div>`;
+    html += `<div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:6px;">CURRENT LOADOUT</div>`;
     const chc = chassisColors[loadout.chassis] || UI_COLORS.text;
     html += `<div style="font-size:12px;color:${chc};letter-spacing:1px;">${(loadout.chassis||'').toUpperCase()} // L:${(loadout.L||'none').toUpperCase()} R:${(loadout.R||'none').toUpperCase()} MOD:${(loadout.mod||'none').toUpperCase()} SHLD:${(loadout.shld||'none').toUpperCase()}</div>`;
     html += '</div>';
@@ -1806,8 +1806,8 @@ function showLoadoutSlots() {
             html += '</div>';
         } else {
             html += `<button onclick="_saveSlot(${i})" class="tw-btn" style="align-items:center;display:flex;gap:8px;text-align:left;width:100%;">`;
-            html += `<div style="font-size:11px;letter-spacing:2px;color:${UI_COLORS.text30};">SLOT ${i+1} — EMPTY</div>`;
-            html += `<div style="margin-left:auto;font-size:10px;letter-spacing:2px;color:${UI_COLORS.cyan40};">SAVE</div>`;
+            html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.45);">SLOT ${i+1} — EMPTY</div>`;
+            html += `<div style="margin-left:auto;font-size:10px;letter-spacing:2px;color:var(--sci-cyan);">SAVE</div>`;
             html += '</button>';
         }
     }
@@ -1952,7 +1952,7 @@ function _showUpgradesPanel() {
         } else if (canBuy) {
             borderColor = UI_COLORS.gold; textColor = UI_COLORS.gold; bg = UI_COLORS.gold06; labelIcon = '●';
         } else {
-            borderColor = UI_COLORS.surface08; textColor = UI_COLORS.text25; bg = UI_COLORS.bgDark30; labelIcon = '🔒';
+            borderColor = UI_COLORS.surface08; textColor = 'rgba(255,255,255,0.45)'; bg = UI_COLORS.bgDark30; labelIcon = '🔒';
         }
 
         const onclick = canBuy ? `onclick="_buySkillNode('${node.id}')"` : '';
@@ -1961,7 +1961,7 @@ function _showUpgradesPanel() {
 
         html += `<div ${onclick} title="${node.desc}" style="position:absolute;left:${left}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px;padding:4px 6px;background:${bg};border:1px solid ${borderColor};border-radius:4px;cursor:${cursor};transition:all 0.2s;z-index:1;overflow:hidden;box-sizing:border-box;${shadowStyle}" ${canBuy ? `onmouseover="this.style.background='${UI_COLORS.gold12}';this.style.boxShadow='0 0 12px ${UI_COLORS.gold25}'" onmouseout="this.style.background='${bg}';this.style.boxShadow='${canBuy ? `0 0 8px ${UI_COLORS.gold15}` : 'none'}'"` : ''}>`;
         html += `<div style="font-size:8px;letter-spacing:0.5px;color:${textColor};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${labelIcon} ${node.label}</div>`;
-        html += `<div style="font-size:7px;color:${owned ? UI_COLORS.text50 : UI_COLORS.text25};line-height:1.3;overflow:hidden;max-height:30px;">${node.desc}</div>`;
+        html += `<div style="font-size:7px;color:${owned ? UI_COLORS.text50 : 'rgba(255,255,255,0.45)'};line-height:1.3;overflow:hidden;max-height:30px;">${node.desc}</div>`;
         html += '</div>';
     }
     html += '</div>'; // end tree container
@@ -1971,7 +1971,7 @@ function _showUpgradesPanel() {
     const activeStats = Object.entries(bonuses).filter(([k, v]) => v !== 0);
     if (activeStats.length > 0) {
         html += `<div style="padding:10px 14px;background:${UI_COLORS.cyanSurface03};border:1px solid ${UI_COLORS.cyan10};border-radius:4px;max-width:${gridW}px;margin-bottom:12px;">`;
-        html += `<div style="font-size:9px;letter-spacing:2px;color:${UI_COLORS.cyan40};margin-bottom:6px;">ACTIVE BONUSES</div>`;
+        html += `<div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:6px;">ACTIVE BONUSES</div>`;
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
         const statLabels = { coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', spd:'Speed',
             dmgMult:'Damage', reloadMult:'Reload Spd', critChance:'Crit Chance', critDmg:'Crit Damage',

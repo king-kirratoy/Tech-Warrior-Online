@@ -683,7 +683,7 @@ async function showCampaignSubMenu() {
     if (resumeBtn) {
         if (hasSave) {
             resumeBtn.style.display = 'flex';
-            resumeBtn.innerHTML = '<span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">★</span><span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Resume Campaign</span><span style="font-size:10px;color:var(--sci-txt3);">›</span>';
+            resumeBtn.innerHTML = '<span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">★</span><span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Resume Campaign</span><span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>';
         } else {
             resumeBtn.style.display = 'none';
         }
@@ -1045,16 +1045,16 @@ function _buildItemComparisonHTML(newItem) {
     function _statCard(item, cardLabel) {
         const rd = (item && RARITY_DEFS && RARITY_DEFS[item.rarity]) ? RARITY_DEFS[item.rarity] : { colorStr: UI_COLORS.text60 };
         let h = `<div style="flex:1;min-width:0;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:8px 10px;">`;
-        h += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);margin-bottom:3px;text-transform:uppercase;">${cardLabel}</div>`;
+        h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;text-transform:uppercase;">${cardLabel}</div>`;
         h += `<div style="font-size:11px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:6px;line-height:1.3;">${item.name || '?'}</div>`;
         const entries = Object.entries(item.baseStats || {}).filter(([, v]) => v !== 0);
         entries.forEach(([k, v]) => {
             h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
-            h += `<span style="color:var(--sci-txt3);">${statNames[k] || k}</span>`;
+            h += `<span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>`;
             h += `<span style="color:var(--sci-txt);">${v}</span>`;
             h += `</div>`;
         });
-        if (!entries.length) h += `<div style="font-size:9px;color:var(--sci-txt3);">No stats</div>`;
+        if (!entries.length) h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">No stats</div>`;
         h += `</div>`;
         return h;
     }
@@ -1080,13 +1080,13 @@ function _buildItemComparisonHTML(newItem) {
 
     // Header row: "VS EQUIPPED" label + optional arm-toggle button
     html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">`;
-    html += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;">vs equipped</div>`;
+    html += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);text-transform:uppercase;">vs equipped</div>`;
     html += toggleBtn;
     html += `</div>`;
 
     if (!equippedItem || !equippedItem.baseStats) {
         const slotLabel = newItem.baseType === 'weapon' ? (_compareArm + ' ARM') : 'this slot';
-        html += `<div style="font-size:10px;color:var(--sci-txt3);font-style:italic;">Nothing equipped in ${slotLabel}</div>`;
+        html += `<div style="font-size:10px;color:rgba(255,255,255,0.45);font-style:italic;">Nothing equipped in ${slotLabel}</div>`;
         html += `</div>`;
         return html;
     }
@@ -1113,13 +1113,13 @@ function _buildItemComparisonHTML(newItem) {
             ? sign + Math.round(diff * 100) + '%'
             : sign + diff;
         return `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">
-            <span style="color:var(--sci-txt3);">${statNames[k] || k}</span>
+            <span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>
             <span style="color:${color};">${fmtVal}</span>
         </div>`;
     }).filter(Boolean).join('');
 
     if (diffRows) {
-        html += `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:4px;">CHANGES IF EQUIPPED:</div>`;
+        html += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">CHANGES IF EQUIPPED:</div>`;
         html += diffRows;
     }
 
@@ -1165,9 +1165,9 @@ function _renderItemDetail(source, key) {
     const _uniqueBadge = item.isUnique ? `<span style="font-size:9px;letter-spacing:2px;color:${UI_COLORS.gold};margin-left:10px;background:${UI_COLORS.gold12};padding:2px 6px;border:1px solid ${UI_COLORS.gold30};border-radius:3px;">★ UNIQUE</span>` : '';
     let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`;
     html += `<div>
-        ${_slotLabel ? `<div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:4px;">${_slotLabel}</div>` : ''}
+        ${_slotLabel ? `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">${_slotLabel}</div>` : ''}
         <span style="font-size:16px;letter-spacing:2px;color:${rd.colorStr};text-shadow:0 0 10px ${rd.colorStr}44;">${item.name}</span>${_uniqueBadge}
-        <span style="font-size:10px;letter-spacing:1px;color:${UI_COLORS.text40};margin-left:12px;">iLvl ${item.level}</span>
+        <span style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.45);margin-left:12px;">iLvl ${item.level}</span>
     </div>`;
 
     // Action buttons
@@ -1861,20 +1861,20 @@ function _showSlotHover(el, slotKey) {
     if (!item) { card.style.display = 'none'; return; }
     const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
     const _slotNames = { L:'L Arm', R:'R Arm', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', mod:'CPU Mod', augment:'Augment' };
-    let html = `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);margin-bottom:3px;">${_slotNames[slotKey]||slotKey}</div>`;
+    let html = `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${_slotNames[slotKey]||slotKey}</div>`;
     html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${item.name}</div>`;
     html += `<div style="font-size:8px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||item.rarity}${item.iLvl ? ' · iLvl '+item.iLvl : ''}</div>`;
     if (item.baseStats) {
         const sn = { dmg:'Damage', reload:'Reload', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', reloadPct:'Reload%', dmgPct:'Dmg%' };
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (!v) return;
-            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:var(--sci-txt3);">${sn[k]||k}</span><span style="color:var(--sci-txt);">${v}</span></div>`;
+            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${sn[k]||k}</span><span style="color:var(--sci-txt);">${v}</span></div>`;
         });
     }
     if (item.affixes && item.affixes.length) {
         item.affixes.forEach(a => { html += `<div style="font-size:9px;color:#44ff88;margin-top:2px;">&#9679; ${a.label}</div>`; });
     }
-    html += `<div style="font-size:7px;letter-spacing:1px;color:var(--sci-txt3);margin-top:8px;opacity:0.5;">Hold + drag to swap</div>`;
+    html += `<div style="font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.22);margin-top:8px;">Hold + drag to swap</div>`;
     card.innerHTML = html;
     card.style.display = 'block';
     // Position beside the slot — flip left/right to avoid edge clipping

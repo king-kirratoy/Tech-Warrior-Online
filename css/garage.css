@@ -508,7 +508,7 @@
 }
 
 .hg-subtitle {
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.45);
   font-size: 9px;
   letter-spacing: 2px;
   margin-top: 2px;
@@ -561,7 +561,7 @@
 
 .hg-stats-header {
   border-bottom: 1px solid var(--sci-line);
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.88);
   flex-shrink: 0;
   font-size: 9px;
   letter-spacing: 2px;
@@ -579,7 +579,7 @@
 }
 
 .hg-stat-label {
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.45);
   font-size: 9px;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -593,7 +593,7 @@
 }
 
 .hg-stat-val.warn   { color: var(--sci-gold); }
-.hg-stat-val.dim    { color: var(--sci-txt2); font-size: 10px; }
+.hg-stat-val.dim    { color: rgba(255,255,255,0.55); font-size: 10px; }
 .hg-stat-val.green  { color: #00ff88; }
 .hg-stat-val.purple { color: #cc88ff; font-size: 10px; }
 
@@ -625,7 +625,7 @@
 
 .lo-xp-lbl,
 .lo-xp-val {
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.45);
   font-family: 'Courier New', monospace;
   font-size: 8px;
   letter-spacing: 2px;
@@ -690,7 +690,7 @@
 }
 
 .lo-sec-title {
-  color: rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.45);
   font-family: 'Courier New', monospace;
   font-size: 8px;
   font-weight: normal;
@@ -768,7 +768,7 @@
 }
 
 .lo-stat-label {
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.45);
   font-family: 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 1px;
@@ -882,7 +882,7 @@
 .eq-slot:hover { border-color: rgba(0,212,255,0.35); }
 
 .eq-slot .eq-slot-label {
-  color: rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.22);
   font-size: 7px;
   letter-spacing: 1.5px;
   margin-bottom: 3px;
@@ -967,7 +967,7 @@
 .lo-slot.empty:hover { border-color: var(--sci-line); }
 
 .lo-slot .lo-slot-lbl {
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.22);
   font-family: 'Courier New', monospace;
   font-size: 6px;
   letter-spacing: 0.5px;
@@ -1029,7 +1029,7 @@
 }
 
 .lo-bp-count {
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.45);
   font-family: 'Courier New', monospace;
   font-size: 9px;
 }
