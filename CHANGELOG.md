@@ -5,6 +5,19 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.44 — Fix hangar top bar button positioning
+
+**Date:** 2026-03-22
+
+Fixed two CSS rules in `css/garage.css` that were breaking the `.hg-top` flex row layout. `#hangar-mm-btn` had `position:absolute; right:16px; top:14px; box-sizing:border-box` which pulled the Back button out of the flex flow entirely — replaced with `flex-shrink:0; width:auto` so it sits as the first flex item on the left. `#deploy-btn` had `font-size`, `overflow:hidden`, and `padding:12px` overrides that were conflicting with the `tw-btn` base styles and causing unwanted stretching — replaced with `flex-shrink:0; width:auto`. The `#deploy-btn.overweight` error-state rule was not touched.
+
+### Files Changed
+
+- `css/garage.css` — #hangar-mm-btn and #deploy-btn rules replaced
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.43 — Hangar full-screen layout, mission select button widths, main menu stats
 
 **Date:** 2026-03-22
