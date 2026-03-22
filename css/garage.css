@@ -739,7 +739,8 @@
 
 /* --- Gear bonus pill tags --- */
 .tw-bonus-tag {
-  border: 1px solid var(--sci-line);
+  border: 1px solid var(--gold-dim);
+  color: var(--sci-gold);
   font-family: 'Courier New', monospace;
   font-size: 9px;
   padding: 2px 7px;
