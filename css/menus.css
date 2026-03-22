@@ -180,6 +180,98 @@
   width: 100%;
 }
 
+/* --- Pause panel --- */
+.ps-panel {
+  background: rgba(8,11,14,0.97);
+  border: 1px solid var(--sci-cyan-border);
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+}
+
+.ps-header {
+  align-items: center;
+  border-bottom: 1px solid var(--sci-line);
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+}
+
+.ps-title {
+  color: var(--sci-cyan);
+  font-size: 11px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+.ps-status {
+  color: var(--sci-txt3);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.ps-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 24px;
+}
+
+.ps-btn {
+  align-items: center;
+  background: var(--sci-surface);
+  border: 1px solid var(--sci-line);
+  color: var(--sci-txt);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  gap: 12px;
+  letter-spacing: 3px;
+  padding: 13px 20px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.ps-btn:hover {
+  background: var(--sci-cyan-dim);
+  border-color: var(--sci-cyan-border);
+  color: var(--sci-cyan);
+}
+
+.ps-btn.danger {
+  border-color: rgba(255,77,106,0.15);
+  color: rgba(255,77,106,0.6);
+}
+
+.ps-btn.danger:hover {
+  background: var(--sci-red-dim);
+  border-color: var(--sci-red-border);
+  color: var(--sci-red);
+}
+
+.ps-btn-icon {
+  border: 1px solid currentColor;
+  flex-shrink: 0;
+  height: 10px;
+  opacity: 0.5;
+  width: 10px;
+}
+
+.ps-footer {
+  border-top: 1px solid var(--sci-line);
+  padding: 12px 24px 20px;
+}
+
+.ps-hint {
+  color: var(--sci-txt3);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
 /* ============================================================
    LOADOUT TABS
    ============================================================ */
