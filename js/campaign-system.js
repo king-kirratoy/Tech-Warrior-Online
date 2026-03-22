@@ -759,11 +759,11 @@ function showMissionSelect() {
 
     // ── Top bar ──
     html += '<div class="cm-top">';
-    html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--ghost tw-btn--sm">&#8249; Back</button>`;
+    html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;flex-shrink:0;">&#8249; Back</button>`;
     html += '<div class="cm-title">CAMPAIGN</div>';
     html += `<span style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);white-space:nowrap;">LVL ${_campaignState.playerLevel} &nbsp;·&nbsp; ${xpCur} / ${xpNeeded} XP</span>`;
-    html += `<button onclick="_openShopFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm">Supply Shop</button>`;
-    html += `<button onclick="_openLoadoutFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm">Loadout</button>`;
+    html += `<button onclick="_openShopFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;flex-shrink:0;">Supply Shop</button>`;
+    html += `<button onclick="_openLoadoutFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;flex-shrink:0;">Loadout</button>`;
     html += '</div>';
 
     // ── Body ──
@@ -832,7 +832,7 @@ function showMissionSelect() {
     html += `<span style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);white-space:nowrap;">LVL ${_campaignState.playerLevel}</span>`;
     html += `<div class="cm-xp-bar"><div class="cm-xp-fill" style="width:${Math.round(xpPct * 100)}%"></div></div>`;
     if (_selectedMissionIdx !== null) {
-        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" class="tw-btn tw-btn--solid">Deploy &#8250;</button>`;
+        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" class="tw-btn tw-btn--solid" style="width:auto;flex-shrink:0;">Deploy &#8250;</button>`;
     }
     html += '</div>'; // cm-bottom
 
