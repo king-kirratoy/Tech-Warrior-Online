@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.54 — Multiplayer hangar restructured to match warzone layout
+
+**Date:** 2026-03-22
+
+Restructured the PVP loadout screen to exactly mirror the warzone hangar layout. In `css/menus.css`: updated `.mp-left` to remove `padding` and `gap` (moved to a new child class) and added `background:#080b0e`; added `.mp-left-controls` (padding 16px 20px, border-bottom, flex column, gap 6px) to wrap all dropdown controls separately from the preview; updated `.mp-preview-zone` to remove `border-bottom` and add `flex:1` so it fills the remaining left column height; updated `.mp-preview-box` from 140×140 to 160×160px and added `flex-shrink:0`; updated `.mp-right` to add `background:#080b0e` and `min-width:0`; added `.mp-stats-header` (padding 10px 20px, border-bottom, small uppercase label); removed `.mp-bottom` entirely since the action button moves to the top bar. In `js/multiplayer.js`: completely rebuilt `_pvpRenderHangar()` — the top bar now holds the Back button, centered "MULTIPLAYER" title, and the Join Lobby / Deploy Mech button at the far right (replacing the old bottom bar); the left column splits into `.mp-left-controls` (all chassis buttons, colour dropdown and six gear slot rows) and `.mp-preview-zone` (160×160 mech preview with sci-corner accents and chassis·colour label below); the right column uses `.mp-stats-header` "Build stats" then a scrollable stats panel built with the same stat calculation logic as the warzone garage — HP, HP split, speed (with hydraulic boost), shield (with absorb and regen delay), L/R fire rate with DPS and brace bonus, core mod CD, chassis traits, passives, and individual slot name rows — all using `.hg-stat-row`/`.hg-stat-label`/`.hg-stat-val` classes with green/warn/dim/purple color variants and `.hg-gap` separators between groups.
+
+### Files Changed
+
+- `css/menus.css` — mp-left restructured; mp-left-controls added; mp-preview-zone flex:1; mp-preview-box 160px; mp-right min-width/background; mp-stats-header added; mp-bottom removed
+- `js/multiplayer.js` — _pvpRenderHangar fully rebuilt with two-column warzone-style layout and full stat panel
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.53 — Three small UI fixes: callsign label centering, leaderboard tab hover, lobby chat keystroke passthrough
 
 **Date:** 2026-03-22
