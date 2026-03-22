@@ -5,6 +5,41 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.64 — Loadout overlay redesign: unified two-column screen
+
+**Date:** 2026-03-22
+
+Complete redesign of the `stats-overlay` (`#stats-overlay`) from a two-tab STATS/GEAR layout into a single unified two-column screen with no tab switching. Changes span `index.html`, `css/garage.css`, `css/menus.css`, and `js/menus.js`.
+
+**HTML (`index.html`):** Replaced the old two-tab overlay (two hidden content divs, tab buttons, max-width wrapper) with a new full-screen flex layout: a top bar (`lo-top-bar`) with item count/scrap on the left, "LOADOUT" title centered, and a CLOSE button on the right; a campaign XP bar (unchanged content, new position); and a two-column body (`lo-body`) split into a fixed 260 px left column (`lo-left`, independently scrollable) and a flex-1 right column (`lo-right`). Left column sections: Hull Integrity (`#lo-hull-info`), Stats (`#stat-mobility-info`), Chassis Traits (`#stat-traits-info`), Gear Bonuses (`#stat-gear-panel`/`#stat-gear-info`), Backpack (with `#lo-bp-count` count + `#inv-backpack` grid), Active Perks (`#lo-perks-section`/`#stat-perks-info`). Right column: equipment doll wrap with `#inv-mech-silhouette` and `#eq-hover-card`, weapon bar `#lo-weapon-bar`, comparison panel `#inv-detail-panel`.
+
+**CSS (`css/garage.css`):** Added full block of new layout rules — `.lo-top-bar`, `.lo-body`, `.lo-left`, `.lo-right`, `.lo-section`, `.lo-sec-title`; hull bar rows `.lo-hp-row`/`.lo-hp-label`/`.lo-hp-track`/`.lo-hp-fill`/`.lo-hp-val`; stat rows `.lo-stat-row`/`.lo-stat-label`/`.lo-stat-val`; trait rows `.lo-trait-row`/`.lo-trait-name`/`.lo-trait-desc`; `.tw-bonus-tag`; `.lo-doll-wrap` (500 px height); `.eq-slot`/`.eq-slot:hover`; `.eq-hover-card` (absolute, 200 px); `.weapon-bar`; `.cmp-panel`/`.cmp-cols`/`.cmp-col`; `.bp-card`/`.bp-card:hover`.
+
+**CSS (`css/menus.css`):** Removed the `LOADOUT TABS` CSS section (`.loadout-tab`, `:first-child`, `:last-child`, `.active`, `:hover:not(.active)`) — no longer needed.
+
+**JS (`js/menus.js`):**
+- Removed `_switchLoadoutTab()` — tab switching no longer exists.
+- `toggleStats()` simplified: removed `populateStats()` and `_switchLoadoutTab()` calls; now calls `populateLoadout()` after showing the overlay.
+- `toggleInventory()` simplified: no longer switches to a tab; just opens the overlay via `toggleStats()` if not already open.
+- Added `populateLoadout()` — the new master render function that calls `_renderHullBars`, `_renderMobilityPanel`, `_renderChassisPanel`, `_renderGearBonusesPanel`, `populateInventory`, conditionally `_renderActivePerksPanel` (simulation mode only with `#lo-perks-section` visibility toggled), and `_renderWeaponBar`.
+- Added `_renderHullBars()` — renders Core/L.Arm/R.Arm/Legs HP bars (with boosted max indicators) to `#lo-hull-info`; extracted from `_renderChassisPanel`.
+- Updated `_renderChassisPanel()` — chassis name/shield/HP content removed from its output; now only renders the traits+arm-config grid to `#stat-traits-info`; `#stat-chassis-info` write is null-guarded for old-layout fallback.
+- Updated `_renderMobilityPanel()` — prepends chassis name row and shield row at the top of `#stat-mobility-info` output.
+- Added `_renderWeaponBar()` — populates `#lo-weapon-bar` with L arm, R arm, and core mod entries showing name, effective damage, DPS, and reload/cooldown.
+- Added `_showSlotHover(el, slotKey)` — positions and populates `#eq-hover-card` with the equipped item's name, base stats, and affixes when the mouse enters a doll slot.
+- Added `_hideSlotHover()` — hides `#eq-hover-card`.
+- `populateInventory()` — equip slot elements now also carry class `eq-slot` alongside `mech-equip-slot`; added `onmouseenter`/`onmouseleave` on each slot to call `_showSlotHover`/`_hideSlotHover`; header count format updated to `N / 30 items · X scrap`; added `#lo-bp-count` update.
+
+### Files Changed
+
+- `index.html` — stats-overlay replaced with two-column layout
+- `css/garage.css` — new lo-* / eq-slot / weapon-bar / cmp-panel layout rules added
+- `css/menus.css` — .loadout-tab CSS block removed
+- `js/menus.js` — populateLoadout, _renderHullBars, _renderWeaponBar, _showSlotHover, _hideSlotHover added; toggleStats, toggleInventory, _renderChassisPanel, _renderMobilityPanel, populateInventory updated; _switchLoadoutTab removed
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.63 — Warzone/multiplayer CSS unification + colour label + backpack comparison
 
 **Date:** 2026-03-22

@@ -280,24 +280,6 @@
   text-transform: uppercase;
 }
 
-/* ============================================================
-   LOADOUT TABS
-   ============================================================ */
-.loadout-tab {
-  flex: 1;
-}
-
-.loadout-tab:first-child { border-radius: 6px 0 0 6px; }
-.loadout-tab:last-child  { border-radius: 0 6px 6px 0; }
-
-.loadout-tab.active {
-  border-color: rgba(0,255,255,0.5);
-  color: var(--cyan);
-}
-
-.loadout-tab:hover:not(.active) {
-  color: rgba(0,255,255,0.8);
-}
 
 /* ============================================================
    MECH EQUIP SLOTS (inventory paper doll)
