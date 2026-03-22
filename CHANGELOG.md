@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.74 — Fix warzone hangar stat panel font
+
+**Date:** 2026-03-22
+
+Fixed warzone hangar stat panel font rendering to match multiplayer by adding `font-family: var(--font-mono)` to `.hg-stat-label` and `.hg-stat-val` in `css/garage.css`, and also added it to `.mp-stats-header` in `css/menus.css` which was likewise missing it.
+
+---
+
 ## v5.73 — Loadout left column font size standardisation + doll slot responsive sizing
 
 **Date:** 2026-03-22
