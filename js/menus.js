@@ -280,6 +280,7 @@ function goToMainMenu() {
     if (menu) { menu.style.opacity = '1'; menu.style.display = 'flex'; }
     resetLoadout();
     startMenuGrid();
+    _updateMainMenuStats();
     // Sync garage UI to the reset loadout so it matches when player returns
     try { refreshGarage(); } catch(e) {}
 }
@@ -656,28 +657,30 @@ function _updateCampaignButton() {
 }
 
 function _updateMainMenuStats() {
-    const callsignEl = document.getElementById('mm-callsign');
-    if (callsignEl && typeof _playerCallsign !== 'undefined') {
-        callsignEl.textContent = _playerCallsign || '—';
-    }
-    const missionsEl = document.getElementById('mm-stat-missions');
-    if (missionsEl && typeof _campaignState !== 'undefined') {
-        missionsEl.textContent = Object.keys(_campaignState.completedMissions || {}).length || '0';
-    }
-    const roundEl = document.getElementById('mm-stat-round');
-    if (roundEl && typeof _bestRound !== 'undefined') {
-        roundEl.textContent = _bestRound || '—';
-    }
-    const fillEl = document.getElementById('mm-xp-fill');
-    const textEl = document.getElementById('mm-xp-text');
-    if (fillEl && typeof _campaignState !== 'undefined') {
-        const level = _campaignState.playerLevel || 1;
-        const xpCur = (_campaignState.playerXP || 0) - (typeof getXPForLevel === 'function' ? getXPForLevel(level) : 0);
-        const xpNext = typeof getXPToNextLevel === 'function' ? getXPToNextLevel(level) : 100;
-        const pct = xpNext > 0 ? Math.min(100, Math.round((xpCur / xpNext) * 100)) : 100;
-        fillEl.style.width = pct + '%';
-        if (textEl) textEl.textContent = 'LVL ' + level + ' — ' + xpCur + ' / ' + xpNext + ' XP';
-    }
+    setTimeout(() => {
+        const callsignEl = document.getElementById('mm-callsign');
+        if (callsignEl && typeof _playerCallsign !== 'undefined') {
+            callsignEl.textContent = _playerCallsign || '—';
+        }
+        const missionsEl = document.getElementById('mm-stat-missions');
+        if (missionsEl) {
+            missionsEl.textContent = Object.keys(_campaignState?.completedMissions || {}).length || '0';
+        }
+        const roundEl = document.getElementById('mm-stat-round');
+        if (roundEl && typeof _bestRound !== 'undefined') {
+            roundEl.textContent = _bestRound || '—';
+        }
+        const fillEl = document.getElementById('mm-xp-fill');
+        const textEl = document.getElementById('mm-xp-text');
+        if (fillEl && typeof _campaignState !== 'undefined') {
+            const level = _campaignState.playerLevel || 1;
+            const xpCur = (_campaignState.playerXP || 0) - (typeof getXPForLevel === 'function' ? getXPForLevel(level) : 0);
+            const xpNext = typeof getXPToNextLevel === 'function' ? getXPToNextLevel(level) : 100;
+            const pct = xpNext > 0 ? Math.min(100, Math.round((xpCur / xpNext) * 100)) : 100;
+            fillEl.style.width = pct + '%';
+            if (textEl) textEl.textContent = 'LVL ' + level + ' — ' + xpCur + ' / ' + xpNext + ' XP';
+        }
+    }, 100);
 }
 
 async function showCampaignSubMenu() {

@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.43 — Hangar full-screen layout, mission select button widths, main menu stats
+
+**Date:** 2026-03-22
+
+Fixed the hangar, campaign mission select, and main menu stats panel. In `css/garage.css`: changed `#ui-layer` from `align-items:center; justify-content:center` to `align-items:stretch; justify-content:flex-start` so the garage fills the viewport instead of floating centred; added `#garage-menu` override rule resetting all `.stat-readout` card styles (border, radius, shadow, padding, width) to a full-screen flex column; added `flex-shrink:0; width:100%` to `.hg-top` and `min-height:0` to `.hg-body` so the top bar and body column share height correctly. In `js/campaign-system.js`: added `style="flex:1;"` inline to the `.cm-title` div so only the title grows while all surrounding buttons stay compact; removed the mission briefing panel that was added in v5.42 (deploy button in `.cm-bottom` remains). In `js/menus.js`: wrapped the entire body of `_updateMainMenuStats()` in a `setTimeout(..., 100)` so it runs after state has loaded; switched to optional chaining (`_campaignState?.completedMissions`) for safety; added a `_updateMainMenuStats()` call to `goToMainMenu()` so stats are fresh when returning from a run.
+
+### Files Changed
+
+- `css/garage.css` — #ui-layer stretch layout; #garage-menu full-screen override; hg-top/hg-body fixes
+- `js/campaign-system.js` — cm-title flex:1 inline; mission briefing panel removed
+- `js/menus.js` — _updateMainMenuStats setTimeout wrap + optional chaining; call added to goToMainMenu()
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.42 — Four layout fixes: hangar top bar, stat row wrapping, campaign sub-menu star, mission briefing panel
 
 **Date:** 2026-03-22
