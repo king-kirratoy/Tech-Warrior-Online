@@ -1575,7 +1575,7 @@ function showShop() {
         // Buy action
         detailHtml += `<div class="shop-bottom-bar">`;
         if (canBuy) {
-            detailHtml += `<button onclick="_shopBuy(${_selectedShopIdx})" class="tw-btn tw-btn--solid" style="width:100%;">Buy — ⬡ ${selItem._shopPrice}</button>`;
+            detailHtml += `<button onclick="_shopBuy(${_selectedShopIdx})" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;min-width:160px;">Buy — ⬡ ${selItem._shopPrice}</button>`;
         } else {
             const reason = scrapVal < selItem._shopPrice ? 'Not enough scrap' : 'Inventory full';
             detailHtml += `<div style="font-size:10px;letter-spacing:1px;color:var(--sci-txt3);">${reason}</div>`;
@@ -1622,7 +1622,7 @@ function showShop() {
 
     // ── Restock button ──
     const restockBtn = `<button onclick="${canRestock ? '_shopRestock()' : ''}"
-        class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;${canRestock ? '' : 'opacity:0.4;pointer-events:none;'}"
+        class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;${canRestock ? '' : 'opacity:0.4;pointer-events:none;'}"
         ${canRestock ? '' : 'disabled'}>Restock ⬡ ${restockCost}</button>`;
 
     // ── Assemble full screen ──

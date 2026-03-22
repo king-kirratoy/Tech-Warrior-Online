@@ -5,6 +5,19 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.62 — Supply shop button width fixes
+
+**Date:** 2026-03-22
+
+Two button width fixes in `showShop()` in `js/campaign-system.js`. Fix 1 (Restock button): the Restock button already had `width:auto` but was still stretching inside its flex container because it lacked an explicit flex shrink rule; added `flex:0 0 auto` before the existing `width:auto` in its inline style so it stays compact regardless of the container. Fix 2 (Buy button): the Buy button in the detail panel had `style="width:100%"` which caused it to span the full panel width; changed it to `style="flex:0 0 auto;width:auto;min-width:160px;"` so it sizes to its content with a sensible minimum width. No other buttons, classes, onclick handlers, or files were changed.
+
+### Files Changed
+
+- `js/campaign-system.js` — Restock and Buy button inline styles fixed in showShop()
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.61 — Main menu stat fixes + _buildItemComparisonHTML implemented
 
 **Date:** 2026-03-22
