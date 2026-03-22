@@ -784,7 +784,7 @@ function showMissionSelect() {
         const cls = active ? `background:${UI_COLORS.gold12};color:${UI_COLORS.gold};border-color:${UI_COLORS.goldGlow};` :
                     unlocked ? `background:${UI_COLORS.surface};color:${UI_COLORS.text70};border-color:${UI_COLORS.surface10};` :
                     `background:${UI_COLORS.bgDark30};color:${UI_COLORS.text25};border-color:${UI_COLORS.surface05};cursor:not-allowed;`;
-        html += `<button onclick="${unlocked ? `_selectChapter(${idx})` : ''}" style="border:1px solid;flex:1;padding:10px 8px;${cls}${idx===0?'border-radius:6px 0 0 6px;':''}${idx===CAMPAIGN_CHAPTERS.length-1?'border-radius:0 6px 6px 0;':''}">`;
+        html += `<button onclick="${unlocked ? `_selectChapter(${idx})` : ''}" class="tw-btn" style="flex:1;${cls}${idx===0?'border-radius:6px 0 0 6px;':''}${idx===CAMPAIGN_CHAPTERS.length-1?'border-radius:0 6px 6px 0;':''}">`;
         html += `CH.${idx + 1}`;
         if (unlocked) html += ` <span style="font-size:8px;opacity:0.5;">${completed}/${total}</span>`;
         if (!unlocked) html += ` <span style="font-size:7px;opacity:0.4;">🔒</span>`;
@@ -812,7 +812,7 @@ function showMissionSelect() {
         const blBase = isSelected ? UI_COLORS.gold : (completed ? UI_COLORS.greenAccent : UI_COLORS.gold40);
         const shadowStyle = isSelected ? `box-shadow:0 0 12px ${UI_COLORS.gold15},inset 0 0 12px ${UI_COLORS.gold06};` : '';
 
-        html += '<button onclick="_selectMission(' + idx + ')" style="align-items:center;background:' + bgBase + ';border:1px solid ' + bdBase + ';border-left:3px solid ' + blBase + ';border-radius:4px;cursor:pointer;display:flex;gap:12px;min-height:54px;padding:12px 16px;text-align:left;width:100%;' + shadowStyle + '">';
+        html += '<button onclick="_selectMission(' + idx + ')" class="tw-btn" style="align-items:center;background:' + bgBase + ';border:1px solid ' + bdBase + ';border-left:3px solid ' + blBase + ';border-radius:4px;display:flex;gap:12px;min-height:54px;padding:12px 16px;text-align:left;width:100%;' + shadowStyle + '">';
 
         // Mission number
         html += `<div style="font-size:18px;letter-spacing:2px;color:${completed ? UI_COLORS.greenAccent : UI_COLORS.gold60};min-width:30px;text-align:center;">${completed ? '✓' : (idx + 1)}</div>`;
@@ -1446,7 +1446,7 @@ function showShop() {
         const bgBase = isSelected ? UI_COLORS.gold12 : UI_COLORS.surface03;
         const bdBase = isSelected ? `${rc}` : `${rc}40`;
         const shadowStyle = isSelected ? `box-shadow:0 0 12px ${rc}33;` : '';
-        html += `<button onclick="_shopSelect(${idx})" style="background:${bgBase};border:1px solid ${bdBase};border-left:3px solid ${rc};border-radius:4px;cursor:pointer;font-family:${UI_COLORS.fontMono};padding:10px;text-align:left;width:155px;${shadowStyle}">`;
+        html += `<button onclick="_shopSelect(${idx})" class="tw-btn" style="background:${bgBase};border:1px solid ${bdBase};border-left:3px solid ${rc};border-radius:4px;padding:10px;text-align:left;width:155px;${shadowStyle}">`;
         html += `<div style="font-size:10px;letter-spacing:1px;color:${rc};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
         html += `<div style="font-size:9px;color:${UI_COLORS.text50};margin-bottom:4px;">${(item.rarity||'').toUpperCase()} LV.${item.level||1}</div>`;
         // Show key stats
@@ -1523,7 +1523,7 @@ function showShop() {
         _inventory.forEach((item, idx) => {
             const rc = rarityColors[item.rarity] || UI_COLORS.rarityCommon;
             const sellPrice = getItemSellPrice(item);
-            html += `<button onclick="_shopSell(${idx})" style="background:${UI_COLORS.surface03};border:1px solid ${rc}30;border-left:2px solid ${rc};border-radius:4px;cursor:pointer;font-family:${UI_COLORS.fontMono};padding:8px;text-align:left;width:145px;">`;
+            html += `<button onclick="_shopSell(${idx})" class="tw-btn" style="background:${UI_COLORS.surface03};border:1px solid ${rc}30;border-left:2px solid ${rc};border-radius:4px;padding:8px;text-align:left;width:145px;">`;
             html += `<div style="font-size:9px;letter-spacing:1px;color:${rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
             html += `<div style="font-size:10px;color:${UI_COLORS.orange};">⬡ ${sellPrice}</div>`;
             html += '</button>';
