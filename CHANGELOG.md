@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.29 — Full button migration audit: all buttons on .tw-btn system
+
+**Date:** 2026-03-22
+
+Completed a full button migration audit across `index.html`, `js/campaign-system.js`, `js/menus.js`, and `js/perks.js`. All remaining inline button appearance styles (background, border, color, font-size, letter-spacing, box-shadow, text-shadow, padding, text-transform, cursor, font-family, transition) have been removed and replaced by the `.tw-btn` base class or the appropriate variant (`.tw-btn--gold`, `.tw-btn--danger`, `.tw-btn--green`, `.tw-btn--sm`, `.tw-btn--block`, `.tw-btn--disabled`). Every `<button>` element in the four scanned files now carries `.tw-btn` as its base class or an established design-system class (`menu-start-btn`, `pause-menu-btn`, `loadout-tab`, `arm-picker-btn`). `onmouseover`/`onmouseout` hover handlers were confirmed absent across all four files. Layout-only inline style properties (position, top, right, width, margin, display, min-width, flex, gap, text-align) were preserved. All onclick handlers were left untouched.
+
+### Files Changed
+
+- `index.html` — chassis selector buttons (`#c-light`, `#c-medium`, `#c-heavy`) given `tw-btn` base class
+- `js/campaign-system.js` — chapter-tab buttons, mission-card buttons, shop-item cards, and shop-sell cards given `tw-btn` base class; `cursor:pointer` and `font-family` appearance removed from card-style buttons; `border:1px solid` and `padding` duplicating defaults removed from chapter tabs
+- `js/menus.js` — chassis-select card buttons given `tw-btn` base class; `cursor:pointer`, `font-family`, and `transition` removed
+- `js/perks.js` — confirmed already clean; no changes needed
+
+---
+
 ## v5.28 — Fix duplicate UI_COLORS and _loadCampaignData reference error
 
 **Date:** 2026-03-22
