@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.28 — Fix duplicate UI_COLORS and _loadCampaignData reference error
+
+**Date:** 2026-03-22
+
+### Bug Fixes
+
+- **Duplicate `UI_COLORS` declaration (SyntaxError):** `const UI_COLORS` was defined in both `js/menus.js` (line 5) and `js/campaign-system.js`. Since `menus.js` loads first, the second declaration in `campaign-system.js` threw `Uncaught SyntaxError: Identifier 'UI_COLORS' has already been declared`, preventing `campaign-system.js` from executing at all. Fixed by removing the duplicate block from `campaign-system.js`. The canonical definition lives in `menus.js`.
+- **`_loadCampaignData` not defined (ReferenceError):** This was a direct consequence of the SyntaxError above — because `campaign-system.js` failed to load, `_loadCampaignData` was never defined and the `menus.js:388` call threw `Uncaught ReferenceError: _loadCampaignData is not defined`. Confirmed that `_loadCampaignData` is a top-level `async function` in `campaign-system.js` and the call site in `menus.js` is correct. No changes needed beyond fixing Bug 1.
+
+### Files Changed
+
+- `js/campaign-system.js` — removed duplicate `UI_COLORS` constant block (lines 580–693)
+
+---
+
 ## v5.27 — CSS typography utility classes
 
 **Date:** 2026-03-22
