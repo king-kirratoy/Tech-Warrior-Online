@@ -996,6 +996,12 @@
   transition: all 0.15s;
 }
 
+.lb-filter-tab:hover:not(.active) {
+  background: var(--sci-cyan-dim);
+  border-color: var(--sci-cyan-border);
+  color: var(--sci-cyan);
+}
+
 .lb-filter-tab.active {
   background: var(--sci-cyan-dim);
   border-color: var(--sci-cyan-border);

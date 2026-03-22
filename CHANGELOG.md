@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.53 — Three small UI fixes: callsign label centering, leaderboard tab hover, lobby chat keystroke passthrough
+
+**Date:** 2026-03-22
+
+Three targeted fixes across the callsign screen, leaderboard, and multiplayer lobby. In `index.html`: added `align-self:center;text-align:center` inline to the `.cs-field-label` element inside `#callsign-screen` so the "Enter callsign" label is centred above the input field. In `css/menus.css`: added `.lb-filter-tab:hover:not(.active)` rule that applies the same cyan highlight as the active state on hover, giving the filter tabs a visible interactive response. In `js/multiplayer.js`: added `onfocus` and `onblur` handlers to the `#mp-chat-input` element that set `window._chatInputFocused` so game systems can check this flag; added `event.stopPropagation()` as the first call in the `onkeydown` handler so WASD and E keystrokes are not intercepted by the global game keyboard listener while the player is typing in the lobby chat box.
+
+### Files Changed
+
+- `index.html` — cs-field-label align-self + text-align center
+- `css/menus.css` — .lb-filter-tab:hover:not(.active) rule
+- `js/multiplayer.js` — mp-chat-input onfocus/onblur flags; stopPropagation on keydown
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.52 — Multiplayer screen redesign, campaign top bar and LVL/XP fixes
 
 **Date:** 2026-03-22

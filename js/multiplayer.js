@@ -1078,7 +1078,9 @@ function mpShowLobby() {
                     <input id="mp-chat-input" type="text" maxlength="200" placeholder="Message..."
                            style="flex:1;padding:6px 10px;background:var(--sci-surface);border:1px solid var(--sci-line);
                                   color:var(--sci-txt);font-family:var(--font-mono);font-size:10px;outline:none;"
-                           onkeydown="if(event.key==='Enter')mpSendChat()">
+                           onfocus="window._chatInputFocused=true"
+                           onblur="window._chatInputFocused=false"
+                           onkeydown="event.stopPropagation();if(event.key==='Enter')mpSendChat()">
                     <button onclick="mpSendChat()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">Send</button>
                 </div>
             </div>
