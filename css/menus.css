@@ -7,15 +7,103 @@
    MAIN MENU
    ============================================================ */
 #main-menu {
-  align-items: center;
-  background: var(--bg);
+  background: #080b0e;
   display: flex;
-  flex-direction: column;
   font-family: var(--font-mono);
   inset: 0;
-  justify-content: center;
   position: fixed;
   z-index: 9999;
+}
+
+/* --- Split layout --- */
+.mm-left {
+  border-right: 1px solid var(--sci-line);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px;
+  width: 52%;
+}
+
+.mm-right {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 44px;
+  padding-top: 60px;
+}
+
+/* --- Eyebrow + Title --- */
+.mm-eyebrow {
+  color: var(--sci-cyan);
+  font-size: 9px;
+  letter-spacing: 5px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+
+.mm-title {
+  color: var(--sci-txt);
+  font-size: 38px;
+  letter-spacing: 6px;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.mm-title .mm-title-accent {
+  color: var(--sci-cyan);
+}
+
+/* --- Nav --- */
+.mm-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 40px;
+}
+
+/* --- Pilot stats (right panel) --- */
+.mm-stat-num {
+  color: var(--sci-cyan);
+  font-size: 44px;
+  letter-spacing: 4px;
+  line-height: 1;
+}
+
+.mm-stat-label {
+  color: var(--sci-txt3);
+  font-size: 9px;
+  letter-spacing: 3px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.mm-stats-row {
+  align-items: center;
+  display: flex;
+  margin-bottom: 36px;
+}
+
+.mm-stat-divider {
+  background: var(--sci-line);
+  height: 56px;
+  margin: 0 28px;
+  width: 1px;
+}
+
+/* --- XP bar --- */
+.mm-xp-bar {
+  background: var(--sci-line);
+  height: 3px;
+  margin-bottom: 4px;
+}
+
+.mm-xp-fill {
+  background: var(--sci-cyan);
+  height: 100%;
 }
 
 #menu-canvas {
