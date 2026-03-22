@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.66 — Loadout screen: align render path and fix design inconsistencies
+
+**Date:** 2026-03-22
+
+Fixed `_openLoadoutFromMission()` in `campaign-system.js` to call `populateLoadout()` instead of the old `populateStats()` + `populateInventory()` pair, ensuring the campaign loadout entry point uses the same unified render path as all other entry points. Removed the ARM CONFIGURATION two-column grid from `_renderChassisPanel()` — the Chassis Traits section now renders as a single column with no ARM CONFIGURATION right column. Updated `_renderGearBonusesPanel()` to output individual stat bonuses as `.tw-bonus-tag` pill elements grouped under OFFENSIVE / DEFENSIVE / UTILITY headings, replacing the old inline-styled label/value rows. Fixed `.tw-bonus-tag` CSS rule in `garage.css` to add `color: var(--sci-gold)` and `border: 1px solid var(--gold-dim)` so tags are visible. Corrected mech image opacity in the equipment doll from `0.25` to `0.18` to match the agreed spec.
+
+---
+
 ## v5.65 — Fix null-ref crash when opening loadout from campaign mission select
 
 **Date:** 2026-03-22

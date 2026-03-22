@@ -872,7 +872,7 @@ function populateInventory() {
         html += `<div style="position:relative;width:100%;height:385px;">`;
         const mechImgSrc = `assets/${ch}-mech.png`;
         const hexStr = typeof mechColor === 'number' ? mechColor.toString(16).padStart(6,'0') : '00ff88';
-        html += `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.25;">`;
+        html += `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.18;">`;
         html += `<img src="${mechImgSrc}" style="height:340px;object-fit:contain;filter:drop-shadow(0 0 20px #${hexStr}66);" />`;
         html += `</div>`;
 
@@ -1491,11 +1491,8 @@ function _renderChassisPanel() {
                : _sBothDiff ? ['INDEPENDENT', 'Different weapons in each arm. Left-click fires L arm, right-click fires R arm.', UI_COLORS.rarityCommon]
                : null;
 
-    // Build the full-width traits+armmode block separately
+    // Build chassis traits block (single column)
     let traitHtml = '';
-    traitHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">`;
-    // Left col: chassis traits
-    traitHtml += `<div>`;
     traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:${UI_COLORS.cyan45};margin-bottom:10px;border-bottom:1px solid ${UI_COLORS.cyan10};padding-bottom:6px;">CHASSIS TRAITS</div>`;
     _cTraits.forEach(([tLabel, tDesc]) => {
     traitHtml += `<div style="margin-bottom:10px;">
@@ -1503,31 +1500,6 @@ function _renderChassisPanel() {
         <div style="font-size:12px;color:${UI_COLORS.text75};line-height:1.5;">${tDesc}</div>
     </div>`;
     });
-    traitHtml += `</div>`;
-    // Right col: arm mode + additional context
-    traitHtml += `<div>`;
-    traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:${UI_COLORS.cyan45};margin-bottom:10px;border-bottom:1px solid ${UI_COLORS.cyan10};padding-bottom:6px;">ARM CONFIGURATION</div>`;
-    if (_armMode) {
-    traitHtml += `<div style="margin-bottom:10px;">
-        <div style="font-size:11px;letter-spacing:1.5px;color:${_armMode[2]};margin-bottom:3px;">${_armMode[0]}</div>
-        <div style="font-size:12px;color:${UI_COLORS.text75};line-height:1.5;">${_armMode[1]}</div>
-    </div>`;
-    }
-    // Show L and R arm weapon names for quick reference
-    const _lName = WEAPONS[loadout?.L]?.name || loadout?.L || '—';
-    const _rName = WEAPONS[loadout?.R]?.name || loadout?.R || '—';
-    traitHtml += `<div style="margin-top:6px;">
-    <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;">
-        <span style="color:${UI_COLORS.text50};letter-spacing:1px;">L ARM</span>
-        <span style="color:${UI_COLORS.rarityCommon};letter-spacing:1px;">${_lName !== 'none' && _lName !== '—' ? _lName : '—'}</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:12px;">
-        <span style="color:${UI_COLORS.text50};letter-spacing:1px;">R ARM</span>
-        <span style="color:${UI_COLORS.rarityCommon};letter-spacing:1px;">${_rName !== 'none' && _rName !== '—' ? _rName : '—'}</span>
-    </div>
-    </div>`;
-    traitHtml += `</div>`;
-    traitHtml += `</div>`;
 
     // chassisHtml (HP bars + chassis name) is now rendered by _renderHullBars() and _renderMobilityPanel()
     const chassisInfoEl = document.getElementById('stat-chassis-info');
@@ -1761,15 +1733,14 @@ function _renderGearBonusesPanel() {
         const _renderGroup = (title, keys) => {
             const active = keys.filter(k => (gs[k] || 0) > 0);
             if (active.length === 0) return '';
-            let h = `<div style="font-size:10px;letter-spacing:2px;color:${UI_COLORS.gold40};margin-top:10px;margin-bottom:6px;">${title}</div>`;
+            let h = `<div style="font-size:9px;letter-spacing:2px;color:${UI_COLORS.gold40};margin-top:10px;margin-bottom:6px;">${title}</div>`;
+            h += `<div style="display:flex;flex-wrap:wrap;gap:4px;">`;
             active.forEach(k => {
                 const v = gs[k];
                 const prefix = ['reloadPct','modCdPct'].includes(k) ? '−' : '+';
-                h += `<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:3px;font-size:13px;">
-                    <span style="color:${UI_COLORS.text60};">${_gsLabels[k] || k}</span>
-                    <span style="color:${UI_COLORS.gold};letter-spacing:1px;">${prefix}${v}</span>
-                </div>`;
+                h += `<span class="tw-bonus-tag">${prefix}${v} ${_gsLabels[k] || k}</span>`;
             });
+            h += `</div>`;
             return h;
         };
         // Show equipped item names at the top

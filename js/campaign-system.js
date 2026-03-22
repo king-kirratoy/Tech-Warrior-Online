@@ -863,10 +863,7 @@ function _openLoadoutFromMission() {
     if (typeof _isStats !== 'undefined') _isStats = true;
     const statsOv = document.getElementById('stats-overlay');
     if (statsOv) statsOv.style.display = 'flex';
-    if (typeof populateStats === 'function') populateStats();
-    if (typeof populateInventory === 'function') populateInventory();
-    if (typeof _updateInvCount === 'function') _updateInvCount();
-    if (typeof _switchLoadoutTab === 'function') _switchLoadoutTab('stats');
+    if (typeof populateLoadout === 'function') populateLoadout();
 }
 
 /** Select a chapter tab. */
