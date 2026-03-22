@@ -577,6 +577,121 @@ const ENEMY_COMPOSITION_POOLS = {
     tier4: { normal: 0.25, scout: 0.12, enforcer: 0.13, technician: 0.12, berserker: 0.13, sniperElite: 0.12, droneCarrier: 0.13 }  // levels 15+
 };
 
+// ── UI Color Constants ────────────────────────────────────────────
+// These replicate CSS tokens for use in JS template literal inline styles.
+// CSS variables cannot be read directly from JS without getComputedStyle,
+// so named constants are used instead. Names mirror css/base.css tokens.
+const UI_COLORS = {
+  // Font
+  fontMono:       "'Courier New', monospace",
+
+  // Gold family  (#ffd700 = --gold)
+  gold:           '#ffd700',
+  goldGlow:       'rgba(255,215,0,0.5)',
+  gold70:         'rgba(255,215,0,0.7)',
+  gold60:         'rgba(255,215,0,0.6)',
+  gold45:         'rgba(255,215,0,0.45)',
+  gold40:         'rgba(255,215,0,0.4)',
+  gold30:         'rgba(255,215,0,0.3)',
+  gold25:         'rgba(255,215,0,0.25)',
+  gold20:         'rgba(255,215,0,0.2)',
+  gold15:         'rgba(255,215,0,0.15)',
+  gold12:         'rgba(255,215,0,0.12)',
+  gold10:         'rgba(255,215,0,0.1)',
+  gold06:         'rgba(255,215,0,0.06)',
+  gold04:         'rgba(255,215,0,0.04)',
+
+  // Cyan family  (#00ffff = --cyan)
+  cyan:           '#00ffff',
+  cyan70:         'rgba(0,255,255,0.7)',
+  cyan60:         'rgba(0,255,255,0.6)',
+  cyan50:         'rgba(0,255,255,0.5)',
+  cyan45:         'rgba(0,255,255,0.45)',
+  cyan40:         'rgba(0,255,255,0.4)',
+  cyan35:         'rgba(0,255,255,0.35)',
+  cyan20:         'rgba(0,255,255,0.2)',
+  cyan12:         'rgba(0,255,255,0.12)',
+  cyan10:         'rgba(0,255,255,0.1)',
+  cyanSurface04:  'rgba(0,255,255,0.04)',
+  cyanSurface03:  'rgba(0,255,255,0.03)',
+
+  // HUD cyan family  (rgba(0,210,255,…) = --hud-cyan)
+  hudCyan:        'rgba(0,210,255,1)',
+  hudCyan75:      'rgba(0,210,255,0.75)',
+  hudCyan60:      'rgba(0,210,255,0.6)',
+  hudCyan55:      'rgba(0,210,255,0.55)',
+  hudCyan40:      'rgba(0,210,255,0.4)',
+  hudCyan35:      'rgba(0,210,255,0.35)',
+  hudCyan25:      'rgba(0,210,255,0.25)',
+  hudCyan08:      'rgba(0,210,255,0.08)',
+  hudCyan04:      'rgba(0,210,255,0.04)',
+
+  // Green / teal family
+  greenAccent:    '#00ff88',   // --green-accent
+  greenPos:       '#44ff88',   // --green-pos
+  teal:           '#00ffcc',   // --teal
+  tealAlt:        '#00ffc8',   // success toast variant
+  yellow:         '#ffdd00',   // --yellow (HP bar mid threshold)
+  green80:        'rgba(0,255,136,0.8)',
+  green20:        'rgba(0,255,136,0.2)',
+  green04:        'rgba(0,255,136,0.04)',
+  toastSuccessBg: 'rgba(0,255,200,0.12)',
+  toastSuccessBd: 'rgba(0,255,200,0.4)',
+
+  // Red / danger family
+  red:            '#ff5050',   // --red
+  redAlt:         '#ff4444',   // --red-alt
+  redCritical:    '#ff4466',   // --red-critical
+  redError:       '#ff3300',   // --red-error
+  redHard:        '#ff2200',   // mission difficulty HARD
+  redSoft:        'rgba(255,100,100,0.7)',
+  redSoft60:      'rgba(255,100,100,0.6)',
+  toastErrorBg:   'rgba(255,40,40,0.18)',
+  toastErrorBd:   'rgba(255,40,40,0.5)',
+  toastErrorText: '#ff6666',
+
+  // Orange / amber / purple
+  orange:         '#ff8844',   // --orange
+  amber:          '#ffaa00',   // --amber
+  purple:         '#cc88ff',   // --purple
+
+  // Chassis accent colors
+  chassisLight:   '#88ff88',
+  chassisMedium:  '#ffcc44',
+  chassisHeavy:   '#ff8844',   // same as --orange
+
+  // Leaderboard specific
+  rankGold:       '#ffd700',
+  rankSilver:     '#c0c0c0',
+  rankBronze:     '#cd7f32',
+  leaderName:     '#e8f0e8',
+  leaderRound:    '#00e0ff',
+  diffEasy:       '#88aacc',
+  diffTrivial:    '#666666',
+
+  // Text / neutral  (#c8d2d9 = rgb(200,210,217) = --text)
+  text:           '#c8d2d9',
+  text90:         'rgba(200,210,217,0.9)',
+  text70:         'rgba(200,210,217,0.7)',
+  text75:         'rgba(200,210,217,0.75)',
+  text65:         'rgba(200,210,217,0.65)',
+  text60:         'rgba(200,210,217,0.6)',
+  text50:         'rgba(200,210,217,0.5)',
+  text40:         'rgba(200,210,217,0.4)',
+  text35:         'rgba(200,210,217,0.35)',
+  text30:         'rgba(200,210,217,0.3)',
+  text25:         'rgba(200,210,217,0.25)',
+  rarityCommon:   '#c0c8d0',
+
+  // Surfaces / overlays
+  surface:        'rgba(255,255,255,0.04)',   // --surface
+  surface03:      'rgba(255,255,255,0.03)',
+  surface08:      'rgba(255,255,255,0.08)',
+  surface10:      'rgba(255,255,255,0.1)',
+  surface05:      'rgba(255,255,255,0.05)',
+  bgDark30:       'rgba(0,0,0,0.3)',
+};
+
 /** Get the composition tier for a given enemy level. */
 function _getCompositionTier(enemyLevel) {
     if (enemyLevel <= 4)  return 'tier1';
@@ -749,7 +864,7 @@ function showMissionSelect() {
 
     // ── Header row: centered CAMPAIGN title + small QUIT button on far right ──
     html += '<div style="position:relative;width:100%;max-width:700px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;">';
-    html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);">CAMPAIGN</div>';
+    html += `<div style="font-size:28px;letter-spacing:6px;color:${UI_COLORS.gold};text-shadow:0 0 20px ${UI_COLORS.goldGlow};">CAMPAIGN</div>`;
     html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--danger tw-btn--sm" style="position:absolute;right:0;">QUIT</button>`;
     html += '</div>';
 
@@ -758,12 +873,12 @@ function showMissionSelect() {
     const xpNeeded = getXPToNextLevel(_campaignState.playerLevel);
     const xpPct = xpNeeded > 0 ? Math.min(1, xpCur / xpNeeded) : 1;
     html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;width:100%;max-width:700px;">';
-    html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.7);">LEVEL ${_campaignState.playerLevel}</div>`;
-    html += `<div style="flex:1;max-width:300px;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">`;
-    html += `<div style="width:${xpPct * 100}%;height:100%;background:#ffd700;border-radius:3px;transition:width 0.3s;"></div>`;
+    html += `<div style="font-size:11px;letter-spacing:2px;color:${UI_COLORS.gold70};">LEVEL ${_campaignState.playerLevel}</div>`;
+    html += `<div style="flex:1;max-width:300px;height:6px;background:${UI_COLORS.surface08};border-radius:3px;overflow:hidden;">`;
+    html += `<div style="width:${xpPct * 100}%;height:100%;background:${UI_COLORS.gold};border-radius:3px;transition:width 0.3s;"></div>`;
     html += `</div>`;
-    html += `<div style="font-size:10px;letter-spacing:1px;color:rgba(255,215,0,0.4);">${xpCur} / ${xpNeeded} XP</div>`;
-    html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);margin-left:auto;">SCRAP: <span style="color:#ffd700;font-size:13px;">${typeof _scrap !== 'undefined' ? _scrap : 0}</span></div>`;
+    html += `<div style="font-size:10px;letter-spacing:1px;color:${UI_COLORS.gold40};">${xpCur} / ${xpNeeded} XP</div>`;
+    html += `<div style="font-size:11px;letter-spacing:2px;color:${UI_COLORS.goldGlow};margin-left:auto;">SCRAP: <span style="color:${UI_COLORS.gold};font-size:13px;">${typeof _scrap !== 'undefined' ? _scrap : 0}</span></div>`;
     html += '</div>';
 
     // ── Action buttons: Supply Shop, Upgrades, Loadout, Loadout Slots ──
@@ -781,9 +896,9 @@ function showMissionSelect() {
         const active = idx === _campaignState.currentChapter;
         const completed = getChapterCompletionCount(idx);
         const total = ch.missions.length;
-        const cls = active ? 'background:rgba(255,215,0,0.12);color:#ffd700;border-color:rgba(255,215,0,0.5);' :
-                    unlocked ? 'background:rgba(255,255,255,0.04);color:rgba(200,210,217,0.7);border-color:rgba(255,255,255,0.1);' :
-                    'background:rgba(0,0,0,0.3);color:rgba(200,210,217,0.25);border-color:rgba(255,255,255,0.05);cursor:not-allowed;';
+        const cls = active ? `background:${UI_COLORS.gold12};color:${UI_COLORS.gold};border-color:${UI_COLORS.goldGlow};` :
+                    unlocked ? `background:${UI_COLORS.surface};color:${UI_COLORS.text70};border-color:${UI_COLORS.surface10};` :
+                    `background:${UI_COLORS.bgDark30};color:${UI_COLORS.text25};border-color:${UI_COLORS.surface05};cursor:not-allowed;`;
         html += `<button onclick="${unlocked ? `_selectChapter(${idx})` : ''}" style="border:1px solid;flex:1;padding:10px 8px;${cls}${idx===0?'border-radius:6px 0 0 6px;':''}${idx===CAMPAIGN_CHAPTERS.length-1?'border-radius:0 6px 6px 0;':''}">`;
         html += `CH.${idx + 1}`;
         if (unlocked) html += ` <span style="font-size:8px;opacity:0.5;">${completed}/${total}</span>`;
@@ -794,8 +909,8 @@ function showMissionSelect() {
 
     // ── Current chapter info ──
     const ch = CAMPAIGN_CHAPTERS[_campaignState.currentChapter];
-    html += `<div style="font-size:14px;letter-spacing:3px;color:#ffd700;margin-bottom:4px;">${ch.title}</div>`;
-    html += `<div style="font-size:11px;letter-spacing:1px;color:rgba(200,210,217,0.5);margin-bottom:16px;">${ch.desc}</div>`;
+    html += `<div style="font-size:14px;letter-spacing:3px;color:${UI_COLORS.gold};margin-bottom:4px;">${ch.title}</div>`;
+    html += `<div style="font-size:11px;letter-spacing:1px;color:${UI_COLORS.text50};margin-bottom:16px;">${ch.desc}</div>`;
 
     // ── Mission list (all missions selectable, including cleared ones) ──
     html += '<div style="display:flex;flex-direction:column;gap:8px;max-width:700px;width:100%;">';
@@ -803,24 +918,24 @@ function showMissionSelect() {
         const completed = isMissionCompleted(m.id);
         const isSelected = (_selectedMissionIdx === idx);
         const levelDiff = m.enemyLevel - _campaignState.playerLevel;
-        const diffColor = levelDiff >= 3 ? '#ff2200' : levelDiff >= 1 ? '#ff8844' : levelDiff === 0 ? '#00ff88' : levelDiff >= -2 ? '#88aacc' : '#666666';
+        const diffColor = levelDiff >= 3 ? UI_COLORS.redHard : levelDiff >= 1 ? UI_COLORS.orange : levelDiff === 0 ? UI_COLORS.greenAccent : levelDiff >= -2 ? UI_COLORS.diffEasy : UI_COLORS.diffTrivial;
         const diffLabel = levelDiff >= 3 ? 'HARD' : levelDiff >= 1 ? 'TOUGH' : levelDiff === 0 ? 'EVEN' : levelDiff >= -2 ? 'EASY' : 'TRIVIAL';
 
         // Selected state uses gold highlight
-        const bgBase = isSelected ? 'rgba(255,215,0,0.12)' : (completed ? 'rgba(0,255,136,0.04)' : 'rgba(255,255,255,0.03)');
-        const bdBase = isSelected ? 'rgba(255,215,0,0.6)' : (completed ? 'rgba(0,255,136,0.2)' : 'rgba(255,255,255,0.1)');
-        const blBase = isSelected ? '#ffd700' : (completed ? '#00ff88' : 'rgba(255,215,0,0.4)');
-        const shadowStyle = isSelected ? 'box-shadow:0 0 12px rgba(255,215,0,0.15),inset 0 0 12px rgba(255,215,0,0.05);' : '';
+        const bgBase = isSelected ? UI_COLORS.gold12 : (completed ? UI_COLORS.green04 : UI_COLORS.surface03);
+        const bdBase = isSelected ? UI_COLORS.gold60 : (completed ? UI_COLORS.green20 : UI_COLORS.surface10);
+        const blBase = isSelected ? UI_COLORS.gold : (completed ? UI_COLORS.greenAccent : UI_COLORS.gold40);
+        const shadowStyle = isSelected ? `box-shadow:0 0 12px ${UI_COLORS.gold15},inset 0 0 12px ${UI_COLORS.gold06};` : '';
 
         html += '<button onclick="_selectMission(' + idx + ')" style="align-items:center;background:' + bgBase + ';border:1px solid ' + bdBase + ';border-left:3px solid ' + blBase + ';border-radius:4px;cursor:pointer;display:flex;gap:12px;min-height:54px;padding:12px 16px;text-align:left;width:100%;' + shadowStyle + '">';
 
         // Mission number
-        html += `<div style="font-size:18px;letter-spacing:2px;color:${completed ? '#00ff88' : 'rgba(255,215,0,0.6)'};min-width:30px;text-align:center;">${completed ? '✓' : (idx + 1)}</div>`;
+        html += `<div style="font-size:18px;letter-spacing:2px;color:${completed ? UI_COLORS.greenAccent : UI_COLORS.gold60};min-width:30px;text-align:center;">${completed ? '✓' : (idx + 1)}</div>`;
 
         // Mission info
         html += '<div style="flex:1;min-width:0;">';
-        html += `<div style="font-size:12px;letter-spacing:1px;color:${isSelected ? '#ffd700' : (completed ? 'rgba(0,255,136,0.8)' : '#c8d2d9')};margin-bottom:2px;">${m.name}</div>`;
-        html += `<div style="font-size:10px;letter-spacing:0.5px;color:rgba(200,210,217,0.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.briefing}</div>`;
+        html += `<div style="font-size:12px;letter-spacing:1px;color:${isSelected ? UI_COLORS.gold : (completed ? UI_COLORS.green80 : UI_COLORS.text)};margin-bottom:2px;">${m.name}</div>`;
+        html += `<div style="font-size:10px;letter-spacing:0.5px;color:${UI_COLORS.text40};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.briefing}</div>`;
         html += '</div>';
 
         // Level + difficulty indicator
@@ -831,12 +946,12 @@ function showMissionSelect() {
 
         // Boss indicator
         if (m.hasBoss) {
-            html += `<div style="font-size:9px;letter-spacing:1px;color:#ff4444;border:1px solid rgba(255,68,68,0.3);padding:2px 6px;border-radius:3px;">BOSS</div>`;
+            html += `<div style="font-size:9px;letter-spacing:1px;color:${UI_COLORS.redAlt};border:1px solid rgba(255,68,68,0.3);padding:2px 6px;border-radius:3px;">BOSS</div>`;
         }
 
         // First-clear reward badge
         if (!completed && typeof getMissionReward === 'function' && getMissionReward(m.id)) {
-            html += `<div style="font-size:8px;letter-spacing:1px;color:#ffd700;border:1px solid rgba(255,215,0,0.3);padding:2px 5px;border-radius:3px;white-space:nowrap;">REWARD</div>`;
+            html += `<div style="font-size:8px;letter-spacing:1px;color:${UI_COLORS.gold};border:1px solid ${UI_COLORS.gold30};padding:2px 5px;border-radius:3px;white-space:nowrap;">REWARD</div>`;
         }
 
         html += '</button>';
@@ -848,13 +963,13 @@ function showMissionSelect() {
         const selMission = ch.missions[_selectedMissionIdx];
         if (selMission) {
             const levelDiff = selMission.enemyLevel - _campaignState.playerLevel;
-            const diffColor = levelDiff >= 3 ? '#ff2200' : levelDiff >= 1 ? '#ff8844' : levelDiff === 0 ? '#00ff88' : levelDiff >= -2 ? '#88aacc' : '#666666';
-            html += '<div style="margin-top:16px;padding:14px 18px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-left:3px solid rgba(255,215,0,0.5);border-radius:4px;width:100%;max-width:700px;">';
-            html += `<div style="font-size:13px;letter-spacing:3px;color:#ffd700;margin-bottom:4px;">${selMission.name.toUpperCase()}</div>`;
-            html += `<div style="font-size:10px;letter-spacing:0.5px;color:rgba(200,210,217,0.5);margin-bottom:8px;">${selMission.briefing}</div>`;
+            const diffColor = levelDiff >= 3 ? UI_COLORS.redHard : levelDiff >= 1 ? UI_COLORS.orange : levelDiff === 0 ? UI_COLORS.greenAccent : levelDiff >= -2 ? UI_COLORS.diffEasy : UI_COLORS.diffTrivial;
+            html += `<div style="margin-top:16px;padding:14px 18px;background:${UI_COLORS.gold04};border:1px solid ${UI_COLORS.gold15};border-left:3px solid ${UI_COLORS.goldGlow};border-radius:4px;width:100%;max-width:700px;">`;
+            html += `<div style="font-size:13px;letter-spacing:3px;color:${UI_COLORS.gold};margin-bottom:4px;">${selMission.name.toUpperCase()}</div>`;
+            html += `<div style="font-size:10px;letter-spacing:0.5px;color:${UI_COLORS.text50};margin-bottom:8px;">${selMission.briefing}</div>`;
             html += `<div style="font-size:10px;letter-spacing:1px;color:${diffColor};">ENEMY LEVEL ${selMission.enemyLevel} // YOUR LEVEL ${_campaignState.playerLevel}</div>`;
             if (selMission.hasBoss) {
-                html += `<div style="font-size:9px;letter-spacing:1px;color:#ff4444;margin-top:4px;">BOSS ENCOUNTER</div>`;
+                html += `<div style="font-size:9px;letter-spacing:1px;color:${UI_COLORS.redAlt};margin-top:4px;">BOSS ENCOUNTER</div>`;
             }
             html += '</div>';
         }
@@ -1431,31 +1546,31 @@ function showShop() {
     };
 
     let html = '';
-    html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);margin-bottom:4px;">SUPPLY SHOP</div>';
-    html += `<div style="font-size:12px;letter-spacing:2px;color:rgba(255,215,0,0.6);margin-bottom:20px;">SCRAP: <span style="color:#ffd700;">${_scrap}</span></div>`;
+    html += `<div style="font-size:28px;letter-spacing:6px;color:${UI_COLORS.gold};text-shadow:0 0 20px ${UI_COLORS.goldGlow};margin-bottom:4px;">SUPPLY SHOP</div>`;
+    html += `<div style="font-size:12px;letter-spacing:2px;color:${UI_COLORS.gold60};margin-bottom:20px;">SCRAP: <span style="color:${UI_COLORS.gold};">${_scrap}</span></div>`;
 
     // ── BUY SECTION ──
-    html += '<div style="font-size:13px;letter-spacing:3px;color:rgba(0,255,255,0.7);margin-bottom:10px;">BUY</div>';
+    html += `<div style="font-size:13px;letter-spacing:3px;color:${UI_COLORS.cyan70};margin-bottom:10px;">BUY</div>`;
     html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;max-width:700px;">';
     if (_shopStock.length === 0) {
-        html += '<div style="font-size:11px;color:rgba(200,210,217,0.4);letter-spacing:1px;">No items in stock. Complete a mission to restock.</div>';
+        html += `<div style="font-size:11px;color:${UI_COLORS.text40};letter-spacing:1px;">No items in stock. Complete a mission to restock.</div>`;
     }
     _shopStock.forEach((item, idx) => {
-        const rc = rarityColors[item.rarity] || '#c0c8d0';
+        const rc = rarityColors[item.rarity] || UI_COLORS.rarityCommon;
         const isSelected = (_selectedShopIdx === idx);
-        const bgBase = isSelected ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.03)';
+        const bgBase = isSelected ? UI_COLORS.gold12 : UI_COLORS.surface03;
         const bdBase = isSelected ? `${rc}` : `${rc}40`;
         const shadowStyle = isSelected ? `box-shadow:0 0 12px ${rc}33;` : '';
-        html += `<button onclick="_shopSelect(${idx})" style="background:${bgBase};border:1px solid ${bdBase};border-left:3px solid ${rc};border-radius:4px;cursor:pointer;font-family:'Courier New',monospace;padding:10px;text-align:left;width:155px;${shadowStyle}">`;
+        html += `<button onclick="_shopSelect(${idx})" style="background:${bgBase};border:1px solid ${bdBase};border-left:3px solid ${rc};border-radius:4px;cursor:pointer;font-family:${UI_COLORS.fontMono};padding:10px;text-align:left;width:155px;${shadowStyle}">`;
         html += `<div style="font-size:10px;letter-spacing:1px;color:${rc};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
-        html += `<div style="font-size:9px;color:rgba(200,210,217,0.5);margin-bottom:4px;">${(item.rarity||'').toUpperCase()} LV.${item.level||1}</div>`;
+        html += `<div style="font-size:9px;color:${UI_COLORS.text50};margin-bottom:4px;">${(item.rarity||'').toUpperCase()} LV.${item.level||1}</div>`;
         // Show key stats
         if (item.computedStats) {
             const statKeys = Object.keys(item.computedStats).slice(0, 2);
             const statStr = statKeys.map(k => `${k}:${item.computedStats[k]}`).join(' ');
-            html += `<div style="font-size:8px;color:rgba(200,210,217,0.35);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${statStr}</div>`;
+            html += `<div style="font-size:8px;color:${UI_COLORS.text35};margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${statStr}</div>`;
         }
-        html += `<div style="font-size:11px;letter-spacing:1px;color:#ffd700;">⬡ ${item._shopPrice}</div>`;
+        html += `<div style="font-size:11px;letter-spacing:1px;color:${UI_COLORS.gold};">⬡ ${item._shopPrice}</div>`;
         html += '</button>';
     });
     html += '</div>';
@@ -1463,14 +1578,14 @@ function showShop() {
     // ── SELECTED ITEM DETAIL + COMPARISON ──
     if (_selectedShopIdx !== null && _selectedShopIdx < _shopStock.length) {
         const selItem = _shopStock[_selectedShopIdx];
-        const rc = rarityColors[selItem.rarity] || '#c0c8d0';
+        const rc = rarityColors[selItem.rarity] || UI_COLORS.rarityCommon;
         const canBuy = _scrap >= selItem._shopPrice && _inventory.length < (typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30);
 
-        html += `<div style="margin-bottom:16px;padding:14px 18px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-left:3px solid ${rc};border-radius:4px;width:100%;max-width:700px;">`;
+        html += `<div style="margin-bottom:16px;padding:14px 18px;background:${UI_COLORS.gold04};border:1px solid ${UI_COLORS.gold15};border-left:3px solid ${rc};border-radius:4px;width:100%;max-width:700px;">`;
         html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">`;
         html += `<div><span style="font-size:13px;letter-spacing:2px;color:${rc};">${selItem.name || 'Item'}</span>`;
-        html += `<span style="font-size:9px;color:rgba(200,210,217,0.5);margin-left:10px;">${(selItem.rarity||'').toUpperCase()} LV.${selItem.level||1}</span></div>`;
-        html += `<div style="font-size:13px;letter-spacing:1px;color:#ffd700;">⬡ ${selItem._shopPrice}</div>`;
+        html += `<span style="font-size:9px;color:${UI_COLORS.text50};margin-left:10px;">${(selItem.rarity||'').toUpperCase()} LV.${selItem.level||1}</span></div>`;
+        html += `<div style="font-size:13px;letter-spacing:1px;color:${UI_COLORS.gold};">⬡ ${selItem._shopPrice}</div>`;
         html += `</div>`;
 
         // Stat comparison with equipped item
@@ -1482,27 +1597,27 @@ function showShop() {
 
         if (allKeys.size > 0) {
             html += `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:2px 12px;font-size:11px;margin-bottom:10px;">`;
-            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;">STAT</div>`;
-            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">${equippedItem ? 'EQUIPPED' : ''}</div>`;
-            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">NEW</div>`;
-            html += `<div style="color:rgba(200,210,220,0.35);letter-spacing:1px;text-align:right;">${equippedItem ? 'DIFF' : ''}</div>`;
+            html += `<div style="color:${UI_COLORS.text35};letter-spacing:1px;">STAT</div>`;
+            html += `<div style="color:${UI_COLORS.text35};letter-spacing:1px;text-align:right;">${equippedItem ? 'EQUIPPED' : ''}</div>`;
+            html += `<div style="color:${UI_COLORS.text35};letter-spacing:1px;text-align:right;">NEW</div>`;
+            html += `<div style="color:${UI_COLORS.text35};letter-spacing:1px;text-align:right;">${equippedItem ? 'DIFF' : ''}</div>`;
             allKeys.forEach(k => {
                 const o = oldStats[k] || 0;
                 const n = newStats[k] || 0;
                 if (o === 0 && n === 0) return;
                 const diff = n - o;
-                const diffColor = diff > 0 ? '#44ff88' : diff < 0 ? '#ff5050' : 'rgba(200,210,220,0.5)';
+                const diffColor = diff > 0 ? UI_COLORS.greenPos : diff < 0 ? UI_COLORS.red : UI_COLORS.text50;
                 const diffStr = equippedItem ? (diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : '—') : '';
-                html += `<div style="color:rgba(200,210,220,0.6);">${_shopStatNames[k] || k}</div>`;
-                html += `<div style="text-align:right;color:rgba(200,210,220,0.5);">${equippedItem ? o : ''}</div>`;
-                html += `<div style="text-align:right;color:rgba(200,210,220,0.9);">${n}</div>`;
+                html += `<div style="color:${UI_COLORS.text60};">${_shopStatNames[k] || k}</div>`;
+                html += `<div style="text-align:right;color:${UI_COLORS.text50};">${equippedItem ? o : ''}</div>`;
+                html += `<div style="text-align:right;color:${UI_COLORS.text90};">${n}</div>`;
                 html += `<div style="text-align:right;color:${diffColor};font-weight:bold;">${diffStr}</div>`;
             });
             html += `</div>`;
             if (equippedItem) {
-                html += `<div style="font-size:9px;color:rgba(200,210,217,0.35);margin-bottom:8px;">Comparing to: ${equippedItem.name || 'equipped item'} (${slotKey})</div>`;
+                html += `<div style="font-size:9px;color:${UI_COLORS.text35};margin-bottom:8px;">Comparing to: ${equippedItem.name || 'equipped item'} (${slotKey})</div>`;
             } else if (slotKey) {
-                html += `<div style="font-size:9px;color:rgba(200,210,217,0.35);margin-bottom:8px;">Slot: ${slotKey.toUpperCase()} (nothing equipped)</div>`;
+                html += `<div style="font-size:9px;color:${UI_COLORS.text35};margin-bottom:8px;">Slot: ${slotKey.toUpperCase()} (nothing equipped)</div>`;
             }
         }
 
@@ -1511,25 +1626,25 @@ function showShop() {
             html += `<button onclick="_shopBuy(${_selectedShopIdx})" class="tw-btn tw-btn--gold">BUY — ⬡ ${selItem._shopPrice}</button>`;
         } else {
             const reason = _scrap < selItem._shopPrice ? 'Not enough scrap' : 'Inventory full';
-            html += `<div style="font-size:10px;color:rgba(255,100,100,0.6);letter-spacing:1px;">${reason}</div>`;
+            html += `<div style="font-size:10px;color:${UI_COLORS.redSoft60};letter-spacing:1px;">${reason}</div>`;
         }
         html += '</div>';
     }
 
     // ── SELL SECTION ──
-    html += '<div style="font-size:13px;letter-spacing:3px;color:rgba(255,100,100,0.7);margin-bottom:10px;">SELL</div>';
+    html += `<div style="font-size:13px;letter-spacing:3px;color:${UI_COLORS.redSoft};margin-bottom:10px;">SELL</div>`;
     html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px;max-width:700px;max-height:200px;overflow-y:auto;">';
     if (typeof _inventory !== 'undefined' && _inventory.length > 0) {
         _inventory.forEach((item, idx) => {
-            const rc = rarityColors[item.rarity] || '#c0c8d0';
+            const rc = rarityColors[item.rarity] || UI_COLORS.rarityCommon;
             const sellPrice = getItemSellPrice(item);
-            html += `<button onclick="_shopSell(${idx})" style="background:rgba(255,255,255,0.03);border:1px solid ${rc}30;border-left:2px solid ${rc};border-radius:4px;cursor:pointer;font-family:'Courier New',monospace;padding:8px;text-align:left;width:145px;">`;
+            html += `<button onclick="_shopSell(${idx})" style="background:${UI_COLORS.surface03};border:1px solid ${rc}30;border-left:2px solid ${rc};border-radius:4px;cursor:pointer;font-family:${UI_COLORS.fontMono};padding:8px;text-align:left;width:145px;">`;
             html += `<div style="font-size:9px;letter-spacing:1px;color:${rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
-            html += `<div style="font-size:10px;color:#ff8844;">⬡ ${sellPrice}</div>`;
+            html += `<div style="font-size:10px;color:${UI_COLORS.orange};">⬡ ${sellPrice}</div>`;
             html += '</button>';
         });
     } else {
-        html += '<div style="font-size:11px;color:rgba(200,210,217,0.4);letter-spacing:1px;">No items in inventory to sell.</div>';
+        html += `<div style="font-size:11px;color:${UI_COLORS.text40};letter-spacing:1px;">No items in inventory to sell.</div>`;
     }
     html += '</div>';
 
@@ -1647,15 +1762,15 @@ function showLoadoutSlots() {
     if (!overlay) return;
 
     const slots = _getLoadoutSlots();
-    const chassisColors = { light: '#88ff88', medium: '#ffcc44', heavy: '#ff8844' };
+    const chassisColors = { light: UI_COLORS.chassisLight, medium: UI_COLORS.chassisMedium, heavy: UI_COLORS.chassisHeavy };
 
     let html = '';
-    html += '<div style="font-size:24px;letter-spacing:6px;color:#00ffff;text-shadow:0 0 16px rgba(0,255,255,0.5);margin-bottom:20px;">LOADOUT SLOTS</div>';
+    html += `<div style="font-size:24px;letter-spacing:6px;color:${UI_COLORS.cyan};text-shadow:0 0 16px ${UI_COLORS.cyan50};margin-bottom:20px;">LOADOUT SLOTS</div>`;
 
     // Current loadout preview
-    html += '<div style="margin-bottom:20px;padding:12px 16px;background:rgba(0,255,255,0.04);border:1px solid rgba(0,255,255,0.2);border-radius:6px;max-width:500px;">';
-    html += '<div style="font-size:10px;letter-spacing:2px;color:rgba(0,255,255,0.6);margin-bottom:6px;">CURRENT LOADOUT</div>';
-    const chc = chassisColors[loadout.chassis] || '#c8d2d9';
+    html += `<div style="margin-bottom:20px;padding:12px 16px;background:${UI_COLORS.cyanSurface04};border:1px solid ${UI_COLORS.cyan20};border-radius:6px;max-width:500px;">`;
+    html += `<div style="font-size:10px;letter-spacing:2px;color:${UI_COLORS.cyan60};margin-bottom:6px;">CURRENT LOADOUT</div>`;
+    const chc = chassisColors[loadout.chassis] || UI_COLORS.text;
     html += `<div style="font-size:12px;color:${chc};letter-spacing:1px;">${(loadout.chassis||'').toUpperCase()} // L:${(loadout.L||'none').toUpperCase()} R:${(loadout.R||'none').toUpperCase()} MOD:${(loadout.mod||'none').toUpperCase()} SHLD:${(loadout.shld||'none').toUpperCase()}</div>`;
     html += '</div>';
 
@@ -1664,19 +1779,19 @@ function showLoadoutSlots() {
     for (let i = 0; i < MAX_LOADOUT_SLOTS; i++) {
         const slot = slots[i];
         if (slot) {
-            const sc = chassisColors[slot.chassis] || '#c8d2d9';
-            html += `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(0,255,255,0.15);border-left:3px solid ${sc};border-radius:4px;">`;
+            const sc = chassisColors[slot.chassis] || UI_COLORS.text;
+            html += `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:${UI_COLORS.surface03};border:1px solid ${UI_COLORS.cyan12};border-left:3px solid ${sc};border-radius:4px;">`;
             html += `<div style="flex:1;">`;
-            html += `<div style="font-size:11px;letter-spacing:2px;color:#c8d2d9;margin-bottom:2px;">${slot.name}</div>`;
-            html += `<div style="font-size:9px;color:rgba(200,210,217,0.4);">${(slot.chassis||'').toUpperCase()} // L:${(slot.L||'none').toUpperCase()} R:${(slot.R||'none').toUpperCase()}</div>`;
+            html += `<div style="font-size:11px;letter-spacing:2px;color:${UI_COLORS.text};margin-bottom:2px;">${slot.name}</div>`;
+            html += `<div style="font-size:9px;color:${UI_COLORS.text40};">${(slot.chassis||'').toUpperCase()} // L:${(slot.L||'none').toUpperCase()} R:${(slot.R||'none').toUpperCase()}</div>`;
             html += '</div>';
             html += `<button onclick="_loadSlot(${i})" class="tw-btn tw-btn--sm">LOAD</button>`;
             html += `<button onclick="_deleteSlot(${i})" class="tw-btn tw-btn--danger tw-btn--sm">✕</button>`;
             html += '</div>';
         } else {
             html += `<button onclick="_saveSlot(${i})" class="tw-btn" style="align-items:center;display:flex;gap:8px;text-align:left;width:100%;">`;
-            html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(200,210,217,0.3);">SLOT ${i+1} — EMPTY</div>`;
-            html += `<div style="margin-left:auto;font-size:10px;letter-spacing:2px;color:rgba(0,255,255,0.4);">SAVE</div>`;
+            html += `<div style="font-size:11px;letter-spacing:2px;color:${UI_COLORS.text30};">SLOT ${i+1} — EMPTY</div>`;
+            html += `<div style="margin-left:auto;font-size:10px;letter-spacing:2px;color:${UI_COLORS.cyan40};">SAVE</div>`;
             html += '</button>';
         }
     }
@@ -1763,7 +1878,7 @@ function _showUpgradesPanel() {
 
     const ch = _campaignState.chassis || 'medium';
     const level = _campaignState.playerLevel;
-    const cc = ch === 'light' ? '#88ff88' : ch === 'medium' ? '#ffcc44' : '#ff8844';
+    const cc = ch === 'light' ? UI_COLORS.chassisLight : ch === 'medium' ? UI_COLORS.chassisMedium : UI_COLORS.chassisHeavy;
     const tree = SKILL_TREES[ch] || [];
     const chosen = _campaignState.skillsChosen || [];
     const availPts = getAvailableSkillPoints();
@@ -1786,7 +1901,7 @@ function _showUpgradesPanel() {
     let html = '';
     html += `<div style="font-size:24px;letter-spacing:6px;color:${cc};text-shadow:0 0 16px ${cc}80;margin-bottom:4px;">SKILL TREE</div>`;
     html += `<div style="font-size:11px;letter-spacing:2px;color:${cc}88;margin-bottom:4px;">${ch.toUpperCase()} CHASSIS — PILOT LEVEL ${level}</div>`;
-    html += `<div style="font-size:12px;letter-spacing:2px;color:${availPts > 0 ? '#ffd700' : 'rgba(200,210,217,0.4)'};margin-bottom:16px;">SKILL POINTS: <span style="font-size:14px;">${availPts}</span></div>`;
+    html += `<div style="font-size:12px;letter-spacing:2px;color:${availPts > 0 ? UI_COLORS.gold : UI_COLORS.text40};margin-bottom:16px;">SKILL POINTS: <span style="font-size:14px;">${availPts}</span></div>`;
 
     // Tree container with relative positioning
     html += `<div style="position:relative;width:${gridW}px;height:${gridH}px;margin-bottom:16px;">`;
@@ -1801,7 +1916,7 @@ function _showUpgradesPanel() {
             if (!from || !to) continue;
             const bothOwned = chosen.includes(node.id) && chosen.includes(reqId);
             const oneOwned = chosen.includes(reqId);
-            const lineColor = bothOwned ? cc : oneOwned ? 'rgba(255,215,0,0.4)' : 'rgba(255,255,255,0.08)';
+            const lineColor = bothOwned ? cc : oneOwned ? UI_COLORS.gold40 : UI_COLORS.surface08;
             html += `<line x1="${from.cx}" y1="${from.cy}" x2="${to.cx}" y2="${to.cy}" stroke="${lineColor}" stroke-width="${bothOwned ? 2 : 1}" />`;
         }
     }
@@ -1819,18 +1934,18 @@ function _showUpgradesPanel() {
         if (owned) {
             borderColor = cc; textColor = cc; bg = `${cc}18`; labelIcon = '✓';
         } else if (canBuy) {
-            borderColor = '#ffd700'; textColor = '#ffd700'; bg = 'rgba(255,215,0,0.06)'; labelIcon = '●';
+            borderColor = UI_COLORS.gold; textColor = UI_COLORS.gold; bg = UI_COLORS.gold06; labelIcon = '●';
         } else {
-            borderColor = 'rgba(255,255,255,0.08)'; textColor = 'rgba(200,210,217,0.25)'; bg = 'rgba(0,0,0,0.3)'; labelIcon = '🔒';
+            borderColor = UI_COLORS.surface08; textColor = UI_COLORS.text25; bg = UI_COLORS.bgDark30; labelIcon = '🔒';
         }
 
         const onclick = canBuy ? `onclick="_buySkillNode('${node.id}')"` : '';
         const cursor = canBuy ? 'pointer' : 'default';
-        const shadowStyle = owned ? `box-shadow:0 0 8px ${cc}33;` : canBuy ? 'box-shadow:0 0 8px rgba(255,215,0,0.15);' : '';
+        const shadowStyle = owned ? `box-shadow:0 0 8px ${cc}33;` : canBuy ? `box-shadow:0 0 8px ${UI_COLORS.gold15};` : '';
 
-        html += `<div ${onclick} title="${node.desc}" style="position:absolute;left:${left}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px;padding:4px 6px;background:${bg};border:1px solid ${borderColor};border-radius:4px;cursor:${cursor};transition:all 0.2s;z-index:1;overflow:hidden;box-sizing:border-box;${shadowStyle}" ${canBuy ? `onmouseover="this.style.background='rgba(255,215,0,0.12)';this.style.boxShadow='0 0 12px rgba(255,215,0,0.25)'" onmouseout="this.style.background='${bg}';this.style.boxShadow='${canBuy ? '0 0 8px rgba(255,215,0,0.15)' : 'none'}'"` : ''}>`;
+        html += `<div ${onclick} title="${node.desc}" style="position:absolute;left:${left}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px;padding:4px 6px;background:${bg};border:1px solid ${borderColor};border-radius:4px;cursor:${cursor};transition:all 0.2s;z-index:1;overflow:hidden;box-sizing:border-box;${shadowStyle}" ${canBuy ? `onmouseover="this.style.background='${UI_COLORS.gold12}';this.style.boxShadow='0 0 12px ${UI_COLORS.gold25}'" onmouseout="this.style.background='${bg}';this.style.boxShadow='${canBuy ? `0 0 8px ${UI_COLORS.gold15}` : 'none'}'"` : ''}>`;
         html += `<div style="font-size:8px;letter-spacing:0.5px;color:${textColor};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${labelIcon} ${node.label}</div>`;
-        html += `<div style="font-size:7px;color:${owned ? 'rgba(200,210,217,0.5)' : 'rgba(200,210,217,0.25)'};line-height:1.3;overflow:hidden;max-height:30px;">${node.desc}</div>`;
+        html += `<div style="font-size:7px;color:${owned ? UI_COLORS.text50 : UI_COLORS.text25};line-height:1.3;overflow:hidden;max-height:30px;">${node.desc}</div>`;
         html += '</div>';
     }
     html += '</div>'; // end tree container
@@ -1839,8 +1954,8 @@ function _showUpgradesPanel() {
     const bonuses = getSkillTreeBonuses(ch);
     const activeStats = Object.entries(bonuses).filter(([k, v]) => v !== 0);
     if (activeStats.length > 0) {
-        html += `<div style="padding:10px 14px;background:rgba(0,255,255,0.03);border:1px solid rgba(0,255,255,0.1);border-radius:4px;max-width:${gridW}px;margin-bottom:12px;">`;
-        html += '<div style="font-size:9px;letter-spacing:2px;color:rgba(0,255,255,0.4);margin-bottom:6px;">ACTIVE BONUSES</div>';
+        html += `<div style="padding:10px 14px;background:${UI_COLORS.cyanSurface03};border:1px solid ${UI_COLORS.cyan10};border-radius:4px;max-width:${gridW}px;margin-bottom:12px;">`;
+        html += `<div style="font-size:9px;letter-spacing:2px;color:${UI_COLORS.cyan40};margin-bottom:6px;">ACTIVE BONUSES</div>`;
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
         const statLabels = { coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', spd:'Speed',
             dmgMult:'Damage', reloadMult:'Reload Spd', critChance:'Crit Chance', critDmg:'Crit Damage',
@@ -1852,7 +1967,7 @@ function _showUpgradesPanel() {
             const isNeg = k === 'modCdMult';
             const sign = v > 0 ? '+' : '';
             const display = pctStats.has(k) ? `${sign}${Math.round(v * 100)}%` : `${sign}${v}`;
-            const color = (v > 0 && !isNeg) || (v < 0 && isNeg) ? '#44ff88' : v < 0 ? '#ff5050' : '#44ff88';
+            const color = (v > 0 && !isNeg) || (v < 0 && isNeg) ? UI_COLORS.greenPos : v < 0 ? UI_COLORS.red : UI_COLORS.greenPos;
             html += `<span style="font-size:10px;color:${color};padding:2px 6px;border:1px solid ${color}33;border-radius:3px;">${label}: ${isNeg ? '-' + Math.round(v*100) + '%' : display}</span>`;
         }
         html += '</div></div>';

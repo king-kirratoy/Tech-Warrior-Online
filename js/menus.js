@@ -1,3 +1,118 @@
+// ── UI Color Constants ────────────────────────────────────────────
+// These replicate CSS tokens for use in JS template literal inline styles.
+// CSS variables cannot be read directly from JS without getComputedStyle,
+// so named constants are used instead. Names mirror css/base.css tokens.
+const UI_COLORS = {
+  // Font
+  fontMono:       "'Courier New', monospace",
+
+  // Gold family  (#ffd700 = --gold)
+  gold:           '#ffd700',
+  goldGlow:       'rgba(255,215,0,0.5)',
+  gold70:         'rgba(255,215,0,0.7)',
+  gold60:         'rgba(255,215,0,0.6)',
+  gold45:         'rgba(255,215,0,0.45)',
+  gold40:         'rgba(255,215,0,0.4)',
+  gold30:         'rgba(255,215,0,0.3)',
+  gold25:         'rgba(255,215,0,0.25)',
+  gold20:         'rgba(255,215,0,0.2)',
+  gold15:         'rgba(255,215,0,0.15)',
+  gold12:         'rgba(255,215,0,0.12)',
+  gold10:         'rgba(255,215,0,0.1)',
+  gold06:         'rgba(255,215,0,0.06)',
+  gold04:         'rgba(255,215,0,0.04)',
+
+  // Cyan family  (#00ffff = --cyan)
+  cyan:           '#00ffff',
+  cyan70:         'rgba(0,255,255,0.7)',
+  cyan60:         'rgba(0,255,255,0.6)',
+  cyan50:         'rgba(0,255,255,0.5)',
+  cyan45:         'rgba(0,255,255,0.45)',
+  cyan40:         'rgba(0,255,255,0.4)',
+  cyan35:         'rgba(0,255,255,0.35)',
+  cyan20:         'rgba(0,255,255,0.2)',
+  cyan12:         'rgba(0,255,255,0.12)',
+  cyan10:         'rgba(0,255,255,0.1)',
+  cyanSurface04:  'rgba(0,255,255,0.04)',
+  cyanSurface03:  'rgba(0,255,255,0.03)',
+
+  // HUD cyan family  (rgba(0,210,255,…) = --hud-cyan)
+  hudCyan:        'rgba(0,210,255,1)',
+  hudCyan75:      'rgba(0,210,255,0.75)',
+  hudCyan60:      'rgba(0,210,255,0.6)',
+  hudCyan55:      'rgba(0,210,255,0.55)',
+  hudCyan40:      'rgba(0,210,255,0.4)',
+  hudCyan35:      'rgba(0,210,255,0.35)',
+  hudCyan25:      'rgba(0,210,255,0.25)',
+  hudCyan08:      'rgba(0,210,255,0.08)',
+  hudCyan04:      'rgba(0,210,255,0.04)',
+
+  // Green / teal family
+  greenAccent:    '#00ff88',   // --green-accent
+  greenPos:       '#44ff88',   // --green-pos
+  teal:           '#00ffcc',   // --teal
+  tealAlt:        '#00ffc8',   // success toast variant
+  yellow:         '#ffdd00',   // --yellow (HP bar mid threshold)
+  green80:        'rgba(0,255,136,0.8)',
+  green20:        'rgba(0,255,136,0.2)',
+  green04:        'rgba(0,255,136,0.04)',
+  toastSuccessBg: 'rgba(0,255,200,0.12)',
+  toastSuccessBd: 'rgba(0,255,200,0.4)',
+
+  // Red / danger family
+  red:            '#ff5050',   // --red
+  redAlt:         '#ff4444',   // --red-alt
+  redCritical:    '#ff4466',   // --red-critical
+  redError:       '#ff3300',   // --red-error
+  redHard:        '#ff2200',   // mission difficulty HARD
+  redSoft:        'rgba(255,100,100,0.7)',
+  redSoft60:      'rgba(255,100,100,0.6)',
+  toastErrorBg:   'rgba(255,40,40,0.18)',
+  toastErrorBd:   'rgba(255,40,40,0.5)',
+  toastErrorText: '#ff6666',
+
+  // Orange / amber / purple
+  orange:         '#ff8844',   // --orange
+  amber:          '#ffaa00',   // --amber
+  purple:         '#cc88ff',   // --purple
+
+  // Chassis accent colors
+  chassisLight:   '#88ff88',
+  chassisMedium:  '#ffcc44',
+  chassisHeavy:   '#ff8844',   // same as --orange
+
+  // Leaderboard specific
+  rankGold:       '#ffd700',
+  rankSilver:     '#c0c0c0',
+  rankBronze:     '#cd7f32',
+  leaderName:     '#e8f0e8',
+  leaderRound:    '#00e0ff',
+  diffEasy:       '#88aacc',
+  diffTrivial:    '#666666',
+
+  // Text / neutral  (#c8d2d9 = rgb(200,210,217) = --text)
+  text:           '#c8d2d9',
+  text90:         'rgba(200,210,217,0.9)',
+  text75:         'rgba(200,210,217,0.75)',
+  text70:         'rgba(200,210,217,0.7)',
+  text65:         'rgba(200,210,217,0.65)',
+  text60:         'rgba(200,210,217,0.6)',
+  text50:         'rgba(200,210,217,0.5)',
+  text40:         'rgba(200,210,217,0.4)',
+  text35:         'rgba(200,210,217,0.35)',
+  text30:         'rgba(200,210,217,0.3)',
+  text25:         'rgba(200,210,217,0.25)',
+  rarityCommon:   '#c0c8d0',
+
+  // Surfaces / overlays
+  surface:        'rgba(255,255,255,0.04)',   // --surface
+  surface03:      'rgba(255,255,255,0.03)',
+  surface08:      'rgba(255,255,255,0.08)',
+  surface10:      'rgba(255,255,255,0.1)',
+  surface05:      'rgba(255,255,255,0.05)',
+  bgDark30:       'rgba(0,0,0,0.3)',
+};
+
 // ═══════════ NAVIGATION ═══════════
 
 function returnToHangar() {
@@ -33,10 +148,10 @@ function returnToHangar() {
         if (_gameMode === 'campaign') {
             const _lvl = (typeof _campaignState !== 'undefined') ? _campaignState.playerLevel : 1;
             _modeLabel.textContent = 'CAMPAIGN // LV.' + _lvl + ' // ROUND ' + _round;
-            _modeLabel.style.color = 'rgba(255,215,0,0.45)';
+            _modeLabel.style.color = UI_COLORS.gold45;
         } else {
             _modeLabel.textContent = 'COMBAT SIMULATION';
-            _modeLabel.style.color = 'rgba(0,255,255,0.35)';
+            _modeLabel.style.color = UI_COLORS.cyan35;
         }
     }
     // Reset HUD to clean state
@@ -300,7 +415,7 @@ function startGame(mode) {
         const modeLabel = document.getElementById('hangar-mode-label');
         if (modeLabel) {
             modeLabel.textContent = 'COMBAT SIMULATION';
-            modeLabel.style.color = 'rgba(0,255,255,0.35)';
+            modeLabel.style.color = UI_COLORS.cyan35;
         }
         startHangarGrid();
         // Ensure garage UI matches loadout state
@@ -649,26 +764,26 @@ function _renderChassisSelect(overlay) {
     if (!overlay) return;
 
     let html = '';
-    html += '<div style="font-size:28px;letter-spacing:6px;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.5);margin-bottom:6px;">NEW CAMPAIGN</div>';
-    html += '<div style="font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);margin-bottom:32px;">SELECT YOUR CHASSIS CLASS</div>';
+    html += `<div style="font-size:28px;letter-spacing:6px;color:${UI_COLORS.gold};text-shadow:0 0 20px ${UI_COLORS.goldGlow};margin-bottom:6px;">NEW CAMPAIGN</div>`;
+    html += `<div style="font-size:11px;letter-spacing:2px;color:${UI_COLORS.goldGlow};margin-bottom:32px;">SELECT YOUR CHASSIS CLASS</div>`;
 
     const chassisInfo = {
-        light: { color: '#88ff88', desc: 'Fast and agile. Access to SMGs, Battle Rifles, Shotguns, Snipers. Mods: Jump, Decoy, Barrier, EMP, Ghost Step.', hp: 'Low HP', speed: 'High Speed' },
-        medium: { color: '#ffcc44', desc: 'Balanced all-rounder. Access to Machine Guns, Battle Rifles, Heavy Rifles, Grenade Launchers, Plasma, Snipers. Mods: Barrier, Repair, Missile, Drone, Overclock.', hp: 'Medium HP', speed: 'Medium Speed' },
-        heavy: { color: '#ff8844', desc: 'Slow but powerful tank. Access to Machine Guns, Heavy Rifles, Rocket Launchers, Plasma, Siege, Chain Gun. Mods: Barrier, Repair, Rage, Siege Mode, Anchor.', hp: 'High HP', speed: 'Low Speed' }
+        light:  { color: UI_COLORS.chassisLight,  desc: 'Fast and agile. Access to SMGs, Battle Rifles, Shotguns, Snipers. Mods: Jump, Decoy, Barrier, EMP, Ghost Step.', hp: 'Low HP', speed: 'High Speed' },
+        medium: { color: UI_COLORS.chassisMedium, desc: 'Balanced all-rounder. Access to Machine Guns, Battle Rifles, Heavy Rifles, Grenade Launchers, Plasma, Snipers. Mods: Barrier, Repair, Missile, Drone, Overclock.', hp: 'Medium HP', speed: 'Medium Speed' },
+        heavy:  { color: UI_COLORS.chassisHeavy,  desc: 'Slow but powerful tank. Access to Machine Guns, Heavy Rifles, Rocket Launchers, Plasma, Siege, Chain Gun. Mods: Barrier, Repair, Rage, Siege Mode, Anchor.', hp: 'High HP', speed: 'Low Speed' }
     };
 
     html += '<div style="display:flex;gap:16px;max-width:800px;width:100%;">';
     for (const ch of ['light', 'medium', 'heavy']) {
         const info = chassisInfo[ch];
         const isSelected = (_selectedNewChassis === ch);
-        const bgColor = isSelected ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.03)';
+        const bgColor = isSelected ? UI_COLORS.gold12 : UI_COLORS.surface03;
         const borderColor = isSelected ? info.color : (info.color + '40');
         const shadowStyle = isSelected ? 'box-shadow:0 0 16px ' + info.color + '33,inset 0 0 12px ' + info.color + '11;' : '';
-        html += `<button onclick="_highlightChassis('${ch}')" style="background:${bgColor};border:1px solid ${borderColor};border-radius:6px;border-top:3px solid ${info.color};cursor:pointer;flex:1;font-family:'Courier New',monospace;padding:24px 16px;text-align:center;transition:all 0.2s;${shadowStyle}">`;
+        html += `<button onclick="_highlightChassis('${ch}')" style="background:${bgColor};border:1px solid ${borderColor};border-radius:6px;border-top:3px solid ${info.color};cursor:pointer;flex:1;font-family:${UI_COLORS.fontMono};padding:24px 16px;text-align:center;transition:all 0.2s;${shadowStyle}">`;
         html += `<div style="font-size:18px;letter-spacing:4px;color:${info.color};margin-bottom:8px;">${ch.toUpperCase()}</div>`;
         html += `<div style="font-size:10px;color:${info.color};opacity:0.7;margin-bottom:8px;">${info.hp} // ${info.speed}</div>`;
-        html += `<div style="font-size:9px;color:rgba(200,210,217,0.5);line-height:1.5;">${info.desc}</div>`;
+        html += `<div style="font-size:9px;color:${UI_COLORS.text50};line-height:1.5;">${info.desc}</div>`;
         html += '</button>';
     }
     html += '</div>';
@@ -767,9 +882,9 @@ function populateInventory() {
         Object.entries(slotPositions).forEach(([key, pos]) => {
             const item = _equipped[key];
             const rd = item ? RARITY_DEFS[item.rarity] : null;
-            const nameColor = rd ? rd.colorStr : 'rgba(200,210,220,0.35)';
+            const nameColor = rd ? rd.colorStr : UI_COLORS.text35;
             const itemName = item ? (item.isUnique ? '★ ' + (item.shortName || item.name) : (item.shortName || item.name)) : '— empty —';
-            const borderColor = rd ? rd.colorStr + '55' : 'rgba(255,215,0,0.2)';
+            const borderColor = rd ? rd.colorStr + '55' : UI_COLORS.gold20;
             let posStyle = `top:${pos.top};`;
             if (pos.left) posStyle += `left:${pos.left};`;
             if (pos.right) posStyle += `right:${pos.right};`;
@@ -793,7 +908,7 @@ function populateInventory() {
     if (bpEl) {
         bpEl.innerHTML = '';
         // Make backpack a drop target for unequipping
-        bpEl.ondragover = (ev) => { ev.preventDefault(); bpEl.style.background = 'rgba(0,255,100,0.04)'; };
+        bpEl.ondragover = (ev) => { ev.preventDefault(); bpEl.style.background = UI_COLORS.green04; };
         bpEl.ondragleave = () => { bpEl.style.background = ''; };
         bpEl.ondrop = (ev) => {
             ev.preventDefault();
@@ -806,18 +921,18 @@ function populateInventory() {
         };
 
         if (_inventory.length === 0) {
-            bpEl.innerHTML = '<span style="font-size:12px;color:rgba(200,210,220,0.35);letter-spacing:1px;">No items in backpack</span>';
+            bpEl.innerHTML = `<span style="font-size:12px;color:${UI_COLORS.text35};letter-spacing:1px;">No items in backpack</span>`;
         } else {
             _inventory.forEach((item, idx) => {
                 const rd = RARITY_DEFS[item.rarity];
                 const cell = document.createElement('div');
                 cell.className = 'bp-cell';
                 const _uBorder = item.isUnique ? `border:2px solid ${rd.colorStr};box-shadow:0 0 6px ${rd.colorStr}44;` : `border:1px solid ${rd.colorStr}44;`;
-                cell.style.cssText = `width:88px;height:76px;${_uBorder}border-radius:5px;background:rgba(0,0,0,0.3);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;`;
+                cell.style.cssText = `width:88px;height:76px;${_uBorder}border-radius:5px;background:${UI_COLORS.bgDark30};display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;`;
                 cell.draggable = true;
                 cell.dataset.invIdx = idx;
                 cell.title = `${item.name}\n${item.affixes.map(a => a.label).join('\n')}${item.uniqueLabel ? '\n★ ' + item.uniqueLabel : ''}`;
-                const _starBadge = item.isUnique ? '<div style="position:absolute;top:1px;right:3px;font-size:9px;color:#ffd700;">★</div>' : '';
+                const _starBadge = item.isUnique ? `<div style="position:absolute;top:1px;right:3px;font-size:9px;color:${UI_COLORS.gold};">★</div>` : '';
                 cell.innerHTML = `${_starBadge}<div style="font-size:9px;letter-spacing:0.5px;color:${rd.colorStr};text-align:center;line-height:1.3;overflow:hidden;max-width:80px;">${item.shortName}</div>
                     <div style="width:7px;height:7px;border-radius:50%;background:${rd.colorStr};margin-top:4px;opacity:0.7;"></div>`;
                 cell.addEventListener('mouseover', () => { cell.style.borderColor = rd.colorStr + 'aa'; cell.style.boxShadow = `0 0 8px ${rd.colorStr}33`; });
@@ -848,11 +963,11 @@ function _showItemDetail(source, key) {
     if (!item) return;
 
     const rd = RARITY_DEFS[item.rarity];
-    const _uniqueBadge = item.isUnique ? '<span style="font-size:9px;letter-spacing:2px;color:#ffd700;margin-left:10px;background:rgba(255,215,0,0.12);padding:2px 6px;border:1px solid rgba(255,215,0,0.3);border-radius:3px;">★ UNIQUE</span>' : '';
+    const _uniqueBadge = item.isUnique ? `<span style="font-size:9px;letter-spacing:2px;color:${UI_COLORS.gold};margin-left:10px;background:${UI_COLORS.gold12};padding:2px 6px;border:1px solid ${UI_COLORS.gold30};border-radius:3px;">★ UNIQUE</span>` : '';
     let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`;
     html += `<div>
         <span style="font-size:16px;letter-spacing:2px;color:${rd.colorStr};text-shadow:0 0 10px ${rd.colorStr}44;">${item.name}</span>${_uniqueBadge}
-        <span style="font-size:10px;letter-spacing:1px;color:rgba(200,210,220,0.4);margin-left:12px;">iLvl ${item.level}</span>
+        <span style="font-size:10px;letter-spacing:1px;color:${UI_COLORS.text40};margin-left:12px;">iLvl ${item.level}</span>
     </div>`;
 
     // Action buttons
@@ -869,7 +984,7 @@ function _showItemDetail(source, key) {
     html += `</div></div>`;
 
     // Base stats
-    html += `<div style="border-top:1px solid rgba(255,215,0,0.1);padding-top:10px;">`;
+    html += `<div style="border-top:1px solid ${UI_COLORS.gold10};padding-top:10px;">`;
     if (item.baseStats) {
         const statNames = { dmg:'Damage', reload:'Reload (ms)', pellets:'Pellets', speed:'Projectile Speed',
             range:'Range', radius:'Blast Radius', burst:'Burst Count', coreHP:'Core HP', armHP:'Arm HP',
@@ -880,8 +995,8 @@ function _showItemDetail(source, key) {
         Object.entries(item.baseStats).forEach(([k, v]) => {
             const label = statNames[k] || k;
             html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
-                <span style="color:rgba(200,210,220,0.6);">${label}</span>
-                <span style="color:rgba(200,210,220,0.9);">${typeof v === 'number' ? (v < 1 && v > 0 ? Math.round(v*100)+'%' : v) : v}</span>
+                <span style="color:${UI_COLORS.text60};">${label}</span>
+                <span style="color:${UI_COLORS.text90};">${typeof v === 'number' ? (v < 1 && v > 0 ? Math.round(v*100)+'%' : v) : v}</span>
             </div>`;
         });
     }
@@ -889,7 +1004,7 @@ function _showItemDetail(source, key) {
 
     // Affixes
     if (item.affixes.length > 0) {
-        html += `<div style="border-top:1px solid rgba(255,215,0,0.1);margin-top:8px;padding-top:8px;">`;
+        html += `<div style="border-top:1px solid ${UI_COLORS.gold10};margin-top:8px;padding-top:8px;">`;
         item.affixes.forEach(a => {
             html += `<div style="font-size:12px;color:#44ff88;margin-bottom:3px;letter-spacing:1px;">● ${a.label}</div>`;
         });
@@ -900,22 +1015,22 @@ function _showItemDetail(source, key) {
     if (item.systemKey) {
         const _sysDesc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[item.systemKey]) ? SLOT_DESCS[item.systemKey] : null;
         const _sysTypeLabel = { shield_system:'SHIELD SYSTEM', mod_system:'CPU MODULE', leg_system:'LEG SYSTEM', aug_system:'AUGMENT SYSTEM' };
-        html += `<div style="border-top:2px solid rgba(0,255,255,0.2);margin-top:10px;padding-top:10px;background:rgba(0,255,255,0.03);border-radius:4px;padding:10px;">`;
-        html += `<div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);margin-bottom:6px;">${_sysTypeLabel[item.baseType] || 'SYSTEM'}</div>`;
-        html += `<div style="font-size:12px;color:#00ffcc;letter-spacing:1px;margin-bottom:4px;">Activates: ${item.systemKey.replace(/_/g,' ').toUpperCase()}</div>`;
+        html += `<div style="border-top:2px solid ${UI_COLORS.cyan20};margin-top:10px;padding-top:10px;background:${UI_COLORS.cyanSurface03};border-radius:4px;padding:10px;">`;
+        html += `<div style="font-size:9px;letter-spacing:3px;color:${UI_COLORS.cyan50};margin-bottom:6px;">${_sysTypeLabel[item.baseType] || 'SYSTEM'}</div>`;
+        html += `<div style="font-size:12px;color:${UI_COLORS.teal};letter-spacing:1px;margin-bottom:4px;">Activates: ${item.systemKey.replace(/_/g,' ').toUpperCase()}</div>`;
         if (_sysDesc) {
-            html += `<div style="font-size:11px;color:rgba(200,210,220,0.65);line-height:1.4;">${_sysDesc.desc}</div>`;
+            html += `<div style="font-size:11px;color:${UI_COLORS.text65};line-height:1.4;">${_sysDesc.desc}</div>`;
         }
         html += `</div>`;
     }
 
     // Unique effect (boss items)
     if (item.isUnique && item.uniqueLabel) {
-        html += `<div style="border-top:2px solid rgba(255,215,0,0.3);margin-top:10px;padding-top:10px;background:rgba(255,215,0,0.04);border-radius:4px;padding:10px;">`;
-        html += `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,215,0,0.5);margin-bottom:6px;">★ UNIQUE EFFECT</div>`;
-        html += `<div style="font-size:12px;color:#ffd700;letter-spacing:1px;margin-bottom:4px;text-shadow:0 0 8px rgba(255,215,0,0.3);">${item.uniqueLabel}</div>`;
+        html += `<div style="border-top:2px solid ${UI_COLORS.gold30};margin-top:10px;padding-top:10px;background:${UI_COLORS.gold04};border-radius:4px;padding:10px;">`;
+        html += `<div style="font-size:9px;letter-spacing:3px;color:${UI_COLORS.goldGlow};margin-bottom:6px;">★ UNIQUE EFFECT</div>`;
+        html += `<div style="font-size:12px;color:${UI_COLORS.gold};letter-spacing:1px;margin-bottom:4px;text-shadow:0 0 8px ${UI_COLORS.gold30};">${item.uniqueLabel}</div>`;
         if (item.uniqueDesc) {
-            html += `<div style="font-size:11px;color:rgba(200,210,220,0.65);line-height:1.4;">${item.uniqueDesc}</div>`;
+            html += `<div style="font-size:11px;color:${UI_COLORS.text65};line-height:1.4;">${item.uniqueDesc}</div>`;
         }
         html += `</div>`;
     }
@@ -987,7 +1102,7 @@ function _unequipItem(slotKey) {
     if (_inventory.length >= INVENTORY_MAX) {
         // Inventory full — show feedback so the player knows why nothing happened
         const _sc = GAME?.scene?.scenes[0];
-        if (_sc && typeof _showFloatingWarning === 'function') _showFloatingWarning(_sc, 'INVENTORY FULL', '#ff4444');
+        if (_sc && typeof _showFloatingWarning === 'function') _showFloatingWarning(_sc, 'INVENTORY FULL', UI_COLORS.redAlt);
         return;
     }
     _inventory.push(item);
@@ -1046,14 +1161,14 @@ function _showArmPicker(invIdx) {
     const rLabel = rItem ? (rItem.shortName || rItem.name) : 'empty';
 
     box.innerHTML = `
-        <div style="font-size:14px;letter-spacing:3px;color:#00ffff;margin-bottom:16px;">EQUIP TO WHICH ARM?</div>
-        <div style="font-size:11px;color:rgba(200,210,220,0.6);margin-bottom:16px;letter-spacing:1px;">${item.name}</div>
+        <div style="font-size:14px;letter-spacing:3px;color:${UI_COLORS.cyan};margin-bottom:16px;">EQUIP TO WHICH ARM?</div>
+        <div style="font-size:11px;color:${UI_COLORS.text60};margin-bottom:16px;letter-spacing:1px;">${item.name}</div>
         <div style="display:flex;gap:12px;justify-content:center;">
-            <button class="arm-picker-btn" id="_arm-pick-L">L ARM<br><span style="font-size:9px;color:rgba(200,210,220,0.5);">${lLabel}</span></button>
-            <button class="arm-picker-btn" id="_arm-pick-R">R ARM<br><span style="font-size:9px;color:rgba(200,210,220,0.5);">${rLabel}</span></button>
+            <button class="arm-picker-btn" id="_arm-pick-L">L ARM<br><span style="font-size:9px;color:${UI_COLORS.text50};">${lLabel}</span></button>
+            <button class="arm-picker-btn" id="_arm-pick-R">R ARM<br><span style="font-size:9px;color:${UI_COLORS.text50};">${rLabel}</span></button>
         </div>
         <div style="margin-top:14px;">
-            <button class="arm-picker-btn" id="_arm-pick-cancel" style="color:rgba(200,210,220,0.5);border-color:rgba(200,210,220,0.2);">CANCEL</button>
+            <button class="arm-picker-btn" id="_arm-pick-cancel" style="color:${UI_COLORS.text50};border-color:${UI_COLORS.text25};">CANCEL</button>
         </div>
     `;
     overlay.appendChild(box);
@@ -1076,7 +1191,7 @@ function _statRow(label, value, colorClass='') {
 
 function _hpBar(label, hp, max, color) {
     const pct = max > 0 ? Math.round(hp/max*100) : 0;
-    const barColor = pct > 60 ? '#00ff88' : pct > 30 ? '#ffdd00' : '#ff4466';
+    const barColor = pct > 60 ? UI_COLORS.greenAccent : pct > 30 ? UI_COLORS.yellow : UI_COLORS.redCritical;
     return `<div class="stats-hp-bar">
         <span class="stats-label" style="min-width:70px">${label}</span>
         <div class="stats-hp-track"><div class="stats-hp-fill" style="width:${pct}%;background:${barColor}"></div></div>
@@ -1086,7 +1201,7 @@ function _hpBar(label, hp, max, color) {
 
 function _hpBarBoosted(label, hp, max, baseMax) {
     const pct = max > 0 ? Math.round(hp/max*100) : 0;
-    const barColor = pct > 60 ? '#00ff88' : pct > 30 ? '#ffdd00' : '#ff4466';
+    const barColor = pct > 60 ? UI_COLORS.greenAccent : pct > 30 ? UI_COLORS.yellow : UI_COLORS.redCritical;
     const bonus = Math.round(max - baseMax);
     const bonusData = bonus > 0 ? ` data-bonus="+${bonus} from perks/gear"` : '';
     const bonusCls = bonus > 0 ? ' stat-has-bonus' : '';
@@ -1131,7 +1246,7 @@ function _renderChassisPanel() {
     const shieldBonusData = shieldTip ? ` data-bonus="${shieldTip}"` : '';
     const shieldBonusCls = shieldTip ? ' stat-has-bonus' : '';
     chassisHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple${shieldBonusCls}"${shieldBonusData}>${_curShield} / ${_maxShield}</span></div>`;
-    chassisHtml += '<div style="margin-top:12px;margin-bottom:6px;font-size:12px;letter-spacing:2px;color:rgba(0,255,255,0.35);">HULL INTEGRITY</div>';
+    chassisHtml += `<div style="margin-top:12px;margin-bottom:6px;font-size:12px;letter-spacing:2px;color:${UI_COLORS.cyan35};">HULL INTEGRITY</div>`;
     {
     const baseHP = { core: chassisData?.coreHP||212, lArm: chassisData?.armHP||120, rArm: chassisData?.armHP||120, legs: chassisData?.legHP||152 };
     if (_inGame) {
@@ -1145,7 +1260,7 @@ function _renderChassisPanel() {
         const totalBonusHp = Math.round(totalMax - totalBase);
         const totalBonusData = totalBonusHp > 0 ? ` data-bonus="+${totalBonusHp} from perks/gear"` : '';
         const totalBonusCls = totalBonusHp > 0 ? ' stat-has-bonus' : '';
-        chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
+        chassisHtml += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
     } else {
         // Not in-game: show base HP values at full
         chassisHtml += _hpBarBoosted('Core',  baseHP.core,  baseHP.core,  baseHP.core);
@@ -1153,11 +1268,11 @@ function _renderChassisPanel() {
         chassisHtml += _hpBarBoosted('R.Arm', baseHP.rArm,  baseHP.rArm,  baseHP.rArm);
         chassisHtml += _hpBarBoosted('Legs',  baseHP.legs,  baseHP.legs,  baseHP.legs);
         const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
-        chassisHtml += `<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalBase} / ${totalBase}</span></div></div>`;
+        chassisHtml += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalBase} / ${totalBase}</span></div></div>`;
     }
     }
     // ── Chassis traits & arm mode — rendered full-width below the grid ──
-    const _chColor = ch==='light'?'#88ff88':ch==='medium'?'#ffcc44':'#ff8844';
+    const _chColor = ch === 'light' ? UI_COLORS.chassisLight : ch === 'medium' ? UI_COLORS.chassisMedium : UI_COLORS.chassisHeavy;
     const _cTraits = ch === 'light'
     ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped (−15% dmg per arm)'],
        ['Reload Speed','+20% passive reload speed on all weapons'],
@@ -1176,10 +1291,10 @@ function _renderChassisPanel() {
     const _sBrace  = !_sIs2H && (_sLEmpty !== _sREmpty);
     const _sDualW  = !_sIs2H && loadout?.L !== 'none' && loadout?.R !== 'none' && loadout?.L === loadout?.R;
     const _sBothDiff = !_sIs2H && !_sLEmpty && !_sREmpty && !_sDualW;
-    const _armMode = _sIs2H   ? ['TWO-HANDED',  'Both arms locked to same weapon. Weight counted once.', '#ff8844']
-               : _sBrace  ? ['BRACE MODE',   '+25% damage and +15% reload when only one arm is equipped.', '#88ff88']
-               : _sDualW  ? ['DUAL WIELD',   'Same weapon in both arms. Left-click fires both simultaneously.', '#ffcc44']
-               : _sBothDiff ? ['INDEPENDENT', 'Different weapons in each arm. Left-click fires L arm, right-click fires R arm.', '#c0c8d0']
+    const _armMode = _sIs2H   ? ['TWO-HANDED',  'Both arms locked to same weapon. Weight counted once.', UI_COLORS.chassisHeavy]
+               : _sBrace  ? ['BRACE MODE',   '+25% damage and +15% reload when only one arm is equipped.', UI_COLORS.chassisLight]
+               : _sDualW  ? ['DUAL WIELD',   'Same weapon in both arms. Left-click fires both simultaneously.', UI_COLORS.chassisMedium]
+               : _sBothDiff ? ['INDEPENDENT', 'Different weapons in each arm. Left-click fires L arm, right-click fires R arm.', UI_COLORS.rarityCommon]
                : null;
 
     // Build the full-width traits+armmode block separately
@@ -1187,21 +1302,21 @@ function _renderChassisPanel() {
     traitHtml += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">`;
     // Left col: chassis traits
     traitHtml += `<div>`;
-    traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.45);margin-bottom:10px;border-bottom:1px solid rgba(0,255,255,0.10);padding-bottom:6px;">CHASSIS TRAITS</div>`;
+    traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:${UI_COLORS.cyan45};margin-bottom:10px;border-bottom:1px solid ${UI_COLORS.cyan10};padding-bottom:6px;">CHASSIS TRAITS</div>`;
     _cTraits.forEach(([tLabel, tDesc]) => {
     traitHtml += `<div style="margin-bottom:10px;">
         <div style="font-size:11px;letter-spacing:1.5px;color:${_chColor};margin-bottom:3px;">${tLabel}</div>
-        <div style="font-size:12px;color:rgba(200,210,220,0.75);line-height:1.5;">${tDesc}</div>
+        <div style="font-size:12px;color:${UI_COLORS.text75};line-height:1.5;">${tDesc}</div>
     </div>`;
     });
     traitHtml += `</div>`;
     // Right col: arm mode + additional context
     traitHtml += `<div>`;
-    traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.45);margin-bottom:10px;border-bottom:1px solid rgba(0,255,255,0.10);padding-bottom:6px;">ARM CONFIGURATION</div>`;
+    traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:${UI_COLORS.cyan45};margin-bottom:10px;border-bottom:1px solid ${UI_COLORS.cyan10};padding-bottom:6px;">ARM CONFIGURATION</div>`;
     if (_armMode) {
     traitHtml += `<div style="margin-bottom:10px;">
         <div style="font-size:11px;letter-spacing:1.5px;color:${_armMode[2]};margin-bottom:3px;">${_armMode[0]}</div>
-        <div style="font-size:12px;color:rgba(200,210,220,0.75);line-height:1.5;">${_armMode[1]}</div>
+        <div style="font-size:12px;color:${UI_COLORS.text75};line-height:1.5;">${_armMode[1]}</div>
     </div>`;
     }
     // Show L and R arm weapon names for quick reference
@@ -1209,12 +1324,12 @@ function _renderChassisPanel() {
     const _rName = WEAPONS[loadout?.R]?.name || loadout?.R || '—';
     traitHtml += `<div style="margin-top:6px;">
     <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;">
-        <span style="color:rgba(200,210,220,0.5);letter-spacing:1px;">L ARM</span>
-        <span style="color:#c0c8d0;letter-spacing:1px;">${_lName !== 'none' && _lName !== '—' ? _lName : '—'}</span>
+        <span style="color:${UI_COLORS.text50};letter-spacing:1px;">L ARM</span>
+        <span style="color:${UI_COLORS.rarityCommon};letter-spacing:1px;">${_lName !== 'none' && _lName !== '—' ? _lName : '—'}</span>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:12px;">
-        <span style="color:rgba(200,210,220,0.5);letter-spacing:1px;">R ARM</span>
-        <span style="color:#c0c8d0;letter-spacing:1px;">${_rName !== 'none' && _rName !== '—' ? _rName : '—'}</span>
+        <span style="color:${UI_COLORS.text50};letter-spacing:1px;">R ARM</span>
+        <span style="color:${UI_COLORS.rarityCommon};letter-spacing:1px;">${_rName !== 'none' && _rName !== '—' ? _rName : '—'}</span>
     </div>
     </div>`;
     traitHtml += `</div>`;
@@ -1235,8 +1350,8 @@ function _renderWeaponPanel() {
     if (!key || key === 'none') return;
     const w = WEAPONS[key];
     if (!w) return;
-    wHtml += `<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(0,255,255,0.1);">`;
-    wHtml += `<div style="font-size:13px;letter-spacing:2px;color:rgba(0,255,255,0.7);margin-bottom:8px;">${side}: ${w.name}</div>`;
+    wHtml += `<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid ${UI_COLORS.cyan10};">`;
+    wHtml += `<div style="font-size:13px;letter-spacing:2px;color:${UI_COLORS.cyan70};margin-bottom:8px;">${side}: ${w.name}</div>`;
     if (w.dmg) {
         const baseDmg  = w.dmg;
         const perkDmg  = Math.round(baseDmg * (_perkState.dmgMult||1));
@@ -1310,7 +1425,7 @@ function _renderMobilityPanel() {
     mobHtml += `<div class="stats-row"><span class="stats-label">Speed</span><span class="stats-value ${effSpd>baseSpd?'green':''}${_bonusCls(spdTip)}"${_bonusData(spdTip)}>${effSpd}</span></div>`;
     mobHtml += _statRow('Legs Status', legsOk ? 'OPERATIONAL' : 'DESTROYED', legsOk ? 'green' : 'red');
     if (!legsOk) mobHtml += _statRow('Speed Penalty', '−50%', 'red');
-    mobHtml += '<div style="border-top:1px solid rgba(0,255,255,0.12);margin-top:10px;padding-top:10px;"></div>';
+    mobHtml += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:10px;padding-top:10px;"></div>`;
     const baseRegenRate = 1.0;
     const perkRegenRate = baseRegenRate * (_perkState.shieldRegenMult||1);
     const gearRegenBonus = (_gearState?.shieldRegen || 0);
@@ -1383,21 +1498,21 @@ function _renderActivePerksPanel() {
         chip.className = 'stats-perk-chip';
         chip.style.position = 'relative';
         chip.style.cursor = 'default';
-        const catColor = p.cat==='universal'?'#00ffff':p.cat==='light'?'#88ff88':p.cat==='medium'?'#ffcc00':p.cat==='heavy'?'#ff8844':'#cc88ff';
+        const catColor = p.cat==='universal' ? UI_COLORS.cyan : p.cat==='light' ? UI_COLORS.chassisLight : p.cat==='medium' ? UI_COLORS.chassisMedium : p.cat==='heavy' ? UI_COLORS.chassisHeavy : UI_COLORS.purple;
         chip.style.borderColor = catColor + '66';
         chip.style.color = catColor;
         if (p.legendary) {
-            chip.style.borderColor = '#ffd700';
-            chip.style.background = 'rgba(255,215,0,0.10)';
-            chip.style.color = '#ffd700';
-            chip.style.boxShadow = '0 0 8px rgba(255,215,0,0.25)';
+            chip.style.borderColor = UI_COLORS.gold;
+            chip.style.background = UI_COLORS.gold10;
+            chip.style.color = UI_COLORS.gold;
+            chip.style.boxShadow = `0 0 8px ${UI_COLORS.gold25}`;
         }
         chip.title = p.desc; // native tooltip fallback
-        const legendBadge = p.legendary ? '<span style="font-size:9px;letter-spacing:1px;color:#ffd700;opacity:0.7;margin-left:6px;">★ LEGENDARY</span>' : '';
+        const legendBadge = p.legendary ? `<span style="font-size:9px;letter-spacing:1px;color:${UI_COLORS.gold};opacity:0.7;margin-left:6px;">★ LEGENDARY</span>` : '';
         chip.innerHTML = `${p.label}${n>1?` <span style="opacity:0.6">×${n}</span>`:''}${legendBadge}`;
         // Custom tooltip
         const tip = document.createElement('div');
-        tip.style.cssText = `display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:rgba(5,10,18,0.97);border:1px solid ${catColor}66;border-radius:6px;padding:8px 12px;font-size:11px;letter-spacing:1px;color:rgba(200,210,217,0.85);white-space:nowrap;z-index:20000;pointer-events:none;box-shadow:0 0 12px rgba(0,0,0,0.6);`;
+        tip.style.cssText = `display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:rgba(5,10,18,0.97);border:1px solid ${catColor}66;border-radius:6px;padding:8px 12px;font-size:11px;letter-spacing:1px;color:${UI_COLORS.text90};white-space:nowrap;z-index:20000;pointer-events:none;box-shadow:0 0 12px rgba(0,0,0,0.6);`;
         tip.textContent = p.desc;
         chip.appendChild(tip);
         chip.addEventListener('mouseenter', () => tip.style.display = 'block');
@@ -1434,13 +1549,13 @@ function _renderGearBonusesPanel() {
         const _renderGroup = (title, keys) => {
             const active = keys.filter(k => (gs[k] || 0) > 0);
             if (active.length === 0) return '';
-            let h = `<div style="font-size:10px;letter-spacing:2px;color:rgba(255,215,0,0.4);margin-top:10px;margin-bottom:6px;">${title}</div>`;
+            let h = `<div style="font-size:10px;letter-spacing:2px;color:${UI_COLORS.gold40};margin-top:10px;margin-bottom:6px;">${title}</div>`;
             active.forEach(k => {
                 const v = gs[k];
                 const prefix = ['reloadPct','modCdPct'].includes(k) ? '−' : '+';
                 h += `<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:3px;font-size:13px;">
-                    <span style="color:rgba(200,210,220,0.6);">${_gsLabels[k] || k}</span>
-                    <span style="color:#ffd700;letter-spacing:1px;">${prefix}${v}</span>
+                    <span style="color:${UI_COLORS.text60};">${_gsLabels[k] || k}</span>
+                    <span style="color:${UI_COLORS.gold};letter-spacing:1px;">${prefix}${v}</span>
                 </div>`;
             });
             return h;
@@ -1453,7 +1568,7 @@ function _renderGearBonusesPanel() {
             if (!it) return;
             const rd = typeof RARITY_DEFS !== 'undefined' ? RARITY_DEFS[it.rarity] : null;
             const c = rd ? rd.colorStr : '#888';
-            gHtml += `<span style="padding:3px 8px;border:1px solid ${c}44;border-radius:3px;font-size:10px;letter-spacing:1px;color:${c};background:rgba(0,0,0,0.3);">${sl}: ${it.shortName || it.name}</span>`;
+            gHtml += `<span style="padding:3px 8px;border:1px solid ${c}44;border-radius:3px;font-size:10px;letter-spacing:1px;color:${c};background:${UI_COLORS.bgDark30};">${sl}: ${it.shortName || it.name}</span>`;
         });
         gHtml += '</div>';
         gHtml += _renderGroup('OFFENSIVE', offKeys);
@@ -1584,7 +1699,7 @@ function _renderScores(scores) {
     }
 
     const sorted = _sortScores([...scores]);
-    const chassisColor = { light: '#88ff88', medium: '#ffcc44', heavy: '#ff8844' };
+    const chassisColor = { light: UI_COLORS.chassisLight, medium: UI_COLORS.chassisMedium, heavy: UI_COLORS.chassisHeavy };
 
     // Build rows using DOM elements so fetched string values are never treated as HTML
     const frag = document.createDocumentFragment();
@@ -1592,23 +1707,23 @@ function _renderScores(scores) {
     // Header row (static strings only — innerHTML is safe here)
     const headerDiv = document.createElement('div');
     headerDiv.innerHTML = `
-        <div style="display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:6px 12px 10px;gap:0 6px;border-bottom:1px solid rgba(0,210,255,0.25);margin-bottom:4px;">
-            <span style="color:rgba(0,210,255,0.35);font-size:9px;">#</span>
-            <span style="color:rgba(0,210,255,0.35);font-size:9px;letter-spacing:2px;">CALLSIGN</span>
-            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">ROUND</span>
-            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">KILLS</span>
-            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">ACC</span>
-            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">DAMAGE</span>
-            <span style="color:rgba(0,210,255,0.35);font-size:9px;text-align:right;letter-spacing:1px;">CHASSIS</span>
+        <div style="display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:6px 12px 10px;gap:0 6px;border-bottom:1px solid ${UI_COLORS.hudCyan25};margin-bottom:4px;">
+            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;">#</span>
+            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;letter-spacing:2px;">CALLSIGN</span>
+            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;text-align:right;letter-spacing:1px;">ROUND</span>
+            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;text-align:right;letter-spacing:1px;">KILLS</span>
+            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;text-align:right;letter-spacing:1px;">ACC</span>
+            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;text-align:right;letter-spacing:1px;">DAMAGE</span>
+            <span style="color:${UI_COLORS.hudCyan35};font-size:9px;text-align:right;letter-spacing:1px;">CHASSIS</span>
         </div>`;
     frag.appendChild(headerDiv);
 
     sorted.forEach((e, i) => {
         const rank    = i + 1;
         const medal   = rank === 1 ? '◈' : rank === 2 ? '◇' : rank === 3 ? '◆' : `${rank}.`;
-        const rankCol = rank === 1 ? '#ffd700' : rank === 2 ? '#c0c0c0' : rank === 3 ? '#cd7f32' : 'rgba(0,210,255,0.4)';
+        const rankCol = rank === 1 ? UI_COLORS.rankGold : rank === 2 ? UI_COLORS.rankSilver : rank === 3 ? UI_COLORS.rankBronze : UI_COLORS.hudCyan40;
         const cc      = chassisColor[e.chassis] || '#aaa';
-        const bg      = rank <= 3 ? 'rgba(0,210,255,0.04)' : 'transparent';
+        const bg      = rank <= 3 ? UI_COLORS.hudCyan04 : 'transparent';
 
         // Coerce numeric fields — never interpolate raw DB values as HTML
         const safeRound    = Math.round(Number(e.round)    || 0);
@@ -1621,15 +1736,15 @@ function _renderScores(scores) {
         const safeChassis = _sanitizeCallsign(e.chassis || '?');
 
         const row = document.createElement('div');
-        row.style.cssText = `display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:9px 12px;border-bottom:1px solid rgba(0,210,255,0.08);background:${bg};gap:0 6px;`;
+        row.style.cssText = `display:grid;grid-template-columns:36px 1fr 60px 60px 60px 72px 52px;align-items:center;padding:9px 12px;border-bottom:1px solid ${UI_COLORS.hudCyan08};background:${bg};gap:0 6px;`;
 
         const cells = [
             { text: medal,                              style: `color:${rankCol};font-size:12px;font-weight:bold;` },
-            { text: safeName,                           style: 'color:#e8f0e8;font-size:12px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' },
-            { text: `R${safeRound}`,                   style: 'color:#00e0ff;font-size:11px;text-align:right;' },
-            { text: `${safeKills}K`,                   style: 'color:rgba(0,210,255,0.75);font-size:11px;text-align:right;' },
-            { text: `${safeAccuracy}%`,                style: 'color:rgba(0,210,255,0.6);font-size:11px;text-align:right;' },
-            { text: safeDamage.toLocaleString(),        style: 'color:rgba(0,210,255,0.55);font-size:10px;text-align:right;' },
+            { text: safeName,                           style: `color:${UI_COLORS.leaderName};font-size:12px;letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;` },
+            { text: `R${safeRound}`,                   style: `color:${UI_COLORS.leaderRound};font-size:11px;text-align:right;` },
+            { text: `${safeKills}K`,                   style: `color:${UI_COLORS.hudCyan75};font-size:11px;text-align:right;` },
+            { text: `${safeAccuracy}%`,                style: `color:${UI_COLORS.hudCyan60};font-size:11px;text-align:right;` },
+            { text: safeDamage.toLocaleString(),        style: `color:${UI_COLORS.hudCyan55};font-size:10px;text-align:right;` },
             { text: safeChassis,                        style: `color:${cc};font-size:9px;text-align:right;letter-spacing:1px;opacity:0.8;` },
         ];
 
@@ -1677,13 +1792,13 @@ function _showCloudStatusToast(msg, isError) {
     if (!toast) {
         toast = document.createElement('div');
         toast.id = 'tw-cloud-toast';
-        toast.style.cssText = 'position:fixed;top:16px;right:16px;z-index:99990;font-family:"Courier New",monospace;font-size:10px;letter-spacing:2px;padding:6px 12px;border-radius:4px;pointer-events:none;transition:opacity 0.4s ease;opacity:0;';
+        toast.style.cssText = `position:fixed;top:16px;right:16px;z-index:99990;font-family:${UI_COLORS.fontMono};font-size:10px;letter-spacing:2px;padding:6px 12px;border-radius:4px;pointer-events:none;transition:opacity 0.4s ease;opacity:0;`;
         document.body.appendChild(toast);
     }
     toast.textContent = msg;
-    toast.style.background = isError ? 'rgba(255,40,40,0.18)' : 'rgba(0,255,200,0.12)';
-    toast.style.border = isError ? '1px solid rgba(255,40,40,0.5)' : '1px solid rgba(0,255,200,0.4)';
-    toast.style.color  = isError ? '#ff6666' : '#00ffc8';
+    toast.style.background = isError ? UI_COLORS.toastErrorBg : UI_COLORS.toastSuccessBg;
+    toast.style.border = isError ? `1px solid ${UI_COLORS.toastErrorBd}` : `1px solid ${UI_COLORS.toastSuccessBd}`;
+    toast.style.color  = isError ? UI_COLORS.toastErrorText : UI_COLORS.tealAlt;
     toast.style.opacity = '1';
     clearTimeout(toast._hideTimer);
     toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2400);

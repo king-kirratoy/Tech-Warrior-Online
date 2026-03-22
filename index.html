@@ -14,22 +14,22 @@
      MAIN MENU
      ============================================================ -->
 <!-- CALLSIGN ENTRY SCREEN (shown first) -->
-<div id="callsign-screen" style="position:fixed;inset:0;background:#0c1014;z-index:10000;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;">
+<div id="callsign-screen" style="position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:var(--font-mono);">
     <canvas id="callsign-canvas" style="position:absolute;inset:0;pointer-events:none;"></canvas>
     <div class="menu-version" id="callsign-version" style="z-index:2;"></div>
     <div style="position:relative;z-index:1;text-align:center;">
         <div style="font-size:11px;letter-spacing:6px;color:rgba(0,210,255,0.4);margin-bottom:12px;">TECH WARRIOR ONLINE</div>
-        <div style="font-size:28px;letter-spacing:8px;color:#00e0ff;font-weight:bold;text-shadow:0 0 24px rgba(0,210,255,0.7);margin-bottom:6px;">IDENTIFY YOURSELF</div>
+        <div style="font-size:28px;letter-spacing:8px;color:#00e0ff;font-weight:bold;text-shadow:0 0 24px var(--hud-cyan-status);margin-bottom:6px;">IDENTIFY YOURSELF</div>
         <div style="margin-bottom:40px;"></div>
 
         <div style="font-size:9px;letter-spacing:4px;color:rgba(0,210,255,0.5);margin-bottom:10px;">ENTER CALLSIGN</div>
         <input id="menu-callsign" type="text" maxlength="16" placeholder="_ _ _ _ _ _" autocomplete="off" spellcheck="false"
-            style="background:rgba(0,0,0,0.6);border:none;border-bottom:2px solid rgba(0,210,255,0.6);color:#00e0ff;padding:10px 16px;font-family:'Courier New',monospace;font-size:20px;letter-spacing:5px;outline:none;text-align:center;width:260px;display:block;margin:0 auto 32px;"
+            style="background:rgba(0,0,0,0.6);border:none;border-bottom:2px solid rgba(0,210,255,0.6);color:#00e0ff;padding:10px 16px;font-family:var(--font-mono);font-size:20px;letter-spacing:5px;outline:none;text-align:center;width:260px;display:block;margin:0 auto 32px;"
             onkeydown="_csKeyDown(event,this)" />
 
         <button id="callsign-proceed-btn" class="tw-btn" onclick="proceedToMainMenu()" disabled>&#9654;&nbsp; PROCEED</button>
 
-        <div style="margin-top:16px;font-size:9px;letter-spacing:2px;color:rgba(0,210,255,0.25);">CALLSIGN REQUIRED TO CONTINUE</div>
+        <div style="margin-top:16px;font-size:9px;letter-spacing:2px;color:var(--hud-cyan-border);">CALLSIGN REQUIRED TO CONTINUE</div>
     </div>
 </div>
 
@@ -57,11 +57,11 @@
      HANGAR / GARAGE UI
      ============================================================ -->
 <canvas id="hangar-canvas" style="position:fixed;inset:0;pointer-events:none;z-index:999;display:none;"></canvas>
-<div id="deploy-cover" style="display:none;position:fixed;inset:0;background:#0c1014;z-index:998;pointer-events:none;"></div>
+<div id="deploy-cover" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:998;pointer-events:none;"></div>
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu">
-        <h2 id="hangar-title" style="text-align:center;margin:0 0 20px;letter-spacing:8px;color:#00ffff;font-family:'Courier New',monospace;font-size:26px;text-shadow:0 0 18px rgba(0,255,255,0.7),0 0 40px rgba(0,255,255,0.2);font-weight:normal;">MECH HANGAR</h2>
-        <div id="hangar-mode-label" style="text-align:center;margin:-14px 0 16px;font-size:10px;letter-spacing:4px;color:rgba(0,255,255,0.35);font-family:'Courier New',monospace;"></div>
+        <h2 id="hangar-title" style="text-align:center;margin:0 0 20px;letter-spacing:8px;color:var(--cyan);font-family:var(--font-mono);font-size:26px;text-shadow:0 0 18px var(--cyan-mid),0 0 40px var(--cyan-glow);font-weight:normal;">MECH HANGAR</h2>
+        <div id="hangar-mode-label" style="text-align:center;margin:-14px 0 16px;font-size:10px;letter-spacing:4px;color:rgba(0,255,255,0.35);font-family:var(--font-mono);"></div>
 
         <div style="display:flex;gap:28px;align-items:stretch;">
 
@@ -91,12 +91,12 @@
 
                 <!-- Starter loadout info panel (read-only) -->
                 <div style="margin-top:16px;">
-                    <div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);font-family:'Courier New',monospace;margin-bottom:6px;text-transform:uppercase;">■ STARTER LOADOUT</div>
+                    <div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);font-family:var(--font-mono);margin-bottom:6px;text-transform:uppercase;">■ STARTER LOADOUT</div>
                     <div id="starter-loadout-panel"></div>
                 </div>
 
                 <div style="margin-top:16px;">
-                    <div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);font-family:'Courier New',monospace;margin-bottom:6px;text-transform:uppercase;">■ BUILD DETAILS</div>
+                    <div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);font-family:var(--font-mono);margin-bottom:6px;text-transform:uppercase;">■ BUILD DETAILS</div>
                     <div id="garage-stats-panel"></div>
                 </div>
 
@@ -124,7 +124,7 @@
 <!-- ============================================================
      LEADERBOARD OVERLAY
      ============================================================ -->
-<div id="leaderboard-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,5,15,0.96);z-index:10001;font-family:'Courier New',monospace;overflow-y:auto;">
+<div id="leaderboard-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,5,15,0.96);z-index:10001;font-family:var(--font-mono);overflow-y:auto;">
     <div style="max-width:700px;margin:0 auto;padding:40px 20px;">
 
         <!-- Header -->
@@ -193,10 +193,10 @@
                     <div class="wr-name-col">
                         <span class="wr-name" id="txt-L">—</span>
                     </div>
-                    <div class="wr-bar-bg" style="border-color:rgba(0,210,255,0.25);">
+                    <div class="wr-bar-bg" style="border-color:var(--hud-cyan-border);">
                         <div class="wr-fill" id="wr-fill-L" ></div>
                     </div>
-                    <span class="wr-status" id="wr-st-L" style="color:rgba(0,210,255,0.7);"></span>
+                    <span class="wr-status" id="wr-st-L" style="color:var(--hud-cyan-status);"></span>
                 </div>
                 <div class="weapon-row" id="slot-R">
                     <div class="wr-slot-col">
@@ -205,10 +205,10 @@
                     <div class="wr-name-col">
                         <span class="wr-name" id="txt-R">—</span>
                     </div>
-                    <div class="wr-bar-bg" style="border-color:rgba(0,210,255,0.25);">
+                    <div class="wr-bar-bg" style="border-color:var(--hud-cyan-border);">
                         <div class="wr-fill" id="wr-fill-R" ></div>
                     </div>
-                    <span class="wr-status" id="wr-st-R" style="color:rgba(0,210,255,0.7);"></span>
+                    <span class="wr-status" id="wr-st-R" style="color:var(--hud-cyan-status);"></span>
                 </div>
                 <div class="weapon-row" id="slot-M">
                     <div class="wr-slot-col">
@@ -217,10 +217,10 @@
                     <div class="wr-name-col">
                         <span class="wr-name" id="txt-M">—</span>
                     </div>
-                    <div class="wr-bar-bg" style="border-color:rgba(0,210,255,0.25);">
+                    <div class="wr-bar-bg" style="border-color:var(--hud-cyan-border);">
                         <div class="wr-fill" id="wr-fill-M" ></div>
                     </div>
-                    <span class="wr-status" id="wr-st-M" style="color:rgba(0,210,255,0.7);"></span>
+                    <span class="wr-status" id="wr-st-M" style="color:var(--hud-cyan-status);"></span>
                 </div>
 
                 <!-- Defense / shield row -->
@@ -231,10 +231,10 @@
                     <div class="wr-name-col">
                         <span class="wr-name" id="txt-S">—</span>
                     </div>
-                    <div class="wr-bar-bg" style="border-color:rgba(0,210,255,0.25);">
+                    <div class="wr-bar-bg" style="border-color:var(--hud-cyan-border);">
                         <div class="wr-fill" id="wr-fill-S"></div>
                     </div>
-                    <span class="wr-status" id="wr-st-S" style="color:rgba(0,210,255,0.7);"></span>
+                    <span class="wr-status" id="wr-st-S" style="color:var(--hud-cyan-status);"></span>
                 </div>
 
             </div>
@@ -243,11 +243,11 @@
     </div><!-- /hud-background -->
 </div><!-- /hud-container -->
 <!-- ROUND HUD -->
-<div id="round-hud" style="display:none;position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;font-family:'Courier New',monospace;">
+<div id="round-hud" style="display:none;position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;font-family:var(--font-mono);">
   <div style="display:flex;gap:28px;align-items:center;padding:12px 24px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-radius:12px;box-shadow:0 0 10px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.1);">
     <div style="text-align:center;">
       <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Round</div>
-      <div id="round-num" style="font-size:22px;letter-spacing:4px;color:#00ffff;text-shadow:0 0 10px rgba(0,255,255,0.5);">1</div>
+      <div id="round-num" style="font-size:22px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 10px rgba(0,255,255,0.5);">1</div>
     </div>
     <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
     <div style="text-align:center;">
@@ -257,11 +257,11 @@
     <div style="width:1px;height:36px;background:rgba(0,255,255,0.2);"></div>
     <div style="text-align:center;">
       <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;">Destroyed</div>
-      <div id="round-kills" style="font-size:22px;letter-spacing:4px;color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.5);">0</div>
+      <div id="round-kills" style="font-size:22px;letter-spacing:4px;color:var(--green-accent);text-shadow:0 0 10px rgba(0,255,136,0.5);">0</div>
     </div>
   </div>
 <!-- BOSS HP BAR -->
-<div id="boss-hud" style="display:none;position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;font-family:'Courier New',monospace;min-width:min(480px,96vw);max-width:96vw;text-align:center;">
+<div id="boss-hud" style="display:none;position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;font-family:var(--font-mono);min-width:min(480px,96vw);max-width:96vw;text-align:center;">
   <div style="background:rgba(8,4,12,0.92);border:1px solid rgba(180,0,255,0.5);border-radius:10px;padding:10px 20px 12px 20px;box-shadow:0 0 18px rgba(180,0,255,0.35),inset 0 0 12px rgba(180,0,255,0.08);">
     <div id="boss-bar-track" style="position:relative;width:min(440px,calc(96vw - 40px));height:18px;background:rgba(0,0,0,0.7);border:1px solid rgba(180,0,255,0.3);border-radius:4px;overflow:hidden;margin-bottom:6px;">
       <div id="boss-bar-fill" style="position:absolute;left:0;top:0;height:100%;width:100%;background:linear-gradient(90deg,#6600cc,#cc00ff);border-radius:4px;transition:width 0.12s linear;box-shadow:0 0 10px rgba(200,0,255,0.6);"></div>
@@ -272,13 +272,13 @@
 </div>
 </div>
 <!-- ROUND BANNER -->
-<div id="round-banner" style="display:none;position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);z-index:99998;pointer-events:none;text-align:center;font-family:'Courier New',monospace;">
-  <div id="round-banner-text" style="font-size:48px;letter-spacing:10px;color:#00ffff;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);"></div>
+<div id="round-banner" style="display:none;position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);z-index:99998;pointer-events:none;text-align:center;font-family:var(--font-mono);">
+  <div id="round-banner-text" style="font-size:48px;letter-spacing:10px;color:var(--cyan);text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);"></div>
   <div id="round-banner-sub"  style="font-size:13px;letter-spacing:5px;color:rgba(0,255,255,0.6);margin-top:8px;"></div>
 </div>
 
 <!-- OBJECTIVE HUD -->
-<div id="objective-hud" style="display:none;position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:9998;pointer-events:none;font-family:'Courier New',monospace;">
+<div id="objective-hud" style="display:none;position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:9998;pointer-events:none;font-family:var(--font-mono);">
   <div style="display:flex;gap:12px;align-items:center;padding:8px 18px;background:rgba(12,16,20,0.88);border:1px solid rgba(255,200,0,0.3);border-radius:8px;box-shadow:0 0 10px rgba(255,200,0,0.15),inset 0 0 8px rgba(255,200,0,0.05);">
     <span id="obj-icon" style="font-size:18px;"></span>
     <div>
@@ -292,43 +292,43 @@
 </div>
 
 <!-- ARENA LABEL (shown briefly at round start) -->
-<div id="arena-label" style="display:none;position:fixed;top:55%;left:50%;transform:translate(-50%,-50%);z-index:99997;pointer-events:none;text-align:center;font-family:'Courier New',monospace;">
+<div id="arena-label" style="display:none;position:fixed;top:55%;left:50%;transform:translate(-50%,-50%);z-index:99997;pointer-events:none;text-align:center;font-family:var(--font-mono);">
   <div id="arena-label-text" style="font-size:16px;letter-spacing:6px;text-transform:uppercase;text-shadow:0 0 12px rgba(255,255,255,0.3);"></div>
 </div>
 
 <!-- CAMPAIGN MISSION SELECT OVERLAY -->
-<div id="mission-select-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.96);z-index:10002;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:'Courier New',monospace;"></div>
+<div id="mission-select-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.96);z-index:10002;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:var(--font-mono);"></div>
 
 <!-- CAMPAIGN MISSION BRIEFING POPUP (shows modifier + bonus objective before deploy) -->
-<div id="mission-briefing-popup" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10003;flex-direction:column;align-items:flex-start;padding:16px 24px;background:rgba(12,16,20,0.95);border:1px solid rgba(255,215,0,0.3);border-left:3px solid #ffd700;border-radius:8px;box-shadow:0 0 20px rgba(255,215,0,0.15);font-family:'Courier New',monospace;pointer-events:none;max-width:500px;"></div>
+<div id="mission-briefing-popup" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10003;flex-direction:column;align-items:flex-start;padding:16px 24px;background:rgba(12,16,20,0.95);border:1px solid rgba(255,215,0,0.3);border-left:3px solid var(--gold);border-radius:8px;box-shadow:0 0 20px rgba(255,215,0,0.15);font-family:var(--font-mono);pointer-events:none;max-width:500px;"></div>
 
 <!-- CAMPAIGN SUPPLY SHOP OVERLAY (Phase 4) -->
-<div id="shop-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.97);z-index:10004;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:'Courier New',monospace;"></div>
+<div id="shop-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.97);z-index:10004;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:var(--font-mono);"></div>
 
 <!-- CAMPAIGN LOADOUT SLOTS OVERLAY (Phase 4) -->
-<div id="loadout-slots-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.97);z-index:10004;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:'Courier New',monospace;"></div>
+<div id="loadout-slots-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.97);z-index:10004;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:var(--font-mono);"></div>
 
 <!-- CAMPAIGN CHASSIS UPGRADES OVERLAY (Phase 4) -->
-<div id="upgrades-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.97);z-index:10004;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:'Courier New',monospace;"></div>
+<div id="upgrades-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,12,0.97);z-index:10004;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 24px;font-family:var(--font-mono);"></div>
 
 <!-- DEATH SCREEN -->
-<div id="death-screen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:99999;flex-direction:column;justify-content:center;align-items:center;font-family:'Courier New',monospace;">
+<div id="death-screen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:99999;flex-direction:column;justify-content:center;align-items:center;font-family:var(--font-mono);">
     <div style="text-align:center;">
         <div id="death-title" style="font-size:52px;letter-spacing:8px;color:#ff0000;text-shadow:0 0 30px #ff0000;margin-bottom:6px;">MECH DESTROYED</div>
-        <div style="font-size:13px;color:rgba(200,210,217,0.5);letter-spacing:3px;margin-bottom:28px;">CORE SYSTEMS OFFLINE</div>
+        <div style="font-size:13px;color:var(--text-dim);letter-spacing:3px;margin-bottom:28px;">CORE SYSTEMS OFFLINE</div>
         <!-- Score Panel -->
         <div style="display:inline-flex;gap:0;margin-bottom:24px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-radius:12px;box-shadow:0 0 10px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.1);overflow:hidden;">
             <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
                 <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Round</div>
-                <div id="score-round" style="font-size:28px;letter-spacing:4px;color:#00ffff;text-shadow:0 0 10px rgba(0,255,255,0.6);">1</div>
+                <div id="score-round" style="font-size:28px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 10px rgba(0,255,255,0.6);">1</div>
             </div>
             <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
                 <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Kills</div>
-                <div id="score-kills" style="font-size:28px;letter-spacing:4px;color:#00ff88;text-shadow:0 0 10px rgba(0,255,136,0.6);">0</div>
+                <div id="score-kills" style="font-size:28px;letter-spacing:4px;color:var(--green-accent);text-shadow:0 0 10px rgba(0,255,136,0.6);">0</div>
             </div>
             <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
                 <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Accuracy</div>
-                <div id="score-accuracy" style="font-size:28px;letter-spacing:4px;color:#ffaa00;text-shadow:0 0 10px rgba(255,170,0,0.6);">0%</div>
+                <div id="score-accuracy" style="font-size:28px;letter-spacing:4px;color:var(--amber);text-shadow:0 0 10px rgba(255,170,0,0.6);">0%</div>
             </div>
             <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
                 <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Dmg Dealt</div>
@@ -340,7 +340,7 @@
             </div>
             <div style="padding:14px 22px;text-align:center;">
                 <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Perks</div>
-                <div id="score-perks" style="font-size:28px;letter-spacing:4px;color:#cc88ff;text-shadow:0 0 10px rgba(200,136,255,0.6);">0</div>
+                <div id="score-perks" style="font-size:28px;letter-spacing:4px;color:var(--purple);text-shadow:0 0 10px rgba(200,136,255,0.6);">0</div>
             </div>
         </div>
         <br>
@@ -370,9 +370,9 @@
 </div>
 
 <!-- ENEMY PAPER DOLL HUD -->
-<div id="enemy-doll-hud" style="display:none;position:fixed;top:20px;right:24px;z-index:9999;pointer-events:none;font-family:'Courier New',monospace;">
+<div id="enemy-doll-hud" style="display:none;position:fixed;top:20px;right:24px;z-index:9999;pointer-events:none;font-family:var(--font-mono);">
   <div style="padding:10px 14px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-radius:12px;box-shadow:0 0 10px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.1);">
-    <div id="edoll-label" style="font-size:9px;font-weight:bold;letter-spacing:1px;color:#c8d2d9;opacity:0.8;text-shadow:0 0 3px rgba(255,170,0,0.3);text-align:center;margin-bottom:6px;text-transform:uppercase;">TARGET</div>
+    <div id="edoll-label" style="font-size:9px;font-weight:bold;letter-spacing:1px;color:var(--text);opacity:0.8;text-shadow:0 0 3px rgba(255,170,0,0.3);text-align:center;margin-bottom:6px;text-transform:uppercase;">TARGET</div>
     <div class="paper-doll">
       <div class="doll-row">
         <div id="edoll-head" class="part head"></div>
@@ -398,29 +398,29 @@
   </div>
 </div>
 
-<div id="perk-menu" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(5,8,12,0.92);font-family:'Courier New',monospace;flex-direction:column;align-items:center;justify-content:center;gap:28px;">
-  <div style="font-size:28px;letter-spacing:4px;color:#00ffff;text-transform:uppercase;text-shadow:0 0 20px rgba(0,255,255,0.6);">Select a Perk</div>
+<div id="perk-menu" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(5,8,12,0.92);font-family:var(--font-mono);flex-direction:column;align-items:center;justify-content:center;gap:28px;">
+  <div style="font-size:28px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;text-shadow:0 0 20px rgba(0,255,255,0.6);">Select a Perk</div>
   <div id="perk-cards" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;max-width:1000px;"></div>
   <div style="font-size:12px;letter-spacing:2px;color:rgba(0,255,255,0.3);margin-top:4px;">CHOOSE 1 — CHOICE IS PERMANENT</div>
 </div>
 
 <!-- COMBINED LOADOUT OVERLAY (Stats + Gear tabs) -->
-<div id="stats-overlay" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(3,6,10,0.96);font-family:'Courier New',monospace;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:24px 24px;">
+<div id="stats-overlay" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(3,6,10,0.96);font-family:var(--font-mono);flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:24px 24px;">
   <div style="width:100%;max-width:1050px;">
     <!-- Header -->
     <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(0,255,255,0.2);">
-      <div style="font-size:26px;letter-spacing:6px;color:#00ffff;text-shadow:0 0 20px rgba(0,255,255,0.5);">LOADOUT</div>
+      <div style="font-size:26px;letter-spacing:6px;color:var(--cyan);text-shadow:0 0 20px rgba(0,255,255,0.5);">LOADOUT</div>
       <div id="inv-header-count" style="position:absolute;left:0;font-size:11px;letter-spacing:2px;color:rgba(255,215,0,0.5);"></div>
       <button onclick="toggleStats()" class="tw-btn tw-btn--sm" style="position:absolute;right:0;">CLOSE</button>
     </div>
     <!-- Campaign XP Bar (only visible in campaign mode) -->
     <div id="campaign-xp-bar" style="display:none;margin-bottom:16px;padding:10px 16px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.15);border-radius:6px;">
       <div style="display:flex;align-items:center;gap:12px;">
-        <div id="campaign-xp-level" style="font-size:12px;letter-spacing:2px;color:rgba(255,215,0,0.7);font-family:'Courier New',monospace;white-space:nowrap;">LEVEL 1</div>
+        <div id="campaign-xp-level" style="font-size:12px;letter-spacing:2px;color:rgba(255,215,0,0.7);font-family:var(--font-mono);white-space:nowrap;">LEVEL 1</div>
         <div style="flex:1;height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
-          <div id="campaign-xp-fill" style="width:0%;height:100%;background:linear-gradient(90deg,#ffd700,#ffaa00);border-radius:4px;transition:width 0.5s ease;"></div>
+          <div id="campaign-xp-fill" style="width:0%;height:100%;background:linear-gradient(90deg,var(--gold),var(--amber));border-radius:4px;transition:width 0.5s ease;"></div>
         </div>
-        <div id="campaign-xp-text" style="font-size:10px;letter-spacing:1px;color:rgba(255,215,0,0.4);font-family:'Courier New',monospace;white-space:nowrap;">0 / 100 XP</div>
+        <div id="campaign-xp-text" style="font-size:10px;letter-spacing:1px;color:rgba(255,215,0,0.4);font-family:var(--font-mono);white-space:nowrap;">0 / 100 XP</div>
       </div>
     </div>
     <!-- Tab Buttons -->
@@ -487,12 +487,12 @@
 <div id="inventory-overlay" style="display:none;"></div>
 
 <div id="pause-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;flex-direction:column;">
-  <div id="pause-text" style="font-family:'Courier New',monospace;font-size:36px;letter-spacing:12px;color:#00ffff;text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);animation:pausePulse 1.2s ease-in-out infinite;margin-bottom:40px;">PAUSED</div>
+  <div id="pause-text" style="font-family:var(--font-mono);font-size:36px;letter-spacing:12px;color:var(--cyan);text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);animation:pausePulse 1.2s ease-in-out infinite;margin-bottom:40px;">PAUSED</div>
   <div style="display:flex;flex-direction:column;gap:14px;align-items:center;">
     <button onclick="togglePause();toggleStats();" class="pause-menu-btn">LOADOUT</button>
     <button onclick="goToMainMenu();" class="pause-menu-btn pause-btn-red">QUIT GAME</button>
   </div>
-  <div style="margin-top:24px;font-family:'Courier New',monospace;font-size:11px;letter-spacing:2px;color:rgba(0,255,255,0.35);">PRESS ESC TO CLOSE</div>
+  <div style="margin-top:24px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:rgba(0,255,255,0.35);">PRESS ESC TO CLOSE</div>
 </div>
 
 <!-- ═══ Scripts ═══ -->

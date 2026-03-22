@@ -5,6 +5,29 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.26 — JS UI_COLORS constant + inline style token migration
+
+**Date:** 2026-03-22
+
+Replaced all hardcoded color and font-family strings in JS template literal inline styles with a named `UI_COLORS` constant object, and replaced inline style colors in `index.html` with CSS `var(--token)` references.
+
+**`UI_COLORS` constant** added near the top of `js/campaign-system.js` and `js/menus.js` (identical object in both files). The constant replicates CSS tokens as JS strings since CSS custom properties cannot be read directly from JS without `getComputedStyle`. Names mirror `css/base.css` token names (e.g. `--gold` → `UI_COLORS.gold`, `--hud-cyan-status` → `UI_COLORS.hudCyan` etc.). Covers: gold family (14 alpha steps), cyan family (12 alpha steps), HUD cyan family (9 entries), green/teal family, red/danger family, orange/amber/purple, chassis accent colors, leaderboard-specific colors, text/neutral family (11 alpha steps), and surface/overlay values.
+
+**`js/campaign-system.js`** — All hardcoded color and `'Courier New', monospace` strings replaced with `UI_COLORS.*` references across: `showMissionSelect`, `showShop`, `showLoadoutSlots`, and `_showUpgradesPanel`. The rgba text-color base was normalized from the inconsistent 220-base to the canonical 217-base (`#c8d2d9`) throughout.
+
+**`js/menus.js`** — Same replacement across: `returnToHangar`, `_renderChassisSelect`, `_showItemDetail`, `_unequipItem` arm-picker, `_hpBar` / `_hpBarBoosted`, `renderStatsOverlay` chassis/traits panels, `_renderWeaponPanel`, `_renderMobilityPanel`, perk-chip renderer, `_renderGearBonusesPanel`, leaderboard renderer, and `_showCloudStatusToast`.
+
+**`index.html`** — Inline style attribute token migration: all `font-family:'Courier New',monospace` replaced with `font-family:var(--font-mono)` (21 occurrences); `background:#0c1014` with `var(--bg)`; `color:#00ffff` with `var(--cyan)`; `rgba(0,210,255,0.7)` with `var(--hud-cyan-status)`; `rgba(0,210,255,0.25)` with `var(--hud-cyan-border)`; `rgba(200,210,217,0.5)` with `var(--text-dim)`; `color:#00ff88` with `var(--green-accent)`; `color:#ffaa00` with `var(--amber)`; `color:#cc88ff` with `var(--purple)`; `color:#c8d2d9` with `var(--text)`; `#ffd700` border-left and gradient stops with `var(--gold)` and `var(--amber)`.
+
+### Files Changed
+
+- `js/campaign-system.js` — `UI_COLORS` constant added; all hardcoded color/font strings replaced in `showMissionSelect`, `showShop`, `showLoadoutSlots`, `_showUpgradesPanel`
+- `js/menus.js` — `UI_COLORS` constant added; all hardcoded color/font strings replaced across all rendering functions
+- `index.html` — inline style colors replaced with CSS `var(--token)` references; `font-family` literals replaced with `var(--font-mono)`
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.25 — CSS token system expansion across all CSS files
 
 **Date:** 2026-03-21
