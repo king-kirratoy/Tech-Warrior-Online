@@ -5,6 +5,34 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.60 — Gear tab: fix backpack click selected state + add slot label to item detail panel
+
+**Date:** 2026-03-22
+
+Two fixes to the loadout gear tab in `js/menus.js`. Fix 1 (backpack click selected state): the click handler on each backpack item card was calling `_showItemDetail('backpack', idx)` correctly, but the card's visual selected state (bright border + glow) was only applied during the initial `populateInventory()` render and never updated when a card was actually clicked. Expanded the click handler to immediately walk all `#inv-backpack .bp-cell` elements after calling `_showItemDetail`, and update each card's `borderColor` and `boxShadow` based on whether `_invSelectedSource === 'backpack' && _invSelectedKey === that card's idx` — so the selected card highlights instantly on click, previously-selected cards clear, and clicking the same card a second time (which `_showItemDetail` handles as a toggle by setting `_invSelectedSource = null`) correctly dims all cards back to their resting state. Fix 2 (slot label in detail panel): `_showItemDetail()` was rendering item name, rarity, stats, and affixes but had no gear slot label. Added `_invSlotNames` mapping (`weapon → 'L ARM / R ARM'`, `mod_system → 'CPU'`, `aug_system → 'AUGMENT'`, `shield_system → 'SHIELD'`, `leg_system → 'LEGS'`, `armor → 'ARMOR'`, `arms → 'ARMS'`, plus `legs`, `shield`, `mod`, `augment` as aliases) and a `_slotLabel` lookup at the start of the render block; when a label exists, a `<div>` with `font-size:9px; letter-spacing:3px; color:var(--sci-txt3); text-transform:uppercase; margin-bottom:4px;` is injected as the first child of the name wrapper, appearing above the item name for both equipped slot clicks and backpack item clicks since they share the same rendering function.
+
+### Files Changed
+
+- `js/menus.js` — backpack click handler expanded with post-click card state update; _invSlotNames + slot label div added to _showItemDetail()
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.59 — Main menu stat timing fix + warzone hangar visual parity with multiplayer
+
+**Date:** 2026-03-22
+
+Two improvements. Fix 1 (main menu stats): increased the `setTimeout` delay in `_updateMainMenuStats()` from 100ms to 200ms so it always runs after campaign state, XP functions, and other init code have fully loaded — this ensures missions count (`_campaignState.completedMissions`), best round (`_bestRound`), and the XP bar all display real values instead of defaults when entering the main menu. The function was already being called from `proceedToMainMenu()`, `returnToMainMenu()`, and `_cancelNewCampaign()`. Fix 2 (warzone hangar visual parity): three sub-changes to make the warzone hangar look identical to the multiplayer hangar. (2a) In `css/garage.css`, updated `.hg-chassis-btn` to match `.mp-chassis-btn` exactly — changed `font-size` from 11px to 10px, `padding` from `10px 14px` to `8px 10px`, `letter-spacing` from 2px to 1px, added `text-align: center` and `flex: 1`, and removed the flex-container properties (`display:flex`, `align-items`, `justify-content`, `flex-wrap`, `gap`) plus deleted the `.hg-chassis-sub` and `.hg-chassis-btn.active .hg-chassis-sub` rules entirely since sub-labels are removed. (2b) In `index.html`, restructured the chassis buttons — removed the `hg-chassis-sub` sub-label spans ("Fast / Agile", "Balanced", "Tank / Brawler") from each button, wrapped all three buttons in a `<div class="mp-chassis-row">` to create a horizontal row matching the multiplayer layout, and changed the "Chassis" and "Colour" section-label divs from inline styles to `class="mp-sec-label"` matching the multiplayer pattern exactly. (2c) Confirmed that the stat row template strings in `garage.js` (`row()` helper) and `multiplayer.js` (`statRow()` helper) are already identical — both use `hg-stat-row`/`hg-stat-label`/`hg-stat-val` class names and `hg-gap` div — no changes were needed.
+
+### Files Changed
+
+- `js/menus.js` — _updateMainMenuStats() setTimeout 100→200ms
+- `css/garage.css` — .hg-chassis-btn rewritten to match .mp-chassis-btn; .hg-chassis-sub and .hg-chassis-btn.active .hg-chassis-sub removed
+- `index.html` — chassis buttons restructured: horizontal mp-chassis-row, mp-sec-label labels, sub-label spans removed
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.58 — Five UI fixes: remove MENU button, pause focus, lobby START GAME position, warzone header parity, backpack card polish
 
 **Date:** 2026-03-22
