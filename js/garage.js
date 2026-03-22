@@ -185,8 +185,6 @@ function refreshGarage() {
         dualWarn.style.display = bothExplosive ? 'block' : 'none';
     }
 
-    // Populate starter loadout info panel
-    _updateStarterPanel();
     updateGarageStats();
 }
 

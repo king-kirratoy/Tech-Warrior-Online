@@ -5,6 +5,30 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.72 — Warzone hangar: remove duplicate WEAPON/SHIELD rows from build stats
+
+**Date:** 2026-03-22
+
+Removed the `_updateStarterPanel()` call in `garage.js` that was appending duplicate WEAPON and SHIELD rows below the build stats panel; the info is already covered by the L ARM / R ARM and slot summary rows in `updateGarageStats()`. Both panels already shared the same `.hg-stat-row/.hg-stat-label/.hg-stat-val` classes — no font changes needed.
+
+---
+
+## v5.71 — Comprehensive text color readability sweep
+
+**Date:** 2026-03-22
+
+Full audit and fix pass across all CSS files, index.html, menus.js, and campaign-system.js to bring every player-readable text element up to legible contrast against the `#080b0e` background. Color rules applied: primary text `rgba(255,255,255,0.88)`, secondary/label text `rgba(255,255,255,0.45)`, tertiary/hint chrome `rgba(255,255,255,0.22)` (intentionally dim — not changed), accent values `var(--sci-cyan)` at full opacity. `base.css`: `.tw-btn--ghost` label color `var(--sci-txt2)` → `rgba(255,255,255,0.45)`. `menus.css`: fixed `.mm-stat-label`, `.ps-status`, `.ps-hint`, `.cm-chapter-prog`, `.lb-filter-tab`, `.lb-th`, `.lb-rank`, `.lb-val`, `.mp-sec-label`, `.mp-chassis-btn`, `.mp-stats-header`, `.lobby-hdr`, `.lobby-player-name.empty`, `.lobby-player-loadout`, `.lobby-ready-badge.waiting`, `.shop-scrap`, `.shop-col-title`, `.shop-item-meta`, `.shop-detail-meta`, `.shop-compare-header`, `.shop-compare-label`, `.shop-compare-val`, `.shop-compare-diff.neu` — all `var(--sci-txt3)` and `var(--sci-txt2)` on labels raised to 0.45 or 0.65 accordingly. `garage.css`: fixed `.hg-subtitle`, `.hg-stats-header`, `.hg-stat-label`, `.hg-stat-val.dim`, `.lo-xp-lbl`, `.lo-xp-val`, `.lo-sec-title`, `.lo-stat-label`, `.eq-slot .eq-slot-label`, `.lo-slot .lo-slot-lbl`, `.lo-bp-count`. `index.html`: hangar nav number/arrow prefix spans `var(--sci-txt3)` → `rgba(255,255,255,0.22)` (tertiary chrome); `#preview-chassis-label`, `#lb-loading`, `#lb-empty`, `#inv-header-count` → `rgba(255,255,255,0.45)`. `menus.js`: resume campaign star/arrow prefixes, `_statCard()` labels, "vs equipped" header, "Nothing equipped", diff stat names, "CHANGES IF EQUIPPED" header, `_showItemDetail()` slot label + iLvl, `_showSlotHover()` slot name + stat names — all raised to `rgba(255,255,255,0.45)`; "Hold + drag to swap" hint set to `rgba(255,255,255,0.22)`. `campaign-system.js`: XP bar text, level label, shop card/detail labels, "SOLD" badge, "CURRENT LOADOUT" header, empty slot labels, skill tree locked node descriptions, "ACTIVE BONUSES" header — all raised to `rgba(255,255,255,0.45)` or `rgba(255,255,255,0.22)` as appropriate; "SAVE" accent fixed to `var(--sci-cyan)` full opacity.
+
+---
+
+## v5.70 — Loadout overlay: left-column restructure + weapon bar chassis traits
+
+**Date:** 2026-03-22
+
+Four-step layout and CSS pass on the loadout overlay. Step 1: added a chassis name row (`#lo-chassis-row`, `.lo-chassis-row/.lo-chassis-lbl/.lo-chassis-val`) above the Hull Integrity section title with no `.lo-sec` wrapper; rewrote `_renderHullBars()` to use new `.lo-hp-row/.lo-hp-part/.lo-hp-track/.lo-hp-fill/.lo-hp-val` structure (replacing `_hpBarBoosted()`), dynamic fill color (green/yellow/red by %), and added Total HP (green `#00ff88`) + Total Shield (purple `#cc88ff`) rows below a thin divider. Step 2: renamed the "Stats" left-column section to "Mech Stats"; rewrote `_renderMobilityPanel()` to render in this exact order — Shield Regen, Dodge Chance, Dmg Reduction, Auto-Repair, Crit Chance, Mod Cooldown, Speed — removing the Chassis name row, Shield capacity row, Legs Status row, and Loot Quality row. Step 3: rewrote `_renderGearBonusesPanel()` to remove equipped gear chip tags and render all bonuses as `.lo-bonus-row` plain text rows with `.lo-bonus-lbl` / `.lo-bonus-val.pos` / `.lo-bonus-val.neg`; group sub-headers switched to new `.bsub` CSS class. Step 4: removed Chassis Traits from the left column entirely; rewrote `_renderWeaponBar()` to render a two-sided flex row — `.lo-weap-side` (L/R/Core weapon stats) separated by a border from `.lo-trait-side` (chassis trait cards as `.lo-trait-inline/.lo-trait-name/.lo-trait-desc`). No game, combat, or round logic changed.
+
+---
+
 ## v5.69 — Text color readability pass across menus
 
 **Date:** 2026-03-22

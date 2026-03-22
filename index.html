@@ -45,39 +45,39 @@
     <div class="mm-title">TECH<br><span class="mm-title-accent">WARRIOR</span><br>ONLINE</div>
     <nav class="mm-nav" id="main-menu-buttons">
       <div class="sci-nav-item" onclick="showCampaignSubMenu()">
-        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">01</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">01</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Campaign</span>
-        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
       <div class="sci-nav-item" onclick="startGame('simulation')">
-        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">02</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">02</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Warzone</span>
-        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
       <div class="sci-nav-item" onclick="startMultiplayer()">
-        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">03</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">03</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Multiplayer</span>
-        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
       <div class="sci-nav-item" onclick="showLeaderboard()">
-        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">04</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">04</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Leaderboard</span>
-        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
     </nav>
     <div id="campaign-sub-menu" style="display:none;flex-direction:column;gap:2px;margin-top:2px;">
       <div class="sci-nav-item" id="resume-campaign-btn" onclick="startGame('campaign')" style="display:none;">
-        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">★</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">★</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Resume Campaign</span>
-        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
       <div class="sci-nav-item" id="new-campaign-btn" onclick="confirmNewCampaign()">
-        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">01</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">01</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">New Campaign</span>
-        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
       <div class="sci-nav-item" onclick="hideCampaignSubMenu()" style="color:var(--sci-red);border-left-color:transparent;">
-        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">←</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">←</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Back</span>
       </div>
     </div>
@@ -153,7 +153,7 @@
               <div class="sci-corner sci-corner-br"></div>
               <img id="preview-img" src="assets/medium-mech.png" style="max-width:90%;max-height:90%;object-fit:contain;">
             </div>
-            <div id="preview-chassis-label" style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;text-align:center;"></div>
+            <div id="preview-chassis-label" style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);text-transform:uppercase;text-align:center;"></div>
           </div>
         </div>
         <div class="hg-right">
@@ -187,9 +187,9 @@
         <div class="lb-th" style="text-align:right;">Kills</div>
         <div class="lb-th" style="text-align:right;">Mode</div>
       </div>
-      <div id="lb-loading" style="padding:40px 0;text-align:center;font-size:11px;letter-spacing:3px;color:var(--sci-txt3);">Loading scores...</div>
+      <div id="lb-loading" style="padding:40px 0;text-align:center;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.45);">Loading scores...</div>
       <div id="lb-table"></div>
-      <div id="lb-empty" style="display:none;padding:40px 0;text-align:center;font-size:11px;letter-spacing:3px;color:var(--sci-txt3);">No runs submitted yet.<br><br>Be the first.</div>
+      <div id="lb-empty" style="display:none;padding:40px 0;text-align:center;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.45);">No runs submitted yet.<br><br>Be the first.</div>
     </div>
   </div>
 </div>
@@ -448,7 +448,7 @@
 
   <!-- Top bar -->
   <div class="lo-top-bar">
-    <div id="inv-header-count" style="font-size:11px;letter-spacing:1px;color:var(--sci-txt3);"></div>
+    <div id="inv-header-count" style="font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.45);"></div>
     <div class="mp-screen-title" style="font-size:12px;letter-spacing:6px;">LOADOUT</div>
     <button onclick="toggleStats()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;margin-left:auto;">CLOSE</button>
   </div>
@@ -466,22 +466,19 @@
     <!-- ─── LEFT COLUMN (260px, scrollable) ─── -->
     <div class="lo-left">
 
+      <!-- Chassis name row (above Hull Integrity, no section wrapper) -->
+      <div id="lo-chassis-row" class="lo-chassis-row"></div>
+
       <!-- 1. Hull Integrity -->
       <div class="lo-sec">
         <div class="lo-sec-title">Hull Integrity</div>
         <div id="lo-hull-info"></div>
       </div>
 
-      <!-- 2. Stats -->
+      <!-- 2. Mech Stats -->
       <div class="lo-sec">
-        <div class="lo-sec-title">Stats</div>
+        <div class="lo-sec-title">Mech Stats</div>
         <div id="stat-mobility-info"></div>
-      </div>
-
-      <!-- 3. Chassis Traits -->
-      <div class="lo-sec">
-        <div class="lo-sec-title">Chassis Traits</div>
-        <div id="stat-traits-info"></div>
       </div>
 
       <!-- Weapon stats placeholder (written by _renderWeaponPanel, hidden in new layout) -->
