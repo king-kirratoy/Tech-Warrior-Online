@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.65 — Fix null-ref crash when opening loadout from campaign mission select
+
+**Date:** 2026-03-22
+
+Added hidden placeholder `<div>` elements for `#stat-weapons-info` and `#stat-run-info` in `index.html`; these IDs were removed during the v5.64 redesign but `_renderWeaponPanel()` and `_renderRunStatsPanel()` (called by the legacy `populateStats()` path used in `_openLoadoutFromMission`) still write to them, causing a `TypeError: Cannot set properties of null` crash.
+
+---
+
 ## v5.64 — Loadout overlay redesign: unified two-column screen
 
 **Date:** 2026-03-22
