@@ -1369,6 +1369,15 @@ function shopSellItem(invIdx) {
 /** Currently selected shop item index (null = none). */
 let _selectedShopIdx = null;
 
+/** Rarity colors used throughout the shop renderer. */
+const _shopRarityColors = {
+    common:    '#c0c8d0',
+    uncommon:  '#00ff44',
+    rare:      '#4488ff',
+    epic:      '#aa44ff',
+    legendary: '#ffd700'
+};
+
 /** Stat display names for comparison panel. */
 const _shopStatNames = {
     dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit %', critDmg:'Crit Dmg %',
@@ -1399,120 +1408,179 @@ function showShop() {
     // Refresh stock if empty
     if (_shopStock.length === 0) refreshShopStock();
 
-    const rarityColors = {
-        common: '#c0c8d0', uncommon: '#00ff44', rare: '#4488ff',
-        epic: '#aa44ff', legendary: '#ffd700'
+    // Reset overlay to full-panel layout
+    overlay.style.padding       = '0';
+    overlay.style.alignItems    = 'stretch';
+    overlay.style.justifyContent = 'flex-start';
+    overlay.style.overflowY     = 'hidden';
+
+    const rc = (item) => _shopRarityColors[item?.rarity] || _shopRarityColors.common;
+    const restockCost = Math.max(10, Math.round(_campaignState.playerLevel * 5));
+    const canRestock  = (typeof _scrap !== 'undefined') && _scrap >= restockCost;
+    const invMax      = typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30;
+    const scrapVal    = typeof _scrap !== 'undefined' ? _scrap : 0;
+
+    // ── Slot mapping: item.baseType → _equipped key ──
+    const _baseTypeToSlot = {
+        armor: 'chest', arms: 'arms', legs: 'legs',
+        shield: 'shield', mod: 'mod', augment: 'augment'
+    };
+    const _slotDisplayNames = {
+        chest: 'Chest', arms: 'Arms', legs: 'Legs',
+        shield: 'Shield', mod: 'Mod', augment: 'Augment'
     };
 
-    let html = '';
-    html += `<div style="font-size:28px;letter-spacing:6px;color:${UI_COLORS.gold};text-shadow:0 0 20px ${UI_COLORS.goldGlow};margin-bottom:4px;">SUPPLY SHOP</div>`;
-    html += `<div style="font-size:12px;letter-spacing:2px;color:${UI_COLORS.gold60};margin-bottom:20px;">SCRAP: <span style="color:${UI_COLORS.gold};">${_scrap}</span></div>`;
-
-    // ── BUY SECTION ──
-    html += `<div style="font-size:13px;letter-spacing:3px;color:${UI_COLORS.cyan70};margin-bottom:10px;">BUY</div>`;
-    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;max-width:700px;">';
-    if (_shopStock.length === 0) {
-        html += `<div style="font-size:11px;color:${UI_COLORS.text40};letter-spacing:1px;">No items in stock. Complete a mission to restock.</div>`;
-    }
-    _shopStock.forEach((item, idx) => {
-        const rc = rarityColors[item.rarity] || UI_COLORS.rarityCommon;
+    // ── Build item row HTML ──
+    function buyRow(item, idx) {
         const isSelected = (_selectedShopIdx === idx);
-        html += `<button onclick="_shopSelect(${idx})" class="tw-btn shop-item-card${isSelected ? ' selected' : ''}" style="--card-color:${rc};">`;
-        html += `<div style="font-size:10px;letter-spacing:1px;color:${rc};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
-        html += `<div style="font-size:9px;color:${UI_COLORS.text50};margin-bottom:4px;">${(item.rarity||'').toUpperCase()} LV.${item.level||1}</div>`;
-        // Show key stats
-        if (item.computedStats) {
-            const statKeys = Object.keys(item.computedStats).slice(0, 2);
-            const statStr = statKeys.map(k => `${k}:${item.computedStats[k]}`).join(' ');
-            html += `<div style="font-size:8px;color:${UI_COLORS.text35};margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${statStr}</div>`;
-        }
-        html += `<div style="font-size:11px;letter-spacing:1px;color:${UI_COLORS.gold};">⬡ ${item._shopPrice}</div>`;
-        html += '</button>';
-    });
-    html += '</div>';
+        const typeLbl = item.baseType
+            ? (_slotDisplayNames[item.baseType] || item.baseType)
+            : (item.type || '');
+        const meta = `${(item.rarity || 'common')} · ${typeLbl} · LV.${item.level || 1}`;
+        return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelect(${idx})">
+            <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
+            <div class="shop-item-info">
+                <div class="shop-item-name" style="color:${rc(item)};">${item.name || 'Item'}</div>
+                <div class="shop-item-meta">${meta}</div>
+            </div>
+            <div class="shop-item-price">⬡ ${item._shopPrice}</div>
+        </div>`;
+    }
 
-    // ── SELECTED ITEM DETAIL + COMPARISON ──
+    function sellRow(item, idx) {
+        const typeLbl = item.baseType
+            ? (_slotDisplayNames[item.baseType] || item.baseType)
+            : (item.type || '');
+        const meta = `${(item.rarity || 'common')} · ${typeLbl} · LV.${item.level || 1}`;
+        return `<div class="shop-item-row" onclick="_shopSell(${idx})">
+            <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
+            <div class="shop-item-info">
+                <div class="shop-item-name" style="color:${rc(item)};">${item.name || 'Item'}</div>
+                <div class="shop-item-meta">${meta}</div>
+            </div>
+            <div class="shop-sell-price">⬡ ${getItemSellPrice(item)}</div>
+        </div>`;
+    }
+
+    // ── Detail + comparison panel ──
+    let detailHtml = '';
     if (_selectedShopIdx !== null && _selectedShopIdx < _shopStock.length) {
         const selItem = _shopStock[_selectedShopIdx];
-        const rc = rarityColors[selItem.rarity] || UI_COLORS.rarityCommon;
-        const canBuy = _scrap >= selItem._shopPrice && _inventory.length < (typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30);
+        const itemRc  = rc(selItem);
+        const canBuy  = scrapVal >= selItem._shopPrice && (typeof _inventory === 'undefined' || _inventory.length < invMax);
 
-        html += `<div style="margin-bottom:16px;padding:14px 18px;background:${UI_COLORS.gold04};border:1px solid ${UI_COLORS.gold15};border-left:3px solid ${rc};border-radius:4px;width:100%;max-width:700px;">`;
-        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">`;
-        html += `<div><span style="font-size:13px;letter-spacing:2px;color:${rc};">${selItem.name || 'Item'}</span>`;
-        html += `<span style="font-size:9px;color:${UI_COLORS.text50};margin-left:10px;">${(selItem.rarity||'').toUpperCase()} LV.${selItem.level||1}</span></div>`;
-        html += `<div style="font-size:13px;letter-spacing:1px;color:${UI_COLORS.gold};">⬡ ${selItem._shopPrice}</div>`;
-        html += `</div>`;
+        const slotKey     = _baseTypeToSlot[selItem.baseType] || null;
+        const equippedItem = (slotKey && typeof _equipped !== 'undefined') ? (_equipped[slotKey] || null) : null;
+        const newStats    = _shopItemTotal(selItem);
+        const oldStats    = equippedItem ? _shopItemTotal(equippedItem) : {};
+        const allKeys     = [...new Set([...Object.keys(newStats), ...Object.keys(oldStats)])];
+        const hasEquipped = !!equippedItem;
 
-        // Stat comparison with equipped item
-        const slotKey = typeof _getSlotForItem === 'function' ? _getSlotForItem(selItem) : null;
-        const equippedItem = (slotKey && typeof _equipped !== 'undefined') ? _equipped[slotKey] : null;
-        const newStats = _shopItemTotal(selItem);
-        const oldStats = equippedItem ? _shopItemTotal(equippedItem) : {};
-        const allKeys = new Set([...Object.keys(newStats), ...Object.keys(oldStats)]);
+        const typeLbl = selItem.baseType
+            ? (_slotDisplayNames[selItem.baseType] || selItem.baseType)
+            : (selItem.type || '');
+        const meta = `${(selItem.rarity || 'common')} ${typeLbl} · LV.${selItem.level || 1} · ⬡ ${selItem._shopPrice}`;
 
-        if (allKeys.size > 0) {
-            html += `<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:2px 12px;font-size:11px;margin-bottom:10px;">`;
-            html += `<div style="color:${UI_COLORS.text35};letter-spacing:1px;">STAT</div>`;
-            html += `<div style="color:${UI_COLORS.text35};letter-spacing:1px;text-align:right;">${equippedItem ? 'EQUIPPED' : ''}</div>`;
-            html += `<div style="color:${UI_COLORS.text35};letter-spacing:1px;text-align:right;">NEW</div>`;
-            html += `<div style="color:${UI_COLORS.text35};letter-spacing:1px;text-align:right;">${equippedItem ? 'DIFF' : ''}</div>`;
+        detailHtml += `<div class="shop-detail-panel">`;
+        detailHtml += `<div class="shop-detail-name" style="color:${itemRc};">${selItem.name || 'Item'}</div>`;
+        detailHtml += `<div class="shop-detail-meta">${meta}</div>`;
+
+        if (allKeys.length > 0) {
+            const gridCls = hasEquipped ? 'shop-compare-grid' : 'shop-compare-grid no-equipped';
+            detailHtml += `<div class="${gridCls}">`;
+            // Header row
+            detailHtml += `<div class="shop-compare-header">Stat</div>`;
+            if (hasEquipped) detailHtml += `<div class="shop-compare-header">Equipped</div>`;
+            detailHtml += `<div class="shop-compare-header">New</div>`;
+            if (hasEquipped) detailHtml += `<div class="shop-compare-header">Diff</div>`;
+
             allKeys.forEach(k => {
                 const o = oldStats[k] || 0;
                 const n = newStats[k] || 0;
                 if (o === 0 && n === 0) return;
                 const diff = n - o;
-                const diffColor = diff > 0 ? UI_COLORS.greenPos : diff < 0 ? UI_COLORS.red : UI_COLORS.text50;
-                const diffStr = equippedItem ? (diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : '—') : '';
-                html += `<div style="color:${UI_COLORS.text60};">${_shopStatNames[k] || k}</div>`;
-                html += `<div style="text-align:right;color:${UI_COLORS.text50};">${equippedItem ? o : ''}</div>`;
-                html += `<div style="text-align:right;color:${UI_COLORS.text90};">${n}</div>`;
-                html += `<div style="text-align:right;color:${diffColor};font-weight:bold;">${diffStr}</div>`;
+                const diffCls = diff > 0 ? 'pos' : diff < 0 ? 'neg' : 'neu';
+                const diffStr = diff > 0 ? `+${diff}` : diff < 0 ? `${diff}` : '—';
+                detailHtml += `<div class="shop-compare-label">${_shopStatNames[k] || k}</div>`;
+                if (hasEquipped) detailHtml += `<div class="shop-compare-val">${o}</div>`;
+                detailHtml += `<div class="shop-compare-new">${n}</div>`;
+                if (hasEquipped) detailHtml += `<div class="shop-compare-diff ${diffCls}">${diffStr}</div>`;
             });
-            html += `</div>`;
-            if (equippedItem) {
-                html += `<div style="font-size:9px;color:${UI_COLORS.text35};margin-bottom:8px;">Comparing to: ${equippedItem.name || 'equipped item'} (${slotKey})</div>`;
+            detailHtml += `</div>`;
+
+            if (hasEquipped) {
+                detailHtml += `<div style="font-size:9px;color:var(--sci-txt3);margin-bottom:8px;">Comparing to: ${equippedItem.name || 'equipped item'} (${_slotDisplayNames[slotKey] || slotKey})</div>`;
             } else if (slotKey) {
-                html += `<div style="font-size:9px;color:${UI_COLORS.text35};margin-bottom:8px;">Slot: ${slotKey.toUpperCase()} (nothing equipped)</div>`;
+                detailHtml += `<div style="font-size:9px;color:var(--sci-txt3);margin-bottom:8px;">Slot: ${_slotDisplayNames[slotKey] || slotKey} (nothing equipped)</div>`;
             }
         }
 
-        // BUY button
+        // Buy action
+        detailHtml += `<div class="shop-bottom-bar">`;
         if (canBuy) {
-            html += `<button onclick="_shopBuy(${_selectedShopIdx})" class="tw-btn tw-btn--gold">BUY — ⬡ ${selItem._shopPrice}</button>`;
+            detailHtml += `<button onclick="_shopBuy(${_selectedShopIdx})" class="tw-btn tw-btn--solid" style="width:100%;">Buy — ⬡ ${selItem._shopPrice}</button>`;
         } else {
-            const reason = _scrap < selItem._shopPrice ? 'Not enough scrap' : 'Inventory full';
-            html += `<div style="font-size:10px;color:${UI_COLORS.redSoft60};letter-spacing:1px;">${reason}</div>`;
+            const reason = scrapVal < selItem._shopPrice ? 'Not enough scrap' : 'Inventory full';
+            detailHtml += `<div style="font-size:10px;letter-spacing:1px;color:var(--sci-txt3);">${reason}</div>`;
         }
-        html += '</div>';
+        detailHtml += `</div>`;
+        detailHtml += `</div>`;
     }
 
-    // ── SELL SECTION ──
-    html += `<div style="font-size:13px;letter-spacing:3px;color:${UI_COLORS.redSoft};margin-bottom:10px;">SELL</div>`;
-    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px;max-width:700px;max-height:200px;overflow-y:auto;">';
-    if (typeof _inventory !== 'undefined' && _inventory.length > 0) {
-        _inventory.forEach((item, idx) => {
-            const rc = rarityColors[item.rarity] || UI_COLORS.rarityCommon;
-            const sellPrice = getItemSellPrice(item);
-            html += `<button onclick="_shopSell(${idx})" class="tw-btn shop-sell-card" style="--card-color:${rc};">`;
-            html += `<div style="font-size:9px;letter-spacing:1px;color:${rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name || 'Item'}</div>`;
-            html += `<div style="font-size:10px;color:${UI_COLORS.orange};">⬡ ${sellPrice}</div>`;
-            html += '</button>';
-        });
+    // ── Buy items list HTML ──
+    let buyItemsHtml = '';
+    if (_shopStock.length === 0) {
+        buyItemsHtml = `<div style="padding:40px 20px;text-align:center;font-size:11px;letter-spacing:2px;color:var(--sci-txt3);">No items in stock</div>`;
     } else {
-        html += `<div style="font-size:11px;color:${UI_COLORS.text40};letter-spacing:1px;">No items in inventory to sell.</div>`;
+        buyItemsHtml = _shopStock.map((item, idx) => buyRow(item, idx)).join('');
     }
-    html += '</div>';
 
-    // ── RESTOCK BUTTON ──
-    const restockCost = Math.max(10, Math.round(_campaignState.playerLevel * 5));
-    const canRestock = _scrap >= restockCost;
-    html += '<div style="display:flex;gap:16px;margin-top:8px;">';
-    html += `<button onclick="${canRestock ? '_shopRestock()' : ''}" class="tw-btn tw-btn--sm${canRestock ? '' : ' tw-btn--disabled'}">RESTOCK ⬡ ${restockCost}</button>`;
-    html += `<button onclick="_closeShop()" class="tw-btn tw-btn--danger">BACK</button>`;
-    html += '</div>';
+    // ── Sell items list HTML ──
+    let sellItemsHtml = '';
+    if (typeof _inventory === 'undefined' || _inventory.length === 0) {
+        sellItemsHtml = `<div style="padding:40px 20px;text-align:center;font-size:11px;letter-spacing:2px;color:var(--sci-txt3);">No items to sell</div>`;
+    } else {
+        sellItemsHtml = _inventory.map((item, idx) => sellRow(item, idx)).join('');
+    }
 
-    overlay.innerHTML = html;
+    // ── Restock button label ──
+    const restockBtn = `<button onclick="${canRestock ? '_shopRestock()' : ''}"
+        class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;${canRestock ? '' : 'opacity:0.4;pointer-events:none;'}"
+        ${canRestock ? '' : 'disabled'}>Restock ⬡ ${restockCost}</button>`;
+
+    // ── Assemble full screen ──
+    overlay.innerHTML = `
+        <div class="shop-screen">
+            <div class="shop-top">
+                <button onclick="_closeShop()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">‹ Back</button>
+                <div class="shop-title">Supply Shop</div>
+                <div class="shop-scrap">Scrap &nbsp;<span>${scrapVal}</span></div>
+            </div>
+            <div class="shop-body">
+                <!-- BUY column -->
+                <div class="shop-buy-col">
+                    <div class="shop-col-header">
+                        <div class="shop-col-title">Buy</div>
+                        ${restockBtn}
+                    </div>
+                    <div class="shop-items-list">
+                        ${buyItemsHtml}
+                    </div>
+                    ${detailHtml}
+                </div>
+                <!-- SELL column -->
+                <div class="shop-sell-col">
+                    <div class="shop-col-header">
+                        <div class="shop-col-title">Sell</div>
+                        <div style="font-size:9px;color:var(--sci-txt3);">Click item to sell</div>
+                    </div>
+                    <div class="shop-items-list">
+                        ${sellItemsHtml}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     overlay.style.display = 'flex';
 }
 

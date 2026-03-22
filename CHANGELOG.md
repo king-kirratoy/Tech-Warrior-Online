@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.55 — Supply shop redesigned to two-column Buy/Sell layout
+
+**Date:** 2026-03-22
+
+Redesigned the campaign supply shop from a scrollable centered card layout to a fixed two-column panel. In `css/menus.css`: added a new Supply Shop section with `.shop-screen` (flex column, full height), `.shop-top` (top bar with position:relative for centred title), `.shop-title` (absolute centred), `.shop-scrap` (right-aligned scrap display with gold `<span>`), `.shop-body` (flex row, flex:1), `.shop-buy-col` (flex:1, border-right) and `.shop-sell-col` (width:320px fixed), `.shop-col-header`, `.shop-items-list`, `.shop-item-row` (with hover and selected states, left-border accent), `.shop-rarity-bar` (3px tall coloured strip), `.shop-item-info`/`.shop-item-name`/`.shop-item-meta`, `.shop-item-price`/`.shop-sell-price`, `.shop-detail-panel` (fixed at bottom of buy column), `.shop-compare-grid` and `.shop-compare-grid.no-equipped` (4-col vs 2-col depending on whether an item is equipped), all comparison cell classes (`.shop-compare-header`, `.shop-compare-label`, `.shop-compare-val`, `.shop-compare-new`, `.shop-compare-diff` with `.pos`/`.neg`/`.neu` variants), and `.shop-bottom-bar`. In `js/campaign-system.js`: added module-level `const _shopRarityColors` with the five rarity colours; completely rebuilt `showShop()` — resets the overlay inline styles to remove old padding/centering before injecting the new layout; buy column lists each `_shopStock` item as a `.shop-item-row` with rarity bar, name (rarity-coloured), type/rarity/level meta, and price; the detail panel renders below the list when an item is selected, showing the item name and a comparison grid that switches between 4-column (stat/equipped/new/diff) when a same-slot item is equipped and 2-column (stat/new) when nothing is equipped; the buy button or a muted "Not enough scrap"/"Inventory full" message appears at the bottom of the detail panel; the sell column lists every `_inventory` item as a `.shop-item-row` with sell price in green; the Restock button moves into the buy column header; the Back button is in the top bar.
+
+### Files Changed
+
+- `css/menus.css` — full supply shop CSS block added
+- `js/campaign-system.js` — _shopRarityColors const added; showShop() fully rebuilt
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.54 — Multiplayer hangar restructured to match warzone layout
 
 **Date:** 2026-03-22
