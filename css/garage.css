@@ -613,6 +613,36 @@
    LOADOUT OVERLAY — redesigned two-column layout (v5.64)
    ============================================================ */
 
+/* --- Slim XP bar row (campaign mode only) --- */
+.lo-xp-row {
+  align-items: center;
+  border-bottom: 1px solid var(--sci-line);
+  display: flex;
+  flex-shrink: 0;
+  gap: 12px;
+  padding: 5px 24px;
+}
+
+.lo-xp-lbl,
+.lo-xp-val {
+  color: var(--sci-txt3);
+  font-family: 'Courier New', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.lo-xp-track {
+  background: var(--sci-line);
+  flex: 1;
+  height: 2px;
+}
+
+.lo-xp-fill {
+  background: #ffd166;
+  height: 100%;
+}
+
 /* --- Outer chrome --- */
 .lo-top-bar {
   align-items: center;
@@ -626,7 +656,7 @@
 .lo-body {
   display: grid;
   flex: 1;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 240px 1fr;
   min-height: 0;
   overflow: hidden;
 }
@@ -643,7 +673,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 /* --- Left column sections --- */
@@ -770,8 +800,9 @@
 
 /* --- Right column: equipment doll --- */
 .lo-doll-wrap {
-  flex-shrink: 0;
-  height: 500px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   position: relative;
 }
 
@@ -806,26 +837,126 @@
   white-space: nowrap;
 }
 
-/* --- Hover card --- */
+/* --- Hover card (renamed from eq-hover-card) --- */
+.lo-hover-card,
 .eq-hover-card {
   background: #0d1316;
   border: 1px solid var(--sci-cyan-border);
   display: none;
+  font-family: 'Courier New', monospace;
   padding: 12px;
   pointer-events: none;
   position: absolute;
-  width: 200px;
+  width: 190px;
   z-index: 20;
 }
 
 /* --- Weapon bar --- */
-.weapon-bar {
-  border-bottom: 1px solid var(--sci-line);
+.lo-weapon-bar {
   border-top: 1px solid var(--sci-line);
   display: flex;
   flex-shrink: 0;
-  gap: 24px;
-  padding: 12px 24px;
+  gap: 20px;
+  padding: 9px 20px;
+}
+
+/* --- Shared slot class (equipment doll + backpack) --- */
+.lo-slot {
+  align-items: center;
+  aspect-ratio: 1;
+  border: 1px solid var(--sci-line);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+  padding: 3px;
+  position: relative;
+  transition: border-color 0.15s;
+}
+
+.lo-slot:hover { border-color: var(--sci-cyan-border); }
+
+.lo-slot.empty {
+  background: rgba(255,255,255,0.01);
+  cursor: default;
+}
+
+.lo-slot.empty:hover { border-color: var(--sci-line); }
+
+.lo-slot .lo-slot-lbl {
+  color: var(--sci-txt3);
+  font-family: 'Courier New', monospace;
+  font-size: 6px;
+  letter-spacing: 0.5px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.lo-slot .lo-slot-name {
+  font-family: 'Courier New', monospace;
+  font-size: 8px;
+  margin-top: 1px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.lo-slot .lo-slot-dot {
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 4px;
+  margin-top: 2px;
+  width: 4px;
+}
+
+.lo-slot .lo-slot-star {
+  color: #ffd700;
+  font-size: 7px;
+  position: absolute;
+  right: 3px;
+  top: 2px;
+}
+
+/* Doll slots — absolutely positioned, fixed width */
+.lo-doll-wrap .lo-slot {
+  aspect-ratio: unset;
+  height: auto;
+  position: absolute;
+  width: 90px;
+}
+
+/* --- Backpack section --- */
+.lo-backpack {
+  border-top: 1px solid var(--sci-line);
+  flex-shrink: 0;
+  padding: 10px 16px 12px;
+}
+
+.lo-bp-header {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.lo-bp-count {
+  color: var(--sci-txt3);
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+}
+
+.lo-bp-grid {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(10, 1fr);
 }
 
 /* --- Comparison panel --- */
@@ -846,14 +977,3 @@
   background: #080b0e;
   padding: 10px 12px;
 }
-
-/* --- Backpack cards (new compact spec) --- */
-.bp-card {
-  border: 1px solid var(--sci-line);
-  cursor: pointer;
-  padding: 8px;
-  transition: border-color 0.15s;
-  width: 86px;
-}
-
-.bp-card:hover { border-color: var(--sci-cyan-border); }

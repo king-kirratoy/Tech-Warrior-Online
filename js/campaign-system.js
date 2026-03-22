@@ -723,7 +723,7 @@ function _updateCampaignXPBar() {
         bar.style.display = 'none';
         return;
     }
-    bar.style.display = 'block';
+    bar.style.display = 'flex';
     const level = _campaignState.playerLevel;
     const xpCur = _campaignState.playerXP - getXPForLevel(level);
     const xpNeeded = getXPToNextLevel(level);
