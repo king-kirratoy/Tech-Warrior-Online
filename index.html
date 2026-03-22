@@ -39,16 +39,16 @@
     <div class="menu-title">TECH WARRIOR ONLINE</div>
     <div class="menu-subtitle">Combat Simulation Alpha 3.0</div>
     <div id="main-menu-buttons" style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
-        <button id="campaign-btn" class="menu-start-btn" onclick="showCampaignSubMenu()">&#9733;&nbsp;&nbsp;CAMPAIGN</button>
-        <button class="menu-start-btn" onclick="startGame('simulation')">&#9654;&nbsp;&nbsp;COMBAT SIMULATION</button>
-        <button class="menu-start-btn" onclick="startMultiplayer()">&#9670;&nbsp;&nbsp;MULTIPLAYER PVP</button>
-        <button class="menu-start-btn" onclick="showLeaderboard()" style="margin-top:8px;">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
+        <button id="campaign-btn" class="tw-btn menu-start-btn" onclick="showCampaignSubMenu()">&#9733;&nbsp;&nbsp;CAMPAIGN</button>
+        <button class="tw-btn menu-start-btn" onclick="startGame('simulation')">&#9654;&nbsp;&nbsp;COMBAT SIMULATION</button>
+        <button class="tw-btn menu-start-btn" onclick="startMultiplayer()">&#9670;&nbsp;&nbsp;MULTIPLAYER PVP</button>
+        <button class="tw-btn menu-start-btn" onclick="showLeaderboard()" style="margin-top:8px;">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
     </div>
     <!-- Campaign sub-menu (Resume / New) -->
     <div id="campaign-sub-menu" style="display:none;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
-        <button id="resume-campaign-btn" class="menu-start-btn" onclick="startGame('campaign')" style="display:none;">&#9733;&nbsp;&nbsp;RESUME CAMPAIGN</button>
-        <button id="new-campaign-btn" class="menu-start-btn" onclick="confirmNewCampaign()">&#9733;&nbsp;&nbsp;NEW CAMPAIGN</button>
-        <button class="menu-start-btn menu-btn-red" onclick="hideCampaignSubMenu()" style="margin-top:8px;">&#9664;&nbsp;&nbsp;BACK</button>
+        <button id="resume-campaign-btn" class="tw-btn menu-start-btn" onclick="startGame('campaign')" style="display:none;">&#9733;&nbsp;&nbsp;RESUME CAMPAIGN</button>
+        <button id="new-campaign-btn" class="tw-btn menu-start-btn" onclick="confirmNewCampaign()">&#9733;&nbsp;&nbsp;NEW CAMPAIGN</button>
+        <button class="tw-btn tw-btn--danger menu-start-btn" onclick="hideCampaignSubMenu()" style="margin-top:8px;">&#9664;&nbsp;&nbsp;BACK</button>
     </div>
     <div class="menu-version" id="main-menu-version">v5.23 // ALPHA BUILD</div>
 </div>
@@ -147,7 +147,7 @@
 
         <!-- Footer -->
         <div style="text-align:center;margin-top:32px;">
-            <button onclick="closeLeaderboard()" class="menu-start-btn menu-btn-red" style="width:220px;text-align:center;">&#9664;&nbsp;&nbsp;BACK</button>
+            <button onclick="closeLeaderboard()" class="tw-btn tw-btn--danger menu-start-btn" style="width:220px;text-align:center;">&#9664;&nbsp;&nbsp;BACK</button>
         </div>
 
     </div>
@@ -489,8 +489,8 @@
 <div id="pause-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;flex-direction:column;">
   <div id="pause-text" style="font-family:var(--font-mono);font-size:36px;letter-spacing:12px;color:var(--cyan);text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);animation:pausePulse 1.2s ease-in-out infinite;margin-bottom:40px;">PAUSED</div>
   <div style="display:flex;flex-direction:column;gap:14px;align-items:center;">
-    <button onclick="togglePause();toggleStats();" class="pause-menu-btn">LOADOUT</button>
-    <button onclick="goToMainMenu();" class="pause-menu-btn pause-btn-red">QUIT GAME</button>
+    <button onclick="togglePause();toggleStats();" class="tw-btn pause-menu-btn">LOADOUT</button>
+    <button onclick="goToMainMenu();" class="tw-btn tw-btn--danger pause-menu-btn">QUIT GAME</button>
   </div>
   <div style="margin-top:24px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:rgba(0,255,255,0.35);">PRESS ESC TO CLOSE</div>
 </div>

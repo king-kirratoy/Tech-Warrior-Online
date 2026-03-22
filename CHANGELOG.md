@@ -5,6 +5,19 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.30 — Add missing tw-btn base class to menu and pause buttons
+
+**Date:** 2026-03-22
+
+Added `tw-btn` as the base class to 10 buttons in `index.html` that were using layout classes (`menu-start-btn`, `pause-menu-btn`) without it. The four main-menu buttons, two campaign sub-menu buttons, the campaign back button, the leaderboard back button, and the two pause-menu buttons all received `tw-btn` as their first class; the two red/danger buttons (`hideCampaignSubMenu`, `closeLeaderboard`, `goToMainMenu`) also had their `menu-btn-red`/`pause-btn-red` variant replaced with `tw-btn--danger` to align with the design system. No other attributes, styles, scripts, or buttons were touched.
+
+### Files Changed
+
+- `index.html` — `tw-btn` added to 10 buttons; `menu-btn-red`/`pause-btn-red` replaced with `tw-btn--danger`
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.29 — Full button migration audit: all buttons on .tw-btn system
 
 **Date:** 2026-03-22
