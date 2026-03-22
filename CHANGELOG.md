@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.27 — CSS typography utility classes
+
+**Date:** 2026-03-22
+
+Scanned all four CSS files (`base.css`, `hud.css`, `garage.css`, `menus.css`) and `index.html` for repeated heading and label patterns, then consolidated them into nine shared utility classes appended to `css/menus.css`. Classes defined: `.tw-heading` (cyan glow overlay title), `.tw-heading--gold` (gold glow panel title), `.tw-subheading` (dim-cyan subtitle), `.tw-label` (small uppercase section label), `.tw-label--dim` (tiny muted-cyan caption), `.tw-panel-title` (small-caps panel header with bottom border), `.tw-desc` (muted body/description text), `.tw-stat-value` (cyan glowing numeric readout), and `.tw-mono` (generic monospace reset). Every class uses only existing `base.css` design tokens — no new hardcoded values introduced. Migration comments (`/* uses .tw-XYZ pattern */`) were added to 12 candidate rules in `css/menus.css` (5) and `css/garage.css` (7) to mark them for future HTML-side adoption. The three round-HUD caption divs in `index.html` (`Round`, `Remaining`, `Destroyed`) — which were identical exact-match instances of the `.tw-label--dim` pattern — had their inline styles replaced with the utility class. No JS files were changed.
+
+### Files Changed
+
+- `css/menus.css` — 9 utility classes added in new TYPOGRAPHY UTILITY CLASSES section; 5 migration comments added to existing rules
+- `css/garage.css` — 7 migration comments added to existing rules
+- `index.html` — 3 inline style attributes replaced with `class="tw-label--dim"` (round HUD captions)
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.26 — JS UI_COLORS constant + inline style token migration
 
 **Date:** 2026-03-22
