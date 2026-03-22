@@ -754,7 +754,7 @@
   color: rgba(255,255,255,0.22);
   flex-shrink: 0;
   font-family: 'Courier New', monospace;
-  font-size: 9px;
+  font-size: 10px;
   text-align: right;
   width: 56px;
 }
@@ -784,7 +784,7 @@
 .lo-stat-value {
   color: #00d4ff;
   font-family: 'Courier New', monospace;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .lo-stat-value.green  { color: #00ff88; }
@@ -841,7 +841,7 @@
 
 .lo-bonus-val {
   font-family: 'Courier New', monospace;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .lo-bonus-val.pos { color: #00ff88; }
@@ -851,7 +851,7 @@
 .bsub {
   color: rgba(212,163,0,0.5);
   font-family: 'Courier New', monospace;
-  font-size: 9px;
+  font-size: 8px;
   letter-spacing: 2px;
   margin-bottom: 4px;
   margin-top: 10px;
@@ -1006,12 +1006,12 @@
   top: 2px;
 }
 
-/* Doll slots — absolutely positioned, fixed width */
+/* Doll slots — absolutely positioned, width matches backpack cell (10-col grid) */
 .lo-doll-wrap .lo-slot {
   aspect-ratio: unset;
   height: auto;
   position: absolute;
-  width: 90px;
+  width: calc((100% - 68px) / 10);
 }
 
 /* --- Backpack section --- */

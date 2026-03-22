@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.73 — Loadout left column font size standardisation + doll slot responsive sizing
+
+**Date:** 2026-03-22
+
+CSS-only pass on the loadout overlay left column and equipment doll. Standardised font sizes in `garage.css`: `.lo-stat-value` 11px → 10px, `.lo-bonus-val` 9px → 10px, `.lo-hp-val` 9px → 10px, `.bsub` 9px → 8px. All listed classes already had `font-family:'Courier New',monospace` — no font-family changes needed. Fixed the 8 equipped gear doll slots rendering too small: removed hardcoded `width:90px` from both the CSS rule (`.lo-doll-wrap .lo-slot`) and the inline `posStyle` in `menus.js`, replacing with `width:calc((100% - 68px) / 10)` which matches the 10-column backpack grid cell width exactly. Steps 4, 5 (chapter numbers, nav item numbers) and Step 6 (warzone vs multiplayer stat panel parity) were confirmed already correct — both hangar panels already use identical `hg-stat-row`/`hg-stat-label`/`hg-stat-val` class structure.
+
+---
+
 ## v5.72 — Warzone hangar: remove duplicate WEAPON/SHIELD rows from build stats
 
 **Date:** 2026-03-22
