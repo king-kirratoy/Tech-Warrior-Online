@@ -2278,20 +2278,11 @@ function _pvpRenderHangar() {
     let buttonsHtml;
     if (_pvpHangarInMatch) {
         buttonsHtml = `
-            <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" style="width:100%;box-sizing:border-box;font-size:13px;padding:12px;display:flex;justify-content:center;
-                background:transparent;border:1px solid rgba(0,255,255,0.35);border-top:2px solid rgba(0,255,255,0.7);border-bottom:2px solid rgba(0,255,255,0.7);
-                color:#00ffff;text-transform:uppercase;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;
-                box-shadow:0 0 10px rgba(0,255,255,0.06);transition:all 0.3s;">DEPLOY MECH</button>
-            <button onclick="_pvpQuitToMenu()" style="width:100%;box-sizing:border-box;font-size:13px;padding:12px;display:flex;justify-content:center;
-                background:transparent;border:1px solid rgba(255,80,80,0.35);border-top:2px solid rgba(255,80,80,0.7);border-bottom:2px solid rgba(255,80,80,0.7);
-                color:rgba(255,100,100,0.9);text-transform:uppercase;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;
-                box-shadow:0 0 10px rgba(255,80,80,0.06);transition:all 0.3s;">QUIT MATCH</button>`;
+            <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--block">DEPLOY MECH</button>
+            <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--block">QUIT MATCH</button>`;
     } else {
         buttonsHtml = `
-            <button onclick="_pvpJoinLobby()" style="width:100%;box-sizing:border-box;font-size:13px;padding:12px;display:flex;justify-content:center;
-                background:transparent;border:1px solid rgba(0,200,255,0.35);border-top:2px solid rgba(0,200,255,0.7);border-bottom:2px solid rgba(0,200,255,0.7);
-                color:#00c8ff;text-transform:uppercase;letter-spacing:4px;font-family:'Courier New',monospace;cursor:pointer;
-                box-shadow:0 0 10px rgba(0,200,255,0.06);transition:all 0.3s;">JOIN LOBBY</button>`;
+            <button onclick="_pvpJoinLobby()" class="tw-btn tw-btn--block">JOIN LOBBY</button>`;
     }
 
     const rArmLabel = is2H ? '■ R.ARM ⬡' : '■ R.ARM';
@@ -2304,10 +2295,7 @@ function _pvpRenderHangar() {
 
     el.innerHTML = `
         <div class="stat-readout" style="max-height:96vh;overflow-y:auto;">
-            ${!_pvpHangarInMatch ? `<button onclick="_pvpBackToMenu()" style="position:absolute;top:14px;right:16px;font-size:11px;padding:7px 18px;
-                background:transparent;border:1px solid rgba(255,80,80,0.35);border-top:2px solid rgba(255,80,80,0.7);border-bottom:2px solid rgba(255,80,80,0.7);
-                color:rgba(255,100,100,0.9);text-transform:uppercase;letter-spacing:3px;font-family:'Courier New',monospace;cursor:pointer;
-                box-shadow:0 0 10px rgba(255,80,80,0.06);transition:all 0.3s;white-space:nowrap;">&#9664;&nbsp; BACK</button>` : ''}
+            ${!_pvpHangarInMatch ? `<button onclick="_pvpBackToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="position:absolute;top:20px;left:24px;">&#9664;&nbsp; BACK</button>` : ''}
             <h2 style="text-align:center;margin:0 0 20px;letter-spacing:8px;color:#00ffff;font-family:'Courier New',monospace;font-size:26px;
                 text-shadow:0 0 18px rgba(0,255,255,0.7),0 0 40px rgba(0,255,255,0.2);font-weight:normal;">MECH HANGAR</h2>
             <div style="text-align:center;margin:-14px 0 16px;font-size:10px;letter-spacing:4px;color:rgba(0,255,255,0.35);font-family:'Courier New',monospace;">
@@ -2365,7 +2353,7 @@ function _pvpRenderHangar() {
                         box-shadow:0 0 14px rgba(0,255,255,0.12);display:flex;justify-content:center;align-items:center;">
                         <img src="assets/${chassis}-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
                     </div>
-                    <div style="width:100%;margin-top:auto;display:flex;flex-direction:column;gap:8px;">
+                    <div style="width:100%;margin-top:8px;display:flex;flex-direction:column;gap:8px;">
                         ${buttonsHtml}
                     </div>
                 </div><!-- /right -->

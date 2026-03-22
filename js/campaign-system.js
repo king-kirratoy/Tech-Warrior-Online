@@ -747,10 +747,12 @@ function showMissionSelect() {
 
     let html = '';
 
-    // ── Header row: centered CAMPAIGN title + small QUIT button on far right ──
-    html += '<div style="position:relative;width:100%;max-width:700px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;">';
+    // ── Back button: top-left of overlay ──
+    html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--danger tw-btn--sm" style="position:absolute;top:20px;left:24px;">&#9664;&nbsp; BACK</button>`;
+
+    // ── Header: centered CAMPAIGN title ──
+    html += '<div style="width:100%;max-width:700px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;">';
     html += `<div style="font-size:28px;letter-spacing:6px;color:${UI_COLORS.gold};text-shadow:0 0 20px ${UI_COLORS.goldGlow};">CAMPAIGN</div>`;
-    html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--danger tw-btn--sm" style="position:absolute;right:0;">QUIT</button>`;
     html += '</div>';
 
     // ── Player level / XP bar + scrap ──

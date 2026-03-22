@@ -70,9 +70,9 @@
                 <div id="chassis-select-row" class="dd-row">
                     <span class="dd-label">■ CHASSIS</span>
                     <div style="display:flex;gap:6px;flex:1;">
-                        <button id="c-light"  class="tw-btn" onclick="setChassis('light')">LIGHT</button>
-                        <button id="c-medium" class="tw-btn" onclick="setChassis('medium')">MEDIUM</button>
-                        <button id="c-heavy"  class="tw-btn" onclick="setChassis('heavy')">HEAVY</button>
+                        <button id="c-light"  class="tw-btn tw-btn--sm" onclick="setChassis('light')">LIGHT</button>
+                        <button id="c-medium" class="tw-btn tw-btn--sm" onclick="setChassis('medium')">MEDIUM</button>
+                        <button id="c-heavy"  class="tw-btn tw-btn--sm" onclick="setChassis('heavy')">HEAVY</button>
                     </div>
                 </div>
 
@@ -110,10 +110,8 @@
                     <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 8px rgba(0,255,255,0.6));">
                 </div>
 
-                <div style="width:100%;margin-top:auto;display:flex;flex-direction:column;gap:8px;">
-                    <button id="hangar-mm-btn" class="tw-btn tw-btn--danger tw-btn--sm" onclick="returnToMainMenu()">&#9664;&nbsp; BACK</button>
-                    <button id="deploy-btn" class="tw-btn tw-btn--block" onclick="deployMech()">DEPLOY MECH</button>
-                </div>
+                <button id="deploy-btn" class="tw-btn tw-btn--block" style="margin-top:8px;" onclick="deployMech()">DEPLOY MECH</button>
+                <button id="hangar-mm-btn" class="tw-btn tw-btn--danger tw-btn--sm" style="margin-top:auto;" onclick="returnToMainMenu()">&#9664;&nbsp; BACK</button>
 
             </div><!-- /right -->
         </div>

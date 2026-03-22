@@ -5,6 +5,22 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.35 — Back button top-left, deploy/join below image, remove loot hint text
+
+**Date:** 2026-03-22
+
+Standardised back/quit button placement and action button layout across three menus. In `js/multiplayer.js` (`_pvpRenderHangar`): moved the BACK button to `position:absolute;top:20px;left:24px` with `tw-btn tw-btn--danger tw-btn--sm`, replaced all three inline-styled action buttons (JOIN LOBBY, DEPLOY MECH, QUIT MATCH) with `tw-btn tw-btn--block` / `tw-btn tw-btn--danger tw-btn--block` classes, and changed the button container from `margin-top:auto` to `margin-top:8px` so buttons appear directly below the chassis image. In `index.html`: added `tw-btn--sm` to the LIGHT/MEDIUM/HEAVY chassis selector buttons; moved the DEPLOY MECH button (`#deploy-btn`) to appear directly below `#preview-container` with `margin-top:8px`; confirmed `#hangar-mm-btn` has `tw-btn tw-btn--danger tw-btn--sm`. In `js/garage.js` (`_updateStarterPanel`): removed the CPU, LEGS, and AUGMENT "find through loot" rows and the loot drop hint paragraph. In `js/campaign-system.js` (`showMissionSelect`): renamed the QUIT button to BACK (with arrow prefix), moved it to `position:absolute;top:20px;left:24px`, and removed it from the header row.
+
+### Files Changed
+
+- `js/multiplayer.js` — back button top-left; JOIN LOBBY, DEPLOY MECH, QUIT MATCH converted to tw-btn; buttons now directly below chassis image
+- `index.html` — chassis buttons get tw-btn--sm; deploy button moved directly below preview image
+- `js/garage.js` — CPU/LEGS/AUGMENT rows and loot hint removed from starter panel
+- `js/campaign-system.js` — QUIT → BACK, moved to top-left position:absolute
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.34 — Text, label, and layout changes to index.html
 
 **Date:** 2026-03-22
