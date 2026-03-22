@@ -653,11 +653,19 @@
   padding: 12px 14px;
 }
 
+.lo-sec {
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+  padding: 14px 18px;
+}
+
 .lo-sec-title {
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.18);
+  font-family: 'Courier New', monospace;
   font-size: 8px;
+  font-weight: normal;
   letter-spacing: 3px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   text-transform: uppercase;
 }
 
@@ -700,11 +708,12 @@
   align-items: baseline;
   display: flex;
   justify-content: space-between;
-  margin-bottom: 4px;
+  padding: 3px 0;
 }
 
 .lo-stat-label {
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.25);
+  font-family: 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -712,29 +721,42 @@
 
 .lo-stat-val {
   color: var(--sci-cyan);
+  font-family: 'Courier New', monospace;
   font-size: 11px;
 }
 
-/* --- Chassis traits --- */
-.lo-trait-row {
-  border-bottom: 1px solid var(--sci-line);
-  margin-bottom: 8px;
-  padding-bottom: 8px;
+.lo-stat-value {
+  color: #00d4ff;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
 }
 
-.lo-trait-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.lo-stat-value.green  { color: #00ff88; }
+.lo-stat-value.red    { color: #ff4d6a; }
+.lo-stat-value.orange { color: #ff8844; }
+.lo-stat-value.yellow { color: #ffdd00; }
+.lo-stat-value.purple { color: #cc88ff; }
+
+/* --- Chassis traits --- */
+.lo-trait {
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 6px 0;
+}
+
+.lo-trait:last-child { border-bottom: none; }
 
 .lo-trait-name {
   color: #ffd166;
+  font-family: 'Courier New', monospace;
   font-size: 10px;
-  letter-spacing: 1px;
   margin-bottom: 2px;
 }
 
 .lo-trait-desc {
-  color: var(--sci-txt3);
+  color: rgba(255,255,255,0.25);
+  font-family: 'Courier New', monospace;
   font-size: 9px;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 /* --- Gear bonus pill tags --- */
@@ -757,13 +779,32 @@
 .eq-slot {
   background: rgba(8,11,14,0.88);
   border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0;
+  cursor: default;
+  font-family: 'Courier New', monospace;
   padding: 8px 10px;
   position: absolute;
   transition: border-color 0.2s;
   width: 115px;
 }
 
-.eq-slot:hover { border-color: var(--sci-cyan-border); }
+.eq-slot:hover { border-color: rgba(0,212,255,0.35); }
+
+.eq-slot .eq-slot-label {
+  color: rgba(255,255,255,0.18);
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+}
+
+.eq-slot .eq-slot-name {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* --- Hover card --- */
 .eq-hover-card {

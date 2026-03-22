@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.67 — Loadout screen: CSS visual polish pass
+
+**Date:** 2026-03-22
+
+Seven CSS and styling fixes applied to the loadout overlay to match the agreed design spec. `garage.css`: updated `.lo-sec-title` to add `font-family:'Courier New'`, `font-weight:normal`, and `margin-bottom:10px`; added `.lo-sec` section wrapper rule (`padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.07)`) and migrated all six left-column section divs in `index.html` from `lo-section` to `lo-sec`; replaced `.lo-trait-row`/`.lo-trait-name`/`.lo-trait-desc` with the spec-correct `.lo-trait`/`.lo-trait-name`/`.lo-trait-desc` (with `font-family` and correct opacity); added sub-rules for `.eq-slot .eq-slot-label` and `.eq-slot .eq-slot-name` and set `border-radius:0` / `cursor:default` / `font-family` on `.eq-slot`; added `.lo-stat-value` and its `.green`/`.red`/`.orange`/`.yellow`/`.purple` color variants. `menus.js`: removed the inline "CHASSIS TRAITS" cyan sub-header; updated `_renderChassisPanel()` to use `.lo-trait`/`.lo-trait-name`/`.lo-trait-desc`; updated `populateInventory()` slot HTML to use `eq-slot-label`/`eq-slot-name`; updated `_statRow()` to use `lo-stat-row`/`lo-stat-label`/`lo-stat-value`; replaced all remaining `stats-row`/`stats-label`/`stats-value` inline class strings with the `lo-stat-*` equivalents; changed Shield Regen color class to `green` and Mod Cooldown to `red`; set mech ghost image to `opacity:0.15; filter:grayscale(100%)`.
+
+---
+
 ## v5.66 — Loadout screen: align render path and fix design inconsistencies
 
 **Date:** 2026-03-22

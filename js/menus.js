@@ -872,8 +872,8 @@ function populateInventory() {
         html += `<div style="position:relative;width:100%;height:385px;">`;
         const mechImgSrc = `assets/${ch}-mech.png`;
         const hexStr = typeof mechColor === 'number' ? mechColor.toString(16).padStart(6,'0') : '00ff88';
-        html += `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.18;">`;
-        html += `<img src="${mechImgSrc}" style="height:340px;object-fit:contain;filter:drop-shadow(0 0 20px #${hexStr}66);" />`;
+        html += `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.15;">`;
+        html += `<img src="${mechImgSrc}" style="height:340px;object-fit:contain;filter:grayscale(100%);" />`;
         html += `</div>`;
 
         // Equipment slots positioned over the silhouette
@@ -893,8 +893,8 @@ function populateInventory() {
                 ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
                 onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()"
                 onclick="_showItemDetail('equipped','${key}')">
-                <div class="slot-label">${pos.label}</div>
-                <div class="slot-item" style="color:${nameColor};">${itemName}</div>
+                <div class="eq-slot-label">${pos.label}</div>
+                <div class="eq-slot-name" style="color:${nameColor};">${itemName}</div>
             </div>`;
         });
 
@@ -1390,16 +1390,16 @@ function _updateInvCount() {
 }
 
 function _statRow(label, value, colorClass='') {
-    return `<div class="stats-row"><span class="stats-label">${label}</span><span class="stats-value ${colorClass}">${value}</span></div>`;
+    return `<div class="lo-stat-row"><span class="lo-stat-label">${label}</span><span class="lo-stat-value ${colorClass}">${value}</span></div>`;
 }
 
 function _hpBar(label, hp, max, color) {
     const pct = max > 0 ? Math.round(hp/max*100) : 0;
     const barColor = pct > 60 ? UI_COLORS.greenAccent : pct > 30 ? UI_COLORS.yellow : UI_COLORS.redCritical;
     return `<div class="stats-hp-bar">
-        <span class="stats-label" style="min-width:70px">${label}</span>
+        <span class="lo-stat-label" style="min-width:70px">${label}</span>
         <div class="stats-hp-track"><div class="stats-hp-fill" style="width:${pct}%;background:${barColor}"></div></div>
-        <span class="stats-value" style="font-size:13px;min-width:70px;text-align:right;color:${barColor}">${Math.round(hp)} / ${Math.round(max)}</span>
+        <span class="lo-stat-value" style="font-size:13px;min-width:70px;text-align:right;color:${barColor}">${Math.round(hp)} / ${Math.round(max)}</span>
     </div>`;
 }
 
@@ -1410,9 +1410,9 @@ function _hpBarBoosted(label, hp, max, baseMax) {
     const bonusData = bonus > 0 ? ` data-bonus="+${bonus} from perks/gear"` : '';
     const bonusCls = bonus > 0 ? ' stat-has-bonus' : '';
     return `<div class="stats-hp-bar">
-        <span class="stats-label" style="min-width:70px">${label}</span>
+        <span class="lo-stat-label" style="min-width:70px">${label}</span>
         <div class="stats-hp-track"><div class="stats-hp-fill" style="width:${pct}%;background:${barColor}"></div></div>
-        <span class="stats-value${bonusCls}" style="min-width:80px;text-align:right;color:${barColor}"${bonusData}>${Math.round(hp)} / ${Math.round(max)}</span>
+        <span class="lo-stat-value${bonusCls}" style="min-width:80px;text-align:right;color:${barColor}"${bonusData}>${Math.round(hp)} / ${Math.round(max)}</span>
     </div>`;
 }
 
@@ -1450,14 +1450,14 @@ function _renderHullBars() {
         const totalBonusHp = Math.round(totalMax - totalBase);
         const totalBonusData = totalBonusHp > 0 ? ` data-bonus="+${totalBonusHp} from perks/gear"` : '';
         const totalBonusCls = totalBonusHp > 0 ? ' stat-has-bonus' : '';
-        html += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
+        html += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"><div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value${totalBonusCls}"${totalBonusData}>${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div></div>`;
     } else {
         html += _hpBarBoosted('Core',  baseHP.core,  baseHP.core,  baseHP.core);
         html += _hpBarBoosted('L.Arm', baseHP.lArm,  baseHP.lArm,  baseHP.lArm);
         html += _hpBarBoosted('R.Arm', baseHP.rArm,  baseHP.rArm,  baseHP.rArm);
         html += _hpBarBoosted('Legs',  baseHP.legs,  baseHP.legs,  baseHP.legs);
         const totalBase = Object.values(baseHP).reduce((s,v)=>s+v,0);
-        html += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"><div class="stats-row"><span class="stats-label">Total HP</span><span class="stats-value">${totalBase} / ${totalBase}</span></div></div>`;
+        html += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"><div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value">${totalBase} / ${totalBase}</span></div></div>`;
     }
     el.innerHTML = html;
 }
@@ -1493,11 +1493,10 @@ function _renderChassisPanel() {
 
     // Build chassis traits block (single column)
     let traitHtml = '';
-    traitHtml += `<div style="font-size:10px;letter-spacing:3px;color:${UI_COLORS.cyan45};margin-bottom:10px;border-bottom:1px solid ${UI_COLORS.cyan10};padding-bottom:6px;">CHASSIS TRAITS</div>`;
     _cTraits.forEach(([tLabel, tDesc]) => {
-    traitHtml += `<div style="margin-bottom:10px;">
-        <div style="font-size:11px;letter-spacing:1.5px;color:${_chColor};margin-bottom:3px;">${tLabel}</div>
-        <div style="font-size:12px;color:${UI_COLORS.text75};line-height:1.5;">${tDesc}</div>
+    traitHtml += `<div class="lo-trait">
+        <div class="lo-trait-name">${tLabel}</div>
+        <div class="lo-trait-desc">${tDesc}</div>
     </div>`;
     });
 
@@ -1545,24 +1544,24 @@ function _renderWeaponPanel() {
         if (_rldGearDiff > 0) rldTip += (rldTip ? ', ' : '') + `-${_rldGearDiff} gear`;
         const rldBonusData = rldTip ? ` data-bonus="${rldTip}"` : '';
         const rldBonusCls = rldTip ? ' stat-has-bonus' : '';
-        wHtml += `<div class="stats-row"><span class="stats-label">Damage/Shot</span><span class="stats-value${dmgBonusCls}"${dmgBonusData}>${Math.round(effDmg)}${dmgSuffix}</span></div>`;
-        wHtml += `<div class="stats-row"><span class="stats-label">Reload (ms)</span><span class="stats-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}${rldBonusCls}"${rldBonusData}>${Math.round(effRld)}</span></div>`;
+        wHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Damage/Shot</span><span class="lo-stat-value${dmgBonusCls}"${dmgBonusData}>${Math.round(effDmg)}${dmgSuffix}</span></div>`;
+        wHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Reload (ms)</span><span class="lo-stat-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}${rldBonusCls}"${rldBonusData}>${Math.round(effRld)}</span></div>`;
         const dpsTip = effDps > baseDps ? `+${effDps - baseDps} from perks/gear` : '';
         const dpsBonusData = dpsTip ? ` data-bonus="${dpsTip}"` : '';
         const dpsBonusCls = dpsTip ? ' stat-has-bonus' : '';
-        wHtml += `<div class="stats-row"><span class="stats-label">DPS (est.)</span><span class="stats-value ${effDps>200?'green':effDps>80?'yellow':'orange'}${dpsBonusCls}"${dpsBonusData}>${Math.round(effDps)}</span></div>`;
+        wHtml += `<div class="lo-stat-row"><span class="lo-stat-label">DPS (est.)</span><span class="lo-stat-value ${effDps>200?'green':effDps>80?'yellow':'orange'}${dpsBonusCls}"${dpsBonusData}>${Math.round(effDps)}</span></div>`;
     }
     if (w.radius) {
         const effRad = Math.round(w.radius * (_perkState.blastMult||1));
         const radDiff = effRad - w.radius;
         const radData = radDiff > 0 ? ` data-bonus="+${radDiff} from perks"` : '';
         const radCls = radDiff > 0 ? ' stat-has-bonus' : '';
-        wHtml += `<div class="stats-row"><span class="stats-label">Blast Radius</span><span class="stats-value${radCls}"${radData}>${effRad}</span></div>`;
+        wHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Blast Radius</span><span class="lo-stat-value${radCls}"${radData}>${effRad}</span></div>`;
     }
     if (w.cooldown) wHtml += _statRow('Mod Cooldown', w.cooldown + 'ms');
     wHtml += '</div>';
     });
-    if (!wHtml) wHtml = '<div class="stats-label" style="opacity:0.4;font-size:13px;">No weapons armed</div>';
+    if (!wHtml) wHtml = '<div class="lo-stat-label" style="opacity:0.4;font-size:13px;">No weapons armed</div>';
     document.getElementById('stat-weapons-info').innerHTML = wHtml;
 }
 
@@ -1585,7 +1584,7 @@ function _renderMobilityPanel() {
     if (perkShieldBonus > 0) shieldTip += (shieldTip ? ', ' : '') + `+${perkShieldBonus} perks`;
     const shieldBonusData = shieldTip ? ` data-bonus="${shieldTip}"` : '';
     const shieldBonusCls = shieldTip ? ' stat-has-bonus' : '';
-    mobHtml += `<div class="stats-row"><span class="stats-label">Shield</span><span class="stats-value purple${shieldBonusCls}"${shieldBonusData}>${_curShield} / ${_maxShield}</span></div>`;
+    mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Shield</span><span class="lo-stat-value purple${shieldBonusCls}"${shieldBonusData}>${_curShield} / ${_maxShield}</span></div>`;
     mobHtml += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:8px;padding-top:8px;"></div>`;
     const baseSpd = chassisData?.spd || 200;
     const perkSpd = Math.round(baseSpd * (_perkState.speedMult||1));
@@ -1606,7 +1605,7 @@ function _renderMobilityPanel() {
     const spdGearDiff = effSpd - perkSpd;
     if (spdPerkDiff > 0) spdTip += `+${spdPerkDiff} perks`;
     if (spdGearDiff > 0) spdTip += (spdTip ? ', ' : '') + `+${spdGearDiff} gear`;
-    mobHtml += `<div class="stats-row"><span class="stats-label">Speed</span><span class="stats-value ${effSpd>baseSpd?'green':''}${_bonusCls(spdTip)}"${_bonusData(spdTip)}>${effSpd}</span></div>`;
+    mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Speed</span><span class="lo-stat-value ${effSpd>baseSpd?'green':''}${_bonusCls(spdTip)}"${_bonusData(spdTip)}>${effSpd}</span></div>`;
     mobHtml += _statRow('Legs Status', legsOk ? 'OPERATIONAL' : 'DESTROYED', legsOk ? 'green' : 'red');
     if (!legsOk) mobHtml += _statRow('Speed Penalty', '−50%', 'red');
     mobHtml += `<div style="border-top:1px solid ${UI_COLORS.cyan12};margin-top:10px;padding-top:10px;"></div>`;
@@ -1619,34 +1618,34 @@ function _renderMobilityPanel() {
     const regenGearDiff = Math.round((effRegenRate - perkRegenRate)*10)/10;
     if (regenPerkDiff > 0) regenTip += `+${regenPerkDiff} perks`;
     if (regenGearDiff > 0) regenTip += (regenTip ? ', ' : '') + `+${regenGearDiff} gear`;
-    mobHtml += `<div class="stats-row"><span class="stats-label">Shield Regen</span><span class="stats-value purple${_bonusCls(regenTip)}"${_bonusData(regenTip)}>${parseFloat(effRegenRate.toFixed(1))}/frame</span></div>`;
+    mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Shield Regen</span><span class="lo-stat-value green${_bonusCls(regenTip)}"${_bonusData(regenTip)}>${parseFloat(effRegenRate.toFixed(1))}/frame</span></div>`;
     if (_perkState.noShieldRegen) mobHtml += _statRow('Regen Active', 'DISABLED', 'red');
     if (_perkState.immovable) mobHtml += _statRow('Immovable', '3x regen while still', 'purple');
     // Dodge: perk + gear
     const perkDodgePct = Math.round((_perkState.dodgeChance||0) * 100);
     const gearDodgePct = (_gearState?.dodgePct || 0);
     const totalDodge = perkDodgePct + gearDodgePct;
-    if (totalDodge > 0) { const _dodgeTip = _bonusTip(perkDodgePct, gearDodgePct); mobHtml += `<div class="stats-row"><span class="stats-label">Dodge Chance</span><span class="stats-value green${_bonusCls(_dodgeTip)}"${_bonusData(_dodgeTip)}>${totalDodge}%</span></div>`; }
+    if (totalDodge > 0) { const _dodgeTip = _bonusTip(perkDodgePct, gearDodgePct); mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Dodge Chance</span><span class="lo-stat-value green${_bonusCls(_dodgeTip)}"${_bonusData(_dodgeTip)}>${totalDodge}%</span></div>`; }
     // DR: perk + gear
     const perkDR = Math.round(Math.min(75, (_perkState.fortress||0) * 100));
     const gearDR = (_gearState?.dr || 0);
     const totalDR = Math.min(75, perkDR + gearDR);
-    if (totalDR > 0) { const _drTip = _bonusTip(perkDR, gearDR); mobHtml += `<div class="stats-row"><span class="stats-label">Dmg Reduction</span><span class="stats-value green${_bonusCls(_drTip)}"${_bonusData(_drTip)}>${totalDR}%</span></div>`; }
+    if (totalDR > 0) { const _drTip = _bonusTip(perkDR, gearDR); mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Dmg Reduction</span><span class="lo-stat-value green${_bonusCls(_drTip)}"${_bonusData(_drTip)}>${totalDR}%</span></div>`; }
     // Auto-repair: perk + gear
     const perkRepair = _perkState.autoRepair || 0;
     const gearRepair = (_gearState?.autoRepair || 0);
     const totalRepair = perkRepair + gearRepair;
-    if (totalRepair > 0) { const _repairTip = _bonusTip(perkRepair, gearRepair); mobHtml += `<div class="stats-row"><span class="stats-label">Auto-Repair</span><span class="stats-value green${_bonusCls(_repairTip)}"${_bonusData(_repairTip)}>${totalRepair} HP/sec</span></div>`; }
+    if (totalRepair > 0) { const _repairTip = _bonusTip(perkRepair, gearRepair); mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Auto-Repair</span><span class="lo-stat-value green${_bonusCls(_repairTip)}"${_bonusData(_repairTip)}>${totalRepair} HP/sec</span></div>`; }
     // Crit: perk + gear
     const perkCrit = Math.round((_perkState.critChance||0) * 100);
     const gearCrit = (_gearState?.critChance || 0);
     const totalCrit = perkCrit + gearCrit;
-    if (totalCrit > 0) { const _critTip = _bonusTip(perkCrit, gearCrit); mobHtml += `<div class="stats-row"><span class="stats-label">Crit Chance</span><span class="stats-value green${_bonusCls(_critTip)}"${_bonusData(_critTip)}>${totalCrit}%</span></div>`; }
+    if (totalCrit > 0) { const _critTip = _bonusTip(perkCrit, gearCrit); mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Crit Chance</span><span class="lo-stat-value green${_bonusCls(_critTip)}"${_bonusData(_critTip)}>${totalCrit}%</span></div>`; }
     // Gear-only stats
     const gearModCd = (_gearState?.modCdPct || 0);
-    if (gearModCd > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Mod Cooldown</span><span class="stats-value stat-has-bonus" data-bonus="−${gearModCd}% gear">−${gearModCd}%</span></div>`;
+    if (gearModCd > 0) mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Mod Cooldown</span><span class="lo-stat-value red" data-bonus="−${gearModCd}% gear">−${gearModCd}%</span></div>`;
     const gearLoot = (_gearState?.lootMult || 0);
-    if (gearLoot > 0) mobHtml += `<div class="stats-row"><span class="stats-label">Loot Quality</span><span class="stats-value stat-has-bonus" data-bonus="+${gearLoot}% gear">+${gearLoot}%</span></div>`;
+    if (gearLoot > 0) mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Loot Quality</span><span class="lo-stat-value stat-has-bonus" data-bonus="+${gearLoot}% gear">+${gearLoot}%</span></div>`;
     document.getElementById('stat-mobility-info').innerHTML = mobHtml;
 }
 
@@ -1670,7 +1669,7 @@ function _renderActivePerksPanel() {
     const perksEl = document.getElementById('stat-perks-info');
     perksEl.innerHTML = '';
     if (_pickedPerks.length === 0) {
-    perksEl.innerHTML = '<span class="stats-label" style="opacity:0.4;font-size:13px;">No perks selected yet</span>';
+    perksEl.innerHTML = '<span class="lo-stat-label" style="opacity:0.4;font-size:13px;">No perks selected yet</span>';
     } else {
     // Count and group
     const perkCounts = {};
