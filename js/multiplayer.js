@@ -2372,10 +2372,15 @@ function _pvpRenderHangar() {
     statsHtml += statRow('SPEED', spdStr, 'warn');
     statsHtml += statRow('SHIELD HP', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
     statsHtml += gap;
+    const lArmName = weaponName(loadout.L);
+    const rArmKey2 = is2H ? loadout.L : loadout.R;
+    const rArmName = weaponName(rArmKey2);
+    const lArmVal  = (!loadout.L || loadout.L === 'none') ? '— none' : lArmName + (lRate ? ' — ' + lRate : '');
+    const rArmVal  = (!rArmKey2 || rArmKey2 === 'none') ? '— none' : rArmName + (rRate ? ' — ' + rRate : '');
     const weaponRows = [
-        lRate ? statRow('L FIRE RATE', lRate, 'dim') : '',
-        rRate ? statRow('R FIRE RATE', rRate, 'dim') : '',
-        modCd ? statRow('CORE CD',     modCd, 'warn') : '',
+        statRow('L ARM', lArmVal, 'dim'),
+        statRow('R ARM', rArmVal, 'dim'),
+        modCd ? statRow('CORE CD', modCd, 'warn') : '',
     ].join('');
     if (weaponRows) { statsHtml += weaponRows; statsHtml += gap; }
     if (chassisTraits.length) {
@@ -2384,8 +2389,6 @@ function _pvpRenderHangar() {
     }
     if (passives.length) statsHtml += statRow('PASSIVES', passives.join(' · '), 'purple');
     statsHtml += gap;
-    statsHtml += statRow('L ARM', weaponName(loadout.L), 'dim');
-    statsHtml += statRow('R ARM', weaponName(is2H ? loadout.L : loadout.R), 'dim');
     statsHtml += statRow('MOD', _pvpGetSlotLabel('M'), 'dim');
     statsHtml += statRow('SHIELD', _pvpGetSlotLabel('S'), 'dim');
     statsHtml += statRow('LEGS', _pvpGetSlotLabel('G'), 'dim');

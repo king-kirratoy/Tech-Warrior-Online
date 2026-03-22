@@ -291,10 +291,14 @@ function updateGarageStats() {
     html += row('SHIELD HP', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
     html += gap;
 
-    // Group 3 — Weapons (only rows that exist)
+    // Group 3 — Weapons: combined name + fire rate per arm
+    const rKey    = is2H ? loadout.L : loadout.R;
+    const rEmpty2 = !rKey || rKey === 'none';
+    const lArmVal = lEmpty ? '— none' : (wL.name + (lRate ? ' — ' + lRate : ''));
+    const rArmVal = rEmpty2 ? '— none' : ((WEAPONS[rKey]?.name || rKey) + (rRate ? ' — ' + rRate : ''));
     const weaponRows = [
-        lRate ? row('L FIRE RATE', lRate, 'dim') : '',
-        rRate ? row('R FIRE RATE', rRate, 'dim') : '',
+        row('L ARM', lArmVal, 'dim'),
+        row('R ARM', rArmVal, 'dim'),
         modCd ? row('CORE CD', modCd, 'warn') : '',
     ].join('');
     if (weaponRows) { html += weaponRows; html += gap; }

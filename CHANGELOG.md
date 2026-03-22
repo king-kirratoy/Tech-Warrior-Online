@@ -5,6 +5,23 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.57 — Six UI fixes: dropdown clipping, page title, weapon stat rows, backpack labels, detail panel toggle
+
+**Date:** 2026-03-22
+
+Six targeted fixes across multiplayer, index.html, the build stats panels, and the loadout gear tab. Fix 1 (MP dropdown clipping): changed `.mp-left` from `overflow-y: auto` to `overflow: visible` in `css/menus.css` so absolutely-positioned `.pvp-dd-list` elements are no longer clipped by the column's scroll container; added a `.pvp-dd-list` CSS rule with `position:absolute`, `z-index:9999`, `max-height:280px`, `overflow-y:auto`, `top:100%`, `left/right:0` to ensure the dropdown scrolls internally rather than forcing the column to extend. Fix 2 (page title): changed `<title>` in `index.html` from "Tech Warrior: Alpha 3.0" to "Tech Warrior Online". Fix 3 (weapon stat rows): in both `js/garage.js` and `js/multiplayer.js`, removed the separate "L FIRE RATE" and "R FIRE RATE" rows and replaced them with single "L ARM" and "R ARM" rows that combine the weapon name and fire rate stats in the format `{Name} — {dps} dps · {N}ms cd` (e.g. "Submachine Gun — 159.6 dps · 47ms cd ★"); `— none` is shown when no weapon is equipped; the separate L ARM / R ARM name-only rows at the bottom of the multiplayer stats panel were removed since the info is now in the combined rows. Fix 4 (backpack slot labels): in `js/menus.js`, updated each backpack item card (`bp-cell`) to include a slot label (`ARMOR`, `CPU`, `AUGMENT`, `SHIELD`, `LEGS`, `ARMS`, `L ARM / R ARM`) as the first line above the item name, styled in 8px uppercase muted text; cell height increased from 76px to 84px to accommodate the extra line. Fix 5 (detail panel toggle): added `_invSelectedSource` and `_invSelectedKey` tracking vars in `js/menus.js`; `_showItemDetail()` now toggles — clicking the same item twice hides the panel; clicking a different item switches to it; `populateInventory()` resets both vars and hides the panel on each re-render so stale selection state is never carried forward.
+
+### Files Changed
+
+- `css/menus.css` — .mp-left overflow changed to visible; .pvp-dd-list added
+- `index.html` — <title> updated to "Tech Warrior Online"
+- `js/garage.js` — L ARM / R ARM combined stat rows replace L/R FIRE RATE rows
+- `js/multiplayer.js` — same combined row change; standalone L ARM/R ARM name rows removed
+- `js/menus.js` — bp-cell slot label added; _invSelectedSource/Key tracking; _showItemDetail toggle
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.56 — Supply shop improvements + loadout drag-and-drop slot highlighting
 
 **Date:** 2026-03-22
