@@ -46,18 +46,10 @@
   z-index: 1;
 }
 
-/* --- Main menu buttons
-   HTML: <button class="tw-btn menu-start-btn"> or
-         <button class="tw-btn tw-btn--danger menu-start-btn">
-   .menu-start-btn ONLY adds layout — .tw-btn handles all visuals.
---- */
+/* --- Main menu buttons — layout only, .tw-btn handles all visuals --- */
 .menu-start-btn {
-  align-self: center;
-  flex: none !important;
-  position: relative;
   text-align: left;
-  width: 340px;
-  z-index: 1;
+  width: 100%;
 }
 
 /* Disabled/coming-soon state — layout only, .tw-btn handles opacity */
@@ -95,15 +87,9 @@
   outline: none !important;
 }
 
-/* --- Pause menu buttons
-   HTML: <button class="tw-btn pause-menu-btn"> or
-         <button class="tw-btn tw-btn--danger pause-menu-btn">
-   .pause-menu-btn ONLY adds layout — .tw-btn handles all visuals.
---- */
+/* --- Pause menu buttons — layout only, .tw-btn handles all visuals --- */
 .pause-menu-btn {
-  border-radius: 6px;
-  border-left-width: 3px;
-  min-width: 200px;
+  width: 100%;
 }
 
 /* ============================================================
