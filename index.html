@@ -123,9 +123,9 @@
         <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;" onclick="deployMech()">Deploy ›</button>
       </div>
       <div class="hg-body">
-        <div class="hg-sidebar">
-          <div class="hg-section-label">Chassis</div>
-          <div id="chassis-select-row">
+        <div class="hg-left">
+          <div class="hg-left-top">
+            <div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:8px;">Chassis</div>
             <button id="c-light"  class="hg-chassis-btn" onclick="setChassis('light')">
               <span>Light</span><span class="hg-chassis-sub">Fast / Agile</span>
             </button>
@@ -135,35 +135,32 @@
             <button id="c-heavy"  class="hg-chassis-btn" onclick="setChassis('heavy')">
               <span>Heavy</span><span class="hg-chassis-sub">Tank / Brawler</span>
             </button>
-          </div>
-          <div class="hg-section-label">Colour</div>
-          <div id="ddw-C" class="dd-wrap">
-            <div class="dd-selected" id="dds-C" onclick="toggleDD('C')">
-              <span id="dd-color-swatch-C" class="dd-color-swatch-header"></span>
-              <span class="dd-name" id="ddn-C">Green</span>
-              <span class="dd-arrow">▼</span>
+            <div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-top:12px;margin-bottom:8px;">Colour</div>
+            <div id="ddw-C" class="dd-wrap">
+              <div class="dd-selected" id="dds-C" onclick="toggleDD('C')">
+                <span id="dd-color-swatch-C" class="dd-color-swatch-header"></span>
+                <span class="dd-name" id="ddn-C">Green</span>
+                <span class="dd-arrow">▼</span>
+              </div>
+              <div class="dd-list" id="ddl-C"></div>
             </div>
-            <div class="dd-list" id="ddl-C"></div>
+            <div id="dual-explosive-warn" style="font-size:9px;letter-spacing:1px;color:var(--sci-gold);display:none;margin-top:8px;">⚠ Dual explosive — high self-damage risk</div>
           </div>
-        </div>
-        <div class="hg-center">
-          <div id="preview-container" style="width:240px;height:240px;border:1px solid var(--sci-cyan-border);background:var(--sci-surface);display:flex;justify-content:center;align-items:center;position:relative;">
-            <div class="sci-corner sci-corner-tl"></div>
-            <div class="sci-corner sci-corner-tr"></div>
-            <div class="sci-corner sci-corner-bl"></div>
-            <div class="sci-corner sci-corner-br"></div>
-            <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;">
+          <div class="hg-preview-zone">
+            <div id="preview-container" style="width:160px;height:160px;border:1px solid var(--sci-cyan-border);background:var(--sci-surface);display:flex;justify-content:center;align-items:center;position:relative;flex-shrink:0;">
+              <div class="sci-corner sci-corner-tl"></div>
+              <div class="sci-corner sci-corner-tr"></div>
+              <div class="sci-corner sci-corner-bl"></div>
+              <div class="sci-corner sci-corner-br"></div>
+              <img id="preview-img" src="assets/medium-mech.png" style="max-width:90%;max-height:90%;object-fit:contain;">
+            </div>
+            <div id="preview-chassis-label" style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;text-align:center;"></div>
           </div>
-          <div id="dual-explosive-warn" style="font-size:9px;letter-spacing:1px;color:var(--sci-gold);display:none;text-align:center;">⚠ Dual explosive loadout — high self-damage risk</div>
         </div>
         <div class="hg-right">
-          <div style="padding:12px 16px;border-bottom:1px solid var(--sci-line);">
-            <div class="hg-stat-label">Build stats</div>
-          </div>
+          <div class="hg-stats-header">Build stats</div>
           <div id="garage-stats-panel"></div>
-          <div class="hg-deploy-zone">
-            <div id="starter-loadout-panel" style="margin-bottom:12px;"></div>
-          </div>
+          <div id="starter-loadout-panel"></div>
         </div>
       </div>
     </div>

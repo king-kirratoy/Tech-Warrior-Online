@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.50 — Hangar layout redesign: two-column split with left chassis/preview column and full-width stats panel
+
+**Date:** 2026-03-22
+
+Full hangar layout overhaul across three files. In `css/garage.css`: removed `.hg-center` and `.hg-sidebar`/`.hg-section-label` (replaced by previous session); added `.hg-left` (260px fixed, border-right, flex column), `.hg-left-top` (chassis buttons + colour dropdown, border-bottom), `.hg-preview-zone` (centered flex column for mech preview image + label); replaced old `.hg-right` (fixed 320px) with new `flex:1` version that takes all remaining width; replaced `.hg-stat-row` grid (120px columns) with new version (130px, `align-items:baseline`); added `.hg-stats-header` for the Build Stats heading row; added `.hg-gap` (6px spacer between stat groups); added CSS class variants `.hg-stat-val.dim`, `.hg-stat-val.green`, `.hg-stat-val.purple`; updated `.hg-deploy-zone` with `border-top` and `padding:16px 20px`. In `index.html`: completely rebuilt `.hg-body` contents — left column (`.hg-left`) holds chassis buttons, colour dropdown and dual-explosive warning in `.hg-left-top`, then mech preview image (160×160) and `#preview-chassis-label` in `.hg-preview-zone`; right column (`.hg-right`) has `.hg-stats-header` then `#garage-stats-panel` then `#starter-loadout-panel` (deploy zone removed from HTML, now CSS-only via `margin-top:auto`). In `js/garage.js`: `updateGarageStats()` rewritten to use CSS class variants (`green`, `dim`, `warn`, `purple`) instead of inline color styles, and to emit `<div class="hg-gap">` dividers between four logical groups (HP / Mobility+Defense / Weapons / Chassis+Passives); `refreshGarage()` now sets `#preview-chassis-label` text to `CHASSIS · COLOUR` after updating chassis button active states; `_updateStarterPanel()` rewritten to use `.hg-stat-val.green` / `.hg-stat-val.warn` class variants instead of `style="color:…"`.
+
+### Files Changed
+
+- `css/garage.css` — new two-column layout classes; hg-gap; class variants; hg-deploy-zone border-top
+- `index.html` — hg-body fully rebuilt with hg-left/hg-right structure
+- `js/garage.js` — updateGarageStats CSS classes + gap groups; refreshGarage chassis label; _updateStarterPanel class variants
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.49 — Five layout and UX fixes: campaign title centring, cloud toast, loading text, hangar stats, WARZONE label
 
 **Date:** 2026-03-22
