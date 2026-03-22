@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.33 — Refactor 5 card-style buttons to CSS custom property system (Findings 3, 7, 8, 9, 10)
+
+**Date:** 2026-03-22
+
+Replaced all inline `background`, `border`, `border-left`, and `box-shadow` color overrides on the five card-style buttons identified in BUTTON_AUDIT.md. Each button's dynamic accent color is now passed as a single CSS custom property (`style="--card-color:${color};"`) and referenced in new CSS modifier classes added to `css/menus.css`: `.chassis-card` (with `.active` and `.locked` states), `.chapter-tab` (with `.active` and `.locked` states), `.mission-card` (with `.selected` and `.completed` states), `.shop-item-card` (with `.selected` state), and `.shop-sell-card`. In `js/menus.js` the chassis card button was simplified to `class="tw-btn chassis-card"` plus `active` state from JS. In `js/campaign-system.js` the chapter tab `cls` string injection was replaced with state classes, and all three shop/mission card buttons were updated to their new modifier classes with `--card-color` only.
+
+### Files Changed
+
+- `css/menus.css` — five new card modifier class sections added
+- `js/menus.js` — chassis card button updated (Finding 3)
+- `js/campaign-system.js` — chapter tab, mission card, shop item card, and shop sell card buttons updated (Findings 7–10)
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.32 — Fix 4 non-compliant buttons (Findings 1, 2, 4, 5)
 
 **Date:** 2026-03-22

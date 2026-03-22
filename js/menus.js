@@ -777,10 +777,7 @@ function _renderChassisSelect(overlay) {
     for (const ch of ['light', 'medium', 'heavy']) {
         const info = chassisInfo[ch];
         const isSelected = (_selectedNewChassis === ch);
-        const bgColor = isSelected ? UI_COLORS.gold12 : UI_COLORS.surface03;
-        const borderColor = isSelected ? info.color : (info.color + '40');
-        const shadowStyle = isSelected ? 'box-shadow:0 0 16px ' + info.color + '33,inset 0 0 12px ' + info.color + '11;' : '';
-        html += `<button onclick="_highlightChassis('${ch}')" class="tw-btn" style="background:${bgColor};border:1px solid ${borderColor};border-radius:6px;border-top:3px solid ${info.color};flex:1;padding:24px 16px;text-align:center;${shadowStyle}">`;
+        html += `<button onclick="_highlightChassis('${ch}')" class="tw-btn chassis-card${isSelected ? ' active' : ''}" style="--card-color:${info.color};">`;
         html += `<div style="font-size:18px;letter-spacing:4px;color:${info.color};margin-bottom:8px;">${ch.toUpperCase()}</div>`;
         html += `<div style="font-size:10px;color:${info.color};opacity:0.7;margin-bottom:8px;">${info.hp} // ${info.speed}</div>`;
         html += `<div style="font-size:9px;color:${UI_COLORS.text50};line-height:1.5;">${info.desc}</div>`;
