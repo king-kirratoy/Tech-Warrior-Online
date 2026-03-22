@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.56 — Supply shop improvements + loadout drag-and-drop slot highlighting
+
+**Date:** 2026-03-22
+
+Four improvements across the shop and loadout systems. Fix 1 (sell confirmation): clicking a sell-column item now selects it (`_selectedSellIdx`) and shows a confirmation panel at the bottom of the sell column with the item's slot label, name, meta, a red "Sell — ⬡ N" button and a "Cancel" link; `_shopSell()` was rebuilt to add the sold item back to `_shopStock` with a `_soldBack:true` flag and its sell price as `_shopPrice` so the player can immediately buy it back, and only removes it from `_inventory` once confirmed; sold-back items appear in the buy list with a small muted "SOLD" badge; `_shopRestock()` and `_closeShop()` both reset `_selectedSellIdx`; `refreshShopStock()` wipes `_shopStock` entirely so sold-back items are cleared on restock. Fix 2 (side-by-side comparison): when a buy item is selected and an item is already equipped in the same slot, the detail panel now shows two stat cards side by side ("New" and "Equipped"), each listing all non-zero stats as rows; below the cards a "Changes if equipped:" section shows only the stats that differ with green/red coloring; when the slot is empty only the new item card is shown with all its stats. Fix 3 (slot label): all baseTypes now resolve to a friendly label (`armor → ARMOR`, `mod_system → CPU`, `aug_system → AUGMENT`, `shield_system → SHIELD`, `leg_system → LEGS`, `weapon → L ARM / R ARM`) via a new `_shopSlotLabels` map; this label appears as the topmost line of every buy and sell detail panel in small uppercase muted text; the meta line in every buy and sell row also shows the friendly slot name instead of the raw `baseType`; `_baseTypeToSlot` was also extended to include all system-type baseTypes (`mod_system`, `aug_system`, `shield_system`, `leg_system`) so the comparison correctly finds the equipped item for those slots. Fix 4 (drag highlighting): added `_getDragValidSlots(item)` helper in `menus.js` that returns the list of valid `data-slot` values for an item; the `dragstart` handler on inventory backpack cells now adds `drag-valid` to matching `.mech-equip-slot` elements and `drag-invalid` to all others; `dragend` removes both classes; in `css/menus.css`, `.mech-equip-slot.drag-invalid` shows a red tint and `.mech-equip-slot.drag-valid` shows a cyan tint.
+
+### Files Changed
+
+- `js/campaign-system.js` — _selectedSellIdx added; showShop() rebuilt with Fixes 1/2/3; _shopSelectSell() added; _shopSell() rewritten; _shopRestock() and _closeShop() reset _selectedSellIdx
+- `js/menus.js` — _getDragValidSlots() added; dragstart/dragend on bp-cell updated for slot highlighting
+- `css/menus.css` — .mech-equip-slot.drag-invalid and .drag-valid rules added; Supply Shop block from v5.55 unchanged
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.55 — Supply shop redesigned to two-column Buy/Sell layout
 
 **Date:** 2026-03-22

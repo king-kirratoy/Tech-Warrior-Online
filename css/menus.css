@@ -323,6 +323,16 @@
   box-shadow: 0 0 14px rgba(0,255,100,0.4);
 }
 
+.mech-equip-slot.drag-invalid {
+  background: rgba(255,77,106,0.15);
+  border-color: rgba(255,77,106,0.4);
+}
+
+.mech-equip-slot.drag-valid {
+  background: rgba(0,212,255,0.08);
+  border-color: rgba(0,212,255,0.4);
+}
+
 .mech-equip-slot .slot-label {
   color: rgba(255,215,0,0.45);
   font-size: var(--text-xs);
