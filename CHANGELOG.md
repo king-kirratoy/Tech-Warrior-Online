@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.72 — Warzone hangar: remove duplicate WEAPON/SHIELD rows from build stats
+
+**Date:** 2026-03-22
+
+Removed the `_updateStarterPanel()` call in `garage.js` that was appending duplicate WEAPON and SHIELD rows below the build stats panel; the info is already covered by the L ARM / R ARM and slot summary rows in `updateGarageStats()`. Both panels already shared the same `.hg-stat-row/.hg-stat-label/.hg-stat-val` classes — no font changes needed.
+
+---
+
 ## v5.71 — Comprehensive text color readability sweep
 
 **Date:** 2026-03-22
