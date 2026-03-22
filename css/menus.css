@@ -688,6 +688,7 @@
   display: flex;
   gap: 16px;
   padding: 14px 24px;
+  position: relative;
 }
 
 .cm-top > button,
@@ -699,13 +700,14 @@
 }
 
 .cm-top > .cm-title {
-  flex: 1 1 auto;
-  min-width: 0;
+  left: 50%;
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(-50%);
 }
 
 .cm-title {
   color: var(--sci-txt);
-  flex: 1;
   font-size: 11px;
   letter-spacing: 4px;
   text-transform: uppercase;

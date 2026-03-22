@@ -5,6 +5,22 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.49 — Five layout and UX fixes: campaign title centring, cloud toast, loading text, hangar stats, WARZONE label
+
+**Date:** 2026-03-22
+
+Five targeted fixes across hangar and campaign screens. In `css/menus.css`: added `position:relative` to `.cm-top` and changed `.cm-top > .cm-title` to `position:absolute; left:50%; transform:translateX(-50%); pointer-events:none;` so the CAMPAIGN title floats centred independently of the button positions. In `js/menus.js`: replaced the `_showCloudStatusToast` function body with a no-op `return;` to stop the CLOUD SAVE SYNCED banner from appearing; fixed two innerHTML assignments that were replacing the entire `#resume-campaign-btn` span structure with unstructured text — both now use `querySelector('span:nth-child(2)').textContent` to update only the label span, preserving the three-span layout; changed both occurrences of `'COMBAT SIMULATION'` in the hangar mode label to `'WARZONE'`. In `css/garage.css`: added `overflow:visible` to `.hg-sidebar` so the colour dropdown is not clipped; widened `.hg-right` to 320px with `overflow-y:auto`; changed `.hg-stat-row` to a two-column grid (120px label / 1fr value) with 8px gap; updated `.hg-stat-val` to `text-align:left` and removed the old ellipsis clipping; increased `.hg-center` padding to 32px. In `index.html`: preview container resized 160px → 240px.
+
+### Files Changed
+
+- `css/menus.css` — .cm-top position:relative; .cm-top > .cm-title absolute centred
+- `css/garage.css` — hg-sidebar overflow:visible; hg-right 320px; hg-stat-row grid; hg-stat-val left; hg-center padding 32px
+- `js/menus.js` — _showCloudStatusToast no-op; loading text span fix; WARZONE label
+- `index.html` — preview-container 240px
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.48 — Hangar panel widths, chassis button text, stat value wrapping
 
 **Date:** 2026-03-22

@@ -150,7 +150,7 @@ function returnToHangar() {
             _modeLabel.textContent = 'CAMPAIGN // LV.' + _lvl + ' // ROUND ' + _round;
             _modeLabel.style.color = UI_COLORS.gold45;
         } else {
-            _modeLabel.textContent = 'COMBAT SIMULATION';
+            _modeLabel.textContent = 'WARZONE';
             _modeLabel.style.color = UI_COLORS.cyan35;
         }
     }
@@ -386,7 +386,7 @@ function startGame(mode) {
         // Disable the triggering button and show a loading label while fetching
         const resumeBtn = document.getElementById('resume-campaign-btn');
         const origHtml  = resumeBtn ? resumeBtn.innerHTML : null;
-        if (resumeBtn) { resumeBtn.disabled = true; resumeBtn.innerHTML = '&#9733;&nbsp;&nbsp;LOADING SAVE DATA...'; }
+        if (resumeBtn) { resumeBtn.disabled = true; const _ls = resumeBtn.querySelector('span:nth-child(2)'); if (_ls) _ls.textContent = 'LOADING SAVE DATA...'; }
         _loadCampaignData()
             .catch(() => {
                 // Cloud load failed but _loadCampaignData already falls back to localStorage
@@ -416,7 +416,7 @@ function startGame(mode) {
         // Show mode label in hangar
         const modeLabel = document.getElementById('hangar-mode-label');
         if (modeLabel) {
-            modeLabel.textContent = 'COMBAT SIMULATION';
+            modeLabel.textContent = 'WARZONE';
             modeLabel.style.color = UI_COLORS.cyan35;
         }
         startHangarGrid();
@@ -700,7 +700,7 @@ async function showCampaignSubMenu() {
     if (!hasSave && resumeBtn) {
         resumeBtn.style.display = 'flex';
         resumeBtn.disabled = true;
-        resumeBtn.innerHTML = '&#9733;&nbsp;&nbsp;CHECKING SAVE DATA...';
+        const _cs = resumeBtn.querySelector('span:nth-child(2)'); if (_cs) _cs.textContent = 'CHECKING SAVE DATA...';
         try {
             const cloudData = await loadFromCloud();
             if (cloudData) hasSave = true;
@@ -1819,22 +1819,7 @@ async function _autoSubmitRun(entry) {
 
 // ── Cloud status toast ────────────────────────────────────────────
 
-function _showCloudStatusToast(msg, isError) {
-    let toast = document.getElementById('tw-cloud-toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'tw-cloud-toast';
-        toast.style.cssText = `position:fixed;top:16px;right:16px;z-index:99990;font-family:${UI_COLORS.fontMono};font-size:10px;letter-spacing:2px;padding:6px 12px;border-radius:4px;pointer-events:none;transition:opacity 0.4s ease;opacity:0;`;
-        document.body.appendChild(toast);
-    }
-    toast.textContent = msg;
-    toast.style.background = isError ? UI_COLORS.toastErrorBg : UI_COLORS.toastSuccessBg;
-    toast.style.border = isError ? `1px solid ${UI_COLORS.toastErrorBd}` : `1px solid ${UI_COLORS.toastSuccessBd}`;
-    toast.style.color  = isError ? UI_COLORS.toastErrorText : UI_COLORS.tealAlt;
-    toast.style.opacity = '1';
-    clearTimeout(toast._hideTimer);
-    toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2400);
-}
+function _showCloudStatusToast() { return; }
 
 // ── Score validation and submission ──────────────────────────────
 
