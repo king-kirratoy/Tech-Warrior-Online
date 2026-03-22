@@ -5,6 +5,19 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.31 — Remove letter-spacing shift from .tw-btn hover states
+
+**Date:** 2026-03-22
+
+Removed the hover letter-spacing expansion from all `.tw-btn` variants in `css/base.css`. The `--btn-ls-hover` and `--btn-ls-sm-hover` token definitions were deleted from `:root`, and the corresponding `letter-spacing` declarations were removed from the `:hover` rules of `.tw-btn`, `.tw-btn--danger`, `.tw-btn--gold`, `.tw-btn--green`, and `.tw-btn--sm` (the `.tw-btn--sm:hover` block, which contained only that one property, was removed entirely). Button hover effects now only change border color, text color, and text-shadow glow — text size and spacing remain identical to the default state. No other files were modified.
+
+### Files Changed
+
+- `css/base.css` — `--btn-ls-hover` and `--btn-ls-sm-hover` removed from `:root`; `letter-spacing` line removed from all five `.tw-btn` `:hover` rules
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.30 — Add missing tw-btn base class to menu and pause buttons
 
 **Date:** 2026-03-22
