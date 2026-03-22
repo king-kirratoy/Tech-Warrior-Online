@@ -44,13 +44,28 @@
      default (.tw-btn)     = menu scale: main menu, death screen, pause, leaderboard
      small   (.tw-btn--sm) = panel scale: hangar, campaign, shop, loadout
   */
-  --btn-padding:      13px 36px;
-  --btn-font-size:    13px;
-  --btn-ls:           4px;
+  --btn-padding:      11px 24px;
+  --btn-font-size:    11px;
+  --btn-ls:           3px;
 
-  --btn-padding-sm:   9px 20px;
-  --btn-font-size-sm: 11px;
-  --btn-ls-sm:        3px;
+  --btn-padding-sm:   8px 16px;
+  --btn-font-size-sm: 10px;
+  --btn-ls-sm:        2px;
+
+  /* Sci-fi Button Palette */
+  --sci-cyan:         #00d4ff;
+  --sci-cyan-dim:     rgba(0,212,255,0.08);
+  --sci-cyan-border:  rgba(0,212,255,0.35);
+  --sci-cyan-bright:  rgba(0,212,255,1);
+  --sci-red:          #ff4d6a;
+  --sci-red-dim:      rgba(255,77,106,0.08);
+  --sci-red-border:   rgba(255,77,106,0.35);
+  --sci-gold:         #ffd166;
+  --sci-line:         rgba(255,255,255,0.07);
+  --sci-txt:          rgba(255,255,255,0.9);
+  --sci-txt2:         rgba(255,255,255,0.4);
+  --sci-txt3:         rgba(255,255,255,0.18);
+  --sci-surface:      rgba(255,255,255,0.03);
 
   /* Box Glows (used on panels/cards, NOT on button hover) */
   --glow-cyan-sm: 0 0 8px  rgba(0,255,255,0.15);
