@@ -550,6 +550,10 @@ function togglePause() {
         if (topBtns) topBtns.style.display = 'none';
         if (po) {
             po.style.display = 'flex';
+            const statusEl = document.getElementById('pause-round-status');
+            if (statusEl && typeof _round !== 'undefined') {
+                statusEl.textContent = 'Round ' + String(_round).padStart(2, '0') + ' active';
+            }
             // Move keyboard focus to first pause menu button so Tab/arrows work immediately
             const firstPauseBtn = po.querySelector('button');
             if (firstPauseBtn) firstPauseBtn.focus();
