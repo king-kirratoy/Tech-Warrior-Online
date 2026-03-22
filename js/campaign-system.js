@@ -827,12 +827,23 @@ function showMissionSelect() {
     });
     html += '</div>'; // scrollable missions
 
+    // Mission briefing panel — visible only when a mission is selected
+    if (_selectedMissionIdx !== null) {
+        const sel = ch.missions[_selectedMissionIdx];
+        const lvColor = sel.enemyLevel <= 3 ? 'var(--sci-txt2)' : sel.enemyLevel <= 6 ? 'var(--sci-gold)' : 'var(--sci-red)';
+        html += '<div style="padding:16px 20px;border-top:1px solid var(--sci-line);background:var(--sci-cyan-dim);">';
+        html += `<div style="font-size:13px;letter-spacing:3px;color:var(--sci-cyan);margin-bottom:4px;">${sel.name}</div>`;
+        html += `<div style="font-size:10px;color:var(--sci-txt3);margin-bottom:8px;">${sel.briefing}</div>`;
+        html += `<div style="font-size:10px;letter-spacing:1px;color:${lvColor};">ENEMY LEVEL ${sel.enemyLevel}${sel.hasBoss ? ' &nbsp;·&nbsp; BOSS MISSION' : ''}</div>`;
+        html += '</div>';
+    }
+
     // Deploy bar
     html += '<div class="cm-bottom">';
     html += `<span style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);white-space:nowrap;">LVL ${_campaignState.playerLevel}</span>`;
     html += `<div class="cm-xp-bar"><div class="cm-xp-fill" style="width:${Math.round(xpPct * 100)}%"></div></div>`;
     if (_selectedMissionIdx !== null) {
-        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" class="tw-btn tw-btn--solid" style="width:auto;flex-shrink:0;">Deploy &#8250;</button>`;
+        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" class="tw-btn tw-btn--solid" style="width:auto;flex-shrink:0;margin-left:auto;">Deploy &#8250;</button>`;
     }
     html += '</div>'; // cm-bottom
 

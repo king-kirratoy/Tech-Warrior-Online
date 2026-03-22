@@ -716,7 +716,7 @@ async function showCampaignSubMenu() {
     if (resumeBtn) {
         if (hasSave) {
             resumeBtn.style.display = 'flex';
-            resumeBtn.innerHTML = '&#9733;&nbsp;&nbsp;RESUME CAMPAIGN';
+            resumeBtn.innerHTML = '<span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">★</span><span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Resume Campaign</span><span style="font-size:10px;color:var(--sci-txt3);">›</span>';
         } else {
             resumeBtn.style.display = 'none';
         }
