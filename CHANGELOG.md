@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.38 — Sci-fi three-column hangar UI rebuild
+
+**Date:** 2026-03-22
+
+Rebuilt the mech hangar UI with a three-column sci-fi split-panel layout. In `css/garage.css`: added a new HANGAR SPLIT-PANEL LAYOUT section with `.hg-top` (top bar with border), `.hg-title`, `.hg-subtitle`, `.hg-body` (flex row), `.hg-sidebar` (200px left column), `.hg-section-label`, `.hg-chassis-btn` (with `:hover`, `.active`, and `.hg-chassis-sub` sub-label), `.hg-center` (flex:1 preview area), `.hg-right` (220px right column), `.hg-stat-row`, `.hg-stat-label`, `.hg-stat-val` (+ `.warn`), and `.hg-deploy-zone`. In `index.html`: replaced the old single-column `#garage-menu` with the new three-column structure — left sidebar has chassis selector buttons (`hg-chassis-btn`) and the colour dropdown; center has the 160×160 preview with sci-corner brackets; right panel holds build stats and the deploy zone. In `js/garage.js`: `updateGarageStats()` and `_updateStarterPanel()` updated to emit `.hg-stat-row` / `.hg-stat-label` / `.hg-stat-val` markup; `refreshGarage()` chassis toggle was already using `classList.toggle('active')` and works unchanged.
+
+### Files Changed
+
+- `css/garage.css` — new hangar split-panel layout classes
+- `index.html` — #garage-menu rebuilt with three-column structure
+- `js/garage.js` — updateGarageStats and _updateStarterPanel use hg-stat-* classes
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.37 — Sci-fi split-panel main menu
 
 **Date:** 2026-03-22
