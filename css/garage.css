@@ -71,9 +71,8 @@
 /* --- Deploy Button --- */
 /* In HTML: class="tw-btn tw-btn--block" id="deploy-btn" */
 #deploy-btn {
-  font-size: var(--text-base);
-  overflow: hidden;
-  padding: 12px;
+  flex-shrink: 0;
+  width: auto;
 }
 
 #deploy-btn.overweight {
@@ -89,10 +88,7 @@
 
 /* --- Back/Main-Menu button (top-right) --- */
 #hangar-mm-btn {
-  box-sizing: border-box;
-  position: absolute;
-  right: 16px;
-  top: 14px;
+  flex-shrink: 0;
   width: auto;
 }
 
