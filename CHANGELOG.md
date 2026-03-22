@@ -5,6 +5,19 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.34 — Text, label, and layout changes to index.html
+
+**Date:** 2026-03-22
+
+Removed the "CALLSIGN REQUIRED TO CONTINUE" hint div from the callsign screen. Renamed the two main menu buttons: "COMBAT SIMULATION" → "WARZONE" and "MULTIPLAYER PVP" → "MULTIPLAYER". Removed the `margin-top:8px` inline style from the leaderboard menu button so all four buttons share consistent spacing from the parent flex gap. Moved the leaderboard back button from the bottom footer to the top-left of the leaderboard content div (wrapped in a flex row), added `tw-btn--sm` to its classes, and removed its `width`/`text-align` inline style overrides.
+
+### Files Changed
+
+- `index.html` — callsign hint removed; menu labels updated; leaderboard button margin removed; leaderboard back button repositioned
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.33 — Refactor 5 card-style buttons to CSS custom property system (Findings 3, 7, 8, 9, 10)
 
 **Date:** 2026-03-22
