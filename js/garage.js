@@ -297,10 +297,6 @@ function _updateStarterPanel() {
     let html = '';
     html += `<div class="gs-row"><span class="gs-label">WEAPON</span><span class="gs-val" style="color:${chColor}">${wL?.name || 'NONE'}</span></div>`;
     html += `<div class="gs-row"><span class="gs-label">SHIELD</span><span class="gs-val" style="color:${chColor}">${shName}</span></div>`;
-    html += `<div class="gs-row"><span class="gs-label">CPU</span><span class="gs-val" style="color:rgba(200,210,220,0.4);">— find through loot —</span></div>`;
-    html += `<div class="gs-row"><span class="gs-label">LEGS</span><span class="gs-val" style="color:rgba(200,210,220,0.4);">— find through loot —</span></div>`;
-    html += `<div class="gs-row"><span class="gs-label">AUGMENT</span><span class="gs-val" style="color:rgba(200,210,220,0.4);">— find through loot —</span></div>`;
-    html += `<div style="margin-top:10px;font-size:10px;letter-spacing:1px;color:rgba(0,255,255,0.4);line-height:1.6;">Find weapons, shields, mods, legs, and augments as loot drops during combat. Equip them in the LOADOUT menu.</div>`;
     panel.innerHTML = html;
 }
 

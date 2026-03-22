@@ -29,7 +29,6 @@
 
         <button id="callsign-proceed-btn" class="tw-btn" onclick="proceedToMainMenu()" disabled>&#9654;&nbsp; PROCEED</button>
 
-        <div style="margin-top:16px;font-size:9px;letter-spacing:2px;color:var(--hud-cyan-border);">CALLSIGN REQUIRED TO CONTINUE</div>
     </div>
 </div>
 
@@ -40,9 +39,9 @@
     <div class="menu-subtitle">Combat Simulation Alpha 3.0</div>
     <div id="main-menu-buttons" style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
         <button id="campaign-btn" class="tw-btn menu-start-btn" onclick="showCampaignSubMenu()">&#9733;&nbsp;&nbsp;CAMPAIGN</button>
-        <button class="tw-btn menu-start-btn" onclick="startGame('simulation')">&#9654;&nbsp;&nbsp;COMBAT SIMULATION</button>
-        <button class="tw-btn menu-start-btn" onclick="startMultiplayer()">&#9670;&nbsp;&nbsp;MULTIPLAYER PVP</button>
-        <button class="tw-btn menu-start-btn" onclick="showLeaderboard()" style="margin-top:8px;">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
+        <button class="tw-btn menu-start-btn" onclick="startGame('simulation')">&#9654;&nbsp;&nbsp;WARZONE</button>
+        <button class="tw-btn menu-start-btn" onclick="startMultiplayer()">&#9670;&nbsp;&nbsp;MULTIPLAYER</button>
+        <button class="tw-btn menu-start-btn" onclick="showLeaderboard()">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
     </div>
     <!-- Campaign sub-menu (Resume / New) -->
     <div id="campaign-sub-menu" style="display:none;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
@@ -71,9 +70,9 @@
                 <div id="chassis-select-row" class="dd-row">
                     <span class="dd-label">■ CHASSIS</span>
                     <div style="display:flex;gap:6px;flex:1;">
-                        <button id="c-light"  class="tw-btn" onclick="setChassis('light')">LIGHT</button>
-                        <button id="c-medium" class="tw-btn" onclick="setChassis('medium')">MEDIUM</button>
-                        <button id="c-heavy"  class="tw-btn" onclick="setChassis('heavy')">HEAVY</button>
+                        <button id="c-light"  class="tw-btn tw-btn--sm" onclick="setChassis('light')">LIGHT</button>
+                        <button id="c-medium" class="tw-btn tw-btn--sm" onclick="setChassis('medium')">MEDIUM</button>
+                        <button id="c-heavy"  class="tw-btn tw-btn--sm" onclick="setChassis('heavy')">HEAVY</button>
                     </div>
                 </div>
 
@@ -111,10 +110,8 @@
                     <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 8px rgba(0,255,255,0.6));">
                 </div>
 
-                <div style="width:100%;margin-top:auto;display:flex;flex-direction:column;gap:8px;">
-                    <button id="hangar-mm-btn" class="tw-btn tw-btn--danger tw-btn--sm" onclick="returnToMainMenu()">&#9664;&nbsp; BACK</button>
-                    <button id="deploy-btn" class="tw-btn tw-btn--block" onclick="deployMech()">DEPLOY MECH</button>
-                </div>
+                <button id="deploy-btn" class="tw-btn tw-btn--block" style="margin-top:8px;" onclick="deployMech()">DEPLOY MECH</button>
+                <button id="hangar-mm-btn" class="tw-btn tw-btn--danger tw-btn--sm" style="margin-top:auto;" onclick="returnToMainMenu()">&#9664;&nbsp; BACK</button>
 
             </div><!-- /right -->
         </div>
@@ -126,6 +123,10 @@
      ============================================================ -->
 <div id="leaderboard-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,5,15,0.96);z-index:10001;font-family:var(--font-mono);overflow-y:auto;">
     <div style="max-width:700px;margin:0 auto;padding:40px 20px;">
+
+        <div style="display:flex;justify-content:flex-start;margin-bottom:24px;">
+            <button onclick="closeLeaderboard()" class="tw-btn tw-btn--danger tw-btn--sm menu-start-btn">&#9664;&nbsp;&nbsp;BACK</button>
+        </div>
 
         <!-- Header -->
         <div style="text-align:center;margin-bottom:32px;">
@@ -144,11 +145,6 @@
         <div id="lb-loading" style="text-align:center;color:rgba(0,210,255,0.4);font-size:11px;letter-spacing:3px;padding:40px 0;">LOADING SCORES...</div>
         <div id="lb-table" style="display:none;"></div>
         <div id="lb-empty" style="display:none;text-align:center;color:rgba(0,210,255,0.3);font-size:11px;letter-spacing:3px;padding:40px 0;">NO RUNS SUBMITTED YET.<br><br>BE THE FIRST.</div>
-
-        <!-- Footer -->
-        <div style="text-align:center;margin-top:32px;">
-            <button onclick="closeLeaderboard()" class="tw-btn tw-btn--danger menu-start-btn" style="width:220px;text-align:center;">&#9664;&nbsp;&nbsp;BACK</button>
-        </div>
 
     </div>
 </div>
