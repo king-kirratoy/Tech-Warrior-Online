@@ -5,6 +5,21 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.63 — Warzone/multiplayer CSS unification + colour label + backpack comparison
+
+**Date:** 2026-03-22
+
+Three fixes across `index.html`, `css/garage.css`, and `js/menus.js`. Fix 1 (warzone uses exact multiplayer CSS classes): in `index.html` the warzone title `<div>` was replaced with `<div class="mp-screen-title">` (same class as the multiplayer screen title), the build-stats header was changed from `hg-stats-header` to `mp-stats-header` (they had identical properties — the difference was class-name drift), and all three chassis buttons were changed from `hg-chassis-btn` to `mp-chassis-btn`; the now-unused `.hg-chassis-btn / :hover / .active` CSS block was removed from `garage.css`. Fix 2 (colour label in warzone): the colour dropdown in the warzone sidebar lacked an inline label to its left; restructured the row to be a `mp-dd-row` wrapper with a `mp-dd-label` span ("Colour") to the left and `flex:1` on the `ddw-C` wrap — matching the multiplayer layout exactly; also updated the `.dd-selected` border in `garage.css` from hard-coded `rgba(0,255,255,0.25)` to `var(--sci-cyan-border)` for consistency. Fix 3 (backpack item comparison): `_buildItemComparisonHTML` in `menus.js` was rewritten to show a side-by-side "NEW / EQUIPPED" stat-card layout plus a "CHANGES IF EQUIPPED:" diff section below (matching the supply shop style); for weapon items, `_compareArm` (default `'L'`, reset on each new item open) controls which arm is used for comparison, and a small "vs R ARM" toggle button appears when the other arm also has a weapon equipped; `_showItemDetail` was split into a toggle-guard entry-point plus a `_renderItemDetail` function so that `_setCompareArm` can switch arms and re-render without re-triggering the toggle; the weapon EQUIP button now calls `_equipItemToSlot(idx, _compareArm)` so it equips directly to the currently compared arm rather than showing the generic arm-picker.
+
+### Files Changed
+
+- `index.html` — warzone title, stats header, chassis buttons, colour dd-row
+- `css/garage.css` — removed .hg-chassis-btn rules; dd-selected border uses var(--sci-cyan-border)
+- `js/menus.js` — _compareArm, _setCompareArm, _renderItemDetail, _buildItemComparisonHTML rewritten
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.62 — Supply shop button width fixes
 
 **Date:** 2026-03-22
