@@ -205,6 +205,7 @@ function returnToMainMenu() {
         menu.style.opacity = '0';
         menu.style.transition = 'opacity 0.5s ease';
         _updateCampaignButton();
+        _updateMainMenuStats();
         setTimeout(() => { menu.style.opacity = '1'; }, 20);
     }
 }
@@ -441,6 +442,7 @@ function proceedToMainMenu() {
         mm.style.opacity = '0';
         mm.style.transition = 'opacity 0.5s ease';
         _updateCampaignButton();
+        _updateMainMenuStats();
         setTimeout(() => { mm.style.opacity = '1'; }, 20);
     }, 500);
 }
@@ -548,6 +550,10 @@ function togglePause() {
         if (topBtns) topBtns.style.display = 'none';
         if (po) {
             po.style.display = 'flex';
+            const statusEl = document.getElementById('pause-round-status');
+            if (statusEl && typeof _round !== 'undefined') {
+                statusEl.textContent = 'Round ' + String(_round).padStart(2, '0') + ' active';
+            }
             // Move keyboard focus to first pause menu button so Tab/arrows work immediately
             const firstPauseBtn = po.querySelector('button');
             if (firstPauseBtn) firstPauseBtn.focus();
@@ -647,6 +653,31 @@ function _updateCampaignButton() {
     if (btn) btn.innerHTML = '&#9733;&nbsp;&nbsp;CAMPAIGN';
     // Reset sub-menu state
     hideCampaignSubMenu();
+}
+
+function _updateMainMenuStats() {
+    const callsignEl = document.getElementById('mm-callsign');
+    if (callsignEl && typeof _playerCallsign !== 'undefined') {
+        callsignEl.textContent = _playerCallsign || '—';
+    }
+    const missionsEl = document.getElementById('mm-stat-missions');
+    if (missionsEl && typeof _campaignState !== 'undefined') {
+        missionsEl.textContent = Object.keys(_campaignState.completedMissions || {}).length || '0';
+    }
+    const roundEl = document.getElementById('mm-stat-round');
+    if (roundEl && typeof _bestRound !== 'undefined') {
+        roundEl.textContent = _bestRound || '—';
+    }
+    const fillEl = document.getElementById('mm-xp-fill');
+    const textEl = document.getElementById('mm-xp-text');
+    if (fillEl && typeof _campaignState !== 'undefined') {
+        const level = _campaignState.playerLevel || 1;
+        const xpCur = (_campaignState.playerXP || 0) - (typeof getXPForLevel === 'function' ? getXPForLevel(level) : 0);
+        const xpNext = typeof getXPToNextLevel === 'function' ? getXPToNextLevel(level) : 100;
+        const pct = xpNext > 0 ? Math.min(100, Math.round((xpCur / xpNext) * 100)) : 100;
+        fillEl.style.width = pct + '%';
+        if (textEl) textEl.textContent = 'LVL ' + level + ' — ' + xpCur + ' / ' + xpNext + ' XP';
+    }
 }
 
 async function showCampaignSubMenu() {
@@ -833,6 +864,7 @@ function _cancelNewCampaign() {
     const menu = document.getElementById('main-menu');
     if (menu) { menu.style.display = 'flex'; menu.style.opacity = '1'; }
     hideCampaignSubMenu();
+    _updateMainMenuStats();
 }
 
 // ═══════════ STATS AND INVENTORY UI ═══════════

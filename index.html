@@ -34,22 +34,77 @@
 
 <!-- MAIN MENU (shown after callsign) -->
 <div id="main-menu" style="display:none;">
-    <canvas id="menu-canvas"></canvas>
-    <div class="menu-title">TECH WARRIOR ONLINE</div>
-    <div class="menu-subtitle">Combat Simulation Alpha 3.0</div>
-    <div id="main-menu-buttons" style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
-        <button id="campaign-btn" class="tw-btn menu-start-btn" onclick="showCampaignSubMenu()">&#9733;&nbsp;&nbsp;CAMPAIGN</button>
-        <button class="tw-btn menu-start-btn" onclick="startGame('simulation')">&#9654;&nbsp;&nbsp;WARZONE</button>
-        <button class="tw-btn menu-start-btn" onclick="startMultiplayer()">&#9670;&nbsp;&nbsp;MULTIPLAYER</button>
-        <button class="tw-btn menu-start-btn" onclick="showLeaderboard()">&#9776;&nbsp;&nbsp;LEADERBOARD</button>
+  <canvas id="menu-canvas"></canvas>
+  <div class="mm-left">
+    <div class="sci-corner sci-corner-tl"></div>
+    <div class="sci-corner sci-corner-bl"></div>
+    <div class="mm-eyebrow">// System online</div>
+    <div class="mm-title">TECH<br><span class="mm-title-accent">WARRIOR</span><br>ONLINE</div>
+    <nav class="mm-nav" id="main-menu-buttons">
+      <div class="sci-nav-item active" onclick="showCampaignSubMenu()">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">01</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Campaign</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+      <div class="sci-nav-item" onclick="startGame('simulation')">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">02</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Warzone</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+      <div class="sci-nav-item" onclick="startMultiplayer()">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">03</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Multiplayer</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+      <div class="sci-nav-item" onclick="showLeaderboard()">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">04</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Leaderboard</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+    </nav>
+    <div id="campaign-sub-menu" style="display:none;flex-direction:column;gap:2px;margin-top:2px;">
+      <div class="sci-nav-item" id="resume-campaign-btn" onclick="startGame('campaign')" style="display:none;">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">01</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Resume Campaign</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+      <div class="sci-nav-item" id="new-campaign-btn" onclick="confirmNewCampaign()">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">01</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">New Campaign</span>
+        <span style="font-size:10px;color:var(--sci-txt3);">›</span>
+      </div>
+      <div class="sci-nav-item" onclick="hideCampaignSubMenu()" style="color:var(--sci-red);border-left-color:transparent;">
+        <span style="font-size:9px;color:var(--sci-txt3);min-width:20px;">←</span>
+        <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Back</span>
+      </div>
     </div>
-    <!-- Campaign sub-menu (Resume / New) -->
-    <div id="campaign-sub-menu" style="display:none;flex-direction:column;align-items:center;gap:12px;margin-top:8px;">
-        <button id="resume-campaign-btn" class="tw-btn menu-start-btn" onclick="startGame('campaign')" style="display:none;">&#9733;&nbsp;&nbsp;RESUME CAMPAIGN</button>
-        <button id="new-campaign-btn" class="tw-btn menu-start-btn" onclick="confirmNewCampaign()">&#9733;&nbsp;&nbsp;NEW CAMPAIGN</button>
-        <button class="tw-btn tw-btn--danger menu-start-btn" onclick="hideCampaignSubMenu()" style="margin-top:8px;">&#9664;&nbsp;&nbsp;BACK</button>
+  </div>
+  <div class="mm-right">
+    <div class="sci-corner sci-corner-tr"></div>
+    <div class="sci-corner sci-corner-br"></div>
+    <div class="mm-stats-row">
+      <div>
+        <div class="mm-stat-num" id="mm-stat-missions">—</div>
+        <div class="mm-stat-label">Missions</div>
+      </div>
+      <div class="mm-stat-divider"></div>
+      <div>
+        <div class="mm-stat-num" id="mm-stat-round">—</div>
+        <div class="mm-stat-label">Best round</div>
+      </div>
     </div>
-    <div class="menu-version" id="main-menu-version">v5.23 // ALPHA BUILD</div>
+    <div class="sci-divider" style="width:100%;"><span style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">Pilot status</span></div>
+    <div style="margin-top:20px;">
+      <div style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:6px;">Callsign</div>
+      <div id="mm-callsign" style="font-size:16px;letter-spacing:4px;color:var(--sci-cyan);">—</div>
+    </div>
+    <div style="margin-top:24px;">
+      <div style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);text-transform:uppercase;margin-bottom:6px;">Campaign level</div>
+      <div class="mm-xp-bar"><div class="mm-xp-fill" id="mm-xp-fill" style="width:0%;"></div></div>
+      <div id="mm-xp-text" style="font-size:9px;color:var(--sci-txt3);margin-top:4px;">—</div>
+    </div>
+    <div id="main-menu-version" class="menu-version" style="margin-top:auto;"></div>
+  </div>
 </div>
 
 <!-- ============================================================
@@ -59,62 +114,58 @@
 <div id="deploy-cover" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:998;pointer-events:none;"></div>
 <div id="ui-layer">
     <div class="stat-readout" id="garage-menu">
-        <h2 id="hangar-title" style="text-align:center;margin:0 0 20px;letter-spacing:8px;color:var(--cyan);font-family:var(--font-mono);font-size:26px;text-shadow:0 0 18px var(--cyan-mid),0 0 40px var(--cyan-glow);font-weight:normal;">MECH HANGAR</h2>
-        <div id="hangar-mode-label" style="text-align:center;margin:-14px 0 16px;font-size:10px;letter-spacing:4px;color:rgba(0,255,255,0.35);font-family:var(--font-mono);"></div>
-
-        <div style="display:flex;gap:28px;align-items:stretch;">
-
-            <!-- LEFT: BUILD OPTIONS -->
-            <div style="flex:1;min-width:0;">
-
-                <div id="chassis-select-row" class="dd-row">
-                    <span class="dd-label">■ CHASSIS</span>
-                    <div style="display:flex;gap:6px;flex:1;">
-                        <button id="c-light"  class="tw-btn tw-btn--sm" onclick="setChassis('light')">LIGHT</button>
-                        <button id="c-medium" class="tw-btn tw-btn--sm" onclick="setChassis('medium')">MEDIUM</button>
-                        <button id="c-heavy"  class="tw-btn tw-btn--sm" onclick="setChassis('heavy')">HEAVY</button>
-                    </div>
-                </div>
-
-                <div class="dd-row">
-                    <span class="dd-label">■ COLOUR</span>
-                    <div class="dd-wrap" id="ddw-C">
-                        <div class="dd-selected" id="dds-C" onclick="toggleDD('C')">
-                            <span id="dd-color-swatch-C" class="dd-color-swatch-header"></span>
-                            <span class="dd-name" id="ddn-C">GREEN</span>
-                            <span class="dd-arrow">▼</span>
-                        </div>
-                        <div class="dd-list" id="ddl-C"></div>
-                    </div>
-                </div>
-
-                <!-- Starter loadout info panel (read-only) -->
-                <div style="margin-top:16px;">
-                    <div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);font-family:var(--font-mono);margin-bottom:6px;text-transform:uppercase;">■ STARTER LOADOUT</div>
-                    <div id="starter-loadout-panel"></div>
-                </div>
-
-                <div style="margin-top:16px;">
-                    <div style="font-size:10px;letter-spacing:3px;color:rgba(0,255,255,0.7);font-family:var(--font-mono);margin-bottom:6px;text-transform:uppercase;">■ BUILD DETAILS</div>
-                    <div id="garage-stats-panel"></div>
-                </div>
-
-                <div id="dual-explosive-warn">⚠ DUAL EXPLOSIVE LOADOUT — high self-damage risk</div>
-
-            </div><!-- /left -->
-
-            <!-- RIGHT: PREVIEW + WEIGHT + DEPLOY -->
-            <div style="width:210px;flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;gap:0;">
-
-                <div id="preview-container" style="width:200px;height:140px;border:1px solid rgba(0,255,255,0.4);background:rgba(0,10,20,0.6);box-shadow:0 0 14px rgba(0,255,255,0.12);display:flex;justify-content:center;align-items:center;">
-                    <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 8px rgba(0,255,255,0.6));">
-                </div>
-
-                <button id="deploy-btn" class="tw-btn tw-btn--block" style="margin-top:8px;" onclick="deployMech()">DEPLOY MECH</button>
-                <button id="hangar-mm-btn" class="tw-btn tw-btn--danger tw-btn--sm" style="margin-top:auto;" onclick="returnToMainMenu()">&#9664;&nbsp; BACK</button>
-
-            </div><!-- /right -->
+      <div class="hg-top">
+        <button id="hangar-mm-btn" class="tw-btn tw-btn--ghost tw-btn--sm" onclick="returnToMainMenu()">‹ Back</button>
+        <div style="flex:1;">
+          <div class="hg-title" id="hangar-title">Mech Hangar</div>
+          <div class="hg-subtitle" id="hangar-mode-label"></div>
         </div>
+        <button id="deploy-btn" class="tw-btn tw-btn--solid" onclick="deployMech()">Deploy ›</button>
+      </div>
+      <div class="hg-body">
+        <div class="hg-sidebar">
+          <div class="hg-section-label">Chassis</div>
+          <div id="chassis-select-row">
+            <button id="c-light"  class="hg-chassis-btn" onclick="setChassis('light')">
+              <span>Light</span><span class="hg-chassis-sub">Fast / Agile</span>
+            </button>
+            <button id="c-medium" class="hg-chassis-btn" onclick="setChassis('medium')">
+              <span>Medium</span><span class="hg-chassis-sub">Balanced</span>
+            </button>
+            <button id="c-heavy"  class="hg-chassis-btn" onclick="setChassis('heavy')">
+              <span>Heavy</span><span class="hg-chassis-sub">Tank / Brawler</span>
+            </button>
+          </div>
+          <div class="hg-section-label">Colour</div>
+          <div id="ddw-C" class="dd-wrap">
+            <div class="dd-selected" id="dds-C" onclick="toggleDD('C')">
+              <span id="dd-color-swatch-C" class="dd-color-swatch-header"></span>
+              <span class="dd-name" id="ddn-C">Green</span>
+              <span class="dd-arrow">▼</span>
+            </div>
+            <div class="dd-list" id="ddl-C"></div>
+          </div>
+        </div>
+        <div class="hg-center">
+          <div id="preview-container" style="width:160px;height:160px;border:1px solid var(--sci-cyan-border);background:var(--sci-surface);display:flex;justify-content:center;align-items:center;position:relative;">
+            <div class="sci-corner sci-corner-tl"></div>
+            <div class="sci-corner sci-corner-tr"></div>
+            <div class="sci-corner sci-corner-bl"></div>
+            <div class="sci-corner sci-corner-br"></div>
+            <img id="preview-img" src="assets/medium-mech.png" style="max-width:100%;max-height:100%;object-fit:contain;">
+          </div>
+          <div id="dual-explosive-warn" style="font-size:9px;letter-spacing:1px;color:var(--sci-gold);display:none;text-align:center;">⚠ Dual explosive loadout — high self-damage risk</div>
+        </div>
+        <div class="hg-right">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--sci-line);">
+            <div class="hg-stat-label">Build stats</div>
+          </div>
+          <div id="garage-stats-panel"></div>
+          <div class="hg-deploy-zone">
+            <div id="starter-loadout-panel" style="margin-bottom:12px;"></div>
+          </div>
+        </div>
+      </div>
     </div>
 </div><!-- /ui-layer -->
 
@@ -482,13 +533,30 @@
 <!-- Keep inventory-overlay as hidden alias so equip-prompt and toggleInventory still work -->
 <div id="inventory-overlay" style="display:none;"></div>
 
-<div id="pause-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;flex-direction:column;">
-  <div id="pause-text" style="font-family:var(--font-mono);font-size:36px;letter-spacing:12px;color:var(--cyan);text-transform:uppercase;text-shadow:0 0 30px rgba(0,255,255,0.8),0 0 60px rgba(0,255,255,0.4);animation:pausePulse 1.2s ease-in-out infinite;margin-bottom:40px;">PAUSED</div>
-  <div style="display:flex;flex-direction:column;gap:14px;align-items:center;">
-    <button onclick="togglePause();toggleStats();" class="tw-btn pause-menu-btn">LOADOUT</button>
-    <button onclick="goToMainMenu();" class="tw-btn tw-btn--danger pause-menu-btn">QUIT GAME</button>
+<div id="pause-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;flex-direction:column;">
+  <div class="ps-panel">
+    <div class="ps-header">
+      <div class="ps-title">Paused</div>
+      <div class="ps-status" id="pause-round-status">Round — active</div>
+    </div>
+    <div class="ps-body">
+      <button class="ps-btn" onclick="togglePause()">
+        <div class="ps-btn-icon"></div>
+        Resume
+      </button>
+      <button class="ps-btn" onclick="togglePause();toggleStats();">
+        <div class="ps-btn-icon"></div>
+        Loadout
+      </button>
+      <button class="ps-btn danger" onclick="goToMainMenu();">
+        <div class="ps-btn-icon"></div>
+        Quit game
+      </button>
+    </div>
+    <div class="ps-footer">
+      <div class="ps-hint">Press ESC to resume</div>
+    </div>
   </div>
-  <div style="margin-top:24px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px;color:rgba(0,255,255,0.35);">PRESS ESC TO CLOSE</div>
 </div>
 
 <!-- ═══ Scripts ═══ -->

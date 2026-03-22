@@ -745,122 +745,99 @@ function showMissionSelect() {
     let overlay = document.getElementById('mission-select-overlay');
     if (!overlay) return;
 
-    let html = '';
+    // Reset overlay to full-panel layout (override inline scrollable defaults)
+    overlay.style.padding = '0';
+    overlay.style.alignItems = 'stretch';
+    overlay.style.justifyContent = 'flex-start';
+    overlay.style.overflowY = 'hidden';
 
-    // ── Back button: top-left of overlay ──
-    html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--danger tw-btn--sm" style="position:absolute;top:20px;left:24px;">&#9664;&nbsp; BACK</button>`;
-
-    // ── Header: centered CAMPAIGN title ──
-    html += '<div style="width:100%;max-width:700px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;">';
-    html += `<div style="font-size:28px;letter-spacing:6px;color:${UI_COLORS.gold};text-shadow:0 0 20px ${UI_COLORS.goldGlow};">CAMPAIGN</div>`;
-    html += '</div>';
-
-    // ── Player level / XP bar + scrap ──
     const xpCur = _campaignState.playerXP - getXPForLevel(_campaignState.playerLevel);
     const xpNeeded = getXPToNextLevel(_campaignState.playerLevel);
     const xpPct = xpNeeded > 0 ? Math.min(1, xpCur / xpNeeded) : 1;
-    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;width:100%;max-width:700px;">';
-    html += `<div style="font-size:11px;letter-spacing:2px;color:${UI_COLORS.gold70};">LEVEL ${_campaignState.playerLevel}</div>`;
-    html += `<div style="flex:1;max-width:300px;height:6px;background:${UI_COLORS.surface08};border-radius:3px;overflow:hidden;">`;
-    html += `<div style="width:${xpPct * 100}%;height:100%;background:${UI_COLORS.gold};border-radius:3px;transition:width 0.3s;"></div>`;
-    html += `</div>`;
-    html += `<div style="font-size:10px;letter-spacing:1px;color:${UI_COLORS.gold40};">${xpCur} / ${xpNeeded} XP</div>`;
-    html += `<div style="font-size:11px;letter-spacing:2px;color:${UI_COLORS.goldGlow};margin-left:auto;">SCRAP: <span style="color:${UI_COLORS.gold};font-size:13px;">${typeof _scrap !== 'undefined' ? _scrap : 0}</span></div>`;
+
+    let html = '';
+
+    // ── Top bar ──
+    html += '<div class="cm-top">';
+    html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--ghost tw-btn--sm">&#8249; Back</button>`;
+    html += '<div class="cm-title">CAMPAIGN</div>';
+    html += `<span style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);white-space:nowrap;">LVL ${_campaignState.playerLevel} &nbsp;·&nbsp; ${xpCur} / ${xpNeeded} XP</span>`;
+    html += `<button onclick="_openShopFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm">Supply Shop</button>`;
+    html += `<button onclick="_openLoadoutFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm">Loadout</button>`;
     html += '</div>';
 
-    // ── Action buttons: Supply Shop, Upgrades, Loadout, Loadout Slots ──
-    html += '<div style="display:flex;gap:10px;margin-bottom:16px;width:100%;max-width:700px;">';
-    html += `<button onclick="_openShopFromMission()" class="tw-btn tw-btn--gold tw-btn--sm" style="flex:1;">SUPPLY SHOP</button>`;
-    html += `<button onclick="_showUpgradesPanel()" class="tw-btn tw-btn--green tw-btn--sm" style="flex:1;">UPGRADES</button>`;
-    html += `<button onclick="_openLoadoutFromMission()" class="tw-btn tw-btn--sm" style="flex:1;">LOADOUT</button>`;
-    html += `<button onclick="showLoadoutSlots()" class="tw-btn tw-btn--sm" style="flex:1;">LOADOUT SLOTS</button>`;
-    html += '</div>';
+    // ── Body ──
+    html += '<div class="cm-body">';
 
-    // ── Chapter tabs ──
-    html += '<div style="display:flex;gap:0;margin-bottom:16px;width:100%;max-width:700px;">';
+    // ── Left panel: chapter list ──
+    html += '<div class="cm-left">';
     CAMPAIGN_CHAPTERS.forEach((ch, idx) => {
         const unlocked = isChapterUnlocked(idx);
         const active = idx === _campaignState.currentChapter;
         const completed = getChapterCompletionCount(idx);
         const total = ch.missions.length;
-        const stateClass = active ? ' active' : (!unlocked ? ' locked' : '');
-        html += `<button onclick="${unlocked ? `_selectChapter(${idx})` : ''}" class="tw-btn tw-btn--sm chapter-tab${stateClass}" style="flex:1;">`;
-        html += `CH.${idx + 1}`;
-        if (unlocked) html += ` <span style="font-size:8px;opacity:0.5;">${completed}/${total}</span>`;
-        if (!unlocked) html += ` <span style="font-size:7px;opacity:0.4;">🔒</span>`;
-        html += '</button>';
+        let cls = 'cm-chapter';
+        if (active) cls += ' active';
+        if (!unlocked) cls += ' locked';
+        const clickAttr = unlocked ? `onclick="_selectChapter(${idx})"` : '';
+        html += `<div class="${cls}" ${clickAttr}>`;
+        html += `<div class="cm-chapter-num">CH.${idx + 1}</div>`;
+        html += `<div class="cm-chapter-name">${ch.title}</div>`;
+        html += `<div class="cm-chapter-prog">${completed} / ${total} missions</div>`;
+        html += '</div>';
     });
     html += '</div>';
 
-    // ── Current chapter info ──
-    const ch = CAMPAIGN_CHAPTERS[_campaignState.currentChapter];
-    html += `<div style="font-size:14px;letter-spacing:3px;color:${UI_COLORS.gold};margin-bottom:4px;">${ch.title}</div>`;
-    html += `<div style="font-size:11px;letter-spacing:1px;color:${UI_COLORS.text50};margin-bottom:16px;">${ch.desc}</div>`;
+    // ── Right panel: mission list + deploy bar ──
+    html += '<div class="cm-main">';
 
-    // ── Mission list (all missions selectable, including cleared ones) ──
-    html += '<div style="display:flex;flex-direction:column;gap:8px;max-width:700px;width:100%;">';
+    // Scrollable mission rows
+    html += '<div style="flex:1;overflow-y:auto;">';
+    const ch = CAMPAIGN_CHAPTERS[_campaignState.currentChapter];
     ch.missions.forEach((m, idx) => {
         const completed = isMissionCompleted(m.id);
         const isSelected = (_selectedMissionIdx === idx);
-        const levelDiff = m.enemyLevel - _campaignState.playerLevel;
-        const diffColor = levelDiff >= 3 ? UI_COLORS.redHard : levelDiff >= 1 ? UI_COLORS.orange : levelDiff === 0 ? UI_COLORS.greenAccent : levelDiff >= -2 ? UI_COLORS.diffEasy : UI_COLORS.diffTrivial;
-        const diffLabel = levelDiff >= 3 ? 'HARD' : levelDiff >= 1 ? 'TOUGH' : levelDiff === 0 ? 'EVEN' : levelDiff >= -2 ? 'EASY' : 'TRIVIAL';
+        let cls = 'cm-mission';
+        if (isSelected) cls += ' selected';
 
-        const blBase = isSelected ? UI_COLORS.gold : (completed ? UI_COLORS.greenAccent : UI_COLORS.gold40);
-        const stateClasses = (isSelected ? ' selected' : '') + (completed ? ' completed' : '');
+        html += `<div class="${cls}" onclick="_selectMission(${idx})">`;
 
-        html += `<button onclick="_selectMission(${idx})" class="tw-btn mission-card${stateClasses}" style="--card-color:${blBase};">`;
-
-        // Mission number
-        html += `<div style="font-size:18px;letter-spacing:2px;color:${completed ? UI_COLORS.greenAccent : UI_COLORS.gold60};min-width:30px;text-align:center;">${completed ? '✓' : (idx + 1)}</div>`;
-
-        // Mission info
-        html += '<div style="flex:1;min-width:0;">';
-        html += `<div style="font-size:12px;letter-spacing:1px;color:${isSelected ? UI_COLORS.gold : (completed ? UI_COLORS.green80 : UI_COLORS.text)};margin-bottom:2px;">${m.name}</div>`;
-        html += `<div style="font-size:10px;letter-spacing:0.5px;color:${UI_COLORS.text40};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.briefing}</div>`;
-        html += '</div>';
-
-        // Level + difficulty indicator
-        html += `<div style="text-align:right;min-width:60px;">`;
-        html += `<div style="font-size:11px;letter-spacing:1px;color:${diffColor};">LV.${m.enemyLevel}</div>`;
-        html += `<div style="font-size:8px;letter-spacing:1px;color:${diffColor};opacity:0.7;">${diffLabel}</div>`;
-        html += '</div>';
-
-        // Boss indicator
-        if (m.hasBoss) {
-            html += `<div style="font-size:9px;letter-spacing:1px;color:${UI_COLORS.redAlt};border:1px solid rgba(255,68,68,0.3);padding:2px 6px;border-radius:3px;">BOSS</div>`;
+        // Number / completion indicator
+        if (completed) {
+            html += `<span class="cm-mission-done">✓</span>`;
+        } else {
+            html += `<span class="cm-mission-num">${String(idx + 1).padStart(2, '0')}</span>`;
         }
+
+        // Name + briefing
+        html += '<div style="flex:1;min-width:0;">';
+        html += `<div class="cm-mission-name">${m.name}</div>`;
+        html += `<div class="cm-mission-brief">${m.briefing}</div>`;
+        html += '</div>';
+
+        // Level badge (red border if boss)
+        html += `<span class="cm-mission-lv${m.hasBoss ? ' boss' : ''}">LV.${m.enemyLevel}</span>`;
 
         // First-clear reward badge
         if (!completed && typeof getMissionReward === 'function' && getMissionReward(m.id)) {
-            html += `<div style="font-size:8px;letter-spacing:1px;color:${UI_COLORS.gold};border:1px solid ${UI_COLORS.gold30};padding:2px 5px;border-radius:3px;white-space:nowrap;">REWARD</div>`;
+            html += `<span style="font-size:8px;letter-spacing:1px;color:var(--sci-gold);border:1px solid rgba(255,209,102,0.3);padding:2px 5px;white-space:nowrap;">REWARD</span>`;
         }
 
-        html += '</button>';
-    });
-    html += '</div>';
-
-    // ── Mission briefing panel — shown inline when a mission is selected ──
-    if (_selectedMissionIdx !== null) {
-        const selMission = ch.missions[_selectedMissionIdx];
-        if (selMission) {
-            const levelDiff = selMission.enemyLevel - _campaignState.playerLevel;
-            const diffColor = levelDiff >= 3 ? UI_COLORS.redHard : levelDiff >= 1 ? UI_COLORS.orange : levelDiff === 0 ? UI_COLORS.greenAccent : levelDiff >= -2 ? UI_COLORS.diffEasy : UI_COLORS.diffTrivial;
-            html += `<div style="margin-top:16px;padding:14px 18px;background:${UI_COLORS.gold04};border:1px solid ${UI_COLORS.gold15};border-left:3px solid ${UI_COLORS.goldGlow};border-radius:4px;width:100%;max-width:700px;">`;
-            html += `<div style="font-size:13px;letter-spacing:3px;color:${UI_COLORS.gold};margin-bottom:4px;">${selMission.name.toUpperCase()}</div>`;
-            html += `<div style="font-size:10px;letter-spacing:0.5px;color:${UI_COLORS.text50};margin-bottom:8px;">${selMission.briefing}</div>`;
-            html += `<div style="font-size:10px;letter-spacing:1px;color:${diffColor};">ENEMY LEVEL ${selMission.enemyLevel} // YOUR LEVEL ${_campaignState.playerLevel}</div>`;
-            if (selMission.hasBoss) {
-                html += `<div style="font-size:9px;letter-spacing:1px;color:${UI_COLORS.redAlt};margin-top:4px;">BOSS ENCOUNTER</div>`;
-            }
-            html += '</div>';
-        }
-
-        // ── Deploy button — right-aligned with action buttons above ──
-        html += '<div style="display:flex;justify-content:flex-end;margin-top:16px;width:100%;max-width:700px;">';
-        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" class="tw-btn tw-btn--gold">DEPLOY</button>`;
         html += '</div>';
+    });
+    html += '</div>'; // scrollable missions
+
+    // Deploy bar
+    html += '<div class="cm-bottom">';
+    html += `<span style="font-size:9px;letter-spacing:2px;color:var(--sci-txt3);white-space:nowrap;">LVL ${_campaignState.playerLevel}</span>`;
+    html += `<div class="cm-xp-bar"><div class="cm-xp-fill" style="width:${Math.round(xpPct * 100)}%"></div></div>`;
+    if (_selectedMissionIdx !== null) {
+        html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" class="tw-btn tw-btn--solid">Deploy &#8250;</button>`;
     }
+    html += '</div>'; // cm-bottom
+
+    html += '</div>'; // cm-main
+    html += '</div>'; // cm-body
 
     overlay.innerHTML = html;
     overlay.style.display = 'flex';

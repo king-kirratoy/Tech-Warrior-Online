@@ -464,3 +464,151 @@
   margin-top: 6px;
   padding: 6px 10px;
 }
+
+/* ============================================================
+   HANGAR SPLIT-PANEL LAYOUT
+   ============================================================ */
+
+/* --- Top bar --- */
+.hg-top {
+  align-items: center;
+  background: #080b0e;
+  border-bottom: 1px solid var(--sci-line);
+  display: flex;
+  gap: 16px;
+  padding: 14px 24px;
+}
+
+.hg-title {
+  color: var(--sci-txt);
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.hg-subtitle {
+  color: var(--sci-txt3);
+  font-size: 9px;
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+
+/* --- Body row --- */
+.hg-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* --- Left sidebar (chassis + colour) --- */
+.hg-sidebar {
+  background: #080b0e;
+  border-right: 1px solid var(--sci-line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  width: 200px;
+}
+
+.hg-section-label {
+  color: var(--sci-txt3);
+  font-size: 9px;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  margin-top: 12px;
+  text-transform: uppercase;
+}
+
+.hg-section-label:first-child {
+  margin-top: 0;
+}
+
+/* --- Chassis selector buttons --- */
+.hg-chassis-btn {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--sci-line);
+  color: var(--sci-txt2);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  justify-content: space-between;
+  letter-spacing: 2px;
+  padding: 10px 14px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+
+.hg-chassis-btn:hover {
+  border-color: var(--sci-cyan-border);
+  color: var(--sci-cyan);
+}
+
+.hg-chassis-btn.active {
+  background: var(--sci-cyan-dim);
+  border-color: var(--sci-cyan-border);
+  color: var(--sci-cyan);
+}
+
+.hg-chassis-sub {
+  color: var(--sci-txt3);
+  font-size: 8px;
+}
+
+.hg-chassis-btn.active .hg-chassis-sub {
+  color: rgba(0,212,255,0.5);
+}
+
+/* --- Center (preview) --- */
+.hg-center {
+  align-items: center;
+  background: #080b0e;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* --- Right panel (stats + deploy) --- */
+.hg-right {
+  background: #080b0e;
+  border-left: 1px solid var(--sci-line);
+  display: flex;
+  flex-direction: column;
+  width: 220px;
+}
+
+.hg-stat-row {
+  align-items: baseline;
+  border-bottom: 1px solid var(--sci-line);
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+
+.hg-stat-label {
+  color: var(--sci-txt3);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.hg-stat-val {
+  color: var(--sci-cyan);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.hg-stat-val.warn {
+  color: var(--sci-gold);
+}
+
+/* --- Deploy zone (bottom of right panel) --- */
+.hg-deploy-zone {
+  margin-top: auto;
+  padding: 16px;
+}

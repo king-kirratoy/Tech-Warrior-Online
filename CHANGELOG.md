@@ -5,6 +5,79 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.40 — Sci-fi pause screen rebuild
+
+**Date:** 2026-03-22
+
+Rebuilt the pause screen overlay with a clean sci-fi panel design. In `css/menus.css`: added `.ps-panel` (300px, `--sci-cyan-border` frame, dark bg), `.ps-header` (flex space-between, border-bottom), `.ps-title` (cyan, 5px ls), `.ps-status` (txt3), `.ps-body` (flex column, gap 8px), `.ps-btn` (full-width, sci-surface bg, 3px ls + hover glow), `.ps-btn.danger` (red tint + hover), `.ps-btn-icon` (10×10 border box), `.ps-footer`, and `.ps-hint`. In `index.html`: replaced the old animated `PAUSED` heading and `tw-btn` button list with the new `ps-panel` structure — header shows title + live round status, body has Resume / Loadout / Quit game rows with `ps-btn-icon` accents, footer shows the ESC hint. In `js/menus.js`: `togglePause()` now writes `'Round 01 active'` (zero-padded `_round`) into `#pause-round-status` each time the overlay opens.
+
+### Files Changed
+
+- `css/menus.css` — new pause panel classes
+- `index.html` — #pause-overlay rebuilt with ps-panel structure
+- `js/menus.js` — togglePause() populates #pause-round-status
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.39 — Sci-fi campaign mission select rebuild
+
+**Date:** 2026-03-22
+
+Rebuilt the campaign mission select screen with a sci-fi split-panel layout. In `css/menus.css`: added a new CAMPAIGN MISSION SELECT section with `.cm-top` (top bar), `.cm-title`, `.cm-body` (flex row), `.cm-left` (240px scrollable chapter list) with `.cm-chapter` (`.active`, `.locked`, `-num`, `-name`, `-prog`), `.cm-main` (flex:1 column) with `.cm-mission` (`.selected`, `-num`, `-done`, `-name`, `-brief`, `-lv`, `-lv.boss`) and `.cm-bottom` (deploy bar) with `.cm-xp-bar` / `.cm-xp-fill`. In `js/campaign-system.js`: rewrote `showMissionSelect()` — old gold-themed inline styles replaced entirely with CSS classes; overlay padding/align overridden in JS for full-panel fit; top bar now holds Back, title, LV/XP span, Supply Shop, and Loadout buttons; chapters render as `.cm-chapter` divs with `active`/`locked` classes; missions render as `.cm-mission` divs with `selected` class; deploy button (`.tw-btn--solid`) only rendered when a mission is selected. All onclick handlers preserved.
+
+### Files Changed
+
+- `css/menus.css` — new campaign mission select layout classes
+- `js/campaign-system.js` — showMissionSelect() rewritten with sci-fi layout
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.38 — Sci-fi three-column hangar UI rebuild
+
+**Date:** 2026-03-22
+
+Rebuilt the mech hangar UI with a three-column sci-fi split-panel layout. In `css/garage.css`: added a new HANGAR SPLIT-PANEL LAYOUT section with `.hg-top` (top bar with border), `.hg-title`, `.hg-subtitle`, `.hg-body` (flex row), `.hg-sidebar` (200px left column), `.hg-section-label`, `.hg-chassis-btn` (with `:hover`, `.active`, and `.hg-chassis-sub` sub-label), `.hg-center` (flex:1 preview area), `.hg-right` (220px right column), `.hg-stat-row`, `.hg-stat-label`, `.hg-stat-val` (+ `.warn`), and `.hg-deploy-zone`. In `index.html`: replaced the old single-column `#garage-menu` with the new three-column structure — left sidebar has chassis selector buttons (`hg-chassis-btn`) and the colour dropdown; center has the 160×160 preview with sci-corner brackets; right panel holds build stats and the deploy zone. In `js/garage.js`: `updateGarageStats()` and `_updateStarterPanel()` updated to emit `.hg-stat-row` / `.hg-stat-label` / `.hg-stat-val` markup; `refreshGarage()` chassis toggle was already using `classList.toggle('active')` and works unchanged.
+
+### Files Changed
+
+- `css/garage.css` — new hangar split-panel layout classes
+- `index.html` — #garage-menu rebuilt with three-column structure
+- `js/garage.js` — updateGarageStats and _updateStarterPanel use hg-stat-* classes
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.37 — Sci-fi split-panel main menu
+
+**Date:** 2026-03-22
+
+Rebuilt the main menu with a two-column sci-fi layout. Left panel (`.mm-left`, 52% width): sci-corner bracket accents, `// System online` eyebrow, stacked TECH / WARRIOR / ONLINE title with a cyan accent span, and a `.mm-nav` block using `.sci-nav-item` rows for Campaign, Warzone, Multiplayer, and Leaderboard. Campaign sub-menu (Resume / New / Back) sits directly below the nav, toggled by `showCampaignSubMenu` / `hideCampaignSubMenu`. Right panel (`.mm-right`): sci-corner brackets, mission count and best-round stat blocks with 44px cyan numerals, a `.sci-divider` labelled "Pilot status", callsign display, a 3px XP progress bar, and the version label at `margin-top:auto`. In `css/menus.css`: replaced the old centred `#main-menu` block and added `.mm-left`, `.mm-right`, `.mm-eyebrow`, `.mm-title`, `.mm-title-accent`, `.mm-nav`, `.mm-stat-num`, `.mm-stat-label`, `.mm-stats-row`, `.mm-stat-divider`, `.mm-xp-bar`, and `.mm-xp-fill`. In `js/menus.js`: added `_updateMainMenuStats()` (populates callsign, mission count, best round, and XP bar from live state), called from `proceedToMainMenu`, `returnToMainMenu`, and `_cancelNewCampaign`.
+
+### Files Changed
+
+- `css/menus.css` — new #main-menu split-panel layout classes
+- `index.html` — #main-menu div rebuilt with new structure
+- `js/menus.js` — _updateMainMenuStats() added; called at all main menu entry points
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.36 — Sci-fi .tw-btn system overhaul
+
+**Date:** 2026-03-22
+
+Replaced the old `.tw-btn` visual system across `css/base.css` and `css/menus.css` with a clean sci-fi design. In `:root`: updated button geometry tokens (smaller padding/font/letter-spacing), removed all `--border-*` and `--tg-*` (text-glow) tokens, and added 13 new `--sci-*` palette tokens (`--sci-cyan`, `--sci-red`, `--sci-gold`, `--sci-line`, `--sci-txt/2/3`, `--sci-surface`, and their dim/border/bright variants). The `.tw-btn` base is now `inline-flex` with a uniform `1px` border and 0.15s transition — no more asymmetric borders or letter-spacing hover expansion; hover simply fills with `--sci-cyan-dim` and brightens the border. Old `--gold` and `--green` variants removed; new `--solid` and `--ghost` variants added. `.tw-btn--error` and `.tw-btn--disabled` updated to use sci tokens. In `menus.css`: `.menu-start-btn` and `.pause-menu-btn` stripped to pure layout (no visual properties), and five new structural utility classes added — `.sci-panel`, `.sci-corner` (with tl/tr/bl/br variants), `.sci-divider`, `.sci-nav-item`, and `.sci-stat-row`.
+
+### Files Changed
+
+- `css/base.css` — new sci-fi button tokens and .tw-btn system; removed --border-* and --tg-* tokens
+- `css/menus.css` — .menu-start-btn and .pause-menu-btn stripped to layout only; sci structural classes added
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.35 — Back button top-left, deploy/join below image, remove loot hint text
 
 **Date:** 2026-03-22

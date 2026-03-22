@@ -7,15 +7,103 @@
    MAIN MENU
    ============================================================ */
 #main-menu {
-  align-items: center;
-  background: var(--bg);
+  background: #080b0e;
   display: flex;
-  flex-direction: column;
   font-family: var(--font-mono);
   inset: 0;
-  justify-content: center;
   position: fixed;
   z-index: 9999;
+}
+
+/* --- Split layout --- */
+.mm-left {
+  border-right: 1px solid var(--sci-line);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px;
+  width: 52%;
+}
+
+.mm-right {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 44px;
+  padding-top: 60px;
+}
+
+/* --- Eyebrow + Title --- */
+.mm-eyebrow {
+  color: var(--sci-cyan);
+  font-size: 9px;
+  letter-spacing: 5px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+
+.mm-title {
+  color: var(--sci-txt);
+  font-size: 38px;
+  letter-spacing: 6px;
+  line-height: 1.1;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.mm-title .mm-title-accent {
+  color: var(--sci-cyan);
+}
+
+/* --- Nav --- */
+.mm-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 40px;
+}
+
+/* --- Pilot stats (right panel) --- */
+.mm-stat-num {
+  color: var(--sci-cyan);
+  font-size: 44px;
+  letter-spacing: 4px;
+  line-height: 1;
+}
+
+.mm-stat-label {
+  color: var(--sci-txt3);
+  font-size: 9px;
+  letter-spacing: 3px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.mm-stats-row {
+  align-items: center;
+  display: flex;
+  margin-bottom: 36px;
+}
+
+.mm-stat-divider {
+  background: var(--sci-line);
+  height: 56px;
+  margin: 0 28px;
+  width: 1px;
+}
+
+/* --- XP bar --- */
+.mm-xp-bar {
+  background: var(--sci-line);
+  height: 3px;
+  margin-bottom: 4px;
+}
+
+.mm-xp-fill {
+  background: var(--sci-cyan);
+  height: 100%;
 }
 
 #menu-canvas {
@@ -46,18 +134,10 @@
   z-index: 1;
 }
 
-/* --- Main menu buttons
-   HTML: <button class="tw-btn menu-start-btn"> or
-         <button class="tw-btn tw-btn--danger menu-start-btn">
-   .menu-start-btn ONLY adds layout — .tw-btn handles all visuals.
---- */
+/* --- Main menu buttons — layout only, .tw-btn handles all visuals --- */
 .menu-start-btn {
-  align-self: center;
-  flex: none !important;
-  position: relative;
   text-align: left;
-  width: 340px;
-  z-index: 1;
+  width: 100%;
 }
 
 /* Disabled/coming-soon state — layout only, .tw-btn handles opacity */
@@ -95,15 +175,101 @@
   outline: none !important;
 }
 
-/* --- Pause menu buttons
-   HTML: <button class="tw-btn pause-menu-btn"> or
-         <button class="tw-btn tw-btn--danger pause-menu-btn">
-   .pause-menu-btn ONLY adds layout — .tw-btn handles all visuals.
---- */
+/* --- Pause menu buttons — layout only, .tw-btn handles all visuals --- */
 .pause-menu-btn {
-  border-radius: 6px;
-  border-left-width: 3px;
-  min-width: 200px;
+  width: 100%;
+}
+
+/* --- Pause panel --- */
+.ps-panel {
+  background: rgba(8,11,14,0.97);
+  border: 1px solid var(--sci-cyan-border);
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+}
+
+.ps-header {
+  align-items: center;
+  border-bottom: 1px solid var(--sci-line);
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+}
+
+.ps-title {
+  color: var(--sci-cyan);
+  font-size: 11px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+.ps-status {
+  color: var(--sci-txt3);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.ps-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 24px;
+}
+
+.ps-btn {
+  align-items: center;
+  background: var(--sci-surface);
+  border: 1px solid var(--sci-line);
+  color: var(--sci-txt);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  gap: 12px;
+  letter-spacing: 3px;
+  padding: 13px 20px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.ps-btn:hover {
+  background: var(--sci-cyan-dim);
+  border-color: var(--sci-cyan-border);
+  color: var(--sci-cyan);
+}
+
+.ps-btn.danger {
+  border-color: rgba(255,77,106,0.15);
+  color: rgba(255,77,106,0.6);
+}
+
+.ps-btn.danger:hover {
+  background: var(--sci-red-dim);
+  border-color: var(--sci-red-border);
+  color: var(--sci-red);
+}
+
+.ps-btn-icon {
+  border: 1px solid currentColor;
+  flex-shrink: 0;
+  height: 10px;
+  opacity: 0.5;
+  width: 10px;
+}
+
+.ps-footer {
+  border-top: 1px solid var(--sci-line);
+  padding: 12px 24px 20px;
+}
+
+.ps-hint {
+  color: var(--sci-txt3);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 /* ============================================================
@@ -420,4 +586,282 @@
 .tw-mono {
   font-family: var(--font-mono);
   letter-spacing: var(--ls-1);
+}
+
+/* ============================================================
+   SCI-FI STRUCTURAL CLASSES
+   ============================================================ */
+
+/* --- Panel --- */
+.sci-panel {
+  background: #080b0e;
+  border: 1px solid var(--sci-line);
+  position: relative;
+}
+
+/* --- Corner brackets (applied via child divs) --- */
+.sci-corner {
+  height: 14px;
+  position: absolute;
+  width: 14px;
+}
+
+.sci-corner-tl {
+  border-left: 1px solid var(--sci-cyan-border);
+  border-top: 1px solid var(--sci-cyan-border);
+  left: 10px;
+  top: 10px;
+}
+
+.sci-corner-tr {
+  border-right: 1px solid var(--sci-cyan-border);
+  border-top: 1px solid var(--sci-cyan-border);
+  right: 10px;
+  top: 10px;
+}
+
+.sci-corner-bl {
+  border-bottom: 1px solid var(--sci-cyan-border);
+  border-left: 1px solid var(--sci-cyan-border);
+  bottom: 10px;
+  left: 10px;
+}
+
+.sci-corner-br {
+  border-bottom: 1px solid var(--sci-cyan-border);
+  border-right: 1px solid var(--sci-cyan-border);
+  bottom: 10px;
+  right: 10px;
+}
+
+/* --- Divider with centered label --- */
+.sci-divider {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.sci-divider::before,
+.sci-divider::after {
+  background: var(--sci-line);
+  content: '';
+  flex: 1;
+  height: 1px;
+}
+
+/* --- Nav item --- */
+.sci-nav-item {
+  align-items: center;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  gap: 16px;
+  padding: 14px 20px;
+  transition: all 0.15s;
+}
+
+.sci-nav-item:hover,
+.sci-nav-item.active {
+  background: var(--sci-cyan-dim);
+  border-left-color: var(--sci-cyan);
+  color: var(--sci-cyan);
+}
+
+/* --- Stat row --- */
+.sci-stat-row {
+  align-items: baseline;
+  border-bottom: 1px solid var(--sci-line);
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+
+/* ============================================================
+   CAMPAIGN MISSION SELECT
+   ============================================================ */
+
+/* --- Top bar --- */
+.cm-top {
+  align-items: center;
+  background: #080b0e;
+  border-bottom: 1px solid var(--sci-line);
+  display: flex;
+  gap: 16px;
+  padding: 14px 24px;
+}
+
+.cm-title {
+  color: var(--sci-txt);
+  flex: 1;
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+/* --- Body row --- */
+.cm-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* --- Left panel: chapters --- */
+.cm-left {
+  border-right: 1px solid var(--sci-line);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  width: 240px;
+}
+
+.cm-chapter {
+  border-bottom: 1px solid var(--sci-line);
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  padding: 12px 16px;
+  transition: all 0.15s;
+}
+
+.cm-chapter:hover {
+  background: var(--sci-surface);
+}
+
+.cm-chapter.active {
+  background: var(--sci-cyan-dim);
+  border-left-color: var(--sci-cyan);
+}
+
+.cm-chapter.locked {
+  cursor: not-allowed;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.cm-chapter-num {
+  color: var(--sci-txt3);
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.cm-chapter-name {
+  color: var(--sci-txt);
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+.cm-chapter.active .cm-chapter-name {
+  color: var(--sci-cyan);
+}
+
+.cm-chapter-prog {
+  color: var(--sci-txt3);
+  font-size: 8px;
+  margin-top: 4px;
+}
+
+.cm-chapter.active .cm-chapter-prog {
+  color: rgba(0,212,255,0.5);
+}
+
+/* --- Right panel: missions --- */
+.cm-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cm-mission {
+  align-items: center;
+  border-bottom: 1px solid var(--sci-line);
+  cursor: pointer;
+  display: flex;
+  gap: 16px;
+  padding: 12px 20px;
+  transition: background 0.1s;
+}
+
+.cm-mission:hover {
+  background: var(--sci-surface);
+}
+
+.cm-mission.selected {
+  background: var(--sci-cyan-dim);
+}
+
+.cm-mission-num {
+  color: var(--sci-txt3);
+  font-size: 10px;
+  min-width: 20px;
+}
+
+.cm-mission.selected .cm-mission-num {
+  color: var(--sci-cyan);
+}
+
+.cm-mission-name {
+  color: var(--sci-txt);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.cm-mission.selected .cm-mission-name {
+  color: var(--sci-cyan);
+}
+
+.cm-mission-brief {
+  color: var(--sci-txt3);
+  font-size: 9px;
+  margin-top: 2px;
+}
+
+.cm-mission-lv {
+  border: 1px solid var(--sci-line);
+  color: var(--sci-txt3);
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+}
+
+.cm-mission.selected .cm-mission-lv {
+  border-color: var(--sci-cyan-border);
+  color: var(--sci-cyan);
+}
+
+.cm-mission-lv.boss {
+  border-color: rgba(255,77,106,0.3);
+  color: var(--sci-red);
+}
+
+.cm-mission-done {
+  color: rgba(0,255,136,0.6);
+  font-size: 10px;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* --- Deploy bar (bottom of right panel) --- */
+.cm-bottom {
+  align-items: center;
+  background: #080b0e;
+  border-top: 1px solid var(--sci-line);
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  padding: 16px 20px;
+}
+
+.cm-xp-bar {
+  background: var(--sci-line);
+  flex: 1;
+  height: 3px;
+}
+
+.cm-xp-fill {
+  background: var(--sci-cyan);
+  height: 100%;
+  transition: width 0.3s;
 }
