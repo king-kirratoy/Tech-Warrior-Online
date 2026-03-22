@@ -5,6 +5,49 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.55 — Supply shop redesigned to two-column Buy/Sell layout
+
+**Date:** 2026-03-22
+
+Redesigned the campaign supply shop from a scrollable centered card layout to a fixed two-column panel. In `css/menus.css`: added a new Supply Shop section with `.shop-screen` (flex column, full height), `.shop-top` (top bar with position:relative for centred title), `.shop-title` (absolute centred), `.shop-scrap` (right-aligned scrap display with gold `<span>`), `.shop-body` (flex row, flex:1), `.shop-buy-col` (flex:1, border-right) and `.shop-sell-col` (width:320px fixed), `.shop-col-header`, `.shop-items-list`, `.shop-item-row` (with hover and selected states, left-border accent), `.shop-rarity-bar` (3px tall coloured strip), `.shop-item-info`/`.shop-item-name`/`.shop-item-meta`, `.shop-item-price`/`.shop-sell-price`, `.shop-detail-panel` (fixed at bottom of buy column), `.shop-compare-grid` and `.shop-compare-grid.no-equipped` (4-col vs 2-col depending on whether an item is equipped), all comparison cell classes (`.shop-compare-header`, `.shop-compare-label`, `.shop-compare-val`, `.shop-compare-new`, `.shop-compare-diff` with `.pos`/`.neg`/`.neu` variants), and `.shop-bottom-bar`. In `js/campaign-system.js`: added module-level `const _shopRarityColors` with the five rarity colours; completely rebuilt `showShop()` — resets the overlay inline styles to remove old padding/centering before injecting the new layout; buy column lists each `_shopStock` item as a `.shop-item-row` with rarity bar, name (rarity-coloured), type/rarity/level meta, and price; the detail panel renders below the list when an item is selected, showing the item name and a comparison grid that switches between 4-column (stat/equipped/new/diff) when a same-slot item is equipped and 2-column (stat/new) when nothing is equipped; the buy button or a muted "Not enough scrap"/"Inventory full" message appears at the bottom of the detail panel; the sell column lists every `_inventory` item as a `.shop-item-row` with sell price in green; the Restock button moves into the buy column header; the Back button is in the top bar.
+
+### Files Changed
+
+- `css/menus.css` — full supply shop CSS block added
+- `js/campaign-system.js` — _shopRarityColors const added; showShop() fully rebuilt
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.54 — Multiplayer hangar restructured to match warzone layout
+
+**Date:** 2026-03-22
+
+Restructured the PVP loadout screen to exactly mirror the warzone hangar layout. In `css/menus.css`: updated `.mp-left` to remove `padding` and `gap` (moved to a new child class) and added `background:#080b0e`; added `.mp-left-controls` (padding 16px 20px, border-bottom, flex column, gap 6px) to wrap all dropdown controls separately from the preview; updated `.mp-preview-zone` to remove `border-bottom` and add `flex:1` so it fills the remaining left column height; updated `.mp-preview-box` from 140×140 to 160×160px and added `flex-shrink:0`; updated `.mp-right` to add `background:#080b0e` and `min-width:0`; added `.mp-stats-header` (padding 10px 20px, border-bottom, small uppercase label); removed `.mp-bottom` entirely since the action button moves to the top bar. In `js/multiplayer.js`: completely rebuilt `_pvpRenderHangar()` — the top bar now holds the Back button, centered "MULTIPLAYER" title, and the Join Lobby / Deploy Mech button at the far right (replacing the old bottom bar); the left column splits into `.mp-left-controls` (all chassis buttons, colour dropdown and six gear slot rows) and `.mp-preview-zone` (160×160 mech preview with sci-corner accents and chassis·colour label below); the right column uses `.mp-stats-header` "Build stats" then a scrollable stats panel built with the same stat calculation logic as the warzone garage — HP, HP split, speed (with hydraulic boost), shield (with absorb and regen delay), L/R fire rate with DPS and brace bonus, core mod CD, chassis traits, passives, and individual slot name rows — all using `.hg-stat-row`/`.hg-stat-label`/`.hg-stat-val` classes with green/warn/dim/purple color variants and `.hg-gap` separators between groups.
+
+### Files Changed
+
+- `css/menus.css` — mp-left restructured; mp-left-controls added; mp-preview-zone flex:1; mp-preview-box 160px; mp-right min-width/background; mp-stats-header added; mp-bottom removed
+- `js/multiplayer.js` — _pvpRenderHangar fully rebuilt with two-column warzone-style layout and full stat panel
+- `CHANGELOG.md` — this entry
+
+---
+
+## v5.53 — Three small UI fixes: callsign label centering, leaderboard tab hover, lobby chat keystroke passthrough
+
+**Date:** 2026-03-22
+
+Three targeted fixes across the callsign screen, leaderboard, and multiplayer lobby. In `index.html`: added `align-self:center;text-align:center` inline to the `.cs-field-label` element inside `#callsign-screen` so the "Enter callsign" label is centred above the input field. In `css/menus.css`: added `.lb-filter-tab:hover:not(.active)` rule that applies the same cyan highlight as the active state on hover, giving the filter tabs a visible interactive response. In `js/multiplayer.js`: added `onfocus` and `onblur` handlers to the `#mp-chat-input` element that set `window._chatInputFocused` so game systems can check this flag; added `event.stopPropagation()` as the first call in the `onkeydown` handler so WASD and E keystrokes are not intercepted by the global game keyboard listener while the player is typing in the lobby chat box.
+
+### Files Changed
+
+- `index.html` — cs-field-label align-self + text-align center
+- `css/menus.css` — .lb-filter-tab:hover:not(.active) rule
+- `js/multiplayer.js` — mp-chat-input onfocus/onblur flags; stopPropagation on keydown
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.52 — Multiplayer screen redesign, campaign top bar and LVL/XP fixes
 
 **Date:** 2026-03-22

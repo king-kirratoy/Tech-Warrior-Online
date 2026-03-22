@@ -1078,7 +1078,9 @@ function mpShowLobby() {
                     <input id="mp-chat-input" type="text" maxlength="200" placeholder="Message..."
                            style="flex:1;padding:6px 10px;background:var(--sci-surface);border:1px solid var(--sci-line);
                                   color:var(--sci-txt);font-family:var(--font-mono);font-size:10px;outline:none;"
-                           onkeydown="if(event.key==='Enter')mpSendChat()">
+                           onfocus="window._chatInputFocused=true"
+                           onblur="window._chatInputFocused=false"
+                           onkeydown="event.stopPropagation();if(event.key==='Enter')mpSendChat()">
                     <button onclick="mpSendChat()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">Send</button>
                 </div>
             </div>
@@ -2271,33 +2273,129 @@ function _pvpRenderHangar() {
     const el = document.getElementById('pvp-hangar');
     if (!el) return;
 
-    const chassis = loadout.chassis;
-    const hexStr  = loadout.color.toString(16).padStart(6, '0');
+    const chassis  = loadout.chassis;
+    const hexStr   = loadout.color.toString(16).padStart(6, '0');
     const colorOpt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : [])
         .find(o => o.key === hexStr) || { label: 'GREEN', hex6: '#00ff00' };
 
-    const is2H   = WEAPONS[loadout.L]?.twoHanded;
     const ch     = typeof CHASSIS !== 'undefined' ? CHASSIS[chassis] : {};
-    const totalHP = typeof getTotalHP === 'function'
-        ? getTotalHP(chassis)
-        : (ch.coreHP || 0) + (ch.armHP || 0) * 2 + (ch.legHP || 0);
-    const shld = typeof SHIELD_SYSTEMS !== 'undefined'
+    const is2H   = WEAPONS[loadout.L]?.twoHanded;
+    const lEmpty = !loadout.L || loadout.L === 'none';
+    const rEmpty = !loadout.R || loadout.R === 'none';
+    const braceArm = !is2H && (lEmpty !== rEmpty);
+
+    const shldSys  = typeof SHIELD_SYSTEMS !== 'undefined'
         ? (SHIELD_SYSTEMS[loadout.shld] || { maxShield: 0 })
         : { maxShield: 0 };
+    const totalHP  = typeof getTotalHP === 'function'
+        ? getTotalHP(chassis)
+        : (ch.coreHP || 0) + (ch.armHP || 0) * 2 + (ch.legHP || 0);
 
-    // Clean weapon name — full name only, no DPS suffix
+    // ── Stat calculations (mirrors updateGarageStats) ──
+    const oc    = loadout.aug === 'overclock_cpu';
+    const hydro = loadout.leg === 'hydraulic_boost';
+    const gyro  = loadout.leg === 'gyro_stabilizer';
+    const mag   = loadout.leg === 'mag_anchors';
+    const spd   = Math.round((ch.spd || 210) * (hydro ? 1.20 : 1.0));
+    const spdStr = spd + ' u/s' + (hydro ? ' (+20%)' : '');
+
+    const shAbsorb = loadout.shld === 'reactive_shield' ? 65 : 50;
+    const shHp     = shldSys.maxShield || 0;
+    const shStr    = shHp > 0
+        ? shHp + ' HP · ' + shAbsorb + '% absorb · ' + shldSys.regenDelay + 's regen'
+        : '—';
+
+    const reloadMult   = oc ? 0.88 : 1.0;
+    const braceDmgB    = braceArm ? 1.25 : 1.0;
+    const braceRldB    = braceArm ? 0.85 : 1.0;
+    function fmtReload(w) {
+        if (!w || !w.reload) return null;
+        const r   = Math.round(w.reload * reloadMult * braceRldB);
+        const dps = w.dmg ? ((w.dmg * braceDmgB) / (r / 1000)).toFixed(1) : null;
+        const tag = braceArm ? ' ★' : '';
+        return dps ? dps + ' dps · ' + r + 'ms cd' + tag : r + 'ms cd' + tag;
+    }
+    const wL   = WEAPONS[loadout.L];
+    const wR   = WEAPONS[loadout.R];
+    const modW = WEAPONS[loadout.mod];
+    const lRate = fmtReload(wL);
+    const rRate = fmtReload(wR);
+    const modCd = modW?.cooldown ? Math.round(modW.cooldown * (oc ? 0.88 : 1.0) / 1000) + 's cd' : null;
+
+    // ── Passives ──
+    const passives = [];
+    if (braceArm)  passives.push('+25% damage · +15% reload (single-arm brace)');
+    if (is2H)      passives.push('TWO-HANDED · both arms locked · weight counted once');
+    if (gyro)      passives.push('leg penalty immunity');
+    if (mag)       passives.push('−20% dmg in / +15% dmg out when still');
+    if (loadout.aug === 'target_painter')   passives.push('hit marks: +20% dmg on target');
+    if (loadout.aug === 'threat_analyzer')  passives.push('hit debuff: −15% resist 3s');
+    if (loadout.aug === 'reactive_plating') passives.push('on hit: +5% DR stack (max 5)');
+    if (loadout.aug === 'scrap_cannon')     passives.push('limb destroy: 30 AoE');
+    if (loadout.leg === 'mine_layer')       passives.push('drop mine every 8s moving');
+    if (loadout.leg === 'afterleg')         passives.push('jump +50% dist · land shockwave');
+
+    // ── Chassis traits ──
+    const chassisTraits = [];
+    if (chassis === 'light') {
+        chassisTraits.push('Dual-fire: fires both arms simultaneously when same weapon equipped in each');
+        chassisTraits.push('+20% reload speed (passive)');
+        chassisTraits.push('Arms: fragile — 30% less base HP');
+    } else if (chassis === 'medium') {
+        chassisTraits.push('All mod cooldowns −15%');
+        chassisTraits.push('Kills reduce mod cooldown by 0.5s');
+        chassisTraits.push('Shield absorbs 60% of damage');
+    } else if (chassis === 'heavy') {
+        chassisTraits.push('Passive 15% damage reduction');
+        chassisTraits.push('Cannot equip JUMP or AFTERLEG');
+        chassisTraits.push('Built for sustained attrition');
+    }
+
+    // ── Slot label helpers ──
     const weaponName = (key) => {
-        if (!key || key === 'none') return 'NONE';
+        if (!key || key === 'none') return 'None';
         const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[key] : null;
         if (desc) return desc.title;
         return WEAPONS[key]?.name || key.toUpperCase();
     };
 
-    // Build an mp-dd-row for each gear slot
+    function statRow(lbl, val, cls) {
+        return `<div class="hg-stat-row"><span class="hg-stat-label">${lbl}</span><span class="hg-stat-val${cls ? ' ' + cls : ''}">${val}</span></div>`;
+    }
+    const gap = '<div class="hg-gap"></div>';
+
+    // ── Stats panel HTML ──
+    let statsHtml = '';
+    statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
+    statsHtml += statRow('HP SPLIT', 'C ' + (ch.coreHP||0) + ' / A ' + (ch.armHP||0) + ' / L ' + (ch.legHP||0), 'dim');
+    statsHtml += gap;
+    statsHtml += statRow('SPEED', spdStr, 'warn');
+    statsHtml += statRow('SHIELD HP', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
+    statsHtml += gap;
+    const weaponRows = [
+        lRate ? statRow('L FIRE RATE', lRate, 'dim') : '',
+        rRate ? statRow('R FIRE RATE', rRate, 'dim') : '',
+        modCd ? statRow('CORE CD',     modCd, 'warn') : '',
+    ].join('');
+    if (weaponRows) { statsHtml += weaponRows; statsHtml += gap; }
+    if (chassisTraits.length) {
+        const chCls = chassis === 'light' ? 'green' : 'warn';
+        statsHtml += statRow('CHASSIS', chassisTraits.join(' · '), chCls);
+    }
+    if (passives.length) statsHtml += statRow('PASSIVES', passives.join(' · '), 'purple');
+    statsHtml += gap;
+    statsHtml += statRow('L ARM', weaponName(loadout.L), 'dim');
+    statsHtml += statRow('R ARM', weaponName(is2H ? loadout.L : loadout.R), 'dim');
+    statsHtml += statRow('MOD', _pvpGetSlotLabel('M'), 'dim');
+    statsHtml += statRow('SHIELD', _pvpGetSlotLabel('S'), 'dim');
+    statsHtml += statRow('LEGS', _pvpGetSlotLabel('G'), 'dim');
+    statsHtml += statRow('AUGMENT', _pvpGetSlotLabel('A'), 'dim');
+
+    // ── Dropdown row builder ──
     function ddRow(slotId, labelText) {
-        const name = slotId === 'L' ? weaponName(loadout.L)
-                   : slotId === 'R' ? weaponName(is2H ? loadout.L : loadout.R)
-                   : _pvpGetSlotLabel(slotId);
+        const name   = slotId === 'L' ? weaponName(loadout.L)
+                     : slotId === 'R' ? weaponName(is2H ? loadout.L : loadout.R)
+                     : _pvpGetSlotLabel(slotId);
         const locked = is2H && slotId === 'R' ? ' style="opacity:0.45;pointer-events:none;"' : '';
         return `<div class="mp-dd-row"${locked}>
             <span class="mp-dd-label">${labelText}</span>
@@ -2311,19 +2409,19 @@ function _pvpRenderHangar() {
         </div>`;
     }
 
-    // Right-panel bottom buttons
-    let bottomHtml;
-    if (_pvpHangarInMatch) {
-        bottomHtml = `
-            <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;">Deploy Mech ›</button>
-            <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="flex:0 0 auto;width:auto;margin-right:auto;">Quit Match</button>`;
-    } else {
-        bottomHtml = `<button onclick="_pvpJoinLobby()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;">Join Lobby ›</button>`;
-    }
-
+    // ── Top-bar action buttons ──
     const backBtn = !_pvpHangarInMatch
         ? `<button onclick="_pvpBackToMenu()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">‹ Back</button>`
         : '';
+
+    let topRightBtn;
+    if (_pvpHangarInMatch) {
+        topRightBtn = `
+            <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;">Deploy Mech ›</button>
+            <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="flex:0 0 auto;width:auto;">Quit Match</button>`;
+    } else {
+        topRightBtn = `<button onclick="_pvpJoinLobby()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;">Join Lobby ›</button>`;
+    }
 
     const screenTitle = _pvpHangarInMatch ? 'CHANGE LOADOUT' : 'MULTIPLAYER';
 
@@ -2332,50 +2430,56 @@ function _pvpRenderHangar() {
         <div class="mp-top">
             ${backBtn}
             <div class="mp-screen-title">${screenTitle}</div>
-            <div style="flex:1;"></div>
+            ${topRightBtn}
         </div>
 
         <!-- Body -->
         <div class="mp-body">
 
-            <!-- Left: options -->
+            <!-- Left column: controls + preview -->
             <div class="mp-left">
-                <div class="mp-sec-label">Chassis</div>
-                <div class="mp-chassis-row">
-                    <button class="mp-chassis-btn${chassis === 'light' ? ' active' : ''}" onclick="_pvpSetChassis('light')">Light</button>
-                    <button class="mp-chassis-btn${chassis === 'medium' ? ' active' : ''}" onclick="_pvpSetChassis('medium')">Medium</button>
-                    <button class="mp-chassis-btn${chassis === 'heavy' ? ' active' : ''}" onclick="_pvpSetChassis('heavy')">Heavy</button>
-                </div>
 
-                <div class="mp-sec-label" style="margin-top:8px;">Colour</div>
-                <div class="mp-dd-row">
-                    <span class="mp-dd-label">Colour</span>
-                    <div class="pvp-dd-wrap" style="position:relative;flex:1;">
-                        <div class="mp-dd-selected pvp-dd-selected" id="pvp-dds-COL" onclick="_pvpToggleColorDD()">
-                            <span style="display:flex;align-items:center;gap:8px;">
-                                <span style="width:10px;height:10px;background:${colorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
-                                ${colorOpt.label}
-                            </span>
-                            <span style="font-size:9px;opacity:0.5;">▼</span>
-                        </div>
-                        <div class="dd-list pvp-dd-list" id="pvp-ddl-COL"></div>
+                <!-- Dropdowns section -->
+                <div class="mp-left-controls">
+                    <div class="mp-sec-label">Chassis</div>
+                    <div class="mp-chassis-row">
+                        <button class="mp-chassis-btn${chassis === 'light'  ? ' active' : ''}" onclick="_pvpSetChassis('light')">Light</button>
+                        <button class="mp-chassis-btn${chassis === 'medium' ? ' active' : ''}" onclick="_pvpSetChassis('medium')">Medium</button>
+                        <button class="mp-chassis-btn${chassis === 'heavy'  ? ' active' : ''}" onclick="_pvpSetChassis('heavy')">Heavy</button>
                     </div>
+
+                    <div class="mp-sec-label">Colour</div>
+                    <div class="mp-dd-row">
+                        <span class="mp-dd-label">Colour</span>
+                        <div class="pvp-dd-wrap" style="position:relative;flex:1;">
+                            <div class="mp-dd-selected pvp-dd-selected" id="pvp-dds-COL" onclick="_pvpToggleColorDD()">
+                                <span style="display:flex;align-items:center;gap:8px;">
+                                    <span style="width:10px;height:10px;background:${colorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
+                                    ${colorOpt.label}
+                                </span>
+                                <span style="font-size:9px;opacity:0.5;">▼</span>
+                            </div>
+                            <div class="dd-list pvp-dd-list" id="pvp-ddl-COL"></div>
+                        </div>
+                    </div>
+
+                    <div class="mp-sec-label">Weapons &amp; Gear</div>
+                    ${ddRow('L', 'L.Arm')}
+                    ${ddRow('R', 'R.Arm')}
+                    ${ddRow('M', 'Core Mod')}
+                    ${ddRow('S', 'Shield')}
+                    ${ddRow('G', 'Legs')}
+                    ${ddRow('A', 'Augment')}
                 </div>
 
-                <div class="mp-sec-label" style="margin-top:8px;">Weapons &amp; Gear</div>
-                ${ddRow('L', 'L.Arm')}
-                ${ddRow('R', 'R.Arm')}
-                ${ddRow('M', 'Core Mod')}
-                ${ddRow('S', 'Shield')}
-                ${ddRow('G', 'Legs')}
-                ${ddRow('A', 'Augment')}
-            </div>
-
-            <!-- Right: preview + stats -->
-            <div class="mp-right">
+                <!-- Mech preview -->
                 <div class="mp-preview-zone">
                     <div class="mp-preview-box">
-                        <img src="assets/${chassis}-mech.png"
+                        <div class="sci-corner sci-corner-tl"></div>
+                        <div class="sci-corner sci-corner-tr"></div>
+                        <div class="sci-corner sci-corner-bl"></div>
+                        <div class="sci-corner sci-corner-br"></div>
+                        <img id="pvp-preview-img" src="assets/${chassis}-mech.png"
                             style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
                     </div>
                     <div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">
@@ -2383,32 +2487,17 @@ function _pvpRenderHangar() {
                     </div>
                 </div>
 
-                <div style="padding:16px 20px;display:flex;flex-direction:column;gap:4px;">
-                    <div class="hg-stat-row">
-                        <span class="hg-stat-label">Total HP</span>
-                        <span class="hg-stat-val green">${totalHP} HP</span>
-                    </div>
-                    <div class="hg-stat-row">
-                        <span class="hg-stat-label">HP Split</span>
-                        <span class="hg-stat-val dim">C ${ch.coreHP||0} / A ${ch.armHP||0} / L ${ch.legHP||0}</span>
-                    </div>
-                    <div class="hg-stat-row">
-                        <span class="hg-stat-label">Speed</span>
-                        <span class="hg-stat-val">${ch.spd||210} u/s</span>
-                    </div>
-                    <div class="hg-stat-row">
-                        <span class="hg-stat-label">Shield</span>
-                        <span class="hg-stat-val">${shld.maxShield > 0 ? shld.maxShield + ' HP / ' + Math.round((shld.absorb||0.5)*100) + '% absorb' : 'None'}</span>
-                    </div>
+            </div><!-- /mp-left -->
+
+            <!-- Right column: full build stats -->
+            <div class="mp-right">
+                <div class="mp-stats-header">Build stats</div>
+                <div style="padding:12px 20px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;">
+                    ${statsHtml}
                 </div>
             </div>
 
         </div><!-- /mp-body -->
-
-        <!-- Bottom bar -->
-        <div class="mp-bottom">
-            ${bottomHtml}
-        </div>
     `;
 }
 
