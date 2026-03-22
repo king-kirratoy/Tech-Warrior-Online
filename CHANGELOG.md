@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.75 — Loadout and hangar UI polish pass
+
+**Date:** 2026-03-22
+
+Restructured loadout left column: removed "Hull Integrity" and "Mech Stats" section titles; moved Total HP/Shield rows into a new `#lo-totals-block` above the HP bars; added `.lo-divider` separators between totals, HP bars, stats, and gear bonuses; added `.lo-block` and `.lo-totals-block` CSS classes for padding. Fixed loadout XP bar fill color from gold (`#ffd166`) to `var(--sci-cyan)` to match the campaign screen. Fixed equipped doll slots to `aspect-ratio: 1` so they render as squares matching backpack cell size. Set inactive campaign chapter name color to `rgba(255,255,255,0.88)` (was `var(--sci-txt)` ≈ 0.9). Removed duplicate standalone "Colour" label from warzone hangar (index.html) and multiplayer hangar (multiplayer.js), keeping only the inline dropdown-row label. Reduced warzone hangar preview zone top padding and changed `justify-content` to `flex-start` so the mech image sits close below the colour row.
+
+---
+
 ## v5.74 — Fix warzone hangar stat panel font
 
 **Date:** 2026-03-22

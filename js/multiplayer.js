@@ -2445,7 +2445,6 @@ function _pvpRenderHangar() {
                         <button class="mp-chassis-btn${chassis === 'heavy'  ? ' active' : ''}" onclick="_pvpSetChassis('heavy')">Heavy</button>
                     </div>
 
-                    <div class="mp-sec-label">Colour</div>
                     <div class="mp-dd-row">
                         <span class="mp-dd-label">Colour</span>
                         <div class="pvp-dd-wrap" style="position:relative;flex:1;">

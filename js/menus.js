@@ -1463,6 +1463,7 @@ function _renderHullBars() {
     };
 
     let html = '';
+    let totalsHtml = '';
     if (_inGame) {
         html += _hpRow('Core',  player.comp.core.hp,  player.comp.core.max);
         html += _hpRow('L.Arm', player.comp.lArm.hp,  player.comp.lArm.max);
@@ -1472,10 +1473,8 @@ function _renderHullBars() {
         const totalMax = Object.values(player.comp).reduce((s,c)=>s+c.max,0);
         const curShield = Math.round(player.shield||0);
         const maxShield = Math.round(player.maxShield||0);
-        html += `<div style="border-top:1px solid rgba(255,255,255,0.07);margin-top:8px;padding-top:8px;">`;
-        html += `<div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value" style="color:#00ff88">${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div>`;
-        html += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:#cc88ff">${curShield} / ${maxShield}</span></div>`;
-        html += `</div>`;
+        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value" style="color:#00ff88">${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div>`;
+        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:#cc88ff">${curShield} / ${maxShield}</span></div>`;
     } else {
         html += _hpRow('Core',  baseHP.core,  baseHP.core);
         html += _hpRow('L.Arm', baseHP.lArm,  baseHP.lArm);
@@ -1483,12 +1482,12 @@ function _renderHullBars() {
         html += _hpRow('Legs',  baseHP.legs,  baseHP.legs);
         const totalBase  = Object.values(baseHP).reduce((s,v)=>s+v,0);
         const baseShield = chassisData?.max || 75;
-        html += `<div style="border-top:1px solid rgba(255,255,255,0.07);margin-top:8px;padding-top:8px;">`;
-        html += `<div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value" style="color:#00ff88">${totalBase} / ${totalBase}</span></div>`;
-        html += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:#cc88ff">${baseShield} / ${baseShield}</span></div>`;
-        html += `</div>`;
+        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value" style="color:#00ff88">${totalBase} / ${totalBase}</span></div>`;
+        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:#cc88ff">${baseShield} / ${baseShield}</span></div>`;
     }
     el.innerHTML = html;
+    const tbEl = document.getElementById('lo-totals-block');
+    if (tbEl) tbEl.innerHTML = totalsHtml;
 }
 
 function _renderChassisPanel() {
