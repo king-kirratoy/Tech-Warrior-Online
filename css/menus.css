@@ -407,3 +407,91 @@
   font-family: var(--font-mono);
   letter-spacing: var(--ls-1);
 }
+
+/* ============================================================
+   SCI-FI STRUCTURAL CLASSES
+   ============================================================ */
+
+/* --- Panel --- */
+.sci-panel {
+  background: #080b0e;
+  border: 1px solid var(--sci-line);
+  position: relative;
+}
+
+/* --- Corner brackets (applied via child divs) --- */
+.sci-corner {
+  height: 14px;
+  position: absolute;
+  width: 14px;
+}
+
+.sci-corner-tl {
+  border-left: 1px solid var(--sci-cyan-border);
+  border-top: 1px solid var(--sci-cyan-border);
+  left: 10px;
+  top: 10px;
+}
+
+.sci-corner-tr {
+  border-right: 1px solid var(--sci-cyan-border);
+  border-top: 1px solid var(--sci-cyan-border);
+  right: 10px;
+  top: 10px;
+}
+
+.sci-corner-bl {
+  border-bottom: 1px solid var(--sci-cyan-border);
+  border-left: 1px solid var(--sci-cyan-border);
+  bottom: 10px;
+  left: 10px;
+}
+
+.sci-corner-br {
+  border-bottom: 1px solid var(--sci-cyan-border);
+  border-right: 1px solid var(--sci-cyan-border);
+  bottom: 10px;
+  right: 10px;
+}
+
+/* --- Divider with centered label --- */
+.sci-divider {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.sci-divider::before,
+.sci-divider::after {
+  background: var(--sci-line);
+  content: '';
+  flex: 1;
+  height: 1px;
+}
+
+/* --- Nav item --- */
+.sci-nav-item {
+  align-items: center;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  gap: 16px;
+  padding: 14px 20px;
+  transition: all 0.15s;
+}
+
+.sci-nav-item:hover,
+.sci-nav-item.active {
+  background: var(--sci-cyan-dim);
+  border-left-color: var(--sci-cyan);
+  color: var(--sci-cyan);
+}
+
+/* --- Stat row --- */
+.sci-stat-row {
+  align-items: baseline;
+  border-bottom: 1px solid var(--sci-line);
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
