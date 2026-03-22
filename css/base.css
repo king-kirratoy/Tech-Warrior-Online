@@ -160,59 +160,30 @@ body {
 
 /* ============================================================
    .tw-btn — CANONICAL BUTTON COMPONENT
-   ============================================================
-   Hover contract (ALL variants):
-     ✓ Border color brightens
-     ✓ Text goes white with a color text-shadow glow
-     ✓ Letter-spacing expands by exactly +1px
-     ✓ overflow:hidden locks the box — button NEVER grows
-     ✗ No box-shadow change on hover
    ============================================================ */
 
 .tw-btn {
-  /* Layout */
-  display:        inline-block;
-  padding:        var(--btn-padding);
-  overflow:       hidden;        /* ← THIS is what prevents size growth */
-  white-space:    nowrap;
-  text-overflow:  ellipsis;
-  text-align:     center;
-
-  /* Typography */
+  align-items:    center;
+  background:     transparent;
+  border:         1px solid var(--sci-cyan-border);
+  color:          var(--sci-cyan);
+  cursor:         pointer;
+  display:        inline-flex;
   font-family:    var(--font-mono);
   font-size:      var(--btn-font-size);
-  text-transform: uppercase;
+  gap:            10px;
   letter-spacing: var(--btn-ls);
-  text-shadow:    none;
-
-  /* Colors — cyan default */
-  color:          var(--cyan);
-  background:     transparent;
-
-  /* Border */
-  border:         1px solid var(--border-cyan);
-  border-top:     2px solid var(--border-cyan-bright);
-  border-bottom:  2px solid var(--border-cyan-bright);
-
-  /* No box glow on default state */
-  box-shadow: none;
-
-  cursor: pointer;
-
-  /* Transition only the properties we actually change */
-  transition:
-    background     0.2s ease,
-    border-color   0.2s ease,
-    color          0.2s ease,
-    letter-spacing 0.2s ease,
-    text-shadow    0.2s ease;
+  overflow:       hidden;
+  padding:        var(--btn-padding);
+  text-transform: uppercase;
+  transition:     background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space:    nowrap;
 }
 
 .tw-btn:hover {
-  background:     rgba(0,255,255,0.04);
-  border-color:   rgba(0,255,255,0.85);
-  color:          #fff;
-  text-shadow:    var(--tg-cyan);
+  background:   var(--sci-cyan-dim);
+  border-color: var(--sci-cyan-bright);
+  color:        #fff;
 }
 
 .tw-btn:focus { outline: none; }
@@ -226,47 +197,36 @@ body {
 
 /* --- Danger / Red --- */
 .tw-btn--danger {
-  color:               var(--red);
-  border-color:        var(--border-red);
-  border-top-color:    var(--border-red-bright);
-  border-bottom-color: var(--border-red-bright);
+  border-color: var(--sci-red-border);
+  color:        var(--sci-red);
 }
 
 .tw-btn--danger:hover {
-  background:     rgba(255,80,80,0.04);
-  border-color:   rgba(255,80,80,0.85);
-  color:          #fff;
-  text-shadow:    var(--tg-red);
+  background:   var(--sci-red-dim);
+  border-color: var(--sci-red);
+  color:        #fff;
 }
 
-/* --- Gold / Campaign --- */
-.tw-btn--gold {
-  color:               var(--gold);
-  border-color:        var(--border-gold);
-  border-top-color:    var(--border-gold-bright);
-  border-bottom-color: var(--border-gold-bright);
+/* --- Solid / filled cyan --- */
+.tw-btn--solid {
+  background:   var(--sci-cyan-dim);
+  border-color: var(--sci-cyan-bright);
 }
 
-.tw-btn--gold:hover {
-  background:     rgba(255,215,0,0.04);
-  border-color:   rgba(255,215,0,0.85);
-  color:          #fff;
-  text-shadow:    var(--tg-gold);
+.tw-btn--solid:hover {
+  background: rgba(0,212,255,0.15);
 }
 
-/* --- Green / Upgrades --- */
-.tw-btn--green {
-  color:               var(--green-accent);
-  border-color:        var(--border-green);
-  border-top-color:    var(--border-green-bright);
-  border-bottom-color: var(--border-green-bright);
+/* --- Ghost / low-contrast --- */
+.tw-btn--ghost {
+  border-color: var(--sci-line);
+  color:        var(--sci-txt2);
 }
 
-.tw-btn--green:hover {
-  background:     rgba(0,255,136,0.04);
-  border-color:   rgba(0,255,136,0.85);
-  color:          #fff;
-  text-shadow:    var(--tg-green);
+.tw-btn--ghost:hover {
+  background:   var(--sci-cyan-dim);
+  border-color: var(--sci-cyan-border);
+  color:        var(--sci-cyan);
 }
 
 /* --- Small / Panel scale --- */
@@ -278,7 +238,6 @@ body {
 
 /* --- Full-width block --- */
 .tw-btn--block {
-  display:         flex;
   justify-content: center;
   width:           100%;
 }
@@ -287,9 +246,6 @@ body {
 .tw-btn--error {
   background:    rgba(255,50,0,0.1) !important;
   border:        1px solid var(--red-error) !important;
-  border-bottom: 2px solid var(--red-error) !important;
-  border-top:    2px solid var(--red-error) !important;
-  box-shadow:    inset 0 0 10px rgba(255,50,0,0.2) !important;
   color:         var(--red-error) !important;
   cursor:        not-allowed !important;
   letter-spacing:var(--ls-2) !important;
