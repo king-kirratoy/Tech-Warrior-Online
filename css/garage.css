@@ -579,7 +579,7 @@
   border-left: 1px solid var(--sci-line);
   display: flex;
   flex-direction: column;
-  width: 220px;
+  width: 260px;
 }
 
 .hg-stat-row {
@@ -595,12 +595,17 @@
   font-size: 9px;
   letter-spacing: 2px;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .hg-stat-val {
   color: var(--sci-cyan);
   font-size: 12px;
   letter-spacing: 1px;
+  min-width: 0;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
 }
 
 .hg-stat-val.warn {

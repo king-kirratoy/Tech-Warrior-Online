@@ -5,6 +5,22 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.42 — Four layout fixes: hangar top bar, stat row wrapping, campaign sub-menu star, mission briefing panel
+
+**Date:** 2026-03-22
+
+Fixed four layout regressions across the hangar and campaign screens. In `index.html`: added `style="width:auto;flex-shrink:0;"` to `#deploy-btn` in `.hg-top` so it stays compact; changed Resume Campaign's first span text from `01` to `★` (still constrained to `font-size:9px; min-width:20px`) so it visually identifies as a saved-game slot without rendering taller than New Campaign. In `js/menus.js`: fixed the `resumeBtn.innerHTML` assignment to restore the full three-span structure (`★` / label / `›`) instead of unstyled raw text, ensuring Resume Campaign and New Campaign are pixel-identical. In `css/garage.css`: added `white-space:nowrap` to `.hg-stat-label`, added `text-align:right; min-width:0; overflow:hidden; text-overflow:ellipsis` to `.hg-stat-val`, and widened `.hg-right` from 220px to 260px to give stat rows enough room. In `js/campaign-system.js`: added `margin-left:auto` to the Deploy button in `.cm-bottom` so it snaps to the right edge; restored the mission briefing panel — a `var(--sci-cyan-dim)` block inserted below the scrollable mission list when a mission is selected, showing the mission name (13px cyan, 3px ls), briefing text (10px muted), and enemy level in a difficulty-coded colour (green/gold/red).
+
+### Files Changed
+
+- `index.html` — deploy-btn gets flex-shrink:0; Resume Campaign span uses ★
+- `js/menus.js` — resumeBtn.innerHTML restored to full span structure
+- `css/garage.css` — stat label nowrap, stat val right-aligned + ellipsis, hg-right 260px
+- `js/campaign-system.js` — Deploy margin-left:auto; mission briefing panel restored
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.41 — Three layout fixes: main menu active state, campaign sub-menu size, mission select button widths
 
 **Date:** 2026-03-22
