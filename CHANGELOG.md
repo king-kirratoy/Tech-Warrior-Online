@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.61 — Main menu stat fixes + _buildItemComparisonHTML implemented
+
+**Date:** 2026-03-22
+
+Three improvements. Fix 1 (warzone/multiplayer CSS parity audit): audited all five property groups — stat row label/value (`hg-stat-label`/`hg-stat-val`), stats section header (`hg-stats-header` vs `mp-stats-header`), left column section labels (already using `mp-sec-label` since v5.59), and chassis buttons (`hg-chassis-btn` vs `mp-chassis-btn`) — all values are already identical, no CSS changes needed; confirmed `updateGarageStats()` Group 5 rows (MOD, SHIELD, LEGS, AUGMENT) already match the multiplayer's `statRow()` output in `multiplayer.js` so no rows were removed. Fix 2 (main menu stats showing defaults): updated `_updateMainMenuStats()` in `menus.js` with three sub-changes — (2a) increased `setTimeout` delay from 200ms to 500ms for more reliable loading after campaign state initializes, (2b) added `if (!document.getElementById('mm-stat-missions')) return;` null check at the top of the callback to prevent silent errors when the main menu isn't in the DOM, (2c) changed missions count to `Object.keys((_campaignState && _campaignState.completedMissions) || {}).length` using explicit `&&` guard; additionally added a 100ms deferred `_updateMainMenuStats()` call at the end of `loadCampaignState()` in `campaign-system.js` so stats refresh after any future cloud save restore. Fix 3 (backpack item detail ReferenceError): `_buildItemComparisonHTML` was called in `_showItemDetail()` but not defined anywhere in the codebase, causing `Uncaught ReferenceError` on every backpack item click; implemented the function in `menus.js` immediately before `_showItemDetail` — it finds the equipped item in the matching slot (using `_getSlotForItem` for non-weapons, preferring `_equipped.L` for weapons), iterates all stat keys across both items, skips zero-diff stats, renders each changed stat with a green/red colour based on whether the change is positive (with reload/modCdPct treated as "lower is better"), and returns an empty string when no equipped item exists for comparison.
+
+### Files Changed
+
+- `js/menus.js` — _updateMainMenuStats() timeout+null-check+missions-syntax fixes; _buildItemComparisonHTML() implemented
+- `js/campaign-system.js` — loadCampaignState() now calls _updateMainMenuStats() after restore
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.60 — Gear tab: fix backpack click selected state + add slot label to item detail panel
 
 **Date:** 2026-03-22

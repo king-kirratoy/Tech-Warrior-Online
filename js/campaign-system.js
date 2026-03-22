@@ -706,7 +706,10 @@ function applyCampaignDeathPenalty() {
 // CAMPAIGN SAVE / LOAD (declared here, full implementation in Phase 4E below)
 // ══════════════════════════════════════════════════════════════════
 function saveCampaignState() {}
-function loadCampaignState() { return false; }
+function loadCampaignState() {
+    setTimeout(() => { if (typeof _updateMainMenuStats === 'function') _updateMainMenuStats(); }, 100);
+    return false;
+}
 
 // ══════════════════════════════════════════════════════════════════
 // CAMPAIGN HUD HELPERS

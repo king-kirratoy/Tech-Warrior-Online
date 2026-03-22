@@ -657,13 +657,14 @@ function _updateCampaignButton() {
 
 function _updateMainMenuStats() {
     setTimeout(() => {
+        if (!document.getElementById('mm-stat-missions')) return;
         const callsignEl = document.getElementById('mm-callsign');
         if (callsignEl && typeof _playerCallsign !== 'undefined') {
             callsignEl.textContent = _playerCallsign || '—';
         }
         const missionsEl = document.getElementById('mm-stat-missions');
         if (missionsEl) {
-            missionsEl.textContent = Object.keys(_campaignState?.completedMissions || {}).length || '0';
+            missionsEl.textContent = Object.keys((_campaignState && _campaignState.completedMissions) || {}).length;
         }
         const roundEl = document.getElementById('mm-stat-round');
         if (roundEl && typeof _bestRound !== 'undefined') {
@@ -679,7 +680,7 @@ function _updateMainMenuStats() {
             fillEl.style.width = pct + '%';
             if (textEl) textEl.textContent = 'LVL ' + level + ' — ' + xpCur + ' / ' + xpNext + ' XP';
         }
-    }, 200);
+    }, 500);
 }
 
 async function showCampaignSubMenu() {
@@ -1039,6 +1040,52 @@ function populateInventory() {
 /** Track currently selected item in the detail panel (for toggle behaviour). */
 let _invSelectedSource = null;
 let _invSelectedKey    = null;
+
+/** Renders a stat-diff comparison between a backpack item and the currently equipped item
+ *  in the matching slot.  Returns an HTML string (empty if no equipped item to compare). */
+function _buildItemComparisonHTML(newItem) {
+    if (!newItem || !newItem.baseStats) return '';
+    let equippedItem = null;
+    if (newItem.baseType === 'weapon') {
+        equippedItem = (_equipped && (_equipped.L || _equipped.R)) || null;
+    } else {
+        const slotKey = (typeof _getSlotForItem === 'function') ? _getSlotForItem(newItem) : null;
+        equippedItem = (slotKey && _equipped) ? _equipped[slotKey] : null;
+    }
+    if (!equippedItem || !equippedItem.baseStats) return '';
+    const statNames = {
+        dmg:'Damage', reload:'Reload (ms)', pellets:'Pellets', speed:'Projectile Speed',
+        range:'Range', radius:'Blast Radius', burst:'Burst Count', coreHP:'Core HP', armHP:'Arm HP',
+        legHP:'Leg HP', dr:'Damage Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %',
+        absorbPct:'Shield Absorb %', speedPct:'Move Speed %', reloadPct:'Reload Speed %',
+        dmgPct:'Damage %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Effectiveness %',
+        dodgePct:'Dodge %', accuracy:'Accuracy', lootMult:'Loot Quality %'
+    };
+    const allKeys = [...new Set([...Object.keys(newItem.baseStats), ...Object.keys(equippedItem.baseStats)])];
+    const rows = allKeys.map(k => {
+        const nv = newItem.baseStats[k] ?? 0;
+        const ev = equippedItem.baseStats[k] ?? 0;
+        const diff = nv - ev;
+        if (diff === 0) return '';
+        const label = statNames[k] || k;
+        // Lower is better for reload and mod cooldown
+        const isPositive = (k === 'reload' || k === 'modCdPct') ? diff < 0 : diff > 0;
+        const color = isPositive ? '#44ff88' : '#ff4466';
+        const sign = diff > 0 ? '+' : '';
+        const fmtVal = (diff > -1 && diff < 1 && diff !== 0)
+            ? sign + Math.round(diff * 100) + '%'
+            : sign + diff;
+        return `<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:11px;">
+            <span style="color:${UI_COLORS.text60};">${label}</span>
+            <span style="color:${color};">${fmtVal}</span>
+        </div>`;
+    }).filter(Boolean).join('');
+    if (!rows) return '';
+    return `<div style="border-top:1px solid ${UI_COLORS.gold10};margin-top:10px;padding-top:10px;">
+        <div style="font-size:9px;letter-spacing:3px;color:${UI_COLORS.text40};margin-bottom:8px;">VS EQUIPPED: ${equippedItem.name || '?'}</div>
+        ${rows}
+    </div>`;
+}
 
 function _showItemDetail(source, key) {
     const dp = document.getElementById('inv-detail-panel');
