@@ -252,6 +252,14 @@
   color: var(--sci-red);
 }
 
+.ps-btn:focus,
+.ps-btn:focus-visible {
+  background: var(--sci-surface);
+  border-color: var(--sci-line);
+  color: var(--sci-txt);
+  outline: none;
+}
+
 .ps-btn-icon {
   border: 1px solid currentColor;
   flex-shrink: 0;
