@@ -5,6 +5,18 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.47 — Verified hangar top bar inline styles (no-op)
+
+**Date:** 2026-03-22
+
+Verification pass only — no code changes made. Confirmed that all three targeted edits were already applied in v5.46: `#hangar-mm-btn` has `style="flex:0 0 auto;width:auto;"`, `#deploy-btn` has `style="flex:0 0 auto;width:auto;"`, and `.hg-top` in `css/garage.css` already contains `align-items:center`.
+
+### Files Changed
+
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.46 — Inline styles on hangar and campaign top bar buttons to prevent stretching
 
 **Date:** 2026-03-22
