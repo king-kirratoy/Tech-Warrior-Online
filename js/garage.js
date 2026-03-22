@@ -281,7 +281,7 @@ function updateGarageStats() {
     ].filter(Boolean);
 
     panel.innerHTML = rows.map(([lbl,val,col]) =>
-        `<div class="gs-row"><span class="gs-label">${lbl}</span><span class="gs-val" style="color:${col}">${val}</span></div>`
+        `<div class="hg-stat-row"><span class="hg-stat-label">${lbl}</span><span class="hg-stat-val" style="color:${col}">${val}</span></div>`
     ).join('');
 }
 
@@ -295,8 +295,8 @@ function _updateStarterPanel() {
     const chColor = ch === 'light' ? '#88ff88' : ch === 'medium' ? '#ffcc44' : '#ff8844';
 
     let html = '';
-    html += `<div class="gs-row"><span class="gs-label">WEAPON</span><span class="gs-val" style="color:${chColor}">${wL?.name || 'NONE'}</span></div>`;
-    html += `<div class="gs-row"><span class="gs-label">SHIELD</span><span class="gs-val" style="color:${chColor}">${shName}</span></div>`;
+    html += `<div class="hg-stat-row"><span class="hg-stat-label">WEAPON</span><span class="hg-stat-val" style="color:${chColor}">${wL?.name || 'NONE'}</span></div>`;
+    html += `<div class="hg-stat-row"><span class="hg-stat-label">SHIELD</span><span class="hg-stat-val" style="color:${chColor}">${shName}</span></div>`;
     panel.innerHTML = html;
 }
 
