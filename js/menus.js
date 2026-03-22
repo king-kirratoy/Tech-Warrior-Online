@@ -848,53 +848,58 @@ function populateInventory() {
     if (silEl) {
         const ch = loadout?.chassis || 'medium';
         const mechColor = typeof loadout !== 'undefined' ? loadout.color : 0x00ff88;
-        const hexColor = typeof mechColor === 'number' ? '#' + mechColor.toString(16).padStart(6,'0') : mechColor;
 
-        // Slot positions: left column and right column flanking the mech
-        // Left (top→bottom): CPU, ARMS, L ARM, SHIELD
-        // Right (top→bottom): AUGMENT, ARMOR, R ARM, LEGS
-        // Positioned close to center using calc() — just outside the mech image
-        const _slotL = 'calc(50% - 244px)';   // right edge of left column (shifted out by half slot width)
-        const _slotR = 'calc(50% + 149px)';   // left edge of right column (shifted out by half slot width)
+        // Slot positions: 4 left / 4 right using percentage-based positioning
+        // Left (top→bottom): CPU, ARMS, L ARM, SHIELD  |  Right: AUGMENT, ARMOR, R ARM, LEGS
         const slotPositions = {
-            mod:     { top: '10px',  left: _slotL,  label: 'CPU' },
-            arms:    { top: '105px', left: _slotL,  label: 'ARMS' },
-            L:       { top: '200px', left: _slotL,  label: 'L ARM' },
-            shield:  { top: '295px', left: _slotL,  label: 'SHIELD' },
-            augment: { top: '10px',  left: _slotR,  label: 'AUGMENT' },
-            chest:   { top: '105px', left: _slotR,  label: 'ARMOR' },
-            R:       { top: '200px', left: _slotR,  label: 'R ARM' },
-            legs:    { top: '295px', left: _slotR,  label: 'LEGS' },
+            mod:     { top: '6%',  left: '2%',  label: 'CPU' },
+            arms:    { top: '28%', left: '2%',  label: 'ARMS' },
+            L:       { top: '50%', left: '2%',  label: 'L ARM' },
+            shield:  { top: '72%', left: '2%',  label: 'SHIELD' },
+            augment: { top: '6%',  right: '2%', label: 'AUGMENT' },
+            chest:   { top: '28%', right: '2%', label: 'ARMOR' },
+            R:       { top: '50%', right: '2%', label: 'R ARM' },
+            legs:    { top: '72%', right: '2%', label: 'LEGS' },
         };
 
         let html = '';
-        // Use the actual mech PNG as the silhouette background
-        html += `<div style="position:relative;width:100%;height:385px;">`;
+        html += `<div style="position:relative;width:100%;height:100%;">`;
+
+        // Mech ghost image — neutral gray at 40% opacity
         const mechImgSrc = `assets/${ch}-mech.png`;
-        const hexStr = typeof mechColor === 'number' ? mechColor.toString(16).padStart(6,'0') : '00ff88';
-        html += `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.15;">`;
-        html += `<img src="${mechImgSrc}" style="height:340px;object-fit:contain;filter:grayscale(100%);" />`;
+        html += `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.40;">`;
+        html += `<img src="${mechImgSrc}" style="width:200px;object-fit:contain;filter:grayscale(100%);" />`;
         html += `</div>`;
+
+        // SVG connector lines from each slot toward mech center
+        html += `<svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">`;
+        const _svgLines = [
+            [8,13,50,50],[8,35,50,50],[8,57,50,50],[8,79,50,50],
+            [92,13,50,50],[92,35,50,50],[92,57,50,50],[92,79,50,50],
+        ];
+        _svgLines.forEach(([x1,y1,x2,y2]) => {
+            html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(0,212,255,0.1)" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"/>`;
+        });
+        html += `</svg>`;
 
         // Equipment slots positioned over the silhouette
         Object.entries(slotPositions).forEach(([key, pos]) => {
             const item = _equipped[key];
             const rd = item ? RARITY_DEFS[item.rarity] : null;
             const nameColor = rd ? rd.colorStr : UI_COLORS.text35;
-            const itemName = item ? (item.isUnique ? '★ ' + (item.shortName || item.name) : (item.shortName || item.name)) : '— empty —';
+            const itemName = item ? (item.isUnique ? '★ ' + (item.shortName || item.name) : (item.shortName || item.name)) : '';
             const borderColor = rd ? rd.colorStr + '55' : UI_COLORS.gold20;
-            let posStyle = `top:${pos.top};`;
+            let posStyle = `top:${pos.top};position:absolute;width:90px;`;
             if (pos.left) posStyle += `left:${pos.left};`;
             if (pos.right) posStyle += `right:${pos.right};`;
-            if (pos.transform) posStyle += `transform:${pos.transform};`;
 
-            html += `<div class="mech-equip-slot eq-slot" style="${posStyle}border-color:${borderColor};"
+            html += `<div class="mech-equip-slot lo-slot" style="${posStyle}border-color:${borderColor};"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
                 ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
                 onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()"
                 onclick="_showItemDetail('equipped','${key}')">
-                <div class="eq-slot-label">${pos.label}</div>
-                <div class="eq-slot-name" style="color:${nameColor};">${itemName}</div>
+                <div class="lo-slot-lbl">${pos.label}</div>
+                ${itemName ? `<div class="lo-slot-name" style="color:${nameColor};">${itemName}</div>` : ''}
             </div>`;
         });
 
@@ -919,29 +924,27 @@ function populateInventory() {
             }
         };
 
-        if (_inventory.length === 0) {
-            bpEl.innerHTML = `<span style="font-size:12px;color:${UI_COLORS.text35};letter-spacing:1px;">No items in backpack</span>`;
-        } else {
-            _inventory.forEach((item, idx) => {
+        const _bpSlotNames = {
+                weapon:'L ARM / R ARM', mod_system:'CPU', aug_system:'AUGMENT',
+                shield_system:'SHIELD', leg_system:'LEGS', armor:'ARMOR', arms:'ARMS',
+                legs:'LEGS', shield:'SHIELD', mod:'CPU', augment:'AUGMENT'
+        };
+        // Render filled item slots
+        _inventory.forEach((item, idx) => {
                 const rd = RARITY_DEFS[item.rarity];
                 const cell = document.createElement('div');
-                cell.className = 'bp-cell';
-                const _uBorder = item.isUnique ? `border:2px solid ${rd.colorStr};box-shadow:0 0 6px ${rd.colorStr}44;` : `border:1px solid ${rd.colorStr}44;`;
-                cell.style.cssText = `width:88px;height:84px;${_uBorder}border-radius:5px;background:${UI_COLORS.bgDark30};display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:0 4px;box-sizing:border-box;`;
+                cell.className = 'lo-slot';
                 cell.draggable = true;
                 cell.dataset.invIdx = idx;
                 cell.title = `${item.name}\n${item.affixes.map(a => a.label).join('\n')}${item.uniqueLabel ? '\n★ ' + item.uniqueLabel : ''}`;
-                const _starBadge = item.isUnique ? `<div style="position:absolute;top:1px;right:3px;font-size:9px;color:${UI_COLORS.gold};">★</div>` : '';
-                const _bpSlotNames = {
-                    weapon:'L ARM / R ARM', mod_system:'CPU', aug_system:'AUGMENT',
-                    shield_system:'SHIELD', leg_system:'LEGS', armor:'ARMOR', arms:'ARMS',
-                    legs:'LEGS', shield:'SHIELD', mod:'CPU', augment:'AUGMENT'
-                };
                 const _bpSlotLbl = _bpSlotNames[item.baseType] || '';
-                cell.innerHTML = `${_starBadge}
-                    ${_bpSlotLbl ? `<div style="font-size:8px;letter-spacing:1px;color:var(--sci-txt3,rgba(160,180,200,0.55));text-transform:uppercase;margin-bottom:2px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;">${_bpSlotLbl}</div>` : ''}
-                    <div style="font-size:11px;letter-spacing:0.5px;color:${rd.colorStr};text-align:center;line-height:1.3;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;">${item.shortName}</div>
-                    <div style="width:7px;height:7px;border-radius:50%;background:${rd.colorStr};margin-top:4px;opacity:0.7;flex-shrink:0;"></div>`;
+                cell.innerHTML = `
+                    ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
+                    <div class="lo-slot-lbl">${_bpSlotLbl}</div>
+                    <div class="lo-slot-name" style="color:${rd.colorStr};">${item.shortName || item.name}</div>
+                    <div class="lo-slot-dot" style="background:${rd.colorStr};"></div>
+                `;
+                cell.style.borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : rd.colorStr + '44';
                 // Apply selected state if this item is currently selected
                 if (_invSelectedSource === 'backpack' && _invSelectedKey === idx) {
                     cell.style.borderColor = rd.colorStr + 'ee';
@@ -955,20 +958,20 @@ function populateInventory() {
                 });
                 cell.addEventListener('mouseout', () => {
                     if (!(_invSelectedSource === 'backpack' && _invSelectedKey === idx)) {
-                        cell.style.borderColor = rd.colorStr + '44';
+                        cell.style.borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : rd.colorStr + '44';
                         cell.style.boxShadow   = 'none';
                     }
                 });
                 cell.addEventListener('click', () => {
                     _showItemDetail('backpack', idx);
-                    // Refresh selected border on all backpack cards immediately
-                    document.querySelectorAll('#inv-backpack .bp-cell').forEach(c => {
+                    // Refresh selected border on all filled backpack slots
+                    document.querySelectorAll('#inv-backpack .lo-slot').forEach(c => {
                         const ci = parseInt(c.dataset.invIdx, 10);
                         const it = _inventory[ci];
                         if (!it) return;
                         const cr = RARITY_DEFS[it.rarity];
                         const sel = (_invSelectedSource === 'backpack' && _invSelectedKey === ci);
-                        c.style.borderColor = sel ? cr.colorStr + 'ee' : cr.colorStr + '44';
+                        c.style.borderColor = sel ? cr.colorStr + 'ee' : (it.isUnique ? 'rgba(255,215,0,0.4)' : cr.colorStr + '44');
                         c.style.boxShadow   = sel ? `0 0 10px ${cr.colorStr}55` : 'none';
                     });
                 });
@@ -976,7 +979,7 @@ function populateInventory() {
                 cell.addEventListener('dragstart', (ev) => {
                     ev.dataTransfer.setData('text/plain', 'backpack:' + idx);
                     cell.classList.add('dragging');
-                    // Highlight valid/invalid equip slots (Fix 4)
+                    // Highlight valid/invalid equip slots
                     const validSlots = _getDragValidSlots(item);
                     document.querySelectorAll('.mech-equip-slot').forEach(slot => {
                         if (validSlots.includes(slot.dataset.slot)) {
@@ -993,7 +996,12 @@ function populateInventory() {
                     });
                 });
                 bpEl.appendChild(cell);
-            });
+        });
+        // Fill remaining slots as empty placeholders (always show 30 total)
+        for (let i = _inventory.length; i < INVENTORY_MAX; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'lo-slot empty';
+                bpEl.appendChild(empty);
         }
     }
 
@@ -1830,10 +1838,11 @@ function _showSlotHover(el, slotKey) {
     if (!card) return;
     const item = _equipped && _equipped[slotKey];
     if (!item) { card.style.display = 'none'; return; }
-    const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60 };
+    const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
     const _slotNames = { L:'L Arm', R:'R Arm', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', mod:'CPU Mod', augment:'Augment' };
     let html = `<div style="font-size:8px;letter-spacing:2px;color:var(--sci-txt3);margin-bottom:3px;">${_slotNames[slotKey]||slotKey}</div>`;
-    html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:6px;">${item.name}</div>`;
+    html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${item.name}</div>`;
+    html += `<div style="font-size:8px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||item.rarity}${item.iLvl ? ' · iLvl '+item.iLvl : ''}</div>`;
     if (item.baseStats) {
         const sn = { dmg:'Damage', reload:'Reload', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', reloadPct:'Reload%', dmgPct:'Dmg%' };
         Object.entries(item.baseStats).forEach(([k, v]) => {
@@ -1844,16 +1853,25 @@ function _showSlotHover(el, slotKey) {
     if (item.affixes && item.affixes.length) {
         item.affixes.forEach(a => { html += `<div style="font-size:9px;color:#44ff88;margin-top:2px;">&#9679; ${a.label}</div>`; });
     }
+    html += `<div style="font-size:7px;letter-spacing:1px;color:var(--sci-txt3);margin-top:8px;opacity:0.5;">Hold + drag to swap</div>`;
     card.innerHTML = html;
     card.style.display = 'block';
+    // Position beside the slot — flip left/right to avoid edge clipping
     const wrap = card.parentElement;
     if (wrap && el) {
         const wr = wrap.getBoundingClientRect();
         const er = el.getBoundingClientRect();
-        const top  = er.top  - wr.top;
-        const left = er.right - wr.left + 8;
-        card.style.top  = Math.max(0, top) + 'px';
-        card.style.left = left + 'px';
+        const cardW = 190 + 2; // card width + border
+        const top = Math.max(0, er.top - wr.top);
+        const rightSpace = window.innerWidth - er.right;
+        if (rightSpace >= cardW + 12) {
+            card.style.left  = (er.right - wr.left + 8) + 'px';
+            card.style.right = 'auto';
+        } else {
+            card.style.right = (wr.right - er.left + 8) + 'px';
+            card.style.left  = 'auto';
+        }
+        card.style.top = top + 'px';
     }
 }
 

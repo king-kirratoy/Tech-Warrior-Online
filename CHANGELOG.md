@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.68 — Loadout overlay: full layout restructure
+
+**Date:** 2026-03-22
+
+Seven-step layout restructure of the loadout overlay to match the approved design. Step 1: replaced the tall campaign XP bar (`#campaign-xp-bar`) with a slim single-line `.lo-xp-row` (2px fill track, 8px monospace labels); updated `campaign-system.js` to show as `flex` instead of `block`. Step 2: narrowed left column from 260px to 240px; set `.lo-right` to `overflow:hidden`. Step 3: removed Backpack section from left column; left column now shows only Hull Integrity → Stats → Chassis Traits → Gear Bonuses → Active Perks (simulation-only). Step 4: equipment doll slots converted from calc()-positioned `.eq-slot` cards to percentage-positioned (left:2%/right:2%, top:6/28/50/72%) `.mech-equip-slot .lo-slot` cards; mech ghost image raised to `opacity:0.40` at `width:200px`; SVG dashed connector lines added (rgba(0,212,255,0.1)); `.lo-doll-wrap` changed to `flex:1` to fill remaining height. Step 5: backpack moved to right column below the weapon bar as a fixed 10×3 grid of 30 `.lo-slot` divs (filled items + empty placeholders); all drag-and-drop event handlers preserved unchanged; old `bp-cell` class replaced with `lo-slot`. Step 6: weapon bar class renamed from `weapon-bar` to `lo-weapon-bar` with updated CSS (`padding:9px 20px; gap:20px`). Step 7: hover card class renamed to `.lo-hover-card` (190px, `font-family:'Courier New'`); `_showSlotHover` updated to flip left/right to avoid screen-edge clipping, and now also shows rarity+iLvl row and a "Hold + drag to swap" hint.
+
+---
+
 ## v5.67 — Loadout screen: CSS visual polish pass
 
 **Date:** 2026-03-22
