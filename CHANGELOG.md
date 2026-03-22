@@ -5,6 +5,20 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.45 — CSS child-selector rules to prevent top bar button stretching
+
+**Date:** 2026-03-22
+
+Added CSS child-selector rules to stop buttons from growing inside the hangar and campaign flex rows. In `css/garage.css`: added `.hg-top > button { flex:0 0 auto; width:auto; min-width:0; align-self:center; }` and `.hg-top > div { flex:1 1 auto; min-width:0; }` after the `.hg-top` rule — buttons stay compact, the title div fills remaining space. In `css/menus.css`: added matching `.cm-top > button, .cm-top > .tw-btn` (same `flex:0 0 auto`) and `.cm-top > .cm-title { flex:1 1 auto; }` rules after `.cm-top`; and `.cm-bottom > button, .cm-bottom > .tw-btn { flex:0 0 auto; margin-left:auto; }` plus `.cm-bottom > .cm-xp-bar { flex:1 1 auto; }` after `.cm-bottom`. No JS files were touched.
+
+### Files Changed
+
+- `css/garage.css` — .hg-top child-selector rules added
+- `css/menus.css` — .cm-top and .cm-bottom child-selector rules added
+- `CHANGELOG.md` — this entry
+
+---
+
 ## v5.44 — Fix hangar top bar button positioning
 
 **Date:** 2026-03-22

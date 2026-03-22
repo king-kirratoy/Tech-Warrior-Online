@@ -690,6 +690,19 @@
   padding: 14px 24px;
 }
 
+.cm-top > button,
+.cm-top > .tw-btn {
+  align-self: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  width: auto;
+}
+
+.cm-top > .cm-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .cm-title {
   color: var(--sci-txt);
   flex: 1;
@@ -852,6 +865,17 @@
   gap: 12px;
   margin-top: auto;
   padding: 16px 20px;
+}
+
+.cm-bottom > button,
+.cm-bottom > .tw-btn {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: auto;
+}
+
+.cm-bottom > .cm-xp-bar {
+  flex: 1 1 auto;
 }
 
 .cm-xp-bar {
