@@ -152,6 +152,26 @@ const WEAPONS = {
               desc: 'Two-handed. Spins up for 1.5s then fires at extreme rate. Locks both arm slots.' },
 };
 
+// ═══════════ WEAPON DISPLAY NAMES ═══════════
+// Canonical full display names for all weapon keys.
+// Use: WEAPON_NAMES[key] || key  — fallback to raw key if not found.
+const WEAPON_NAMES = {
+    smg:   'Submachine Gun',
+    mg:    'Machine Gun',
+    sg:    'Shotgun',
+    br:    'Battle Rifle',
+    hr:    'Heavy Rifle',
+    fth:   'Flamethrower',
+    sr:    'Sniper Rifle',
+    gl:    'Grenade Launcher',
+    rl:    'Rocket Launcher',
+    plsm:  'Plasma Cannon',
+    rail:  'Railgun',
+    siege: 'Siege Cannon',
+    chain: 'Chain Gun',
+    none:  'None',
+};
+
 // ═══════════ SHIELDS ═══════════
 
 const SHIELD_SYSTEMS = {

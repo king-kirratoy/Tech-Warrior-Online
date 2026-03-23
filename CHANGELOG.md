@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.99 — Canonical WEAPON_NAMES map; fix multiplayer weapon name display
+
+**Date:** 2026-03-23
+
+Added `WEAPON_NAMES` constant to `constants.js` as the single canonical source for all 13 weapon display names plus `none`. Fixed `multiplayer.js` `weaponName()` which was returning abbreviated `SLOT_DESCS` titles (e.g. "SMG — SUBMACHINE GUN") — it now uses `WEAPON_NAMES`. Updated the multiplayer lobby summary, weapon bar (`menus.js`), hangar stats panel (`garage.js`), and loot item generation (`loot-system.js`) to all use `WEAPON_NAMES[key]` with fallback to `WEAPONS[key].name`.
+
+---
+
 ## v5.98 — Full weapon display names; revert slot name font size
 
 **Date:** 2026-03-23

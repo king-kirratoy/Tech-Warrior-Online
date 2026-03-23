@@ -722,7 +722,7 @@ function generateItem(round, enemyData) {
         const w = WEAPONS[baseKey];
         if (!w) return null;
         subType = baseKey;
-        name = w.name;
+        name = (typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[baseKey] : null) || w.name;
         icon = baseKey; // icon key matches weapon key
         baseStats = {};
         if (w.dmg) baseStats.dmg = w.dmg;

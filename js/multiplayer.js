@@ -1040,9 +1040,9 @@ function mpShowLobby() {
     lobbyEl.className = 'mp-screen';
 
     // Build loadout summary string for the left panel
-    const wL = loadout.L && loadout.L !== 'none' ? (WEAPONS[loadout.L]?.name || loadout.L) : '';
+    const wL = loadout.L && loadout.L !== 'none' ? (WEAPON_NAMES[loadout.L] || WEAPONS[loadout.L]?.name || loadout.L) : '';
     const wR = loadout.R && loadout.R !== 'none' && loadout.R !== loadout.L
-        ? (WEAPONS[loadout.R]?.name || loadout.R) : '';
+        ? (WEAPON_NAMES[loadout.R] || WEAPONS[loadout.R]?.name || loadout.R) : '';
     const loadoutSummary = [wL, wR].filter(Boolean).join(' / ') || 'Unarmed';
     const chassisLabel   = (loadout.chassis || 'light');
 
@@ -2348,9 +2348,8 @@ function _pvpRenderHangar() {
     // ── Slot label helpers ──
     const weaponName = (key) => {
         if (!key || key === 'none') return 'None';
-        const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[key] : null;
-        if (desc) return desc.title;
-        return WEAPONS[key]?.name || key.toUpperCase();
+        return (typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[key] : null)
+            || WEAPONS[key]?.name || key.toUpperCase();
     };
 
     function statRow(lbl, val, cls) {
