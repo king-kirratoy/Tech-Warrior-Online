@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.84 — Left column reorder, hover card overhaul, backpack hover + compare
+
+**Date:** 2026-03-23
+
+Reordered left column: HP bars now render directly below chassis row with no divider; divider moved below bars; Total HP/Shield rows sit between divider and Gear Bonuses. Hover card rewritten with fixed positioning (`z-index:9999`) and edge-aware placement: flips left/right based on slot position, anchors upward for bottom-row slots, clamps to viewport edges. Extracted `_buildHoverHtml()` shared builder that renders stats, affixes, and unique effects (parsed from `uniqueLabel` into name + description with gold `#ffd700` styling). Added `mouseenter`/`mouseleave` on backpack slots to show hover card with full item details plus "VS EQUIPPED" comparison section showing stat diffs (green/red). Cache-busting bumped to `?v=5.84`.
+
+---
+
 ## v5.83 — Uppercase labels, weapon bar flex layout, 4×5 backpack, slot sizing
 
 **Date:** 2026-03-23
