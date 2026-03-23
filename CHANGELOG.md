@@ -5,6 +5,38 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.87 — Remove cache-busting query strings
+
+**Date:** 2026-03-23
+
+Removed cache-busting query strings from all script and CSS tags.
+
+---
+
+## v5.86 — Fix inverted display for Reload Speed % and Mod Cooldown %
+
+**Date:** 2026-03-23
+
+Fixed display-only color logic for stats where lower is better (`reloadPct`, `modCdPct`, `reload`). Gear bonuses panel now shows these reductions in green (`.pos`) instead of red. Hover card base stats color negative values green for inverted stats. Hover card VS EQUIPPED comparison and menus.js `_buildItemComparisonHTML` both now treat negative diffs as improvements for these keys. Supply shop comparison in `campaign-system.js` also updated. Affix labels containing "reload" or "cooldown" with "-" prefix render green. No underlying data values changed. Cache-busting bumped to `?v=5.86`.
+
+---
+
+## v5.85 — Remove click-to-detail, hover-only interaction
+
+**Date:** 2026-03-23
+
+Removed click handlers from both equipped doll slots and backpack slots — items are now inspected via hover card only (mouseenter/mouseleave). The right-side comparison panel (`#inv-detail-panel`) is permanently hidden with `display:none !important`. Drag-and-drop behavior is unchanged. Cache-busting bumped to `?v=5.85`.
+
+---
+
+## v5.84 — Left column reorder, hover card overhaul, backpack hover + compare
+
+**Date:** 2026-03-23
+
+Reordered left column: HP bars now render directly below chassis row with no divider; divider moved below bars; Total HP/Shield rows sit between divider and Gear Bonuses. Hover card rewritten with fixed positioning (`z-index:9999`) and edge-aware placement: flips left/right based on slot position, anchors upward for bottom-row slots, clamps to viewport edges. Extracted `_buildHoverHtml()` shared builder that renders stats, affixes, and unique effects (parsed from `uniqueLabel` into name + description with gold `#ffd700` styling). Added `mouseenter`/`mouseleave` on backpack slots to show hover card with full item details plus "VS EQUIPPED" comparison section showing stat diffs (green/red). Cache-busting bumped to `?v=5.84`.
+
+---
+
 ## v5.83 — Uppercase labels, weapon bar flex layout, 4×5 backpack, slot sizing
 
 **Date:** 2026-03-23

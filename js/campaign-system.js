@@ -1536,9 +1536,11 @@ function showShop() {
             const diffKeys = allKeys.filter(k => (newStats[k] || 0) !== (oldStats[k] || 0));
             if (diffKeys.length > 0) {
                 detailHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">Changes if equipped:</div>`;
+                const _shopInvertedStats = new Set(['reloadPct','modCdPct','reload']);
                 diffKeys.forEach(k => {
                     const diff    = (newStats[k] || 0) - (oldStats[k] || 0);
-                    const diffCls = diff > 0 ? 'pos' : 'neg';
+                    const isGood  = _shopInvertedStats.has(k) ? diff < 0 : diff > 0;
+                    const diffCls = isGood ? 'pos' : 'neg';
                     const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
                     detailHtml += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
                     detailHtml += `<span style="color:rgba(255,255,255,0.45);">${_shopStatNames[k] || k}</span>`;

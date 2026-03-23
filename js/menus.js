@@ -899,8 +899,7 @@ function populateInventory() {
             html += `<div class="mech-equip-slot lo-slot" style="${posStyle}border-color:${borderColor};"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
                 ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
-                onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()"
-                onclick="_showItemDetail('equipped','${key}')">
+                onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
                 <div class="lo-slot-lbl">${pos.label}</div>
                 ${itemName ? `<div class="lo-slot-name" style="color:${nameColor};">${itemName}</div>` : ''}
             </div>`;
@@ -965,19 +964,8 @@ function populateInventory() {
                         cell.style.boxShadow   = 'none';
                     }
                 });
-                cell.addEventListener('click', () => {
-                    _showItemDetail('backpack', idx);
-                    // Refresh selected border on all filled backpack slots
-                    document.querySelectorAll('#inv-backpack .lo-slot').forEach(c => {
-                        const ci = parseInt(c.dataset.invIdx, 10);
-                        const it = _inventory[ci];
-                        if (!it) return;
-                        const cr = RARITY_DEFS[it.rarity];
-                        const sel = (_invSelectedSource === 'backpack' && _invSelectedKey === ci);
-                        c.style.borderColor = sel ? cr.colorStr + 'ee' : (it.isUnique ? 'rgba(255,215,0,0.4)' : cr.colorStr + '44');
-                        c.style.boxShadow   = sel ? `0 0 10px ${cr.colorStr}55` : 'none';
-                    });
-                });
+                cell.addEventListener('mouseenter', () => { _showSlotHover(cell, null, item); });
+                cell.addEventListener('mouseleave', () => { _hideSlotHover(); });
                 // Drag events
                 cell.addEventListener('dragstart', (ev) => {
                     ev.dataTransfer.setData('text/plain', 'backpack:' + idx);
@@ -1109,7 +1097,7 @@ function _buildItemComparisonHTML(newItem) {
         const ev   = oldStats[k] ?? 0;
         const diff = nv - ev;
         if (diff === 0) return '';
-        const isPositive = (k === 'reload' || k === 'modCdPct') ? diff < 0 : diff > 0;
+        const isPositive = (k === 'reload' || k === 'reloadPct' || k === 'modCdPct') ? diff < 0 : diff > 0;
         const color  = isPositive ? '#44ff88' : '#ff4466';
         const sign   = diff > 0 ? '+' : '';
         const fmtVal = (diff > -1 && diff < 1 && diff !== 0)
@@ -1576,8 +1564,7 @@ function _renderGearBonusesPanel() {
             const v  = gs[k];
             const neg = negKeys.has(k);
             const prefix = neg ? '−' : '+';
-            const cls    = neg ? 'neg' : 'pos';
-            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${_gsLabels[k] || k}</span><span class="lo-bonus-val ${cls}">${prefix}${v}</span></div>`;
+            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${_gsLabels[k] || k}</span><span class="lo-bonus-val pos">${prefix}${v}</span></div>`;
         });
         return h;
     };
@@ -1668,52 +1655,150 @@ function _renderWeaponBar() {
     }
 }
 
-/** Shows a hover card for an equipment slot in the doll view. */
-function _showSlotHover(el, slotKey) {
-    const card = document.getElementById('eq-hover-card');
-    if (!card) return;
-    const item = _equipped && _equipped[slotKey];
-    if (!item) { card.style.display = 'none'; return; }
+/** Builds hover card HTML for any item. */
+function _buildHoverHtml(item, slotLabel, compareItem) {
     const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
-    const _slotNames = { L:'L Arm', R:'R Arm', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', mod:'CPU Mod', augment:'Augment' };
-    let html = `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${_slotNames[slotKey]||slotKey}</div>`;
+    const sn = { dmg:'Damage', reload:'Reload', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP',
+        dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', reloadPct:'Reload%', dmgPct:'Dmg%',
+        critChance:'Crit%', critDmg:'Crit Dmg%', dodgePct:'Dodge%', modCdPct:'Mod CD%',
+        modEffPct:'Mod Eff%', lootMult:'Loot%', autoRepair:'Repair', allHP:'All HP',
+        absorbPct:'Absorb%', pellets:'Pellets', splashRadius:'Blast%' };
+    let html = '';
+    if (slotLabel) html += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${slotLabel}</div>`;
     html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${item.name}</div>`;
     html += `<div style="font-size:8px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||item.rarity}${item.iLvl ? ' · iLvl '+item.iLvl : ''}</div>`;
+    const _invertedStats = new Set(['reloadPct','modCdPct','reload']);
     if (item.baseStats) {
-        const sn = { dmg:'Damage', reload:'Reload', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', reloadPct:'Reload%', dmgPct:'Dmg%' };
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (!v) return;
-            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${sn[k]||k}</span><span style="color:var(--sci-txt);">${v}</span></div>`;
+            let valColor = 'var(--sci-txt)';
+            if (_invertedStats.has(k)) {
+                valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-txt)');
+            }
+            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${sn[k]||k}</span><span style="color:${valColor};">${v}</span></div>`;
         });
     }
     if (item.affixes && item.affixes.length) {
-        item.affixes.forEach(a => { html += `<div style="font-size:9px;color:#44ff88;margin-top:2px;">&#9679; ${a.label}</div>`; });
+        item.affixes.forEach(a => {
+            const lbl = a.label || '';
+            const isInvertedAffix = /reload|cooldown/i.test(lbl);
+            const color = isInvertedAffix && lbl.startsWith('-') ? '#00ff88' : '#44ff88';
+            html += `<div style="font-size:9px;color:${color};margin-top:2px;">&#9679; ${lbl}</div>`;
+        });
     }
-    html += `<div style="font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.22);margin-top:8px;">Hold + drag to swap</div>`;
-    card.innerHTML = html;
-    card.style.display = 'block';
-    // Position beside the slot — flip left/right to avoid edge clipping
-    const wrap = card.parentElement;
-    if (wrap && el) {
-        const wr = wrap.getBoundingClientRect();
-        const er = el.getBoundingClientRect();
-        const cardW = 190 + 2; // card width + border
-        const top = Math.max(0, er.top - wr.top);
-        const rightSpace = window.innerWidth - er.right;
-        if (rightSpace >= cardW + 12) {
-            card.style.left  = (er.right - wr.left + 8) + 'px';
-            card.style.right = 'auto';
-        } else {
-            card.style.right = (wr.right - er.left + 8) + 'px';
-            card.style.left  = 'auto';
+    // Unique effect
+    if (item.isUnique && item.uniqueLabel) {
+        const parts = item.uniqueLabel.split(': ');
+        const uName = parts[0] || '';
+        const uDesc = parts.slice(1).join(': ') || '';
+        html += `<div class="lo-hover-unique">`;
+        html += `<div class="lo-hover-unique-hdr">★ UNIQUE EFFECT</div>`;
+        html += `<div class="lo-hover-unique-name">${uName}</div>`;
+        if (uDesc) html += `<div class="lo-hover-unique-desc">${uDesc}</div>`;
+        html += `</div>`;
+    }
+    // Comparison to equipped item
+    if (compareItem) {
+        const crd = RARITY_DEFS[compareItem.rarity] || { colorStr: UI_COLORS.text60 };
+        html += `<div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:8px;padding-top:6px;">`;
+        html += `<div style="font-size:7px;letter-spacing:2px;color:rgba(255,255,255,0.35);margin-bottom:4px;">VS EQUIPPED: <span style="color:${crd.colorStr};">${compareItem.name}</span></div>`;
+        // Gather all stat keys from both items
+        const allKeys = new Set([...Object.keys(item.baseStats||{}), ...Object.keys(compareItem.baseStats||{})]);
+        allKeys.forEach(k => {
+            const nv = (item.baseStats||{})[k] || 0;
+            const ov = (compareItem.baseStats||{})[k] || 0;
+            const diff = nv - ov;
+            if (diff === 0) return;
+            const isInverted = _invertedStats.has(k);
+            const isGood = isInverted ? diff < 0 : diff > 0;
+            const color = isGood ? '#00ff88' : '#ff4d6a';
+            const sign = diff > 0 ? '+' : '';
+            html += `<div style="display:flex;justify-content:space-between;font-size:8px;padding:1px 0;"><span style="color:rgba(255,255,255,0.35);">${sn[k]||k}</span><span style="color:${color};">${sign}${diff}</span></div>`;
+        });
+        html += `</div>`;
+    }
+    return html;
+}
+
+/** Shows a hover card for an equipment or backpack slot. */
+function _showSlotHover(el, slotKey, itemOverride) {
+    const card = document.getElementById('eq-hover-card');
+    if (!card) return;
+    const _slotNames = { L:'L Arm', R:'R Arm', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', mod:'CPU Mod', augment:'Augment' };
+
+    let item, slotLabel, compareItem;
+    if (itemOverride) {
+        // Backpack item passed directly
+        item = itemOverride;
+        const bpSlotNames = { weapon:'Weapon', mod_system:'CPU', aug_system:'Augment',
+            shield_system:'Shield', leg_system:'Legs', armor:'Armor', arms:'Arms' };
+        slotLabel = bpSlotNames[item.baseType] || item.baseType || '';
+        // Find equipped item for same slot to compare
+        const slotMap = { weapon:'L', mod_system:'mod', aug_system:'augment',
+            shield_system:'shield', leg_system:'legs', armor:'chest', arms:'arms' };
+        const eqKey = slotMap[item.baseType];
+        if (eqKey && _equipped && _equipped[eqKey]) {
+            compareItem = _equipped[eqKey];
         }
-        card.style.top = top + 'px';
+    } else {
+        // Equipped slot by key
+        item = _equipped && _equipped[slotKey];
+        slotLabel = _slotNames[slotKey] || slotKey;
     }
+    if (!item) { card.style.display = 'none'; return; }
+
+    card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem);
+    card.style.display = 'block';
+
+    // Position: use fixed positioning relative to viewport
+    const overlay = document.getElementById('stats-overlay');
+    if (!overlay || !el) return;
+    const or = overlay.getBoundingClientRect();
+    const er = el.getBoundingClientRect();
+    const cardW = 210;
+    const margin = 8;
+
+    // Render offscreen briefly to measure height
+    card.style.position = 'fixed';
+    card.style.left = '-9999px';
+    card.style.top = '0';
+    const cardH = card.offsetHeight;
+
+    // Determine left/right: prefer right of slot, flip if clipped
+    let left;
+    const isRightSide = er.left > (or.left + or.width / 2);
+    if (isRightSide) {
+        // Slot is on right half — show card to left
+        left = er.left - cardW - margin;
+        if (left < or.left) left = er.right + margin;
+    } else {
+        // Slot is on left half — show card to right
+        left = er.right + margin;
+        if (left + cardW > window.innerWidth) left = er.left - cardW - margin;
+    }
+    // Clamp horizontal
+    if (left < 0) left = 4;
+    if (left + cardW > window.innerWidth) left = window.innerWidth - cardW - 4;
+
+    // Determine top: default align top of card with top of slot
+    let top = er.top;
+    // If card would overflow bottom, anchor upward
+    if (top + cardH > window.innerHeight - 8) {
+        top = er.bottom - cardH;
+    }
+    // Clamp vertical
+    if (top < 4) top = 4;
+
+    card.style.left = left + 'px';
+    card.style.top = top + 'px';
 }
 
 function _hideSlotHover() {
     const card = document.getElementById('eq-hover-card');
-    if (card) card.style.display = 'none';
+    if (card) {
+        card.style.display = 'none';
+        card.style.position = 'absolute';
+    }
 }
 
 // ═══════════ LEADERBOARD ═══════════
