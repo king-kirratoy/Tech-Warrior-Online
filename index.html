@@ -493,17 +493,22 @@
     <!-- ─── CENTER COLUMN (flex:1) ─── -->
     <div class="lo-center">
 
-      <!-- Chassis Traits Bar -->
-      <div id="lo-traits-bar" class="lo-traits-bar"></div>
+      <!-- Bordered frame — stops at bottom of weapon bar -->
+      <div class="lo-center-frame">
 
-      <!-- Equipment Doll (flex:1, fills remaining height) -->
-      <div class="lo-doll-wrap">
-        <div id="inv-mech-silhouette" style="position:relative;width:100%;height:100%;"></div>
-        <div id="eq-hover-card" class="lo-hover-card"></div>
-      </div>
+        <!-- Chassis Traits Bar -->
+        <div id="lo-traits-bar" class="lo-traits-bar"></div>
 
-      <!-- Weapon Bar -->
-      <div id="lo-weapon-bar" class="lo-weapon-bar"></div>
+        <!-- Equipment Doll (fixed 440px height) -->
+        <div class="lo-doll-wrap">
+          <div id="inv-mech-silhouette" style="position:relative;width:100%;height:100%;"></div>
+          <div id="eq-hover-card" class="lo-hover-card"></div>
+        </div>
+
+        <!-- Weapon Bar -->
+        <div id="lo-weapon-bar" class="lo-weapon-bar"></div>
+
+      </div><!-- /lo-center-frame -->
 
     </div><!-- /lo-center -->
 

@@ -5,6 +5,22 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.96 — Hover card style refresh
+
+**Date:** 2026-03-23
+
+Updated single item hover cards to use `var(--sci-cyan)` for base stat values and added a `.lo-hover-divider` separator line between the base stats block and affixes block. Rebuilt the comparison hover card as a unified single bordered card (`.lo-hover-cmp-card`) using a CSS grid two-column layout with `BACKPACK` / `EQUIPPED` source labels, per-column stat/affix dividers, and a shared "Changes if equipped" diff section below; sign inversion for Reload Speed % and Mod Cooldown % applies in both columns and the diff. Viewport overflow detection is unchanged and already uses measured card width, so the wider comparison card stays on screen correctly.
+
+---
+
+## v5.95 — Center column border, dividers, and font size polish
+
+**Date:** 2026-03-23
+
+Replaced the full-height `border-right` on `.lo-center` with a new `.lo-center-frame` wrapper (in `index.html` + `garage.css`) that applies `border-left`, `border-right`, and `border-bottom` only around the trait bar + doll area + weapon bar, so the border stops cleanly at the bottom of the weapon bar. Added `border-bottom` to `.lo-weapon-bar` as a closing line. Added `align-self:stretch` to `.lo-wb-divider` and inserted dividers between each chassis trait in `_renderWeaponBar()` to match the weapon bar's visual style. Increased `.lo-slot-lbl` from 6px to 8px, `.lo-slot-name` from 8px to 11px, `.lo-trait-name` from 9px to 11px, and `.lo-trait-desc` from 8px to 9px.
+
+---
+
 ## v5.94 — Fix doll area height and slot column layout
 
 **Date:** 2026-03-23
