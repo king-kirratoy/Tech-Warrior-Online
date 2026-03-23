@@ -899,7 +899,7 @@ function populateInventory() {
             html += `<div class="mech-equip-slot lo-slot" style="${posStyle}border-color:${borderColor};"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
                 ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
-                onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
+                onmousedown="_hideSlotHover()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
                 <div class="lo-slot-lbl">${pos.label}</div>
                 ${itemName ? `<div class="lo-slot-name" style="color:${nameColor};">${itemName}</div>` : ''}
             </div>`;
@@ -967,7 +967,9 @@ function populateInventory() {
                 cell.addEventListener('mouseenter', () => { _showSlotHover(cell, null, item); });
                 cell.addEventListener('mouseleave', () => { _hideSlotHover(); });
                 // Drag events
+                cell.addEventListener('mousedown', () => { _hideSlotHover(); });
                 cell.addEventListener('dragstart', (ev) => {
+                    _hideSlotHover();
                     ev.dataTransfer.setData('text/plain', 'backpack:' + idx);
                     cell.classList.add('dragging');
                     // Highlight valid/invalid equip slots

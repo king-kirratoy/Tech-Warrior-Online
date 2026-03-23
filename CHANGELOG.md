@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.88 — Divider fix, sign display fix, hover-on-drag fix
+
+**Date:** 2026-03-23
+
+Moved the divider line in the loadout left column to sit below Total Shield (above Gear Bonuses) instead of between HP bars and totals. Fixed Reload Speed % and Mod Cooldown % to display a `+` sign instead of `−` across all six UI locations (gear bonuses panel, hover card base stats, hover card affixes, hover card VS EQUIPPED comparison, item comparison panel, and campaign supply shop diffs). Added `_hideSlotHover()` on mousedown for both equipped doll slots and backpack slots so the hover card disappears immediately when the player clicks to drag.
+
+---
+
 ## v5.87 — Remove cache-busting query strings
 
 **Date:** 2026-03-23
