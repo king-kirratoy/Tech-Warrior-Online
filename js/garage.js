@@ -292,8 +292,8 @@ function updateGarageStats() {
     // Group 3 — Weapons: combined name + fire rate per arm
     const rKey    = is2H ? loadout.L : loadout.R;
     const rEmpty2 = !rKey || rKey === 'none';
-    const lArmVal = lEmpty ? '— none' : (wL.name + (lRate ? ' — ' + lRate : ''));
-    const rArmVal = rEmpty2 ? '— none' : ((WEAPONS[rKey]?.name || rKey) + (rRate ? ' — ' + rRate : ''));
+    const lArmVal = lEmpty ? '— none' : ((WEAPON_NAMES[loadout.L] || wL.name) + (lRate ? ' — ' + lRate : ''));
+    const rArmVal = rEmpty2 ? '— none' : ((WEAPON_NAMES[rKey] || WEAPONS[rKey]?.name || rKey) + (rRate ? ' — ' + rRate : ''));
     const weaponRows = [
         row('L ARM', lArmVal, 'dim'),
         row('R ARM', rArmVal, 'dim'),
@@ -343,7 +343,7 @@ function _updateStarterPanel() {
 
     const sCls = ch === 'light' ? 'green' : 'warn';
     let html = '';
-    html += `<div class="hg-stat-row"><span class="hg-stat-label">WEAPON</span><span class="hg-stat-val ${sCls}">${wL?.name || 'NONE'}</span></div>`;
+    html += `<div class="hg-stat-row"><span class="hg-stat-label">WEAPON</span><span class="hg-stat-val ${sCls}">${WEAPON_NAMES[loadout.L] || wL?.name || 'NONE'}</span></div>`;
     html += `<div class="hg-stat-row"><span class="hg-stat-label">SHIELD</span><span class="hg-stat-val ${sCls}">${shName}</span></div>`;
     panel.innerHTML = html;
 }
