@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.77 — Hangar chassis buttons, doll area sizing, stats timing, mission XP bar
+
+**Date:** 2026-03-23
+
+Five UI fixes. (1) `.mp-chassis-btn` letter-spacing increased from 1px to 2px (font-size was already 10px) in `menus.css`, covering both warzone and multiplayer hangar. (2) `margin-bottom: 16px` added to `.mp-chassis-row` in `menus.css` for clear spacing between chassis buttons and the Colour row. (3) Loadout doll area: `.lo-doll-wrap` min-height changed from 0 to 480px; `.lo-doll-wrap .lo-slot` width updated to explicit `calc((100% - 36px - 32px) / 10)` form; mech silhouette image width increased from 200px to 220px. (4) `_updateMainMenuStats()` internal setTimeout delay increased from 500ms to 800ms to ensure campaign state is available when the stats panel renders. (5) Removed the duplicate LVL label and `cm-xp-bar` from the campaign mission select deploy bar — level and XP are already shown in the screen's top bar.
+
+---
+
 ## v5.76 — Loadout overlay: gear HP, trim stats section, CPU MOD, top bar swap
 
 **Date:** 2026-03-23

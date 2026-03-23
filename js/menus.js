@@ -622,6 +622,7 @@ function _updateCampaignButton() {
 function _updateMainMenuStats() {
     setTimeout(() => {
         if (!document.getElementById('mm-stat-missions')) return;
+
         const callsignEl = document.getElementById('mm-callsign');
         if (callsignEl && typeof _playerCallsign !== 'undefined') {
             callsignEl.textContent = _playerCallsign || '—';
@@ -644,7 +645,7 @@ function _updateMainMenuStats() {
             fillEl.style.width = pct + '%';
             if (textEl) textEl.textContent = 'LVL ' + level + ' — ' + xpCur + ' / ' + xpNext + ' XP';
         }
-    }, 500);
+    }, 800);
 }
 
 async function showCampaignSubMenu() {
@@ -868,7 +869,7 @@ function populateInventory() {
         // Mech ghost image — neutral gray at 40% opacity
         const mechImgSrc = `assets/${ch}-mech.png`;
         html += `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0.40;">`;
-        html += `<img src="${mechImgSrc}" style="width:200px;object-fit:contain;filter:grayscale(100%);" />`;
+        html += `<img src="${mechImgSrc}" style="width:220px;object-fit:contain;filter:grayscale(100%);" />`;
         html += `</div>`;
 
         // SVG connector lines from each slot toward mech center
