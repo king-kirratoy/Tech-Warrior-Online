@@ -1636,32 +1636,36 @@ function _renderWeaponBar() {
     const _gDmgPct  = (_gearState?.dmgPct    || 0);
     const _gRldPct  = (_gearState?.reloadPct || 0);
 
-    let weapHtml = '';
-    [['L', loadout.L], ['R', loadout.R]].forEach(([side, key]) => {
-        if (!key || key === 'none') return;
+    const _wbItem = (label, key) => {
+        if (!key || key === 'none') return null;
         const w = WEAPONS[key];
-        if (!w) return;
-        const effDmg = w.dmg ? Math.round((w.dmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100)) : 0;
-        const effRld = Math.round((w.reload||0) * (_perkState.reloadMult||1) * (1 - _gRldPct/100));
-        const effDps = effRld > 0 ? Math.round(effDmg / effRld * 1000) : 0;
-        weapHtml += `<div style="min-width:0;">`;
-        weapHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:2px;">${side} ARM</div>`;
-        weapHtml += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.name}</div>`;
-        weapHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span></div>`;
-        weapHtml += `</div>`;
-    });
-    if (loadout.mod && loadout.mod !== 'none') {
-        const w = WEAPONS[loadout.mod];
-        if (w) {
-            weapHtml += `<div style="min-width:0;">`;
-            weapHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:2px;">CPU MOD</div>`;
-            weapHtml += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.name}</div>`;
-            if (w.cooldown) weapHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">Cooldown <span style="color:rgba(255,255,255,0.88);">${w.cooldown}ms</span></div>`;
-            weapHtml += `</div>`;
+        if (!w) return null;
+        let h = `<div class="lo-wb-item">`;
+        h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:2px;">${label}</div>`;
+        h += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.name}</div>`;
+        if (w.dmg) {
+            const effDmg = Math.round((w.dmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100));
+            const effRld = Math.round((w.reload||0) * (_perkState.reloadMult||1) * (1 - _gRldPct/100));
+            const effDps = effRld > 0 ? Math.round(effDmg / effRld * 1000) : 0;
+            h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span></div>`;
+        } else if (w.cooldown) {
+            h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">Cooldown <span style="color:rgba(255,255,255,0.88);">${w.cooldown}ms</span></div>`;
         }
+        h += `</div>`;
+        return h;
+    };
+
+    const items = [
+        _wbItem('L ARM', loadout.L),
+        _wbItem('R ARM', loadout.R),
+        _wbItem('CPU MOD', loadout.mod),
+    ].filter(Boolean);
+
+    if (items.length === 0) {
+        el.innerHTML = '<div class="lo-wb-item" style="opacity:0.3;font-size:9px;color:rgba(255,255,255,0.45);">No weapons armed</div>';
+    } else {
+        el.innerHTML = items.join('<div class="lo-wb-divider"></div>');
     }
-    if (!weapHtml) weapHtml = '<div style="min-width:0;opacity:0.3;font-size:9px;font-family:\'Courier New\',monospace;color:rgba(255,255,255,0.45);">No weapons armed</div>';
-    el.innerHTML = weapHtml;
 }
 
 /** Shows a hover card for an equipment slot in the doll view. */
