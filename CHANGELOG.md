@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.98 — Full weapon display names; revert slot name font size
+
+**Date:** 2026-03-23
+
+Reverted `.lo-slot-name` font-size from 11px back to 9px. Updated all 13 `WEAPONS[key].name` values in `constants.js` to full spelled-out names (`Submachine Gun`, `Machine Gun`, `Shotgun`, `Battle Rifle`, `Heavy Rifle`, `Flamethrower`, `Sniper Rifle`, `Grenade Launcher`, `Rocket Launcher`, `Plasma Cannon`, `Railgun`, `Siege Cannon`, `Chain Gun`); since `loot-system.js`, the weapon bar, and the hangar stats panel all derive display names from `WEAPONS[key].name`, the change propagates everywhere automatically — garage dropdown labels were already full names and are unchanged.
+
+---
+
 ## v5.97 — Fix double borders on center column
 
 **Date:** 2026-03-23

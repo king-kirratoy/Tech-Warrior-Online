@@ -90,28 +90,28 @@ const CHASSIS = {
 const WEAPONS = {
     // ── PRIMARY WEAPONS ─────────────────────────────────────────────
     // SMG: high fire rate, close range — identity: spray & suppression, damage falls off past 280px
-    smg:    { name: 'SMG',    reload: 55,   dmg: 6,   weight: 15,  bulletSize: 4,  speed: 950, rangeDropoff: 280 },
+    smg:    { name: 'Submachine Gun', reload: 55,   dmg: 6,   weight: 15,  bulletSize: 4,  speed: 950, rangeDropoff: 280 },
     // MG: solid sustained fire — identity: reliable workhorse
-    mg:     { name: 'MG',     reload: 280,  dmg: 28,  weight: 25,  bulletSize: 6,  speed: 870 },
+    mg:     { name: 'Machine Gun',    reload: 280,  dmg: 28,  weight: 25,  bulletSize: 6,  speed: 870 },
     // SG: close-range burst — identity: devastating at point blank, weak at range
-    sg:     { name: 'SG',     reload: 700,  dmg: 16,  weight: 30,  bulletSize: 5,  speed: 580,  pellets: 6, range: 500 },
+    sg:     { name: 'Shotgun',        reload: 700,  dmg: 16,  weight: 30,  bulletSize: 5,  speed: 580,  pellets: 6, range: 500 },
     // BR: burst precision — identity: mid-range burst, first shot accurate
-    br:     { name: 'BR',     reload: 900,  dmg: 30,  weight: 30,  bulletSize: 5,  speed: 1150, burst: 3 },
+    br:     { name: 'Battle Rifle',   reload: 900,  dmg: 30,  weight: 30,  bulletSize: 5,  speed: 1150, burst: 3 },
     // HR: anti-armor heavy — identity: pierces shields entirely (shield absorb ignored), high single-shot damage
-    hr:     { name: 'HR',     reload: 1600, dmg: 160, weight: 45,  bulletSize: 12, speed: 1100, armorBuster: true, shieldPierce: true },
+    hr:     { name: 'Heavy Rifle',    reload: 1600, dmg: 160, weight: 45,  bulletSize: 12, speed: 1100, armorBuster: true, shieldPierce: true },
     // FTH: flamethrower — identity: short-range DoT cone, no bullet, spray fire
-    fth:    { name: 'FTH',    reload: 90,   dmg: 7,   weight: 30,  bulletSize: 8,  speed: 420,  flame: true, range: 350 },
+    fth:    { name: 'Flamethrower',   reload: 90,   dmg: 7,   weight: 30,  bulletSize: 8,  speed: 420,  flame: true, range: 350 },
     // ── SECONDARY WEAPONS ───────────────────────────────────────────
     // SR: precision eliminator — identity: pierce through all enemies in line
-    sr:     { name: 'SR',     reload: 2200, dmg: 240, weight: 50,  bulletSize: 6,  speed: 2200, pierce: true },
+    sr:     { name: 'Sniper Rifle',   reload: 2200, dmg: 240, weight: 50,  bulletSize: 6,  speed: 2200, pierce: true },
     // GL: area denial — identity: short arm distance, big AOE
-    gl:     { name: 'GL',     reload: 2800, dmg: 220, weight: 55,  explosive: true, armDist: 80 },
+    gl:     { name: 'Grenade Launcher', reload: 2800, dmg: 220, weight: 55,  explosive: true, armDist: 80 },
     // RL: high-risk heavy — identity: massive dmg+radius, can self-damage
-    rl:     { name: 'RL',     reload: 3200, dmg: 250, weight: 65,  explosive: true, bulletSize: 12, speed: 820, selfDamage: true, radius: 120 },
+    rl:     { name: 'Rocket Launcher', reload: 3200, dmg: 250, weight: 65,  explosive: true, bulletSize: 12, speed: 820, selfDamage: true, radius: 120 },
     // PLSM: channeled beam — identity: continuous growing orb
-    plsm:   { name: 'PLSM',   reload: 3200, dmg: 300, weight: 60,  size: 32 },
+    plsm:   { name: 'Plasma Cannon',  reload: 3200, dmg: 300, weight: 60,  size: 32 },
     // RAIL: railgun — identity: long charge, extreme single-target damage, pierces all
-    rail:   { name: 'RAIL',   reload: 4500, dmg: 450, weight: 70,  bulletSize: 5,  speed: 3000, pierce: true, charge: true },
+    rail:   { name: 'Railgun',        reload: 4500, dmg: 450, weight: 70,  bulletSize: 5,  speed: 3000, pierce: true, charge: true },
     // ── SYSTEM MODIFICATIONS ────────────────────────────────────────
     none:   { name: 'NONE',   weight: 0 },
     // JUMP: repositioning — deals slam AoE on land
@@ -143,11 +143,11 @@ const WEAPONS = {
                      desc: '4s: +30% DR and 5 HP/s core regen. Immovable fortress.' },
     // ── TWO-HANDED WEAPONS ──────────────────────────────────────────
     // SIEGE CANNON: slow, devastating AoE — requires both arms, no secondary possible
-    siege:  { name: 'SIEGE CANNON', reload: 4000, dmg: 380, weight: 90, twoHanded: true,
+    siege:  { name: 'Siege Cannon',  reload: 4000, dmg: 380, weight: 90, twoHanded: true,
               bulletSize: 16, speed: 600, explosive: true, radius: 160,
               desc: 'Two-handed. Massive AoE cannon. Locks both arm slots.' },
     // CHAINGUN: spins up over 1.5s then fires at extreme rate — requires both arms
-    chain:  { name: 'CHAINGUN',     reload: 45,   dmg: 12,  weight: 80, twoHanded: true,
+    chain:  { name: 'Chain Gun',     reload: 45,   dmg: 12,  weight: 80, twoHanded: true,
               bulletSize: 5,  speed: 1100, spinUp: 1500,
               desc: 'Two-handed. Spins up for 1.5s then fires at extreme rate. Locks both arm slots.' },
 };
