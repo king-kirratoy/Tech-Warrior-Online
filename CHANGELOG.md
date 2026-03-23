@@ -5,6 +5,30 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.93 — Create UI_CONVENTIONS.md
+
+**Date:** 2026-03-23
+
+Created UI_CONVENTIONS.md documenting all UI patterns and conventions.
+
+---
+
+## v5.92 — Update OVERVIEW.md
+
+**Date:** 2026-03-23
+
+Updated OVERVIEW.md to reflect current project state.
+
+---
+
+## v5.91 — Update CLAUDE.md
+
+**Date:** 2026-03-23
+
+Rewrote CLAUDE.md to reflect current project state.
+
+---
+
 ## v5.90 — Rename weapon slot labels, remove backpack rarity dot
 
 **Date:** 2026-03-23
