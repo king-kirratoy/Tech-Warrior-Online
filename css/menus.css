@@ -292,19 +292,12 @@
    ============================================================ */
 .mech-equip-slot {
   align-items: center;
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,215,0,0.2);
   border-radius: 5px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  height: 76px;
   justify-content: center;
-  padding: 6px 4px;
-  position: absolute;
   text-align: center;
-  transition: all 0.2s;
-  width: 88px;
   z-index: 2;
 }
 
