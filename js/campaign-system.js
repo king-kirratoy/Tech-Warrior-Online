@@ -1716,10 +1716,11 @@ function _shopShowHover(el, idx, listType) {
 
     card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem, 'SHOP');
     const isCompare = !!compareItem;
-    card.style.display = 'block';
-    card.style.width   = isCompare ? 'auto' : '200px';
-    card.style.padding = isCompare ? '0' : '';
-    card.style.border  = isCompare ? 'none' : '';
+    card.style.display  = 'block';
+    card.style.zIndex   = '10005';  // must exceed #shop-overlay z-index (10004)
+    card.style.width    = isCompare ? 'auto' : '200px';
+    card.style.padding  = isCompare ? '0' : '';
+    card.style.border   = isCompare ? 'none' : '';
 
     // Measure then position (same algorithm as _showSlotHover in menus.js)
     card.style.position = 'fixed';
