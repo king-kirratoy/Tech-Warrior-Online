@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.97 — Fix double borders on center column
+
+**Date:** 2026-03-23
+
+Removed redundant `border-left` and `border-bottom` from `.lo-center-frame`; the single dividing line between columns is now provided solely by `.lo-left`'s `border-right`, and the bottom edge by `.lo-weapon-bar`'s existing `border-bottom`.
+
+---
+
 ## v5.96 — Hover card style refresh
 
 **Date:** 2026-03-23
