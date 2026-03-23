@@ -1539,9 +1539,10 @@ function showShop() {
                 const _shopInvertedStats = new Set(['reloadPct','modCdPct','reload']);
                 diffKeys.forEach(k => {
                     const diff    = (newStats[k] || 0) - (oldStats[k] || 0);
-                    const isGood  = _shopInvertedStats.has(k) ? diff < 0 : diff > 0;
+                    const isInv   = _shopInvertedStats.has(k);
+                    const isGood  = isInv ? diff < 0 : diff > 0;
                     const diffCls = isGood ? 'pos' : 'neg';
-                    const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+                    const diffStr = (isInv && diff < 0) ? `+${Math.abs(diff)}` : (diff > 0 ? `+${diff}` : `${diff}`);
                     detailHtml += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
                     detailHtml += `<span style="color:rgba(255,255,255,0.45);">${_shopStatNames[k] || k}</span>`;
                     detailHtml += `<span class="shop-compare-diff ${diffCls}">${diffStr}</span>`;

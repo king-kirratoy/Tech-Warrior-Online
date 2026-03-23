@@ -949,6 +949,17 @@
 .lo-hover-unique-desc { color: rgba(255,255,255,0.55); font-family: 'Courier New', monospace; font-size: 9px; line-height: 1.4;
 }
 
+/* --- Comparison hover card --- */
+.lo-hover-cmp-wrap { display: flex; flex-direction: column; }
+.lo-hover-cmp-cards { display: flex; gap: 4px; align-items: flex-start; }
+.lo-hover-cmp-col { display: flex; flex-direction: column; width: 200px; }
+.lo-hover-cmp-label { color: rgba(255,255,255,0.30); font-family: 'Courier New', monospace; font-size: 7px; letter-spacing: 2px; margin-bottom: 4px; padding-left: 2px; text-transform: uppercase; }
+.lo-hover-cmp-card { background: #0d1316; border: 1px solid rgba(0,212,255,0.35); padding: 10px 12px; }
+.lo-hover-diff { background: #0d1316; border: 1px solid rgba(0,212,255,0.35); border-top: none; padding: 10px 14px; }
+.lo-hover-diff-hdr { color: rgba(255,255,255,0.30); font-family: 'Courier New', monospace; font-size: 7px; letter-spacing: 2px; margin-bottom: 6px; text-transform: uppercase; }
+.lo-hover-diff-row { display: flex; font-family: 'Courier New', monospace; font-size: 9px; justify-content: space-between; padding: 2px 0; }
+.lo-hover-diff-lbl { color: rgba(255,255,255,0.30); letter-spacing: 0.5px; text-transform: uppercase; }
+
 /* --- Weapon bar --- */
 /* --- Chassis traits bar (top of center column) --- */
 .lo-traits-bar {

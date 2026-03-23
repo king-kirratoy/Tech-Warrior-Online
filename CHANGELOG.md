@@ -5,6 +5,30 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.90 — Rename weapon slot labels, remove backpack rarity dot
+
+**Date:** 2026-03-23
+
+Renamed weapon slot display labels from "L ARM / R ARM" to "WEAPON" across backpack slot cards, item detail panel, and hover cards; removed the colored rarity dot element from backpack grid slot cards.
+
+---
+
+## v5.89 — Redesign comparison hover card
+
+**Date:** 2026-03-23
+
+Redesigned the backpack item hover card to show two full item cards side by side (Backpack vs Equipped) with a "Changes if equipped" diff section spanning full width beneath both cards. Extracted `_buildSingleCardHtml()` as a reusable single-card renderer shared by both single and comparison views. Weapon comparison defaults to L arm, falls back to R if L is empty. Card positioning uses measured width for overflow detection so the wider comparison card stays fully on-screen. Single item hover cards (equipped slots, backpack items with no counterpart) are unchanged.
+
+---
+
+## v5.88 — Divider fix, sign display fix, hover-on-drag fix
+
+**Date:** 2026-03-23
+
+Moved the divider line in the loadout left column to sit below Total Shield (above Gear Bonuses) instead of between HP bars and totals. Fixed Reload Speed % and Mod Cooldown % to display a `+` sign instead of `−` across all six UI locations (gear bonuses panel, hover card base stats, hover card affixes, hover card VS EQUIPPED comparison, item comparison panel, and campaign supply shop diffs). Added `_hideSlotHover()` on mousedown for both equipped doll slots and backpack slots so the hover card disappears immediately when the player clicks to drag.
+
+---
+
 ## v5.87 — Remove cache-busting query strings
 
 **Date:** 2026-03-23
