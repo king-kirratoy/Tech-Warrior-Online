@@ -447,9 +447,9 @@
 
   <!-- Top bar -->
   <div class="lo-top-bar">
-    <div id="inv-header-count" style="font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.45);"></div>
+    <button onclick="toggleStats()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">BACK</button>
     <div class="mp-screen-title" style="font-size:12px;letter-spacing:6px;">LOADOUT</div>
-    <button onclick="toggleStats()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;margin-left:auto;">CLOSE</button>
+    <div id="inv-header-count" style="font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.45);margin-left:auto;"></div>
   </div>
 
   <!-- Campaign XP Bar (hidden unless campaign mode) — slim single-line row -->
@@ -475,13 +475,6 @@
 
       <!-- HP bars: Core, L Arm, R Arm, Legs -->
       <div id="lo-hull-info" class="lo-block"></div>
-
-      <div class="lo-divider"></div>
-
-      <!-- Mech Stats rows -->
-      <div id="stat-mobility-info" class="lo-block"></div>
-
-      <div class="lo-divider"></div>
 
       <!-- Weapon stats placeholder (written by _renderWeaponPanel, hidden in new layout) -->
       <div id="stat-weapons-info" style="display:none;"></div>

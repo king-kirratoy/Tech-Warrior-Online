@@ -1443,7 +1443,15 @@ function _renderHullBars() {
     const ch = loadout.chassis;
     const chassisData = CHASSIS[ch];
     const _inGame = !!(player?.comp);
-    const baseHP = { core: chassisData?.coreHP||212, lArm: chassisData?.armHP||120, rArm: chassisData?.armHP||120, legs: chassisData?.legHP||152 };
+    const _gCore = (_gearState?.coreHP||0) + (_gearState?.allHP||0);
+    const _gArm  = (_gearState?.armHP||0)  + (_gearState?.allHP||0);
+    const _gLeg  = (_gearState?.legHP||0)  + (_gearState?.allHP||0);
+    const baseHP = {
+        core: (chassisData?.coreHP||212) + _gCore,
+        lArm: (chassisData?.armHP||120)  + _gArm,
+        rArm: (chassisData?.armHP||120)  + _gArm,
+        legs: (chassisData?.legHP||152)  + _gLeg,
+    };
 
     // Chassis name row
     const crEl = document.getElementById('lo-chassis-row');
@@ -1481,7 +1489,7 @@ function _renderHullBars() {
         html += _hpRow('R.Arm', baseHP.rArm,  baseHP.rArm);
         html += _hpRow('Legs',  baseHP.legs,  baseHP.legs);
         const totalBase  = Object.values(baseHP).reduce((s,v)=>s+v,0);
-        const baseShield = chassisData?.max || 75;
+        const baseShield = (SHIELD_SYSTEMS[loadout?.shld]?.maxShield||0) + (_gearState?.shieldHP||0);
         totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value" style="color:#00ff88">${totalBase} / ${totalBase}</span></div>`;
         totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:#cc88ff">${baseShield} / ${baseShield}</span></div>`;
     }
@@ -1781,7 +1789,6 @@ function populateStats() {
 function populateLoadout() {
     if (typeof _updateCampaignXPBar === 'function') _updateCampaignXPBar();
     _renderHullBars();
-    _renderMobilityPanel();
     _renderGearBonusesPanel();
     populateInventory();
     const perksSection = document.getElementById('lo-perks-section');
@@ -1814,14 +1821,14 @@ function _renderWeaponBar() {
         weapHtml += `<div style="min-width:0;">`;
         weapHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.22);margin-bottom:2px;">${side} ARM</div>`;
         weapHtml += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.name}</div>`;
-        weapHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.22);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span> &middot; RELOAD <span style="color:rgba(255,255,255,0.88);">${effRld}ms</span></div>`;
+        weapHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.22);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span></div>`;
         weapHtml += `</div>`;
     });
     if (loadout.mod && loadout.mod !== 'none') {
         const w = WEAPONS[loadout.mod];
         if (w) {
             weapHtml += `<div style="min-width:0;">`;
-            weapHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.22);margin-bottom:2px;">CORE MOD</div>`;
+            weapHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.22);margin-bottom:2px;">CPU MOD</div>`;
             weapHtml += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.name}</div>`;
             if (w.cooldown) weapHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.22);">Cooldown <span style="color:rgba(255,255,255,0.88);">${w.cooldown}ms</span></div>`;
             weapHtml += `</div>`;

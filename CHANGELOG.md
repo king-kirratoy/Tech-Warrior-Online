@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.76 — Loadout overlay: gear HP, trim stats section, CPU MOD, top bar swap
+
+**Date:** 2026-03-23
+
+Four targeted changes to the loadout overlay. (1) HP values in `_renderHullBars()` now reflect equipped gear bonuses: `_gearState.coreHP/armHP/legHP/allHP` are added to each chassis base value; `_gearState.shieldHP` is added to the shield system's `maxShield`; the shield base now reads from `SHIELD_SYSTEMS[loadout.shld].maxShield` instead of the incorrect `chassisData.max`. (2) Removed the Mech Stats section entirely: deleted `_renderMobilityPanel()` call from `populateLoadout()` and removed the `#stat-mobility-info` div and surrounding dividers from `index.html`. (3) Weapon bar: renamed "CORE MOD" label to "CPU MOD"; removed RELOAD from the arm weapon stats line (shows DMG and DPS only). (4) Top bar: BACK button (renamed from CLOSE) moved to left side; items/scrap count moved to right side with `margin-left:auto`.
+
+---
+
 ## v5.75 — Loadout and hangar UI polish pass
 
 **Date:** 2026-03-22
