@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.90 — Rename weapon slot labels, remove backpack rarity dot
+
+**Date:** 2026-03-23
+
+Renamed weapon slot display labels from "L ARM / R ARM" to "WEAPON" across backpack slot cards, item detail panel, and hover cards; removed the colored rarity dot element from backpack grid slot cards.
+
+---
+
 ## v5.89 — Redesign comparison hover card
 
 **Date:** 2026-03-23

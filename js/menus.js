@@ -927,7 +927,7 @@ function populateInventory() {
         };
 
         const _bpSlotNames = {
-                weapon:'L ARM / R ARM', mod_system:'CPU', aug_system:'AUGMENT',
+                weapon:'WEAPON', mod_system:'CPU', aug_system:'AUGMENT',
                 shield_system:'SHIELD', leg_system:'LEGS', armor:'ARMOR', arms:'ARMS',
                 legs:'LEGS', shield:'SHIELD', mod:'CPU', augment:'AUGMENT'
         };
@@ -944,7 +944,6 @@ function populateInventory() {
                     ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
                     <div class="lo-slot-lbl">${_bpSlotLbl}</div>
                     <div class="lo-slot-name" style="color:${rd.colorStr};">${item.shortName || item.name}</div>
-                    <div class="lo-slot-dot" style="background:${rd.colorStr};"></div>
                 `;
                 cell.style.borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : rd.colorStr + '44';
                 // Apply selected state if this item is currently selected
@@ -1156,7 +1155,7 @@ function _renderItemDetail(source, key) {
 
     const rd = RARITY_DEFS[item.rarity];
     const _invSlotNames = {
-        weapon:'L ARM / R ARM', mod_system:'CPU', aug_system:'AUGMENT',
+        weapon:'WEAPON', mod_system:'CPU', aug_system:'AUGMENT',
         shield_system:'SHIELD', leg_system:'LEGS', armor:'ARMOR', arms:'ARMS',
         legs:'LEGS', shield:'SHIELD', mod:'CPU', augment:'AUGMENT'
     };
@@ -1749,7 +1748,7 @@ function _buildHoverHtml(item, slotLabel, compareItem) {
 function _showSlotHover(el, slotKey, itemOverride) {
     const card = document.getElementById('eq-hover-card');
     if (!card) return;
-    const _slotNames = { L:'L Arm', R:'R Arm', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', mod:'CPU Mod', augment:'Augment' };
+    const _slotNames = { L:'Weapon', R:'Weapon', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', mod:'CPU Mod', augment:'Augment' };
 
     let item, slotLabel, compareItem;
     if (itemOverride) {
