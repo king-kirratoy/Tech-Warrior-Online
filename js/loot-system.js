@@ -569,7 +569,7 @@ const AFFIX_POOL = {
 };
 
 // ── INVENTORY & EQUIPMENT STATE ────────────────────────────────
-const INVENTORY_MAX = 16;
+const INVENTORY_MAX = 20;
 let _inventory = [];
 let _equipped = {
     L: null, R: null,

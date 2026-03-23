@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.83 — Uppercase labels, weapon bar flex layout, 4×5 backpack, slot sizing
+
+**Date:** 2026-03-23
+
+Added `text-transform:uppercase` to `.lo-hp-part`, `.lo-bonus-lbl`, `.lo-chassis-val` in `garage.css`; reduced `.lo-chassis-val` font-size from 11px to 9px. Rewrote weapon bar as flex items with `lo-wb-item` (flex:1) separated by `lo-wb-divider` (1px vertical rule), replacing loose inline-block divs. Doll slots now have explicit `height:100px; min-width:100px; min-height:100px` in addition to `width:100px`. Backpack expanded to 4×5 grid (20 slots): `INVENTORY_MAX` changed from 16 to 20, grid-template-rows added as `repeat(5,100px)`. Cache-busting bumped to `?v=5.83`.
+
+---
+
 ## v5.82 — Inventory cap 16, backpack 4×4, right column 440px
 
 **Date:** 2026-03-23

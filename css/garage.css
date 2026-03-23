@@ -746,8 +746,9 @@
 .lo-chassis-val {
   color: rgba(255,255,255,0.88);
   font-family: 'Courier New', monospace;
-  font-size: 11px;
+  font-size: 9px;
   letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 /* --- Hull section — HP bar rows --- */
@@ -764,6 +765,7 @@
   font-family: 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
   width: 38px;
 }
 
@@ -865,6 +867,7 @@
   font-family: 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .lo-bonus-val {
@@ -969,12 +972,28 @@
 
 /* --- Weapon bar (bottom of center column) --- */
 .lo-weapon-bar {
-  align-items: flex-start;
+  align-items: stretch;
   border-top: 1px solid var(--sci-line);
   display: flex;
   flex-shrink: 0;
-  gap: 20px;
-  padding: 10px 20px;
+  padding: 8px 16px;
+}
+
+.lo-wb-item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 12px;
+}
+
+.lo-wb-item:last-child { padding-right: 0; }
+
+.lo-wb-divider {
+  background: var(--sci-line);
+  flex-shrink: 0;
+  margin: 0 12px 0 0;
+  width: 1px;
 }
 
 /* --- Shared slot class (equipment doll + backpack) --- */
@@ -1041,10 +1060,13 @@
   top: 2px;
 }
 
-/* Doll slots — absolutely positioned, fixed 100px width, no aspect-ratio */
+/* Doll slots — absolutely positioned, fixed 100×100px */
 .lo-doll-wrap .lo-slot {
   background: rgba(8,11,14,0.9);
   border: 1px solid rgba(255,255,255,0.12);
+  height: 100px;
+  min-height: 100px;
+  min-width: 100px;
   padding: 5px 7px;
   position: absolute;
   transition: border-color 0.2s;
@@ -1074,9 +1096,9 @@
 
 .lo-bp-grid {
   display: grid;
-  flex: 1;
   gap: 4px;
   grid-template-columns: repeat(4, 100px);
+  grid-template-rows: repeat(5, 100px);
   overflow-y: auto;
 }
 
