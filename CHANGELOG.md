@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.91 — Update CLAUDE.md
+
+**Date:** 2026-03-23
+
+Rewrote CLAUDE.md to reflect current project state.
+
+---
+
 ## v5.90 — Rename weapon slot labels, remove backpack rarity dot
 
 **Date:** 2026-03-23
