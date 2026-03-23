@@ -681,8 +681,6 @@
 
 /* --- Center frame: borders stop at bottom of weapon bar --- */
 .lo-center-frame {
-  border-bottom: 1px solid var(--sci-line);
-  border-left: 1px solid var(--sci-line);
   border-right: 1px solid var(--sci-line);
   display: flex;
   flex-direction: column;
