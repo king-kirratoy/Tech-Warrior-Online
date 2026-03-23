@@ -45,39 +45,39 @@
     <div class="mm-title">TECH<br><span class="mm-title-accent">WARRIOR</span><br>ONLINE</div>
     <nav class="mm-nav" id="main-menu-buttons">
       <div class="sci-nav-item" onclick="showCampaignSubMenu()">
-        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">01</span>
+        <span class="mm-nav-num">01</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Campaign</span>
         <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
       <div class="sci-nav-item" onclick="startGame('simulation')">
-        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">02</span>
+        <span class="mm-nav-num">02</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Warzone</span>
         <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
       <div class="sci-nav-item" onclick="startMultiplayer()">
-        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">03</span>
+        <span class="mm-nav-num">03</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Multiplayer</span>
         <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
       <div class="sci-nav-item" onclick="showLeaderboard()">
-        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">04</span>
+        <span class="mm-nav-num">04</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Leaderboard</span>
         <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
     </nav>
     <div id="campaign-sub-menu" style="display:none;flex-direction:column;gap:2px;margin-top:2px;">
       <div class="sci-nav-item" id="resume-campaign-btn" onclick="startGame('campaign')" style="display:none;">
-        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">★</span>
+        <span class="mm-nav-num">★</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Resume Campaign</span>
         <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
       <div class="sci-nav-item" id="new-campaign-btn" onclick="confirmNewCampaign()">
-        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">01</span>
+        <span class="mm-nav-num">01</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">New Campaign</span>
         <span style="font-size:10px;color:rgba(255,255,255,0.22);">›</span>
       </div>
       <div class="sci-nav-item" onclick="hideCampaignSubMenu()" style="color:var(--sci-red);border-left-color:transparent;">
-        <span style="font-size:9px;color:rgba(255,255,255,0.22);min-width:20px;">←</span>
+        <span class="mm-nav-num">←</span>
         <span style="font-size:12px;letter-spacing:3px;text-transform:uppercase;flex:1;">Back</span>
       </div>
     </div>
