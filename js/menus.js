@@ -1097,7 +1097,7 @@ function _buildItemComparisonHTML(newItem) {
         const ev   = oldStats[k] ?? 0;
         const diff = nv - ev;
         if (diff === 0) return '';
-        const isPositive = (k === 'reload' || k === 'modCdPct') ? diff < 0 : diff > 0;
+        const isPositive = (k === 'reload' || k === 'reloadPct' || k === 'modCdPct') ? diff < 0 : diff > 0;
         const color  = isPositive ? '#44ff88' : '#ff4466';
         const sign   = diff > 0 ? '+' : '';
         const fmtVal = (diff > -1 && diff < 1 && diff !== 0)
@@ -1564,8 +1564,7 @@ function _renderGearBonusesPanel() {
             const v  = gs[k];
             const neg = negKeys.has(k);
             const prefix = neg ? '−' : '+';
-            const cls    = neg ? 'neg' : 'pos';
-            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${_gsLabels[k] || k}</span><span class="lo-bonus-val ${cls}">${prefix}${v}</span></div>`;
+            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${_gsLabels[k] || k}</span><span class="lo-bonus-val pos">${prefix}${v}</span></div>`;
         });
         return h;
     };
@@ -1668,14 +1667,24 @@ function _buildHoverHtml(item, slotLabel, compareItem) {
     if (slotLabel) html += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${slotLabel}</div>`;
     html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${item.name}</div>`;
     html += `<div style="font-size:8px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||item.rarity}${item.iLvl ? ' · iLvl '+item.iLvl : ''}</div>`;
+    const _invertedStats = new Set(['reloadPct','modCdPct','reload']);
     if (item.baseStats) {
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (!v) return;
-            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${sn[k]||k}</span><span style="color:var(--sci-txt);">${v}</span></div>`;
+            let valColor = 'var(--sci-txt)';
+            if (_invertedStats.has(k)) {
+                valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-txt)');
+            }
+            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${sn[k]||k}</span><span style="color:${valColor};">${v}</span></div>`;
         });
     }
     if (item.affixes && item.affixes.length) {
-        item.affixes.forEach(a => { html += `<div style="font-size:9px;color:#44ff88;margin-top:2px;">&#9679; ${a.label}</div>`; });
+        item.affixes.forEach(a => {
+            const lbl = a.label || '';
+            const isInvertedAffix = /reload|cooldown/i.test(lbl);
+            const color = isInvertedAffix && lbl.startsWith('-') ? '#00ff88' : '#44ff88';
+            html += `<div style="font-size:9px;color:${color};margin-top:2px;">&#9679; ${lbl}</div>`;
+        });
     }
     // Unique effect
     if (item.isUnique && item.uniqueLabel) {
@@ -1700,7 +1709,9 @@ function _buildHoverHtml(item, slotLabel, compareItem) {
             const ov = (compareItem.baseStats||{})[k] || 0;
             const diff = nv - ov;
             if (diff === 0) return;
-            const color = diff > 0 ? '#00ff88' : '#ff4d6a';
+            const isInverted = _invertedStats.has(k);
+            const isGood = isInverted ? diff < 0 : diff > 0;
+            const color = isGood ? '#00ff88' : '#ff4d6a';
             const sign = diff > 0 ? '+' : '';
             html += `<div style="display:flex;justify-content:space-between;font-size:8px;padding:1px 0;"><span style="color:rgba(255,255,255,0.35);">${sn[k]||k}</span><span style="color:${color};">${sign}${diff}</span></div>`;
         });

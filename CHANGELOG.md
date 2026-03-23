@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.86 — Fix inverted display for Reload Speed % and Mod Cooldown %
+
+**Date:** 2026-03-23
+
+Fixed display-only color logic for stats where lower is better (`reloadPct`, `modCdPct`, `reload`). Gear bonuses panel now shows these reductions in green (`.pos`) instead of red. Hover card base stats color negative values green for inverted stats. Hover card VS EQUIPPED comparison and menus.js `_buildItemComparisonHTML` both now treat negative diffs as improvements for these keys. Supply shop comparison in `campaign-system.js` also updated. Affix labels containing "reload" or "cooldown" with "-" prefix render green. No underlying data values changed. Cache-busting bumped to `?v=5.86`.
+
+---
+
 ## v5.85 — Remove click-to-detail, hover-only interaction
 
 **Date:** 2026-03-23
