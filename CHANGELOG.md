@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.85 — Remove click-to-detail, hover-only interaction
+
+**Date:** 2026-03-23
+
+Removed click handlers from both equipped doll slots and backpack slots — items are now inspected via hover card only (mouseenter/mouseleave). The right-side comparison panel (`#inv-detail-panel`) is permanently hidden with `display:none !important`. Drag-and-drop behavior is unchanged. Cache-busting bumped to `?v=5.85`.
+
+---
+
 ## v5.84 — Left column reorder, hover card overhaul, backpack hover + compare
 
 **Date:** 2026-03-23

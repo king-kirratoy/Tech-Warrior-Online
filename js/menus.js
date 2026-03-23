@@ -899,8 +899,7 @@ function populateInventory() {
             html += `<div class="mech-equip-slot lo-slot" style="${posStyle}border-color:${borderColor};"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
                 ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
-                onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()"
-                onclick="_showItemDetail('equipped','${key}')">
+                onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
                 <div class="lo-slot-lbl">${pos.label}</div>
                 ${itemName ? `<div class="lo-slot-name" style="color:${nameColor};">${itemName}</div>` : ''}
             </div>`;
@@ -967,19 +966,6 @@ function populateInventory() {
                 });
                 cell.addEventListener('mouseenter', () => { _showSlotHover(cell, null, item); });
                 cell.addEventListener('mouseleave', () => { _hideSlotHover(); });
-                cell.addEventListener('click', () => {
-                    _showItemDetail('backpack', idx);
-                    // Refresh selected border on all filled backpack slots
-                    document.querySelectorAll('#inv-backpack .lo-slot').forEach(c => {
-                        const ci = parseInt(c.dataset.invIdx, 10);
-                        const it = _inventory[ci];
-                        if (!it) return;
-                        const cr = RARITY_DEFS[it.rarity];
-                        const sel = (_invSelectedSource === 'backpack' && _invSelectedKey === ci);
-                        c.style.borderColor = sel ? cr.colorStr + 'ee' : (it.isUnique ? 'rgba(255,215,0,0.4)' : cr.colorStr + '44');
-                        c.style.boxShadow   = sel ? `0 0 10px ${cr.colorStr}55` : 'none';
-                    });
-                });
                 // Drag events
                 cell.addEventListener('dragstart', (ev) => {
                     ev.dataTransfer.setData('text/plain', 'backpack:' + idx);
