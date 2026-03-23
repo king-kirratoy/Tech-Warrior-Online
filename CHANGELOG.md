@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.02 — Fix supply shop hover card transparency (z-index below overlay)
+
+**Date:** 2026-03-23
+
+Shop hover card was rendered behind `#shop-overlay` (z-index 9999 < 10004), making it appear transparent; fixed by setting `card.style.zIndex = '10005'` in `_shopShowHover`.
+
+---
+
 ## v6.01 — Supply shop hover cards; fix weapon slot label; inline buy button
 
 **Date:** 2026-03-23
