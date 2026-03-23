@@ -891,8 +891,9 @@
 
 /* --- Right column: equipment doll --- */
 .lo-doll-wrap {
-  flex: 1;
-  min-height: 480px;
+  flex-grow: 0;
+  flex-shrink: 0;
+  height: 440px;
   overflow: hidden;
   position: relative;
 }
@@ -1078,15 +1079,29 @@
   top: 2px;
 }
 
-/* Doll slots — absolutely positioned, fixed 100×100px */
+/* --- Doll flex columns --- */
+.lo-doll-left,
+.lo-doll-right {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lo-doll-left  { left: 8px; }
+.lo-doll-right { right: 8px; }
+
+/* Doll slots — fixed 100×100px, flow in flex column */
 .lo-doll-wrap .lo-slot {
   background: rgba(8,11,14,0.9);
   border: 1px solid rgba(255,255,255,0.12);
+  flex-shrink: 0;
   height: 100px;
   min-height: 100px;
   min-width: 100px;
   padding: 5px 7px;
-  position: absolute;
   transition: border-color 0.2s;
   width: 100px;
 }
