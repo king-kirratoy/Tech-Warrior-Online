@@ -1720,7 +1720,7 @@ function _buildSingleCardHtml(item, slotLabel) {
     return html;
 }
 
-function _buildHoverHtml(item, slotLabel, compareItem) {
+function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
     if (!compareItem) return _buildSingleCardHtml(item, slotLabel);
 
     // Builds one column's content (source label + slot label + name + stats + affixes + unique)
@@ -1769,7 +1769,7 @@ function _buildHoverHtml(item, slotLabel, compareItem) {
 
     let html = '<div class="lo-hover-cmp-card">';
     html += '<div class="lo-hover-cmp-cols">';
-    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left">${_mkCol(item, 'BACKPACK', slotLabel)}</div>`;
+    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left">${_mkCol(item, leftLabel || 'BACKPACK', slotLabel)}</div>`;
     html += `<div class="lo-hover-cmp-col">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
     html += '</div>';
 

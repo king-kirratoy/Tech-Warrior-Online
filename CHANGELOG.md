@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.01 — Supply shop hover cards; fix weapon slot label; inline buy button
+
+**Date:** 2026-03-23
+
+Fixed supply shop weapon slot label from `L ARM / R ARM` to `WEAPON`. Replaced the click-to-view detail panel for buy items with the same hover card system used in the loadout screen: `mouseenter` on any buy or sell row now shows a `_buildHoverHtml`-powered card (single card for sell items; comparison card showing `SHOP` vs `EQUIPPED` for buy items with an equipped counterpart). Added optional `leftLabel` param to `_buildHoverHtml` (default `'BACKPACK'`) so the shop comparison card shows `SHOP` instead. Moved the buy button inline into each buy row so purchasing works without the now-disabled click detail panel; sell confirmation panel (`_shopSelectSell`) is unchanged.
+
+---
+
 ## v6.00 — Runtime weapon name lookup at all render sites
 
 **Date:** 2026-03-23

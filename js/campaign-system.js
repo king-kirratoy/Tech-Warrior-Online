@@ -1436,7 +1436,7 @@ function showShop() {
     };
     // Friendly slot labels per baseType (Fix 3)
     const _shopSlotLabels = {
-        weapon:        'L ARM / R ARM',
+        weapon:        'WEAPON',
         armor:         'ARMOR',
         arms:          'ARMS',
         legs:          'LEGS',
@@ -1478,25 +1478,29 @@ function showShop() {
 
     // ── Item row builders ──
     function buyRow(item, idx) {
-        const isSelected = (_selectedShopIdx === idx);
         const meta = `${item.rarity || 'common'} · ${slotLbl(item)} · LV.${item.level || 1}`;
         const soldBadge = item._soldBack
             ? `<span style="font-size:8px;letter-spacing:1px;color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.06);border-radius:2px;padding:1px 4px;margin-left:6px;">SOLD</span>`
             : '';
-        return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelect(${idx})">
+        const canBuyRow = scrapVal >= item._shopPrice && (typeof _inventory === 'undefined' || _inventory.length < invMax);
+        const buyBtn = canBuyRow
+            ? `<button class="tw-btn tw-btn--solid tw-btn--sm" onclick="_shopBuy(${idx});event.stopPropagation();" style="flex:0 0 auto;width:auto;min-width:52px;font-size:9px;padding:0 8px;height:26px;">Buy</button>`
+            : `<button class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;min-width:52px;font-size:9px;padding:0 8px;height:26px;opacity:0.35;" disabled>Buy</button>`;
+        return `<div class="shop-item-row" onmouseenter="_shopShowHover(this,${idx},'buy')" onmouseleave="_shopHideHover()">
             <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
             <div class="shop-item-info">
                 <div class="shop-item-name" style="color:${rc(item)};">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name || 'Item'}${soldBadge}</div>
                 <div class="shop-item-meta">${meta}</div>
             </div>
             <div class="shop-item-price">⬡ ${item._shopPrice}</div>
+            ${buyBtn}
         </div>`;
     }
 
     function sellRow(item, idx) {
         const isSelected = (_selectedSellIdx === idx);
         const meta = `${item.rarity || 'common'} · ${slotLbl(item)} · LV.${item.level || 1}`;
-        return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelectSell(${idx})">
+        return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelectSell(${idx})" onmouseenter="_shopShowHover(this,${idx},'sell')" onmouseleave="_shopHideHover()">
             <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
             <div class="shop-item-info">
                 <div class="shop-item-name" style="color:${rc(item)};">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name || 'Item'}</div>
@@ -1506,9 +1510,10 @@ function showShop() {
         </div>`;
     }
 
-    // ── Buy detail panel (Fix 2 + Fix 3) ──
+    // ── Buy detail panel — disabled; hover cards replace click-to-view ──
+    _selectedShopIdx = null;
     let detailHtml = '';
-    if (_selectedShopIdx !== null && _selectedShopIdx < _shopStock.length) {
+    if (false) { // detail panel removed — kept as dead code for reference
         const selItem      = _shopStock[_selectedShopIdx];
         const itemRc       = rc(selItem);
         const canBuy       = scrapVal >= selItem._shopPrice && (typeof _inventory === 'undefined' || _inventory.length < invMax);
@@ -1670,6 +1675,88 @@ function _shopSelect(idx) {
 function _shopSelectSell(idx) {
     _selectedSellIdx = (_selectedSellIdx === idx) ? null : idx;
     showShop();
+}
+
+/** Show the loadout-style hover card for a shop item row. */
+function _shopShowHover(el, idx, listType) {
+    const item = listType === 'buy' ? (_shopStock && _shopStock[idx]) : (typeof _inventory !== 'undefined' && _inventory[idx]);
+    if (!item) return;
+    if (typeof _buildHoverHtml !== 'function') return;
+
+    let card = document.getElementById('shop-hover-card');
+    if (!card) {
+        card = document.createElement('div');
+        card.id = 'shop-hover-card';
+        card.className = 'lo-hover-card';
+        document.body.appendChild(card);
+    }
+
+    const _lblMap = {
+        weapon:'WEAPON', armor:'ARMOR', arms:'ARMS', legs:'LEGS',
+        shield:'SHIELD', mod:'CPU', augment:'AUGMENT',
+        shield_system:'SHIELD', mod_system:'CPU', leg_system:'LEGS', aug_system:'AUGMENT'
+    };
+    const slotLabel = _lblMap[item.baseType] || item.baseType || '';
+
+    // Comparison: buy items only — find equipped counterpart
+    let compareItem = null;
+    if (listType === 'buy' && typeof _equipped !== 'undefined') {
+        const _eqMap = {
+            armor:'chest', arms:'arms', legs:'legs', shield:'shield',
+            mod:'mod', augment:'augment', shield_system:'shield',
+            mod_system:'mod', leg_system:'legs', aug_system:'augment'
+        };
+        if (item.baseType === 'weapon') {
+            compareItem = _equipped['L'] || _equipped['R'] || null;
+        } else {
+            const eqKey = _eqMap[item.baseType];
+            if (eqKey && _equipped[eqKey]) compareItem = _equipped[eqKey];
+        }
+    }
+
+    card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem, 'SHOP');
+    const isCompare = !!compareItem;
+    card.style.display = 'block';
+    card.style.width   = isCompare ? 'auto' : '200px';
+    card.style.padding = isCompare ? '0' : '';
+    card.style.border  = isCompare ? 'none' : '';
+
+    // Measure then position (same algorithm as _showSlotHover in menus.js)
+    card.style.position = 'fixed';
+    card.style.left = '-9999px';
+    card.style.top  = '0';
+    const cardW = card.offsetWidth;
+    const cardH = card.offsetHeight;
+
+    const er     = el.getBoundingClientRect();
+    const margin = 8;
+    let left;
+    if (er.left > window.innerWidth / 2) {
+        left = er.left - cardW - margin;
+        if (left < 0) left = er.right + margin;
+    } else {
+        left = er.right + margin;
+        if (left + cardW > window.innerWidth) left = er.left - cardW - margin;
+    }
+    if (left < 0) left = 4;
+    if (left + cardW > window.innerWidth) left = window.innerWidth - cardW - 4;
+
+    let top = er.top;
+    if (top + cardH > window.innerHeight - 8) top = er.bottom - cardH;
+    if (top < 4) top = 4;
+
+    card.style.left = left + 'px';
+    card.style.top  = top  + 'px';
+}
+
+function _shopHideHover() {
+    const card = document.getElementById('shop-hover-card');
+    if (card) {
+        card.style.display = 'none';
+        card.style.width   = '';
+        card.style.padding = '';
+        card.style.border  = '';
+    }
 }
 
 function _shopBuy(idx) {
