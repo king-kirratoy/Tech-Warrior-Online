@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.82 — Inventory cap 16, backpack 4×4, right column 440px
+
+**Date:** 2026-03-23
+
+Reduced `INVENTORY_MAX` from 30 to 16 in `loot-system.js`. Right column widened from 280px to 440px to accommodate larger slots. Backpack grid changed from 5×6 `repeat(5,1fr)` to 4×4 `repeat(4,100px)` with explicit 100×100px slots matching gear slot dimensions. Removed `aspect-ratio:1` from base `.lo-slot` class. Top bar item count replaced with scrap-only display (`SCRAP 504` in amber-orange `#e8923a`). Cache-busting bumped to `?v=5.82`.
+
+---
+
 ## v5.81 — Three-column loadout layout restructure
 
 **Date:** 2026-03-23

@@ -658,7 +658,7 @@
 .lo-body {
   display: grid;
   flex: 1;
-  grid-template-columns: 220px 1fr 280px;
+  grid-template-columns: 220px 1fr 440px;
   min-height: 0;
   overflow: hidden;
 }
@@ -980,7 +980,6 @@
 /* --- Shared slot class (equipment doll + backpack) --- */
 .lo-slot {
   align-items: center;
-  aspect-ratio: 1;
   border: 1px solid var(--sci-line);
   cursor: pointer;
   display: flex;
@@ -1077,8 +1076,13 @@
   display: grid;
   flex: 1;
   gap: 4px;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 100px);
   overflow-y: auto;
+}
+
+.lo-bp-grid .lo-slot {
+  height: 100px;
+  width: 100px;
 }
 
 /* --- Comparison panel --- */

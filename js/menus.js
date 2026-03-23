@@ -842,7 +842,7 @@ function _cancelNewCampaign() {
 function populateInventory() {
     // Update header count
     const hdr = document.getElementById('inv-header-count');
-    if (hdr) hdr.textContent = `${_inventory.length} / ${INVENTORY_MAX} items · ${_scrap} scrap`;
+    if (hdr) hdr.innerHTML = `<span style="color:rgba(255,255,255,0.35);">SCRAP</span> <span style="color:#e8923a;">${_scrap}</span>`;
     const bpCount = document.getElementById('lo-bp-count');
     if (bpCount) bpCount.textContent = `${_inventory.length} / ${INVENTORY_MAX}`;
 
