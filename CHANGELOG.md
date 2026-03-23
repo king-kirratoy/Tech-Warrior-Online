@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.93 — Create UI_CONVENTIONS.md
+
+**Date:** 2026-03-23
+
+Created UI_CONVENTIONS.md documenting all UI patterns and conventions.
+
+---
+
 ## v5.92 — Update OVERVIEW.md
 
 **Date:** 2026-03-23

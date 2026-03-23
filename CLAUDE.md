@@ -27,7 +27,8 @@ Never compare against the display strings — always use the internal key string
 
 1. Read `OVERVIEW.md` before touching any code
 2. Read `CHANGELOG.md` to understand what changed recently and confirm the current version
-3. After making any changes, update both `OVERVIEW.md` (current state) and `CHANGELOG.md`
+3. If the session touches `css/`, `js/menus.js`, or the loadout screen: also read `UI_CONVENTIONS.md`
+4. After making any changes, update both `OVERVIEW.md` (current state) and `CHANGELOG.md`
    (what changed, with new version number)
 
 Version numbers use `v1.0, v1.1 … v5.90 …` format. Every session that changes code gets
