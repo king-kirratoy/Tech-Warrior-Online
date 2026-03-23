@@ -1683,18 +1683,21 @@ function _buildSingleCardHtml(item, slotLabel) {
     if (slotLabel) html += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${slotLabel}</div>`;
     html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${item.name}</div>`;
     html += `<div style="font-size:8px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||item.rarity}${item.iLvl ? ' · iLvl '+item.iLvl : ''}</div>`;
-    if (item.baseStats) {
+    const hasStats = item.baseStats && Object.values(item.baseStats).some(v => v);
+    const hasAffixes = item.affixes && item.affixes.length > 0;
+    if (hasStats) {
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (!v) return;
-            let valColor = 'var(--sci-txt)';
+            let valColor = 'var(--sci-cyan)';
             if (_hoverInvertedStats.has(k)) {
-                valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-txt)');
+                valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-cyan)');
             }
             const displayVal = (_hoverInvertedStats.has(k) && v < 0) ? '+' + Math.abs(v) : v;
             html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${_hoverStatNames[k]||k}</span><span style="color:${valColor};">${displayVal}</span></div>`;
         });
     }
-    if (item.affixes && item.affixes.length) {
+    if (hasStats && hasAffixes) html += '<div class="lo-hover-divider"></div>';
+    if (hasAffixes) {
         item.affixes.forEach(a => {
             const lbl = a.label || '';
             const isInvertedAffix = /reload|cooldown/i.test(lbl);
@@ -1718,17 +1721,57 @@ function _buildSingleCardHtml(item, slotLabel) {
 
 function _buildHoverHtml(item, slotLabel, compareItem) {
     if (!compareItem) return _buildSingleCardHtml(item, slotLabel);
-    // Two-column comparison layout
-    let html = '<div class="lo-hover-cmp-wrap">';
-    html += '<div class="lo-hover-cmp-cards">';
-    html += '<div class="lo-hover-cmp-col"><div class="lo-hover-cmp-label">Backpack</div>';
-    html += `<div class="lo-hover-cmp-card">${_buildSingleCardHtml(item, slotLabel)}</div>`;
+
+    // Builds one column's content (source label + slot label + name + stats + affixes + unique)
+    const _mkCol = (colItem, sourceLbl, colSlotLabel) => {
+        const rd = RARITY_DEFS[colItem.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
+        let h = `<div class="lo-hover-source-lbl">${sourceLbl}</div>`;
+        if (colSlotLabel) h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${colSlotLabel}</div>`;
+        h += `<div style="font-size:13px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${colItem.name}</div>`;
+        h += `<div style="font-size:9px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||colItem.rarity}${colItem.iLvl ? ' · iLvl '+colItem.iLvl : ''}</div>`;
+        const hasStats = colItem.baseStats && Object.values(colItem.baseStats).some(v => v);
+        const hasAffixes = colItem.affixes && colItem.affixes.length > 0;
+        if (hasStats) {
+            Object.entries(colItem.baseStats).forEach(([k, v]) => {
+                if (!v) return;
+                let valColor = 'var(--sci-cyan)';
+                if (_hoverInvertedStats.has(k)) {
+                    valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-cyan)');
+                }
+                const displayVal = (_hoverInvertedStats.has(k) && v < 0) ? '+' + Math.abs(v) : v;
+                h += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${_hoverStatNames[k]||k}</span><span style="color:${valColor};">${displayVal}</span></div>`;
+            });
+        }
+        if (hasStats && hasAffixes) h += '<div class="lo-hover-divider"></div>';
+        if (hasAffixes) {
+            colItem.affixes.forEach(a => {
+                const lbl = a.label || '';
+                const isInvertedAffix = /reload|cooldown/i.test(lbl);
+                const color = isInvertedAffix && lbl.startsWith('-') ? '#00ff88' : '#44ff88';
+                const fixedLbl = (isInvertedAffix && lbl.startsWith('-')) ? '+' + lbl.slice(1) : lbl;
+                h += `<div style="font-size:9px;color:${color};margin-top:2px;">&#9679; ${fixedLbl}</div>`;
+            });
+        }
+        if (colItem.isUnique && colItem.uniqueLabel) {
+            const parts = colItem.uniqueLabel.split(': ');
+            const uName = parts[0] || '';
+            const uDesc = parts.slice(1).join(': ') || '';
+            h += `<div class="lo-hover-unique">`;
+            h += `<div class="lo-hover-unique-hdr">★ UNIQUE EFFECT</div>`;
+            h += `<div class="lo-hover-unique-name">${uName}</div>`;
+            if (uDesc) h += `<div class="lo-hover-unique-desc">${uDesc}</div>`;
+            h += `</div>`;
+        }
+        h += `<div class="cmp-spacer"></div>`;
+        return h;
+    };
+
+    let html = '<div class="lo-hover-cmp-card">';
+    html += '<div class="lo-hover-cmp-cols">';
+    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left">${_mkCol(item, 'BACKPACK', slotLabel)}</div>`;
+    html += `<div class="lo-hover-cmp-col">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
     html += '</div>';
-    const eqSlotLabel = slotLabel || '';
-    html += '<div class="lo-hover-cmp-col"><div class="lo-hover-cmp-label">Equipped</div>';
-    html += `<div class="lo-hover-cmp-card">${_buildSingleCardHtml(compareItem, eqSlotLabel)}</div>`;
-    html += '</div>';
-    html += '</div>';
+
     // Diff section
     const allKeys = new Set([...Object.keys(item.baseStats||{}), ...Object.keys(compareItem.baseStats||{})]);
     let diffHtml = '';
@@ -1744,7 +1787,7 @@ function _buildHoverHtml(item, slotLabel, compareItem) {
         diffHtml += `<div class="lo-hover-diff-row"><span class="lo-hover-diff-lbl">${_hoverStatNames[k]||k}</span><span style="color:${color};">${diffDisplay}</span></div>`;
     });
     if (diffHtml) {
-        html += '<div class="lo-hover-diff">';
+        html += '<div class="lo-hover-cmp-diff">';
         html += '<div class="lo-hover-diff-hdr">Changes if equipped</div>';
         html += diffHtml;
         html += '</div>';

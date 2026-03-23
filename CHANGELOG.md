@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.96 — Hover card style refresh
+
+**Date:** 2026-03-23
+
+Updated single item hover cards to use `var(--sci-cyan)` for base stat values and added a `.lo-hover-divider` separator line between the base stats block and affixes block. Rebuilt the comparison hover card as a unified single bordered card (`.lo-hover-cmp-card`) using a CSS grid two-column layout with `BACKPACK` / `EQUIPPED` source labels, per-column stat/affix dividers, and a shared "Changes if equipped" diff section below; sign inversion for Reload Speed % and Mod Cooldown % applies in both columns and the diff. Viewport overflow detection is unchanged and already uses measured card width, so the wider comparison card stays on screen correctly.
+
+---
+
 ## v5.95 — Center column border, dividers, and font size polish
 
 **Date:** 2026-03-23
