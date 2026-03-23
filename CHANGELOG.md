@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.81 — Three-column loadout layout restructure
+
+**Date:** 2026-03-23
+
+Restructured the loadout overlay from a two-column layout (stats + doll/backpack) to a three-column layout: (1) Left column (220px) — chassis stats, HP bars, gear bonuses, active perks (unchanged content). (2) Center column (flex fill) — chassis traits bar at top, mech silhouette with 8 equipment slots in the middle, weapon bar at bottom. Traits moved from weapon bar into their own `#lo-traits-bar` div above the doll. (3) Right column (280px) — backpack only, now a 5×6 grid (was 10×3). Equipment doll slots changed to fixed 100px width with evenly spaced percentage positioning (5%/28%/51%/74%). Removed old `.lo-weap-side`/`.lo-trait-side` CSS. Weapon bar inline label colors raised from 0.22 to 0.45 opacity. Cache-busting bumped to `?v=5.81`.
+
+---
+
 ## v5.80 — Cache busting, dead code removal, text visibility, stats timing
 
 **Date:** 2026-03-23

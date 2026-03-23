@@ -852,17 +852,17 @@ function populateInventory() {
         const ch = loadout?.chassis || 'medium';
         const mechColor = typeof loadout !== 'undefined' ? loadout.color : 0x00ff88;
 
-        // Slot positions: 4 left / 4 right using percentage-based positioning
+        // Slot positions: 4 left / 4 right, evenly spaced vertically
         // Left (top→bottom): CPU, ARMS, L ARM, SHIELD  |  Right: AUGMENT, ARMOR, R ARM, LEGS
         const slotPositions = {
-            mod:     { top: '6%',  left: '2%',  label: 'CPU' },
+            mod:     { top: '5%',  left: '2%',  label: 'CPU' },
             arms:    { top: '28%', left: '2%',  label: 'ARMS' },
-            L:       { top: '50%', left: '2%',  label: 'L ARM' },
-            shield:  { top: '72%', left: '2%',  label: 'SHIELD' },
-            augment: { top: '6%',  right: '2%', label: 'AUGMENT' },
+            L:       { top: '51%', left: '2%',  label: 'L ARM' },
+            shield:  { top: '74%', left: '2%',  label: 'SHIELD' },
+            augment: { top: '5%',  right: '2%', label: 'AUGMENT' },
             chest:   { top: '28%', right: '2%', label: 'ARMOR' },
-            R:       { top: '50%', right: '2%', label: 'R ARM' },
-            legs:    { top: '72%', right: '2%', label: 'LEGS' },
+            R:       { top: '51%', right: '2%', label: 'R ARM' },
+            legs:    { top: '74%', right: '2%', label: 'LEGS' },
         };
 
         let html = '';
@@ -877,8 +877,8 @@ function populateInventory() {
         // SVG connector lines from each slot toward mech center
         html += `<svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">`;
         const _svgLines = [
-            [8,13,50,50],[8,35,50,50],[8,57,50,50],[8,79,50,50],
-            [92,13,50,50],[92,35,50,50],[92,57,50,50],[92,79,50,50],
+            [8,10,50,50],[8,33,50,50],[8,56,50,50],[8,79,50,50],
+            [92,10,50,50],[92,33,50,50],[92,56,50,50],[92,79,50,50],
         ];
         _svgLines.forEach(([x1,y1,x2,y2]) => {
             html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(0,212,255,0.1)" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"/>`;
@@ -1605,15 +1605,37 @@ function populateLoadout() {
     _renderWeaponBar();
 }
 
-/** Populates #lo-weapon-bar with armed weapon stats (left) and chassis traits (right). */
+/** Populates #lo-traits-bar with chassis traits and #lo-weapon-bar with weapon stats. */
 function _renderWeaponBar() {
+    // ── Chassis traits bar (top of center column) ─────────────
+    const traitsEl = document.getElementById('lo-traits-bar');
+    if (traitsEl) {
+        const ch = loadout.chassis;
+        const _cTraits = ch === 'light'
+            ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped (−15% dmg per arm)'],
+               ['Reload Speed','+20% passive reload speed on all weapons'],
+               ['Fragile Arms','Arms have 30% less base HP than Medium chassis']]
+            : ch === 'medium'
+            ? [['Mod Cooldowns','All mod cooldowns reduced by −15%'],
+               ['Kill Reduction','Each kill shaves 0.5s off active mod cooldowns'],
+               ['Shield Absorb','Shield absorbs 60% of incoming damage (vs 50%)']]
+            : [['Passive DR','15% damage reduction at all times'],
+               ['Restrictions','Cannot equip JUMP mod or AFTERLEG legs'],
+               ['Attrition','Built for sustained punishment — high HP across all parts']];
+        let traitHtml = '';
+        _cTraits.forEach(([name, desc]) => {
+            traitHtml += `<div class="lo-trait-inline"><div class="lo-trait-name">${name}</div><div class="lo-trait-desc">${desc}</div></div>`;
+        });
+        traitsEl.innerHTML = traitHtml;
+    }
+
+    // ── Weapon bar (bottom of center column) ──────────────────
     const el = document.getElementById('lo-weapon-bar');
     if (!el) return;
     const _gDmgFlat = (_gearState?.dmgFlat   || 0);
     const _gDmgPct  = (_gearState?.dmgPct    || 0);
     const _gRldPct  = (_gearState?.reloadPct || 0);
 
-    // ── Weapon side ───────────────────────────────────────────
     let weapHtml = '';
     [['L', loadout.L], ['R', loadout.R]].forEach(([side, key]) => {
         if (!key || key === 'none') return;
@@ -1623,44 +1645,23 @@ function _renderWeaponBar() {
         const effRld = Math.round((w.reload||0) * (_perkState.reloadMult||1) * (1 - _gRldPct/100));
         const effDps = effRld > 0 ? Math.round(effDmg / effRld * 1000) : 0;
         weapHtml += `<div style="min-width:0;">`;
-        weapHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.22);margin-bottom:2px;">${side} ARM</div>`;
+        weapHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:2px;">${side} ARM</div>`;
         weapHtml += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.name}</div>`;
-        weapHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.22);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span></div>`;
+        weapHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span></div>`;
         weapHtml += `</div>`;
     });
     if (loadout.mod && loadout.mod !== 'none') {
         const w = WEAPONS[loadout.mod];
         if (w) {
             weapHtml += `<div style="min-width:0;">`;
-            weapHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.22);margin-bottom:2px;">CPU MOD</div>`;
+            weapHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:2px;">CPU MOD</div>`;
             weapHtml += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.name}</div>`;
-            if (w.cooldown) weapHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.22);">Cooldown <span style="color:rgba(255,255,255,0.88);">${w.cooldown}ms</span></div>`;
+            if (w.cooldown) weapHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">Cooldown <span style="color:rgba(255,255,255,0.88);">${w.cooldown}ms</span></div>`;
             weapHtml += `</div>`;
         }
     }
-
-    // ── Chassis traits side ───────────────────────────────────
-    const ch = loadout.chassis;
-    const _cTraits = ch === 'light'
-        ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped (−15% dmg per arm)'],
-           ['Reload Speed','+20% passive reload speed on all weapons'],
-           ['Fragile Arms','Arms have 30% less base HP than Medium chassis']]
-        : ch === 'medium'
-        ? [['Mod Cooldowns','All mod cooldowns reduced by −15%'],
-           ['Kill Reduction','Each kill shaves 0.5s off active mod cooldowns'],
-           ['Shield Absorb','Shield absorbs 60% of incoming damage (vs 50%)']]
-        : [['Passive DR','15% damage reduction at all times'],
-           ['Restrictions','Cannot equip JUMP mod or AFTERLEG legs'],
-           ['Attrition','Built for sustained punishment — high HP across all parts']];
-
-    let traitHtml = '';
-    _cTraits.forEach(([name, desc]) => {
-        traitHtml += `<div class="lo-trait-inline"><div class="lo-trait-name">${name}</div><div class="lo-trait-desc">${desc}</div></div>`;
-    });
-
-    const hasWeapons = !!weapHtml;
-    el.style.display = (hasWeapons || traitHtml) ? 'flex' : 'none';
-    el.innerHTML = `<div class="lo-weap-side">${weapHtml || '<div style="min-width:0;opacity:0.3;font-size:9px;font-family:\'Courier New\',monospace;color:rgba(255,255,255,0.45);">No weapons armed</div>'}</div><div class="lo-trait-side">${traitHtml}</div>`;
+    if (!weapHtml) weapHtml = '<div style="min-width:0;opacity:0.3;font-size:9px;font-family:\'Courier New\',monospace;color:rgba(255,255,255,0.45);">No weapons armed</div>';
+    el.innerHTML = weapHtml;
 }
 
 /** Shows a hover card for an equipment slot in the doll view. */
