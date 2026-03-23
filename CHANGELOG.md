@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.80 — Cache busting, dead code removal, text visibility, stats timing
+
+**Date:** 2026-03-23
+
+Five changes based on the UI audit. (1) Added `?v=5.80` cache-busting query strings to all 4 CSS `<link>` tags and all 21 local `<script>` tags in `index.html`, ensuring browsers load fresh code after each deploy. (2) Deleted 5 orphaned render functions from `menus.js` that were never called by `populateLoadout()`: `populateStats()`, `_renderChassisPanel()`, `_renderWeaponPanel()`, `_renderMobilityPanel()`, `_renderRunStatsPanel()`. Removed 2 hidden placeholder divs (`#stat-weapons-info`, `#stat-run-info`) from `index.html`. (3) Fixed 7 near-invisible text rules in `garage.css`: `.lo-hp-part` 0.22→0.55, `.lo-hp-val` 0.22→0.55, `.lo-chassis-lbl` 0.22→0.45, `.lo-bonus-lbl` 0.22→0.55, `.lo-trait-desc` 0.22→0.45, `.lo-slot .lo-slot-lbl` 0.22→0.55, `.bsub` `rgba(212,163,0,0.5)`→`rgba(255,255,255,0.35)`. (4) Raised decorative nav/chapter number opacity in `menus.css`: `.mm-nav-num` 0.22→0.35, `.cm-chapter-num` 0.22→0.35. (5) Fixed campaign main menu stats timing: added `loadCampaignState()` calls before `_updateMainMenuStats()` in both `proceedToMainMenu()` and `returnToMainMenu()` so campaign state is loaded from localStorage synchronously before stats render; reduced `_updateMainMenuStats()` internal setTimeout from 800ms to 100ms.
+
+---
+
 ## v5.78 — Nav number CSS class extraction
 
 **Date:** 2026-03-23

@@ -725,7 +725,7 @@
 }
 
 .lo-chassis-lbl {
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.45);
   font-family: 'Courier New', monospace;
   font-size: 8px;
   letter-spacing: 3px;
@@ -748,7 +748,7 @@
 }
 
 .lo-hp-part {
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.55);
   flex-shrink: 0;
   font-family: 'Courier New', monospace;
   font-size: 9px;
@@ -768,7 +768,7 @@
 }
 
 .lo-hp-val {
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.55);
   flex-shrink: 0;
   font-family: 'Courier New', monospace;
   font-size: 10px;
@@ -826,7 +826,7 @@
 }
 
 .lo-trait-desc {
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.45);
   font-family: 'Courier New', monospace;
   font-size: 8px;
   line-height: 1.4;
@@ -850,7 +850,7 @@
 }
 
 .lo-bonus-lbl {
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.55);
   font-family: 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 0.5px;
@@ -866,7 +866,7 @@
 
 /* --- Gear bonus group sub-header --- */
 .bsub {
-  color: rgba(212,163,0,0.5);
+  color: rgba(255,255,255,0.35);
   font-family: 'Courier New', monospace;
   font-size: 8px;
   letter-spacing: 2px;
@@ -984,7 +984,7 @@
 .lo-slot.empty:hover { border-color: var(--sci-line); }
 
 .lo-slot .lo-slot-lbl {
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.55);
   font-family: 'Courier New', monospace;
   font-size: 6px;
   letter-spacing: 0.5px;

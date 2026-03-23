@@ -66,7 +66,7 @@
 }
 
 .mm-nav-num {
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.35);
   font-size: 9px;
   min-width: 20px;
 }
@@ -759,7 +759,7 @@
 }
 
 .cm-chapter-num {
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.35);
   font-size: 8px;
   letter-spacing: 2px;
   text-transform: uppercase;
