@@ -1623,7 +1623,8 @@ function _renderWeaponBar() {
                ['Restrictions','Cannot equip JUMP mod or AFTERLEG legs'],
                ['Attrition','Built for sustained punishment — high HP across all parts']];
         let traitHtml = '';
-        _cTraits.forEach(([name, desc]) => {
+        _cTraits.forEach(([name, desc], i) => {
+            if (i > 0) traitHtml += `<div class="lo-wb-divider"></div>`;
             traitHtml += `<div class="lo-trait-inline"><div class="lo-trait-name">${name}</div><div class="lo-trait-desc">${desc}</div></div>`;
         });
         traitsEl.innerHTML = traitHtml;

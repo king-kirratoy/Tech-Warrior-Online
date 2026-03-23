@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.95 — Center column border, dividers, and font size polish
+
+**Date:** 2026-03-23
+
+Replaced the full-height `border-right` on `.lo-center` with a new `.lo-center-frame` wrapper (in `index.html` + `garage.css`) that applies `border-left`, `border-right`, and `border-bottom` only around the trait bar + doll area + weapon bar, so the border stops cleanly at the bottom of the weapon bar. Added `border-bottom` to `.lo-weapon-bar` as a closing line. Added `align-self:stretch` to `.lo-wb-divider` and inserted dividers between each chassis trait in `_renderWeaponBar()` to match the weapon bar's visual style. Increased `.lo-slot-lbl` from 6px to 8px, `.lo-slot-name` from 8px to 11px, `.lo-trait-name` from 9px to 11px, and `.lo-trait-desc` from 8px to 9px.
+
+---
+
 ## v5.94 — Fix doll area height and slot column layout
 
 **Date:** 2026-03-23
