@@ -852,17 +852,34 @@ function populateInventory() {
         const ch = loadout?.chassis || 'medium';
         const mechColor = typeof loadout !== 'undefined' ? loadout.color : 0x00ff88;
 
-        // Slot positions: 4 left / 4 right, evenly spaced vertically
-        // Left (top→bottom): CPU, ARMS, L ARM, SHIELD  |  Right: AUGMENT, ARMOR, R ARM, LEGS
-        const slotPositions = {
-            mod:     { top: '5%',  left: '2%',  label: 'CPU' },
-            arms:    { top: '28%', left: '2%',  label: 'ARMS' },
-            L:       { top: '51%', left: '2%',  label: 'L ARM' },
-            shield:  { top: '74%', left: '2%',  label: 'SHIELD' },
-            augment: { top: '5%',  right: '2%', label: 'AUGMENT' },
-            chest:   { top: '28%', right: '2%', label: 'ARMOR' },
-            R:       { top: '51%', right: '2%', label: 'R ARM' },
-            legs:    { top: '74%', right: '2%', label: 'LEGS' },
+        // Slot config: left column (top→bottom): CPU, ARMS, L ARM, SHIELD
+        //              right column (top→bottom): AUGMENT, ARMOR, R ARM, LEGS
+        const _leftSlots  = [
+            { key: 'mod',     label: 'CPU' },
+            { key: 'arms',    label: 'ARMS' },
+            { key: 'L',       label: 'L ARM' },
+            { key: 'shield',  label: 'SHIELD' },
+        ];
+        const _rightSlots = [
+            { key: 'augment', label: 'AUGMENT' },
+            { key: 'chest',   label: 'ARMOR' },
+            { key: 'R',       label: 'R ARM' },
+            { key: 'legs',    label: 'LEGS' },
+        ];
+
+        const _mkSlot = ({ key, label }) => {
+            const item = _equipped[key];
+            const rd = item ? RARITY_DEFS[item.rarity] : null;
+            const nameColor = rd ? rd.colorStr : UI_COLORS.text35;
+            const itemName = item ? (item.isUnique ? '★ ' + (item.shortName || item.name) : (item.shortName || item.name)) : '';
+            const borderColor = rd ? rd.colorStr + '55' : UI_COLORS.gold20;
+            return `<div class="mech-equip-slot lo-slot" style="border-color:${borderColor};"
+                data-slot="${key}" ${item ? 'draggable="true"' : ''}
+                ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
+                onmousedown="_hideSlotHover()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
+                <div class="lo-slot-lbl">${label}</div>
+                ${itemName ? `<div class="lo-slot-name" style="color:${nameColor};">${itemName}</div>` : ''}
+            </div>`;
         };
 
         let html = '';
@@ -874,36 +891,27 @@ function populateInventory() {
         html += `<img src="${mechImgSrc}" style="width:220px;object-fit:contain;filter:grayscale(100%);" />`;
         html += `</div>`;
 
-        // SVG connector lines from each slot toward mech center
+        // SVG connector lines — y coords match vertically-centered 4-slot stack
+        // (doll 440px, stack 412px → top=14px; slot centers at 64,168,272,376px → 14.5,38.2,61.8,85.5%)
         html += `<svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">`;
         const _svgLines = [
-            [8,10,50,50],[8,33,50,50],[8,56,50,50],[8,79,50,50],
-            [92,10,50,50],[92,33,50,50],[92,56,50,50],[92,79,50,50],
+            [13,14.5,50,50],[13,38.2,50,50],[13,61.8,50,50],[13,85.5,50,50],
+            [87,14.5,50,50],[87,38.2,50,50],[87,61.8,50,50],[87,85.5,50,50],
         ];
         _svgLines.forEach(([x1,y1,x2,y2]) => {
             html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(0,212,255,0.1)" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"/>`;
         });
         html += `</svg>`;
 
-        // Equipment slots positioned over the silhouette
-        Object.entries(slotPositions).forEach(([key, pos]) => {
-            const item = _equipped[key];
-            const rd = item ? RARITY_DEFS[item.rarity] : null;
-            const nameColor = rd ? rd.colorStr : UI_COLORS.text35;
-            const itemName = item ? (item.isUnique ? '★ ' + (item.shortName || item.name) : (item.shortName || item.name)) : '';
-            const borderColor = rd ? rd.colorStr + '55' : UI_COLORS.gold20;
-            let posStyle = `top:${pos.top};position:absolute;`;
-            if (pos.left) posStyle += `left:${pos.left};`;
-            if (pos.right) posStyle += `right:${pos.right};`;
+        // Left flex column
+        html += `<div class="lo-doll-left">`;
+        _leftSlots.forEach(s => { html += _mkSlot(s); });
+        html += `</div>`;
 
-            html += `<div class="mech-equip-slot lo-slot" style="${posStyle}border-color:${borderColor};"
-                data-slot="${key}" ${item ? 'draggable="true"' : ''}
-                ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
-                onmousedown="_hideSlotHover()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
-                <div class="lo-slot-lbl">${pos.label}</div>
-                ${itemName ? `<div class="lo-slot-name" style="color:${nameColor};">${itemName}</div>` : ''}
-            </div>`;
-        });
+        // Right flex column
+        html += `<div class="lo-doll-right">`;
+        _rightSlots.forEach(s => { html += _mkSlot(s); });
+        html += `</div>`;
 
         html += `</div>`; // end relative container
         silEl.innerHTML = html;

@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.94 — Fix doll area height and slot column layout
+
+**Date:** 2026-03-23
+
+Replaced `flex:1` on `.lo-doll-wrap` with a fixed `height:440px` (flex-shrink/grow:0) so the doll area stays exactly 440px regardless of screen size. Replaced percentage-based absolute positioning on individual doll slots with two absolutely positioned flex columns (`.lo-doll-left` / `.lo-doll-right`, centered vertically via `top:50%;transform:translateY(-50%);gap:4px`) so the 4 left and 4 right slots are evenly spaced at all viewport heights. Removed inline `top`/`left`/`right` style positioning from slot elements. Updated SVG connector line y-coordinates to match the new centered stack geometry (slot centers at 14.5%, 38.2%, 61.8%, 85.5% of doll height). Backpack grid, weapon bar, trait bar, and left column are unchanged.
+
+---
+
 ## v5.93 — Create UI_CONVENTIONS.md
 
 **Date:** 2026-03-23
