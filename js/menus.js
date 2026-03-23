@@ -204,6 +204,7 @@ function returnToMainMenu() {
         menu.style.display = 'flex';
         menu.style.opacity = '0';
         menu.style.transition = 'opacity 0.5s ease';
+        if (typeof loadCampaignState === 'function') loadCampaignState();
         _updateCampaignButton();
         _updateMainMenuStats();
         setTimeout(() => { menu.style.opacity = '1'; }, 20);
@@ -442,6 +443,7 @@ function proceedToMainMenu() {
         mm.style.display = 'flex';
         mm.style.opacity = '0';
         mm.style.transition = 'opacity 0.5s ease';
+        if (typeof loadCampaignState === 'function') loadCampaignState();
         _updateCampaignButton();
         _updateMainMenuStats();
         setTimeout(() => { mm.style.opacity = '1'; }, 20);
@@ -645,7 +647,7 @@ function _updateMainMenuStats() {
             fillEl.style.width = pct + '%';
             if (textEl) textEl.textContent = 'LVL ' + level + ' — ' + xpCur + ' / ' + xpNext + ' XP';
         }
-    }, 800);
+    }, 100);
 }
 
 async function showCampaignSubMenu() {
@@ -1499,195 +1501,6 @@ function _renderHullBars() {
     if (tbEl) tbEl.innerHTML = totalsHtml;
 }
 
-function _renderChassisPanel() {
-    const ch = loadout.chassis;
-    const chassisData = CHASSIS[ch];
-    // ── Chassis traits & arm mode ──────────────────────────────
-    const _chColor = ch === 'light' ? UI_COLORS.chassisLight : ch === 'medium' ? UI_COLORS.chassisMedium : UI_COLORS.chassisHeavy;
-    const _cTraits = ch === 'light'
-    ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped (−15% dmg per arm)'],
-       ['Reload Speed','+20% passive reload speed on all weapons'],
-       ['Fragile Arms','Arms have 30% less base HP than Medium chassis']]
-    : ch === 'medium'
-    ? [['Mod Cooldowns','All mod cooldowns reduced by −15%'],
-       ['Kill Reduction','Each kill shaves 0.5s off active mod cooldowns'],
-       ['Shield Absorb','Shield absorbs 60% of incoming damage (vs 50%)']]
-    : [['Passive DR','15% damage reduction at all times'],
-       ['Restrictions','Cannot equip JUMP mod or AFTERLEG legs'],
-       ['Attrition','Built for sustained punishment — high HP across all parts']];
-
-    const _sIs2H   = WEAPONS[loadout?.L]?.twoHanded;
-    const _sLEmpty = !loadout?.L || loadout.L === 'none';
-    const _sREmpty = !loadout?.R || loadout.R === 'none';
-    const _sBrace  = !_sIs2H && (_sLEmpty !== _sREmpty);
-    const _sDualW  = !_sIs2H && loadout?.L !== 'none' && loadout?.R !== 'none' && loadout?.L === loadout?.R;
-    const _sBothDiff = !_sIs2H && !_sLEmpty && !_sREmpty && !_sDualW;
-    const _armMode = _sIs2H   ? ['TWO-HANDED',  'Both arms locked to same weapon. Weight counted once.', UI_COLORS.chassisHeavy]
-               : _sBrace  ? ['BRACE MODE',   '+25% damage and +15% reload when only one arm is equipped.', UI_COLORS.chassisLight]
-               : _sDualW  ? ['DUAL WIELD',   'Same weapon in both arms. Left-click fires both simultaneously.', UI_COLORS.chassisMedium]
-               : _sBothDiff ? ['INDEPENDENT', 'Different weapons in each arm. Left-click fires L arm, right-click fires R arm.', UI_COLORS.rarityCommon]
-               : null;
-
-    // Build chassis traits block (single column)
-    let traitHtml = '';
-    _cTraits.forEach(([tLabel, tDesc]) => {
-    traitHtml += `<div class="lo-trait">
-        <div class="lo-trait-name">${tLabel}</div>
-        <div class="lo-trait-desc">${tDesc}</div>
-    </div>`;
-    });
-
-    // chassisHtml (HP bars + chassis name) is now rendered by _renderHullBars() and _renderWeaponBar()
-    const chassisInfoEl = document.getElementById('stat-chassis-info');
-    if (chassisInfoEl) chassisInfoEl.innerHTML = '';
-    const traitsEl = document.getElementById('stat-traits-info');
-    if (traitsEl) traitsEl.innerHTML = traitHtml;
-}
-
-function _renderWeaponPanel() {
-    // ── WEAPONS & DPS ─────────────────────────────────────────
-    let wHtml = '';
-    const sides = [['L', loadout.L], ['R', loadout.R], ['CORE', loadout.mod]];
-    const _gDmgFlat = (_gearState?.dmgFlat || 0);
-    const _gDmgPct  = (_gearState?.dmgPct || 0);
-    const _gReloadPct = (_gearState?.reloadPct || 0);
-    sides.forEach(([side, key]) => {
-    if (!key || key === 'none') return;
-    const w = WEAPONS[key];
-    if (!w) return;
-    wHtml += `<div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid ${UI_COLORS.cyan10};">`;
-    wHtml += `<div style="font-size:13px;letter-spacing:2px;color:${UI_COLORS.cyan70};margin-bottom:8px;">${side}: ${w.name}</div>`;
-    if (w.dmg) {
-        const baseDmg  = w.dmg;
-        const perkDmg  = Math.round(baseDmg * (_perkState.dmgMult||1));
-        const effDmg   = Math.round((baseDmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100));
-        const baseRld  = w.reload || 0;
-        const perkRld  = Math.round(baseRld * (_perkState.reloadMult||1));
-        const effRld   = Math.round(baseRld * (_perkState.reloadMult||1) * (1 - _gReloadPct/100));
-        const baseDps  = baseRld > 0 ? Math.round(baseDmg / baseRld * 1000) : 0;
-        const effDps   = effRld  > 0 ? Math.round(effDmg  / effRld  * 1000) : 0;
-        const dmgSuffix = w.pellets ? ` x ${w.pellets} pellets` : '';
-        // Build tooltip strings for gear+perk breakdowns
-        const _dmgGearDiff = Math.round(effDmg - perkDmg);
-        const _dmgPerkDiff = Math.round(perkDmg - baseDmg);
-        let dmgTip = '';
-        if (_dmgPerkDiff > 0) dmgTip += `+${_dmgPerkDiff} perks`;
-        if (_dmgGearDiff > 0) dmgTip += (dmgTip ? ', ' : '') + `+${_dmgGearDiff} gear`;
-        const dmgBonusData = dmgTip ? ` data-bonus="${dmgTip}"` : '';
-        const dmgBonusCls = dmgTip ? ' stat-has-bonus' : '';
-        const _rldGearDiff = Math.round(perkRld - effRld);
-        const _rldPerkDiff = Math.round(baseRld - perkRld);
-        let rldTip = '';
-        if (_rldPerkDiff > 0) rldTip += `-${_rldPerkDiff} perks`;
-        if (_rldGearDiff > 0) rldTip += (rldTip ? ', ' : '') + `-${_rldGearDiff} gear`;
-        const rldBonusData = rldTip ? ` data-bonus="${rldTip}"` : '';
-        const rldBonusCls = rldTip ? ' stat-has-bonus' : '';
-        wHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Damage/Shot</span><span class="lo-stat-value${dmgBonusCls}"${dmgBonusData}>${Math.round(effDmg)}${dmgSuffix}</span></div>`;
-        wHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Reload (ms)</span><span class="lo-stat-value ${effRld < 500?'green':effRld<1500?'yellow':'orange'}${rldBonusCls}"${rldBonusData}>${Math.round(effRld)}</span></div>`;
-        const dpsTip = effDps > baseDps ? `+${effDps - baseDps} from perks/gear` : '';
-        const dpsBonusData = dpsTip ? ` data-bonus="${dpsTip}"` : '';
-        const dpsBonusCls = dpsTip ? ' stat-has-bonus' : '';
-        wHtml += `<div class="lo-stat-row"><span class="lo-stat-label">DPS (est.)</span><span class="lo-stat-value ${effDps>200?'green':effDps>80?'yellow':'orange'}${dpsBonusCls}"${dpsBonusData}>${Math.round(effDps)}</span></div>`;
-    }
-    if (w.radius) {
-        const effRad = Math.round(w.radius * (_perkState.blastMult||1));
-        const radDiff = effRad - w.radius;
-        const radData = radDiff > 0 ? ` data-bonus="+${radDiff} from perks"` : '';
-        const radCls = radDiff > 0 ? ' stat-has-bonus' : '';
-        wHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Blast Radius</span><span class="lo-stat-value${radCls}"${radData}>${effRad}</span></div>`;
-    }
-    if (w.cooldown) wHtml += _statRow('Mod Cooldown', w.cooldown + 'ms');
-    wHtml += '</div>';
-    });
-    if (!wHtml) wHtml = '<div class="lo-stat-label" style="opacity:0.4;font-size:13px;">No weapons armed</div>';
-    document.getElementById('stat-weapons-info').innerHTML = wHtml;
-}
-
-function _renderMobilityPanel() {
-    const ch = loadout.chassis;
-    const chassisData = CHASSIS[ch];
-    const _inGame = !!(player?.comp);
-    // ── MECH STATS ────────────────────────────────────────────
-    // Helper: build tooltip string from perk + gear contributions
-    const _bonusTip = (perkVal, gearVal) => {
-    let tip = '';
-    if (perkVal > 0) tip += `+${perkVal} perks`;
-    if (gearVal > 0) tip += (tip ? ', ' : '') + `+${gearVal} gear`;
-    return tip;
-    };
-    const _bonusCls  = (tip) => tip ? ' stat-has-bonus' : '';
-    const _bonusData = (tip) => tip ? ` data-bonus="${tip}"` : '';
-
-    let mobHtml = '';
-
-    // 1. Shield Regen
-    const baseRegenRate = 1.0;
-    const perkRegenRate = baseRegenRate * (_perkState.shieldRegenMult||1);
-    const gearRegenBonus = (_gearState?.shieldRegen || 0);
-    const effRegenRate   = perkRegenRate * (1 + gearRegenBonus/100);
-    const regenPerkDiff  = Math.round((perkRegenRate - baseRegenRate)*10)/10;
-    const regenGearDiff  = Math.round((effRegenRate - perkRegenRate)*10)/10;
-    const regenTip = (regenPerkDiff > 0 ? `+${regenPerkDiff} perks` : '') + (regenGearDiff > 0 ? ((regenPerkDiff > 0 ? ', ' : '') + `+${regenGearDiff} gear`) : '');
-    mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Shield Regen</span><span class="lo-stat-value green${_bonusCls(regenTip)}"${_bonusData(regenTip)}>${parseFloat(effRegenRate.toFixed(1))}/frame</span></div>`;
-    if (_perkState.noShieldRegen) mobHtml += _statRow('Regen Active', 'DISABLED', 'red');
-    if (_perkState.immovable) mobHtml += _statRow('Immovable', '3x regen while still', 'purple');
-
-    // 2. Dodge Chance
-    const perkDodgePct = Math.round((_perkState.dodgeChance||0) * 100);
-    const gearDodgePct = (_gearState?.dodgePct || 0);
-    const totalDodge = perkDodgePct + gearDodgePct;
-    if (totalDodge > 0) { const _t = _bonusTip(perkDodgePct, gearDodgePct); mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Dodge Chance</span><span class="lo-stat-value green${_bonusCls(_t)}"${_bonusData(_t)}>${totalDodge}%</span></div>`; }
-
-    // 3. Dmg Reduction
-    const perkDR = Math.round(Math.min(75, (_perkState.fortress||0) * 100));
-    const gearDR = (_gearState?.dr || 0);
-    const totalDR = Math.min(75, perkDR + gearDR);
-    if (totalDR > 0) { const _t = _bonusTip(perkDR, gearDR); mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Dmg Reduction</span><span class="lo-stat-value green${_bonusCls(_t)}"${_bonusData(_t)}>${totalDR}%</span></div>`; }
-
-    // 4. Auto-Repair
-    const perkRepair = _perkState.autoRepair || 0;
-    const gearRepair = (_gearState?.autoRepair || 0);
-    const totalRepair = perkRepair + gearRepair;
-    if (totalRepair > 0) { const _t = _bonusTip(perkRepair, gearRepair); mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Auto-Repair</span><span class="lo-stat-value green${_bonusCls(_t)}"${_bonusData(_t)}>${totalRepair} HP/sec</span></div>`; }
-
-    // 5. Crit Chance
-    const perkCrit = Math.round((_perkState.critChance||0) * 100);
-    const gearCrit = (_gearState?.critChance || 0);
-    const totalCrit = perkCrit + gearCrit;
-    if (totalCrit > 0) { const _t = _bonusTip(perkCrit, gearCrit); mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Crit Chance</span><span class="lo-stat-value green${_bonusCls(_t)}"${_bonusData(_t)}>${totalCrit}%</span></div>`; }
-
-    // 6. Mod Cooldown
-    const gearModCd = (_gearState?.modCdPct || 0);
-    if (gearModCd > 0) mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Mod Cooldown</span><span class="lo-stat-value red" data-bonus="−${gearModCd}% gear">−${gearModCd}%</span></div>`;
-
-    // 7. Speed
-    const baseSpd = chassisData?.spd || 200;
-    const perkSpd = Math.round(baseSpd * (_perkState.speedMult||1));
-    const gearSpdBonus = (_gearState?.speedPct || 0);
-    const effSpd = Math.round(perkSpd * (1 + gearSpdBonus/100));
-    const spdPerkDiff = perkSpd - baseSpd;
-    const spdGearDiff = effSpd - perkSpd;
-    const spdTip = (spdPerkDiff > 0 ? `+${spdPerkDiff} perks` : '') + (spdGearDiff > 0 ? ((spdPerkDiff > 0 ? ', ' : '') + `+${spdGearDiff} gear`) : '');
-    mobHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Speed</span><span class="lo-stat-value ${effSpd>baseSpd?'green':''}${_bonusCls(spdTip)}"${_bonusData(spdTip)}>${effSpd}</span></div>`;
-
-    document.getElementById('stat-mobility-info').innerHTML = mobHtml;
-}
-
-function _renderRunStatsPanel() {
-    // ── RUN STATS ─────────────────────────────────────────────
-    const acc = _shotsFired > 0 ? Math.round(_shotsHit/_shotsFired*100) : 0;
-    let runHtml = '';
-    runHtml += _statRow('Current Round', _round, 'yellow');
-    runHtml += _statRow('Total Kills', _totalKills, 'green');
-    runHtml += _statRow('Shots Fired', _shotsFired);
-    runHtml += _statRow('Shots Hit', _shotsHit, 'green');
-    runHtml += _statRow('Accuracy', acc + '%', acc >= 60 ? 'green' : acc >= 30 ? 'yellow' : 'orange');
-    runHtml += _statRow('Damage Dealt', Math.round(_damageDealt), 'orange');
-    runHtml += _statRow('Damage Taken', Math.round(_damageTaken), 'red');
-    runHtml += _statRow('Perks Earned', _perksEarned, 'purple');
-    document.getElementById('stat-run-info').innerHTML = runHtml;
-}
-
 function _renderActivePerksPanel() {
     // ── ACTIVE PERKS ──────────────────────────────────────────
     const perksEl = document.getElementById('stat-perks-info');
@@ -1774,16 +1587,6 @@ function _renderGearBonusesPanel() {
     gHtml += _renderGroup('DEFENSIVE', defKeys);
     gHtml += _renderGroup('UTILITY', utilKeys);
     gearInfo.innerHTML = gHtml;
-}
-
-function populateStats() {
-    if (typeof _updateCampaignXPBar === 'function') _updateCampaignXPBar();
-    _renderChassisPanel();
-    _renderWeaponPanel();
-    _renderMobilityPanel();
-    _renderRunStatsPanel();
-    _renderActivePerksPanel();
-    _renderGearBonusesPanel();
 }
 
 /** Populates the unified two-column loadout overlay (v5.64). */
