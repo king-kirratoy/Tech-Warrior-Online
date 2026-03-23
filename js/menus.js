@@ -1097,12 +1097,18 @@ function _buildItemComparisonHTML(newItem) {
         const ev   = oldStats[k] ?? 0;
         const diff = nv - ev;
         if (diff === 0) return '';
-        const isPositive = (k === 'reload' || k === 'reloadPct' || k === 'modCdPct') ? diff < 0 : diff > 0;
+        const isInverted = (k === 'reload' || k === 'reloadPct' || k === 'modCdPct');
+        const isPositive = isInverted ? diff < 0 : diff > 0;
         const color  = isPositive ? '#44ff88' : '#ff4466';
-        const sign   = diff > 0 ? '+' : '';
-        const fmtVal = (diff > -1 && diff < 1 && diff !== 0)
-            ? sign + Math.round(diff * 100) + '%'
-            : sign + diff;
+        let fmtVal;
+        if (isInverted && diff < 0) {
+            fmtVal = (diff > -1) ? '+' + Math.round(Math.abs(diff) * 100) + '%' : '+' + Math.abs(diff);
+        } else {
+            const sign = diff > 0 ? '+' : '';
+            fmtVal = (diff > -1 && diff < 1 && diff !== 0)
+                ? sign + Math.round(diff * 100) + '%'
+                : sign + diff;
+        }
         return `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">
             <span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>
             <span style="color:${color};">${fmtVal}</span>
@@ -1562,9 +1568,7 @@ function _renderGearBonusesPanel() {
         let h = `<div class="bsub">${title}</div>`;
         active.forEach(k => {
             const v  = gs[k];
-            const neg = negKeys.has(k);
-            const prefix = neg ? '−' : '+';
-            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${_gsLabels[k] || k}</span><span class="lo-bonus-val pos">${prefix}${v}</span></div>`;
+            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${_gsLabels[k] || k}</span><span class="lo-bonus-val pos">+${v}</span></div>`;
         });
         return h;
     };
@@ -1675,7 +1679,8 @@ function _buildHoverHtml(item, slotLabel, compareItem) {
             if (_invertedStats.has(k)) {
                 valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-txt)');
             }
-            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${sn[k]||k}</span><span style="color:${valColor};">${v}</span></div>`;
+            const displayVal = (_invertedStats.has(k) && v < 0) ? '+' + Math.abs(v) : v;
+            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${sn[k]||k}</span><span style="color:${valColor};">${displayVal}</span></div>`;
         });
     }
     if (item.affixes && item.affixes.length) {
@@ -1683,7 +1688,8 @@ function _buildHoverHtml(item, slotLabel, compareItem) {
             const lbl = a.label || '';
             const isInvertedAffix = /reload|cooldown/i.test(lbl);
             const color = isInvertedAffix && lbl.startsWith('-') ? '#00ff88' : '#44ff88';
-            html += `<div style="font-size:9px;color:${color};margin-top:2px;">&#9679; ${lbl}</div>`;
+            const fixedLbl = (isInvertedAffix && lbl.startsWith('-')) ? '+' + lbl.slice(1) : lbl;
+            html += `<div style="font-size:9px;color:${color};margin-top:2px;">&#9679; ${fixedLbl}</div>`;
         });
     }
     // Unique effect
@@ -1712,8 +1718,8 @@ function _buildHoverHtml(item, slotLabel, compareItem) {
             const isInverted = _invertedStats.has(k);
             const isGood = isInverted ? diff < 0 : diff > 0;
             const color = isGood ? '#00ff88' : '#ff4d6a';
-            const sign = diff > 0 ? '+' : '';
-            html += `<div style="display:flex;justify-content:space-between;font-size:8px;padding:1px 0;"><span style="color:rgba(255,255,255,0.35);">${sn[k]||k}</span><span style="color:${color};">${sign}${diff}</span></div>`;
+            const diffDisplay = (isInverted && diff < 0) ? '+' + Math.abs(diff) : (diff > 0 ? '+' + diff : '' + diff);
+            html += `<div style="display:flex;justify-content:space-between;font-size:8px;padding:1px 0;"><span style="color:rgba(255,255,255,0.35);">${sn[k]||k}</span><span style="color:${color};">${diffDisplay}</span></div>`;
         });
         html += `</div>`;
     }
