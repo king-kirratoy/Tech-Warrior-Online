@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.87 — Remove cache-busting query strings
+
+**Date:** 2026-03-23
+
+Removed cache-busting query strings from all script and CSS tags.
+
+---
+
 ## v5.86 — Fix inverted display for Reload Speed % and Mod Cooldown %
 
 **Date:** 2026-03-23
