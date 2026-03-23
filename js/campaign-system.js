@@ -1461,7 +1461,7 @@ function showShop() {
         if (cardLabel) {
             h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:4px;text-transform:uppercase;">${cardLabel}</div>`;
         }
-        h += `<div style="font-size:11px;letter-spacing:1px;color:${itemRc};margin-bottom:2px;">${item.name || 'Item'}</div>`;
+        h += `<div style="font-size:11px;letter-spacing:1px;color:${itemRc};margin-bottom:2px;">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name || 'Item'}</div>`;
         h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);margin-bottom:8px;">${meta}</div>`;
         entries.forEach(([k, v]) => {
             h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
@@ -1486,7 +1486,7 @@ function showShop() {
         return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelect(${idx})">
             <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
             <div class="shop-item-info">
-                <div class="shop-item-name" style="color:${rc(item)};">${item.name || 'Item'}${soldBadge}</div>
+                <div class="shop-item-name" style="color:${rc(item)};">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name || 'Item'}${soldBadge}</div>
                 <div class="shop-item-meta">${meta}</div>
             </div>
             <div class="shop-item-price">⬡ ${item._shopPrice}</div>
@@ -1499,7 +1499,7 @@ function showShop() {
         return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelectSell(${idx})">
             <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
             <div class="shop-item-info">
-                <div class="shop-item-name" style="color:${rc(item)};">${item.name || 'Item'}</div>
+                <div class="shop-item-name" style="color:${rc(item)};">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name || 'Item'}</div>
                 <div class="shop-item-meta">${meta}</div>
             </div>
             <div class="shop-sell-price">⬡ ${getItemSellPrice(item)}</div>

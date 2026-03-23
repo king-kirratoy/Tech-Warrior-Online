@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.00 — Runtime weapon name lookup at all render sites
+
+**Date:** 2026-03-23
+
+Fixed all UI render sites to look up `WEAPON_NAMES[item.subType]` at render time instead of relying on the stored `item.name`/`item.shortName`, which may have been generated before the canonical name fix. Updated: equipped doll slot cards, backpack slot cards, single item hover card, comparison hover card (both columns), and all three campaign supply shop item name locations (`_itemStatCard`, buy row, sell row).
+
+---
+
 ## v5.99 — Canonical WEAPON_NAMES map; fix multiplayer weapon name display
 
 **Date:** 2026-03-23

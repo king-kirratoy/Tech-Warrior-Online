@@ -871,7 +871,8 @@ function populateInventory() {
             const item = _equipped[key];
             const rd = item ? RARITY_DEFS[item.rarity] : null;
             const nameColor = rd ? rd.colorStr : UI_COLORS.text35;
-            const itemName = item ? (item.isUnique ? '★ ' + (item.shortName || item.name) : (item.shortName || item.name)) : '';
+            const _dn = item ? ((item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.shortName || item.name) : '';
+            const itemName = item ? (item.isUnique ? '★ ' + _dn : _dn) : '';
             const borderColor = rd ? rd.colorStr + '55' : UI_COLORS.gold20;
             return `<div class="mech-equip-slot lo-slot" style="border-color:${borderColor};"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
@@ -951,7 +952,7 @@ function populateInventory() {
                 cell.innerHTML = `
                     ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
                     <div class="lo-slot-lbl">${_bpSlotLbl}</div>
-                    <div class="lo-slot-name" style="color:${rd.colorStr};">${item.shortName || item.name}</div>
+                    <div class="lo-slot-name" style="color:${rd.colorStr};">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.shortName || item.name}</div>
                 `;
                 cell.style.borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : rd.colorStr + '44';
                 // Apply selected state if this item is currently selected
@@ -1681,7 +1682,7 @@ function _buildSingleCardHtml(item, slotLabel) {
     const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
     let html = '';
     if (slotLabel) html += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${slotLabel}</div>`;
-    html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${item.name}</div>`;
+    html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name}</div>`;
     html += `<div style="font-size:8px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||item.rarity}${item.iLvl ? ' · iLvl '+item.iLvl : ''}</div>`;
     const hasStats = item.baseStats && Object.values(item.baseStats).some(v => v);
     const hasAffixes = item.affixes && item.affixes.length > 0;
@@ -1727,7 +1728,7 @@ function _buildHoverHtml(item, slotLabel, compareItem) {
         const rd = RARITY_DEFS[colItem.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
         let h = `<div class="lo-hover-source-lbl">${sourceLbl}</div>`;
         if (colSlotLabel) h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${colSlotLabel}</div>`;
-        h += `<div style="font-size:13px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${colItem.name}</div>`;
+        h += `<div style="font-size:13px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${(colItem.baseType === 'weapon' ? WEAPON_NAMES[colItem.subType] : null) || colItem.name}</div>`;
         h += `<div style="font-size:9px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||colItem.rarity}${colItem.iLvl ? ' · iLvl '+colItem.iLvl : ''}</div>`;
         const hasStats = colItem.baseStats && Object.values(colItem.baseStats).some(v => v);
         const hasAffixes = colItem.affixes && colItem.affixes.length > 0;
