@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.89 — Redesign comparison hover card
+
+**Date:** 2026-03-23
+
+Redesigned the backpack item hover card to show two full item cards side by side (Backpack vs Equipped) with a "Changes if equipped" diff section spanning full width beneath both cards. Extracted `_buildSingleCardHtml()` as a reusable single-card renderer shared by both single and comparison views. Weapon comparison defaults to L arm, falls back to R if L is empty. Card positioning uses measured width for overflow detection so the wider comparison card stays fully on-screen. Single item hover cards (equipped slots, backpack items with no counterpart) are unchanged.
+
+---
+
 ## v5.88 — Divider fix, sign display fix, hover-on-drag fix
 
 **Date:** 2026-03-23
