@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.92 — Update OVERVIEW.md
+
+**Date:** 2026-03-23
+
+Updated OVERVIEW.md to reflect current project state.
+
+---
+
 ## v5.91 — Update CLAUDE.md
 
 **Date:** 2026-03-23
