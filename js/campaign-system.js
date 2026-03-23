@@ -832,8 +832,6 @@ function showMissionSelect() {
 
     // Deploy bar
     html += '<div class="cm-bottom">';
-    html += `<span style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);white-space:nowrap;">LVL ${_campaignState.playerLevel}</span>`;
-    html += `<div class="cm-xp-bar"><div class="cm-xp-fill" style="width:${Math.round(xpPct * 100)}%"></div></div>`;
     if (_selectedMissionIdx !== null) {
         html += `<button onclick="_deployFromMissionSelect()" id="mission-deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;">Deploy &#8250;</button>`;
     }

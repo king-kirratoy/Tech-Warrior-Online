@@ -5,6 +5,30 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v5.78 — Nav number CSS class extraction
+
+**Date:** 2026-03-23
+
+Extracted main menu nav number spans (01–04, sub-menu items) from inline `color:rgba(255,255,255,0.22)` styles into a named CSS class `.mm-nav-num` in `menus.css`; updated all 7 number spans in `index.html` to use the class. The campaign chapter number class `.cm-chapter-num` in `menus.css` was confirmed already correct at `rgba(255,255,255,0.22)` — no change needed there.
+
+---
+
+## v5.77 — Hangar chassis buttons, doll area sizing, stats timing, mission XP bar
+
+**Date:** 2026-03-23
+
+Five UI fixes. (1) `.mp-chassis-btn` letter-spacing increased from 1px to 2px (font-size was already 10px) in `menus.css`, covering both warzone and multiplayer hangar. (2) `margin-bottom: 16px` added to `.mp-chassis-row` in `menus.css` for clear spacing between chassis buttons and the Colour row. (3) Loadout doll area: `.lo-doll-wrap` min-height changed from 0 to 480px; `.lo-doll-wrap .lo-slot` width updated to explicit `calc((100% - 36px - 32px) / 10)` form; mech silhouette image width increased from 200px to 220px. (4) `_updateMainMenuStats()` internal setTimeout delay increased from 500ms to 800ms to ensure campaign state is available when the stats panel renders. (5) Removed the duplicate LVL label and `cm-xp-bar` from the campaign mission select deploy bar — level and XP are already shown in the screen's top bar.
+
+---
+
+## v5.76 — Loadout overlay: gear HP, trim stats section, CPU MOD, top bar swap
+
+**Date:** 2026-03-23
+
+Four targeted changes to the loadout overlay. (1) HP values in `_renderHullBars()` now reflect equipped gear bonuses: `_gearState.coreHP/armHP/legHP/allHP` are added to each chassis base value; `_gearState.shieldHP` is added to the shield system's `maxShield`; the shield base now reads from `SHIELD_SYSTEMS[loadout.shld].maxShield` instead of the incorrect `chassisData.max`. (2) Removed the Mech Stats section entirely: deleted `_renderMobilityPanel()` call from `populateLoadout()` and removed the `#stat-mobility-info` div and surrounding dividers from `index.html`. (3) Weapon bar: renamed "CORE MOD" label to "CPU MOD"; removed RELOAD from the arm weapon stats line (shows DMG and DPS only). (4) Top bar: BACK button (renamed from CLOSE) moved to left side; items/scrap count moved to right side with `margin-left:auto`.
+
+---
+
 ## v5.75 — Loadout and hangar UI polish pass
 
 **Date:** 2026-03-22

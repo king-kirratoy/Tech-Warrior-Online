@@ -878,7 +878,7 @@
 /* --- Right column: equipment doll --- */
 .lo-doll-wrap {
   flex: 1;
-  min-height: 0;
+  min-height: 480px;
   overflow: hidden;
   position: relative;
 }
@@ -1028,7 +1028,7 @@
   aspect-ratio: 1;
   height: auto;
   position: absolute;
-  width: calc((100% - 68px) / 10);
+  width: calc((100% - 36px - 32px) / 10);
 }
 
 /* --- Backpack section --- */

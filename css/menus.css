@@ -65,6 +65,12 @@
   margin-top: 40px;
 }
 
+.mm-nav-num {
+  color: rgba(255,255,255,0.22);
+  font-size: 9px;
+  min-width: 20px;
+}
+
 /* --- Pilot stats (right panel) --- */
 .mm-stat-num {
   color: var(--sci-cyan);
@@ -1137,6 +1143,7 @@
 .mp-chassis-row {
   display: flex;
   gap: 4px;
+  margin-bottom: 16px;
 }
 
 .mp-chassis-btn {
@@ -1147,7 +1154,7 @@
   flex: 1;
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   padding: 8px 10px;
   text-align: center;
   text-transform: uppercase;
