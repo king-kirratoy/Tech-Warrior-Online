@@ -1325,9 +1325,7 @@
 .shop-body {
   border-bottom: 1px solid var(--sci-line);
   display: grid;
-  flex: 1;
   grid-template-columns: 1fr 440px;
-  height: 100%;
   overflow: hidden;
 }
 
@@ -1385,7 +1383,6 @@
 
 .shop-buy-cats {
   display: flex;
-  flex: 1;
   gap: 0;
   overflow: hidden;
 }
