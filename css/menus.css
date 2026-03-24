@@ -1076,8 +1076,9 @@
   width: 380px;
 }
 
-/* Multiplayer dropdown list — overrides .dd-list clipping inside .mp-left */
-.pvp-dd-list {
+/* Hangar dropdown list — overrides .dd-list clipping inside .mp-left */
+.pvp-dd-list,
+.wz-dd-list {
   background: var(--overlay-dark, #05080c);
   border: 1px solid var(--sci-cyan-border, rgba(0,212,255,0.35));
   left: 0;

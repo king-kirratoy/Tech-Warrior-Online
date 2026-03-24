@@ -1,95 +1,91 @@
 // ═══════════ DROPDOWN SYSTEM ═══════════
 
-function toggleDD(slotId) {
-    if (_openDD === slotId) { closeAllDD(); return; }
-    closeAllDD();
-    _openDD = slotId;
-    if (slotId === 'C') {
-        buildColorDD();
-    } else {
-        const DD_OPTIONS = { L: WEAPON_OPTIONS, R: WEAPON_OPTIONS, M: MOD_OPTIONS, A: AUG_OPTIONS, G: LEG_OPTIONS, S: SHIELD_OPTIONS };
-        buildDD(slotId, DD_OPTIONS[slotId] ?? LEG_OPTIONS);
-    }
-    document.getElementById('dds-' + slotId)?.classList.add('dd-open');
-    document.getElementById('ddl-' + slotId)?.classList.add('dd-list-open');
-}
-
-function closeAllDD() {
-    // Only close main hangar dropdowns — PVP hangar has its own close handler
-    document.querySelectorAll('.dd-selected:not(.pvp-dd-selected)').forEach(el => el.classList.remove('dd-open'));
-    document.querySelectorAll('.dd-list:not(.pvp-dd-list)').forEach(el => el.classList.remove('dd-list-open'));
+function _wzCloseAllDD() {
+    document.querySelectorAll('#garage-menu .wz-dd-selected').forEach(el => el.classList.remove('dd-open'));
+    document.querySelectorAll('#garage-menu .wz-dd-list').forEach(el => el.classList.remove('dd-list-open'));
     _openDD = null;
 }
 
-function buildDD(slotId, options) {
-    const list = document.getElementById('ddl-' + slotId);
+function _wzToggleDD(slotId) {
+    if (_openDD === slotId) { _wzCloseAllDD(); return; }
+    _wzCloseAllDD();
+    _openDD = slotId;
+    _wzBuildDropdown(slotId);
+    document.getElementById('wz-dds-' + slotId)?.classList.add('dd-open');
+    document.getElementById('wz-ddl-' + slotId)?.classList.add('dd-list-open');
+}
+
+function _wzToggleColorDD() {
+    if (_openDD === 'COL') { _wzCloseAllDD(); return; }
+    _wzCloseAllDD();
+    _openDD = 'COL';
+    _wzBuildColorDD();
+    document.getElementById('wz-dds-COL')?.classList.add('dd-open');
+    document.getElementById('wz-ddl-COL')?.classList.add('dd-list-open');
+}
+
+function _wzBuildDropdown(slotId) {
+    const list = document.getElementById('wz-ddl-' + slotId);
     if (!list) return;
     list.innerHTML = '';
-    const cap = CHASSIS[loadout.chassis]?.max || 999;
-    const currentTotal = _calcWeight(loadout);
+    const chassis = loadout.chassis;
 
-    // Sort options by weight (ascending) so they display lowest→highest
+    let options, restrictSet;
+    if (slotId === 'L' || slotId === 'R') {
+        options = typeof WEAPON_OPTIONS !== 'undefined' ? WEAPON_OPTIONS : [];
+        restrictSet = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[chassis] : null;
+    } else if (slotId === 'M') {
+        options = typeof MOD_OPTIONS !== 'undefined' ? MOD_OPTIONS : [];
+        restrictSet = typeof CHASSIS_MODS !== 'undefined' ? CHASSIS_MODS[chassis] : null;
+    } else if (slotId === 'S') {
+        options = typeof SHIELD_OPTIONS !== 'undefined' ? SHIELD_OPTIONS : [];
+        restrictSet = typeof CHASSIS_SHIELDS !== 'undefined' ? CHASSIS_SHIELDS[chassis] : null;
+    } else if (slotId === 'G') {
+        options = typeof LEG_OPTIONS !== 'undefined' ? LEG_OPTIONS : [];
+        restrictSet = typeof CHASSIS_LEGS !== 'undefined' ? CHASSIS_LEGS[chassis] : null;
+    } else {
+        options = typeof AUG_OPTIONS !== 'undefined' ? AUG_OPTIONS : [];
+        restrictSet = typeof CHASSIS_AUGS !== 'undefined' ? CHASSIS_AUGS[chassis] : null;
+    }
+
+    const currentKey = loadout[SLOT_ID_MAP[slotId]];
+    const is2H = WEAPONS[loadout.L]?.twoHanded;
+
     const _sorted = [...options].sort((a, b) => (a.weight || 0) - (b.weight || 0));
     _sorted.forEach(opt => {
-        // Chassis-based slot restrictions
-        if (slotId === 'L' || slotId === 'R') {
-            if (CHASSIS_WEAPONS[loadout.chassis] && !CHASSIS_WEAPONS[loadout.chassis].has(opt.key)) return;
-        }
-        if (slotId === 'M') {
-            if (CHASSIS_MODS[loadout.chassis] && !CHASSIS_MODS[loadout.chassis].has(opt.key)) return;
-        }
-        if (slotId === 'S') {
-            if (CHASSIS_SHIELDS[loadout.chassis] && !CHASSIS_SHIELDS[loadout.chassis].has(opt.key)) return;
-        }
-        if (slotId === 'G') {
-            if (CHASSIS_LEGS[loadout.chassis] && !CHASSIS_LEGS[loadout.chassis].has(opt.key)) return;
-        }
-        if (slotId === 'A') {
-            if (CHASSIS_AUGS[loadout.chassis] && !CHASSIS_AUGS[loadout.chassis].has(opt.key)) return;
-        }
-        // LIGHT chassis: cannot equip two-handed weapons
-        if (loadout.chassis === 'light' && opt.twoHanded) return;
-        // If a two-handed weapon is equipped, hide the R arm slot options (except the locked weapon)
-        const activeTwoHanded = WEAPONS[loadout.L]?.twoHanded;
-        if (activeTwoHanded && slotId === 'R' && opt.key !== loadout.L && opt.key !== 'none') return;
-        const slotKey = loadout[SLOT_ID_MAP[slotId]];
-        // Weight cap only applies to weapon arm slots
-        const _isWeaponSlot = (slotId === 'L' || slotId === 'R');
-        const currentSlotW = _isWeaponSlot ? (WEAPONS[slotKey]?.weight ?? 0) : 0;
-        const wouldBe = _isWeaponSlot ? (currentTotal - currentSlotW + opt.weight) : 0;
-        const over = false;
-        const desc = SLOT_DESCS[opt.key];
-        const descText = (desc && opt.key !== 'none') ? desc.desc : '';
+        if (restrictSet && !restrictSet.has(opt.key)) return;
+        if (chassis === 'light' && opt.twoHanded) return;
+        if (is2H && slotId === 'R' && opt.key !== loadout.L && opt.key !== 'none') return;
 
-        // Check if same weapon is in the other arm — allowed only for light (dual-wield)
-        const otherArm  = slotId === 'L' ? loadout.R : slotId === 'R' ? loadout.L : null;
-        const isDual    = loadout.chassis === 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
-        // Non-light: weapon already equipped in the other arm — gray it out, block selection
-        const isBlocked = loadout.chassis !== 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
+        const otherArm = slotId === 'L' ? loadout.R : slotId === 'R' ? loadout.L : null;
+        const isDual = chassis === 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
+        const isBlocked = chassis !== 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
+
+        const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[opt.key] : null;
+        const descText = (desc && opt.key !== 'none') ? desc.desc : '';
+        const titleText = desc ? desc.title : opt.label;
 
         const div = document.createElement('div');
         div.className = 'dd-option'
-            + (opt.key === slotKey ? ' dd-active' : '')
-            + (over ? ' do-warn' : '')
+            + (opt.key === currentKey ? ' dd-active' : '')
             + (isBlocked ? ' do-disabled' : '');
         div.innerHTML = `
             <div class="do-header">
-                <span class="do-name">${opt.label}${isDual ? ' <span style="font-size:9px;letter-spacing:1px;color:#00ffcc;background:rgba(0,255,204,0.12);padding:1px 5px;border:1px solid rgba(0,255,204,0.3);border-radius:2px;vertical-align:middle;">DUAL</span>' : ''}${isBlocked ? ' <span style="font-size:9px;letter-spacing:1px;color:rgba(255,100,100,0.7);background:rgba(255,60,60,0.08);padding:1px 5px;border:1px solid rgba(255,60,60,0.25);border-radius:2px;vertical-align:middle;">IN USE</span>' : ''}</span>
-
+                <span class="do-name">${titleText}${isDual ? ' <span style="font-size:9px;letter-spacing:1px;color:#00ffcc;background:rgba(0,255,204,0.12);padding:1px 5px;border:1px solid rgba(0,255,204,0.3);border-radius:2px;vertical-align:middle;">DUAL</span>' : ''}${isBlocked ? ' <span style="font-size:9px;letter-spacing:1px;color:rgba(255,100,100,0.7);background:rgba(255,60,60,0.08);padding:1px 5px;border:1px solid rgba(255,60,60,0.25);border-radius:2px;vertical-align:middle;">IN USE</span>' : ''}</span>
             </div>
             ${descText ? `<div class="do-desc">${descText}</div>` : ''}`;
-        if (!isBlocked) div.onclick = () => { selectSlot(slotId, opt.key); closeAllDD(); };
+        if (!isBlocked) div.onclick = () => { selectSlot(slotId, opt.key); _wzCloseAllDD(); };
         list.appendChild(div);
     });
 }
 
-function buildColorDD() {
-    const list = document.getElementById('ddl-C');
+function _wzBuildColorDD() {
+    const list = document.getElementById('wz-ddl-COL');
     if (!list) return;
     list.innerHTML = '';
-    const curHex = loadout.color.toString(16).padStart(6,'0').toLowerCase();
-    COLOR_OPTIONS.forEach(opt => {
-        const desc = SLOT_DESCS['col_' + opt.key];
+    const curHex = loadout.color.toString(16).padStart(6, '0').toLowerCase();
+    (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : []).forEach(opt => {
+        const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS['col_' + opt.key] : null;
         const div = document.createElement('div');
         div.className = 'dd-option dd-color-opt' + (opt.key === curHex ? ' dd-active' : '');
         div.innerHTML = `
@@ -98,10 +94,14 @@ function buildColorDD() {
                 <span class="do-name">${opt.label}</span>
             </div>
             ${desc ? `<div class="do-desc">${desc.desc}</div>` : ''}`;
-        div.onclick = () => { loadout.color = opt.hex; closeAllDD(); refreshGarage(); };
+        div.onclick = () => { loadout.color = opt.hex; _wzCloseAllDD(); refreshGarage(); };
         list.appendChild(div);
     });
 }
+
+// Legacy wrappers — some external files call these
+function closeAllDD() { _wzCloseAllDD(); }
+function toggleDD(slotId) { _wzToggleDD(slotId); }
 
 function selectSlot(slotId, key) {
     // LIGHT chassis: cannot equip two-handed weapons
@@ -143,136 +143,77 @@ function setChassis(t) {
 
 // ═══════════ GARAGE UI ═══════════
 
-function refreshGarage() {
-    // Update chassis buttons
-    ['light','medium','heavy'].forEach(ch => {
-        document.getElementById('c-' + ch)?.classList.toggle('active', loadout.chassis === ch);
-    });
-
-    // Preview chassis label
-    const hexStr0 = loadout.color.toString(16).padStart(6,'0').toLowerCase();
-    const colLabel = (COLOR_OPTIONS.find(o => o.key === hexStr0)?.label || '').toUpperCase();
-    const chassisLbl = document.getElementById('preview-chassis-label');
-    if (chassisLbl) chassisLbl.textContent = (loadout.chassis || '').toUpperCase() + ' · ' + colLabel;
-
-    // Colour dropdown header
-    const hexStr = loadout.color.toString(16).padStart(6,'0').toLowerCase();
-    const colOpt = COLOR_OPTIONS.find(o => o.key === hexStr) || COLOR_OPTIONS[0];
-    const colNameEl  = document.getElementById('ddn-C');
-    const colSwatchEl = document.getElementById('dd-color-swatch-C');
-    if (colNameEl)   colNameEl.textContent = colOpt.label;
-    if (colSwatchEl) { colSwatchEl.style.background = colOpt.hex6; colSwatchEl.style.boxShadow = `0 0 6px ${colOpt.hex6}55`; }
-
-    // Slot dropdown headers
-    const _slotLabel = (slotId) => {
-        const key = loadout[SLOT_ID_MAP[slotId]];
-        if (!key || key === 'none') return 'None';
-        const desc = SLOT_DESCS[key];
-        if (desc) return desc.title;
-        if (slotId === 'L' || slotId === 'R') return WEAPON_NAMES[key] || WEAPONS[key]?.name || key;
-        if (slotId === 'S') return (SHIELD_SYSTEMS[key]?.name || key);
-        if (slotId === 'G') return (LEG_SYSTEMS[key]?.name || key);
-        if (slotId === 'A') return (AUGMENTS[key]?.name || key);
-        if (slotId === 'M') return (WEAPONS[key]?.name || key);
-        return key;
-    };
-    ['L','R','M','S','G','A'].forEach(id => {
-        const el = document.getElementById('ddn-' + id);
-        if (el) el.textContent = _slotLabel(id);
-    });
-    // Lock R arm row when two-handed weapon is equipped
-    const rRow = document.getElementById('dds-R')?.closest('.mp-dd-row');
-    if (rRow) {
-        const is2H = WEAPONS[loadout.L]?.twoHanded;
-        rRow.style.opacity = is2H ? '0.45' : '';
-        rRow.style.pointerEvents = is2H ? 'none' : '';
-    }
-
-    // Preview image
-    const previewImg = document.getElementById('preview-img');
-    if (previewImg) {
-        previewImg.src          = `assets/${loadout.chassis}-mech.png`;
-        previewImg.style.filter = `drop-shadow(0 0 15px #${hexStr})`;
-    }
-
-    // Deploy button — always enabled since starter loadout always has a weapon
-    const deployBtn = document.getElementById('deploy-btn');
-    if (deployBtn) {
-        deployBtn.disabled = false;
-        deployBtn.innerText = 'DEPLOY MECH';
-        deployBtn.classList.remove('overweight');
-    }
-
-    // Dual-explosive warning
-    const dualWarn = document.getElementById('dual-explosive-warn');
-    if (dualWarn) {
-        const bothExplosive = EXPLOSIVE_KEYS.has(loadout.L) && EXPLOSIVE_KEYS.has(loadout.R);
-        dualWarn.style.display = bothExplosive ? 'block' : 'none';
-    }
-
-    updateGarageStats();
+function _wzGetSlotLabel(slotId) {
+    const key = loadout[SLOT_ID_MAP[slotId]];
+    if (!key || key === 'none') return 'NONE';
+    const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[key] : null;
+    if (desc) return desc.title;
+    if (slotId === 'L' || slotId === 'R') return (typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[key] : null) || WEAPONS[key]?.name || key.toUpperCase();
+    if (slotId === 'S') return (SHIELD_SYSTEMS[key]?.name || key.toUpperCase());
+    if (slotId === 'G') return (typeof LEG_SYSTEMS !== 'undefined' ? LEG_SYSTEMS[key]?.name : null) || key.toUpperCase();
+    if (slotId === 'A') return (typeof AUGMENTS !== 'undefined' ? AUGMENTS[key]?.name : null) || key.toUpperCase();
+    if (slotId === 'M') return (WEAPONS[key]?.name || key.toUpperCase());
+    return key.toUpperCase();
 }
 
-function updateGarageStats() {
-    const panel = document.getElementById('garage-stats-panel');
-    if (!panel) return;
-    const ch   = CHASSIS[loadout.chassis];
-    const shld = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
-    const oc   = loadout.aug === 'overclock_cpu';
-    const gyro = loadout.leg === 'gyro_stabilizer';
-    const hydro = loadout.leg === 'hydraulic_boost';
-    const mag  = loadout.leg === 'mag_anchors';
+function refreshGarage() {
+    const el = document.getElementById('garage-menu');
+    if (!el) return;
 
-    // ── HP breakdown (chassis-specific, not visible in dropdowns) ──
-    const totalHP = getTotalHP(loadout.chassis);
-    const coreHP  = ch.coreHP;
-    const armHP   = ch.armHP;
-    const legHP   = ch.legHP;
-    const hpBreak = coreHP + ' / ' + armHP + ' / ' + armHP + ' / ' + legHP;
-
-    // ── Speed (modified by legs) ──
-    const baseSpd = ch.spd;
-    const spd = Math.round(baseSpd * (hydro ? 1.20 : 1.0));
-    const spdStr = spd + ' u/s' + (hydro ? ' (+20%)' : '');
-
-    // ── Shield stats ──
-    const shAbsorb = loadout.shld === 'reactive_shield' ? 65 : 50;
-    const shHp     = shld.maxShield;
-    const shStr    = shHp > 0 ? shHp + ' HP · ' + shAbsorb + '% absorb · ' + shld.regenDelay + 's regen' : '—';
-
-    // ── Arm state (needed early for brace calcs) ──
+    const chassis  = loadout.chassis;
+    const hexStr   = loadout.color.toString(16).padStart(6, '0').toLowerCase();
+    const colorOpt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : [])
+        .find(o => o.key === hexStr) || { label: 'GREEN', hex6: '#00ff00' };
+    const ch     = typeof CHASSIS !== 'undefined' ? CHASSIS[chassis] : {};
     const is2H   = WEAPONS[loadout.L]?.twoHanded;
     const lEmpty = !loadout.L || loadout.L === 'none';
     const rEmpty = !loadout.R || loadout.R === 'none';
     const braceArm = !is2H && (lEmpty !== rEmpty);
 
-    // ── Weapon fire rates ──
-    const wL = WEAPONS[loadout.L];
-    const wR = WEAPONS[loadout.R];
-    const reloadMult = oc ? 0.88 : 1.0;
-    const _garageBrace = braceArm;
-    const _braceDmgB   = _garageBrace ? 1.25 : 1.0;
-    const _braceRldB   = _garageBrace ? 0.85 : 1.0;
+    const shldSys  = typeof SHIELD_SYSTEMS !== 'undefined'
+        ? (SHIELD_SYSTEMS[loadout.shld] || { maxShield: 0 })
+        : { maxShield: 0 };
+    const totalHP  = typeof getTotalHP === 'function'
+        ? getTotalHP(chassis)
+        : (ch.coreHP || 0) + (ch.armHP || 0) * 2 + (ch.legHP || 0);
+
+    // ── Stat calculations ──
+    const oc    = loadout.aug === 'overclock_cpu';
+    const hydro = loadout.leg === 'hydraulic_boost';
+    const gyro  = loadout.leg === 'gyro_stabilizer';
+    const mag   = loadout.leg === 'mag_anchors';
+    const spd   = Math.round((ch.spd || 210) * (hydro ? 1.20 : 1.0));
+    const spdStr = spd + ' u/s' + (hydro ? ' (+20%)' : '');
+
+    const shAbsorb = loadout.shld === 'reactive_shield' ? 65 : 50;
+    const shHp     = shldSys.maxShield || 0;
+    const shStr    = shHp > 0
+        ? shHp + ' HP · ' + shAbsorb + '% absorb · ' + shldSys.regenDelay + 's regen'
+        : '—';
+
+    const reloadMult   = oc ? 0.88 : 1.0;
+    const braceDmgB    = braceArm ? 1.25 : 1.0;
+    const braceRldB    = braceArm ? 0.85 : 1.0;
     function fmtReload(w) {
         if (!w || !w.reload) return null;
-        const r = Math.round(w.reload * reloadMult * _braceRldB);
-        const dps = w.dmg ? ((w.dmg * _braceDmgB) / (r/1000)).toFixed(1) : null;
-        const tag = _garageBrace ? ' ★' : '';
+        const r   = Math.round(w.reload * reloadMult * braceRldB);
+        const dps = w.dmg ? ((w.dmg * braceDmgB) / (r / 1000)).toFixed(1) : null;
+        const tag = braceArm ? ' ★' : '';
         return dps ? dps + ' dps · ' + r + 'ms cd' + tag : r + 'ms cd' + tag;
     }
+    const wL   = WEAPONS[loadout.L];
+    const wR   = WEAPONS[loadout.R];
+    const modW = WEAPONS[loadout.mod];
     const lRate = fmtReload(wL);
     const rRate = fmtReload(wR);
-
-    // ── Mod cooldown ──
-    const modW = WEAPONS[loadout.mod];
     const modCd = modW?.cooldown ? Math.round(modW.cooldown * (oc ? 0.88 : 1.0) / 1000) + 's cd' : null;
 
-    // ── Passive effects summary ──
+    // ── Passives ──
     const passives = [];
     if (braceArm)  passives.push('+25% damage · +15% reload (single-arm brace)');
     if (is2H)      passives.push('TWO-HANDED · both arms locked · weight counted once');
-    if (gyro)  passives.push('leg penalty immunity');
-    if (mag)   passives.push('−20% dmg in / +15% dmg out when still');
+    if (gyro)      passives.push('leg penalty immunity');
+    if (mag)       passives.push('−20% dmg in / +15% dmg out when still');
     if (loadout.aug === 'target_painter')   passives.push('hit marks: +20% dmg on target');
     if (loadout.aug === 'threat_analyzer')  passives.push('hit debuff: −15% resist 3s');
     if (loadout.aug === 'reactive_plating') passives.push('on hit: +5% DR stack (max 5)');
@@ -280,97 +221,163 @@ function updateGarageStats() {
     if (loadout.leg === 'mine_layer')       passives.push('drop mine every 8s moving');
     if (loadout.leg === 'afterleg')         passives.push('jump +50% dist · land shockwave');
 
-    // ── Chassis identity traits ──
-    const chassisDef = CHASSIS[loadout.chassis];
+    // ── Chassis traits ──
     const chassisTraits = [];
-    if (loadout.chassis === 'light') {
-        chassisTraits.push('Dual-fire: fires both arms simultaneously when same weapon is equipped in each');
+    if (chassis === 'light') {
+        chassisTraits.push('Dual-fire: fires both arms simultaneously when same weapon equipped in each');
         chassisTraits.push('+20% reload speed (passive)');
         chassisTraits.push('Arms: fragile — 30% less base HP');
-    } else if (loadout.chassis === 'medium') {
+    } else if (chassis === 'medium') {
         chassisTraits.push('All mod cooldowns −15%');
         chassisTraits.push('Kills reduce mod cooldown by 0.5s');
         chassisTraits.push('Shield absorbs 60% of damage');
-    } else if (loadout.chassis === 'heavy') {
+    } else if (chassis === 'heavy') {
         chassisTraits.push('Passive 15% damage reduction');
         chassisTraits.push('Cannot equip JUMP or AFTERLEG');
         chassisTraits.push('Built for sustained attrition');
     }
 
-    function row(lbl, val, cls = '') {
+    // ── Slot label helpers ──
+    const weaponName = (key) => {
+        if (!key || key === 'none') return 'NONE';
+        return (typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[key] : null)
+            || WEAPONS[key]?.name || key.toUpperCase();
+    };
+
+    function statRow(lbl, val, cls) {
         return `<div class="hg-stat-row"><span class="hg-stat-label">${lbl}</span><span class="hg-stat-val${cls ? ' ' + cls : ''}">${val}</span></div>`;
     }
     const gap = '<div class="hg-gap"></div>';
 
-    let html = '';
-
-    // Group 1 — HP
-    html += row('TOTAL HP', totalHP + ' HP', 'green');
-    html += row('HP SPLIT', 'C ' + coreHP + ' / A ' + armHP + ' / L ' + legHP, 'dim');
-    html += gap;
-
-    // Group 2 — Mobility / Defense
-    html += row('SPEED', spdStr, 'warn');
-    html += row('SHIELD HP', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
-    html += gap;
-
-    // Group 3 — Weapons: combined name + fire rate per arm
-    const rKey    = is2H ? loadout.L : loadout.R;
-    const rEmpty2 = !rKey || rKey === 'none';
-    const lArmVal = lEmpty ? '— none' : ((WEAPON_NAMES[loadout.L] || wL.name) + (lRate ? ' — ' + lRate : ''));
-    const rArmVal = rEmpty2 ? '— none' : ((WEAPON_NAMES[rKey] || WEAPONS[rKey]?.name || rKey) + (rRate ? ' — ' + rRate : ''));
+    // ── Stats panel HTML ──
+    let statsHtml = '';
+    statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
+    statsHtml += statRow('HP SPLIT', 'C ' + (ch.coreHP||0) + ' / A ' + (ch.armHP||0) + ' / L ' + (ch.legHP||0), 'dim');
+    statsHtml += gap;
+    statsHtml += statRow('SPEED', spdStr, 'warn');
+    statsHtml += statRow('SHIELD HP', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
+    statsHtml += gap;
+    const lArmName = weaponName(loadout.L);
+    const rArmKey2 = is2H ? loadout.L : loadout.R;
+    const rArmName = weaponName(rArmKey2);
+    const lArmVal  = lEmpty ? '— none' : lArmName + (lRate ? ' — ' + lRate : '');
+    const rArmVal  = (!rArmKey2 || rArmKey2 === 'none') ? '— none' : rArmName + (rRate ? ' — ' + rRate : '');
     const weaponRows = [
-        row('L ARM', lArmVal, 'dim'),
-        row('R ARM', rArmVal, 'dim'),
-        modCd ? row('CORE CD', modCd, 'warn') : '',
+        statRow('L ARM', lArmVal, 'dim'),
+        statRow('R ARM', rArmVal, 'dim'),
+        modCd ? statRow('CORE CD', modCd, 'warn') : '',
     ].join('');
-    if (weaponRows) { html += weaponRows; html += gap; }
-
-    // Group 4 — Chassis / Passives
+    if (weaponRows) { statsHtml += weaponRows; statsHtml += gap; }
     if (chassisTraits.length) {
-        const chCls = loadout.chassis === 'light' ? 'green' : 'warn';
-        html += row('CHASSIS', chassisTraits.join(' · '), chCls);
+        const chCls = chassis === 'light' ? 'green' : 'warn';
+        statsHtml += statRow('CHASSIS', chassisTraits.join(' · '), chCls);
     }
-    if (passives.length) {
-        html += row('PASSIVES', passives.join(' · '), 'purple');
+    if (passives.length) statsHtml += statRow('PASSIVES', passives.join(' · '), 'purple');
+    statsHtml += gap;
+    statsHtml += statRow('MOD', _wzGetSlotLabel('M'), 'dim');
+    statsHtml += statRow('SHIELD', _wzGetSlotLabel('S'), 'dim');
+    statsHtml += statRow('LEGS', _wzGetSlotLabel('G'), 'dim');
+    statsHtml += statRow('AUGMENT', _wzGetSlotLabel('A'), 'dim');
+
+    // ── Dropdown row builder ──
+    function ddRow(slotId, labelText) {
+        const name   = slotId === 'L' ? weaponName(loadout.L)
+                     : slotId === 'R' ? weaponName(is2H ? loadout.L : loadout.R)
+                     : _wzGetSlotLabel(slotId);
+        const locked = is2H && slotId === 'R' ? ' style="opacity:0.45;pointer-events:none;"' : '';
+        return `<div class="mp-dd-row"${locked}>
+            <span class="mp-dd-label">${labelText}</span>
+            <div class="pvp-dd-wrap" style="position:relative;flex:1;">
+                <div class="mp-dd-selected wz-dd-selected" id="wz-dds-${slotId}" onclick="_wzToggleDD('${slotId}')">
+                    <span>${name}</span>
+                    <span style="font-size:9px;opacity:0.5;">▼</span>
+                </div>
+                <div class="dd-list wz-dd-list" id="wz-ddl-${slotId}"></div>
+            </div>
+        </div>`;
     }
 
-    // Group 5 — Slot name summary (matches multiplayer bottom rows)
-    function _slotName(key, dict) {
-        if (!key || key === 'none') return null;
-        const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[key] : null;
-        if (desc) return desc.title;
-        return dict?.[key]?.name || key.replace(/_/g, ' ').toUpperCase();
-    }
-    const _modName  = _slotName(loadout.mod,  WEAPONS);
-    const _shldName = _slotName(loadout.shld, SHIELD_SYSTEMS) || 'NONE';
-    const _legName  = _slotName(loadout.leg,  typeof LEG_SYSTEMS !== 'undefined' ? LEG_SYSTEMS : {});
-    const _augName  = _slotName(loadout.aug,  typeof AUGMENTS    !== 'undefined' ? AUGMENTS    : {});
-    const slotRows = [
-        _modName  ? row('MOD',     _modName,  'dim') : '',
-        row('SHIELD', _shldName, 'dim'),
-        _legName  ? row('LEGS',    _legName,  'dim') : '',
-        _augName  ? row('AUGMENT', _augName,  'dim') : '',
-    ].filter(Boolean).join('');
-    if (slotRows) { html += gap; html += slotRows; }
+    // ── Dual-explosive warning ──
+    const bothExplosive = typeof EXPLOSIVE_KEYS !== 'undefined' && EXPLOSIVE_KEYS.has(loadout.L) && EXPLOSIVE_KEYS.has(loadout.R);
 
-    panel.innerHTML = html;
-}
+    el.innerHTML = `
+        <!-- Top bar -->
+        <div class="mp-top" style="position:relative;">
+            <button id="hangar-mm-btn" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;" onclick="returnToMainMenu()">‹ Back</button>
+            <div class="mp-screen-title">WARZONE</div>
+            <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;" onclick="deployMech()">Deploy Mech ›</button>
+        </div>
 
-function _updateStarterPanel() {
-    const panel = document.getElementById('starter-loadout-panel');
-    if (!panel) return;
-    const ch = loadout.chassis;
-    const starter = STARTER_LOADOUTS[ch];
-    const wL = WEAPONS[starter.L];
-    const shName = SHIELD_SYSTEMS[starter.shld]?.name || 'NONE';
-    const chColor = ch === 'light' ? '#88ff88' : ch === 'medium' ? '#ffcc44' : '#ff8844';
+        <!-- Body -->
+        <div class="mp-body">
 
-    const sCls = ch === 'light' ? 'green' : 'warn';
-    let html = '';
-    html += `<div class="hg-stat-row"><span class="hg-stat-label">WEAPON</span><span class="hg-stat-val ${sCls}">${WEAPON_NAMES[loadout.L] || wL?.name || 'NONE'}</span></div>`;
-    html += `<div class="hg-stat-row"><span class="hg-stat-label">SHIELD</span><span class="hg-stat-val ${sCls}">${shName}</span></div>`;
-    panel.innerHTML = html;
+            <!-- Left column: controls + preview -->
+            <div class="mp-left">
+
+                <!-- Dropdowns section -->
+                <div class="mp-left-controls">
+                    <div class="mp-sec-label">Chassis</div>
+                    <div class="mp-chassis-row">
+                        <button id="c-light" class="mp-chassis-btn${chassis === 'light' ? ' active' : ''}" onclick="setChassis('light')">Light</button>
+                        <button id="c-medium" class="mp-chassis-btn${chassis === 'medium' ? ' active' : ''}" onclick="setChassis('medium')">Medium</button>
+                        <button id="c-heavy" class="mp-chassis-btn${chassis === 'heavy' ? ' active' : ''}" onclick="setChassis('heavy')">Heavy</button>
+                    </div>
+
+                    <div class="mp-sec-label">Loadout</div>
+                    <div class="mp-dd-row">
+                        <span class="mp-dd-label">Colour</span>
+                        <div class="pvp-dd-wrap" style="position:relative;flex:1;">
+                            <div class="mp-dd-selected wz-dd-selected" id="wz-dds-COL" onclick="_wzToggleColorDD()">
+                                <span style="display:flex;align-items:center;gap:8px;">
+                                    <span style="width:10px;height:10px;background:${colorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
+                                    ${colorOpt.label}
+                                </span>
+                                <span style="font-size:9px;opacity:0.5;">▼</span>
+                            </div>
+                            <div class="dd-list wz-dd-list" id="wz-ddl-COL"></div>
+                        </div>
+                    </div>
+                    ${ddRow('L', 'L.Arm')}
+                    ${ddRow('R', 'R.Arm')}
+                    ${ddRow('M', 'Core Mod')}
+                    ${ddRow('S', 'Shield')}
+                    ${ddRow('G', 'Legs')}
+                    ${ddRow('A', 'Augment')}
+                    ${bothExplosive ? '<div style="font-size:9px;letter-spacing:1px;color:var(--sci-gold);margin-top:8px;">⚠ Dual explosive — high self-damage risk</div>' : ''}
+                </div>
+
+                <!-- Mech preview -->
+                <div class="mp-preview-zone">
+                    <div class="mp-preview-box">
+                        <div class="sci-corner sci-corner-tl"></div>
+                        <div class="sci-corner sci-corner-tr"></div>
+                        <div class="sci-corner sci-corner-bl"></div>
+                        <div class="sci-corner sci-corner-br"></div>
+                        <img id="preview-img" src="assets/${chassis}-mech.png"
+                            style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
+                    </div>
+                    <div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">
+                        ${chassis} &nbsp;·&nbsp; ${colorOpt.label}
+                    </div>
+                </div>
+
+            </div><!-- /mp-left -->
+
+            <!-- Right column: full build stats -->
+            <div class="mp-right">
+                <div class="mp-stats-header">Build stats</div>
+                <div style="padding:12px 20px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;">
+                    ${statsHtml}
+                </div>
+            </div>
+
+        </div><!-- /mp-body -->
+    `;
+
+    // Close dropdowns when clicking outside
+    el.onclick = (e) => {
+        if (!e.target.closest('.pvp-dd-wrap')) _wzCloseAllDD();
+    };
 }
 
 function _calcWeight(lo) {
