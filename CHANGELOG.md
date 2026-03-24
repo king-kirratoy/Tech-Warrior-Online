@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.14 — Warzone hangar mp-dd class system unification
+
+**Date:** 2026-03-24
+
+Rebuilt the warzone hangar screen to use the same `mp-*` / `pvp-dd-*` CSS class system as the multiplayer hangar. Previously the warzone screen used `.dd-*` classes from `garage.css` and `.hg-*` container classes, which are for the legacy pre-deploy screen only. Converted `refreshGarage()` from a partial-update function into a full dynamic renderer (like PVP's `_pvpRenderHangar()`), outputting identical structure: `.mp-top`, `.mp-body`, `.mp-left`/`.mp-right`, `.mp-left-controls`, `.mp-preview-zone`, `.mp-preview-box`. Replaced `toggleDD()`/`buildDD()`/`closeAllDD()`/`buildColorDD()` with warzone-specific equivalents (`_wzToggleDD`, `_wzBuildDropdown`, `_wzCloseAllDD`, `_wzBuildColorDD`) using `.wz-dd-selected`/`.wz-dd-list` selectors scoped to `#garage-menu`. Added `.wz-dd-list` CSS rule alongside `.pvp-dd-list` in `menus.css`. Empty slot text now displays "NONE" (uppercase) matching the multiplayer screen. Stats panel always shows MOD/SHIELD/LEGS/AUGMENT rows regardless of whether a slot is equipped.
+
+---
+
 ## v6.13 — Warzone/multiplayer hangar dropdown parity
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Documentation-only session. Audited OVERVIEW.md for staleness against CHANGELOG.
 **Date:** 2026-03-24
 
 Replaced the single 6×5 buy grid with three side-by-side category grids (Offensive / Defensive / Utility), each 3×5. Items are categorized by `baseType` via new `_shopGetCategory()`. Reduced `SHOP_MAX_ITEMS` from 30 to 12 — items distribute randomly across categories. Sold-back items appear immediately in the correct category grid with no special visual treatment. Added `_shopRenderCategory()` for targeted re-renders on sell.
-
----
-
-## v6.04 — Fix shop hover cards not showing
-
-**Date:** 2026-03-24
-
-Fixed supply shop hover cards being invisible because `#eq-hover-card` was nested inside `#stats-overlay` (hidden when shop is open); created a dedicated `#shop-hover-card` lazily appended to `document.body` so it renders above all overlays.
 
 ---
