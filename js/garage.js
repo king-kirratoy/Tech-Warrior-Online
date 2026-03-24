@@ -1,3 +1,58 @@
+// ═══════════ SLOT DETAIL HELPER ═══════════
+
+// Builds multi-line detail HTML for a BUILD STATS slot.
+// Returns array of {lbl, val, cls} objects for statRow rendering.
+function _buildSlotDetails(slotType, key) {
+    if (!key || key === 'none') return [];
+    const lines = [];
+    const _dim = 'dim';
+
+    if (slotType === 'weapon') {
+        const w = WEAPONS[key];
+        if (!w) return [];
+        if (w.dmg && w.reload) {
+            const dps = (w.dmg / (w.reload / 1000)).toFixed(1);
+            lines.push({ lbl: '  DPS', val: dps, cls: 'green' });
+        }
+        if (w.dmg) lines.push({ lbl: '  DMG', val: w.dmg + (w.pellets ? ' ×' + w.pellets : ''), cls: _dim });
+        if (w.reload) lines.push({ lbl: '  RELOAD', val: w.reload + 'ms', cls: _dim });
+        if (w.burst) lines.push({ lbl: '  BURST', val: w.burst + ' rounds', cls: _dim });
+        const flags = [];
+        if (w.explosive) flags.push('EXPLOSIVE');
+        if (w.pierce) flags.push('PIERCE');
+        if (w.flame) flags.push('FLAME');
+        if (w.twoHanded) flags.push('TWO-HANDED');
+        if (w.shieldPierce) flags.push('SHIELD PIERCE');
+        if (flags.length) lines.push({ lbl: '  FLAGS', val: flags.join(' · '), cls: 'warn' });
+
+    } else if (slotType === 'shield') {
+        const s = typeof SHIELD_SYSTEMS !== 'undefined' ? SHIELD_SYSTEMS[key] : null;
+        if (!s) return [];
+        lines.push({ lbl: '  HP', val: s.maxShield + ' · ' + Math.round(s.absorb * 100) + '% absorb', cls: _dim });
+        lines.push({ lbl: '  REGEN', val: s.regenRate + '/s · ' + s.regenDelay + 's delay', cls: _dim });
+        if (s.desc && key !== 'none') lines.push({ lbl: '  INFO', val: s.desc, cls: _dim });
+
+    } else if (slotType === 'augment') {
+        const a = typeof AUGMENTS !== 'undefined' ? AUGMENTS[key] : null;
+        if (!a) return [];
+        if (a.desc && key !== 'none') lines.push({ lbl: '  INFO', val: a.desc, cls: _dim });
+
+    } else if (slotType === 'legs') {
+        const l = typeof LEG_SYSTEMS !== 'undefined' ? LEG_SYSTEMS[key] : null;
+        if (!l) return [];
+        if (l.desc && key !== 'none') lines.push({ lbl: '  INFO', val: l.desc, cls: _dim });
+
+    } else if (slotType === 'cpu') {
+        const m = WEAPONS[key];
+        if (!m) return [];
+        if (m.cooldown) lines.push({ lbl: '  COOLDOWN', val: (m.cooldown / 1000) + 's', cls: _dim });
+        const desc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[key]) ? SLOT_DESCS[key].desc : (m.desc || null);
+        if (desc) lines.push({ lbl: '  INFO', val: desc, cls: _dim });
+    }
+
+    return lines;
+}
+
 // ═══════════ DROPDOWN SYSTEM ═══════════
 
 function _wzCloseAllDD() {
@@ -264,19 +319,21 @@ function refreshGarage() {
     statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
     statsHtml += statRow('TOTAL SHIELD', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
     statsHtml += gap;
-    // Slot summary — same order as dropdown list
-    statsHtml += statRow('CPU', _wzGetSlotLabel('M'), 'dim');
-    if (modCd) statsHtml += statRow('CPU CD', modCd, 'warn');
-    statsHtml += statRow('AUGMENT', _wzGetSlotLabel('A'), 'dim');
-    const lArmName = weaponName(loadout.L);
+    // Slot details — same order as dropdown list
+    function slotBlock(label, slotType, key) {
+        const name = (slotType === 'weapon') ? weaponName(key) : _wzGetSlotLabel(
+            slotType === 'cpu' ? 'M' : slotType === 'augment' ? 'A' : slotType === 'legs' ? 'G' : 'S'
+        );
+        statsHtml += statRow(label, name, 'dim');
+        _buildSlotDetails(slotType, key).forEach(d => { statsHtml += statRow(d.lbl, d.val, d.cls); });
+    }
+    slotBlock('CPU', 'cpu', loadout.mod);
+    slotBlock('AUGMENT', 'augment', loadout.aug);
     const rArmKey2 = is2H ? loadout.L : loadout.R;
-    const rArmName = weaponName(rArmKey2);
-    const lArmVal  = lEmpty ? '— none' : lArmName + (lRate ? ' — ' + lRate : '');
-    const rArmVal  = (!rArmKey2 || rArmKey2 === 'none') ? '— none' : rArmName + (rRate ? ' — ' + rRate : '');
-    statsHtml += statRow('L ARM', lArmVal, 'dim');
-    statsHtml += statRow('R ARM', rArmVal, 'dim');
-    statsHtml += statRow('LEGS', _wzGetSlotLabel('G'), 'dim');
-    statsHtml += statRow('SHIELD', _wzGetSlotLabel('S'), 'dim');
+    slotBlock('L ARM', 'weapon', loadout.L);
+    slotBlock('R ARM', 'weapon', rArmKey2);
+    slotBlock('LEGS', 'legs', loadout.leg);
+    slotBlock('SHIELD', 'shield', loadout.shld);
 
     // ── Dropdown row builder ──
     function ddRow(slotId, labelText) {

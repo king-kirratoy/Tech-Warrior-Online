@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.16 — BUILD STATS slot detail rows
+
+**Date:** 2026-03-24
+
+Enriched the BUILD STATS panel on both the warzone and multiplayer hangar screens so every equipped item shows its full stats, not just its name. Added `_buildSlotDetails()` helper in `js/garage.js` that returns detail lines per slot type: weapons show DPS, damage, reload, burst, and flags (explosive/pierce/etc.); shields show HP, absorb %, regen rate, delay, and description; CPU/mods show cooldown and description; augments and legs show their description. Both screens now render these detail rows beneath each slot header row using the existing `.hg-stat-row` pattern. Multiplayer calls the helper via a `typeof` guard since it's defined in a separate file. Updated GAME_VERSION to v6.16.
+
+---
+
 ## v6.15 — Hangar UI polish: reorder, preview, deploy validation
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Moved the Restock button and scrap count from the buy column into the top header
 **Date:** 2026-03-24
 
 Documentation-only session. Made UI_CONVENTIONS.md the single authoritative source for all UI rules (design tokens, font rules, color meanings, rarity colors, inverted stats, slot label naming, loadout screen architecture, hover card system). Removed duplicate content from CLAUDE.md and OVERVIEW.md, replacing it with one-line references to the relevant UI_CONVENTIONS.md sections. Updated CLAUDE.md session-start rule #3 wording.
-
----
-
-## v6.06 — OVERVIEW.md accuracy audit
-
-**Date:** 2026-03-24
-
-Documentation-only session. Audited OVERVIEW.md for staleness against CHANGELOG.md and actual code. Fixed: added `WEAPON_NAMES` to `js/constants.js` File Map entry, updated `js/campaign-system.js` entry with new shop functions (`_shopGetCategory`, `_shopSortCategories`, `_shopRenderCategory`, `_shopGetHoverCard`, `_shopShowHover`, `_shopHideHover`), updated `_buildHoverHtml` signature to include `leftLabel` param, replaced stale hover card CSS classes (`.lo-hover-cmp-wrap`/`.lo-hover-cmp-cards`/`.lo-hover-cmp-label` → `.lo-hover-cmp-card`/`.lo-hover-cmp-cols`/`.lo-hover-cmp-left`) and added `.lo-hover-divider`.
 
 ---

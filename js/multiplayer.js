@@ -2372,19 +2372,23 @@ function _pvpRenderHangar() {
     statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
     statsHtml += statRow('TOTAL SHIELD', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
     statsHtml += gap;
-    // Slot summary — same order as dropdown list
-    statsHtml += statRow('CPU', _pvpGetSlotLabel('M'), 'dim');
-    if (modCd) statsHtml += statRow('CPU CD', modCd, 'warn');
-    statsHtml += statRow('AUGMENT', _pvpGetSlotLabel('A'), 'dim');
-    const lArmName = weaponName(loadout.L);
+    // Slot details — same order as dropdown list
+    function pvpSlotBlock(label, slotType, key) {
+        const name = (slotType === 'weapon') ? weaponName(key) : _pvpGetSlotLabel(
+            slotType === 'cpu' ? 'M' : slotType === 'augment' ? 'A' : slotType === 'legs' ? 'G' : 'S'
+        );
+        statsHtml += statRow(label, name, 'dim');
+        if (typeof _buildSlotDetails === 'function') {
+            _buildSlotDetails(slotType, key).forEach(d => { statsHtml += statRow(d.lbl, d.val, d.cls); });
+        }
+    }
+    pvpSlotBlock('CPU', 'cpu', loadout.mod);
+    pvpSlotBlock('AUGMENT', 'augment', loadout.aug);
     const rArmKey2 = is2H ? loadout.L : loadout.R;
-    const rArmName = weaponName(rArmKey2);
-    const lArmVal  = lEmpty ? '— none' : lArmName + (lRate ? ' — ' + lRate : '');
-    const rArmVal  = (!rArmKey2 || rArmKey2 === 'none') ? '— none' : rArmName + (rRate ? ' — ' + rRate : '');
-    statsHtml += statRow('L ARM', lArmVal, 'dim');
-    statsHtml += statRow('R ARM', rArmVal, 'dim');
-    statsHtml += statRow('LEGS', _pvpGetSlotLabel('G'), 'dim');
-    statsHtml += statRow('SHIELD', _pvpGetSlotLabel('S'), 'dim');
+    pvpSlotBlock('L ARM', 'weapon', loadout.L);
+    pvpSlotBlock('R ARM', 'weapon', rArmKey2);
+    pvpSlotBlock('LEGS', 'legs', loadout.leg);
+    pvpSlotBlock('SHIELD', 'shield', loadout.shld);
 
     // ── Dropdown row builder ──
     function ddRow(slotId, labelText) {
