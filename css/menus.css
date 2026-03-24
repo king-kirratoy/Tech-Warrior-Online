@@ -389,28 +389,99 @@
    CHASSIS SELECTOR CARDS
    ============================================================ */
 .chassis-card {
-  border-color: color-mix(in srgb, var(--card-color, var(--cyan)) 40%, transparent);
+  border: 1px solid var(--sci-cyan-border);
   border-radius: 6px;
-  border-top: 3px solid var(--card-color, var(--border-cyan-bright));
+  cursor: pointer;
   flex: 1;
-  padding: 24px 16px;
-  text-align: center;
+  min-width: 0;
+  padding: 14px 12px;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .chassis-card:hover {
-  border-color: color-mix(in srgb, var(--card-color, var(--cyan)) 70%, transparent);
+  background: var(--sci-cyan-dim);
+  border-color: rgba(0,212,255,0.7);
 }
 
 .chassis-card.active {
-  background: color-mix(in srgb, var(--card-color, var(--cyan)) 8%, transparent);
-  border-color: var(--card-color, var(--cyan));
-  box-shadow: 0 0 16px color-mix(in srgb, var(--card-color, var(--cyan)) 20%, transparent),
-              inset 0 0 12px color-mix(in srgb, var(--card-color, var(--cyan)) 7%, transparent);
+  background: var(--sci-cyan-dim);
+  border-color: var(--sci-cyan);
+  box-shadow: 0 0 16px rgba(0,212,255,0.12);
 }
 
 .chassis-card.locked {
   cursor: not-allowed;
   opacity: 0.35;
+}
+
+/* --- Chassis card internals --- */
+
+.cc-preview {
+  align-items: center;
+  display: flex;
+  height: 90px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.cc-name {
+  color: var(--sci-cyan);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 4px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.cc-divider {
+  background: var(--sci-line);
+  height: 1px;
+  margin: 7px 0;
+}
+
+.cc-sec-label {
+  color: var(--sci-txt2);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.cc-stat-row {
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+
+.cc-stat-lbl {
+  color: var(--sci-txt2);
+  letter-spacing: 1px;
+}
+
+.cc-stat-val {
+  color: var(--sci-txt);
+  letter-spacing: 1px;
+  text-align: right;
+}
+
+.cc-green  { color: var(--green-accent); }
+.cc-cyan   { color: var(--sci-cyan); }
+.cc-dim    { color: var(--sci-txt2); }
+.cc-orange { color: var(--orange); }
+
+.cc-trait {
+  border-top: 1px solid var(--sci-line);
+  color: var(--sci-txt3);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-style: italic;
+  line-height: 1.5;
+  margin-top: 8px;
+  padding-top: 8px;
 }
 
 /* ============================================================

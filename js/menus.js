@@ -764,35 +764,79 @@ function _renderChassisSelect(overlay) {
     if (!overlay) overlay = document.getElementById('mission-select-overlay');
     if (!overlay) return;
 
-    let html = '';
-    html += `<div style="font-size:28px;letter-spacing:6px;color:${UI_COLORS.gold};text-shadow:0 0 20px ${UI_COLORS.goldGlow};margin-bottom:6px;">NEW CAMPAIGN</div>`;
-    html += `<div style="font-size:11px;letter-spacing:2px;color:${UI_COLORS.goldGlow};margin-bottom:32px;">SELECT YOUR CHASSIS CLASS</div>`;
-
-    const chassisInfo = {
-        light:  { color: UI_COLORS.chassisLight,  desc: 'Fast and agile. Access to SMGs, Battle Rifles, Shotguns, Snipers. Mods: Jump, Decoy, Barrier, EMP, Ghost Step.', hp: 'Low HP', speed: 'High Speed' },
-        medium: { color: UI_COLORS.chassisMedium, desc: 'Balanced all-rounder. Access to Machine Guns, Battle Rifles, Heavy Rifles, Grenade Launchers, Plasma, Snipers. Mods: Barrier, Repair, Missile, Drone, Overclock.', hp: 'Medium HP', speed: 'Medium Speed' },
-        heavy:  { color: UI_COLORS.chassisHeavy,  desc: 'Slow but powerful tank. Access to Machine Guns, Heavy Rifles, Rocket Launchers, Plasma, Siege, Chain Gun. Mods: Barrier, Repair, Rage, Siege Mode, Anchor.', hp: 'High HP', speed: 'Low Speed' }
+    const chassisColors = {
+        light:  UI_COLORS.chassisLight,
+        medium: UI_COLORS.chassisMedium,
+        heavy:  UI_COLORS.chassisHeavy,
     };
 
-    html += '<div style="display:flex;gap:16px;max-width:800px;width:100%;">';
-    for (const ch of ['light', 'medium', 'heavy']) {
-        const info = chassisInfo[ch];
-        const isSelected = (_selectedNewChassis === ch);
-        html += `<button onclick="_highlightChassis('${ch}')" class="tw-btn chassis-card${isSelected ? ' active' : ''}" style="--card-color:${info.color};">`;
-        html += `<div style="font-size:18px;letter-spacing:4px;color:${info.color};margin-bottom:8px;">${ch.toUpperCase()}</div>`;
-        html += `<div style="font-size:10px;color:${info.color};opacity:0.7;margin-bottom:8px;">${info.hp} // ${info.speed}</div>`;
-        html += `<div style="font-size:9px;color:${UI_COLORS.text50};line-height:1.5;">${info.desc}</div>`;
-        html += '</button>';
-    }
-    html += '</div>';
+    let html = '';
 
-    // Start Campaign button — only visible when a chassis is selected
-    html += '<div style="display:flex;gap:16px;margin-top:24px;align-items:center;">';
-    if (_selectedNewChassis) {
-        const selInfo = chassisInfo[_selectedNewChassis];
-        html += `<button onclick="_startNewCampaignWithChassis('${_selectedNewChassis}')" class="tw-btn tw-btn--gold">START CAMPAIGN</button>`;
+    // Title area
+    html += `<div style="font-family:var(--font-mono);font-size:13px;letter-spacing:6px;color:var(--sci-txt);text-transform:uppercase;margin-bottom:4px;">NEW CAMPAIGN</div>`;
+    html += `<div style="font-family:var(--font-mono);font-size:9px;letter-spacing:3px;color:var(--sci-txt3);margin-bottom:28px;">SELECT YOUR CHASSIS CLASS</div>`;
+
+    // Chassis cards row
+    html += '<div style="display:flex;gap:14px;width:100%;max-width:860px;">';
+    for (const ch of ['light', 'medium', 'heavy']) {
+        const isSelected = (_selectedNewChassis === ch);
+        const color = chassisColors[ch];
+        const c = CHASSIS[ch];
+        const sl = STARTER_LOADOUTS[ch];
+        const totalHP = c.coreHP + c.armHP + c.legHP;
+        const weaponName = (WEAPON_NAMES[sl.L] || sl.L).toUpperCase();
+        const shieldData = SHIELD_SYSTEMS[sl.shld];
+        const shieldName = shieldData ? shieldData.name : sl.shld.toUpperCase();
+        const maxShield = shieldData ? shieldData.maxShield : '—';
+        const identity = c.identity || '';
+
+        html += `<div class="chassis-card${isSelected ? ' active' : ''}" onclick="_highlightChassis('${ch}')">`;
+
+        // Mech preview
+        html += `<div class="cc-preview"><img src="assets/${ch}-mech.png" alt="${ch}" style="filter:drop-shadow(0 0 12px ${color});max-width:100%;max-height:100%;object-fit:contain;"></div>`;
+
+        // Chassis name
+        html += `<div class="cc-name">${ch.toUpperCase()}</div>`;
+
+        // Divider
+        html += `<div class="cc-divider"></div>`;
+
+        // STATS section
+        html += `<div class="cc-sec-label">STATS</div>`;
+        html += `<div class="cc-stat-row"><span class="cc-stat-lbl">TOTAL HP</span><span class="cc-stat-val cc-green">${totalHP}</span></div>`;
+        html += `<div class="cc-stat-row"><span class="cc-stat-lbl">HP SPLIT</span><span><span class="cc-dim">C&thinsp;</span><span class="cc-green">${c.coreHP}</span><span class="cc-dim">&thinsp;/&thinsp;A&thinsp;</span><span class="cc-green">${c.armHP}</span><span class="cc-dim">&thinsp;/&thinsp;L&thinsp;</span><span class="cc-green">${c.legHP}</span></span></div>`;
+        html += `<div class="cc-stat-row"><span class="cc-stat-lbl">SHIELD</span><span class="cc-stat-val cc-cyan">${maxShield}</span></div>`;
+        html += `<div class="cc-stat-row"><span class="cc-stat-lbl">SPEED</span><span class="cc-stat-val">${c.spd}</span></div>`;
+
+        // Divider
+        html += `<div class="cc-divider"></div>`;
+
+        // STARTER LOADOUT section
+        html += `<div class="cc-sec-label">STARTER LOADOUT</div>`;
+        html += `<div class="cc-stat-row"><span class="cc-stat-lbl">WEAPON</span><span class="cc-stat-val cc-orange">${weaponName}</span></div>`;
+        html += `<div class="cc-stat-row"><span class="cc-stat-lbl">SHIELD</span><span class="cc-stat-val cc-orange">${shieldName}</span></div>`;
+
+        // Chassis trait summary
+        html += `<div class="cc-trait">${identity}</div>`;
+
+        html += `</div>`; // close .chassis-card
     }
-    html += `<button onclick="_cancelNewCampaign()" class="tw-btn tw-btn--danger">BACK</button>`;
+    html += '</div>'; // close cards row
+
+    // Footer
+    const noSel = !_selectedNewChassis;
+    html += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:24px;">';
+    html += '<div style="display:flex;gap:12px;align-items:center;">';
+    if (_selectedNewChassis) {
+        html += `<button onclick="_startNewCampaignWithChassis('${_selectedNewChassis}')" class="tw-btn tw-btn--solid">START CAMPAIGN</button>`;
+    } else {
+        html += `<button class="tw-btn tw-btn--solid" style="opacity:0.4;pointer-events:none;" disabled>START CAMPAIGN</button>`;
+    }
+    html += `<button onclick="_cancelNewCampaign()" class="tw-btn tw-btn--ghost tw-btn--sm">‹ Back</button>`;
+    html += '</div>';
+    if (noSel) {
+        html += `<div style="font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:var(--sci-red);">Select a chassis to continue</div>`;
+    }
     html += '</div>';
 
     overlay.innerHTML = html;
