@@ -1129,8 +1129,8 @@ function pickPerk(key, nextRound) {
     if (menu) menu.style.display = 'none';
     _roundClearing = false;
 
-    // If player has unequipped loot, show brief equip prompt before next round
-    if (_inventory.length > 0) {
+    // If player has unequipped loot, show brief equip prompt before next round (campaign only)
+    if (_gameMode === 'campaign' && _inventory.length > 0) {
         _showEquipPrompt(nextRound);
         return;
     }
