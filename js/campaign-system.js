@@ -1298,7 +1298,16 @@ function awardMissionReward(missionId) {
 
 /** Shop stock — refreshed each time player returns to mission select. */
 let _shopStock = [];
-const SHOP_MAX_ITEMS = 30;
+const SHOP_MAX_ITEMS = 12;
+
+/** Categorize a shop/loot item by its baseType for the three-column buy grid. */
+function _shopGetCategory(item) {
+    const t = (item.baseType || '').toLowerCase();
+    if (['weapon'].includes(t)) return 'offensive';
+    if (['armor', 'arms', 'shield', 'shield_system'].includes(t)) return 'defensive';
+    if (['legs', 'leg_system', 'mod', 'mod_system', 'augment', 'aug_system'].includes(t)) return 'utility';
+    return 'utility';
+}
 
 /** Base prices by rarity (buy price). Sell = scrapValue from RARITY_DEFS. */
 const SHOP_PRICES = {
