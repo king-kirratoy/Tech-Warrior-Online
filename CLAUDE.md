@@ -29,6 +29,8 @@ Version numbers use `v1.0, v1.1 … v5.90 …` format. Every session that change
 a version bump. The version is displayed in `#callsign-version` and `#main-menu-version`
 in the game UI, populated at runtime from `GAME_VERSION`.
 
+There is no CHANGELOG.md on this project. Do not create one under any circumstances.
+
 ---
 
 ## 2. Key Architecture Rules
