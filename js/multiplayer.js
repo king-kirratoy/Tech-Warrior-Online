@@ -2118,6 +2118,7 @@ function mpNudgeOutOfCover(scene) {
 let _pvpHangarOpen = false;
 let _pvpHangarInMatch = false; // true = opened mid-match via ESC menu
 let _pvpOpenDD = null;         // currently open dropdown slot key
+let _pvpPrevRArm = null;       // R arm value saved before entering 2H mode
 
 function mpShowPvpHangar(inMatch) {
     _pvpHangarOpen = true;
@@ -2202,6 +2203,8 @@ function _pvpBuildDropdown(slotId) {
                      : slotId === 'G' ? loadout.leg : loadout.aug;
 
     const is2H = WEAPONS[loadout.L]?.twoHanded;
+    const lHasWeapon = loadout.L && loadout.L !== 'none';
+    const rHasWeapon = loadout.R && loadout.R !== 'none';
 
     options.forEach(opt => {
         // Chassis restriction
@@ -2215,6 +2218,9 @@ function _pvpBuildDropdown(slotId) {
         const otherArm = slotId === 'L' ? loadout.R : slotId === 'R' ? loadout.L : null;
         const isDual = chassis === 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
         const isBlocked = chassis !== 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
+        const isNoneDisabled = opt.key === 'none'
+            && (slotId === 'L' || slotId === 'R')
+            && (slotId === 'L' ? rHasWeapon : lHasWeapon);
 
         const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[opt.key] : null;
         const descText = (desc && opt.key !== 'none') ? desc.desc : '';
@@ -2223,13 +2229,13 @@ function _pvpBuildDropdown(slotId) {
         const div = document.createElement('div');
         div.className = 'dd-option'
             + (opt.key === currentKey ? ' dd-active' : '')
-            + (isBlocked ? ' do-disabled' : '');
+            + (isBlocked || isNoneDisabled ? ' do-disabled' : '');
         div.innerHTML = `
             <div class="do-header">
                 <span class="do-name">${titleText}${isDual ? ' <span style="font-size:9px;letter-spacing:1px;color:#00ffcc;background:rgba(0,255,204,0.12);padding:1px 5px;border:1px solid rgba(0,255,204,0.3);border-radius:2px;vertical-align:middle;">DUAL</span>' : ''}${isBlocked ? ' <span style="font-size:9px;letter-spacing:1px;color:rgba(255,100,100,0.7);background:rgba(255,60,60,0.08);padding:1px 5px;border:1px solid rgba(255,60,60,0.25);border-radius:2px;vertical-align:middle;">IN USE</span>' : ''}</span>
             </div>
             ${descText ? `<div class="do-desc">${descText}</div>` : ''}`;
-        if (!isBlocked) div.onclick = () => { _pvpSelectSlot(slotId, opt.key); _pvpCloseAllDD(); };
+        if (!isBlocked && !isNoneDisabled) div.onclick = () => { _pvpSelectSlot(slotId, opt.key); _pvpCloseAllDD(); };
         list.appendChild(div);
     });
 }
@@ -2422,7 +2428,6 @@ function _pvpRenderHangar() {
     // ── Deploy/join validation ──
     const noWeapons = lEmpty && rEmpty;
     const _deployDisabled = noWeapons ? ' style="opacity:0.45;pointer-events:none;"' : '';
-    const _deployWarn = noWeapons ? '<div style="font-size:9px;letter-spacing:1px;color:var(--sci-red);margin-top:4px;">Equip at least one weapon to deploy</div>' : '';
 
     let topRightBtn;
     if (_pvpHangarInMatch) {
@@ -2432,13 +2437,11 @@ function _pvpRenderHangar() {
                     <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Deploy Mech ›</button>
                     <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="flex:0 0 auto;width:auto;">Quit Match</button>
                 </div>
-                ${_deployWarn}
             </div>`;
     } else {
         topRightBtn = `
             <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
                 <button id="pvp-join-btn" onclick="_pvpJoinLobby()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Join Lobby ›</button>
-                ${_deployWarn}
             </div>`;
     }
 
@@ -2521,11 +2524,19 @@ function _pvpRenderHangar() {
 function _pvpSelectSlot(slotId, key) {
     if (slotId === 'L' || slotId === 'R') {
         const is2H = WEAPONS[key]?.twoHanded;
+        const prevWas2H = WEAPONS[loadout.L]?.twoHanded;
         if (loadout.chassis === 'light' && is2H) return;
         if (is2H) {
-            loadout.L = key; loadout.R = key;
+            // Entering 2H mode — save current R value (only on first entry)
+            if (!prevWas2H) _pvpPrevRArm = loadout.R;
+            loadout.L = key;
+            loadout.R = key;
         } else if (slotId === 'L') {
-            if (WEAPONS[loadout.L]?.twoHanded) loadout.R = 'none';
+            if (prevWas2H) {
+                // Leaving 2H mode — restore previous R value
+                loadout.R = _pvpPrevRArm || 'none';
+                _pvpPrevRArm = null;
+            }
             loadout.L = key;
             if (loadout.chassis !== 'light' && key !== 'none' && loadout.R === key) loadout.R = 'none';
         } else {
