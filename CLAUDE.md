@@ -30,9 +30,18 @@ Never compare against the display strings — always use the internal key string
 3. If the session touches `css/`, `js/menus.js`, or the loadout screen: also read `UI_CONVENTIONS.md`
 4. After making any changes, update both `OVERVIEW.md` (current state) and `CHANGELOG.md`
    (what changed, with new version number)
+5. Keep CHANGELOG.md to the 10 most recent version entries. After writing
+   a new changelog entry, count the total number of version entries
+   (each starts with "## v"). If there are more than 10, delete the oldest
+   entries until only 10 remain. Do not archive — just delete. No separate
+   archive file.
 
 Version numbers use `v1.0, v1.1 … v5.90 …` format. Every session that changes code gets
 a version bump. The version must be visible somewhere in the game UI.
+
+Maximum 10 entries: After writing a new entry, if CHANGELOG.md contains
+more than 10 version entries, delete the oldest ones immediately. Count
+before ending the session.
 
 ---
 
