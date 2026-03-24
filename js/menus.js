@@ -804,15 +804,14 @@ function _renderChassisSelect(overlay) {
         // STATS section
         html += `<div class="cc-sec-label">STATS</div>`;
         html += `<div class="cc-stat-row"><span class="cc-stat-lbl">TOTAL HP</span><span class="cc-stat-val cc-green">${totalHP}</span></div>`;
-        html += `<div class="cc-stat-row"><span class="cc-stat-lbl">HP SPLIT</span><span><span class="cc-dim">C&thinsp;</span><span class="cc-green">${c.coreHP}</span><span class="cc-dim">&thinsp;/&thinsp;A&thinsp;</span><span class="cc-green">${c.armHP}</span><span class="cc-dim">&thinsp;/&thinsp;L&thinsp;</span><span class="cc-green">${c.legHP}</span></span></div>`;
+        html += `<div class="cc-stat-row"><span class="cc-stat-lbl">HP SPLIT</span><span class="cc-hp-split-val"><span class="cc-dim">C&thinsp;</span><span class="cc-green">${c.coreHP}</span><span class="cc-dim">&thinsp;/&thinsp;A&thinsp;</span><span class="cc-green">${c.armHP}</span><span class="cc-dim">&thinsp;/&thinsp;L&thinsp;</span><span class="cc-green">${c.legHP}</span></span></div>`;
         html += `<div class="cc-stat-row"><span class="cc-stat-lbl">SHIELD</span><span class="cc-stat-val cc-cyan">${maxShield}</span></div>`;
-        html += `<div class="cc-stat-row"><span class="cc-stat-lbl">SPEED</span><span class="cc-stat-val">${c.spd}</span></div>`;
 
         // Divider
         html += `<div class="cc-divider"></div>`;
 
-        // STARTER LOADOUT section
-        html += `<div class="cc-sec-label">STARTER LOADOUT</div>`;
+        // LOADOUT section
+        html += `<div class="cc-sec-label">LOADOUT</div>`;
         html += `<div class="cc-stat-row"><span class="cc-stat-lbl">WEAPON</span><span class="cc-stat-val cc-orange">${weaponName}</span></div>`;
         html += `<div class="cc-stat-row"><span class="cc-stat-lbl">SHIELD</span><span class="cc-stat-val cc-orange">${shieldName}</span></div>`;
 
@@ -823,24 +822,25 @@ function _renderChassisSelect(overlay) {
     }
     html += '</div>'; // close cards row
 
-    // Footer
+    // Footer — Start Campaign button centered, Back button at top-left
     const noSel = !_selectedNewChassis;
     html += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:24px;">';
-    html += '<div style="display:flex;gap:12px;align-items:center;">';
     if (_selectedNewChassis) {
-        html += `<button onclick="_startNewCampaignWithChassis('${_selectedNewChassis}')" class="tw-btn tw-btn--solid">START CAMPAIGN</button>`;
+        html += `<button onclick="_startNewCampaignWithChassis('${_selectedNewChassis}')" class="tw-btn tw-btn--solid" style="min-width:220px;padding:12px 40px;white-space:nowrap;">START CAMPAIGN</button>`;
     } else {
-        html += `<button class="tw-btn tw-btn--solid" style="opacity:0.4;pointer-events:none;" disabled>START CAMPAIGN</button>`;
+        html += `<button class="tw-btn tw-btn--solid" style="min-width:220px;padding:12px 40px;white-space:nowrap;opacity:0.4;pointer-events:none;" disabled>START CAMPAIGN</button>`;
     }
-    html += `<button onclick="_cancelNewCampaign()" class="tw-btn tw-btn--ghost tw-btn--sm">‹ Back</button>`;
-    html += '</div>';
     if (noSel) {
         html += `<div style="font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:var(--sci-red);">Select a chassis to continue</div>`;
     }
     html += '</div>';
 
+    // Back button — top-left of overlay
+    html += `<button onclick="_cancelNewCampaign()" class="tw-btn tw-btn--ghost tw-btn--sm" style="position:absolute;top:20px;left:20px;">‹ Back</button>`;
+
     overlay.innerHTML = html;
     overlay.style.display = 'flex';
+    overlay.style.position = 'fixed';
 }
 
 /** Highlight a chassis without starting the campaign. */
