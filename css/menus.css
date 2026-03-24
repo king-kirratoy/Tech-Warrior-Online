@@ -1560,3 +1560,173 @@
   gap: 8px;
   padding: 10px 20px;
 }
+
+/* ============================================================
+   WARZONE PERKS OVERLAY
+   ============================================================ */
+
+#wz-perks-overlay {
+  align-items: stretch;
+  background: rgba(0,0,0,0.92);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 9999;
+}
+
+.wz-perks-panel {
+  background: rgba(8,11,14,0.97);
+  border-left: 1px solid var(--sci-cyan-border);
+  border-right: 1px solid var(--sci-cyan-border);
+  display: flex;
+  flex-direction: column;
+  max-width: 860px;
+  width: 100%;
+}
+
+/* --- Top bar --- */
+
+.wz-perks-top-bar {
+  align-items: center;
+  border-bottom: 1px solid var(--sci-line);
+  display: flex;
+  flex-shrink: 0;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+
+.wz-perks-back {
+  background: transparent;
+  border: 1px solid var(--sci-line);
+  border-radius: 3px;
+  color: var(--sci-txt2);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 4px 10px;
+  text-transform: uppercase;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.wz-perks-back:hover {
+  border-color: var(--sci-cyan-border);
+  color: var(--sci-cyan);
+}
+
+.wz-perks-title {
+  color: var(--sci-txt);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+.wz-perks-count {
+  color: var(--sci-txt2);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+/* --- Body --- */
+
+.wz-perks-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* --- Left column — build stats --- */
+
+.wz-perks-left {
+  border-right: 1px solid var(--sci-line);
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 14px 16px;
+  width: 220px;
+}
+
+.wz-perks-sec-label {
+  color: var(--sci-txt2);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 3px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.wz-perks-stat-row {
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  justify-content: space-between;
+  letter-spacing: 1px;
+  padding: 3px 0;
+}
+
+.wz-perks-stat-lbl {
+  color: var(--sci-txt2);
+  text-transform: uppercase;
+}
+
+.wz-perks-stat-val {
+  color: var(--sci-txt);
+  text-align: right;
+}
+
+.wz-perks-divider {
+  border-top: 1px solid var(--sci-line);
+  margin: 6px 0;
+}
+
+/* --- Right column — perks list --- */
+
+.wz-perks-right {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+
+.wz-perks-empty {
+  color: var(--sci-txt3);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding-top: 4px;
+}
+
+.wz-perks-perk-row {
+  border-bottom: 1px solid var(--sci-line);
+  padding: 8px 0;
+}
+
+.wz-perks-perk-row:last-child {
+  border-bottom: none;
+}
+
+.wz-perks-cat {
+  color: var(--sci-txt3);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 2px;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.wz-perks-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+
+.wz-perks-desc {
+  color: var(--sci-txt2);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1px;
+  line-height: 1.6;
+}

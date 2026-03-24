@@ -560,6 +560,9 @@ function togglePause() {
             // Loadout button only appears in campaign
             const loadoutBtn = document.getElementById('pause-loadout-btn');
             if (loadoutBtn) loadoutBtn.style.display = _gameMode === 'campaign' ? '' : 'none';
+            // Perks button only appears in warzone (simulation)
+            const perksBtn = document.getElementById('pause-perks-btn');
+            if (perksBtn) perksBtn.style.display = _gameMode === 'simulation' ? '' : 'none';
             // Remove focus from in-game elements so no pause button appears pre-selected
             document.activeElement?.blur();
         }
@@ -572,6 +575,105 @@ function togglePause() {
         if (btn) { btn.innerHTML = 'MENU'; btn.blur(); }
         if (po)  po.style.display = 'none';
     }
+}
+
+// ── Warzone Perks Overlay ─────────────────────────────────────────
+function showWarzonePerksOverlay() {
+    // Remove stale instance so data is always fresh
+    const old = document.getElementById('wz-perks-overlay');
+    if (old) old.remove();
+
+    // ── Helpers ──
+    const chassis   = loadout.chassis || 'light';
+    const totalHP   = typeof getTotalHP === 'function' ? getTotalHP(chassis) : 0;
+    const shieldHP  = (typeof player !== 'undefined' && player && player.active && typeof player.maxShield !== 'undefined')
+        ? (player.maxShield || 0) : 0;
+    const wName = k => {
+        if (!k || k === 'none') return 'NONE';
+        return (typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[k] : null)
+            || (typeof WEAPONS !== 'undefined' ? WEAPONS[k]?.name : null)
+            || k.toUpperCase();
+    };
+    const gName = k => {
+        if (!k || k === 'none') return 'NONE';
+        return typeof _hudName === 'function' ? _hudName(k) : k.toUpperCase();
+    };
+    const isNone   = k => !k || k === 'none';
+    const noneClr  = 'color:var(--sci-txt2)';
+    const gearClr  = 'color:#e8923a';
+    const statRow  = (lbl, val, vs = '') =>
+        `<div class="wz-perks-stat-row"><span class="wz-perks-stat-lbl">${lbl}</span>` +
+        `<span class="wz-perks-stat-val"${vs ? ` style="${vs}"` : ''}>${val}</span></div>`;
+    const divRow   = () => '<div class="wz-perks-divider"></div>';
+
+    // ── Left column — BUILD STATS ──
+    let statsHtml = '<div class="wz-perks-sec-label">BUILD STATS</div>';
+    statsHtml += statRow('ROUND',   typeof _round      !== 'undefined' ? _round      : '—');
+    statsHtml += statRow('KILLS',   typeof _totalKills !== 'undefined' ? _totalKills : '—');
+    statsHtml += divRow();
+    statsHtml += statRow('CHASSIS', chassis.toUpperCase(), 'color:#cc88ff');
+    statsHtml += statRow('TOTAL HP', totalHP,
+        'color:#00ff88');
+    statsHtml += statRow('SHIELD',
+        shieldHP > 0 ? shieldHP + ' HP' : 'NONE',
+        shieldHP > 0 ? 'color:var(--sci-cyan)' : noneClr);
+    statsHtml += divRow();
+    statsHtml += statRow('L ARM',    wName(loadout.L),    isNone(loadout.L)    ? noneClr : gearClr);
+    statsHtml += statRow('R ARM',    wName(loadout.R),    isNone(loadout.R)    ? noneClr : gearClr);
+    statsHtml += statRow('CPU',      gName(loadout.mod),  isNone(loadout.mod)  ? noneClr : gearClr);
+    statsHtml += statRow('SHIELD',   gName(loadout.shld), isNone(loadout.shld) ? noneClr : gearClr);
+    statsHtml += statRow('LEGS',     gName(loadout.leg),  isNone(loadout.leg)  ? noneClr : gearClr);
+    statsHtml += statRow('AUGMENT',  gName(loadout.aug),  isNone(loadout.aug)  ? noneClr : gearClr);
+
+    // ── Right column — PERKS ──
+    const picks    = typeof _pickedPerks !== 'undefined' ? _pickedPerks : [];
+    const perkCount = picks.length;
+    let perksHtml  = '';
+
+    if (perkCount === 0) {
+        perksHtml = '<div class="wz-perks-empty">No perks selected yet.</div>';
+    } else {
+        // Group duplicates, preserve first-seen order
+        const seen   = [];
+        const counts = {};
+        picks.forEach(k => {
+            if (!counts[k]) { seen.push(k); counts[k] = 0; }
+            counts[k]++;
+        });
+        seen.forEach(k => {
+            const p = typeof _perks !== 'undefined' ? _perks[k] : null;
+            if (!p) return;
+            const n         = counts[k];
+            const isLegend  = !!p.legendary;
+            const nameClr   = isLegend ? 'var(--sci-gold)' : 'var(--sci-txt)';
+            const stackBadge = n > 1
+                ? `<span style="color:var(--sci-cyan);font-size:9px;margin-left:4px;">×${n}</span>`
+                : '';
+            perksHtml +=
+                `<div class="wz-perks-perk-row">` +
+                `<div class="wz-perks-cat">${(p.cat || '').toUpperCase()}</div>` +
+                `<div class="wz-perks-name" style="color:${nameClr}">${p.label}${stackBadge}</div>` +
+                `<div class="wz-perks-desc">${p.desc}</div>` +
+                `</div>`;
+        });
+    }
+
+    // ── Build overlay DOM ──
+    const ov = document.createElement('div');
+    ov.id = 'wz-perks-overlay';
+    ov.innerHTML =
+        `<div class="wz-perks-panel">` +
+            `<div class="wz-perks-top-bar">` +
+                `<button class="wz-perks-back" onclick="document.getElementById('wz-perks-overlay').remove()">&#8249; Back</button>` +
+                `<div class="wz-perks-title">PERKS</div>` +
+                `<div class="wz-perks-count">${perkCount} selected this run</div>` +
+            `</div>` +
+            `<div class="wz-perks-body">` +
+                `<div class="wz-perks-left">${statsHtml}</div>` +
+                `<div class="wz-perks-right">${perksHtml}</div>` +
+            `</div>` +
+        `</div>`;
+    document.body.appendChild(ov);
 }
 
 function toggleStats() {
