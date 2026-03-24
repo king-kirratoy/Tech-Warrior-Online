@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.09 — Fix shop divider overflow and sell hover comparison
+
+**Date:** 2026-03-24
+
+Fixed vertical divider lines (.shop-cat-sep and .shop-buy-col border-right) running off the bottom of the viewport by removing flex: 1 and height: 100% from .shop-body so it sizes to its grid content instead of stretching to fill the screen; the border-bottom is now visible at the natural content boundary. Fixed sell grid hover cards incorrectly showing a two-column equipped-item comparison by adding a noCompare flag to _shopShowHover, passed from sellSlot, so sell items display a single-card hover only.
+
+---
+
 ## v6.08 — Supply shop layout adjustments
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Fixed supply shop weapon slot label from `L ARM / R ARM` to `WEAPON`. Replaced t
 **Date:** 2026-03-23
 
 Fixed all UI render sites to look up `WEAPON_NAMES[item.subType]` at render time instead of relying on the stored `item.name`/`item.shortName`, which may have been generated before the canonical name fix. Updated: equipped doll slot cards, backpack slot cards, single item hover card, comparison hover card (both columns), and all three campaign supply shop item name locations (`_itemStatCard`, buy row, sell row).
-
----
-
-## v5.99 — Canonical WEAPON_NAMES map; fix multiplayer weapon name display
-
-**Date:** 2026-03-23
-
-Added `WEAPON_NAMES` constant to `constants.js` as the single canonical source for all 13 weapon display names plus `none`. Fixed `multiplayer.js` `weaponName()` which was returning abbreviated `SLOT_DESCS` titles (e.g. "SMG — SUBMACHINE GUN") — it now uses `WEAPON_NAMES`. Updated the multiplayer lobby summary, weapon bar (`menus.js`), hangar stats panel (`garage.js`), and loot item generation (`loot-system.js`) to all use `WEAPON_NAMES[key]` with fallback to `WEAPONS[key].name`.
 
 ---

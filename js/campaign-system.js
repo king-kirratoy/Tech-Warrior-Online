@@ -1565,7 +1565,7 @@ function showShop() {
         const sellPrice = getItemSellPrice(item);
         return `<div class="lo-slot" style="border-color:${borderColor};" data-sell-idx="${idx}"
             onclick="_shopSelectSell(${idx})"
-            onmouseenter="_shopShowHover(this,_inventory[${idx}],'left')"
+            onmouseenter="_shopShowHover(this,_inventory[${idx}],'left',true)"
             onmouseleave="_shopHideHover()"
             onmousedown="_shopHideHover()">
             ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
@@ -1816,7 +1816,7 @@ function _shopGetHoverCard() {
     return card;
 }
 
-function _shopShowHover(el, item, preferSide) {
+function _shopShowHover(el, item, preferSide, noCompare) {
     if (typeof _buildHoverHtml !== 'function') return;
     if (!el || !item) return;
     const card = _shopGetHoverCard();
@@ -1829,22 +1829,24 @@ function _shopShowHover(el, item, preferSide) {
     };
     const slotLabel = _shopHoverSlotNames[item.baseType] || item.baseType || '';
 
-    // Find equipped item for comparison
+    // Find equipped item for comparison (skip for sell slots)
     let compareItem = null;
-    const _slotMap = {
-        weapon:'L', armor:'chest', arms:'arms', legs:'legs',
-        shield:'shield', mod:'mod', augment:'augment',
-        shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment'
-    };
-    if (item.baseType === 'weapon') {
-        if (typeof _equipped !== 'undefined') {
-            if (_equipped['L']) compareItem = _equipped['L'];
-            else if (_equipped['R']) compareItem = _equipped['R'];
-        }
-    } else {
-        const eqKey = _slotMap[item.baseType];
-        if (eqKey && typeof _equipped !== 'undefined' && _equipped[eqKey]) {
-            compareItem = _equipped[eqKey];
+    if (!noCompare) {
+        const _slotMap = {
+            weapon:'L', armor:'chest', arms:'arms', legs:'legs',
+            shield:'shield', mod:'mod', augment:'augment',
+            shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment'
+        };
+        if (item.baseType === 'weapon') {
+            if (typeof _equipped !== 'undefined') {
+                if (_equipped['L']) compareItem = _equipped['L'];
+                else if (_equipped['R']) compareItem = _equipped['R'];
+            }
+        } else {
+            const eqKey = _slotMap[item.baseType];
+            if (eqKey && typeof _equipped !== 'undefined' && _equipped[eqKey]) {
+                compareItem = _equipped[eqKey];
+            }
         }
     }
 
