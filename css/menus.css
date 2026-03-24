@@ -1250,6 +1250,8 @@
   color: #fff;
 }
 
+#lo-col-sel { font-size: var(--text-md); }
+
 .mp-right {
   background: #080b0e;
   display: flex;
