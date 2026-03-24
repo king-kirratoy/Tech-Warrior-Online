@@ -852,17 +852,35 @@ function populateInventory() {
         const ch = loadout?.chassis || 'medium';
         const mechColor = typeof loadout !== 'undefined' ? loadout.color : 0x00ff88;
 
-        // Slot positions: 4 left / 4 right, evenly spaced vertically
-        // Left (top→bottom): CPU, ARMS, L ARM, SHIELD  |  Right: AUGMENT, ARMOR, R ARM, LEGS
-        const slotPositions = {
-            mod:     { top: '5%',  left: '2%',  label: 'CPU' },
-            arms:    { top: '28%', left: '2%',  label: 'ARMS' },
-            L:       { top: '51%', left: '2%',  label: 'L ARM' },
-            shield:  { top: '74%', left: '2%',  label: 'SHIELD' },
-            augment: { top: '5%',  right: '2%', label: 'AUGMENT' },
-            chest:   { top: '28%', right: '2%', label: 'ARMOR' },
-            R:       { top: '51%', right: '2%', label: 'R ARM' },
-            legs:    { top: '74%', right: '2%', label: 'LEGS' },
+        // Slot config: left column (top→bottom): CPU, ARMS, L ARM, SHIELD
+        //              right column (top→bottom): AUGMENT, ARMOR, R ARM, LEGS
+        const _leftSlots  = [
+            { key: 'mod',     label: 'CPU' },
+            { key: 'arms',    label: 'ARMS' },
+            { key: 'L',       label: 'L ARM' },
+            { key: 'shield',  label: 'SHIELD' },
+        ];
+        const _rightSlots = [
+            { key: 'augment', label: 'AUGMENT' },
+            { key: 'chest',   label: 'ARMOR' },
+            { key: 'R',       label: 'R ARM' },
+            { key: 'legs',    label: 'LEGS' },
+        ];
+
+        const _mkSlot = ({ key, label }) => {
+            const item = _equipped[key];
+            const rd = item ? RARITY_DEFS[item.rarity] : null;
+            const nameColor = rd ? rd.colorStr : UI_COLORS.text35;
+            const _dn = item ? ((item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.shortName || item.name) : '';
+            const itemName = item ? (item.isUnique ? '★ ' + _dn : _dn) : '';
+            const borderColor = rd ? rd.colorStr + '55' : UI_COLORS.gold20;
+            return `<div class="mech-equip-slot lo-slot" style="border-color:${borderColor};"
+                data-slot="${key}" ${item ? 'draggable="true"' : ''}
+                ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
+                onmousedown="_hideSlotHover()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
+                <div class="lo-slot-lbl">${label}</div>
+                ${itemName ? `<div class="lo-slot-name" style="color:${nameColor};">${itemName}</div>` : ''}
+            </div>`;
         };
 
         let html = '';
@@ -874,36 +892,27 @@ function populateInventory() {
         html += `<img src="${mechImgSrc}" style="width:220px;object-fit:contain;filter:grayscale(100%);" />`;
         html += `</div>`;
 
-        // SVG connector lines from each slot toward mech center
+        // SVG connector lines — y coords match vertically-centered 4-slot stack
+        // (doll 440px, stack 412px → top=14px; slot centers at 64,168,272,376px → 14.5,38.2,61.8,85.5%)
         html += `<svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">`;
         const _svgLines = [
-            [8,10,50,50],[8,33,50,50],[8,56,50,50],[8,79,50,50],
-            [92,10,50,50],[92,33,50,50],[92,56,50,50],[92,79,50,50],
+            [13,14.5,50,50],[13,38.2,50,50],[13,61.8,50,50],[13,85.5,50,50],
+            [87,14.5,50,50],[87,38.2,50,50],[87,61.8,50,50],[87,85.5,50,50],
         ];
         _svgLines.forEach(([x1,y1,x2,y2]) => {
             html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(0,212,255,0.1)" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"/>`;
         });
         html += `</svg>`;
 
-        // Equipment slots positioned over the silhouette
-        Object.entries(slotPositions).forEach(([key, pos]) => {
-            const item = _equipped[key];
-            const rd = item ? RARITY_DEFS[item.rarity] : null;
-            const nameColor = rd ? rd.colorStr : UI_COLORS.text35;
-            const itemName = item ? (item.isUnique ? '★ ' + (item.shortName || item.name) : (item.shortName || item.name)) : '';
-            const borderColor = rd ? rd.colorStr + '55' : UI_COLORS.gold20;
-            let posStyle = `top:${pos.top};position:absolute;`;
-            if (pos.left) posStyle += `left:${pos.left};`;
-            if (pos.right) posStyle += `right:${pos.right};`;
+        // Left flex column
+        html += `<div class="lo-doll-left">`;
+        _leftSlots.forEach(s => { html += _mkSlot(s); });
+        html += `</div>`;
 
-            html += `<div class="mech-equip-slot lo-slot" style="${posStyle}border-color:${borderColor};"
-                data-slot="${key}" ${item ? 'draggable="true"' : ''}
-                ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
-                onmousedown="_hideSlotHover()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
-                <div class="lo-slot-lbl">${pos.label}</div>
-                ${itemName ? `<div class="lo-slot-name" style="color:${nameColor};">${itemName}</div>` : ''}
-            </div>`;
-        });
+        // Right flex column
+        html += `<div class="lo-doll-right">`;
+        _rightSlots.forEach(s => { html += _mkSlot(s); });
+        html += `</div>`;
 
         html += `</div>`; // end relative container
         silEl.innerHTML = html;
@@ -943,7 +952,7 @@ function populateInventory() {
                 cell.innerHTML = `
                     ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
                     <div class="lo-slot-lbl">${_bpSlotLbl}</div>
-                    <div class="lo-slot-name" style="color:${rd.colorStr};">${item.shortName || item.name}</div>
+                    <div class="lo-slot-name" style="color:${rd.colorStr};">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.shortName || item.name}</div>
                 `;
                 cell.style.borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : rd.colorStr + '44';
                 // Apply selected state if this item is currently selected
@@ -1615,7 +1624,8 @@ function _renderWeaponBar() {
                ['Restrictions','Cannot equip JUMP mod or AFTERLEG legs'],
                ['Attrition','Built for sustained punishment — high HP across all parts']];
         let traitHtml = '';
-        _cTraits.forEach(([name, desc]) => {
+        _cTraits.forEach(([name, desc], i) => {
+            if (i > 0) traitHtml += `<div class="lo-wb-divider"></div>`;
             traitHtml += `<div class="lo-trait-inline"><div class="lo-trait-name">${name}</div><div class="lo-trait-desc">${desc}</div></div>`;
         });
         traitsEl.innerHTML = traitHtml;
@@ -1634,7 +1644,7 @@ function _renderWeaponBar() {
         if (!w) return null;
         let h = `<div class="lo-wb-item">`;
         h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:2px;">${label}</div>`;
-        h += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${w.name}</div>`;
+        h += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${WEAPON_NAMES[key] || w.name}</div>`;
         if (w.dmg) {
             const effDmg = Math.round((w.dmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100));
             const effRld = Math.round((w.reload||0) * (_perkState.reloadMult||1) * (1 - _gRldPct/100));
@@ -1672,20 +1682,23 @@ function _buildSingleCardHtml(item, slotLabel) {
     const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
     let html = '';
     if (slotLabel) html += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${slotLabel}</div>`;
-    html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${item.name}</div>`;
+    html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name}</div>`;
     html += `<div style="font-size:8px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||item.rarity}${item.iLvl ? ' · iLvl '+item.iLvl : ''}</div>`;
-    if (item.baseStats) {
+    const hasStats = item.baseStats && Object.values(item.baseStats).some(v => v);
+    const hasAffixes = item.affixes && item.affixes.length > 0;
+    if (hasStats) {
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (!v) return;
-            let valColor = 'var(--sci-txt)';
+            let valColor = 'var(--sci-cyan)';
             if (_hoverInvertedStats.has(k)) {
-                valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-txt)');
+                valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-cyan)');
             }
             const displayVal = (_hoverInvertedStats.has(k) && v < 0) ? '+' + Math.abs(v) : v;
             html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${_hoverStatNames[k]||k}</span><span style="color:${valColor};">${displayVal}</span></div>`;
         });
     }
-    if (item.affixes && item.affixes.length) {
+    if (hasStats && hasAffixes) html += '<div class="lo-hover-divider"></div>';
+    if (hasAffixes) {
         item.affixes.forEach(a => {
             const lbl = a.label || '';
             const isInvertedAffix = /reload|cooldown/i.test(lbl);
@@ -1707,19 +1720,59 @@ function _buildSingleCardHtml(item, slotLabel) {
     return html;
 }
 
-function _buildHoverHtml(item, slotLabel, compareItem) {
+function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
     if (!compareItem) return _buildSingleCardHtml(item, slotLabel);
-    // Two-column comparison layout
-    let html = '<div class="lo-hover-cmp-wrap">';
-    html += '<div class="lo-hover-cmp-cards">';
-    html += '<div class="lo-hover-cmp-col"><div class="lo-hover-cmp-label">Backpack</div>';
-    html += `<div class="lo-hover-cmp-card">${_buildSingleCardHtml(item, slotLabel)}</div>`;
+
+    // Builds one column's content (source label + slot label + name + stats + affixes + unique)
+    const _mkCol = (colItem, sourceLbl, colSlotLabel) => {
+        const rd = RARITY_DEFS[colItem.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
+        let h = `<div class="lo-hover-source-lbl">${sourceLbl}</div>`;
+        if (colSlotLabel) h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${colSlotLabel}</div>`;
+        h += `<div style="font-size:13px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${(colItem.baseType === 'weapon' ? WEAPON_NAMES[colItem.subType] : null) || colItem.name}</div>`;
+        h += `<div style="font-size:9px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||colItem.rarity}${colItem.iLvl ? ' · iLvl '+colItem.iLvl : ''}</div>`;
+        const hasStats = colItem.baseStats && Object.values(colItem.baseStats).some(v => v);
+        const hasAffixes = colItem.affixes && colItem.affixes.length > 0;
+        if (hasStats) {
+            Object.entries(colItem.baseStats).forEach(([k, v]) => {
+                if (!v) return;
+                let valColor = 'var(--sci-cyan)';
+                if (_hoverInvertedStats.has(k)) {
+                    valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-cyan)');
+                }
+                const displayVal = (_hoverInvertedStats.has(k) && v < 0) ? '+' + Math.abs(v) : v;
+                h += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${_hoverStatNames[k]||k}</span><span style="color:${valColor};">${displayVal}</span></div>`;
+            });
+        }
+        if (hasStats && hasAffixes) h += '<div class="lo-hover-divider"></div>';
+        if (hasAffixes) {
+            colItem.affixes.forEach(a => {
+                const lbl = a.label || '';
+                const isInvertedAffix = /reload|cooldown/i.test(lbl);
+                const color = isInvertedAffix && lbl.startsWith('-') ? '#00ff88' : '#44ff88';
+                const fixedLbl = (isInvertedAffix && lbl.startsWith('-')) ? '+' + lbl.slice(1) : lbl;
+                h += `<div style="font-size:9px;color:${color};margin-top:2px;">&#9679; ${fixedLbl}</div>`;
+            });
+        }
+        if (colItem.isUnique && colItem.uniqueLabel) {
+            const parts = colItem.uniqueLabel.split(': ');
+            const uName = parts[0] || '';
+            const uDesc = parts.slice(1).join(': ') || '';
+            h += `<div class="lo-hover-unique">`;
+            h += `<div class="lo-hover-unique-hdr">★ UNIQUE EFFECT</div>`;
+            h += `<div class="lo-hover-unique-name">${uName}</div>`;
+            if (uDesc) h += `<div class="lo-hover-unique-desc">${uDesc}</div>`;
+            h += `</div>`;
+        }
+        h += `<div class="cmp-spacer"></div>`;
+        return h;
+    };
+
+    let html = '<div class="lo-hover-cmp-card">';
+    html += '<div class="lo-hover-cmp-cols">';
+    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left">${_mkCol(item, leftLabel || 'BACKPACK', slotLabel)}</div>`;
+    html += `<div class="lo-hover-cmp-col">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
     html += '</div>';
-    const eqSlotLabel = slotLabel || '';
-    html += '<div class="lo-hover-cmp-col"><div class="lo-hover-cmp-label">Equipped</div>';
-    html += `<div class="lo-hover-cmp-card">${_buildSingleCardHtml(compareItem, eqSlotLabel)}</div>`;
-    html += '</div>';
-    html += '</div>';
+
     // Diff section
     const allKeys = new Set([...Object.keys(item.baseStats||{}), ...Object.keys(compareItem.baseStats||{})]);
     let diffHtml = '';
@@ -1735,7 +1788,7 @@ function _buildHoverHtml(item, slotLabel, compareItem) {
         diffHtml += `<div class="lo-hover-diff-row"><span class="lo-hover-diff-lbl">${_hoverStatNames[k]||k}</span><span style="color:${color};">${diffDisplay}</span></div>`;
     });
     if (diffHtml) {
-        html += '<div class="lo-hover-diff">';
+        html += '<div class="lo-hover-cmp-diff">';
         html += '<div class="lo-hover-diff-hdr">Changes if equipped</div>';
         html += diffHtml;
         html += '</div>';

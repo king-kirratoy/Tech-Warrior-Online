@@ -673,11 +673,19 @@
 
 /* --- Center column (flex fill) --- */
 .lo-center {
-  border-right: 1px solid var(--sci-line);
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+}
+
+/* --- Center frame: borders stop at bottom of weapon bar --- */
+.lo-center-frame {
+  border-right: 1px solid var(--sci-line);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 100%;
 }
 
 /* --- Right column (280px, backpack only) --- */
@@ -891,8 +899,9 @@
 
 /* --- Right column: equipment doll --- */
 .lo-doll-wrap {
-  flex: 1;
-  min-height: 480px;
+  flex-grow: 0;
+  flex-shrink: 0;
+  height: 440px;
   overflow: hidden;
   position: relative;
 }
@@ -949,13 +958,17 @@
 .lo-hover-unique-desc { color: rgba(255,255,255,0.55); font-family: 'Courier New', monospace; font-size: 9px; line-height: 1.4;
 }
 
-/* --- Comparison hover card --- */
-.lo-hover-cmp-wrap { display: flex; flex-direction: column; }
-.lo-hover-cmp-cards { display: flex; gap: 4px; align-items: flex-start; }
-.lo-hover-cmp-col { display: flex; flex-direction: column; width: 200px; }
-.lo-hover-cmp-label { color: rgba(255,255,255,0.30); font-family: 'Courier New', monospace; font-size: 7px; letter-spacing: 2px; margin-bottom: 4px; padding-left: 2px; text-transform: uppercase; }
-.lo-hover-cmp-card { background: #0d1316; border: 1px solid rgba(0,212,255,0.35); padding: 10px 12px; }
-.lo-hover-diff { background: #0d1316; border: 1px solid rgba(0,212,255,0.35); border-top: none; padding: 10px 14px; }
+/* --- Stat/affix divider in hover cards --- */
+.lo-hover-divider { background: rgba(255,255,255,0.07); height: 1px; margin: 6px 0; }
+
+/* --- Comparison hover card (unified single card) --- */
+.lo-hover-cmp-card { background: #0d1316; border: 1px solid var(--sci-cyan-border); display: flex; flex-direction: column; font-family: 'Courier New', monospace; }
+.lo-hover-cmp-cols { display: grid; flex: 1; grid-template-columns: 1fr 1fr; }
+.lo-hover-cmp-col { display: flex; flex-direction: column; padding: 10px 12px; }
+.lo-hover-cmp-left { border-right: 1px solid var(--sci-line); }
+.lo-hover-source-lbl { border-bottom: 1px solid var(--sci-line); color: rgba(255,255,255,0.30); font-family: 'Courier New', monospace; font-size: 7px; letter-spacing: 2px; margin-bottom: 6px; padding-bottom: 4px; text-transform: uppercase; }
+.cmp-spacer { flex: 1; }
+.lo-hover-cmp-diff { border-top: 1px solid var(--sci-line); padding: 10px 12px; }
 .lo-hover-diff-hdr { color: rgba(255,255,255,0.30); font-family: 'Courier New', monospace; font-size: 7px; letter-spacing: 2px; margin-bottom: 6px; text-transform: uppercase; }
 .lo-hover-diff-row { display: flex; font-family: 'Courier New', monospace; font-size: 9px; justify-content: space-between; padding: 2px 0; }
 .lo-hover-diff-lbl { color: rgba(255,255,255,0.30); letter-spacing: 0.5px; text-transform: uppercase; }
@@ -977,20 +990,21 @@
 .lo-trait-inline .lo-trait-name {
   color: #ffd166;
   font-family: 'Courier New', monospace;
-  font-size: 9px;
+  font-size: 11px;
   margin-bottom: 2px;
 }
 
 .lo-trait-inline .lo-trait-desc {
   color: rgba(255,255,255,0.45);
   font-family: 'Courier New', monospace;
-  font-size: 8px;
+  font-size: 9px;
   line-height: 1.3;
 }
 
 /* --- Weapon bar (bottom of center column) --- */
 .lo-weapon-bar {
   align-items: stretch;
+  border-bottom: 1px solid var(--sci-line);
   border-top: 1px solid var(--sci-line);
   display: flex;
   flex-shrink: 0;
@@ -1008,6 +1022,7 @@
 .lo-wb-item:last-child { padding-right: 0; }
 
 .lo-wb-divider {
+  align-self: stretch;
   background: var(--sci-line);
   flex-shrink: 0;
   margin: 0 12px 0 0;
@@ -1041,7 +1056,7 @@
 .lo-slot .lo-slot-lbl {
   color: rgba(255,255,255,0.55);
   font-family: 'Courier New', monospace;
-  font-size: 6px;
+  font-size: 8px;
   letter-spacing: 0.5px;
   overflow: hidden;
   text-align: center;
@@ -1053,7 +1068,7 @@
 
 .lo-slot .lo-slot-name {
   font-family: 'Courier New', monospace;
-  font-size: 8px;
+  font-size: 9px;
   margin-top: 1px;
   overflow: hidden;
   text-align: center;
@@ -1078,15 +1093,29 @@
   top: 2px;
 }
 
-/* Doll slots — absolutely positioned, fixed 100×100px */
+/* --- Doll flex columns --- */
+.lo-doll-left,
+.lo-doll-right {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lo-doll-left  { left: 8px; }
+.lo-doll-right { right: 8px; }
+
+/* Doll slots — fixed 100×100px, flow in flex column */
 .lo-doll-wrap .lo-slot {
   background: rgba(8,11,14,0.9);
   border: 1px solid rgba(255,255,255,0.12);
+  flex-shrink: 0;
   height: 100px;
   min-height: 100px;
   min-width: 100px;
   padding: 5px 7px;
-  position: absolute;
   transition: border-color 0.2s;
   width: 100px;
 }

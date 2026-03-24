@@ -1461,7 +1461,7 @@ function showShop() {
         if (cardLabel) {
             h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:4px;text-transform:uppercase;">${cardLabel}</div>`;
         }
-        h += `<div style="font-size:11px;letter-spacing:1px;color:${itemRc};margin-bottom:2px;">${item.name || 'Item'}</div>`;
+        h += `<div style="font-size:11px;letter-spacing:1px;color:${itemRc};margin-bottom:2px;">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name || 'Item'}</div>`;
         h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);margin-bottom:8px;">${meta}</div>`;
         entries.forEach(([k, v]) => {
             h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
@@ -1477,6 +1477,10 @@ function showShop() {
     }
 
     // ── Slot builders ──
+    function _shopItemName(item) {
+        return (item.baseType === 'weapon' && typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[item.subType] : null) || item.shortName || item.name || 'Item';
+    }
+
     function buySlot(item, idx) {
         const rd = (typeof RARITY_DEFS !== 'undefined') ? RARITY_DEFS[item.rarity] : null;
         const color = rd ? rd.colorStr : rc(item);
@@ -1492,7 +1496,7 @@ function showShop() {
             onmousedown="_shopHideHover()">
             ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
             <div class="lo-slot-lbl">${slotLbl(item)}</div>
-            <div class="lo-slot-name" style="color:${color};">${item.shortName || item.name}</div>
+            <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
             ${soldBadge}
             ${priceTag}
         </div>`;
@@ -1510,14 +1514,15 @@ function showShop() {
             onmousedown="_shopHideHover()">
             ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
             <div class="lo-slot-lbl">${slotLbl(item)}</div>
-            <div class="lo-slot-name" style="color:${color};">${item.shortName || item.name}</div>
+            <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
             <div style="font-size:8px;color:#00ff88;margin-top:2px;">⬡ ${sellPrice}</div>
         </div>`;
     }
 
-    // ── Buy detail panel (Fix 2 + Fix 3) ──
+    // ── Buy detail panel — disabled; hover cards replace click-to-view ──
+    _selectedShopIdx = null;
     let detailHtml = '';
-    if (_selectedShopIdx !== null && _selectedShopIdx < _shopStock.length) {
+    if (false) { // detail panel removed — kept as dead code for reference
         const selItem      = _shopStock[_selectedShopIdx];
         const itemRc       = rc(selItem);
         const canBuy       = scrapVal >= selItem._shopPrice && (typeof _inventory === 'undefined' || _inventory.length < invMax);
@@ -1749,8 +1754,9 @@ function _shopShowHover(el, item, preferSide) {
     }
 
     const isCompare = !!compareItem;
-    card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem);
+    card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem, 'SHOP');
     card.style.display = 'block';
+    card.style.zIndex = '10005';
     card.style.width = isCompare ? 'auto' : '200px';
     card.style.padding = isCompare ? '0' : '';
     card.style.border = isCompare ? 'none' : '';
