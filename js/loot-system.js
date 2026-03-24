@@ -759,9 +759,6 @@ function generateItem(round, enemyData) {
     const affixType = _affixTypeMap[baseType] || baseType;
     const affixes = rollAffixes(affixType, subType, rarity);
 
-    // Generate rarity-colored name
-    const fullName = rarity === 'common' ? name : `${rarityDef.label} ${name}`;
-
     // For system items, carry the systemKey so equip logic can activate the GAME system
     const _baseDef = ITEM_BASES[baseKey];
     const systemKey = _baseDef?.systemKey || null;
@@ -771,7 +768,7 @@ function generateItem(round, enemyData) {
         baseType,
         subType,
         baseKey,
-        name: fullName,
+        name,
         shortName: name,
         icon,
         rarity,
