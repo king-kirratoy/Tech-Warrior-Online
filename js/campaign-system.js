@@ -1485,7 +1485,11 @@ function showShop() {
         const soldStyle = isSold ? 'opacity:0.35;pointer-events:none;' : '';
         const soldBadge = isSold ? '<div style="font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.55);margin-top:2px;">SOLD</div>' : '';
         const priceTag = `<div style="font-size:8px;color:var(--sci-gold,#ffd700);margin-top:2px;">⬡ ${item._shopPrice}</div>`;
-        return `<div class="lo-slot" style="border-color:${borderColor};${soldStyle}" data-shop-idx="${idx}" onclick="_shopSelect(${idx})">
+        return `<div class="lo-slot" style="border-color:${borderColor};${soldStyle}" data-shop-idx="${idx}"
+            onclick="_shopSelect(${idx})"
+            onmouseenter="_shopShowHover(this,_shopStock[${idx}],'right')"
+            onmouseleave="_shopHideHover()"
+            onmousedown="_shopHideHover()">
             ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
             <div class="lo-slot-lbl">${slotLbl(item)}</div>
             <div class="lo-slot-name" style="color:${color};">${item.shortName || item.name}</div>
@@ -1499,7 +1503,11 @@ function showShop() {
         const color = rd ? rd.colorStr : rc(item);
         const borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : color + '44';
         const sellPrice = getItemSellPrice(item);
-        return `<div class="lo-slot" style="border-color:${borderColor};" data-sell-idx="${idx}" onclick="_shopSelectSell(${idx})">
+        return `<div class="lo-slot" style="border-color:${borderColor};" data-sell-idx="${idx}"
+            onclick="_shopSelectSell(${idx})"
+            onmouseenter="_shopShowHover(this,_inventory[${idx}],'left')"
+            onmouseleave="_shopHideHover()"
+            onmousedown="_shopHideHover()">
             ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
             <div class="lo-slot-lbl">${slotLbl(item)}</div>
             <div class="lo-slot-name" style="color:${color};">${item.shortName || item.name}</div>
@@ -1707,9 +1715,82 @@ function _shopRestock() {
     showShop();
 }
 
+// ── Shop hover card helpers ──
+function _shopShowHover(el, item, preferSide) {
+    if (typeof _buildHoverHtml !== 'function') return;
+    const card = document.getElementById('eq-hover-card');
+    if (!card || !el || !item) return;
+
+    // Determine slot label
+    const _shopHoverSlotNames = {
+        weapon:'Weapon', armor:'Armor', arms:'Arms', legs:'Legs',
+        shield:'Shield', mod:'CPU', augment:'Augment',
+        shield_system:'Shield', mod_system:'CPU', leg_system:'Legs', aug_system:'Augment'
+    };
+    const slotLabel = _shopHoverSlotNames[item.baseType] || item.baseType || '';
+
+    // Find equipped item for comparison
+    let compareItem = null;
+    const _slotMap = {
+        weapon:'L', armor:'chest', arms:'arms', legs:'legs',
+        shield:'shield', mod:'mod', augment:'augment',
+        shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment'
+    };
+    if (item.baseType === 'weapon') {
+        if (typeof _equipped !== 'undefined') {
+            if (_equipped['L']) compareItem = _equipped['L'];
+            else if (_equipped['R']) compareItem = _equipped['R'];
+        }
+    } else {
+        const eqKey = _slotMap[item.baseType];
+        if (eqKey && typeof _equipped !== 'undefined' && _equipped[eqKey]) {
+            compareItem = _equipped[eqKey];
+        }
+    }
+
+    const isCompare = !!compareItem;
+    card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem);
+    card.style.display = 'block';
+    card.style.width = isCompare ? 'auto' : '200px';
+    card.style.padding = isCompare ? '0' : '';
+    card.style.border = isCompare ? 'none' : '';
+
+    // Position offscreen to measure
+    card.style.position = 'fixed';
+    card.style.left = '-9999px';
+    card.style.top = '0';
+    const cardW = card.offsetWidth;
+    const cardH = card.offsetHeight;
+
+    const er = el.getBoundingClientRect();
+    const margin = 8;
+    let left;
+    if (preferSide === 'left') {
+        left = er.left - cardW - margin;
+        if (left < 4) left = er.right + margin;
+    } else {
+        left = er.right + margin;
+        if (left + cardW > window.innerWidth) left = er.left - cardW - margin;
+    }
+    if (left < 4) left = 4;
+    if (left + cardW > window.innerWidth) left = window.innerWidth - cardW - 4;
+
+    let top = er.top;
+    if (top + cardH > window.innerHeight - 8) top = er.bottom - cardH;
+    if (top < 4) top = 4;
+
+    card.style.left = left + 'px';
+    card.style.top = top + 'px';
+}
+
+function _shopHideHover() {
+    if (typeof _hideSlotHover === 'function') _hideSlotHover();
+}
+
 function _closeShop() {
     _selectedShopIdx = null;
     _selectedSellIdx = null;
+    _shopHideHover();
     const overlay = document.getElementById('shop-overlay');
     if (overlay) overlay.style.display = 'none';
     // Return to mission select
