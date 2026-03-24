@@ -320,9 +320,22 @@ function refreshGarage() {
         const name = (slotType === 'weapon') ? weaponName(key) : _wzGetSlotLabel(
             slotType === 'cpu' ? 'M' : slotType === 'augment' ? 'A' : slotType === 'legs' ? 'G' : 'S'
         );
-        const details = _buildSlotDetails(slotType, key).map(d => d.val);
-        const val = details.length ? name + ' · ' + details.join(' · ') : name;
-        statsHtml += statRow(label, val, 'dim');
+        if (!key || key === 'none' || name === 'NONE') {
+            statsHtml += statRow(label, '<span style="color:var(--sci-txt2)">NONE</span>', '');
+            return;
+        }
+        const details = _buildSlotDetails(slotType, key);
+        const sep = '<span style="color:var(--sci-txt2)"> · </span>';
+        const nameSpan = `<span style="color:var(--sci-cyan)">${name}</span>`;
+        if (!details.length) {
+            statsHtml += statRow(label, nameSpan, '');
+            return;
+        }
+        const detailSpans = details.map(d => {
+            const isDesc = d.lbl.trim() === 'INFO';
+            return `<span style="color:${isDesc ? 'var(--sci-txt2)' : 'var(--sci-txt)'}">${d.val}</span>`;
+        });
+        statsHtml += statRow(label, nameSpan + sep + detailSpans.join(sep), '');
     }
     slotBlock('CPU', 'cpu', loadout.mod);
     slotBlock('AUGMENT', 'augment', loadout.aug);
