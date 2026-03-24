@@ -1816,9 +1816,28 @@ function _shopGetHoverCard() {
     return card;
 }
 
+var _shopHoverActiveEl = null;
+var _shopHoverActiveItem = null;
+var _shopHoverActiveSide = null;
+var _shopHoverActiveNoCompare = false;
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Shift' && _shopHoverActiveEl && _shopHoverActiveItem && _shopHoverActiveItem.baseType === 'weapon' && !_shopHoverActiveNoCompare) {
+        _shopShowHover(_shopHoverActiveEl, _shopHoverActiveItem, _shopHoverActiveSide, _shopHoverActiveNoCompare);
+    }
+});
+document.addEventListener('keyup', (e) => {
+    if (e.key === 'Shift' && _shopHoverActiveEl && _shopHoverActiveItem && _shopHoverActiveItem.baseType === 'weapon' && !_shopHoverActiveNoCompare) {
+        _shopShowHover(_shopHoverActiveEl, _shopHoverActiveItem, _shopHoverActiveSide, _shopHoverActiveNoCompare);
+    }
+});
+
 function _shopShowHover(el, item, preferSide, noCompare) {
     if (typeof _buildHoverHtml !== 'function') return;
     if (!el || !item) return;
+    _shopHoverActiveEl = el;
+    _shopHoverActiveItem = item;
+    _shopHoverActiveSide = preferSide;
+    _shopHoverActiveNoCompare = !!noCompare;
     const card = _shopGetHoverCard();
 
     // Determine slot label
@@ -1887,6 +1906,10 @@ function _shopShowHover(el, item, preferSide, noCompare) {
 }
 
 function _shopHideHover() {
+    _shopHoverActiveEl = null;
+    _shopHoverActiveItem = null;
+    _shopHoverActiveSide = null;
+    _shopHoverActiveNoCompare = false;
     const card = document.getElementById('shop-hover-card');
     if (card) {
         card.style.display = 'none';

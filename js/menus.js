@@ -1033,8 +1033,25 @@ var _compareArm = 'L';
 
 /** Track Shift key state for weapon arm comparison in hover cards. */
 var _shiftHeld = false;
-document.addEventListener('keydown', (e) => { if (e.key === 'Shift') _shiftHeld = true; });
-document.addEventListener('keyup',   (e) => { if (e.key === 'Shift') _shiftHeld = false; });
+var _hoverActiveEl = null;
+var _hoverActiveSlotKey = null;
+var _hoverActiveItem = null;
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Shift' && !_shiftHeld) {
+        _shiftHeld = true;
+        if (_hoverActiveEl && _hoverActiveItem && _hoverActiveItem.baseType === 'weapon') {
+            _showSlotHover(_hoverActiveEl, _hoverActiveSlotKey, _hoverActiveItem);
+        }
+    }
+});
+document.addEventListener('keyup', (e) => {
+    if (e.key === 'Shift' && _shiftHeld) {
+        _shiftHeld = false;
+        if (_hoverActiveEl && _hoverActiveItem && _hoverActiveItem.baseType === 'weapon') {
+            _showSlotHover(_hoverActiveEl, _hoverActiveSlotKey, _hoverActiveItem);
+        }
+    }
+});
 
 /** Switch which arm is used for weapon comparison and re-render the detail panel. */
 function _setCompareArm(arm) {
@@ -1817,6 +1834,9 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
 function _showSlotHover(el, slotKey, itemOverride) {
     const card = document.getElementById('eq-hover-card');
     if (!card) return;
+    _hoverActiveEl = el;
+    _hoverActiveSlotKey = slotKey;
+    _hoverActiveItem = itemOverride || (_equipped && _equipped[slotKey]) || null;
     const _slotNames = { L:'Weapon', R:'Weapon', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', mod:'CPU Mod', augment:'Augment' };
 
     let item, slotLabel, compareItem;
@@ -1902,6 +1922,9 @@ function _showSlotHover(el, slotKey, itemOverride) {
 }
 
 function _hideSlotHover() {
+    _hoverActiveEl = null;
+    _hoverActiveSlotKey = null;
+    _hoverActiveItem = null;
     const card = document.getElementById('eq-hover-card');
     if (card) {
         card.style.display = 'none';

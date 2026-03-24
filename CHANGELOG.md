@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.11 — Fix shift-arm hover card comparison not updating live
+
+**Date:** 2026-03-24
+
+Fixed Shift-key weapon arm switching in hover cards not working because the hover card was built once on mouseenter and never rebuilt when Shift state changed. Both `_showSlotHover` (loadout) and `_shopShowHover` (shop) now track the currently hovered element/item and re-invoke themselves on Shift keydown/keyup, so pressing or releasing Shift while hovering a weapon item immediately rebuilds the comparison card against the other arm.
+
+---
+
 ## v6.10 — Doll slot star fix, double-click equip, shift-arm hover comparison
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Replaced the row-based buy and sell lists in the campaign supply shop with fixed
 **Date:** 2026-03-23
 
 Shop hover card was rendered behind `#shop-overlay` (z-index 9999 < 10004), making it appear transparent; fixed by setting `card.style.zIndex = '10005'` in `_shopShowHover`.
-
----
-
-## v6.01 — Supply shop hover cards; fix weapon slot label; inline buy button
-
-**Date:** 2026-03-23
-
-Fixed supply shop weapon slot label from `L ARM / R ARM` to `WEAPON`. Replaced the click-to-view detail panel for buy items with the same hover card system used in the loadout screen: `mouseenter` on any buy or sell row now shows a `_buildHoverHtml`-powered card (single card for sell items; comparison card showing `SHOP` vs `EQUIPPED` for buy items with an equipped counterpart). Added optional `leftLabel` param to `_buildHoverHtml` (default `'BACKPACK'`) so the shop comparison card shows `SHOP` instead. Moved the buy button inline into each buy row so purchasing works without the now-disabled click detail panel; sell confirmation panel (`_shopSelectSell`) is unchanged.
 
 ---
