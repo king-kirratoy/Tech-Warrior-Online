@@ -5,6 +5,22 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.05 — Shop three-column category buy grid
+
+**Date:** 2026-03-24
+
+Replaced the single 6×5 buy grid with three side-by-side category grids (Offensive / Defensive / Utility), each 3×5. Items are categorized by `baseType` via new `_shopGetCategory()`. Reduced `SHOP_MAX_ITEMS` from 30 to 12 — items distribute randomly across categories. Sold-back items appear immediately in the correct category grid with no special visual treatment. Added `_shopRenderCategory()` for targeted re-renders on sell.
+
+---
+
+## v6.04 — Fix shop hover cards not showing
+
+**Date:** 2026-03-24
+
+Fixed supply shop hover cards being invisible because `#eq-hover-card` was nested inside `#stats-overlay` (hidden when shop is open); created a dedicated `#shop-hover-card` lazily appended to `document.body` so it renders above all overlays.
+
+---
+
 ## v6.03 — Rebuild supply shop with slot grids
 
 **Date:** 2026-03-24
