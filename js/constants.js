@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.32';
+const GAME_VERSION = 'v6.33';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -669,7 +669,7 @@ const SLOT_DESCS = {
 // Colour options — head gets the selected colour, torso/body gets darkenColor(colour, 0.4)
 const COLOR_OPTIONS = [
     { key:'00ff00', hex:0x00ff00, label:'GREEN',         hex6:'#00ff00' },
-    { key:'00ccff', hex:0x00ccff, label:'ELECTRIC BLUE', hex6:'#00ccff' },
+    { key:'00ccff', hex:0x00ccff, label:'BLUE',          hex6:'#00ccff' },
     { key:'ff3300', hex:0xff3300, label:'RED',           hex6:'#ff3300' },
     { key:'ffff00', hex:0xffff00, label:'YELLOW',        hex6:'#ffff00' },
     { key:'ff8800', hex:0xff8800, label:'ORANGE',        hex6:'#ff8800' },

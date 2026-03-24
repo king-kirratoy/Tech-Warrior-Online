@@ -656,6 +656,9 @@
   position: relative;
 }
 
+/* --- Loadout top-bar color picker — border matches .lo-slot --- */
+#lo-col-sel { border-color: var(--sci-line); }
+
 .lo-body {
   display: grid;
   flex: 1;
