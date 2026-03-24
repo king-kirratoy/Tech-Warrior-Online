@@ -129,6 +129,70 @@ phaser.min.js → constants.js → state.js → utils.js → audio.js → mechs.
 **Key pattern:** `populateLoadout()` is the single render entry point — do not call sub-renderers directly.
 **Shared class:** `.lo-slot` applies to both equipped doll slots AND backpack cells — CSS changes affect both.
 **Hover card flow:** `_showSlotHover(el, slotKey, itemOverride)` → `_buildHoverHtml(item, slotLabel, compareItem)` for single items; `_buildSingleCardHtml(item, slotLabel)` used for each side of a comparison card.
+**Equipment doll slot labels:** 8 slots positioned on the mech silhouette using percentage-based `top`/`left`/`right` absolute positioning. Slot positions defined in a config object inside `populateLoadout()`. Labels: Arm slots use `"L ARM"` and `"R ARM"`. Other slots: `"CPU"`, `"AUGMENT"`, `"SHIELD"`, `"LEGS"`, `"TORSO"`, `"ARMOR"`.
+
+### HUD Element IDs Reference
+
+```
+slot-L/R/M/S         txt-L/R/M/S          wr-fill-L/R/M/S      wr-st-L/R/M/S
+slot-leg-wrap        txt-G
+round-hud            round-num            round-remaining       round-kills
+boss-hud             boss-bar-fill        boss-bar-name
+doll-head            doll-core            doll-lArm             doll-rArm
+doll-lShoulder       doll-rShoulder       doll-lLeg             doll-rLeg
+minimap-canvas       enemy-doll-hud       edoll-label
+stats-overlay        pause-overlay        death-screen          perk-menu
+```
+
+---
+
+## Display Conventions
+
+### Slot Label Naming
+
+| Location | Label used | Notes |
+|---|---|---|
+| Backpack item cards | **"WEAPON"** for weapons | Uses `_bpSlotNames` map in `js/menus.js` |
+| Backpack item cards | "CPU" for mod systems | |
+| Backpack item cards | "AUGMENT" for augments | |
+| Backpack item cards | "DEFENSE" for shields | |
+| Backpack item cards | "LEGS" for leg systems | |
+| Equipped doll slots (arms) | "L ARM" / "R ARM" | Position config in `populateLoadout()` |
+| Weapon bar (center col bottom) | "L ARM" / "R ARM" | `_wbItem()` calls in `populateLoadout()` |
+
+### Rarity Colors
+
+Rarity color strings come from `RARITY_DEFS[rarity].colorStr` in `js/loot-system.js`.
+
+| Rarity | Approximate color |
+|---|---|
+| common | white / grey |
+| uncommon | green |
+| rare | blue |
+| epic | purple |
+| legendary | orange/gold |
+
+### Inverted Stats (Negative Is Better)
+
+| Stat key | Display label | Why |
+|---|---|---|
+| `reloadPct` | Reload Speed % | Negative % = faster reload |
+| `modCdPct` | Mod Cooldown % | Negative % = shorter cooldown |
+| `reload` | Reload (raw ms) | Lower value = faster |
+
+Use the `_hoverInvertedStats` Set in `js/menus.js` to check any stat key.
+
+### Color Meanings (General UI)
+
+| Color | Meaning |
+|---|---|
+| `--sci-cyan` (#00d4ff) | Interactive, active, selected, primary accent |
+| `--sci-red` (#ff4d6a) | Danger, destroyed, negative diff, bad stat |
+| `--sci-gold` (#ffd166) | Legendary, unique, special |
+| Green (`.pos` class) | Positive stat value, improvement |
+| Red (`.neg` class) | Negative stat value, downgrade |
+| `--sci-txt2` (40% white) | Muted labels, secondary info |
+| `--sci-txt3` (18% white) | Decorative only — nav numbers, chapter numbers |
 
 ---
 
