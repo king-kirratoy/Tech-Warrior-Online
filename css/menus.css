@@ -1566,12 +1566,11 @@
    ============================================================ */
 
 #wz-perks-overlay {
-  align-items: stretch;
+  align-items: center;
   background: rgba(0,0,0,0.75);
   display: flex;
   flex-direction: column;
   inset: 0;
-  justify-content: center;
   overflow: hidden;
   position: fixed;
   z-index: 9999;
