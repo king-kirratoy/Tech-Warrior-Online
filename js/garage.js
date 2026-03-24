@@ -12,11 +12,6 @@ function _buildSlotDetails(slotType, key) {
         if (!w) return [];
         const desc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[key]) ? SLOT_DESCS[key].desc : (w.desc || null);
         if (desc) lines.push({ lbl: '  INFO', val: desc, cls: _dim });
-        if (w.dmg) lines.push({ lbl: '  DMG', val: 'DMG: ' + w.dmg, cls: _dim });
-        if (w.dmg && w.reload) {
-            const dps = Math.round(w.dmg / (w.reload / 1000));
-            lines.push({ lbl: '  DPS', val: 'DPS: ' + dps, cls: _dim });
-        }
 
     } else if (slotType === 'shield') {
         const s = typeof SHIELD_SYSTEMS !== 'undefined' ? SHIELD_SYSTEMS[key] : null;
@@ -309,11 +304,15 @@ function refreshGarage() {
     statsHtml += statRow('CHASSIS', (chassis || '').toUpperCase(), 'warn');
     // Chassis perks/traits
     if (chassisTraits.length) {
-        const chCls = chassis === 'light' ? 'green' : 'warn';
+        const chCls = 'warn';
         statsHtml += statRow('CHASSIS PERKS', chassisTraits.join(' · '), chCls);
     }
     // HP
-    statsHtml += statRow('HP SPLIT', 'C ' + (ch.coreHP||0) + ' / A ' + (ch.armHP||0) + ' / L ' + (ch.legHP||0), 'dim');
+    const _hpN = n => `<span style="color:#00ff88">${n}</span>`;
+    const _hpD = s => `<span style="color:rgba(255,255,255,0.55)">${s}</span>`;
+    statsHtml += statRow('HP SPLIT',
+        _hpD('C ') + _hpN(ch.coreHP||0) + _hpD(' / A ') + _hpN(ch.armHP||0) + _hpD(' / L ') + _hpN(ch.legHP||0),
+        '');
     statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
     statsHtml += statRow('TOTAL SHIELD', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
     // Slot details — same order as dropdown list
@@ -328,7 +327,7 @@ function refreshGarage() {
         const details = _buildSlotDetails(slotType, key);
         const sep = '<span style="color:var(--sci-txt2)"> · </span>';
         const displayName = slotType === 'weapon' ? name.toUpperCase() : name;
-        const nameSpan = `<span style="color:var(--sci-cyan)">${displayName}</span>`;
+        const nameSpan = `<span style="color:var(--sci-gold)">${displayName}</span>`;
         if (!details.length) {
             statsHtml += statRow(label, nameSpan, '');
             return;
