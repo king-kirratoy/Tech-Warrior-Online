@@ -21,13 +21,13 @@ Never compare against the display strings — always use the internal key string
 1. Read `OVERVIEW.md` before touching any code
 2. For any session touching `css/` or `js/menus.js`: also read `UI_CONVENTIONS.md`
 3. After making any changes, update `OVERVIEW.md` (current state)
-4. At the end of any session that changes code: increment the version number in `OVERVIEW.md`
-   and update `GAME_VERSION` in `js/constants.js` (which populates `#callsign-version` and
-   `#main-menu-version` in the game UI). No changelog entry needed — the version number is
-   the record.
+4. At the end of any session that changes code, increment `GAME_VERSION` in
+   `js/constants.js`. This is the only place the version number lives. Do not
+   update OVERVIEW.md or any other doc with a version number.
 
 Version numbers use `v1.0, v1.1 … v5.90 …` format. Every session that changes code gets
-a version bump. The version must be visible somewhere in the game UI.
+a version bump. The version is displayed in `#callsign-version` and `#main-menu-version`
+in the game UI, populated at runtime from `GAME_VERSION`.
 
 ---
 
