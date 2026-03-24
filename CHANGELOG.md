@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.04 — Fix shop hover cards not showing
+
+**Date:** 2026-03-24
+
+Fixed supply shop hover cards being invisible because `#eq-hover-card` was nested inside `#stats-overlay` (hidden when shop is open); created a dedicated `#shop-hover-card` lazily appended to `document.body` so it renders above all overlays.
+
+---
+
 ## v6.03 — Rebuild supply shop with slot grids
 
 **Date:** 2026-03-24
