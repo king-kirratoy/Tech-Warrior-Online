@@ -2,7 +2,9 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. **Warzone** is a roguelike run-and-die loop (`_gameMode='simulation'`); **Campaign** is persistent with XP/levels/missions/shop (`_gameMode='campaign'`); **Multiplayer** is real-time PVP via Socket.IO (`_gameMode='pvp'`).
 
-Last updated: March 24, 2026 (v6.14 — warzone hangar mp-dd class system unification)
+**Current version: v5.23** (as displayed in game UI via `GAME_VERSION` in `js/constants.js`)
+
+Last updated: March 24, 2026
 
 ---
 
@@ -191,5 +193,5 @@ See UI_CONVENTIONS.md — Section 3 (Color Meaning) for the full semantic color 
 - **Cloud save lives in loot-system.js** — `saveCampaignProgress()`, `loadCampaignProgress()`, and `_scheduleCloudSave()` are in `js/loot-system.js`, not `js/campaign-system.js`. Campaign-system.js handles localStorage only.
 - **`.lo-slot` is shared** — see UI_CONVENTIONS.md Section 6 for details.
 - **Comparison panel is disabled** — see UI_CONVENTIONS.md Section 6 (Hover Card System).
-- **Version display:** The version number is displayed in `#callsign-version` and `#main-menu-version` elements, populated at runtime. Tracked in CHANGELOG.md.
+- **Version display:** The version number is displayed in `#callsign-version` and `#main-menu-version` elements, populated at runtime.
 - **No cache-busting query strings** — see CLAUDE.md DO NOT list #13.
