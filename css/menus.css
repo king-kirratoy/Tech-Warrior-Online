@@ -1381,6 +1381,63 @@
   width: 100px;
 }
 
+/* --- Shop Category Grids (3-column buy layout) --- */
+
+.shop-buy-cats {
+  display: flex;
+  flex: 1;
+  gap: 0;
+  overflow: hidden;
+}
+
+.shop-cat {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shop-cat-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.shop-cat-title {
+  color: var(--sci-txt3);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.shop-cat-line {
+  background: var(--sci-line);
+  height: 1px;
+  width: 100%;
+}
+
+.shop-cat-grid {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(3, 100px);
+  grid-template-rows: repeat(5, 100px);
+}
+
+.shop-cat-grid .lo-slot {
+  height: 100px;
+  width: 100px;
+}
+
+.shop-cat-sep {
+  align-self: stretch;
+  background: var(--sci-line);
+  flex-shrink: 0;
+  margin: 0 16px;
+  width: 1px;
+}
+
 .shop-sell-grid {
   display: grid;
   gap: 4px;
