@@ -1568,27 +1568,28 @@
    ============================================================ */
 
 #wz-perks-overlay {
-  align-items: stretch;
+  align-items: center;
   background: rgba(0,0,0,0.75);
+  bottom: 0;
   display: flex;
-  flex-direction: column;
-  inset: 0;
-  overflow: hidden;
+  justify-content: center;
+  left: 0;
   position: fixed;
+  right: 0;
+  top: 0;
   z-index: 9999;
 }
 
 .wz-perks-panel {
-  background: rgba(8,11,14,0.97);
-  border-left: 1px solid var(--sci-cyan-border);
-  border-right: 1px solid var(--sci-cyan-border);
+  background: rgba(5,8,12,0.97);
+  border: 1px solid var(--sci-line);
   display: flex;
-  flex: 1;
   flex-direction: column;
-  min-height: 0;
-  max-width: 860px;
+  height: 80vh;
+  max-height: 80vh;
+  max-width: 900px;
   overflow: hidden;
-  width: 100%;
+  width: 90%;
 }
 
 /* --- Top bar --- */
