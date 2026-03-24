@@ -1721,10 +1721,25 @@ function _shopRestock() {
 }
 
 // ── Shop hover card helpers ──
+function _shopGetHoverCard() {
+    let card = document.getElementById('shop-hover-card');
+    if (!card) {
+        card = document.createElement('div');
+        card.id = 'shop-hover-card';
+        card.className = 'lo-hover-card';
+        card.style.display = 'none';
+        card.style.position = 'fixed';
+        card.style.zIndex = '10010';
+        card.style.pointerEvents = 'none';
+        document.body.appendChild(card);
+    }
+    return card;
+}
+
 function _shopShowHover(el, item, preferSide) {
     if (typeof _buildHoverHtml !== 'function') return;
-    const card = document.getElementById('eq-hover-card');
-    if (!card || !el || !item) return;
+    if (!el || !item) return;
+    const card = _shopGetHoverCard();
 
     // Determine slot label
     const _shopHoverSlotNames = {
@@ -1756,13 +1771,11 @@ function _shopShowHover(el, item, preferSide) {
     const isCompare = !!compareItem;
     card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem, 'SHOP');
     card.style.display = 'block';
-    card.style.zIndex = '10005';
     card.style.width = isCompare ? 'auto' : '200px';
     card.style.padding = isCompare ? '0' : '';
     card.style.border = isCompare ? 'none' : '';
 
     // Position offscreen to measure
-    card.style.position = 'fixed';
     card.style.left = '-9999px';
     card.style.top = '0';
     const cardW = card.offsetWidth;
@@ -1790,7 +1803,11 @@ function _shopShowHover(el, item, preferSide) {
 }
 
 function _shopHideHover() {
-    if (typeof _hideSlotHover === 'function') _hideSlotHover();
+    const card = document.getElementById('shop-hover-card');
+    if (card) {
+        card.style.display = 'none';
+        card.innerHTML = '';
+    }
 }
 
 function _closeShop() {
