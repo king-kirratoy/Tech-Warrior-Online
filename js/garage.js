@@ -249,35 +249,34 @@ function refreshGarage() {
     }
     const gap = '<div class="hg-gap"></div>';
 
-    // ── Stats panel HTML ──
+    // ── Stats panel HTML (new order) ──
     let statsHtml = '';
-    statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
+    // Chassis name
+    statsHtml += statRow('CHASSIS', (chassis || '').toUpperCase(), 'warn');
+    // Chassis perks/traits
+    if (chassisTraits.length) {
+        const chCls = chassis === 'light' ? 'green' : 'warn';
+        statsHtml += statRow('CHASSIS PERKS', chassisTraits.join(' · '), chCls);
+    }
+    statsHtml += gap;
+    // HP
     statsHtml += statRow('HP SPLIT', 'C ' + (ch.coreHP||0) + ' / A ' + (ch.armHP||0) + ' / L ' + (ch.legHP||0), 'dim');
+    statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
+    statsHtml += statRow('TOTAL SHIELD', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
     statsHtml += gap;
-    statsHtml += statRow('SPEED', spdStr, 'warn');
-    statsHtml += statRow('SHIELD HP', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
-    statsHtml += gap;
+    // Slot summary — same order as dropdown list
+    statsHtml += statRow('CPU', _wzGetSlotLabel('M'), 'dim');
+    if (modCd) statsHtml += statRow('CPU CD', modCd, 'warn');
+    statsHtml += statRow('AUGMENT', _wzGetSlotLabel('A'), 'dim');
     const lArmName = weaponName(loadout.L);
     const rArmKey2 = is2H ? loadout.L : loadout.R;
     const rArmName = weaponName(rArmKey2);
     const lArmVal  = lEmpty ? '— none' : lArmName + (lRate ? ' — ' + lRate : '');
     const rArmVal  = (!rArmKey2 || rArmKey2 === 'none') ? '— none' : rArmName + (rRate ? ' — ' + rRate : '');
-    const weaponRows = [
-        statRow('L ARM', lArmVal, 'dim'),
-        statRow('R ARM', rArmVal, 'dim'),
-        modCd ? statRow('CORE CD', modCd, 'warn') : '',
-    ].join('');
-    if (weaponRows) { statsHtml += weaponRows; statsHtml += gap; }
-    if (chassisTraits.length) {
-        const chCls = chassis === 'light' ? 'green' : 'warn';
-        statsHtml += statRow('CHASSIS', chassisTraits.join(' · '), chCls);
-    }
-    if (passives.length) statsHtml += statRow('PASSIVES', passives.join(' · '), 'purple');
-    statsHtml += gap;
-    statsHtml += statRow('MOD', _wzGetSlotLabel('M'), 'dim');
-    statsHtml += statRow('SHIELD', _wzGetSlotLabel('S'), 'dim');
+    statsHtml += statRow('L ARM', lArmVal, 'dim');
+    statsHtml += statRow('R ARM', rArmVal, 'dim');
     statsHtml += statRow('LEGS', _wzGetSlotLabel('G'), 'dim');
-    statsHtml += statRow('AUGMENT', _wzGetSlotLabel('A'), 'dim');
+    statsHtml += statRow('SHIELD', _wzGetSlotLabel('S'), 'dim');
 
     // ── Dropdown row builder ──
     function ddRow(slotId, labelText) {
@@ -300,19 +299,42 @@ function refreshGarage() {
     // ── Dual-explosive warning ──
     const bothExplosive = typeof EXPLOSIVE_KEYS !== 'undefined' && EXPLOSIVE_KEYS.has(loadout.L) && EXPLOSIVE_KEYS.has(loadout.R);
 
+    // ── Deploy button validation ──
+    const noWeapons = lEmpty && rEmpty;
+    const deployDisabled = noWeapons ? ' style="opacity:0.45;pointer-events:none;"' : '';
+    const deployWarn = noWeapons ? '<div style="font-size:9px;letter-spacing:1px;color:var(--sci-red);margin-top:4px;">Equip at least one weapon to deploy</div>' : '';
+
     el.innerHTML = `
         <!-- Top bar -->
-        <div class="mp-top" style="position:relative;">
+        <div class="mp-top">
             <button id="hangar-mm-btn" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;" onclick="returnToMainMenu()">‹ Back</button>
             <div class="mp-screen-title">WARZONE</div>
-            <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;" onclick="deployMech()">Deploy Mech ›</button>
+            <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
+                <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;" onclick="deployMech()"${deployDisabled}>Deploy Mech ›</button>
+                ${deployWarn}
+            </div>
         </div>
 
         <!-- Body -->
         <div class="mp-body">
 
-            <!-- Left column: controls + preview -->
+            <!-- Left column: preview + controls -->
             <div class="mp-left">
+
+                <!-- Mech preview -->
+                <div class="mp-preview-zone">
+                    <div class="mp-preview-box">
+                        <div class="sci-corner sci-corner-tl"></div>
+                        <div class="sci-corner sci-corner-tr"></div>
+                        <div class="sci-corner sci-corner-bl"></div>
+                        <div class="sci-corner sci-corner-br"></div>
+                        <img id="preview-img" src="assets/${chassis}-mech.png"
+                            style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
+                    </div>
+                    <div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">
+                        ${chassis} &nbsp;·&nbsp; ${colorOpt.label}
+                    </div>
+                </div>
 
                 <!-- Dropdowns section -->
                 <div class="mp-left-controls">
@@ -337,28 +359,13 @@ function refreshGarage() {
                             <div class="dd-list wz-dd-list" id="wz-ddl-COL"></div>
                         </div>
                     </div>
+                    ${ddRow('M', 'Cpu')}
+                    ${ddRow('A', 'Augment')}
                     ${ddRow('L', 'L.Arm')}
                     ${ddRow('R', 'R.Arm')}
-                    ${ddRow('M', 'Core Mod')}
-                    ${ddRow('S', 'Shield')}
                     ${ddRow('G', 'Legs')}
-                    ${ddRow('A', 'Augment')}
+                    ${ddRow('S', 'Shield')}
                     ${bothExplosive ? '<div style="font-size:9px;letter-spacing:1px;color:var(--sci-gold);margin-top:8px;">⚠ Dual explosive — high self-damage risk</div>' : ''}
-                </div>
-
-                <!-- Mech preview -->
-                <div class="mp-preview-zone">
-                    <div class="mp-preview-box">
-                        <div class="sci-corner sci-corner-tl"></div>
-                        <div class="sci-corner sci-corner-tr"></div>
-                        <div class="sci-corner sci-corner-bl"></div>
-                        <div class="sci-corner sci-corner-br"></div>
-                        <img id="preview-img" src="assets/${chassis}-mech.png"
-                            style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
-                    </div>
-                    <div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">
-                        ${chassis} &nbsp;·&nbsp; ${colorOpt.label}
-                    </div>
                 </div>
 
             </div><!-- /mp-left -->
