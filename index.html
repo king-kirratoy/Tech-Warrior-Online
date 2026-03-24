@@ -131,6 +131,7 @@
               <button id="c-medium" class="mp-chassis-btn" onclick="setChassis('medium')">Medium</button>
               <button id="c-heavy"  class="mp-chassis-btn" onclick="setChassis('heavy')">Heavy</button>
             </div>
+            <div class="mp-sec-label">Loadout</div>
             <div class="mp-dd-row">
               <span class="mp-dd-label">Colour</span>
               <div id="ddw-C" class="dd-wrap" style="flex:1;">
@@ -140,6 +141,66 @@
                   <span class="dd-arrow">▼</span>
                 </div>
                 <div class="dd-list" id="ddl-C"></div>
+              </div>
+            </div>
+            <div class="mp-dd-row">
+              <span class="mp-dd-label">L.Arm</span>
+              <div class="dd-wrap" style="flex:1;">
+                <div class="dd-selected" id="dds-L" onclick="toggleDD('L')">
+                  <span class="dd-name" id="ddn-L">None</span>
+                  <span class="dd-arrow">▼</span>
+                </div>
+                <div class="dd-list" id="ddl-L"></div>
+              </div>
+            </div>
+            <div class="mp-dd-row">
+              <span class="mp-dd-label">R.Arm</span>
+              <div class="dd-wrap" style="flex:1;">
+                <div class="dd-selected" id="dds-R" onclick="toggleDD('R')">
+                  <span class="dd-name" id="ddn-R">None</span>
+                  <span class="dd-arrow">▼</span>
+                </div>
+                <div class="dd-list" id="ddl-R"></div>
+              </div>
+            </div>
+            <div class="mp-dd-row">
+              <span class="mp-dd-label">Core Mod</span>
+              <div class="dd-wrap" style="flex:1;">
+                <div class="dd-selected" id="dds-M" onclick="toggleDD('M')">
+                  <span class="dd-name" id="ddn-M">None</span>
+                  <span class="dd-arrow">▼</span>
+                </div>
+                <div class="dd-list" id="ddl-M"></div>
+              </div>
+            </div>
+            <div class="mp-dd-row">
+              <span class="mp-dd-label">Shield</span>
+              <div class="dd-wrap" style="flex:1;">
+                <div class="dd-selected" id="dds-S" onclick="toggleDD('S')">
+                  <span class="dd-name" id="ddn-S">None</span>
+                  <span class="dd-arrow">▼</span>
+                </div>
+                <div class="dd-list" id="ddl-S"></div>
+              </div>
+            </div>
+            <div class="mp-dd-row">
+              <span class="mp-dd-label">Legs</span>
+              <div class="dd-wrap" style="flex:1;">
+                <div class="dd-selected" id="dds-G" onclick="toggleDD('G')">
+                  <span class="dd-name" id="ddn-G">None</span>
+                  <span class="dd-arrow">▼</span>
+                </div>
+                <div class="dd-list" id="ddl-G"></div>
+              </div>
+            </div>
+            <div class="mp-dd-row">
+              <span class="mp-dd-label">Augment</span>
+              <div class="dd-wrap" style="flex:1;">
+                <div class="dd-selected" id="dds-A" onclick="toggleDD('A')">
+                  <span class="dd-name" id="ddn-A">None</span>
+                  <span class="dd-arrow">▼</span>
+                </div>
+                <div class="dd-list" id="ddl-A"></div>
               </div>
             </div>
             <div id="dual-explosive-warn" style="font-size:9px;letter-spacing:1px;color:var(--sci-gold);display:none;margin-top:8px;">⚠ Dual explosive — high self-damage risk</div>

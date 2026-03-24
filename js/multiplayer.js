@@ -2444,6 +2444,7 @@ function _pvpRenderHangar() {
                         <button class="mp-chassis-btn${chassis === 'heavy'  ? ' active' : ''}" onclick="_pvpSetChassis('heavy')">Heavy</button>
                     </div>
 
+                    <div class="mp-sec-label">Loadout</div>
                     <div class="mp-dd-row">
                         <span class="mp-dd-label">Colour</span>
                         <div class="pvp-dd-wrap" style="position:relative;flex:1;">
@@ -2457,8 +2458,6 @@ function _pvpRenderHangar() {
                             <div class="dd-list pvp-dd-list" id="pvp-ddl-COL"></div>
                         </div>
                     </div>
-
-                    <div class="mp-sec-label">Weapons &amp; Gear</div>
                     ${ddRow('L', 'L.Arm')}
                     ${ddRow('R', 'R.Arm')}
                     ${ddRow('M', 'Core Mod')}

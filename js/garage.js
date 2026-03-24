@@ -163,6 +163,31 @@ function refreshGarage() {
     if (colNameEl)   colNameEl.textContent = colOpt.label;
     if (colSwatchEl) { colSwatchEl.style.background = colOpt.hex6; colSwatchEl.style.boxShadow = `0 0 6px ${colOpt.hex6}55`; }
 
+    // Slot dropdown headers
+    const _slotLabel = (slotId) => {
+        const key = loadout[SLOT_ID_MAP[slotId]];
+        if (!key || key === 'none') return 'None';
+        const desc = SLOT_DESCS[key];
+        if (desc) return desc.title;
+        if (slotId === 'L' || slotId === 'R') return WEAPON_NAMES[key] || WEAPONS[key]?.name || key;
+        if (slotId === 'S') return (SHIELD_SYSTEMS[key]?.name || key);
+        if (slotId === 'G') return (LEG_SYSTEMS[key]?.name || key);
+        if (slotId === 'A') return (AUGMENTS[key]?.name || key);
+        if (slotId === 'M') return (WEAPONS[key]?.name || key);
+        return key;
+    };
+    ['L','R','M','S','G','A'].forEach(id => {
+        const el = document.getElementById('ddn-' + id);
+        if (el) el.textContent = _slotLabel(id);
+    });
+    // Lock R arm row when two-handed weapon is equipped
+    const rRow = document.getElementById('dds-R')?.closest('.mp-dd-row');
+    if (rRow) {
+        const is2H = WEAPONS[loadout.L]?.twoHanded;
+        rRow.style.opacity = is2H ? '0.45' : '';
+        rRow.style.pointerEvents = is2H ? 'none' : '';
+    }
+
     // Preview image
     const previewImg = document.getElementById('preview-img');
     if (previewImg) {
