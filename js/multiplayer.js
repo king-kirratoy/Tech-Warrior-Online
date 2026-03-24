@@ -2293,11 +2293,8 @@ function _pvpRenderHangar() {
     const spd   = Math.round((ch.spd || 210) * (hydro ? 1.20 : 1.0));
     const spdStr = spd + ' u/s' + (hydro ? ' (+20%)' : '');
 
-    const shAbsorb = loadout.shld === 'reactive_shield' ? 65 : 50;
-    const shHp     = shldSys.maxShield || 0;
-    const shStr    = shHp > 0
-        ? shHp + ' HP · ' + shAbsorb + '% absorb · ' + shldSys.regenDelay + 's regen'
-        : '—';
+    const shHp  = shldSys.maxShield || 0;
+    const shStr = shHp + ' HP';
 
     const reloadMult   = oc ? 0.88 : 1.0;
     const braceDmgB    = braceArm ? 1.25 : 1.0;
@@ -2373,9 +2370,23 @@ function _pvpRenderHangar() {
         const name = (slotType === 'weapon') ? weaponName(key) : _pvpGetSlotLabel(
             slotType === 'cpu' ? 'M' : slotType === 'augment' ? 'A' : slotType === 'legs' ? 'G' : 'S'
         );
-        const details = (typeof _buildSlotDetails === 'function') ? _buildSlotDetails(slotType, key).map(d => d.val) : [];
-        const val = details.length ? name + ' · ' + details.join(' · ') : name;
-        statsHtml += statRow(label, val, 'dim');
+        if (!key || key === 'none' || name === 'NONE') {
+            statsHtml += statRow(label, '<span style="color:var(--sci-txt2)">NONE</span>', '');
+            return;
+        }
+        const details = (typeof _buildSlotDetails === 'function') ? _buildSlotDetails(slotType, key) : [];
+        const sep = '<span style="color:var(--sci-txt2)"> · </span>';
+        const displayName = slotType === 'weapon' ? name.toUpperCase() : name;
+        const nameSpan = `<span style="color:var(--sci-cyan)">${displayName}</span>`;
+        if (!details.length) {
+            statsHtml += statRow(label, nameSpan, '');
+            return;
+        }
+        const detailSpans = details.map(d => {
+            const isDesc = d.lbl.trim() === 'INFO';
+            return `<span style="color:${isDesc ? 'var(--sci-txt2)' : 'var(--sci-txt)'}">${d.val}</span>`;
+        });
+        statsHtml += statRow(label, nameSpan + sep + detailSpans.join(sep), '');
     }
     pvpSlotBlock('CPU', 'cpu', loadout.mod);
     pvpSlotBlock('AUGMENT', 'augment', loadout.aug);

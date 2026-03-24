@@ -10,27 +10,19 @@ function _buildSlotDetails(slotType, key) {
     if (slotType === 'weapon') {
         const w = WEAPONS[key];
         if (!w) return [];
+        const desc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[key]) ? SLOT_DESCS[key].desc : (w.desc || null);
+        if (desc) lines.push({ lbl: '  INFO', val: desc, cls: _dim });
+        if (w.dmg) lines.push({ lbl: '  DMG', val: 'DMG: ' + w.dmg, cls: _dim });
         if (w.dmg && w.reload) {
-            const dps = (w.dmg / (w.reload / 1000)).toFixed(1);
-            lines.push({ lbl: '  DPS', val: dps, cls: 'green' });
+            const dps = Math.round(w.dmg / (w.reload / 1000));
+            lines.push({ lbl: '  DPS', val: 'DPS: ' + dps, cls: _dim });
         }
-        if (w.dmg) lines.push({ lbl: '  DMG', val: w.dmg + (w.pellets ? ' ×' + w.pellets : ''), cls: _dim });
-        if (w.reload) lines.push({ lbl: '  RELOAD', val: w.reload + 'ms', cls: _dim });
-        if (w.burst) lines.push({ lbl: '  BURST', val: w.burst + ' rounds', cls: _dim });
-        const flags = [];
-        if (w.explosive) flags.push('EXPLOSIVE');
-        if (w.pierce) flags.push('PIERCE');
-        if (w.flame) flags.push('FLAME');
-        if (w.twoHanded) flags.push('TWO-HANDED');
-        if (w.shieldPierce) flags.push('SHIELD PIERCE');
-        if (flags.length) lines.push({ lbl: '  FLAGS', val: flags.join(' · '), cls: 'warn' });
 
     } else if (slotType === 'shield') {
         const s = typeof SHIELD_SYSTEMS !== 'undefined' ? SHIELD_SYSTEMS[key] : null;
         if (!s) return [];
-        lines.push({ lbl: '  HP', val: s.maxShield + ' · ' + Math.round(s.absorb * 100) + '% absorb', cls: _dim });
-        lines.push({ lbl: '  REGEN', val: s.regenRate + '/s · ' + s.regenDelay + 's delay', cls: _dim });
-        if (s.desc && key !== 'none') lines.push({ lbl: '  INFO', val: s.desc, cls: _dim });
+        const desc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[key]) ? SLOT_DESCS[key].desc : (s.desc || null);
+        if (desc && key !== 'none') lines.push({ lbl: '  INFO', val: desc, cls: _dim });
 
     } else if (slotType === 'augment') {
         const a = typeof AUGMENTS !== 'undefined' ? AUGMENTS[key] : null;
@@ -45,7 +37,6 @@ function _buildSlotDetails(slotType, key) {
     } else if (slotType === 'cpu') {
         const m = WEAPONS[key];
         if (!m) return [];
-        if (m.cooldown) lines.push({ lbl: '  COOLDOWN', val: (m.cooldown / 1000) + 's', cls: _dim });
         const desc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[key]) ? SLOT_DESCS[key].desc : (m.desc || null);
         if (desc) lines.push({ lbl: '  INFO', val: desc, cls: _dim });
     }
@@ -240,11 +231,8 @@ function refreshGarage() {
     const spd   = Math.round((ch.spd || 210) * (hydro ? 1.20 : 1.0));
     const spdStr = spd + ' u/s' + (hydro ? ' (+20%)' : '');
 
-    const shAbsorb = loadout.shld === 'reactive_shield' ? 65 : 50;
-    const shHp     = shldSys.maxShield || 0;
-    const shStr    = shHp > 0
-        ? shHp + ' HP · ' + shAbsorb + '% absorb · ' + shldSys.regenDelay + 's regen'
-        : '—';
+    const shHp  = shldSys.maxShield || 0;
+    const shStr = shHp + ' HP';
 
     const reloadMult   = oc ? 0.88 : 1.0;
     const braceDmgB    = braceArm ? 1.25 : 1.0;
@@ -320,9 +308,23 @@ function refreshGarage() {
         const name = (slotType === 'weapon') ? weaponName(key) : _wzGetSlotLabel(
             slotType === 'cpu' ? 'M' : slotType === 'augment' ? 'A' : slotType === 'legs' ? 'G' : 'S'
         );
-        const details = _buildSlotDetails(slotType, key).map(d => d.val);
-        const val = details.length ? name + ' · ' + details.join(' · ') : name;
-        statsHtml += statRow(label, val, 'dim');
+        if (!key || key === 'none' || name === 'NONE') {
+            statsHtml += statRow(label, '<span style="color:var(--sci-txt2)">NONE</span>', '');
+            return;
+        }
+        const details = _buildSlotDetails(slotType, key);
+        const sep = '<span style="color:var(--sci-txt2)"> · </span>';
+        const displayName = slotType === 'weapon' ? name.toUpperCase() : name;
+        const nameSpan = `<span style="color:var(--sci-cyan)">${displayName}</span>`;
+        if (!details.length) {
+            statsHtml += statRow(label, nameSpan, '');
+            return;
+        }
+        const detailSpans = details.map(d => {
+            const isDesc = d.lbl.trim() === 'INFO';
+            return `<span style="color:${isDesc ? 'var(--sci-txt2)' : 'var(--sci-txt)'}">${d.val}</span>`;
+        });
+        statsHtml += statRow(label, nameSpan + sep + detailSpans.join(sep), '');
     }
     slotBlock('CPU', 'cpu', loadout.mod);
     slotBlock('AUGMENT', 'augment', loadout.aug);

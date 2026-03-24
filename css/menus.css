@@ -1051,6 +1051,7 @@
 
 .mp-screen-title {
   color: var(--sci-txt);
+  font-family: var(--font-mono);
   font-size: 11px;
   left: 50%;
   letter-spacing: 4px;
