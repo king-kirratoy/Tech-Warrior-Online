@@ -46,6 +46,8 @@ function _buildSlotDetails(slotType, key) {
 
 // ═══════════ DROPDOWN SYSTEM ═══════════
 
+let _wzPrevRArm = null; // R arm value saved before entering 2H mode
+
 function _wzCloseAllDD() {
     document.querySelectorAll('#garage-menu .wz-dd-selected').forEach(el => el.classList.remove('dd-open'));
     document.querySelectorAll('#garage-menu .wz-dd-list').forEach(el => el.classList.remove('dd-list-open'));
@@ -96,6 +98,8 @@ function _wzBuildDropdown(slotId) {
 
     const currentKey = loadout[SLOT_ID_MAP[slotId]];
     const is2H = WEAPONS[loadout.L]?.twoHanded;
+    const lHasWeapon = loadout.L && loadout.L !== 'none';
+    const rHasWeapon = loadout.R && loadout.R !== 'none';
 
     const _sorted = [...options].sort((a, b) => (a.weight || 0) - (b.weight || 0));
     _sorted.forEach(opt => {
@@ -106,6 +110,9 @@ function _wzBuildDropdown(slotId) {
         const otherArm = slotId === 'L' ? loadout.R : slotId === 'R' ? loadout.L : null;
         const isDual = chassis === 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
         const isBlocked = chassis !== 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
+        const isNoneDisabled = opt.key === 'none'
+            && (slotId === 'L' || slotId === 'R')
+            && (slotId === 'L' ? rHasWeapon : lHasWeapon);
 
         const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[opt.key] : null;
         const descText = (desc && opt.key !== 'none') ? desc.desc : '';
@@ -114,13 +121,13 @@ function _wzBuildDropdown(slotId) {
         const div = document.createElement('div');
         div.className = 'dd-option'
             + (opt.key === currentKey ? ' dd-active' : '')
-            + (isBlocked ? ' do-disabled' : '');
+            + (isBlocked || isNoneDisabled ? ' do-disabled' : '');
         div.innerHTML = `
             <div class="do-header">
                 <span class="do-name">${titleText}${isDual ? ' <span style="font-size:9px;letter-spacing:1px;color:#00ffcc;background:rgba(0,255,204,0.12);padding:1px 5px;border:1px solid rgba(0,255,204,0.3);border-radius:2px;vertical-align:middle;">DUAL</span>' : ''}${isBlocked ? ' <span style="font-size:9px;letter-spacing:1px;color:rgba(255,100,100,0.7);background:rgba(255,60,60,0.08);padding:1px 5px;border:1px solid rgba(255,60,60,0.25);border-radius:2px;vertical-align:middle;">IN USE</span>' : ''}</span>
             </div>
             ${descText ? `<div class="do-desc">${descText}</div>` : ''}`;
-        if (!isBlocked) div.onclick = () => { selectSlot(slotId, opt.key); _wzCloseAllDD(); };
+        if (!isBlocked && !isNoneDisabled) div.onclick = () => { selectSlot(slotId, opt.key); _wzCloseAllDD(); };
         list.appendChild(div);
     });
 }
@@ -155,15 +162,21 @@ function selectSlot(slotId, key) {
 
     if (slotId === 'L' || slotId === 'R') {
         const is2H = WEAPONS[key]?.twoHanded;
+        const prevWas2H = WEAPONS[loadout.L]?.twoHanded;
         if (is2H) {
-            // Two-handed: fill both arms with same key, lock R
+            // Entering 2H mode — save current R value (only on first entry)
+            if (!prevWas2H) _wzPrevRArm = loadout.R;
             loadout.L = key;
             loadout.R = key;
         } else {
             // Normal: set the chosen side.
             // Only Light chassis can dual-wield (same weapon in both arms).
             if (slotId === 'L') {
-                if (WEAPONS[loadout.L]?.twoHanded) loadout.R = 'none';
+                if (prevWas2H) {
+                    // Leaving 2H mode — restore previous R value
+                    loadout.R = _wzPrevRArm || 'none';
+                    _wzPrevRArm = null;
+                }
                 loadout.L = key;
                 // Non-light: if the other arm already has the same weapon, clear it
                 if (loadout.chassis !== 'light' && key !== 'none' && loadout.R === key) loadout.R = 'none';
@@ -358,7 +371,6 @@ function refreshGarage() {
     // ── Deploy button validation ──
     const noWeapons = lEmpty && rEmpty;
     const deployDisabled = noWeapons ? ' style="opacity:0.45;pointer-events:none;"' : '';
-    const deployWarn = noWeapons ? '<div style="font-size:9px;letter-spacing:1px;color:var(--sci-red);margin-top:4px;">Equip at least one weapon to deploy</div>' : '';
 
     el.innerHTML = `
         <!-- Top bar -->
@@ -367,7 +379,6 @@ function refreshGarage() {
             <div class="mp-screen-title">WARZONE</div>
             <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
                 <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;" onclick="deployMech()"${deployDisabled}>Deploy Mech ›</button>
-                ${deployWarn}
             </div>
         </div>
 
