@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.06 — OVERVIEW.md accuracy audit
+
+**Date:** 2026-03-24
+
+Documentation-only session. Audited OVERVIEW.md for staleness against CHANGELOG.md and actual code. Fixed: added `WEAPON_NAMES` to `js/constants.js` File Map entry, updated `js/campaign-system.js` entry with new shop functions (`_shopGetCategory`, `_shopSortCategories`, `_shopRenderCategory`, `_shopGetHoverCard`, `_shopShowHover`, `_shopHideHover`), updated `_buildHoverHtml` signature to include `leftLabel` param, replaced stale hover card CSS classes (`.lo-hover-cmp-wrap`/`.lo-hover-cmp-cards`/`.lo-hover-cmp-label` → `.lo-hover-cmp-card`/`.lo-hover-cmp-cols`/`.lo-hover-cmp-left`) and added `.lo-hover-divider`.
+
+---
+
 ## v6.05 — Shop three-column category buy grid
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Reverted `.lo-slot-name` font-size from 11px back to 9px. Updated all 13 `WEAPON
 **Date:** 2026-03-23
 
 Removed redundant `border-left` and `border-bottom` from `.lo-center-frame`; the single dividing line between columns is now provided solely by `.lo-left`'s `border-right`, and the bottom edge by `.lo-weapon-bar`'s existing `border-bottom`.
-
----
-
-## v5.96 — Hover card style refresh
-
-**Date:** 2026-03-23
-
-Updated single item hover cards to use `var(--sci-cyan)` for base stat values and added a `.lo-hover-divider` separator line between the base stats block and affixes block. Rebuilt the comparison hover card as a unified single bordered card (`.lo-hover-cmp-card`) using a CSS grid two-column layout with `BACKPACK` / `EQUIPPED` source labels, per-column stat/affix dividers, and a shared "Changes if equipped" diff section below; sign inversion for Reload Speed % and Mod Cooldown % applies in both columns and the diff. Viewport overflow detection is unchanged and already uses measured card width, so the wider comparison card stays on screen correctly.
 
 ---
