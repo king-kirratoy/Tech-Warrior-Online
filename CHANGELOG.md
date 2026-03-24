@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.10 — Doll slot star fix, double-click equip, shift-arm hover comparison
+
+**Date:** 2026-03-24
+
+Fixed unique item gold star (★) on equipped doll slots to use the same absolutely-positioned `.lo-slot-star` element as backpack slots instead of rendering inline with the item name. Added double-click to equip from the loadout backpack grid — weapons equip to L arm by default or R arm with Shift held, non-weapons route to their natural slot. Added Shift-key arm switching for weapon hover card comparison in both the loadout backpack and supply shop buy grid, reading a new `_shiftHeld` global tracked via keydown/keyup listeners.
+
+---
+
 ## v6.09 — Fix shop divider overflow and sell hover comparison
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Shop hover card was rendered behind `#shop-overlay` (z-index 9999 < 10004), maki
 **Date:** 2026-03-23
 
 Fixed supply shop weapon slot label from `L ARM / R ARM` to `WEAPON`. Replaced the click-to-view detail panel for buy items with the same hover card system used in the loadout screen: `mouseenter` on any buy or sell row now shows a `_buildHoverHtml`-powered card (single card for sell items; comparison card showing `SHOP` vs `EQUIPPED` for buy items with an equipped counterpart). Added optional `leftLabel` param to `_buildHoverHtml` (default `'BACKPACK'`) so the shop comparison card shows `SHOP` instead. Moved the buy button inline into each buy row so purchasing works without the now-disabled click detail panel; sell confirmation panel (`_shopSelectSell`) is unchanged.
-
----
-
-## v6.00 — Runtime weapon name lookup at all render sites
-
-**Date:** 2026-03-23
-
-Fixed all UI render sites to look up `WEAPON_NAMES[item.subType]` at render time instead of relying on the stored `item.name`/`item.shortName`, which may have been generated before the canonical name fix. Updated: equipped doll slot cards, backpack slot cards, single item hover card, comparison hover card (both columns), and all three campaign supply shop item name locations (`_itemStatCard`, buy row, sell row).
 
 ---

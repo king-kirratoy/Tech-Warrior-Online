@@ -1839,8 +1839,10 @@ function _shopShowHover(el, item, preferSide, noCompare) {
         };
         if (item.baseType === 'weapon') {
             if (typeof _equipped !== 'undefined') {
-                if (_equipped['L']) compareItem = _equipped['L'];
-                else if (_equipped['R']) compareItem = _equipped['R'];
+                const _hArm = (typeof _shiftHeld !== 'undefined' && _shiftHeld) ? 'R' : 'L';
+                const _hAlt = _hArm === 'L' ? 'R' : 'L';
+                if (_equipped[_hArm]) compareItem = _equipped[_hArm];
+                else if (_equipped[_hAlt]) compareItem = _equipped[_hAlt];
             }
         } else {
             const eqKey = _slotMap[item.baseType];
