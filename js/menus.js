@@ -557,6 +557,9 @@ function togglePause() {
             if (statusEl && typeof _round !== 'undefined') {
                 statusEl.textContent = 'Round ' + String(_round).padStart(2, '0') + ' active';
             }
+            // Loadout button only appears in campaign
+            const loadoutBtn = document.getElementById('pause-loadout-btn');
+            if (loadoutBtn) loadoutBtn.style.display = _gameMode === 'campaign' ? '' : 'none';
             // Remove focus from in-game elements so no pause button appears pre-selected
             document.activeElement?.blur();
         }

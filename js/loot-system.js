@@ -1125,6 +1125,7 @@ function _removeEquipmentDrop(scene, drop, fade) {
 
 // ── EQUIPMENT PICKUP CHECK (called from update loop) ───────────
 function checkEquipmentPickups(scene) {
+    if (_gameMode === 'simulation' || _gameMode === 'pvp') return;
     if (!player?.active || !isDeployed) return;
     _equipmentDrops.slice().forEach(drop => {
         if (!drop.active) return;
@@ -1175,7 +1176,7 @@ function _showLootPickupNotification(scene, item) {
     _lootNotifications = _lootNotifications.filter(n => n.active);
     const yOffset = _lootNotifications.length * 36;
 
-    const baseX = GAME.config.width - 10;
+    const baseX = 10;
     const baseY = 80 + yOffset;
 
     // Build notification text
@@ -1184,28 +1185,31 @@ function _showLootPickupNotification(scene, item) {
         : '';
     const displayText = `${rarityDef.label === 'Common' ? '' : rarityDef.label + ' '}${item.shortName}${affixText}`;
 
-    // Background bar
-    const bg = scene.add.rectangle(baseX, baseY, 280, 28, 0x0a0f16, 0.92)
-        .setOrigin(1, 0.5).setDepth(200).setScrollFactor(0)
-        .setStrokeStyle(1, rarityDef.color, 0.6);
+    // Background bar — rounded rect via Graphics (max-width 280px, border-radius 6px)
+    const bg = scene.add.graphics().setDepth(200).setScrollFactor(0);
+    bg.fillStyle(0x0a0f16, 0.92);
+    bg.fillRoundedRect(0, -14, 280, 28, 6);
+    bg.lineStyle(1, rarityDef.color, 0.6);
+    bg.strokeRoundedRect(0, -14, 280, 28, 6);
 
     // Rarity stripe on left edge
-    const stripe = scene.add.rectangle(baseX - 278, baseY, 3, 28, rarityDef.color, 0.9)
+    const stripe = scene.add.rectangle(baseX, baseY, 3, 28, rarityDef.color, 0.9)
         .setOrigin(0, 0.5).setDepth(201).setScrollFactor(0);
 
     // Text
-    const txt = scene.add.text(baseX - 270, baseY, displayText, {
+    const txt = scene.add.text(baseX + 7, baseY, displayText, {
         font: 'bold 10px Courier New',
         fill: rarityDef.colorStr,
         stroke: '#000000',
         strokeThickness: 2
     }).setOrigin(0, 0.5).setDepth(201).setScrollFactor(0);
 
-    // Slide in from right
-    const startX = baseX + 300;
+    // Slide in from left
+    const startX = baseX - 310;
     bg.x = startX;
-    stripe.x = startX - 278;
-    txt.x = startX - 270;
+    bg.y = baseY;
+    stripe.x = startX;
+    txt.x = startX + 7;
 
     const notification = { bg, stripe, txt, active: true };
     _lootNotifications.push(notification);
@@ -1218,13 +1222,13 @@ function _showLootPickupNotification(scene, item) {
     });
     scene.tweens.add({
         targets: [stripe],
-        x: baseX - 278,
+        x: baseX,
         duration: 300,
         ease: 'Power2'
     });
     scene.tweens.add({
         targets: [txt],
-        x: baseX - 270,
+        x: baseX + 7,
         duration: 300,
         ease: 'Power2'
     });
@@ -1258,6 +1262,7 @@ function _showFloatingWarning(scene, text, color) {
 
 // ── INTEGRATION: spawnEquipmentLoot (called alongside existing spawnLoot) ──
 function spawnEquipmentLoot(scene, x, y, enemyData) {
+    if (_gameMode === 'simulation' || _gameMode === 'pvp') return;
     const chance = _getEquipDropChance(enemyData);
     if (Math.random() > chance) return;
 
