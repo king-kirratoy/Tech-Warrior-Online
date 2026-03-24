@@ -2,6 +2,9 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. **Warzone** is a roguelike run-and-die loop (`_gameMode='simulation'`); **Campaign** is persistent with XP/levels/missions/shop (`_gameMode='campaign'`); **Multiplayer** is real-time PVP via Socket.IO (`_gameMode='pvp'`).
 
+**Current version: v6.16** (as displayed in game UI via `GAME_VERSION` in `js/constants.js`)
+Last updated: March 24, 2026
+
 ---
 
 ## File Map
