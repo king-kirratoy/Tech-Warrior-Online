@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.12 — Strip rarity prefix from generated item names
+
+**Date:** 2026-03-24
+
+Removed the rarity label prefix (e.g. "Epic", "Legendary") from generated item names in `generateItem()`. The rarity word was being prepended to `item.name` for non-common items, producing names like "Epic Threat Analyzer" even though rarity is already shown separately in hover cards and slot UI. Newly generated items now use the base name only (e.g. "Threat Analyzer") with rarity stored in the `item.rarity` field. Items already saved in player inventory or campaign saves may still have the old rarity-prefixed names since they were generated before this fix; no migration of saved data is needed.
+
+---
+
 ## v6.11 — Fix shift-arm hover card comparison not updating live
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Fixed supply shop hover cards being invisible because `#eq-hover-card` was neste
 **Date:** 2026-03-24
 
 Replaced the row-based buy and sell lists in the campaign supply shop with fixed slot grids (6×5 buy, 4×5 sell) using the same `.lo-slot` cards as the loadout backpack. Added hover cards with equipped-item comparison to both grids via reused `_buildHoverHtml`, increased `SHOP_MAX_ITEMS` from 8 to 30, and removed all old row/card CSS.
-
----
-
-## v6.02 — Fix supply shop hover card transparency (z-index below overlay)
-
-**Date:** 2026-03-23
-
-Shop hover card was rendered behind `#shop-overlay` (z-index 9999 < 10004), making it appear transparent; fixed by setting `card.style.zIndex = '10005'` in `_shopShowHover`.
 
 ---
