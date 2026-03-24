@@ -452,7 +452,7 @@
 .cc-stat-row {
   display: flex;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 9px;
   justify-content: space-between;
   margin-bottom: 3px;
 }
@@ -469,7 +469,7 @@
 }
 
 .cc-hp-split-val {
-  font-size: 10px;
+  font-size: 9px;
 }
 
 .cc-green  { color: var(--green-accent); }
