@@ -872,14 +872,14 @@ function populateInventory() {
             const rd = item ? RARITY_DEFS[item.rarity] : null;
             const nameColor = rd ? rd.colorStr : UI_COLORS.text35;
             const _dn = item ? ((item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.shortName || item.name) : '';
-            const itemName = item ? (item.isUnique ? '★ ' + _dn : _dn) : '';
             const borderColor = rd ? rd.colorStr + '55' : UI_COLORS.gold20;
             return `<div class="mech-equip-slot lo-slot" style="border-color:${borderColor};"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
                 ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
                 onmousedown="_hideSlotHover()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
+                ${item && item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
                 <div class="lo-slot-lbl">${label}</div>
-                ${itemName ? `<div class="lo-slot-name" style="color:${nameColor};">${itemName}</div>` : ''}
+                ${_dn ? `<div class="lo-slot-name" style="color:${nameColor};">${_dn}</div>` : ''}
             </div>`;
         };
 
@@ -974,6 +974,17 @@ function populateInventory() {
                 });
                 cell.addEventListener('mouseenter', () => { _showSlotHover(cell, null, item); });
                 cell.addEventListener('mouseleave', () => { _hideSlotHover(); });
+                // Double-click to equip
+                cell.addEventListener('dblclick', (ev) => {
+                    _hideSlotHover();
+                    if (item.baseType === 'weapon') {
+                        const arm = ev.shiftKey ? 'R' : 'L';
+                        _equipItemToSlot(idx, arm);
+                    } else {
+                        _equipItem(idx);
+                    }
+                    populateLoadout();
+                });
                 // Drag events
                 cell.addEventListener('mousedown', () => { _hideSlotHover(); });
                 cell.addEventListener('dragstart', (ev) => {
@@ -1019,6 +1030,11 @@ let _invSelectedKey    = null;
 
 /** Current arm used when comparing a weapon from the backpack. Reset to 'L' on each new selection. */
 var _compareArm = 'L';
+
+/** Track Shift key state for weapon arm comparison in hover cards. */
+var _shiftHeld = false;
+document.addEventListener('keydown', (e) => { if (e.key === 'Shift') _shiftHeld = true; });
+document.addEventListener('keyup',   (e) => { if (e.key === 'Shift') _shiftHeld = false; });
 
 /** Switch which arm is used for weapon comparison and re-render the detail panel. */
 function _setCompareArm(arm) {
@@ -1812,11 +1828,13 @@ function _showSlotHover(el, slotKey, itemOverride) {
         slotLabel = bpSlotNames[item.baseType] || item.baseType || '';
         // Find equipped item for same slot to compare
         if (item.baseType === 'weapon') {
-            // Prefer L arm; fall back to R if L is empty
-            if (_equipped && _equipped['L']) {
-                compareItem = _equipped['L'];
-            } else if (_equipped && _equipped['R']) {
-                compareItem = _equipped['R'];
+            // Default L arm; Shift switches to R arm
+            const _hoverArm = _shiftHeld ? 'R' : 'L';
+            const _hoverAlt = _shiftHeld ? 'L' : 'R';
+            if (_equipped && _equipped[_hoverArm]) {
+                compareItem = _equipped[_hoverArm];
+            } else if (_equipped && _equipped[_hoverAlt]) {
+                compareItem = _equipped[_hoverAlt];
             }
         } else {
             const slotMap = { mod_system:'mod', aug_system:'augment',
