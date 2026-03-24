@@ -823,15 +823,11 @@ function _renderChassisSelect(overlay) {
     html += '</div>'; // close cards row
 
     // Footer — Start Campaign button centered, Back button at top-left
-    const noSel = !_selectedNewChassis;
     html += '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:24px;">';
     if (_selectedNewChassis) {
         html += `<button onclick="_startNewCampaignWithChassis('${_selectedNewChassis}')" class="tw-btn tw-btn--solid" style="min-width:220px;padding:12px 40px;white-space:nowrap;">START CAMPAIGN</button>`;
     } else {
         html += `<button class="tw-btn tw-btn--solid" style="min-width:220px;padding:12px 40px;white-space:nowrap;opacity:0.4;pointer-events:none;" disabled>START CAMPAIGN</button>`;
-    }
-    if (noSel) {
-        html += `<div style="font-family:var(--font-mono);font-size:8px;letter-spacing:2px;color:var(--sci-red);">Select a chassis to continue</div>`;
     }
     html += '</div>';
 
