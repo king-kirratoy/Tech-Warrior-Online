@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.13 — Warzone/multiplayer hangar dropdown parity
+
+**Date:** 2026-03-24
+
+Added the full set of loadout dropdowns (L Arm, R Arm, Core Mod, Shield, Legs, Augment) to the warzone hangar screen, matching the multiplayer hangar. Previously warzone only had a Colour dropdown while multiplayer had all slots. On both screens, moved the Colour dropdown above L Arm and placed a new "LOADOUT" section label above it (replacing the old "Weapons & Gear" label on multiplayer). Updated `refreshGarage()` to sync all dropdown headers and lock the R arm row when a two-handed weapon is equipped.
+
+---
+
 ## v6.12 — Strip rarity prefix from generated item names
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Replaced the single 6×5 buy grid with three side-by-side category grids (Offens
 **Date:** 2026-03-24
 
 Fixed supply shop hover cards being invisible because `#eq-hover-card` was nested inside `#stats-overlay` (hidden when shop is open); created a dedicated `#shop-hover-card` lazily appended to `document.body` so it renders above all overlays.
-
----
-
-## v6.03 — Rebuild supply shop with slot grids
-
-**Date:** 2026-03-24
-
-Replaced the row-based buy and sell lists in the campaign supply shop with fixed slot grids (6×5 buy, 4×5 sell) using the same `.lo-slot` cards as the loadout backpack. Added hover cards with equipped-item comparison to both grids via reused `_buildHoverHtml`, increased `SHOP_MAX_ITEMS` from 8 to 30, and removed all old row/card CSS.
 
 ---
