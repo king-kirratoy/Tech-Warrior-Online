@@ -191,5 +191,5 @@ See UI_CONVENTIONS.md — Section 3 (Color Meaning) for the full semantic color 
 - **Cloud save lives in loot-system.js** — `saveCampaignProgress()`, `loadCampaignProgress()`, and `_scheduleCloudSave()` are in `js/loot-system.js`, not `js/campaign-system.js`. Campaign-system.js handles localStorage only.
 - **`.lo-slot` is shared** — see UI_CONVENTIONS.md Section 6 for details.
 - **Comparison panel is disabled** — see UI_CONVENTIONS.md Section 6 (Hover Card System).
-- **Version display:** The version number is displayed in `#callsign-version` and `#main-menu-version` elements, populated at runtime. Tracked in CHANGELOG.md.
+- **Version display:** The version number is displayed in `#callsign-version` and `#main-menu-version` elements, populated at runtime.
 - **No cache-busting query strings** — see CLAUDE.md DO NOT list #13.
