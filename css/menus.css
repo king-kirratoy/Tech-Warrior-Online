@@ -1349,41 +1349,48 @@
 }
 
 .shop-body {
-  display: flex;
+  display: grid;
   flex: 1;
+  grid-template-columns: 1fr 440px;
+  height: 100%;
   overflow: hidden;
 }
 
 .shop-buy-col {
   border-right: 1px solid var(--sci-line);
   display: flex;
-  flex: 1;
   flex-direction: column;
   overflow: hidden;
+  padding: 14px;
 }
 
 .shop-sell-col {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
   overflow: hidden;
-  width: 320px;
+  padding: 14px;
 }
 
-.shop-col-header {
-  align-items: center;
-  border-bottom: 1px solid var(--sci-line);
+.shop-col-hdr {
+  align-items: baseline;
   display: flex;
   flex-shrink: 0;
   justify-content: space-between;
-  padding: 10px 20px;
+  margin-bottom: 10px;
 }
 
 .shop-col-title {
-  color: rgba(255,255,255,0.45);
-  font-size: 9px;
+  color: var(--sci-txt3, rgba(255,255,255,0.45));
+  font-family: 'Courier New', monospace;
+  font-size: 8px;
   letter-spacing: 3px;
   text-transform: uppercase;
+}
+
+.shop-col-sub {
+  color: var(--sci-txt3, rgba(255,255,255,0.45));
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
 }
 
 .shop-items-list {

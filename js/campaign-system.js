@@ -1634,24 +1634,20 @@ function showShop() {
             <div class="shop-body">
                 <!-- BUY column -->
                 <div class="shop-buy-col">
-                    <div class="shop-col-header">
+                    <div class="shop-col-hdr">
                         <div class="shop-col-title">Buy</div>
                         ${restockBtn}
                     </div>
-                    <div class="shop-items-list">
-                        ${buyItemsHtml}
-                    </div>
+                    ${buyItemsHtml}
                     ${detailHtml}
                 </div>
                 <!-- SELL column -->
                 <div class="shop-sell-col">
-                    <div class="shop-col-header">
+                    <div class="shop-col-hdr">
                         <div class="shop-col-title">Sell</div>
-                        <div style="font-size:9px;color:rgba(255,255,255,0.45);">Select item to sell</div>
+                        <div class="shop-col-sub">${typeof _inventory !== 'undefined' ? _inventory.length : 0} / ${invMax}</div>
                     </div>
-                    <div class="shop-items-list">
-                        ${sellItemsHtml}
-                    </div>
+                    ${sellItemsHtml}
                     ${sellDetailHtml}
                 </div>
             </div>
