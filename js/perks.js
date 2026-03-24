@@ -1114,9 +1114,6 @@ function showPerkMenu(nextRound) {
     const _psc = GAME?.scene?.scenes[0];
     if (_psc) { try { _psc.input.setDefaultCursor('default'); } catch(e){} }
     document.body.style.cursor = 'default';
-    // Focus first card so keyboard users can immediately interact
-    const firstCard = cards.querySelector('.perk-card');
-    if (firstCard) firstCard.focus();
 }
 
 function pickPerk(key, nextRound) {

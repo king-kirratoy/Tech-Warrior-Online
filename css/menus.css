@@ -1581,7 +1581,9 @@
   border-right: 1px solid var(--sci-cyan-border);
   display: flex;
   flex-direction: column;
+  height: 100%;
   max-width: 860px;
+  overflow: hidden;
   width: 100%;
 }
 
@@ -1602,12 +1604,14 @@
   border-radius: 3px;
   color: var(--sci-txt2);
   cursor: pointer;
+  flex: 0 0 auto;
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 2px;
   padding: 4px 10px;
   text-transform: uppercase;
   transition: border-color 0.15s, color 0.15s;
+  width: auto;
 }
 
 .wz-perks-back:hover {
@@ -1643,6 +1647,7 @@
 .wz-perks-left {
   border-right: 1px solid var(--sci-line);
   flex-shrink: 0;
+  height: 100%;
   overflow-y: auto;
   padding: 14px 16px;
   width: 220px;
@@ -1685,6 +1690,8 @@
 
 .wz-perks-right {
   flex: 1;
+  height: 100%;
+  min-height: 0;
   min-width: 0;
   overflow-y: auto;
   padding: 14px 16px;
