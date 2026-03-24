@@ -1298,7 +1298,7 @@ function awardMissionReward(missionId) {
 
 /** Shop stock — refreshed each time player returns to mission select. */
 let _shopStock = [];
-const SHOP_MAX_ITEMS = 8;
+const SHOP_MAX_ITEMS = 30;
 
 /** Base prices by rarity (buy price). Sell = scrapValue from RARITY_DEFS. */
 const SHOP_PRICES = {
@@ -1436,7 +1436,7 @@ function showShop() {
     };
     // Friendly slot labels per baseType (Fix 3)
     const _shopSlotLabels = {
-        weapon:        'L ARM / R ARM',
+        weapon:        'WEAPON',
         armor:         'ARMOR',
         arms:          'ARMS',
         legs:          'LEGS',
@@ -1476,20 +1476,21 @@ function showShop() {
         return h;
     }
 
-    // ── Item row builders ──
-    function buyRow(item, idx) {
-        const isSelected = (_selectedShopIdx === idx);
-        const meta = `${item.rarity || 'common'} · ${slotLbl(item)} · LV.${item.level || 1}`;
-        const soldBadge = item._soldBack
-            ? `<span style="font-size:8px;letter-spacing:1px;color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.06);border-radius:2px;padding:1px 4px;margin-left:6px;">SOLD</span>`
-            : '';
-        return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelect(${idx})">
-            <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
-            <div class="shop-item-info">
-                <div class="shop-item-name" style="color:${rc(item)};">${item.name || 'Item'}${soldBadge}</div>
-                <div class="shop-item-meta">${meta}</div>
-            </div>
-            <div class="shop-item-price">⬡ ${item._shopPrice}</div>
+    // ── Slot builders ──
+    function buySlot(item, idx) {
+        const rd = (typeof RARITY_DEFS !== 'undefined') ? RARITY_DEFS[item.rarity] : null;
+        const color = rd ? rd.colorStr : rc(item);
+        const borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : color + '44';
+        const isSold = !!item._soldBack;
+        const soldStyle = isSold ? 'opacity:0.35;pointer-events:none;' : '';
+        const soldBadge = isSold ? '<div style="font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.55);margin-top:2px;">SOLD</div>' : '';
+        const priceTag = `<div style="font-size:8px;color:var(--sci-gold,#ffd700);margin-top:2px;">⬡ ${item._shopPrice}</div>`;
+        return `<div class="lo-slot" style="border-color:${borderColor};${soldStyle}" data-shop-idx="${idx}" onclick="_shopSelect(${idx})">
+            ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
+            <div class="lo-slot-lbl">${slotLbl(item)}</div>
+            <div class="lo-slot-name" style="color:${color};">${item.shortName || item.name}</div>
+            ${soldBadge}
+            ${priceTag}
         </div>`;
     }
 
@@ -1602,13 +1603,16 @@ function showShop() {
         sellDetailHtml += `</div>`;
     }
 
-    // ── Buy items list HTML ──
-    let buyItemsHtml = '';
-    if (_shopStock.length === 0) {
-        buyItemsHtml = `<div style="padding:40px 20px;text-align:center;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.45);">No items in stock</div>`;
-    } else {
-        buyItemsHtml = _shopStock.map((item, idx) => buyRow(item, idx)).join('');
+    // ── Buy grid HTML (6×5 = 30 slots) ──
+    let buyItemsHtml = '<div class="shop-buy-grid">';
+    for (let i = 0; i < 30; i++) {
+        if (i < _shopStock.length) {
+            buyItemsHtml += buySlot(_shopStock[i], i);
+        } else {
+            buyItemsHtml += '<div class="lo-slot empty"></div>';
+        }
     }
+    buyItemsHtml += '</div>';
 
     // ── Sell items list HTML ──
     let sellItemsHtml = '';

@@ -1393,6 +1393,32 @@
   font-size: 9px;
 }
 
+.shop-buy-grid {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(6, 100px);
+  grid-template-rows: repeat(5, 100px);
+  overflow-y: auto;
+}
+
+.shop-buy-grid .lo-slot {
+  height: 100px;
+  width: 100px;
+}
+
+.shop-sell-grid {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(4, 100px);
+  grid-template-rows: repeat(5, 100px);
+  overflow-y: auto;
+}
+
+.shop-sell-grid .lo-slot {
+  height: 100px;
+  width: 100px;
+}
+
 .shop-items-list {
   flex: 1;
   overflow-y: auto;
