@@ -594,7 +594,7 @@
   word-break: break-word;
 }
 
-.hg-stat-val.warn   { color: var(--sci-gold); }
+.hg-stat-val.warn   { color: var(--sci-cyan); }
 .hg-stat-val.dim    { color: rgba(255,255,255,0.55); font-size: 10px; }
 .hg-stat-val.green  { color: #00ff88; }
 .hg-stat-val.purple { color: #cc88ff; font-size: 10px; }
@@ -752,7 +752,7 @@
 }
 
 .lo-chassis-val {
-  color: rgba(255,255,255,0.88);
+  color: var(--sci-cyan);
   font-family: 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 2px;
@@ -829,7 +829,7 @@
 .lo-stat-value.red    { color: #ff4d6a; }
 .lo-stat-value.orange { color: #ff8844; }
 .lo-stat-value.yellow { color: #ffdd00; }
-.lo-stat-value.purple { color: #cc88ff; }
+.lo-stat-value.purple { color: var(--sci-cyan); }
 
 /* --- Chassis traits --- */
 .lo-trait {
