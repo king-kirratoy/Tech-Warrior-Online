@@ -107,7 +107,7 @@ function _wzBuildDropdown(slotId) {
         const isBlocked = chassis !== 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
         const isNoneDisabled = opt.key === 'none'
             && (slotId === 'L' || slotId === 'R')
-            && (slotId === 'L' ? rHasWeapon : lHasWeapon);
+            && (slotId === 'L' ? !rHasWeapon : !lHasWeapon);
 
         const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[opt.key] : null;
         const descText = (desc && opt.key !== 'none') ? desc.desc : '';
