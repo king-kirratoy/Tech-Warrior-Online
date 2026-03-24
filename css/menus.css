@@ -1310,10 +1310,9 @@
 }
 
 .shop-scrap {
+  color: rgba(255,255,255,0.45);
   font-size: 10px;
   letter-spacing: 2px;
-  color: rgba(255,255,255,0.45);
-  margin-left: auto;
   text-transform: uppercase;
 }
 
@@ -1324,6 +1323,7 @@
 }
 
 .shop-body {
+  border-bottom: 1px solid var(--sci-line);
   display: grid;
   flex: 1;
   grid-template-columns: 1fr 440px;

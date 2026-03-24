@@ -1699,7 +1699,8 @@ function showShop() {
     buyItemsHtml += '</div>';
 
     // ── Sell grid HTML (4×5 = 20 slots) ──
-    let sellItemsHtml = '<div class="shop-sell-grid">';
+    let sellItemsHtml = '<div class="shop-cat-header"><span class="shop-cat-title">Backpack</span><div class="shop-cat-line"></div></div>';
+    sellItemsHtml += '<div class="shop-sell-grid">';
     const inv = (typeof _inventory !== 'undefined') ? _inventory : [];
     for (let i = 0; i < invMax; i++) {
         if (i < inv.length) {
@@ -1721,14 +1722,16 @@ function showShop() {
             <div class="shop-top">
                 <button onclick="_closeShop()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">‹ Back</button>
                 <div class="shop-title">Supply Shop</div>
-                <div class="shop-scrap">Scrap &nbsp;<span>${scrapVal}</span></div>
+                <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+                    <div class="shop-scrap">Scrap &nbsp;<span>${scrapVal}</span></div>
+                    ${restockBtn}
+                </div>
             </div>
             <div class="shop-body">
                 <!-- BUY column -->
                 <div class="shop-buy-col">
                     <div class="shop-col-hdr">
                         <div class="shop-col-title">Buy</div>
-                        ${restockBtn}
                     </div>
                     ${buyItemsHtml}
                     ${detailHtml}
