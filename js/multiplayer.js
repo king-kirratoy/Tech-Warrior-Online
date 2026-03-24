@@ -2355,8 +2355,6 @@ function _pvpRenderHangar() {
     function statRow(lbl, val, cls) {
         return `<div class="hg-stat-row"><span class="hg-stat-label">${lbl}</span><span class="hg-stat-val${cls ? ' ' + cls : ''}">${val}</span></div>`;
     }
-    const gap = '<div class="hg-gap"></div>';
-
     // ── Stats panel HTML (new order) ──
     let statsHtml = '';
     // Chassis name
@@ -2366,21 +2364,18 @@ function _pvpRenderHangar() {
         const chCls = chassis === 'light' ? 'green' : 'warn';
         statsHtml += statRow('CHASSIS PERKS', chassisTraits.join(' · '), chCls);
     }
-    statsHtml += gap;
     // HP
     statsHtml += statRow('HP SPLIT', 'C ' + (ch.coreHP||0) + ' / A ' + (ch.armHP||0) + ' / L ' + (ch.legHP||0), 'dim');
     statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
     statsHtml += statRow('TOTAL SHIELD', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
-    statsHtml += gap;
     // Slot details — same order as dropdown list
     function pvpSlotBlock(label, slotType, key) {
         const name = (slotType === 'weapon') ? weaponName(key) : _pvpGetSlotLabel(
             slotType === 'cpu' ? 'M' : slotType === 'augment' ? 'A' : slotType === 'legs' ? 'G' : 'S'
         );
-        statsHtml += statRow(label, name, 'dim');
-        if (typeof _buildSlotDetails === 'function') {
-            _buildSlotDetails(slotType, key).forEach(d => { statsHtml += statRow(d.lbl, d.val, d.cls); });
-        }
+        const details = (typeof _buildSlotDetails === 'function') ? _buildSlotDetails(slotType, key).map(d => d.val) : [];
+        const val = details.length ? name + ' · ' + details.join(' · ') : name;
+        statsHtml += statRow(label, val, 'dim');
     }
     pvpSlotBlock('CPU', 'cpu', loadout.mod);
     pvpSlotBlock('AUGMENT', 'augment', loadout.aug);
