@@ -594,8 +594,9 @@
   word-break: break-word;
 }
 
-.hg-stat-val.warn   { color: var(--sci-cyan); }
+.hg-stat-val.warn   { color: #cc88ff; }
 .hg-stat-val.dim    { color: rgba(255,255,255,0.55); font-size: 10px; }
+.hg-stat-val.gold   { color: var(--sci-gold); }
 .hg-stat-val.green  { color: #00ff88; }
 .hg-stat-val.purple { color: #cc88ff; font-size: 10px; }
 
@@ -752,7 +753,7 @@
 }
 
 .lo-chassis-val {
-  color: var(--sci-cyan);
+  color: #cc88ff;
   font-family: 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 2px;

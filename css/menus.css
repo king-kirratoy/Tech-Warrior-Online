@@ -426,7 +426,7 @@
 }
 
 .cc-name {
-  color: var(--sci-cyan);
+  color: #cc88ff;
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 4px;
