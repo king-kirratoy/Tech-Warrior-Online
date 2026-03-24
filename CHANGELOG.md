@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.17 — BUILD STATS cleanup: remove gap bars, collapse detail rows, uppercase dropdowns
+
+**Date:** 2026-03-24
+
+Three visual fixes applied to both the warzone and multiplayer hangar BUILD STATS panels. (1) Removed the faint horizontal `hg-gap` separator bars that appeared before HP SPLIT and CPU rows. (2) Collapsed individual stat detail child rows (DPS, DMG, RELOAD, HP, REGEN, INFO) into the parent item row as an inline `·`-separated string (e.g. "Submachine Gun · 109 DPS · 6 dmg · 55ms reload"). (3) Added `text-transform: uppercase` to `.mp-dd-selected` in `css/menus.css` so dropdown selected values display in uppercase on both screens. Updated GAME_VERSION to v6.17.
+
+---
+
 ## v6.16 — BUILD STATS slot detail rows
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Fixed vertical divider lines (.shop-cat-sep and .shop-buy-col border-right) runn
 **Date:** 2026-03-24
 
 Moved the Restock button and scrap count from the buy column into the top header bar, grouped to the far right alongside the Back button and title. Removed the restock button from the Buy column header so both Buy and Sell headers now align at the same height. Added a "BACKPACK" category header with separator line above the sell slot grid, matching the buy-side category header style. Added a bottom border to `.shop-body` to visually close the grid area without changing the full-screen flex layout.
-
----
-
-## v6.07 — Doc consolidation: UI_CONVENTIONS.md as single source of truth
-
-**Date:** 2026-03-24
-
-Documentation-only session. Made UI_CONVENTIONS.md the single authoritative source for all UI rules (design tokens, font rules, color meanings, rarity colors, inverted stats, slot label naming, loadout screen architecture, hover card system). Removed duplicate content from CLAUDE.md and OVERVIEW.md, replacing it with one-line references to the relevant UI_CONVENTIONS.md sections. Updated CLAUDE.md session-start rule #3 wording.
 
 ---
