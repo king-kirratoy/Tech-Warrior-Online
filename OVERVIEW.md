@@ -34,7 +34,6 @@
 | `js/multiplayer.js` | PVP matchmaking via Socket.IO: connection, remote players, per-frame sync, lobby, PVP HUD, chat, kill feed, respawn, match results, and PVP hangar. |
 | `js/events.js` | All top-level global event listeners: resize, click, keydown (all game states), main-menu key nav, player movement/firing, and inventory drag-and-drop. |
 | `js/init.js` | Game startup: animated grid canvas, callsign handlers, Phaser scene lifecycle (`preload`/`create`/`update`), objective round-end polling, and `window.onload` bootstrap. |
-| `LOOT_SYSTEM_DESIGN.md` | Design reference document for the ARPG loot overhaul; not loaded at runtime. |
 
 **Script load order (bottom of `<body>`):**
 ```
