@@ -5,6 +5,22 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.16 — BUILD STATS slot detail rows
+
+**Date:** 2026-03-24
+
+Enriched the BUILD STATS panel on both the warzone and multiplayer hangar screens so every equipped item shows its full stats, not just its name. Added `_buildSlotDetails()` helper in `js/garage.js` that returns detail lines per slot type: weapons show DPS, damage, reload, burst, and flags (explosive/pierce/etc.); shields show HP, absorb %, regen rate, delay, and description; CPU/mods show cooldown and description; augments and legs show their description. Both screens now render these detail rows beneath each slot header row using the existing `.hg-stat-row` pattern. Multiplayer calls the helper via a `typeof` guard since it's defined in a separate file. Updated GAME_VERSION to v6.16.
+
+---
+
+## v6.15 — Hangar UI polish: reorder, preview, deploy validation
+
+**Date:** 2026-03-24
+
+Unified the warzone and multiplayer hangar screens with identical layout and behavior. Renamed "Core Mod" dropdown label to "Cpu" and stats row "MOD" to "CPU" on both screens. Reordered dropdowns to: CPU, Augment, L.Arm, R.Arm, Legs, Shield. Moved the mech preview image to the top of the left column above the chassis selection buttons. Rebuilt the BUILD STATS panel order to: CHASSIS name, CHASSIS PERKS, HP SPLIT, TOTAL HP, TOTAL SHIELD, then slot rows matching dropdown order. Removed the PASSIVES row. Fixed empty weapon slots displaying "None" instead of "NONE" on the multiplayer screen. Added deploy/join button validation — disabled with a red warning when no weapons are equipped. Updated GAME_VERSION to v6.15.
+
+---
+
 ## v6.14 — Warzone hangar mp-dd class system unification
 
 **Date:** 2026-03-24
@@ -66,21 +82,5 @@ Moved the Restock button and scrap count from the buy column into the top header
 **Date:** 2026-03-24
 
 Documentation-only session. Made UI_CONVENTIONS.md the single authoritative source for all UI rules (design tokens, font rules, color meanings, rarity colors, inverted stats, slot label naming, loadout screen architecture, hover card system). Removed duplicate content from CLAUDE.md and OVERVIEW.md, replacing it with one-line references to the relevant UI_CONVENTIONS.md sections. Updated CLAUDE.md session-start rule #3 wording.
-
----
-
-## v6.06 — OVERVIEW.md accuracy audit
-
-**Date:** 2026-03-24
-
-Documentation-only session. Audited OVERVIEW.md for staleness against CHANGELOG.md and actual code. Fixed: added `WEAPON_NAMES` to `js/constants.js` File Map entry, updated `js/campaign-system.js` entry with new shop functions (`_shopGetCategory`, `_shopSortCategories`, `_shopRenderCategory`, `_shopGetHoverCard`, `_shopShowHover`, `_shopHideHover`), updated `_buildHoverHtml` signature to include `leftLabel` param, replaced stale hover card CSS classes (`.lo-hover-cmp-wrap`/`.lo-hover-cmp-cards`/`.lo-hover-cmp-label` → `.lo-hover-cmp-card`/`.lo-hover-cmp-cols`/`.lo-hover-cmp-left`) and added `.lo-hover-divider`.
-
----
-
-## v6.05 — Shop three-column category buy grid
-
-**Date:** 2026-03-24
-
-Replaced the single 6×5 buy grid with three side-by-side category grids (Offensive / Defensive / Utility), each 3×5. Items are categorized by `baseType` via new `_shopGetCategory()`. Reduced `SHOP_MAX_ITEMS` from 30 to 12 — items distribute randomly across categories. Sold-back items appear immediately in the correct category grid with no special visual treatment. Added `_shopRenderCategory()` for targeted re-renders on sell.
 
 ---

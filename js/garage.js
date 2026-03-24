@@ -1,3 +1,58 @@
+// ═══════════ SLOT DETAIL HELPER ═══════════
+
+// Builds multi-line detail HTML for a BUILD STATS slot.
+// Returns array of {lbl, val, cls} objects for statRow rendering.
+function _buildSlotDetails(slotType, key) {
+    if (!key || key === 'none') return [];
+    const lines = [];
+    const _dim = 'dim';
+
+    if (slotType === 'weapon') {
+        const w = WEAPONS[key];
+        if (!w) return [];
+        if (w.dmg && w.reload) {
+            const dps = (w.dmg / (w.reload / 1000)).toFixed(1);
+            lines.push({ lbl: '  DPS', val: dps, cls: 'green' });
+        }
+        if (w.dmg) lines.push({ lbl: '  DMG', val: w.dmg + (w.pellets ? ' ×' + w.pellets : ''), cls: _dim });
+        if (w.reload) lines.push({ lbl: '  RELOAD', val: w.reload + 'ms', cls: _dim });
+        if (w.burst) lines.push({ lbl: '  BURST', val: w.burst + ' rounds', cls: _dim });
+        const flags = [];
+        if (w.explosive) flags.push('EXPLOSIVE');
+        if (w.pierce) flags.push('PIERCE');
+        if (w.flame) flags.push('FLAME');
+        if (w.twoHanded) flags.push('TWO-HANDED');
+        if (w.shieldPierce) flags.push('SHIELD PIERCE');
+        if (flags.length) lines.push({ lbl: '  FLAGS', val: flags.join(' · '), cls: 'warn' });
+
+    } else if (slotType === 'shield') {
+        const s = typeof SHIELD_SYSTEMS !== 'undefined' ? SHIELD_SYSTEMS[key] : null;
+        if (!s) return [];
+        lines.push({ lbl: '  HP', val: s.maxShield + ' · ' + Math.round(s.absorb * 100) + '% absorb', cls: _dim });
+        lines.push({ lbl: '  REGEN', val: s.regenRate + '/s · ' + s.regenDelay + 's delay', cls: _dim });
+        if (s.desc && key !== 'none') lines.push({ lbl: '  INFO', val: s.desc, cls: _dim });
+
+    } else if (slotType === 'augment') {
+        const a = typeof AUGMENTS !== 'undefined' ? AUGMENTS[key] : null;
+        if (!a) return [];
+        if (a.desc && key !== 'none') lines.push({ lbl: '  INFO', val: a.desc, cls: _dim });
+
+    } else if (slotType === 'legs') {
+        const l = typeof LEG_SYSTEMS !== 'undefined' ? LEG_SYSTEMS[key] : null;
+        if (!l) return [];
+        if (l.desc && key !== 'none') lines.push({ lbl: '  INFO', val: l.desc, cls: _dim });
+
+    } else if (slotType === 'cpu') {
+        const m = WEAPONS[key];
+        if (!m) return [];
+        if (m.cooldown) lines.push({ lbl: '  COOLDOWN', val: (m.cooldown / 1000) + 's', cls: _dim });
+        const desc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[key]) ? SLOT_DESCS[key].desc : (m.desc || null);
+        if (desc) lines.push({ lbl: '  INFO', val: desc, cls: _dim });
+    }
+
+    return lines;
+}
+
 // ═══════════ DROPDOWN SYSTEM ═══════════
 
 function _wzCloseAllDD() {
@@ -249,35 +304,36 @@ function refreshGarage() {
     }
     const gap = '<div class="hg-gap"></div>';
 
-    // ── Stats panel HTML ──
+    // ── Stats panel HTML (new order) ──
     let statsHtml = '';
-    statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
-    statsHtml += statRow('HP SPLIT', 'C ' + (ch.coreHP||0) + ' / A ' + (ch.armHP||0) + ' / L ' + (ch.legHP||0), 'dim');
-    statsHtml += gap;
-    statsHtml += statRow('SPEED', spdStr, 'warn');
-    statsHtml += statRow('SHIELD HP', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
-    statsHtml += gap;
-    const lArmName = weaponName(loadout.L);
-    const rArmKey2 = is2H ? loadout.L : loadout.R;
-    const rArmName = weaponName(rArmKey2);
-    const lArmVal  = lEmpty ? '— none' : lArmName + (lRate ? ' — ' + lRate : '');
-    const rArmVal  = (!rArmKey2 || rArmKey2 === 'none') ? '— none' : rArmName + (rRate ? ' — ' + rRate : '');
-    const weaponRows = [
-        statRow('L ARM', lArmVal, 'dim'),
-        statRow('R ARM', rArmVal, 'dim'),
-        modCd ? statRow('CORE CD', modCd, 'warn') : '',
-    ].join('');
-    if (weaponRows) { statsHtml += weaponRows; statsHtml += gap; }
+    // Chassis name
+    statsHtml += statRow('CHASSIS', (chassis || '').toUpperCase(), 'warn');
+    // Chassis perks/traits
     if (chassisTraits.length) {
         const chCls = chassis === 'light' ? 'green' : 'warn';
-        statsHtml += statRow('CHASSIS', chassisTraits.join(' · '), chCls);
+        statsHtml += statRow('CHASSIS PERKS', chassisTraits.join(' · '), chCls);
     }
-    if (passives.length) statsHtml += statRow('PASSIVES', passives.join(' · '), 'purple');
     statsHtml += gap;
-    statsHtml += statRow('MOD', _wzGetSlotLabel('M'), 'dim');
-    statsHtml += statRow('SHIELD', _wzGetSlotLabel('S'), 'dim');
-    statsHtml += statRow('LEGS', _wzGetSlotLabel('G'), 'dim');
-    statsHtml += statRow('AUGMENT', _wzGetSlotLabel('A'), 'dim');
+    // HP
+    statsHtml += statRow('HP SPLIT', 'C ' + (ch.coreHP||0) + ' / A ' + (ch.armHP||0) + ' / L ' + (ch.legHP||0), 'dim');
+    statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
+    statsHtml += statRow('TOTAL SHIELD', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
+    statsHtml += gap;
+    // Slot details — same order as dropdown list
+    function slotBlock(label, slotType, key) {
+        const name = (slotType === 'weapon') ? weaponName(key) : _wzGetSlotLabel(
+            slotType === 'cpu' ? 'M' : slotType === 'augment' ? 'A' : slotType === 'legs' ? 'G' : 'S'
+        );
+        statsHtml += statRow(label, name, 'dim');
+        _buildSlotDetails(slotType, key).forEach(d => { statsHtml += statRow(d.lbl, d.val, d.cls); });
+    }
+    slotBlock('CPU', 'cpu', loadout.mod);
+    slotBlock('AUGMENT', 'augment', loadout.aug);
+    const rArmKey2 = is2H ? loadout.L : loadout.R;
+    slotBlock('L ARM', 'weapon', loadout.L);
+    slotBlock('R ARM', 'weapon', rArmKey2);
+    slotBlock('LEGS', 'legs', loadout.leg);
+    slotBlock('SHIELD', 'shield', loadout.shld);
 
     // ── Dropdown row builder ──
     function ddRow(slotId, labelText) {
@@ -300,19 +356,42 @@ function refreshGarage() {
     // ── Dual-explosive warning ──
     const bothExplosive = typeof EXPLOSIVE_KEYS !== 'undefined' && EXPLOSIVE_KEYS.has(loadout.L) && EXPLOSIVE_KEYS.has(loadout.R);
 
+    // ── Deploy button validation ──
+    const noWeapons = lEmpty && rEmpty;
+    const deployDisabled = noWeapons ? ' style="opacity:0.45;pointer-events:none;"' : '';
+    const deployWarn = noWeapons ? '<div style="font-size:9px;letter-spacing:1px;color:var(--sci-red);margin-top:4px;">Equip at least one weapon to deploy</div>' : '';
+
     el.innerHTML = `
         <!-- Top bar -->
-        <div class="mp-top" style="position:relative;">
+        <div class="mp-top">
             <button id="hangar-mm-btn" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;" onclick="returnToMainMenu()">‹ Back</button>
             <div class="mp-screen-title">WARZONE</div>
-            <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;" onclick="deployMech()">Deploy Mech ›</button>
+            <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
+                <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;" onclick="deployMech()"${deployDisabled}>Deploy Mech ›</button>
+                ${deployWarn}
+            </div>
         </div>
 
         <!-- Body -->
         <div class="mp-body">
 
-            <!-- Left column: controls + preview -->
+            <!-- Left column: preview + controls -->
             <div class="mp-left">
+
+                <!-- Mech preview -->
+                <div class="mp-preview-zone">
+                    <div class="mp-preview-box">
+                        <div class="sci-corner sci-corner-tl"></div>
+                        <div class="sci-corner sci-corner-tr"></div>
+                        <div class="sci-corner sci-corner-bl"></div>
+                        <div class="sci-corner sci-corner-br"></div>
+                        <img id="preview-img" src="assets/${chassis}-mech.png"
+                            style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
+                    </div>
+                    <div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">
+                        ${chassis} &nbsp;·&nbsp; ${colorOpt.label}
+                    </div>
+                </div>
 
                 <!-- Dropdowns section -->
                 <div class="mp-left-controls">
@@ -337,28 +416,13 @@ function refreshGarage() {
                             <div class="dd-list wz-dd-list" id="wz-ddl-COL"></div>
                         </div>
                     </div>
+                    ${ddRow('M', 'Cpu')}
+                    ${ddRow('A', 'Augment')}
                     ${ddRow('L', 'L.Arm')}
                     ${ddRow('R', 'R.Arm')}
-                    ${ddRow('M', 'Core Mod')}
-                    ${ddRow('S', 'Shield')}
                     ${ddRow('G', 'Legs')}
-                    ${ddRow('A', 'Augment')}
+                    ${ddRow('S', 'Shield')}
                     ${bothExplosive ? '<div style="font-size:9px;letter-spacing:1px;color:var(--sci-gold);margin-top:8px;">⚠ Dual explosive — high self-damage risk</div>' : ''}
-                </div>
-
-                <!-- Mech preview -->
-                <div class="mp-preview-zone">
-                    <div class="mp-preview-box">
-                        <div class="sci-corner sci-corner-tl"></div>
-                        <div class="sci-corner sci-corner-tr"></div>
-                        <div class="sci-corner sci-corner-bl"></div>
-                        <div class="sci-corner sci-corner-br"></div>
-                        <img id="preview-img" src="assets/${chassis}-mech.png"
-                            style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
-                    </div>
-                    <div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">
-                        ${chassis} &nbsp;·&nbsp; ${colorOpt.label}
-                    </div>
                 </div>
 
             </div><!-- /mp-left -->

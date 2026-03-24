@@ -2347,7 +2347,7 @@ function _pvpRenderHangar() {
 
     // ── Slot label helpers ──
     const weaponName = (key) => {
-        if (!key || key === 'none') return 'None';
+        if (!key || key === 'none') return 'NONE';
         return (typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[key] : null)
             || WEAPONS[key]?.name || key.toUpperCase();
     };
@@ -2357,35 +2357,38 @@ function _pvpRenderHangar() {
     }
     const gap = '<div class="hg-gap"></div>';
 
-    // ── Stats panel HTML ──
+    // ── Stats panel HTML (new order) ──
     let statsHtml = '';
-    statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
-    statsHtml += statRow('HP SPLIT', 'C ' + (ch.coreHP||0) + ' / A ' + (ch.armHP||0) + ' / L ' + (ch.legHP||0), 'dim');
-    statsHtml += gap;
-    statsHtml += statRow('SPEED', spdStr, 'warn');
-    statsHtml += statRow('SHIELD HP', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
-    statsHtml += gap;
-    const lArmName = weaponName(loadout.L);
-    const rArmKey2 = is2H ? loadout.L : loadout.R;
-    const rArmName = weaponName(rArmKey2);
-    const lArmVal  = (!loadout.L || loadout.L === 'none') ? '— none' : lArmName + (lRate ? ' — ' + lRate : '');
-    const rArmVal  = (!rArmKey2 || rArmKey2 === 'none') ? '— none' : rArmName + (rRate ? ' — ' + rRate : '');
-    const weaponRows = [
-        statRow('L ARM', lArmVal, 'dim'),
-        statRow('R ARM', rArmVal, 'dim'),
-        modCd ? statRow('CORE CD', modCd, 'warn') : '',
-    ].join('');
-    if (weaponRows) { statsHtml += weaponRows; statsHtml += gap; }
+    // Chassis name
+    statsHtml += statRow('CHASSIS', (chassis || '').toUpperCase(), 'warn');
+    // Chassis perks/traits
     if (chassisTraits.length) {
         const chCls = chassis === 'light' ? 'green' : 'warn';
-        statsHtml += statRow('CHASSIS', chassisTraits.join(' · '), chCls);
+        statsHtml += statRow('CHASSIS PERKS', chassisTraits.join(' · '), chCls);
     }
-    if (passives.length) statsHtml += statRow('PASSIVES', passives.join(' · '), 'purple');
     statsHtml += gap;
-    statsHtml += statRow('MOD', _pvpGetSlotLabel('M'), 'dim');
-    statsHtml += statRow('SHIELD', _pvpGetSlotLabel('S'), 'dim');
-    statsHtml += statRow('LEGS', _pvpGetSlotLabel('G'), 'dim');
-    statsHtml += statRow('AUGMENT', _pvpGetSlotLabel('A'), 'dim');
+    // HP
+    statsHtml += statRow('HP SPLIT', 'C ' + (ch.coreHP||0) + ' / A ' + (ch.armHP||0) + ' / L ' + (ch.legHP||0), 'dim');
+    statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
+    statsHtml += statRow('TOTAL SHIELD', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
+    statsHtml += gap;
+    // Slot details — same order as dropdown list
+    function pvpSlotBlock(label, slotType, key) {
+        const name = (slotType === 'weapon') ? weaponName(key) : _pvpGetSlotLabel(
+            slotType === 'cpu' ? 'M' : slotType === 'augment' ? 'A' : slotType === 'legs' ? 'G' : 'S'
+        );
+        statsHtml += statRow(label, name, 'dim');
+        if (typeof _buildSlotDetails === 'function') {
+            _buildSlotDetails(slotType, key).forEach(d => { statsHtml += statRow(d.lbl, d.val, d.cls); });
+        }
+    }
+    pvpSlotBlock('CPU', 'cpu', loadout.mod);
+    pvpSlotBlock('AUGMENT', 'augment', loadout.aug);
+    const rArmKey2 = is2H ? loadout.L : loadout.R;
+    pvpSlotBlock('L ARM', 'weapon', loadout.L);
+    pvpSlotBlock('R ARM', 'weapon', rArmKey2);
+    pvpSlotBlock('LEGS', 'legs', loadout.leg);
+    pvpSlotBlock('SHIELD', 'shield', loadout.shld);
 
     // ── Dropdown row builder ──
     function ddRow(slotId, labelText) {
@@ -2410,13 +2413,27 @@ function _pvpRenderHangar() {
         ? `<button onclick="_pvpBackToMenu()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">‹ Back</button>`
         : '';
 
+    // ── Deploy/join validation ──
+    const noWeapons = lEmpty && rEmpty;
+    const _deployDisabled = noWeapons ? ' style="opacity:0.45;pointer-events:none;"' : '';
+    const _deployWarn = noWeapons ? '<div style="font-size:9px;letter-spacing:1px;color:var(--sci-red);margin-top:4px;">Equip at least one weapon to deploy</div>' : '';
+
     let topRightBtn;
     if (_pvpHangarInMatch) {
         topRightBtn = `
-            <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;">Deploy Mech ›</button>
-            <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="flex:0 0 auto;width:auto;">Quit Match</button>`;
+            <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Deploy Mech ›</button>
+                    <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="flex:0 0 auto;width:auto;">Quit Match</button>
+                </div>
+                ${_deployWarn}
+            </div>`;
     } else {
-        topRightBtn = `<button onclick="_pvpJoinLobby()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;margin-left:auto;">Join Lobby ›</button>`;
+        topRightBtn = `
+            <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
+                <button id="pvp-join-btn" onclick="_pvpJoinLobby()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Join Lobby ›</button>
+                ${_deployWarn}
+            </div>`;
     }
 
     const screenTitle = _pvpHangarInMatch ? 'CHANGE LOADOUT' : 'MULTIPLAYER';
@@ -2432,8 +2449,23 @@ function _pvpRenderHangar() {
         <!-- Body -->
         <div class="mp-body">
 
-            <!-- Left column: controls + preview -->
+            <!-- Left column: preview + controls -->
             <div class="mp-left">
+
+                <!-- Mech preview -->
+                <div class="mp-preview-zone">
+                    <div class="mp-preview-box">
+                        <div class="sci-corner sci-corner-tl"></div>
+                        <div class="sci-corner sci-corner-tr"></div>
+                        <div class="sci-corner sci-corner-bl"></div>
+                        <div class="sci-corner sci-corner-br"></div>
+                        <img id="pvp-preview-img" src="assets/${chassis}-mech.png"
+                            style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
+                    </div>
+                    <div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">
+                        ${chassis} &nbsp;·&nbsp; ${colorOpt.label}
+                    </div>
+                </div>
 
                 <!-- Dropdowns section -->
                 <div class="mp-left-controls">
@@ -2458,27 +2490,12 @@ function _pvpRenderHangar() {
                             <div class="dd-list pvp-dd-list" id="pvp-ddl-COL"></div>
                         </div>
                     </div>
+                    ${ddRow('M', 'Cpu')}
+                    ${ddRow('A', 'Augment')}
                     ${ddRow('L', 'L.Arm')}
                     ${ddRow('R', 'R.Arm')}
-                    ${ddRow('M', 'Core Mod')}
-                    ${ddRow('S', 'Shield')}
                     ${ddRow('G', 'Legs')}
-                    ${ddRow('A', 'Augment')}
-                </div>
-
-                <!-- Mech preview -->
-                <div class="mp-preview-zone">
-                    <div class="mp-preview-box">
-                        <div class="sci-corner sci-corner-tl"></div>
-                        <div class="sci-corner sci-corner-tr"></div>
-                        <div class="sci-corner sci-corner-bl"></div>
-                        <div class="sci-corner sci-corner-br"></div>
-                        <img id="pvp-preview-img" src="assets/${chassis}-mech.png"
-                            style="max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 0 15px #${hexStr});">
-                    </div>
-                    <div style="font-size:9px;letter-spacing:3px;color:var(--sci-txt3);text-transform:uppercase;">
-                        ${chassis} &nbsp;·&nbsp; ${colorOpt.label}
-                    </div>
+                    ${ddRow('S', 'Shield')}
                 </div>
 
             </div><!-- /mp-left -->

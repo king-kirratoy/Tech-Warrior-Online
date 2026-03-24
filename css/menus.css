@@ -1185,10 +1185,9 @@
 .mp-preview-zone {
   align-items: center;
   display: flex;
-  flex: 1;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 10px;
-  justify-content: center;
   padding: 20px;
 }
 
