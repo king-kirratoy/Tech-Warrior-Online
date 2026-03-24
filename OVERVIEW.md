@@ -2,7 +2,7 @@
 
 > A browser-based top-down mech shooter built with Phaser 3.60.0. Players choose a chassis, build a loadout in the Hangar, then deploy into wave-based combat. **Warzone** is a roguelike run-and-die loop (`_gameMode='simulation'`); **Campaign** is persistent with XP/levels/missions/shop (`_gameMode='campaign'`); **Multiplayer** is real-time PVP via Socket.IO (`_gameMode='pvp'`).
 
-Last updated: March 24, 2026 (v6.06 — OVERVIEW.md accuracy audit)
+Last updated: March 24, 2026 (v6.07 — doc consolidation, UI_CONVENTIONS.md as single source of truth)
 
 ---
 
@@ -126,10 +126,7 @@ phaser.min.js → constants.js → state.js → utils.js → audio.js → mechs.
 ### Loadout Overlay (GEAR Screen)
 **Lives in:** `js/menus.js` — `populateLoadout()`, `_renderHullBars()`, `_renderGearBonusesPanel()`, `_renderActivePerksPanel()`, `_renderWeaponBar()`; `css/garage.css` — all `.lo-*` classes
 **What it does:** Three-column overlay (`grid-template-columns: 220px 1fr 440px`). Left: chassis stats, HP bars, total HP/shield, gear bonuses, active perks. Center: chassis traits bar, mech silhouette with 8 equipment slots, weapon bar. Right: backpack (4×5 grid, 20 slots × 100×100px). Hover cards appear on `mouseenter` for both doll slots and backpack cells.
-**Key pattern:** `populateLoadout()` is the single render entry point — do not call sub-renderers directly.
-**Shared class:** `.lo-slot` applies to both equipped doll slots AND backpack cells — CSS changes affect both.
-**Hover card flow:** `_showSlotHover(el, slotKey, itemOverride)` → `_buildHoverHtml(item, slotLabel, compareItem, leftLabel)` for single items; `_buildSingleCardHtml(item, slotLabel)` used for each side of a comparison card. Optional `leftLabel` (default `'BACKPACK'`) lets the shop pass `'SHOP'` for its comparison cards.
-**Equipment doll slot labels:** 8 slots positioned on the mech silhouette using percentage-based `top`/`left`/`right` absolute positioning. Slot positions defined in a config object inside `populateLoadout()`. Labels: Arm slots use `"L ARM"` and `"R ARM"`. Other slots: `"CPU"`, `"AUGMENT"`, `"SHIELD"`, `"LEGS"`, `"TORSO"`, `"ARMOR"`.
+**UI details:** See UI_CONVENTIONS.md — Section 6 (Loadout Screen Architecture) for layout, render entry point, shared `.lo-slot` class, hover card system, and equipment doll slot labels.
 
 ### HUD Element IDs Reference
 
@@ -150,49 +147,19 @@ stats-overlay        pause-overlay        death-screen          perk-menu
 
 ### Slot Label Naming
 
-| Location | Label used | Notes |
-|---|---|---|
-| Backpack item cards | **"WEAPON"** for weapons | Uses `_bpSlotNames` map in `js/menus.js` |
-| Backpack item cards | "CPU" for mod systems | |
-| Backpack item cards | "AUGMENT" for augments | |
-| Backpack item cards | "DEFENSE" for shields | |
-| Backpack item cards | "LEGS" for leg systems | |
-| Equipped doll slots (arms) | "L ARM" / "R ARM" | Position config in `populateLoadout()` |
-| Weapon bar (center col bottom) | "L ARM" / "R ARM" | `_wbItem()` calls in `populateLoadout()` |
+See UI_CONVENTIONS.md — Section 5 (Slot Label Naming) for the full mapping tables.
 
 ### Rarity Colors
 
-Rarity color strings come from `RARITY_DEFS[rarity].colorStr` in `js/loot-system.js`.
-
-| Rarity | Approximate color |
-|---|---|
-| common | white / grey |
-| uncommon | green |
-| rare | blue |
-| epic | purple |
-| legendary | orange/gold |
+See UI_CONVENTIONS.md — Section 3 (Color Meaning → Rarity Colors) for the full table.
 
 ### Inverted Stats (Negative Is Better)
 
-| Stat key | Display label | Why |
-|---|---|---|
-| `reloadPct` | Reload Speed % | Negative % = faster reload |
-| `modCdPct` | Mod Cooldown % | Negative % = shorter cooldown |
-| `reload` | Reload (raw ms) | Lower value = faster |
-
-Use the `_hoverInvertedStats` Set in `js/menus.js` to check any stat key.
+See UI_CONVENTIONS.md — Section 4 (Inverted Display Stats) for the full table and implementation rules.
 
 ### Color Meanings (General UI)
 
-| Color | Meaning |
-|---|---|
-| `--sci-cyan` (#00d4ff) | Interactive, active, selected, primary accent |
-| `--sci-red` (#ff4d6a) | Danger, destroyed, negative diff, bad stat |
-| `--sci-gold` (#ffd166) | Legendary, unique, special |
-| Green (`.pos` class) | Positive stat value, improvement |
-| Red (`.neg` class) | Negative stat value, downgrade |
-| `--sci-txt2` (40% white) | Muted labels, secondary info |
-| `--sci-txt3` (18% white) | Decorative only — nav numbers, chapter numbers |
+See UI_CONVENTIONS.md — Section 3 (Color Meaning) for the full semantic color table.
 
 ---
 
@@ -222,7 +189,7 @@ Use the `_hoverInvertedStats` Set in `js/menus.js` to check any stat key.
 - **`_arenaState` from arena-objectives.js** — mutate its properties in place, never reassign the whole object.
 - **Campaign enemy scaling uses `_activeCampaignConfig?.enemyLevel || _round`** — never use raw `_round` for campaign enemy HP/speed.
 - **Cloud save lives in loot-system.js** — `saveCampaignProgress()`, `loadCampaignProgress()`, and `_scheduleCloudSave()` are in `js/loot-system.js`, not `js/campaign-system.js`. Campaign-system.js handles localStorage only.
-- **`.lo-slot` is shared** — used for both equipped doll slots and backpack cells. `.mech-equip-slot` is applied alongside `.lo-slot` on doll slots to enable drag-and-drop CSS states.
-- **Comparison panel is disabled** — `#inv-detail-panel` has `display:none !important`. Item comparison is done via hover cards only (`_buildHoverHtml` with `compareItem`).
+- **`.lo-slot` is shared** — see UI_CONVENTIONS.md Section 6 for details.
+- **Comparison panel is disabled** — see UI_CONVENTIONS.md Section 6 (Hover Card System).
 - **Version display:** The version number is displayed in `#callsign-version` and `#main-menu-version` elements, populated at runtime. Tracked in CHANGELOG.md.
-- **No cache-busting query strings** — `?v=X.XX` strings on `<link>` and `<script>` tags were deliberately removed in v5.87. Do not add them back.
+- **No cache-busting query strings** — see CLAUDE.md DO NOT list #13.

@@ -20,7 +20,7 @@ Never compare against the display strings — always use the internal key string
 
 1. Read `OVERVIEW.md` before touching any code
 2. Read `CHANGELOG.md` to understand what changed recently and confirm the current version
-3. If the session touches `css/`, `js/menus.js`, or the loadout screen: also read `UI_CONVENTIONS.md`
+3. For any session touching `css/` or `js/menus.js`: also read `UI_CONVENTIONS.md`
 4. After making any changes, update both `OVERVIEW.md` (current state) and `CHANGELOG.md`
    (what changed, with new version number)
 5. Keep CHANGELOG.md to the 10 most recent version entries. After writing
@@ -146,17 +146,14 @@ This is **not** dual-wield. Dual-wield is Light chassis only, same weapon in bot
 
 ### Font rule
 
-**Every UI element uses `Courier New`, monospace.** There is no sans-serif or display font anywhere in the game. Always use the token:
-```css
-font-family: var(--font-mono); /* 'Courier New', monospace */
-```
-Do not hardcode the font string — use the variable.
+See UI_CONVENTIONS.md — Section 2 (Typography Rules).
+Always use `var(--font-mono)`. Never hardcode a non-monospace font for any game UI element.
 
 ### Design token system
 
 All colors, borders, and surface fills use the `--sci-*` custom properties defined in `css/base.css`.
 **Never hardcode a hex value that duplicates one of these tokens.**
-See `css/base.css` for token values and OVERVIEW.md for the full token reference.
+See UI_CONVENTIONS.md — Section 1 for the full token reference.
 
 ### Section comment pattern
 
@@ -203,13 +200,8 @@ context-specific overrides.
 
 ### Hover card system
 
-Hover cards appear on `mouseenter` for both doll slots and backpack cells.
-They are positioned with fixed coordinates and edge-detection to stay on screen.
-
-- Single item: `_showSlotHover(item, el)` — calls `_buildHoverHtml(item, compareItem)`
-- Comparison: when a backpack item has an equipped counterpart, the card shows two columns
-  side by side (Backpack | Equipped) with a diff section below, built by `_buildSingleCardHtml()`
-- Hide: `_hideSlotHover()` on `mouseleave` and on `mousedown` (so the card disappears on drag)
+See UI_CONVENTIONS.md — Section 6 (Hover Card System) for the full API and rules.
+Key point: hover cards replace all click-based item detail panels. The old `#inv-detail-panel` is disabled.
 
 ### Code style
 
@@ -244,15 +236,15 @@ Opening braces on the same line. Trailing commas in multi-line objects/arrays.
 Some stats improve as the value goes more negative (e.g. `reloadPct`, `modCdPct`).
 Render these with **reversed** color logic and a `+` prefix rather than `−`.
 Use the `_hoverInvertedStats` Set in `js/menus.js` — it is the single source of truth.
-Do not hard-code inversion logic elsewhere. See OVERVIEW.md for the full stat key list.
+Do not hard-code inversion logic elsewhere. See UI_CONVENTIONS.md — Section 4.
 
 ### Slot label naming
 
 **Do not revert backpack weapon cards to "L ARM" / "R ARM"** — they intentionally use "WEAPON".
-See OVERVIEW.md (Display Conventions) for the full slot label mapping table.
+See UI_CONVENTIONS.md — Section 5 for the full slot label mapping table.
 
 ### Rarity colors
 
 Rarity color strings come from `RARITY_DEFS[rarity].colorStr` in `js/loot-system.js`.
 Apply them as inline `color:` or `border-color:` — never hardcode rarity hex values in CSS.
-See OVERVIEW.md (Display Conventions) for the rarity-to-color reference and color meanings table.
+See UI_CONVENTIONS.md — Section 3 for the rarity-to-color reference and color meanings.

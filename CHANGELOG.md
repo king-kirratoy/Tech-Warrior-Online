@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.07 — Doc consolidation: UI_CONVENTIONS.md as single source of truth
+
+**Date:** 2026-03-24
+
+Documentation-only session. Made UI_CONVENTIONS.md the single authoritative source for all UI rules (design tokens, font rules, color meanings, rarity colors, inverted stats, slot label naming, loadout screen architecture, hover card system). Removed duplicate content from CLAUDE.md and OVERVIEW.md, replacing it with one-line references to the relevant UI_CONVENTIONS.md sections. Updated CLAUDE.md session-start rule #3 wording.
+
+---
+
 ## v6.06 — OVERVIEW.md accuracy audit
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Added `WEAPON_NAMES` constant to `constants.js` as the single canonical source f
 **Date:** 2026-03-23
 
 Reverted `.lo-slot-name` font-size from 11px back to 9px. Updated all 13 `WEAPONS[key].name` values in `constants.js` to full spelled-out names (`Submachine Gun`, `Machine Gun`, `Shotgun`, `Battle Rifle`, `Heavy Rifle`, `Flamethrower`, `Sniper Rifle`, `Grenade Launcher`, `Rocket Launcher`, `Plasma Cannon`, `Railgun`, `Siege Cannon`, `Chain Gun`); since `loot-system.js`, the weapon bar, and the hangar stats panel all derive display names from `WEAPONS[key].name`, the change propagates everywhere automatically — garage dropdown labels were already full names and are unchanged.
-
----
-
-## v5.97 — Fix double borders on center column
-
-**Date:** 2026-03-23
-
-Removed redundant `border-left` and `border-bottom` from `.lo-center-frame`; the single dividing line between columns is now provided solely by `.lo-left`'s `border-right`, and the bottom edge by `.lo-weapon-bar`'s existing `border-bottom`.
 
 ---
