@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.08 — Supply shop layout adjustments
+
+**Date:** 2026-03-24
+
+Moved the Restock button and scrap count from the buy column into the top header bar, grouped to the far right alongside the Back button and title. Removed the restock button from the Buy column header so both Buy and Sell headers now align at the same height. Added a "BACKPACK" category header with separator line above the sell slot grid, matching the buy-side category header style. Added a bottom border to `.shop-body` to visually close the grid area without changing the full-screen flex layout.
+
+---
+
 ## v6.07 — Doc consolidation: UI_CONVENTIONS.md as single source of truth
 
 **Date:** 2026-03-24
@@ -74,13 +82,5 @@ Fixed all UI render sites to look up `WEAPON_NAMES[item.subType]` at render time
 **Date:** 2026-03-23
 
 Added `WEAPON_NAMES` constant to `constants.js` as the single canonical source for all 13 weapon display names plus `none`. Fixed `multiplayer.js` `weaponName()` which was returning abbreviated `SLOT_DESCS` titles (e.g. "SMG — SUBMACHINE GUN") — it now uses `WEAPON_NAMES`. Updated the multiplayer lobby summary, weapon bar (`menus.js`), hangar stats panel (`garage.js`), and loot item generation (`loot-system.js`) to all use `WEAPON_NAMES[key]` with fallback to `WEAPONS[key].name`.
-
----
-
-## v5.98 — Full weapon display names; revert slot name font size
-
-**Date:** 2026-03-23
-
-Reverted `.lo-slot-name` font-size from 11px back to 9px. Updated all 13 `WEAPONS[key].name` values in `constants.js` to full spelled-out names (`Submachine Gun`, `Machine Gun`, `Shotgun`, `Battle Rifle`, `Heavy Rifle`, `Flamethrower`, `Sniper Rifle`, `Grenade Launcher`, `Rocket Launcher`, `Plasma Cannon`, `Railgun`, `Siege Cannon`, `Chain Gun`); since `loot-system.js`, the weapon bar, and the hangar stats panel all derive display names from `WEAPONS[key].name`, the change propagates everywhere automatically — garage dropdown labels were already full names and are unchanged.
 
 ---
