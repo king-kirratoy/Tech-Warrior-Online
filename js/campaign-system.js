@@ -1494,16 +1494,16 @@ function showShop() {
         </div>`;
     }
 
-    function sellRow(item, idx) {
-        const isSelected = (_selectedSellIdx === idx);
-        const meta = `${item.rarity || 'common'} · ${slotLbl(item)} · LV.${item.level || 1}`;
-        return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelectSell(${idx})">
-            <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
-            <div class="shop-item-info">
-                <div class="shop-item-name" style="color:${rc(item)};">${item.name || 'Item'}</div>
-                <div class="shop-item-meta">${meta}</div>
-            </div>
-            <div class="shop-sell-price">⬡ ${getItemSellPrice(item)}</div>
+    function sellSlot(item, idx) {
+        const rd = (typeof RARITY_DEFS !== 'undefined') ? RARITY_DEFS[item.rarity] : null;
+        const color = rd ? rd.colorStr : rc(item);
+        const borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : color + '44';
+        const sellPrice = getItemSellPrice(item);
+        return `<div class="lo-slot" style="border-color:${borderColor};" data-sell-idx="${idx}" onclick="_shopSelectSell(${idx})">
+            ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
+            <div class="lo-slot-lbl">${slotLbl(item)}</div>
+            <div class="lo-slot-name" style="color:${color};">${item.shortName || item.name}</div>
+            <div style="font-size:8px;color:#00ff88;margin-top:2px;">⬡ ${sellPrice}</div>
         </div>`;
     }
 
@@ -1614,13 +1614,17 @@ function showShop() {
     }
     buyItemsHtml += '</div>';
 
-    // ── Sell items list HTML ──
-    let sellItemsHtml = '';
-    if (typeof _inventory === 'undefined' || _inventory.length === 0) {
-        sellItemsHtml = `<div style="padding:40px 20px;text-align:center;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.45);">No items to sell</div>`;
-    } else {
-        sellItemsHtml = _inventory.map((item, idx) => sellRow(item, idx)).join('');
+    // ── Sell grid HTML (4×5 = 20 slots) ──
+    let sellItemsHtml = '<div class="shop-sell-grid">';
+    const inv = (typeof _inventory !== 'undefined') ? _inventory : [];
+    for (let i = 0; i < invMax; i++) {
+        if (i < inv.length) {
+            sellItemsHtml += sellSlot(inv[i], i);
+        } else {
+            sellItemsHtml += '<div class="lo-slot empty"></div>';
+        }
     }
+    sellItemsHtml += '</div>';
 
     // ── Restock button ──
     const restockBtn = `<button onclick="${canRestock ? '_shopRestock()' : ''}"
