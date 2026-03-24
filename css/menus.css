@@ -465,31 +465,6 @@
 /* ============================================================
    SHOP ITEM CARDS
    ============================================================ */
-.shop-item-card {
-  border-color: color-mix(in srgb, var(--card-color, var(--cyan)) 40%, transparent);
-  border-left: 3px solid var(--card-color, var(--border-cyan));
-  border-radius: 4px;
-  padding: 10px;
-  text-align: left;
-  width: 155px;
-}
-
-.shop-item-card.selected {
-  background: color-mix(in srgb, var(--card-color, var(--cyan)) 8%, transparent);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--card-color, var(--cyan)) 20%, transparent);
-}
-
-/* ============================================================
-   SHOP SELL CARDS
-   ============================================================ */
-.shop-sell-card {
-  border-color: color-mix(in srgb, var(--card-color, var(--cyan)) 25%, transparent);
-  border-left: 2px solid var(--card-color, var(--border-cyan));
-  border-radius: 4px;
-  padding: 8px;
-  text-align: left;
-  width: 145px;
-}
 
 /* ============================================================
    ANIMATIONS
@@ -1349,105 +1324,74 @@
 }
 
 .shop-body {
-  display: flex;
+  display: grid;
   flex: 1;
+  grid-template-columns: 1fr 440px;
+  height: 100%;
   overflow: hidden;
 }
 
 .shop-buy-col {
   border-right: 1px solid var(--sci-line);
   display: flex;
-  flex: 1;
   flex-direction: column;
   overflow: hidden;
+  padding: 14px;
 }
 
 .shop-sell-col {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
   overflow: hidden;
-  width: 320px;
+  padding: 14px;
 }
 
-.shop-col-header {
-  align-items: center;
-  border-bottom: 1px solid var(--sci-line);
+.shop-col-hdr {
+  align-items: baseline;
   display: flex;
   flex-shrink: 0;
   justify-content: space-between;
-  padding: 10px 20px;
+  margin-bottom: 10px;
 }
 
 .shop-col-title {
-  color: rgba(255,255,255,0.45);
-  font-size: 9px;
+  color: var(--sci-txt3, rgba(255,255,255,0.45));
+  font-family: 'Courier New', monospace;
+  font-size: 8px;
   letter-spacing: 3px;
   text-transform: uppercase;
 }
 
-.shop-items-list {
-  flex: 1;
+.shop-col-sub {
+  color: var(--sci-txt3, rgba(255,255,255,0.45));
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+}
+
+.shop-buy-grid {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(6, 100px);
+  grid-template-rows: repeat(5, 100px);
   overflow-y: auto;
 }
 
-.shop-item-row {
-  align-items: center;
-  border-bottom: 1px solid var(--sci-line);
-  border-left: 2px solid transparent;
-  cursor: pointer;
-  display: flex;
-  gap: 12px;
-  padding: 10px 20px;
-  transition: background 0.1s;
+.shop-buy-grid .lo-slot {
+  height: 100px;
+  width: 100px;
 }
 
-.shop-item-row:hover { background: var(--sci-surface); }
-
-.shop-item-row.selected {
-  background: rgba(0,212,255,0.04);
-  border-left-color: var(--sci-cyan);
+.shop-sell-grid {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(4, 100px);
+  grid-template-rows: repeat(5, 100px);
+  overflow-y: auto;
 }
 
-.shop-rarity-bar {
-  border-radius: 1px;
-  flex-shrink: 0;
-  height: 36px;
-  width: 3px;
-}
-
-.shop-item-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.shop-item-name {
-  font-size: 11px;
-  letter-spacing: 1px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.shop-item-meta {
-  color: rgba(255,255,255,0.45);
-  font-size: 9px;
-  letter-spacing: 0.5px;
-  margin-top: 2px;
-}
-
-.shop-item-price {
-  color: var(--sci-gold);
-  flex-shrink: 0;
-  font-size: 12px;
-  letter-spacing: 1px;
-}
-
-.shop-sell-price {
-  color: #00ff88;
-  flex-shrink: 0;
-  font-size: 12px;
-  letter-spacing: 1px;
+.shop-sell-grid .lo-slot {
+  height: 100px;
+  width: 100px;
 }
 
 .shop-detail-panel {
@@ -1467,47 +1411,6 @@
   color: rgba(255,255,255,0.45);
   font-size: 9px;
   margin-bottom: 10px;
-}
-
-.shop-compare-grid {
-  display: grid;
-  font-size: 10px;
-  gap: 2px 10px;
-  grid-template-columns: 1fr auto auto auto;
-  margin-bottom: 10px;
-}
-
-.shop-compare-grid.no-equipped {
-  grid-template-columns: 1fr auto;
-}
-
-.shop-compare-header {
-  border-bottom: 1px solid var(--sci-line);
-  color: rgba(255,255,255,0.45);
-  font-size: 8px;
-  letter-spacing: 1px;
-  padding-bottom: 4px;
-  text-align: right;
-  text-transform: uppercase;
-}
-
-.shop-compare-header:first-child { text-align: left; }
-
-.shop-compare-label {
-  color: rgba(255,255,255,0.65);
-  padding: 3px 0;
-}
-
-.shop-compare-val {
-  color: rgba(255,255,255,0.65);
-  padding: 3px 0;
-  text-align: right;
-}
-
-.shop-compare-new {
-  color: var(--sci-txt);
-  padding: 3px 0;
-  text-align: right;
 }
 
 .shop-compare-diff {

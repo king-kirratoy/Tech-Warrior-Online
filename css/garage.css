@@ -948,7 +948,7 @@
   pointer-events: none;
   position: fixed;
   width: 200px;
-  z-index: 9999;
+  z-index: 10010;
 }
 
 /* --- Unique effect in hover card --- */

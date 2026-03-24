@@ -5,6 +5,14 @@ Each session that changes code gets a version bump.
 
 ---
 
+## v6.03 — Rebuild supply shop with slot grids
+
+**Date:** 2026-03-24
+
+Replaced the row-based buy and sell lists in the campaign supply shop with fixed slot grids (6×5 buy, 4×5 sell) using the same `.lo-slot` cards as the loadout backpack. Added hover cards with equipped-item comparison to both grids via reused `_buildHoverHtml`, increased `SHOP_MAX_ITEMS` from 8 to 30, and removed all old row/card CSS.
+
+---
+
 ## v6.02 — Fix supply shop hover card transparency (z-index below overlay)
 
 **Date:** 2026-03-23

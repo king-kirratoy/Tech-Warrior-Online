@@ -1298,7 +1298,7 @@ function awardMissionReward(missionId) {
 
 /** Shop stock — refreshed each time player returns to mission select. */
 let _shopStock = [];
-const SHOP_MAX_ITEMS = 8;
+const SHOP_MAX_ITEMS = 30;
 
 /** Base prices by rarity (buy price). Sell = scrapValue from RARITY_DEFS. */
 const SHOP_PRICES = {
@@ -1476,37 +1476,46 @@ function showShop() {
         return h;
     }
 
-    // ── Item row builders ──
-    function buyRow(item, idx) {
-        const meta = `${item.rarity || 'common'} · ${slotLbl(item)} · LV.${item.level || 1}`;
-        const soldBadge = item._soldBack
-            ? `<span style="font-size:8px;letter-spacing:1px;color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.06);border-radius:2px;padding:1px 4px;margin-left:6px;">SOLD</span>`
-            : '';
-        const canBuyRow = scrapVal >= item._shopPrice && (typeof _inventory === 'undefined' || _inventory.length < invMax);
-        const buyBtn = canBuyRow
-            ? `<button class="tw-btn tw-btn--solid tw-btn--sm" onclick="_shopBuy(${idx});event.stopPropagation();" style="flex:0 0 auto;width:auto;min-width:52px;font-size:9px;padding:0 8px;height:26px;">Buy</button>`
-            : `<button class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;min-width:52px;font-size:9px;padding:0 8px;height:26px;opacity:0.35;" disabled>Buy</button>`;
-        return `<div class="shop-item-row" onmouseenter="_shopShowHover(this,${idx},'buy')" onmouseleave="_shopHideHover()">
-            <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
-            <div class="shop-item-info">
-                <div class="shop-item-name" style="color:${rc(item)};">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name || 'Item'}${soldBadge}</div>
-                <div class="shop-item-meta">${meta}</div>
-            </div>
-            <div class="shop-item-price">⬡ ${item._shopPrice}</div>
-            ${buyBtn}
+    // ── Slot builders ──
+    function _shopItemName(item) {
+        return (item.baseType === 'weapon' && typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[item.subType] : null) || item.shortName || item.name || 'Item';
+    }
+
+    function buySlot(item, idx) {
+        const rd = (typeof RARITY_DEFS !== 'undefined') ? RARITY_DEFS[item.rarity] : null;
+        const color = rd ? rd.colorStr : rc(item);
+        const borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : color + '44';
+        const isSold = !!item._soldBack;
+        const soldStyle = isSold ? 'opacity:0.35;pointer-events:none;' : '';
+        const soldBadge = isSold ? '<div style="font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.55);margin-top:2px;">SOLD</div>' : '';
+        const priceTag = `<div style="font-size:8px;color:var(--sci-gold,#ffd700);margin-top:2px;">⬡ ${item._shopPrice}</div>`;
+        return `<div class="lo-slot" style="border-color:${borderColor};${soldStyle}" data-shop-idx="${idx}"
+            onclick="_shopSelect(${idx})"
+            onmouseenter="_shopShowHover(this,_shopStock[${idx}],'right')"
+            onmouseleave="_shopHideHover()"
+            onmousedown="_shopHideHover()">
+            ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
+            <div class="lo-slot-lbl">${slotLbl(item)}</div>
+            <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
+            ${soldBadge}
+            ${priceTag}
         </div>`;
     }
 
-    function sellRow(item, idx) {
-        const isSelected = (_selectedSellIdx === idx);
-        const meta = `${item.rarity || 'common'} · ${slotLbl(item)} · LV.${item.level || 1}`;
-        return `<div class="shop-item-row${isSelected ? ' selected' : ''}" onclick="_shopSelectSell(${idx})" onmouseenter="_shopShowHover(this,${idx},'sell')" onmouseleave="_shopHideHover()">
-            <div class="shop-rarity-bar" style="background:${rc(item)};"></div>
-            <div class="shop-item-info">
-                <div class="shop-item-name" style="color:${rc(item)};">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name || 'Item'}</div>
-                <div class="shop-item-meta">${meta}</div>
-            </div>
-            <div class="shop-sell-price">⬡ ${getItemSellPrice(item)}</div>
+    function sellSlot(item, idx) {
+        const rd = (typeof RARITY_DEFS !== 'undefined') ? RARITY_DEFS[item.rarity] : null;
+        const color = rd ? rd.colorStr : rc(item);
+        const borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : color + '44';
+        const sellPrice = getItemSellPrice(item);
+        return `<div class="lo-slot" style="border-color:${borderColor};" data-sell-idx="${idx}"
+            onclick="_shopSelectSell(${idx})"
+            onmouseenter="_shopShowHover(this,_inventory[${idx}],'left')"
+            onmouseleave="_shopHideHover()"
+            onmousedown="_shopHideHover()">
+            ${item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
+            <div class="lo-slot-lbl">${slotLbl(item)}</div>
+            <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
+            <div style="font-size:8px;color:#00ff88;margin-top:2px;">⬡ ${sellPrice}</div>
         </div>`;
     }
 
@@ -1607,21 +1616,28 @@ function showShop() {
         sellDetailHtml += `</div>`;
     }
 
-    // ── Buy items list HTML ──
-    let buyItemsHtml = '';
-    if (_shopStock.length === 0) {
-        buyItemsHtml = `<div style="padding:40px 20px;text-align:center;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.45);">No items in stock</div>`;
-    } else {
-        buyItemsHtml = _shopStock.map((item, idx) => buyRow(item, idx)).join('');
+    // ── Buy grid HTML (6×5 = 30 slots) ──
+    let buyItemsHtml = '<div class="shop-buy-grid">';
+    for (let i = 0; i < 30; i++) {
+        if (i < _shopStock.length) {
+            buyItemsHtml += buySlot(_shopStock[i], i);
+        } else {
+            buyItemsHtml += '<div class="lo-slot empty"></div>';
+        }
     }
+    buyItemsHtml += '</div>';
 
-    // ── Sell items list HTML ──
-    let sellItemsHtml = '';
-    if (typeof _inventory === 'undefined' || _inventory.length === 0) {
-        sellItemsHtml = `<div style="padding:40px 20px;text-align:center;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.45);">No items to sell</div>`;
-    } else {
-        sellItemsHtml = _inventory.map((item, idx) => sellRow(item, idx)).join('');
+    // ── Sell grid HTML (4×5 = 20 slots) ──
+    let sellItemsHtml = '<div class="shop-sell-grid">';
+    const inv = (typeof _inventory !== 'undefined') ? _inventory : [];
+    for (let i = 0; i < invMax; i++) {
+        if (i < inv.length) {
+            sellItemsHtml += sellSlot(inv[i], i);
+        } else {
+            sellItemsHtml += '<div class="lo-slot empty"></div>';
+        }
     }
+    sellItemsHtml += '</div>';
 
     // ── Restock button ──
     const restockBtn = `<button onclick="${canRestock ? '_shopRestock()' : ''}"
@@ -1639,24 +1655,20 @@ function showShop() {
             <div class="shop-body">
                 <!-- BUY column -->
                 <div class="shop-buy-col">
-                    <div class="shop-col-header">
+                    <div class="shop-col-hdr">
                         <div class="shop-col-title">Buy</div>
                         ${restockBtn}
                     </div>
-                    <div class="shop-items-list">
-                        ${buyItemsHtml}
-                    </div>
+                    ${buyItemsHtml}
                     ${detailHtml}
                 </div>
                 <!-- SELL column -->
                 <div class="shop-sell-col">
-                    <div class="shop-col-header">
+                    <div class="shop-col-hdr">
                         <div class="shop-col-title">Sell</div>
-                        <div style="font-size:9px;color:rgba(255,255,255,0.45);">Select item to sell</div>
+                        <div class="shop-col-sub">${typeof _inventory !== 'undefined' ? _inventory.length : 0} / ${invMax}</div>
                     </div>
-                    <div class="shop-items-list">
-                        ${sellItemsHtml}
-                    </div>
+                    ${sellItemsHtml}
                     ${sellDetailHtml}
                 </div>
             </div>
@@ -1675,89 +1687,6 @@ function _shopSelect(idx) {
 function _shopSelectSell(idx) {
     _selectedSellIdx = (_selectedSellIdx === idx) ? null : idx;
     showShop();
-}
-
-/** Show the loadout-style hover card for a shop item row. */
-function _shopShowHover(el, idx, listType) {
-    const item = listType === 'buy' ? (_shopStock && _shopStock[idx]) : (typeof _inventory !== 'undefined' && _inventory[idx]);
-    if (!item) return;
-    if (typeof _buildHoverHtml !== 'function') return;
-
-    let card = document.getElementById('shop-hover-card');
-    if (!card) {
-        card = document.createElement('div');
-        card.id = 'shop-hover-card';
-        card.className = 'lo-hover-card';
-        document.body.appendChild(card);
-    }
-
-    const _lblMap = {
-        weapon:'WEAPON', armor:'ARMOR', arms:'ARMS', legs:'LEGS',
-        shield:'SHIELD', mod:'CPU', augment:'AUGMENT',
-        shield_system:'SHIELD', mod_system:'CPU', leg_system:'LEGS', aug_system:'AUGMENT'
-    };
-    const slotLabel = _lblMap[item.baseType] || item.baseType || '';
-
-    // Comparison: buy items only — find equipped counterpart
-    let compareItem = null;
-    if (listType === 'buy' && typeof _equipped !== 'undefined') {
-        const _eqMap = {
-            armor:'chest', arms:'arms', legs:'legs', shield:'shield',
-            mod:'mod', augment:'augment', shield_system:'shield',
-            mod_system:'mod', leg_system:'legs', aug_system:'augment'
-        };
-        if (item.baseType === 'weapon') {
-            compareItem = _equipped['L'] || _equipped['R'] || null;
-        } else {
-            const eqKey = _eqMap[item.baseType];
-            if (eqKey && _equipped[eqKey]) compareItem = _equipped[eqKey];
-        }
-    }
-
-    card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem, 'SHOP');
-    const isCompare = !!compareItem;
-    card.style.display  = 'block';
-    card.style.zIndex   = '10005';  // must exceed #shop-overlay z-index (10004)
-    card.style.width    = isCompare ? 'auto' : '200px';
-    card.style.padding  = isCompare ? '0' : '';
-    card.style.border   = isCompare ? 'none' : '';
-
-    // Measure then position (same algorithm as _showSlotHover in menus.js)
-    card.style.position = 'fixed';
-    card.style.left = '-9999px';
-    card.style.top  = '0';
-    const cardW = card.offsetWidth;
-    const cardH = card.offsetHeight;
-
-    const er     = el.getBoundingClientRect();
-    const margin = 8;
-    let left;
-    if (er.left > window.innerWidth / 2) {
-        left = er.left - cardW - margin;
-        if (left < 0) left = er.right + margin;
-    } else {
-        left = er.right + margin;
-        if (left + cardW > window.innerWidth) left = er.left - cardW - margin;
-    }
-    if (left < 0) left = 4;
-    if (left + cardW > window.innerWidth) left = window.innerWidth - cardW - 4;
-
-    let top = er.top;
-    if (top + cardH > window.innerHeight - 8) top = er.bottom - cardH;
-    if (top < 4) top = 4;
-
-    card.style.left = left + 'px';
-    card.style.top  = top  + 'px';
-}
-
-function _shopHideHover() {
-    const card = document.getElementById('shop-hover-card');
-    if (card) {
-        card.style.display = 'none';
-        card.style.width   = '';
-        card.style.padding = '';
-        card.style.border  = '';
-    }
 }
 
 function _shopBuy(idx) {
@@ -1791,9 +1720,83 @@ function _shopRestock() {
     showShop();
 }
 
+// ── Shop hover card helpers ──
+function _shopShowHover(el, item, preferSide) {
+    if (typeof _buildHoverHtml !== 'function') return;
+    const card = document.getElementById('eq-hover-card');
+    if (!card || !el || !item) return;
+
+    // Determine slot label
+    const _shopHoverSlotNames = {
+        weapon:'Weapon', armor:'Armor', arms:'Arms', legs:'Legs',
+        shield:'Shield', mod:'CPU', augment:'Augment',
+        shield_system:'Shield', mod_system:'CPU', leg_system:'Legs', aug_system:'Augment'
+    };
+    const slotLabel = _shopHoverSlotNames[item.baseType] || item.baseType || '';
+
+    // Find equipped item for comparison
+    let compareItem = null;
+    const _slotMap = {
+        weapon:'L', armor:'chest', arms:'arms', legs:'legs',
+        shield:'shield', mod:'mod', augment:'augment',
+        shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment'
+    };
+    if (item.baseType === 'weapon') {
+        if (typeof _equipped !== 'undefined') {
+            if (_equipped['L']) compareItem = _equipped['L'];
+            else if (_equipped['R']) compareItem = _equipped['R'];
+        }
+    } else {
+        const eqKey = _slotMap[item.baseType];
+        if (eqKey && typeof _equipped !== 'undefined' && _equipped[eqKey]) {
+            compareItem = _equipped[eqKey];
+        }
+    }
+
+    const isCompare = !!compareItem;
+    card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem, 'SHOP');
+    card.style.display = 'block';
+    card.style.zIndex = '10005';
+    card.style.width = isCompare ? 'auto' : '200px';
+    card.style.padding = isCompare ? '0' : '';
+    card.style.border = isCompare ? 'none' : '';
+
+    // Position offscreen to measure
+    card.style.position = 'fixed';
+    card.style.left = '-9999px';
+    card.style.top = '0';
+    const cardW = card.offsetWidth;
+    const cardH = card.offsetHeight;
+
+    const er = el.getBoundingClientRect();
+    const margin = 8;
+    let left;
+    if (preferSide === 'left') {
+        left = er.left - cardW - margin;
+        if (left < 4) left = er.right + margin;
+    } else {
+        left = er.right + margin;
+        if (left + cardW > window.innerWidth) left = er.left - cardW - margin;
+    }
+    if (left < 4) left = 4;
+    if (left + cardW > window.innerWidth) left = window.innerWidth - cardW - 4;
+
+    let top = er.top;
+    if (top + cardH > window.innerHeight - 8) top = er.bottom - cardH;
+    if (top < 4) top = 4;
+
+    card.style.left = left + 'px';
+    card.style.top = top + 'px';
+}
+
+function _shopHideHover() {
+    if (typeof _hideSlotHover === 'function') _hideSlotHover();
+}
+
 function _closeShop() {
     _selectedShopIdx = null;
     _selectedSellIdx = null;
+    _shopHideHover();
     const overlay = document.getElementById('shop-overlay');
     if (overlay) overlay.style.display = 'none';
     // Return to mission select
