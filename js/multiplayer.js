@@ -2364,7 +2364,7 @@ function _pvpRenderHangar() {
     statsHtml += statRow('CHASSIS', (chassis || '').toUpperCase(), 'warn');
     // Chassis perks/traits
     if (chassisTraits.length) {
-        const chCls = 'warn';
+        const chCls = 'gold';
         statsHtml += statRow('CHASSIS PERKS', chassisTraits.join(' · '), chCls);
     }
     // HP

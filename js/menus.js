@@ -586,6 +586,7 @@ function toggleStats() {
         overlay.style.display = 'none';
         _isInventory = false;
         _isPaused = false;
+        _loCloseColorDD();
         // If opened from mission select, return there instead of resuming GAME
         if (window._loadoutOpenedFromMission) {
             window._loadoutOpenedFromMission = false;
@@ -1562,7 +1563,7 @@ function _renderHullBars() {
         const curShield = Math.round(player.shield||0);
         const maxShield = Math.round(player.maxShield||0);
         totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value" style="color:#00ff88">${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div>`;
-        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:#cc88ff">${curShield} / ${maxShield}</span></div>`;
+        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:var(--sci-cyan)">${curShield} / ${maxShield}</span></div>`;
     } else {
         html += _hpRow('Core',  baseHP.core,  baseHP.core);
         html += _hpRow('L.Arm', baseHP.lArm,  baseHP.lArm);
@@ -1571,7 +1572,7 @@ function _renderHullBars() {
         const totalBase  = Object.values(baseHP).reduce((s,v)=>s+v,0);
         const baseShield = (SHIELD_SYSTEMS[loadout?.shld]?.maxShield||0) + (_gearState?.shieldHP||0);
         totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value" style="color:#00ff88">${totalBase} / ${totalBase}</span></div>`;
-        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:#cc88ff">${baseShield} / ${baseShield}</span></div>`;
+        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:var(--sci-cyan)">${baseShield} / ${baseShield}</span></div>`;
     }
     el.innerHTML = html;
     const tbEl = document.getElementById('lo-totals-block');
@@ -1677,6 +1678,71 @@ function populateLoadout() {
         if (perksSection) perksSection.style.display = 'none';
     }
     _renderWeaponBar();
+    _loRefreshColorSwatch();
+}
+
+// ── Loadout top bar color picker ──────────────────────────────────
+let _loColDDOpen = false;
+let _loColDDOutsideHandler = null;
+
+function _loCloseColorDD() {
+    _loColDDOpen = false;
+    document.getElementById('lo-col-list')?.classList.remove('dd-list-open');
+    document.getElementById('lo-col-sel')?.classList.remove('dd-open');
+    if (_loColDDOutsideHandler) {
+        document.removeEventListener('click', _loColDDOutsideHandler, true);
+        _loColDDOutsideHandler = null;
+    }
+}
+
+function _loToggleColorDD() {
+    if (_loColDDOpen) { _loCloseColorDD(); return; }
+    _loColDDOpen = true;
+    _loBuildColorDD();
+    document.getElementById('lo-col-list')?.classList.add('dd-list-open');
+    document.getElementById('lo-col-sel')?.classList.add('dd-open');
+    setTimeout(() => {
+        _loColDDOutsideHandler = (e) => {
+            if (!e.target.closest('#lo-color-picker')) _loCloseColorDD();
+        };
+        document.addEventListener('click', _loColDDOutsideHandler, true);
+    }, 0);
+}
+
+function _loBuildColorDD() {
+    const list = document.getElementById('lo-col-list');
+    if (!list) return;
+    list.innerHTML = '';
+    const curHex = (loadout.color || 0).toString(16).padStart(6, '0').toLowerCase();
+    (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : []).forEach(opt => {
+        const div = document.createElement('div');
+        div.className = 'dd-option dd-color-opt' + (opt.key === curHex ? ' dd-active' : '');
+        div.innerHTML = `<div class="do-header">
+            <span class="do-color-swatch" style="background:${opt.hex6};box-shadow:0 0 6px ${opt.hex6}55;"></span>
+            <span class="do-name">${opt.label}</span>
+        </div>`;
+        div.onclick = () => {
+            loadout.color = opt.hex;
+            _loCloseColorDD();
+            _loRefreshColorSwatch();
+            if (typeof refreshMechColor === 'function') refreshMechColor();
+            if (typeof saveCampaignState === 'function') saveCampaignState();
+        };
+        list.appendChild(div);
+    });
+}
+
+function _loRefreshColorSwatch() {
+    const picker = document.getElementById('lo-color-picker');
+    if (!picker) return;
+    picker.style.display = _gameMode === 'campaign' ? 'block' : 'none';
+    if (_gameMode !== 'campaign') return;
+    const curHex = (loadout.color || 0).toString(16).padStart(6, '0').toLowerCase();
+    const opt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : []).find(o => o.key === curHex);
+    const swatchEl = document.getElementById('lo-col-swatch');
+    const labelEl  = document.getElementById('lo-col-label');
+    if (swatchEl) swatchEl.style.background = opt ? opt.hex6 : '#888';
+    if (labelEl)  labelEl.textContent = opt ? opt.label : '—';
 }
 
 /** Populates #lo-traits-bar with chassis traits and #lo-weapon-bar with weapon stats. */

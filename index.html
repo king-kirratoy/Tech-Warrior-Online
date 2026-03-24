@@ -510,7 +510,19 @@
   <div class="lo-top-bar">
     <button onclick="toggleStats()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">BACK</button>
     <div class="mp-screen-title" style="font-size:12px;letter-spacing:6px;">LOADOUT</div>
-    <div id="inv-header-count" style="font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.45);margin-left:auto;"></div>
+    <div style="align-items:center;display:flex;gap:14px;margin-left:auto;">
+      <div id="inv-header-count" style="color:rgba(255,255,255,0.45);font-size:11px;letter-spacing:1px;"></div>
+      <div id="lo-color-picker" style="display:none;position:relative;">
+        <div id="lo-col-sel" class="mp-dd-selected" onclick="_loToggleColorDD()" style="min-width:140px;padding:6px 12px;">
+          <span style="align-items:center;display:flex;gap:8px;">
+            <span id="lo-col-swatch" style="border-radius:1px;display:inline-block;flex-shrink:0;height:10px;width:10px;"></span>
+            <span id="lo-col-label">—</span>
+          </span>
+          <span style="font-size:9px;opacity:0.5;">▼</span>
+        </div>
+        <div id="lo-col-list" class="dd-list" style="left:auto;min-width:160px;right:0;"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Campaign XP Bar (hidden unless campaign mode) — slim single-line row -->
