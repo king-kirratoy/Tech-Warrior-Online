@@ -2167,9 +2167,12 @@ function _pvpGetSlotLabel(slotId) {
               : slotId === 'M' ? loadout.cpu : slotId === 'S' ? loadout.shld
               : slotId === 'G' ? loadout.leg : loadout.aug;
     if (!key || key === 'none') return 'NONE';
+    if (slotId === 'L' || slotId === 'R') {
+        return (typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[key] : null) || WEAPONS[key]?.name || key.toUpperCase();
+    }
     const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[key] : null;
     if (desc) return desc.title;
-    const dict = (slotId === 'L' || slotId === 'R' || slotId === 'M') ? WEAPONS
+    const dict = slotId === 'M' ? WEAPONS
                : slotId === 'S' ? SHIELD_SYSTEMS : slotId === 'G' ? LEG_SYSTEMS : AUGMENTS;
     return dict[key]?.name || key.toUpperCase();
 }
@@ -2220,7 +2223,9 @@ function _pvpBuildDropdown(slotId) {
 
         const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[opt.key] : null;
         const descText = (desc && opt.key !== 'none') ? desc.desc : '';
-        const titleText = desc ? desc.title : opt.label;
+        const titleText = (slotId === 'L' || slotId === 'R')
+            ? ((typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[opt.key] : null) || opt.label)
+            : (desc ? desc.title : opt.label);
 
         const div = document.createElement('div');
         div.className = 'dd-option'

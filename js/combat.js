@@ -501,7 +501,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     // Bulwark Shield: 12% DR always active (even when shield depleted)
     const _bwSys2 = SHIELD_SYSTEMS[loadout.shld];
     if (_bwSys2?.passiveDR) amt = Math.round(amt * (1 - _bwSys2.passiveDR));
-    // Siege Wall: -20% damage while shield is up
+    // Siege Shield: -20% damage while shield is up
     if (_bwSys2?.activeDR && player.shield > 0) amt = Math.round(amt * (1 - _bwSys2.activeDR));
     // Scrap Shield: absorb incoming damage after limb destruction
     if (_perkState._scrapAbsorb > 0) {
@@ -755,11 +755,6 @@ function _applyPassiveShieldAbsorption(amt) {
         player._shieldCounterChg = (player._shieldCounterChg || 0) + amt * absorb;
     }
 
-    // ── Retribution: charge on absorbed hits ──
-    if (_ss.retributionBreak) {
-        player._shieldRetribChg = (player._shieldRetribChg || 0) + amt * absorb;
-    }
-
     const _prevShield = player.shield;
     const _shieldFloor = _perkState.shieldIndestructible ? 1 : 0;
     player.shield = Math.max(_shieldFloor, player.shield - amt * absorb);
@@ -802,18 +797,6 @@ function _applyPassiveShieldAbsorption(amt) {
             }
         }
 
-        // Retribution: AoE on break scaled to charge
-        if (_ss.retributionBreak && player._shieldRetribChg > 0 && enemies) {
-            const _rdmg = Math.min(Math.round(player._shieldRetribChg * 0.6), 120);
-            enemies.getChildren().forEach(e => {
-                if (!e.active) return;
-                if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < 200) {
-                    damageEnemy(e, _rdmg, 0);
-                }
-            });
-            if (_sc) createExplosion(_sc, player.x, player.y, 200, 0);
-            player._shieldRetribChg = 0;
-        }
     }
 
     // ── Reactive invuln window blocks further damage ──
@@ -1514,7 +1497,6 @@ function _applyShieldRegen(time) {
         player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult * immovableBonus);
         if (player.shield >= player.maxShield) {
             player._shieldAdaptStack = 0;  // adaptive_shield: reset on full regen
-            player._shieldRetribChg  = 0;  // retribution: reset charge on full regen
         }
         updateBars();
     }

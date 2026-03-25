@@ -420,7 +420,6 @@ function _initPlayerHP(scene, s) {
     player._shieldFlickerHit  = false;  // flicker_shield: tracks odd/even hits
     player._shieldAdaptStack  = 0;      // adaptive_shield: consecutive hit count
     player._shieldCounterChg  = 0;      // counter_shield: stored charge
-    player._shieldRetribChg   = 0;      // retribution: stored charge
     player._shieldLayerHP     = [       // layered_shield: [layer1, layer2]
         _shldSys.layer1Max || 0, _shldSys.layer2Max || 0
     ];
