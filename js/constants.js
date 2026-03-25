@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.45';
+const GAME_VERSION = 'v6.46';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -9,7 +9,7 @@ window.TW = {};
 // ── CHASSIS RESTRICTIONS ─────────────────────────────────────────
 const CHASSIS_WEAPONS = {
     light:  new Set(['none','smg','fth','sg']),
-    medium: new Set(['none','mg','br','sr']),
+    medium: new Set(['none','mg','br','sr','rail']),
     heavy:  new Set(['none','hr','rl','plsm','gl']),
 };
 // ── CHASSIS CPU RESTRICTIONS ──────────────────────────────────────
