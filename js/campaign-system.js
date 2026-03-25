@@ -916,6 +916,7 @@ function _closeMissionSelect() {
         menu.style.display = 'flex';
         menu.style.opacity = '1';
     }
+    if (typeof _updateMainMenuStats === 'function') _updateMainMenuStats();
 }
 
 // ══════════════════════════════════════════════════════════════════
