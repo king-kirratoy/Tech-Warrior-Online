@@ -239,7 +239,7 @@ function refreshGarage() {
 
     // ── Passives ──
     const passives = [];
-    if (braceArm)  passives.push('+25% damage · +15% reload (single-arm brace)');
+    if (braceArm)  passives.push('+25% damage · +15% fire rate (single-arm brace)');
     if (gyro)      passives.push('leg penalty immunity');
     if (mag)       passives.push('−20% dmg in / +15% dmg out when still');
     if (loadout.aug === 'target_painter')   passives.push('hit marks: +20% dmg on target');
@@ -253,7 +253,7 @@ function refreshGarage() {
     const chassisTraits = [];
     if (chassis === 'light') {
         chassisTraits.push('Dual-fire: fires both arms simultaneously when same weapon equipped in each');
-        chassisTraits.push('+20% reload speed (passive)');
+        chassisTraits.push('+20% fire rate (passive)');
         chassisTraits.push('Arms: fragile — 30% less base HP');
     } else if (chassis === 'medium') {
         chassisTraits.push('All mod cooldowns −15%');

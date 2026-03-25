@@ -192,9 +192,9 @@ Some stats are **buffs when their numeric value is negative** because they reduc
 
 | Stat key | Display label | Why inverted |
 |---|---|---|
-| `reloadPct` | Reload Speed % | −15 means 15% faster reload — a buff |
+| `reloadPct` | Fire Rate % | −15 means 15% faster reload = higher fire rate — a buff |
 | `modCdPct` | Mod Cooldown % | −15 means 15% shorter cooldown — a buff |
-| `reload` | Reload (raw ms) | Lower value = faster — a buff |
+| `reload` | Fire Rate (shots/sec) | Lower ms = faster = more shots/sec — converted for display |
 
 ### Display Rule
 

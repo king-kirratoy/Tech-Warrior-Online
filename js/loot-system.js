@@ -194,7 +194,7 @@ const UNIQUE_ITEMS = {
         affixes: [
             { key:'dmgPct', stat:'dmgPct', value:15, label:'+15% Damage' },
             { key:'critChance', stat:'critChance', value:8, label:'+8% Crit Chance' },
-            { key:'reloadPct', stat:'reloadPct', value:10, label:'-10% Reload Time' }
+            { key:'reloadPct', stat:'reloadPct', value:10, label:'+10% Fire Rate' }
         ],
         uniqueEffect: 'doubleStrike',
         uniqueLabel: 'TWIN FANGS: Every 3rd shot fires twice',
@@ -210,7 +210,7 @@ const UNIQUE_ITEMS = {
         boss: 'razor',
         baseStats: { armHP: 25, reloadPct: -8 },
         affixes: [
-            { key:'reloadPct', stat:'reloadPct', value:12, label:'-12% Reload Time' },
+            { key:'reloadPct', stat:'reloadPct', value:12, label:'+12% Fire Rate' },
             { key:'dmgPct', stat:'dmgPct', value:5, label:'+5% Damage' }
         ],
         uniqueEffect: 'dualReload',
@@ -341,7 +341,7 @@ const UNIQUE_ITEMS = {
         affixes: [
             { key:'dmgPct', stat:'dmgPct', value:12, label:'+12% Damage' },
             { key:'critDmg', stat:'critDmg', value:15, label:'+15% Crit Damage' },
-            { key:'reloadPct', stat:'reloadPct', value:8, label:'+8% Reload Speed' }
+            { key:'reloadPct', stat:'reloadPct', value:8, label:'+8% Fire Rate' }
         ],
         uniqueEffect: 'mirrorShot',
         uniqueLabel: 'MIRROR SHOT: Bullets reflect off walls once, dealing 60% damage',
@@ -357,7 +357,7 @@ const UNIQUE_ITEMS = {
         boss: 'mirror',
         baseStats: { armHP: 35, reloadPct: 5 },
         affixes: [
-            { key:'reloadPct', stat:'reloadPct', value:8, label:'+8% Reload Speed' },
+            { key:'reloadPct', stat:'reloadPct', value:8, label:'+8% Fire Rate' },
             { key:'accuracy', stat:'accuracy', value:6, label:'+6% Accuracy' }
         ],
         uniqueEffect: 'echoStrike',
@@ -540,7 +540,7 @@ const AFFIX_POOL = {
     dmgPct:       { label:'+{v}% Damage',            min:3,  max:28, weight:8,  types:['weapon','arms','augment'] },
     critChance:   { label:'+{v}% Crit Chance',       min:2,  max:18, weight:7,  types:['weapon','augment'] },
     critDmg:      { label:'+{v}% Crit Damage',       min:10, max:60, weight:5,  types:['weapon','augment'] },
-    reloadPct:    { label:'-{v}% Reload Time',       min:3,  max:22, weight:8,  types:['weapon','arms'] },
+    reloadPct:    { label:'+{v}% Fire Rate',          min:3,  max:22, weight:8,  types:['weapon','arms'] },
     pellets:      { label:'+{v} Pellets',            min:1,  max:3,  weight:3,  types:['weapon'], subTypes:['sg'] },
     splashRadius: { label:'+{v}% Blast Radius',      min:10, max:45, weight:5,  types:['weapon'], subTypes:['gl','rl','plsm'] },
     accuracy:     { label:'+{v}% Accuracy',          min:3,  max:15, weight:5,  types:['weapon','arms'] },

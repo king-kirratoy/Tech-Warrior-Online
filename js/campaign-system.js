@@ -1445,11 +1445,11 @@ const _shopRarityColors = {
 /** Stat display names for comparison panel. */
 const _shopStatNames = {
     dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit %', critDmg:'Crit Dmg %',
-    reloadPct:'Reload Spd %', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All HP',
+    reloadPct:'Fire Rate %', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All HP',
     dr:'Dmg Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %',
     dodgePct:'Dodge %', speedPct:'Move Speed %', modCdPct:'Mod CD %', modEffPct:'Mod Eff %',
     lootMult:'Loot Quality %', autoRepair:'Auto Repair', pellets:'Pellets', splashRadius:'Blast Radius %',
-    accuracy:'Accuracy', dmg:'Damage', reload:'Reload (ms)'
+    accuracy:'Accuracy', dmg:'Damage', reload:'Fire Rate'
 };
 
 /** Get the total computed stats for an item (baseStats + affixes). */
@@ -1529,7 +1529,7 @@ function showShop() {
         entries.forEach(([k, v]) => {
             h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
             h += `<span style="color:rgba(255,255,255,0.45);">${_shopStatNames[k] || k}</span>`;
-            h += `<span style="color:var(--sci-txt);">${v}</span>`;
+            h += `<span style="color:var(--sci-txt);">${k === 'reload' ? (1000 / v).toFixed(1) + '/sec' : v}</span>`;
             h += `</div>`;
         });
         if (!entries.length) {
@@ -1631,7 +1631,7 @@ function showShop() {
             entries.forEach(([k, v]) => {
                 detailHtml += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
                 detailHtml += `<span style="color:rgba(255,255,255,0.45);">${_shopStatNames[k] || k}</span>`;
-                detailHtml += `<span style="color:var(--sci-txt);">${v}</span>`;
+                detailHtml += `<span style="color:var(--sci-txt);">${k === 'reload' ? (1000 / v).toFixed(1) + '/sec' : v}</span>`;
                 detailHtml += `</div>`;
             });
             if (!entries.length) {
@@ -2193,7 +2193,7 @@ function _showUpgradesPanel() {
         html += `<div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:6px;">ACTIVE BONUSES</div>`;
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
         const statLabels = { coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', spd:'Speed',
-            dmgMult:'Damage', reloadMult:'Reload Spd', critChance:'Crit Chance', critDmg:'Crit Damage',
+            dmgMult:'Damage', reloadMult:'Fire Rate', critChance:'Crit Chance', critDmg:'Crit Damage',
             shieldRegen:'Shield Regen', blastMult:'Blast Radius', dodgeChance:'Dodge',
             dr:'Dmg Reduction', modCdMult:'Mod Cooldown', autoRepair:'Auto Repair' };
         const pctStats = new Set(['dmgMult','reloadMult','critChance','critDmg','shieldRegen','blastMult','dodgeChance','dr','modCdMult']);
