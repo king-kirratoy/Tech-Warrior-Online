@@ -664,7 +664,7 @@ function showWarzonePerksOverlay() {
     ov.innerHTML =
         `<div class="wz-perks-panel">` +
             `<div class="wz-perks-top-bar">` +
-                `<button class="wz-perks-back" onclick="document.getElementById('wz-perks-overlay').remove()">&#8249; Back</button>` +
+                `<button class="wz-perks-back">&#8249; Back</button>` +
                 `<div class="wz-perks-title">PERKS</div>` +
                 `<div class="wz-perks-count">${perkCount} selected this run</div>` +
             `</div>` +
@@ -674,6 +674,21 @@ function showWarzonePerksOverlay() {
             `</div>` +
         `</div>`;
     document.body.appendChild(ov);
+
+    // ── ESC / Back button — close overlay, keep pause menu open ──
+    function _closeWzPerksOverlay() {
+        document.removeEventListener('keydown', _wzPerksEscHandler, true);
+        const overlay = document.getElementById('wz-perks-overlay');
+        if (overlay) overlay.remove();
+    }
+    function _wzPerksEscHandler(e) {
+        if (e.key !== 'Escape') return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        _closeWzPerksOverlay();
+    }
+    ov.querySelector('.wz-perks-back').onclick = _closeWzPerksOverlay;
+    document.addEventListener('keydown', _wzPerksEscHandler, true);
 }
 
 function toggleStats() {
