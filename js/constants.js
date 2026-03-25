@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.56';
+const GAME_VERSION = 'v6.57';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -90,28 +90,28 @@ const CHASSIS = {
 const WEAPONS = {
     // ── PRIMARY WEAPONS ─────────────────────────────────────────────
     // SMG: high fire rate, close range — identity: spray & suppression, damage falls off past 280px
-    smg:    { name: 'Submachine Gun', reload: 55,   dmg: 6,   weight: 15,  bulletSize: 4,  speed: 950, rangeDropoff: 280 },
+    smg:    { name: 'Submachine Gun', fireRate: 55,   dmg: 6,   weight: 15,  bulletSize: 4,  speed: 950, rangeDropoff: 280 },
     // MG: solid sustained fire — identity: reliable workhorse
-    mg:     { name: 'Machine Gun',    reload: 280,  dmg: 28,  weight: 25,  bulletSize: 6,  speed: 870 },
+    mg:     { name: 'Machine Gun',    fireRate: 280,  dmg: 28,  weight: 25,  bulletSize: 6,  speed: 870 },
     // SG: close-range burst — identity: devastating at point blank, weak at range
-    sg:     { name: 'Shotgun',        reload: 700,  dmg: 16,  weight: 30,  bulletSize: 5,  speed: 580,  pellets: 6, range: 500 },
+    sg:     { name: 'Shotgun',        fireRate: 700,  dmg: 16,  weight: 30,  bulletSize: 5,  speed: 580,  pellets: 6, range: 500 },
     // BR: burst precision — identity: mid-range burst, first shot accurate
-    br:     { name: 'Battle Rifle',   reload: 900,  dmg: 30,  weight: 30,  bulletSize: 5,  speed: 1150, burst: 3 },
+    br:     { name: 'Battle Rifle',   fireRate: 900,  dmg: 30,  weight: 30,  bulletSize: 5,  speed: 1150, burst: 3 },
     // HR: anti-armor heavy — identity: pierces shields entirely (shield absorb ignored), high single-shot damage
-    hr:     { name: 'Heavy Rifle',    reload: 1600, dmg: 160, weight: 45,  bulletSize: 12, speed: 1100, armorBuster: true, shieldPierce: true },
+    hr:     { name: 'Heavy Rifle',    fireRate: 1600, dmg: 160, weight: 45,  bulletSize: 12, speed: 1100, armorBuster: true, shieldPierce: true },
     // FTH: flamethrower — identity: short-range DoT cone, no bullet, spray fire
-    fth:    { name: 'Flamethrower',   reload: 90,   dmg: 7,   weight: 30,  bulletSize: 8,  speed: 420,  flame: true, range: 350 },
+    fth:    { name: 'Flamethrower',   fireRate: 90,   dmg: 7,   weight: 30,  bulletSize: 8,  speed: 420,  flame: true, range: 350 },
     // ── SECONDARY WEAPONS ───────────────────────────────────────────
     // SR: precision eliminator — identity: pierce through all enemies in line
-    sr:     { name: 'Sniper Rifle',   reload: 2200, dmg: 240, weight: 50,  bulletSize: 6,  speed: 2200, pierce: true },
+    sr:     { name: 'Sniper Rifle',   fireRate: 2200, dmg: 240, weight: 50,  bulletSize: 6,  speed: 2200, pierce: true },
     // GL: area denial — identity: short arm distance, big AOE
-    gl:     { name: 'Grenade Launcher', reload: 2800, dmg: 220, weight: 55,  explosive: true, armDist: 80 },
+    gl:     { name: 'Grenade Launcher', fireRate: 2800, dmg: 220, weight: 55,  explosive: true, armDist: 80 },
     // RL: high-risk heavy — identity: massive dmg+radius, can self-damage
-    rl:     { name: 'Rocket Launcher', reload: 3200, dmg: 250, weight: 65,  explosive: true, bulletSize: 12, speed: 820, selfDamage: true, radius: 120 },
+    rl:     { name: 'Rocket Launcher', fireRate: 3200, dmg: 250, weight: 65,  explosive: true, bulletSize: 12, speed: 820, selfDamage: true, radius: 120 },
     // PLSM: channeled beam — identity: continuous growing orb
-    plsm:   { name: 'Plasma Cannon',  reload: 3200, dmg: 300, weight: 60,  size: 32 },
+    plsm:   { name: 'Plasma Cannon',  fireRate: 3200, dmg: 300, weight: 60,  size: 32 },
     // RAIL: railgun — identity: long charge, extreme single-target damage, pierces all
-    rail:   { name: 'Railgun',        reload: 4500, dmg: 450, weight: 70,  bulletSize: 5,  speed: 3000, pierce: true, charge: true },
+    rail:   { name: 'Railgun',        fireRate: 4500, dmg: 450, weight: 70,  bulletSize: 5,  speed: 3000, pierce: true, charge: true },
     // ── SYSTEM MODIFICATIONS ────────────────────────────────────────
     none:   { name: 'NONE',   weight: 0 },
     // JUMP: repositioning — deals slam AoE on land

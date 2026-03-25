@@ -55,7 +55,7 @@ const ITEM_BASES = {
     reactive_plate: { baseType:'armor', name:'Reactive Plating',  icon:'armor_react',  baseStats:{ coreHP:30, dr:0.04 } },
 
     // ── ARM REINFORCEMENT (arms slot) ──
-    servo_enhancer: { baseType:'arms', name:'Servo Enhancer',     icon:'arm_servo',    baseStats:{ armHP:15, reloadPct:-5 } },
+    servo_enhancer: { baseType:'arms', name:'Servo Enhancer',     icon:'arm_servo',    baseStats:{ armHP:15, fireRatePct:-5 } },
     stabilizer:     { baseType:'arms', name:'Stabilizer',         icon:'arm_stab',     baseStats:{ armHP:20, accuracy:5 } },
     power_coupler:  { baseType:'arms', name:'Power Coupler',      icon:'arm_power',    baseStats:{ armHP:10, dmgPct:3 } },
 
@@ -126,11 +126,11 @@ const ITEM_BASES = {
     // ── SYSTEM AUGMENTS (aug_system slot → sets loadout.aug) ──
     sys_target_painter:   { baseType:'aug_system', systemKey:'target_painter',   name:'Target Painter',    icon:'aug_painter',  baseStats:{ dmgPct:3, accuracy:3 } },
     sys_threat_analyzer:  { baseType:'aug_system', systemKey:'threat_analyzer',  name:'Threat Analyzer',   icon:'aug_threat',   baseStats:{ critChance:2, accuracy:3 } },
-    sys_overclock_cpu:    { baseType:'aug_system', systemKey:'overclock_cpu',    name:'Overclock CPU',     icon:'aug_cpu',      baseStats:{ reloadPct:-5, modCdPct:-3 } },
+    sys_overclock_cpu:    { baseType:'aug_system', systemKey:'overclock_cpu',    name:'Overclock CPU',     icon:'aug_cpu',      baseStats:{ fireRatePct:-5, modCdPct:-3 } },
     sys_reactive_plating: { baseType:'aug_system', systemKey:'reactive_plating', name:'Reactive Plating',  icon:'aug_plating',  baseStats:{ dr:0.03, coreHP:10 } },
     sys_scrap_cannon:     { baseType:'aug_system', systemKey:'scrap_cannon',     name:'Scrap Cannon',      icon:'aug_scrap',    baseStats:{ dmgPct:4 } },
     sys_ghost_circuit:    { baseType:'aug_system', systemKey:'ghost_circuit',    name:'Ghost Circuit',     icon:'aug_ghost',    baseStats:{ dodgePct:3, speedPct:3 } },
-    sys_reflex_amp:       { baseType:'aug_system', systemKey:'reflex_amp',       name:'Reflex Amp',        icon:'aug_reflex',   baseStats:{ reloadPct:-4, dodgePct:2 } },
+    sys_reflex_amp:       { baseType:'aug_system', systemKey:'reflex_amp',       name:'Reflex Amp',        icon:'aug_reflex',   baseStats:{ fireRatePct:-4, dodgePct:2 } },
     sys_combat_ai:        { baseType:'aug_system', systemKey:'combat_ai',        name:'Combat AI',         icon:'aug_ai',       baseStats:{ critChance:3, dmgPct:2 } },
     sys_war_machine:      { baseType:'aug_system', systemKey:'war_machine',      name:'War Machine',       icon:'aug_war',      baseStats:{ dmgPct:5, dr:0.02 } },
     sys_iron_fortress:    { baseType:'aug_system', systemKey:'iron_fortress',    name:'Iron Fortress',     icon:'aug_iron',     baseStats:{ dr:0.05, coreHP:15 } },
@@ -194,7 +194,7 @@ const UNIQUE_ITEMS = {
         affixes: [
             { key:'dmgPct', stat:'dmgPct', value:15, label:'+15% Damage' },
             { key:'critChance', stat:'critChance', value:8, label:'+8% Crit Chance' },
-            { key:'reloadPct', stat:'reloadPct', value:10, label:'+10% Fire Rate' }
+            { key:'fireRatePct', stat:'fireRatePct', value:10, label:'+10% Fire Rate' }
         ],
         uniqueEffect: 'doubleStrike',
         uniqueLabel: 'TWIN FANGS: Every 3rd shot fires twice',
@@ -208,9 +208,9 @@ const UNIQUE_ITEMS = {
         rarity: 'epic',
         isUnique: true,
         boss: 'razor',
-        baseStats: { armHP: 25, reloadPct: -8 },
+        baseStats: { armHP: 25, fireRatePct: -8 },
         affixes: [
-            { key:'reloadPct', stat:'reloadPct', value:12, label:'+12% Fire Rate' },
+            { key:'fireRatePct', stat:'fireRatePct', value:12, label:'+12% Fire Rate' },
             { key:'dmgPct', stat:'dmgPct', value:5, label:'+5% Damage' }
         ],
         uniqueEffect: 'dualReload',
@@ -341,7 +341,7 @@ const UNIQUE_ITEMS = {
         affixes: [
             { key:'dmgPct', stat:'dmgPct', value:12, label:'+12% Damage' },
             { key:'critDmg', stat:'critDmg', value:15, label:'+15% Crit Damage' },
-            { key:'reloadPct', stat:'reloadPct', value:8, label:'+8% Fire Rate' }
+            { key:'fireRatePct', stat:'fireRatePct', value:8, label:'+8% Fire Rate' }
         ],
         uniqueEffect: 'mirrorShot',
         uniqueLabel: 'MIRROR SHOT: Bullets reflect off walls once, dealing 60% damage',
@@ -355,9 +355,9 @@ const UNIQUE_ITEMS = {
         rarity: 'epic',
         isUnique: true,
         boss: 'mirror',
-        baseStats: { armHP: 35, reloadPct: 5 },
+        baseStats: { armHP: 35, fireRatePct: 5 },
         affixes: [
-            { key:'reloadPct', stat:'reloadPct', value:8, label:'+8% Fire Rate' },
+            { key:'fireRatePct', stat:'fireRatePct', value:8, label:'+8% Fire Rate' },
             { key:'accuracy', stat:'accuracy', value:6, label:'+6% Accuracy' }
         ],
         uniqueEffect: 'echoStrike',
@@ -478,7 +478,7 @@ function generateUniqueItem(uniqueKey, round) {
     }));
     // Update labels with scaled values
     affixes.forEach(a => {
-        const prefix = ['reloadPct','modCdPct'].includes(a.stat) ? '-' : '+';
+        const prefix = ['fireRatePct','modCdPct'].includes(a.stat) ? '-' : '+';
         a.label = a.label.replace(/[+-]?\d+/, prefix + a.value);
     });
 
@@ -540,7 +540,7 @@ const AFFIX_POOL = {
     dmgPct:       { label:'+{v}% Damage',            min:3,  max:28, weight:8,  types:['weapon','arms','augment'] },
     critChance:   { label:'+{v}% Crit Chance',       min:2,  max:18, weight:7,  types:['weapon','augment'] },
     critDmg:      { label:'+{v}% Crit Damage',       min:10, max:60, weight:5,  types:['weapon','augment'] },
-    reloadPct:    { label:'+{v}% Fire Rate',          min:3,  max:22, weight:8,  types:['weapon','arms'] },
+    fireRatePct:  { label:'+{v}% Fire Rate',          min:3,  max:22, weight:8,  types:['weapon','arms'] },
     pellets:      { label:'+{v} Pellets',            min:1,  max:3,  weight:3,  types:['weapon'], subTypes:['sg'] },
     splashRadius: { label:'+{v}% Blast Radius',      min:10, max:45, weight:5,  types:['weapon'], subTypes:['gl','rl','plsm'] },
     accuracy:     { label:'+{v}% Accuracy',          min:3,  max:15, weight:5,  types:['weapon','arms'] },
@@ -722,7 +722,7 @@ function generateItem(round, enemyData) {
         icon = baseKey; // icon key matches weapon key
         baseStats = {};
         if (w.dmg) baseStats.dmg = w.dmg;
-        if (w.reload) baseStats.reload = w.reload;
+        if (w.fireRate) baseStats.fireRate = w.fireRate;
         if (w.pellets) baseStats.pellets = w.pellets;
         if (w.speed) baseStats.speed = w.speed;
         if (w.range) baseStats.range = w.range;
@@ -1275,7 +1275,7 @@ function spawnEquipmentLoot(scene, x, y, enemyData) {
 // ── GEAR STATE CALCULATION ─────────────────────────────────────
 function recalcGearStats() {
     _gearState = {
-        dmgFlat:0, dmgPct:0, critChance:0, critDmg:0, reloadPct:0,
+        dmgFlat:0, dmgPct:0, critChance:0, critDmg:0, fireRatePct:0,
         coreHP:0, armHP:0, legHP:0, allHP:0, dr:0,
         shieldHP:0, shieldRegen:0, absorbPct:0, dodgePct:0, speedPct:0,
         modCdPct:0, modEffPct:0, lootMult:0, autoRepair:0,
@@ -1619,7 +1619,7 @@ function _createStarterItem(baseType, weaponKey) {
         icon = weaponKey;
         baseStats = {};
         if (w.dmg) baseStats.dmg = w.dmg;
-        if (w.reload) baseStats.reload = w.reload;
+        if (w.fireRate) baseStats.fireRate = w.fireRate;
         if (w.pellets) baseStats.pellets = w.pellets;
         if (w.speed) baseStats.speed = w.speed;
         if (w.range) baseStats.range = w.range;

@@ -1200,7 +1200,7 @@ function _handleEnemyFiringDecision(scene, enemy, dist, time) {
     const _pWep = enemy.loadout?.primary || 'smg';
     const fireRange  = (_pWep === 'fth' || _pWep === 'sg') ? 320
                      : enemy.behavior === 'sniper' ? 1000 : 750;
-    const wepReload  = WEAPONS[_pWep]?.reload || 300;
+    const wepReload  = WEAPONS[_pWep]?.fireRate || 300;
     const reloadMult = enemy.behavior === 'sniper' ? 1.4
                      : enemy.behavior === 'rusher' ? 0.85
                      : enemy.behavior === 'flanker' ? 1.0 : 1.1;
@@ -1216,7 +1216,7 @@ function _handleEnemyFiringDecision(scene, enemy, dist, time) {
     const secKey = enemy.loadout?.secondary;
     if (secKey && secKey !== 'none') {
         const secW    = WEAPONS[secKey];
-        const secCd   = (secW?.reload || 3500) * 1.2;
+        const secCd   = (secW?.fireRate || 3500) * 1.2;
         const secRange = secKey === 'emp'  ? WEAPONS.emp.radius
                      : secKey === 'gl'   ? 700
                      : secKey === 'fth'  ? 320

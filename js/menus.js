@@ -1287,7 +1287,7 @@ function _buildItemComparisonHTML(newItem) {
         dmg:'Damage', reload:'Fire Rate', pellets:'Pellets', speed:'Projectile Speed',
         range:'Range', radius:'Blast Radius', burst:'Burst Count', coreHP:'Core HP', armHP:'Arm HP',
         legHP:'Leg HP', dr:'Damage Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %',
-        absorbPct:'Shield Absorb %', speedPct:'Move Speed %', reloadPct:'Fire Rate %',
+        absorbPct:'Shield Absorb %', speedPct:'Move Speed %', fireRatePct:'Fire Rate %',
         dmgPct:'Damage %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Effectiveness %',
         dodgePct:'Dodge %', accuracy:'Accuracy', lootMult:'Loot Quality %'
     };
@@ -1357,7 +1357,7 @@ function _buildItemComparisonHTML(newItem) {
         const ev   = oldStats[k] ?? 0;
         const diff = nv - ev;
         if (diff === 0) return '';
-        const isInverted = (k === 'reload' || k === 'reloadPct' || k === 'modCdPct');
+        const isInverted = (k === 'fireRate' || k === 'fireRatePct' || k === 'modCdPct');
         const isPositive = isInverted ? diff < 0 : diff > 0;
         const color  = isPositive ? '#44ff88' : '#ff4466';
         let fmtVal;
@@ -1455,7 +1455,7 @@ function _renderItemDetail(source, key) {
         const statNames = { dmg:'Damage', reload:'Fire Rate', pellets:'Pellets', speed:'Projectile Speed',
             range:'Range', radius:'Blast Radius', burst:'Burst Count', coreHP:'Core HP', armHP:'Arm HP',
             legHP:'Leg HP', dr:'Damage Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %',
-            absorbPct:'Shield Absorb %', speedPct:'Move Speed %', reloadPct:'Fire Rate %',
+            absorbPct:'Shield Absorb %', speedPct:'Move Speed %', fireRatePct:'Fire Rate %',
             dmgPct:'Damage %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Effectiveness %',
             dodgePct:'Dodge %', accuracy:'Accuracy', lootMult:'Loot Quality %' };
         Object.entries(item.baseStats).forEach(([k, v]) => {
@@ -1818,17 +1818,17 @@ function _renderGearBonusesPanel() {
     gearPanel.style.display = 'block';
     const _gsLabels = {
         dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
-        reloadPct:'Fire Rate %', pellets:'Bonus Pellets', splashRadius:'Blast Radius %',
+        fireRatePct:'Fire Rate %', pellets:'Bonus Pellets', splashRadius:'Blast Radius %',
         coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All Part HP',
         dr:'Damage Reduction %', shieldHP:'Shield Capacity', shieldRegen:'Shield Regen %',
         dodgePct:'Dodge Chance %', speedPct:'Move Speed %', modCdPct:'Mod Cooldown %',
         modEffPct:'Mod Effectiveness %', lootMult:'Loot Quality %', autoRepair:'HP/sec Regen',
         absorbPct:'Shield Absorb %'
     };
-    const offKeys  = ['dmgFlat','dmgPct','critChance','critDmg','reloadPct','pellets','splashRadius'];
+    const offKeys  = ['dmgFlat','dmgPct','critChance','critDmg','fireRatePct','pellets','splashRadius'];
     const defKeys  = ['coreHP','armHP','legHP','allHP','dr','shieldHP','shieldRegen','dodgePct','absorbPct'];
     const utilKeys = ['speedPct','modCdPct','modEffPct','lootMult','autoRepair'];
-    const negKeys  = new Set(['reloadPct','modCdPct']);
+    const negKeys  = new Set(['fireRatePct','modCdPct']);
 
     const _renderGroup = (title, keys) => {
         const active = keys.filter(k => (gs[k] || 0) > 0);
@@ -1960,7 +1960,7 @@ function _renderWeaponBar() {
     if (!el) return;
     const _gDmgFlat = (_gearState?.dmgFlat   || 0);
     const _gDmgPct  = (_gearState?.dmgPct    || 0);
-    const _gRldPct  = (_gearState?.reloadPct || 0);
+    const _gRldPct  = (_gearState?.fireRatePct || 0);
 
     const _wbItem = (label, key) => {
         if (!key || key === 'none') return null;
@@ -1971,7 +1971,7 @@ function _renderWeaponBar() {
         h += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${WEAPON_NAMES[key] || w.name}</div>`;
         if (w.dmg) {
             const effDmg = Math.round((w.dmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100));
-            const effRld = Math.round((w.reload||0) * (_perkState.reloadMult||1) * (1 - _gRldPct/100));
+            const effRld = Math.round((w.fireRate||0) * (_perkState.reloadMult||1) * (1 - _gRldPct/100));
             const effDps = effRld > 0 ? Math.round(effDmg / effRld * 1000) : 0;
             h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span></div>`;
         } else if (w.cooldown) {
@@ -1995,13 +1995,13 @@ function _renderWeaponBar() {
 }
 
 /** Builds hover card HTML for any item. */
-const _hoverStatNames = { dmg:'Damage', reload:'Fire Rate', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP',
-    dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', reloadPct:'Fire Rate%', dmgPct:'Dmg%',
+const _hoverStatNames = { dmg:'Damage', fireRate:'Fire Rate', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP',
+    dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', fireRatePct:'Fire Rate%', dmgPct:'Dmg%',
     critChance:'Crit%', critDmg:'Crit Dmg%', dodgePct:'Dodge%', modCdPct:'Mod CD%',
     modEffPct:'Mod Eff%', lootMult:'Loot%', autoRepair:'Repair', allHP:'All HP',
     absorbPct:'Absorb%', pellets:'Pellets', splashRadius:'Blast%' };
-const _hoverInvertedStats = new Set(['reloadPct','modCdPct','reload']);
-const _pctStats = new Set(['dmgPct','critChance','critDmg','reloadPct','dodgePct','speedPct','modCdPct','modEffPct','absorbPct','shieldRegen','splashRadius','accuracy','lootMult']);
+const _hoverInvertedStats = new Set(['fireRatePct','modCdPct','fireRate']);
+const _pctStats = new Set(['dmgPct','critChance','critDmg','fireRatePct','dodgePct','speedPct','modCdPct','modEffPct','absorbPct','shieldRegen','splashRadius','accuracy','lootMult']);
 
 function _buildSingleCardHtml(item, slotLabel) {
     const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };

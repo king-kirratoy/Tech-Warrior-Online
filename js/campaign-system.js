@@ -1445,7 +1445,7 @@ const _shopRarityColors = {
 /** Stat display names for comparison panel. */
 const _shopStatNames = {
     dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit %', critDmg:'Crit Dmg %',
-    reloadPct:'Fire Rate %', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All HP',
+    fireRatePct:'Fire Rate %', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All HP',
     dr:'Dmg Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %',
     dodgePct:'Dodge %', speedPct:'Move Speed %', modCdPct:'Mod CD %', modEffPct:'Mod Eff %',
     lootMult:'Loot Quality %', autoRepair:'Auto Repair', pellets:'Pellets', splashRadius:'Blast Radius %',
@@ -1609,7 +1609,7 @@ function showShop() {
             const diffKeys = allKeys.filter(k => (newStats[k] || 0) !== (oldStats[k] || 0));
             if (diffKeys.length > 0) {
                 detailHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">Changes if equipped:</div>`;
-                const _shopInvertedStats = new Set(['reloadPct','modCdPct','reload']);
+                const _shopInvertedStats = new Set(['fireRatePct','modCdPct','fireRate']);
                 diffKeys.forEach(k => {
                     const diff    = (newStats[k] || 0) - (oldStats[k] || 0);
                     const isInv   = _shopInvertedStats.has(k);

@@ -2306,8 +2306,8 @@ function _pvpRenderHangar() {
     const braceDmgB    = braceArm ? 1.25 : 1.0;
     const braceRldB    = braceArm ? 0.85 : 1.0;
     function fmtReload(w) {
-        if (!w || !w.reload) return null;
-        const r   = Math.round(w.reload * reloadMult * braceRldB);
+        if (!w || !w.fireRate) return null;
+        const r   = Math.round(w.fireRate * reloadMult * braceRldB);
         const dps = w.dmg ? ((w.dmg * braceDmgB) / (r / 1000)).toFixed(1) : null;
         const tag = braceArm ? ' ★' : '';
         return dps ? dps + ' dps · ' + r + 'ms cd' + tag : r + 'ms cd' + tag;
