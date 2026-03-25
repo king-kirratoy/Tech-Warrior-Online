@@ -120,7 +120,7 @@ function startRound(roundNum) {
     }
 
     // Autonomous Unit: auto-deploy drone at round start (after short delay)
-    if (_perkState.autonomousUnit && loadout.mod === 'atk_drone' && !_perkState._autoDroneActive) {
+    if (_perkState.autonomousUnit && loadout.cpu === 'atk_drone' && !_perkState._autoDroneActive) {
         setTimeout(() => { if (isDeployed && _roundActive) activateAutoDrone(scene); }, 600);
     }
 }

@@ -18,9 +18,9 @@ function updateHUD() {
     // ── System mod ──
     const _mRow = document.getElementById('slot-M');
     const _mTxt = document.getElementById('txt-M');
-    const _mName = (loadout.mod && loadout.mod !== 'none') ? _hudName(loadout.mod) : '—';
+    const _mName = (loadout.cpu && loadout.cpu !== 'none') ? _hudName(loadout.cpu) : '—';
     if (_mTxt) _mTxt.innerText = _mName;
-    if (_mRow) _mRow.style.opacity = (loadout.mod && loadout.mod !== 'none') ? '1' : '0.3';
+    if (_mRow) _mRow.style.opacity = (loadout.cpu && loadout.cpu !== 'none') ? '1' : '0.3';
 
     // ── Shield / defense ──
     const _sRow = document.getElementById('slot-S');
@@ -101,8 +101,8 @@ function updateCooldownOverlays(time) {
     _updateBarRow('R', loadout.R, reloadR, time);
 
     // System mod cooldown
-    if (loadout.mod && loadout.mod !== 'none') {
-        const total   = WEAPONS[loadout.mod]?.cooldown || 0;
+    if (loadout.cpu && loadout.cpu !== 'none') {
+        const total   = WEAPONS[loadout.cpu]?.cooldown || 0;
         const elapsed = time - lastModTime;
         let pct = 0;
         if (isShieldActive || isJumping || isRageActive) {

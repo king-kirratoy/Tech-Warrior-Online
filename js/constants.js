@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.43';
+const GAME_VERSION = 'v6.44';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -12,8 +12,8 @@ const CHASSIS_WEAPONS = {
     medium: new Set(['none','mg','br','hr','gl','plsm','sr','siege','chain']),
     heavy:  new Set(['none','mg','hr','rl','plsm','siege','chain']),
 };
-// ── CHASSIS MOD RESTRICTIONS ──────────────────────────────────────
-const CHASSIS_MODS = {
+// ── CHASSIS CPU RESTRICTIONS ──────────────────────────────────────
+const CHASSIS_CPUS = {
     // Each chassis gets exactly 5 unique options (plus none).
     // 'jump' and 'decoy' appear on light only; 'rage' on heavy only; etc.
     light:  new Set(['none','jump','decoy','barrier','emp','ghost_step']),
@@ -131,7 +131,7 @@ const WEAPONS = {
     missile: { name: 'MISSILES', weight: 35, missileDmg: 55, missileCount: 6, cooldown: 11000 },
     // DECOY: utility — hologram that draws enemy fire for 6s
     decoy:  { name: 'DECOY',  weight: 15,  decoyDuration: 6000, cooldown: 8500 },
-    // ── CHASSIS-UNIQUE CORE MODS ──────────────────────────────────
+    // ── CHASSIS-UNIQUE CORE CPU SYSTEMS ──────────────────────────
     // GHOST STEP: brief cloaking dash — 1.5s invisibility, 3s cooldown
     ghost_step: { name: 'GHOST STEP', weight: 20, cloakTime: 1500, cooldown: 7000,
                   desc: 'Cloak for 1.5s. Enemies lose targeting. Ends if you fire.' },
@@ -301,9 +301,9 @@ const LEG_SYSTEMS = {
 // ── STARTER LOADOUTS ─────────────────────────────────────────────
 /** Starter loadouts per chassis — barebones gear to find the rest through loot. */
 const STARTER_LOADOUTS = {
-    light:  { L: 'smg',  R: 'none', mod: 'none', aug: 'none', leg: 'none', shld: 'light_shield' },
-    medium: { L: 'mg',   R: 'none', mod: 'none', aug: 'none', leg: 'none', shld: 'standard_shield' },
-    heavy:  { L: 'hr',   R: 'none', mod: 'none', aug: 'none', leg: 'none', shld: 'heavy_shield' },
+    light:  { L: 'smg',  R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'light_shield' },
+    medium: { L: 'mg',   R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'standard_shield' },
+    heavy:  { L: 'hr',   R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'heavy_shield' },
 };
 
 // ═══════════ UI CONFIG ═══════════
@@ -411,7 +411,7 @@ const WORLD_CENTER = 2000; // world center X and Y; also the player spawn point
 const SLOT_ID_MAP = {
     L: 'L',
     R: 'R',
-    M: 'mod',
+    M: 'cpu',
     A: 'aug',
     G: 'leg',
     S: 'shld',

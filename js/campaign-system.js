@@ -1269,7 +1269,7 @@ function awardMissionReward(missionId) {
                     }
                     // Re-roll affixes for new rarity
                     if (typeof rollAffixes === 'function') {
-                        const _affixTypeMap = { shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment' };
+                        const _affixTypeMap = { shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment' };
                         const affixType = _affixTypeMap[item.baseType] || item.baseType;
                         item.affixes = rollAffixes(affixType, item.subType, reward.itemRarity);
                         // Re-merge computed stats
@@ -1310,7 +1310,7 @@ function _shopGetCategory(item) {
     const t = (item.baseType || '').toLowerCase();
     if (['weapon'].includes(t)) return 'offensive';
     if (['armor', 'arms', 'shield', 'shield_system'].includes(t)) return 'defensive';
-    if (['legs', 'leg_system', 'mod', 'mod_system', 'augment', 'aug_system'].includes(t)) return 'utility';
+    if (['legs', 'leg_system', 'cpu', 'cpu_system', 'augment', 'aug_system'].includes(t)) return 'utility';
     return 'utility';
 }
 
@@ -1330,8 +1330,8 @@ function _shopRenderCategory(catKey) {
     const items = _shopItems[catKey];
     const _shopSlotLabelsLocal = {
         weapon:'WEAPON', armor:'ARMOR', arms:'ARMS', legs:'LEGS',
-        shield:'SHIELD', mod:'CPU', augment:'AUGMENT',
-        shield_system:'SHIELD', mod_system:'CPU', leg_system:'LEGS', aug_system:'AUGMENT'
+        shield:'SHIELD', cpu:'CPU', augment:'AUGMENT',
+        shield_system:'SHIELD', cpu_system:'CPU', leg_system:'LEGS', aug_system:'AUGMENT'
     };
     const slotLbl = (item) => _shopSlotLabelsLocal[item?.baseType] || (item?.baseType || '');
     const _shopItemName = (item) => (item.baseType === 'weapon' && typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[item.subType] : null) || item.shortName || item.name || 'Item';
@@ -1490,10 +1490,10 @@ function showShop() {
         arms:          'arms',
         legs:          'legs',
         shield:        'shield',
-        mod:           'mod',
+        cpu:           'cpu',
         augment:       'augment',
         shield_system: 'shield',
-        mod_system:    'mod',
+        cpu_system:    'cpu',
         leg_system:    'legs',
         aug_system:    'augment'
     };
@@ -1504,10 +1504,10 @@ function showShop() {
         arms:          'ARMS',
         legs:          'LEGS',
         shield:        'SHIELD',
-        mod:           'CPU',
+        cpu:           'CPU',
         augment:       'AUGMENT',
         shield_system: 'SHIELD',
-        mod_system:    'CPU',
+        cpu_system:    'CPU',
         leg_system:    'LEGS',
         aug_system:    'AUGMENT'
     };
@@ -1846,8 +1846,8 @@ function _shopShowHover(el, item, preferSide, noCompare) {
     // Determine slot label
     const _shopHoverSlotNames = {
         weapon:'Weapon', armor:'Armor', arms:'Arms', legs:'Legs',
-        shield:'Shield', mod:'CPU', augment:'Augment',
-        shield_system:'Shield', mod_system:'CPU', leg_system:'Legs', aug_system:'Augment'
+        shield:'Shield', cpu:'CPU', augment:'Augment',
+        shield_system:'Shield', cpu_system:'CPU', leg_system:'Legs', aug_system:'Augment'
     };
     const slotLabel = _shopHoverSlotNames[item.baseType] || item.baseType || '';
 
@@ -1856,8 +1856,8 @@ function _shopShowHover(el, item, preferSide, noCompare) {
     if (!noCompare) {
         const _slotMap = {
             weapon:'L', armor:'chest', arms:'arms', legs:'legs',
-            shield:'shield', mod:'mod', augment:'augment',
-            shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment'
+            shield:'shield', cpu:'cpu', augment:'augment',
+            shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment'
         };
         if (item.baseType === 'weapon') {
             if (typeof _equipped !== 'undefined') {
@@ -1953,7 +1953,7 @@ function saveLoadoutSlot(slotIdx, name) {
         chassis: loadout.chassis,
         L: loadout.L,
         R: loadout.R,
-        mod: loadout.mod,
+        cpu: loadout.cpu,
         aug: loadout.aug,
         leg: loadout.leg,
         shld: loadout.shld,
@@ -1972,7 +1972,7 @@ function loadLoadoutSlot(slotIdx) {
     loadout.chassis = slot.chassis || 'light';
     loadout.L       = slot.L       || 'smg';
     loadout.R       = slot.R       || 'none';
-    loadout.mod     = slot.mod     || 'none';
+    loadout.cpu     = slot.cpu     || 'none';
     loadout.aug     = slot.aug     || 'none';
     loadout.leg     = slot.leg     || 'none';
     loadout.shld    = slot.shld    || 'light_shield';
@@ -2006,7 +2006,7 @@ function showLoadoutSlots() {
     html += `<div style="margin-bottom:20px;padding:12px 16px;background:${UI_COLORS.cyanSurface04};border:1px solid ${UI_COLORS.cyan20};border-radius:6px;max-width:500px;">`;
     html += `<div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:6px;">CURRENT LOADOUT</div>`;
     const chc = chassisColors[loadout.chassis] || UI_COLORS.text;
-    html += `<div style="font-size:12px;color:${chc};letter-spacing:1px;">${(loadout.chassis||'').toUpperCase()} // L:${(loadout.L||'none').toUpperCase()} R:${(loadout.R||'none').toUpperCase()} MOD:${(loadout.mod||'none').toUpperCase()} SHLD:${(loadout.shld||'none').toUpperCase()}</div>`;
+    html += `<div style="font-size:12px;color:${chc};letter-spacing:1px;">${(loadout.chassis||'').toUpperCase()} // L:${(loadout.L||'none').toUpperCase()} R:${(loadout.R||'none').toUpperCase()} CPU:${(loadout.cpu||'none').toUpperCase()} SHLD:${(loadout.shld||'none').toUpperCase()}</div>`;
     html += '</div>';
 
     // Slot list
@@ -2257,7 +2257,7 @@ async function saveToCloud() {
             chassis: loadout.chassis,
             color: loadout.color,
             L: loadout.L, R: loadout.R,
-            mod: loadout.mod, aug: loadout.aug,
+            cpu: loadout.cpu, aug: loadout.aug,
             leg: loadout.leg, shld: loadout.shld,
             totalKills: (typeof _totalKills !== 'undefined') ? _totalKills : 0,
             perksEarned: (typeof _perksEarned !== 'undefined') ? _perksEarned : 0
@@ -2352,7 +2352,7 @@ function _restoreFromCloudData(data) {
         loadout.color = cp.color || 0x00ff00;
         loadout.L = cp.L || 'smg';
         loadout.R = cp.R || 'none';
-        loadout.mod = cp.mod || 'none';
+        loadout.cpu = cp.cpu || 'none';
         loadout.aug = cp.aug || 'none';
         loadout.leg = cp.leg || 'none';
         loadout.shld = cp.shld || 'light_shield';
@@ -2371,8 +2371,8 @@ function _restoreFromCloudData(data) {
         _inventory = _cloudClean;
     }
     if (data.equipped && typeof data.equipped === 'object') {
-        const validSlots = ['L','R','chest','arms','legs','shield','mod','augment'];
-        const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
+        const validSlots = ['L','R','chest','arms','legs','shield','cpu','augment'];
+        const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
         validSlots.forEach(s => { if (data.equipped[s] && typeof data.equipped[s] === 'object' && data.equipped[s].name && data.equipped[s].rarity && data.equipped[s].baseType) clean[s] = data.equipped[s]; });
         _equipped = clean;
     }
@@ -2420,7 +2420,7 @@ async function _loadCampaignData() {
             loadout.color   = saved.color   || 0x00ff00;
             loadout.L       = saved.L       || 'smg';
             loadout.R       = saved.R       || 'none';
-            loadout.mod     = saved.mod     || 'none';
+            loadout.cpu     = saved.cpu     || 'none';
             loadout.aug     = saved.aug     || 'none';
             loadout.leg     = saved.leg     || 'none';
             loadout.shld    = saved.shld    || 'light_shield';

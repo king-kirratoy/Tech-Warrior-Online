@@ -1235,7 +1235,7 @@ function _tickPerkExpiries(time) {
 
 function selectPerks() {
     const ch  = loadout.chassis;
-    const mod = loadout.mod || 'none';
+    const mod = loadout.cpu || 'none';
     const wL  = loadout.L   || 'none';
     const wR  = loadout.R   || 'none';
     const aug = loadout.aug || 'none';

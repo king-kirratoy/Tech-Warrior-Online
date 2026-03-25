@@ -226,14 +226,14 @@ function handlePlayerMovement(scene, time) {
         * _warlordSpeedMult
         * _shldSpdMult
         * _unstoppableSpdMult;
-    const modCooldown = loadout.mod !== 'none' ? WEAPONS[loadout.mod]?.cooldown || 0 : 0;
+    const modCooldown = loadout.cpu !== 'none' ? WEAPONS[loadout.cpu]?.cooldown || 0 : 0;
 
     // Mod activation (SPACE)
     const _gearModCdMult = 1 - ((_gearState?.modCdPct || 0) / 100);
     const effectiveModCooldown = (isChargeActive ? modCooldown * 0.5
         : (loadout.chassis === 'medium' ? modCooldown * (CHASSIS.medium.modCooldownMult || 0.85) : modCooldown))
         * _gearModCdMult
-        * (loadout.mod === 'jump' ? (_perkState.jumpCdMult || 1) * (_perkState.jumpCooldownMult || 1) : 1);
+        * (loadout.cpu === 'jump' ? (_perkState.jumpCdMult || 1) * (_perkState.jumpCooldownMult || 1) : 1);
     if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + effectiveModCooldown) {
         activateMod(scene, time);
     }

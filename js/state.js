@@ -49,7 +49,7 @@ let loadout = {
     chassis: 'light',
     L: 'smg',
     R: 'none',
-    mod: 'none',
+    cpu: 'none',
     aug: 'none',
     leg: 'none',
     shld: 'light_shield',
@@ -59,7 +59,7 @@ let loadout = {
 // Saved loadout snapshots taken at deploy time; used to restore on respawn.
 let _savedL   = null;
 let _savedR   = null;
-let _savedMod = null;
+let _savedCpu = null;
 let _savedAug = null;
 let _savedLeg = null;
 
