@@ -149,12 +149,8 @@ function sndFire(wKey) {
             _tone(85, 'sawtooth', 0.04, 0.10, 40);
             break;
         case 'missile':
-        case 'siege':
             _noise(0.15, 0.40, 0, 80, 1600);
             _tone(70, 'sawtooth', 0.15, 0.20, 30);
-            break;
-        case 'chain':
-            _noise(0.04, 0.18, 0, 1200, 6000);
             break;
     }
 }

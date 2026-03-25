@@ -283,12 +283,6 @@ function handlePlayerFiring(scene) {
     if (!player?.active || !isDeployed) return;
     const ptr = scene.input.activePointer;
 
-    // Reset chaingun spin-up when not firing
-    if (!ptr.isDown && !ptr.rightButtonDown()) {
-        _chaingunSpinStart = 0;
-        _chaingunReady = false;
-    }
-
     // Left-click: fire L arm (and R arm too if Light with matching weapons)
     if (ptr.isDown && ptr.leftButtonDown()) {
         const _target = document.elementFromPoint(ptr.x, ptr.y);

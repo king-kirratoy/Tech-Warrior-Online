@@ -89,10 +89,6 @@ let _extractionPromptShown = false; // whether "PRESS E" prompt is visible
 let reloadL = 0;
 let reloadR = 0;
 
-// Chaingun spin-up tracking.
-let _chaingunSpinStart = 0;   // when chaingun started spinning up
-let _chaingunReady     = false; // true once spin-up complete
-
 // Damage and mod timing.
 let lastDamageTime         = -99999;
 let lastModTime            = 0;

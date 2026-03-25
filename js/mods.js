@@ -42,7 +42,7 @@ function activateDecoy(scene, time) {
         const ang = Math.atan2(nearest.y - decoyTorso.y, nearest.x - decoyTorso.x);
         const wKey = loadout.L !== 'none' ? loadout.L : loadout.R;
         const weapon = WEAPONS[wKey];
-        if (!weapon || weapon.twoHanded || weapon.explosive) return; // skip heavy/explosive for safety
+        if (!weapon || weapon.explosive) return; // skip explosive weapons for safety
         // Fire a visual-only bullet (doesn't use the physics bullet group to keep things simple)
         const b = scene.add.circle(decoyTorso.x, decoyTorso.y, (weapon.bulletSize||4), 0x88ccff, 0.7).setDepth(11);
         scene.physics.add.existing(b);
@@ -443,9 +443,6 @@ function applyAugment() {
             break;
         case 'chain_drive':
             _perkState.chainDrive = true;
-            if (loadout.L === 'chain' || loadout.L === 'siege' || loadout.R === 'chain' || loadout.R === 'siege') {
-                _perkState.dmgMult = (_perkState.dmgMult || 1) * 1.15;
-            }
             break;
     }
 }

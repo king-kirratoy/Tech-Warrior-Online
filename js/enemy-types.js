@@ -66,7 +66,7 @@ const ENEMY_TYPE_DEFS = {
         behavior: 'rusher',
         hpMult: 0.55,         // slightly reduced for enrage compensation
         speedMult: 1.0,
-        primaryPool: ['sg', 'mg', 'chain'],
+        primaryPool: ['sg', 'mg', 'rl'],
         colors: { body: 0x1a0000, head: 0xff2200, eye: 0xff0000 },
         labelColor: '#ff2200',
         dropBias: 'weapon',

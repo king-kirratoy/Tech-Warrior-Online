@@ -6,32 +6,24 @@ function randomEnemyLoadout() {
 
     // ── Chassis-locked weapon pools (mirrors player restrictions) ──
     const LIGHT_WEAPONS  = ['smg','mg','sg','br','fth','plsm'];
-    const MEDIUM_WEAPONS = ['mg','sg','br','hr','fth','sr','gl','plsm','siege','chain'];
-    const HEAVY_WEAPONS  = ['hr','sg','gl','rl','fth','plsm','siege','chain','rail'];
+    const MEDIUM_WEAPONS = ['mg','sg','br','hr','fth','sr','gl','plsm'];
+    const HEAVY_WEAPONS  = ['hr','sg','gl','rl','fth','plsm','rail'];
 
     const weaponPool = chassis === 'light' ? LIGHT_WEAPONS
                      : chassis === 'medium' ? MEDIUM_WEAPONS
                      : HEAVY_WEAPONS;
 
-    // Two-handed only for medium/heavy
-    const twoHandPool = chassis !== 'light' ? ['siege','chain'] : [];
-    const use2H = twoHandPool.length > 0 && Math.random() < 0.10;
-
     let L = 'none', R = 'none';
-    if (use2H) {
-        L = R = rnd.pick(twoHandPool);
-    } else {
-        L = rnd.pick(weaponPool);
-        if (Math.random() < 0.75) {
-            if (Math.random() < 0.20) {
-                R = L; // dual wield same
-            } else {
-                R = rnd.pick(weaponPool);
-            }
+    L = rnd.pick(weaponPool);
+    if (Math.random() < 0.75) {
+        if (Math.random() < 0.20) {
+            R = L; // dual wield same
+        } else {
+            R = rnd.pick(weaponPool);
         }
-        // Light: no dual wield (mirror player restriction)
-        if (chassis === 'light' && L === R) R = 'none';
     }
+    // Light: no dual wield (mirror player restriction)
+    if (chassis === 'light' && L === R) R = 'none';
 
     // ── Chassis-locked mod pools ──
     const LIGHT_MODS  = ['jump','decoy','barrier','emp','ghost_step'];
@@ -425,7 +417,7 @@ function enemyFire(scene, enemy, time) {
     const _rawAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, _ftx, _fty);
     // Accuracy spread per weapon type (radians). Larger = less accurate.
     // Also increases while enemy is moving (momentum penalty)
-    const _spreadMap = { smg:0.28, mg:0.18, br:0.14, sg:0.22, hr:0.10, fth:0, sr:0.06, gl:0, rl:0, plsm:0.10, chain:0.22, siege:0.06 };
+    const _spreadMap = { smg:0.28, mg:0.18, br:0.14, sg:0.22, hr:0.10, fth:0, sr:0.06, gl:0, rl:0, plsm:0.10 };
     const _baseSpread = _spreadMap[wKey] ?? 0.15;
     const _moving = Math.abs(enemy.body?.velocity?.x || 0) + Math.abs(enemy.body?.velocity?.y || 0) > 30;
     const _totalSpread = _baseSpread * (_moving ? 1.6 : 1.0);
@@ -438,7 +430,6 @@ function enemyFire(scene, enemy, time) {
         rail:  0.30,   // 450 → 135  (still scary but not instant death)
         sr:    0.40,   // 240 → 96
         plsm:  0.40,   // 300 → 120
-        siege: 0.35,   // 380 → 133
         gl:    0.55,   // 200 → 110
         rl:    0.55,   // 220 → 121
         hr:    0.65,   // 160 → 104
@@ -555,26 +546,6 @@ function _dispatchEnemyWeapon(scene, enemy, wKey, weapon, dmg, angle, ex, ey, bS
         beam.lineStyle(4, 0xffffff, 1.0);
         beam.lineBetween(ex, ey, endX, endY);
         scene.tweens.add({ targets: beam, alpha: 0, duration: 150, onComplete: () => beam.destroy() });
-    } else if (wKey === 'siege' || wKey === 'chain') {
-        // Two-handed: fire like normal bullet but with siege/chain stats
-        const b = scene.add.circle(ex, ey, bSize, 0xff2200);
-        scene.physics.add.existing(b);
-        b.body.setAllowGravity(false);
-        b.damageValue = dmg; _tagBullet(b);
-        if (wKey === 'siege') {
-            const eSiegeOverlap = scene.physics.add.overlap(b, player, () => {
-                if (!b.active) return;
-                eSiegeOverlap.destroy();
-                createExplosion(scene, b.x, b.y, weapon.radius || 160, dmg);
-                b.destroy();
-            });
-            scene.physics.velocityFromRotation(angle, bSpeed, b.body.velocity);
-            scene.time.delayedCall(2500, () => { if (b.active) { eSiegeOverlap.destroy(); b.destroy(); } });
-        } else {
-            enemyBullets.add(b);
-            scene.physics.velocityFromRotation(angle, bSpeed, b.body.velocity);
-            scene.time.delayedCall(2500, () => { if (b.active) b.destroy(); });
-        }
     } else if (wKey === 'br') {
         // Burst rifle: 3 rapid shots
         for (let i = 0; i < 3; i++) {
@@ -626,7 +597,7 @@ function enemyFireSecondary(scene, enemy, wKey, time) {
     const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, _ftx, _fty);
     const ex = enemy.x, ey = enemy.y;
     // Scaled damage — same table as enemyFire primary
-    const _secScale = { rail:0.30, sr:0.40, plsm:0.40, siege:0.35, gl:0.55, rl:0.55, hr:0.65, br:0.75 };
+    const _secScale = { rail:0.30, sr:0.40, plsm:0.40, gl:0.55, rl:0.55, hr:0.65, br:0.75 };
     const _sDmg = Math.round((weapon.dmg || 15) * (_secScale[wKey] || 1.0));
 
     switch (wKey) {
@@ -1816,7 +1787,7 @@ function spawnArchitect(scene) {
 function spawnJuggernaut(scene) {
     const p = _bossSpawnPos();
     const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', BOSS_COLORS.juggernaut, 5.0, 0.8);
-    e.loadout = { chassis:'heavy', primary:'chain', secondary:'rl',
+    e.loadout = { chassis:'heavy', primary:'mg', secondary:'rl',
                   mod:'rage', shld:'titan_shield', leg:'siege_stance', aug:'reactive_plating' };
     e.behavior = 'circle'; e.isBoss = true; e.bossType = 'juggernaut';
     e._jugPhase = 1; e._jugCharging = false;
@@ -2125,7 +2096,7 @@ function spawnTitan(scene) {
     const p = _bossSpawnPos();
     const titanColors = { body: 0x1a1000, head: 0xff8800, eye: 0xffcc00 };
     const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', titanColors, 8.0, 0.55);
-    e.loadout = { chassis:'heavy', primary:'siege', secondary:'chain',
+    e.loadout = { chassis:'heavy', primary:'rl', secondary:'mg',
                   mod:'fortress_mode', shld:'titan_shield', leg:'siege_stance', aug:'reactive_plating' };
     e.behavior = 'patrol'; e.isBoss = true; e.bossType = 'titan';
     e._titanPhase = 1;
@@ -2388,7 +2359,7 @@ function spawnCore(scene) {
             scene.tweens.add({ targets: warn, alpha:0, duration:2500, onComplete:()=>warn.destroy() });
             _tone(600, 'sine', 0.2, 0.1, 300);
             // Core starts firing faster in desperation
-            coreE.loadout.primary = 'chain';
+            coreE.loadout.primary = 'rl';
         }
 
         // Core laser beam at player every 3s

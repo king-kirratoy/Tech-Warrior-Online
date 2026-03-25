@@ -309,40 +309,6 @@ const _perks = {
         apply: () => { _perkState.railstorm=true; } },
 
     // ══════════════════════════════════════════════════════════════
-    // SIEGE CANNON PERKS (need 10 reg + 1 leg)
-    // ══════════════════════════════════════════════════════════════
-    siege_radius:    { cat:'siege', label:'Heavy Shell',   desc:'Siege Cannon explosion radius +20% (stackable)',          apply: () => { _perkState.siegeRadius=(_perkState.siegeRadius||0)+0.20; } },
-    siege_reload:    { cat:'siege', label:'Shell Loader',  desc:'Siege Cannon reload -20% (stackable)',                    apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.80; } },
-    siege_penetrate: { cat:'siege', label:'Armor Piercing',desc:'Siege Cannon shells ignore 40% of enemy DR',              apply: () => { _perkState.siegePenetrate=true; } },
-    siege_shockwave: { cat:'siege', label:'Concussive Shell',desc:'Siege Cannon blasts stun enemies for 1s',              apply: () => { _perkState.siegeShockwave=true; } },
-    siege_incend:    { cat:'siege', label:'Incendiary Shell',desc:'Siege Cannon leaves a burning patch for 4s on impact',  apply: () => { _perkState.siegeIncend=true; } },
-    siege_cluster:   { cat:'siege', label:'Cluster Payload',desc:'Siege Cannon explosion spawns 4 submunitions (40 dmg each)', apply: () => { _perkState.siegeCluster=true; } },
-    siege_dmg:       { cat:'siege', label:'Overload Shell', desc:'Siege Cannon base damage +25% (stackable)',             apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.25; } },
-    siege_self_shld: { cat:'siege', label:'Blast Shield',   desc:'Siege Cannon self-damage reduced 50%',                  apply: () => { _perkState.siegeSelfShield=true; } },
-    siege_double:    { cat:'siege', label:'Twin Barrel',    desc:'Every 3rd Siege Cannon shot fires twice simultaneously', apply: () => { _perkState.siegeDouble=true; } },
-    siege_lifesteal: { cat:'siege', label:'Spoils of War',  desc:'Siege Cannon kills restore 20 core HP',                 apply: () => { _perkState.siegeLifesteal=true; } },
-    siege_legendary: { cat:'siege', once:true, legendary:true, label:'Siege Breaker',
-        desc:'LEGENDARY — Siege Cannon fires continuously without reload. Explosion radius doubled. Self-damage removed entirely.',
-        apply: () => { _perkState.siegeBreaker=true; } },
-
-    // ══════════════════════════════════════════════════════════════
-    // CHAINGUN PERKS (need 10 reg + 1 leg)
-    // ══════════════════════════════════════════════════════════════
-    chain_spinup:    { cat:'chain', label:'Fast Spin-Up',  desc:'Chaingun reaches full fire rate 40% faster',              apply: () => { _perkState.chainSpinup=true; } },
-    chain_penetrate: { cat:'chain', label:'Penetrating',   desc:'Chaingun bullets pierce through 1 enemy',                 apply: () => { _perkState.chainPenetrate=true; } },
-    chain_incend:    { cat:'chain', label:'Incendiary Feed',desc:'Every 6th Chaingun bullet is incendiary',                apply: () => { _perkState.chainIncend=true; } },
-    chain_suppress:  { cat:'chain', label:'Suppression',   desc:'Chaingun hits slow enemies 5% (stacks up to 5×)',         apply: () => { _perkState.chainSuppress=true; } },
-    chain_dmg:       { cat:'chain', label:'Heavy Caliber', desc:'Chaingun damage +20% (stackable)',                        apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.20; } },
-    chain_lifesteal: { cat:'chain', label:'Blood Feed',    desc:'Chaingun kills restore 4 core HP',                        apply: () => { _perkState.chainLifesteal=true; } },
-    chain_reload:    { cat:'chain', label:'Belt Fed II',   desc:'Chaingun reload -15% (stackable)',                        apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.85; } },
-    chain_tracer:    { cat:'chain', label:'Tracer Every 5',desc:'Every 5th Chaingun bullet deals 3× damage',               apply: () => { _perkState.chainTracer=true; } },
-    chain_shred:     { cat:'chain', label:'Armor Shred',   desc:'Chaingun hits reduce enemy max HP by 2% per hit (max 20% reduction)', apply: () => { _perkState.chainShred=true; } },
-    chain_rampup:    { cat:'chain', label:'Rampage',       desc:'Chaingun damage increases 3% per kill this round (max +30%)', apply: () => { _perkState.chainRampup=(_perkState.chainRampup||0)+1; } },
-    chain_legendary: { cat:'chain', once:true, legendary:true, label:'Endless Belt',
-        desc:'LEGENDARY — Chaingun never needs to reload. Damage ramps +4% per second of continuous fire (max +80%). Resets when you stop.',
-        apply: () => { _perkState.chainEndlessBelt=true; } },
-
-    // ══════════════════════════════════════════════════════════════
     // JUMP MOD PERKS (need 4 reg — already has legendary)
     // ══════════════════════════════════════════════════════════════
     jump_stealth:    { cat:'jump', label:'Ghost Launch',   desc:'JUMP launch grants 1s of invisibility',                   apply: () => { _perkState.jumpStealth=true; } },
@@ -1023,16 +989,6 @@ const _perks = {
     rail_double:         { cat:'rail', label:'Double Beam',      desc:'RAIL: fires 2 beams in a narrow spread',                                      apply: () => { _perkState.railDouble=true; } },
     rail_chain_lightning:{ cat:'rail', label:'Chain Lightning',   desc:'RAIL: beam chains to 2 additional enemies near hit point (60% dmg)',          apply: () => { _perkState.railChainLightning=true; } },
     rail_charge_bonus:   { cat:'rail', label:'Deep Charge',      desc:'RAIL: waiting full charge time grants +40% damage',                           apply: () => { _perkState.railChargeBonus=true; } },
-
-    // ── SIEGE (3 new) ───────────────────────────────────────────
-    siege_frag:          { cat:'siege', label:'Frag Shell',      desc:'Siege: shells spawn 6 shrapnel fragments on impact (15 dmg each)',             apply: () => { _perkState.siegeFrag=true; } },
-    siege_earthquake:    { cat:'siege', label:'Earthquake',      desc:'Siege: explosions stagger all enemies in 300px for 1.5s',                     apply: () => { _perkState.siegeEarthquake=true; } },
-    siege_bunker_buster: { cat:'siege', label:'Bunker Buster',   desc:'Siege: shells ignore all enemy DR and shields',                               apply: () => { _perkState.siegeBunkerBuster=true; } },
-
-    // ── CHAINGUN (3 new) ────────────────────────────────────────
-    chain_overheat:      { cat:'chain', label:'Overheat Mode',   desc:'Chaingun: after 3s continuous fire, bullets ignite enemies',                   apply: () => { _perkState.chainOverheat=true; } },
-    chain_armor_melt:    { cat:'chain', label:'Armor Melt',      desc:'Chaingun: sustained fire reduces enemy DR by 2% per hit (max 30%)',           apply: () => { _perkState.chainArmorMelt=true; } },
-    chain_reaper:        { cat:'chain', label:'Reaper',           desc:'Chaingun: kills extend spin-up state by 2s (no re-spin needed)',              apply: () => { _perkState.chainReaper=true; } },
 
     // ── UNIVERSAL LEGENDARY (5 new) ──────────────────────────────
     universal_phoenix:   { cat:'universal', once:true, legendary:true, label:'Phoenix Protocol',
