@@ -345,6 +345,17 @@ function activateJump(scene) {
                     _perkState._phantomShotReady = false;
                 }, 3000);
             }
+            // Reflex Amp: next shot after landing deals +40% damage
+            if (_perkState.reflexAmp) _perkState._reflexAmpReady = true;
+            // Ghost Circuit: invisible to enemies for 2s after landing
+            if (_perkState.ghostCircuit && player?.active) {
+                player._ghostExitActive = true;
+                if (torso) torso.setAlpha(0.15);
+                GAME.scene.scenes[0].time.delayedCall(2000, () => {
+                    player._ghostExitActive = false;
+                    if (torso?.active) torso.setAlpha(1.0);
+                });
+            }
             // ── SLAM LANDING DAMAGE ──────────────────────────────
             const slamDmg = (WEAPONS.jump.slamDmg || 40) + (_perkState.jumpSlam || 0);
             const slamR   = (loadout.leg === 'afterleg' && _perkState.legSystemActive)

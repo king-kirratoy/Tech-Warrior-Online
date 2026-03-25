@@ -95,6 +95,9 @@ function fire(scene, side) {
     // Build-specific multipliers
     const _neuralMult  = (_perkState._neuralAccelActive && _perkState.neuralAccel) ? 2.0 : 1.0;
     const _phantomMult = _perkState._phantomShotReady ? 4.0 : 1.0;
+    // Reflex Amp: +40% on first shot after JUMP landing or dodge
+    const _reflexMult  = (_perkState.reflexAmp && _perkState._reflexAmpReady) ? 1.4 : 1.0;
+    if (_perkState._reflexAmpReady) _perkState._reflexAmpReady = false;
     // Targeting Scope: SR/RAIL +15% per 200px to cursor
     let _scopeMult = 1.0;
     if (_perkState.targetingScope && (wKey === 'sr' || wKey === 'rail')) {
@@ -124,7 +127,7 @@ function fire(scene, side) {
     const _gearDmgFlat = (_gearState?.dmgFlat || 0);
     const _gearDmgPct  = 1 + ((_gearState?.dmgPct || 0) / 100);
     const _colossusMult = (typeof getColossusDmgMult === 'function') ? getColossusDmgMult() : 1.0;
-    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult);
+    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult * _reflexMult);
     // Apply gear splash radius bonus to explosion weapons (GL, RL, PLSM).
     const _gearSplashMult = 1 + ((_gearState?.splashRadius || 0) / 100);
     const _wEff = Object.assign({}, weapon, {
@@ -539,6 +542,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
             font:'bold 18px monospace', fill:'#88ff88', stroke:'#000', strokeThickness:3
         }).setDepth(20);
         scene.tweens.add({ targets:dodgeTxt, y:dodgeTxt.y-30, alpha:0, duration:700, onComplete:()=>dodgeTxt.destroy() });
+        if (_perkState.reflexAmp) _perkState._reflexAmpReady = true;
         return;
     }
     // Glass Step: first hit per round is always dodged
@@ -549,6 +553,7 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
             font:'bold 16px monospace', fill:'#88ffff', stroke:'#000', strokeThickness:3
         }).setOrigin(0.5).setDepth(20);
         scene3.tweens.add({ targets:dodgeTxt, y:dodgeTxt.y-28, alpha:0, duration:700, onComplete:()=>dodgeTxt.destroy() });
+        if (_perkState.reflexAmp) _perkState._reflexAmpReady = true;
         return;
     }
     player.isProcessingDamage = true;
@@ -905,6 +910,11 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     }
     // Target Painter: painted enemy takes +20% damage
     if (_perkState.targetPainter && _perkState._paintedEnemy === e) amt *= 1.20;
+    // Predator Lens: +10% damage vs enemies >400px away
+    if (_perkState.predatorLens && player) {
+        const _plDist = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+        if (_plDist > 400) amt *= 1.10;
+    }
     // Per-enemy damage multiplier (Threat Analyzer debuff)
     if (e._dmgMult) amt *= e._dmgMult;
     // Elite modifier damage handling (enforcer shield gate, shielded overshield, cloak DR)

@@ -1278,6 +1278,20 @@ function _syncEnemyVisuals(scene, enemy, time) {
             }
         });
     }
+    // Predator Lens: highlight enemies >400px (red-orange outline)
+    if (_perkState.predatorLens && player) {
+        const _plDist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+        const _shouldHL = _plDist > 400;
+        if (_shouldHL !== enemy._predatorHighlight) {
+            enemy._predatorHighlight = _shouldHL;
+            enemy.torso?.list?.forEach(s => {
+                if (s.setStrokeStyle) s.setStrokeStyle(_shouldHL ? 2 : 0, 0xff4400);
+            });
+        }
+    } else if (enemy._predatorHighlight) {
+        enemy._predatorHighlight = false;
+        enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(0); });
+    }
     // Chassis movement FX
     syncEnemyChassisEffect(scene, time, enemy);
 }
