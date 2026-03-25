@@ -1292,6 +1292,16 @@ function _syncEnemyVisuals(scene, enemy, time) {
         enemy._predatorHighlight = false;
         enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(0); });
     }
+    // Echo Targeting: teal outline on revealed enemies
+    if (enemy._echoRevealedUntil && time < enemy._echoRevealedUntil) {
+        if (!enemy._echoHighlight) {
+            enemy._echoHighlight = true;
+            enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(2, 0x00ffcc); });
+        }
+    } else if (enemy._echoHighlight) {
+        enemy._echoHighlight = false;
+        enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(0); });
+    }
     // Chassis movement FX
     syncEnemyChassisEffect(scene, time, enemy);
 }

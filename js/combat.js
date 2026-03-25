@@ -531,8 +531,8 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     if (typeof getColossusDR === 'function') { const cdr = getColossusDR(); if (cdr > 0) amt = Math.round(amt * (1 - cdr)); }
     // Matrix Barrier: invulnerability bubble
     if (typeof isMatrixBarrierActive === 'function' && isMatrixBarrierActive()) return;
-    // Gear total DR
-    const _totalDR = (_perkState.fortress || 0) + ((_gearState?.dr || 0) / 100);
+    // Gear total DR (+ Adaptive Core per-round bonus)
+    const _totalDR = (_perkState.fortress || 0) + ((_gearState?.dr || 0) / 100) + (_perkState._adaptiveCoreDR || 0);
     if (_totalDR > 0) amt = Math.round(amt * (1 - Math.min(0.75, _totalDR)));
     // Phantom dodge chance
     const _totalDodge = (_perkState.dodgeChance || 0) + ((_gearState?.dodgePct || 0) / 100);
@@ -1308,6 +1308,23 @@ function handleBulletEnemyOverlap(scene, bullet, enemy) {
         enemy._painted = true;
         _perkState._paintedEnemy = enemy;
         enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(2, 0xffaa00); });
+    }
+    // Field Processor: track hits per enemy; after 3 hits deal permanent +15% damage
+    if (_perkState.fieldProcessor && enemy.active && !enemy._fpBonused) {
+        enemy._fpHits = (enemy._fpHits || 0) + 1;
+        if (enemy._fpHits >= 3) {
+            enemy._fpBonused = true;
+            enemy._dmgMult = (enemy._dmgMult || 1) * 1.15;
+        }
+    }
+    // Echo Targeting: hitting an enemy reveals all enemies within 300px for 3s
+    if (_perkState.echoTargeting && enemies) {
+        const _echoNow = scene.time.now;
+        enemies.getChildren().forEach(e2 => {
+            if (!e2.active) return;
+            const _echoDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
+            if (_echoDist <= 300) e2._echoRevealedUntil = _echoNow + 3000;
+        });
     }
     damageEnemy(enemy, dmg, bAngle, false, bulletShieldPierce);
 

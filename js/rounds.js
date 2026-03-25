@@ -80,6 +80,10 @@ function startRound(roundNum) {
     _round      = roundNum;
     _roundKills = 0;
     resetRoundPerks();
+    // Adaptive Core: each round survived grants +3% DR (max +15%)
+    if (_perkState.adaptiveCore && roundNum > 1) {
+        _perkState._adaptiveCoreDR = Math.min(0.15, (_perkState._adaptiveCoreDR || 0) + 0.03);
+    }
     _roundActive = true;
     const scene = GAME.scene.scenes[0];
 

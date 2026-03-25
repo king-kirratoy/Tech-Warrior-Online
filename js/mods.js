@@ -877,6 +877,16 @@ function activateMod(scene, time) {
     if (typeof spawnModCover === 'function') spawnModCover(scene);
     // Core Reactor: mod activation damage pulse
     if (typeof triggerCoreOverload === 'function') triggerCoreOverload(scene);
+    // System Sync: any mod activation heals 20 HP to the most-damaged limb
+    if (_perkState.systemSync && player?.comp) {
+        const _ssParts = Object.entries(player.comp).sort((a, b) => (a[1].hp / a[1].max) - (b[1].hp / b[1].max));
+        const [, _ssPart] = _ssParts[0];
+        if (_ssPart && _ssPart.hp < _ssPart.max) {
+            _ssPart.hp = Math.min(_ssPart.max, _ssPart.hp + 20);
+            if (typeof updatePaperDoll === 'function') updatePaperDoll();
+            if (typeof updateBars === 'function') updateBars();
+        }
+    }
     switch (loadout.cpu) {
         case 'jump':      activateJump(scene);           break;
         case 'barrier':   activateShield(scene);         break;
