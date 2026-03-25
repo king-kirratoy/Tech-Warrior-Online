@@ -501,13 +501,12 @@ function deployMech() {
         .setDepth(5);
     scene.physics.add.existing(player);
     // Hitbox circle sized to match each chassis's core visual
-    const hitR   = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
-    const hitOff = loadout.chassis === 'light' ? -8  : loadout.chassis === 'medium' ? -10 : -12;
+    const hitR = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
     player.body.setCircle(hitR);
-    // Center the circle within the scaled sprite bounds.
-    // Formula: (legW * scale / 2) - hitR compensates for Phaser's displayWidth-based body positioning.
-    const hitOffX = Math.round(legW * s.scale / 2 - hitR);
-    player.body.setOffset(hitOffX, hitOff);
+    // Center the circle on the sprite using unscaled dimensions — works for all chassis scales.
+    const offsetX = (player.width - hitR * 2) / 2;
+    const offsetY = (player.height - hitR * 2) / 2;
+    player.body.setOffset(offsetX, offsetY);
     player.setScale(s.scale);
     player.body.setCollideWorldBounds(true);
 

@@ -842,9 +842,11 @@ function mpDeployPVP() {
         .setDepth(5);
     scene.physics.add.existing(player);
     const hitR = loadout.chassis === 'light' ? 24 : loadout.chassis === 'medium' ? 32 : 42;
-    const hitOff = loadout.chassis === 'light' ? -12 : loadout.chassis === 'medium' ? -14 : -16;
     player.body.setCircle(hitR);
-    player.body.setOffset(-hitR, hitOff);
+    // Center the circle on the sprite using unscaled dimensions — works for all chassis scales.
+    const offsetX = (player.width - hitR * 2) / 2;
+    const offsetY = (player.height - hitR * 2) / 2;
+    player.body.setOffset(offsetX, offsetY);
     player.setScale(s.scale);
     player.body.setCollideWorldBounds(true);
 
