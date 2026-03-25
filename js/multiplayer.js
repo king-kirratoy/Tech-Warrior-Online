@@ -2125,6 +2125,8 @@ function mpShowPvpHangar(inMatch) {
     _pvpHangarOpen = true;
     _pvpHangarInMatch = !!inMatch;
     _pvpOpenDD = null;
+    // Reset to Light chassis starter loadout when opening fresh — multiplayer never persists selections
+    if (!inMatch && typeof resetLoadout === 'function') resetLoadout();
     let el = document.getElementById('pvp-hangar');
     if (!el) {
         el = document.createElement('div');
