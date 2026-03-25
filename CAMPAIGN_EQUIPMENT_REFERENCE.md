@@ -714,3 +714,97 @@ Chassis filtering does **not** apply at drop time; equip is unrestricted (baseTy
 - **Implementation**: Effect key registered in `_gearState._uniqueEffects`; per-enemy hit counter tracked; resets when a different enemy deals damage
 
 ---
+
+## Section 5: Arms
+
+Arms items occupy the `arms` slot (`_equipped.arms`). There is only one category: **pure stat arms reinforcement** (`baseType: 'arms'`). There are no arms system items (no systemKey, no gameplay ability activated on equip).
+
+Arms drops have base weight **8** in the type selection table (out of ~100 total weight). No enemy type applies a specific multiplier to the arms weight — commanders, medics, elites, and bosses all leave it at 8.
+
+**No chassis restrictions** — arms generation in `_selectBaseItem()` applies no chassis filtering. Any chassis (Light, Medium, Heavy) can receive and equip any arms sub type.
+
+> **Note on `reloadPct`**: This stat does not appear in any arms base item or arms-eligible affix. The `fireRatePct` affix (positive values) increases fire rate; reload speed is handled separately via perks and unique effects (e.g. `dualReload` on Twinned Servo).
+
+---
+
+### Arms Affixes
+
+All arms items draw from the following affix pool (`AFFIX_POOL` entries with `types` including `'arms'`):
+
+| Affix key | Label | Range | Weight | Notes |
+|---|---|---|---|---|
+| `dmgPct` | +{v}% Damage | 3–28 | 8 | Also on `weapon`, `augment` |
+| `fireRatePct` | +{v}% Fire Rate | 3–22 | 8 | Also on `weapon`. Label uses `+` prefix; lower values are better in one context (see base stat notes below) |
+| `accuracy` | +{v}% Accuracy | 3–15 | 5 | Also on `weapon` |
+| `armHP` | +{v} Arm HP | 5–50 | 6 | Arms-only |
+
+> `reloadPct` is **not** in the affix pool for arms. The only arms-eligible affixes are the four listed above.
+
+---
+
+### Arms Sub Types
+
+#### Servo Enhancer
+- **Display name**: Servo Enhancer
+- **Sub type key**: `servo_enhancer`
+- **Base stats**: armHP: 15, fireRatePct: −5
+  - `fireRatePct: -5` is a **negative base value** (fire rate cost) — it trades a small fire-rate penalty for structural arm HP. Affixes that roll `fireRatePct` on this item add on top of the −5 base, and can partially or fully offset it.
+- **Chassis**: All (no restriction)
+- **Affix pool**: dmgPct, fireRatePct, accuracy, armHP
+- **Drop sources**: Regular enemies, elites, commanders, bosses (regular drops)
+
+---
+
+#### Stabilizer
+- **Display name**: Stabilizer
+- **Sub type key**: `stabilizer`
+- **Base stats**: armHP: 20, accuracy: 5
+  - Pure defensive/accuracy profile — highest base armHP of the three sub types, with a flat accuracy bonus and no fire-rate cost.
+- **Chassis**: All (no restriction)
+- **Affix pool**: dmgPct, fireRatePct, accuracy, armHP
+- **Drop sources**: Regular enemies, elites, commanders, bosses (regular drops)
+
+---
+
+#### Power Coupler
+- **Display name**: Power Coupler
+- **Sub type key**: `power_coupler`
+- **Base stats**: armHP: 10, dmgPct: 3
+  - Offensive profile — lowest base armHP, compensated by a flat damage percentage bonus. Best pairing for builds that prioritize damage output over arm durability.
+- **Chassis**: All (no restriction)
+- **Affix pool**: dmgPct, fireRatePct, accuracy, armHP
+- **Drop sources**: Regular enemies, elites, commanders, bosses (regular drops)
+
+---
+
+### Unique / Boss-Drop Arms Items
+
+Unique arms items drop exclusively from boss kills (25% Legendary, 75% Epic chance per drop).
+Both unique arms items are **Epic** rarity. Neither boss has a Legendary arms counterpart — the Legendary slot for both bosses is occupied by a different base type.
+Chassis filtering does **not** apply at drop time; equip is unrestricted (baseType `arms`).
+
+---
+
+#### Twinned Servo *(Epic — Twin Razors boss, rounds 10/30/50…)*
+- **Key**: `twinned_servo` | **Rarity**: Epic | **Base type**: `arms`
+- **Base stats**: armHP: 25, fireRatePct: −8
+- **Fixed affixes**: +12% Fire Rate, +5% Damage
+- **Computed total** (base + affixes, pre-scaling): armHP: 25, fireRatePct: +4 (−8 base + 12 affix), dmgPct: 5
+- **Unique effect** (`dualReload`): **SYNC SERVOS** — When both arm slots (L and R) have weapons equipped, reload speed is boosted by 30%.
+- **Chassis**: All (baseType `arms`, no chassis restriction)
+- **Implementation**: `dualReload` effect key registered in `_gearState._uniqueEffects`; checked in reload logic when `_equipped.L` and `_equipped.R` are both non-null weapons. Effect applies once regardless of which arm is reloading.
+- **Boss context**: Twin Razors (Razor) is a Light-chassis boss encountered at rounds 10, 30, 50, and every 20 rounds thereafter. Drop is 75% chance on boss kill (Epic tier).
+
+---
+
+#### Echo Frame *(Epic — The Mirror boss, rounds 30/70/110…)*
+- **Key**: `echo_frame` | **Rarity**: Epic | **Base type**: `arms`
+- **Base stats**: armHP: 35, fireRatePct: 5
+- **Fixed affixes**: +8% Fire Rate, +6% Accuracy
+- **Computed total** (base + affixes, pre-scaling): armHP: 35, fireRatePct: 13, accuracy: 6
+- **Unique effect** (`echoStrike`): **ECHO** — When you activate your equipped mod (CPU slot), a ghost projectile mimicking your last fired weapon shot is automatically released from the player's current position.
+- **Chassis**: All (baseType `arms`, no chassis restriction)
+- **Implementation**: `echoStrike` effect key registered in `_gearState._uniqueEffects`; mod-activation hook in `mods.js` checks for this key and calls the echo-shot spawner. The phantom projectile uses the last weapon's `dmg`, `speed`, and `pierce` values but does not trigger on-hit effects (crits, splash, unique weapon procs).
+- **Boss context**: The Mirror is encountered at rounds 30, 70, 110, and every 40 rounds thereafter. Drop is 75% chance on boss kill (Epic tier).
+
+---
