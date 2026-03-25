@@ -8,9 +8,9 @@ window.TW = {};
 
 // ── CHASSIS RESTRICTIONS ─────────────────────────────────────────
 const CHASSIS_WEAPONS = {
-    light:  new Set(['none','smg','br','fth','sg','sr']),
-    medium: new Set(['none','mg','br','hr','gl','plsm','sr']),
-    heavy:  new Set(['none','mg','hr','rl','plsm']),
+    light:  new Set(['none','smg','fth','sg']),
+    medium: new Set(['none','mg','br','sr']),
+    heavy:  new Set(['none','hr','rl','plsm','gl']),
 };
 // ── CHASSIS CPU RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_CPUS = {
