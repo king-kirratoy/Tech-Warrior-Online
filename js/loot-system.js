@@ -48,7 +48,7 @@ const RARITY_DEFS = {
 // Weapons inherit stats from the existing WEAPONS object at generation time.
 // Non-weapon items have their own base stats defined here.
 const ITEM_BASES = {
-    // ── ARMOR PLATING (chest slot) ──
+    // ── ARMOR PLATING (armor slot) ──
     light_plate:    { baseType:'armor', name:'Light Plating',     icon:'armor_light',  baseStats:{ coreHP:20, dr:0.02 } },
     medium_plate:   { baseType:'armor', name:'Medium Plating',    icon:'armor_medium', baseStats:{ coreHP:40, dr:0.05 } },
     heavy_plate:    { baseType:'armor', name:'Heavy Plating',     icon:'armor_heavy',  baseStats:{ coreHP:60, dr:0.08 } },
@@ -570,7 +570,7 @@ const INVENTORY_MAX = 20;
 let _inventory = [];
 let _equipped = {
     L: null, R: null,
-    chest: null, arms: null, legs: null,
+    armor: null, arms: null, legs: null,
     shield: null, cpu: null, augment: null
 };
 let _gearState = {};
@@ -1288,7 +1288,7 @@ function recalcGearStats() {
         pellets:0, splashRadius:0, accuracy:0
     };
 
-    const slots = [_equipped.L, _equipped.R, _equipped.chest, _equipped.arms,
+    const slots = [_equipped.L, _equipped.R, _equipped.armor, _equipped.arms,
                    _equipped.legs, _equipped.shield, _equipped.cpu, _equipped.augment];
 
     slots.forEach(item => {
@@ -1683,7 +1683,7 @@ function equipStarterGear() {
 /** Reset all inventory/equipment state for a new run. */
 function resetInventory() {
     _inventory = Array(INVENTORY_MAX).fill(null);
-    _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
+    _equipped = { L:null, R:null, armor:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
     _scrap = 0;
     _gearState = {};
     equipStarterGear();
@@ -1725,8 +1725,8 @@ function loadCampaignInventory() {
         if (eq) {
             const parsed = JSON.parse(eq);
             if (parsed && typeof parsed === 'object') {
-                const validSlots = ['L','R','chest','arms','legs','shield','cpu','augment'];
-                const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
+                const validSlots = ['L','R','armor','arms','legs','shield','cpu','augment'];
+                const clean = { L:null, R:null, armor:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
                 validSlots.forEach(s => {
                     if (parsed[s] && typeof parsed[s] === 'object' && parsed[s].name && parsed[s].rarity && parsed[s].baseType) clean[s] = parsed[s];
                 });
@@ -1739,7 +1739,7 @@ function loadCampaignInventory() {
     } catch(e) {
         // If campaign data is corrupt, start fresh with starter gear
         _inventory = Array(INVENTORY_MAX).fill(null);
-        _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
+        _equipped = { L:null, R:null, armor:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
         _scrap = 0;
     }
 }

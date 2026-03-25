@@ -71,8 +71,8 @@ See UI_CONVENTIONS.md for slot label naming (§5), rarity colors (§3), inverted
 - **DOM element IDs:** kebab-case — `round-hud`, `hud-container`, `boss-hud`, `enemy-doll-hud`
 - **Slot IDs in garage dropdown:** single uppercase letter — `L` `R` `M` (cpu) `A` (aug) `G` (leg) `S` (shield) `C` (color)
 - **Slot keys in `loadout`:** `L` `R` `cpu` `aug` `leg` `shld` (note: `shld` not `shield`)
-- **Slot keys in `_equipped`:** different again — `L` `R` `chest` `arms` `legs` `shield` `cpu` `augment`
-- **Garage slot ID → loadout key:** use `SLOT_ID_MAP` constant: `{ L:'L', R:'R', M:'cpu', A:'aug', G:'leg', S:'shld' }`. `_equipped` uses a different set: `{ L, R, chest, arms, legs, shield, cpu, augment }`.
+- **Slot keys in `_equipped`:** different again — `L` `R` `armor` `arms` `legs` `shield` `cpu` `augment`
+- **Garage slot ID → loadout key:** use `SLOT_ID_MAP` constant: `{ L:'L', R:'R', M:'cpu', A:'aug', G:'leg', S:'shld' }`. `_equipped` uses a different set: `{ L, R, armor, arms, legs, shield, cpu, augment }`.
 - **`selectPerks()`:** pure perk selection (no DOM). Call before `showPerkMenu()` renders cards.
 - **`destroyEnemyWithCleanup(scene, e)`:** centralised enemy teardown. Use wherever enemies are force-removed outside the normal damage path.
 - **Enemy color palettes:** `ENEMY_COLORS`, `COMMANDER_COLORS`, `MEDIC_COLORS`, `BOSS_COLORS` (all keyed by chassis/type)

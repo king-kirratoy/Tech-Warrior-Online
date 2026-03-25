@@ -1031,7 +1031,7 @@ function populateInventory() {
         ];
         const _rightSlots = [
             { key: 'augment', label: 'AUGMENT' },
-            { key: 'chest',   label: 'ARMOR' },
+            { key: 'armor',   label: 'ARMOR' },
             { key: 'R',       label: 'R ARM' },
             { key: 'legs',    label: 'LEGS' },
         ];
@@ -1506,7 +1506,7 @@ function _renderItemDetail(source, key) {
 function _getSlotForItem(item) {
     if (item.baseType === 'weapon') return null; // weapon needs L or R choice
     const map = {
-        armor:'chest', arms:'arms', legs:'legs', shield:'shield', cpu:'cpu', augment:'augment',
+        armor:'armor', arms:'arms', legs:'legs', shield:'shield', cpu:'cpu', augment:'augment',
         // System items map to the same equip slots
         shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment'
     };
@@ -2122,7 +2122,7 @@ function _showSlotHover(el, slotKey, itemOverride) {
     _hoverActiveEl = el;
     _hoverActiveSlotKey = slotKey;
     _hoverActiveItem = itemOverride || (_equipped && _equipped[slotKey]) || null;
-    const _slotNames = { L:'Weapon', R:'Weapon', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', cpu:'CPU Mod', augment:'Augment' };
+    const _slotNames = { L:'Weapon', R:'Weapon', armor:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', cpu:'CPU Mod', augment:'Augment' };
 
     let item, slotLabel, compareItem;
     if (itemOverride) {
@@ -2143,7 +2143,7 @@ function _showSlotHover(el, slotKey, itemOverride) {
             }
         } else {
             const slotMap = { cpu_system:'cpu', aug_system:'augment',
-                shield_system:'shield', leg_system:'legs', armor:'chest', arms:'arms' };
+                shield_system:'shield', leg_system:'legs', armor:'armor', arms:'arms' };
             const eqKey = slotMap[item.baseType];
             if (eqKey && _equipped && _equipped[eqKey]) {
                 compareItem = _equipped[eqKey];
