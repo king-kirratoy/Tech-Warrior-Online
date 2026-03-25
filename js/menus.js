@@ -680,6 +680,7 @@ function showWarzonePerksOverlay() {
         document.removeEventListener('keydown', _wzPerksEscHandler, true);
         const overlay = document.getElementById('wz-perks-overlay');
         if (overlay) overlay.remove();
+        document.getElementById('pause-perks-btn')?.blur();
     }
     function _wzPerksEscHandler(e) {
         if (e.key !== 'Escape') return;
