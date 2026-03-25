@@ -34,7 +34,7 @@ const HUD_NAMES = {
   rl:'ROCKET LAUNCHER', plsm:'PLASMA CANNON', rail:'RAILGUN',
   jump:'JUMP JETS', barrier:'BARRIER', rage:'RAGE MODE', emp:'EMP BURST',
   repair:'REPAIR DRONE', atk_drone:'ATTACK DRONE', missile:'MISSILE POD',
-  decoy:'DECOY', ghost_step:'GHOST STEP', overclock_burst:'OVERCLOCK BURST',
+  decoy:'DECOY', ghost_step:'GHOST STEP',
   fortress_mode:'FORTRESS MODE',
   light_shield:'LIGHT SHIELD', standard_shield:'STD. SHIELD',
   heavy_shield:'HEAVY SHIELD', reactive_shield:'REACTIVE SHIELD',

@@ -842,21 +842,6 @@ function activateFortressMode(scene, time) {
     sndBarrier?.();
 }
 
-function activateOverclockBurst(scene, time) {
-    if (!player?.active) return;
-    _perkState._overclockBurst = true;
-    _perkState.speedMult = (_perkState.speedMult || 1) * 1.20;
-    _perkState._overclockReloadMult = 0.75; // 25% faster fire rate
-    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
-    const _obDur = WEAPONS.overclock_burst.boostTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
-    scene.time.delayedCall(_obDur, () => {
-        _perkState._overclockBurst = false;
-        _perkState.speedMult = (_perkState.speedMult || 1.20) / 1.20;
-        _perkState._overclockReloadMult = 1.0;
-    });
-    lastModTime = time;
-    sndRage?.();
-}
 
 function activateGhostStep(scene, time) {
     if (!player?.active) return;
@@ -893,7 +878,6 @@ function activateMod(scene, time) {
         case 'missile':   activateMissiles(scene, time); break;
         case 'decoy':     activateDecoy(scene, time);    break;
         case 'ghost_step':    activateGhostStep(scene, time);   break;
-        case 'overclock_burst': activateOverclockBurst(scene, time); break;
         case 'fortress_mode': activateFortressMode(scene, time); break;
     }
 }
