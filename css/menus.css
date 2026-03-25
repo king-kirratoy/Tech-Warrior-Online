@@ -1250,7 +1250,7 @@
   color: #fff;
 }
 
-#lo-col-sel { font-size: var(--text-md); }
+#lo-col-sel { font-size: 11px; }
 
 .mp-right {
   background: #080b0e;
