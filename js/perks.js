@@ -1232,6 +1232,7 @@ function resetRoundPerks() {
     // Kill-based counters
     _perkState._killStreakCount   = 0;
     _perkState._killStreakActive  = false;
+    CHASSIS.light.killSpeedStacks = 0;
     _perkState._pressureTarget   = null;
     _perkState._pressureStacks   = 0;
     _perkState.overwatchKills     = 0;

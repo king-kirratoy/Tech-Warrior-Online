@@ -334,6 +334,20 @@ function onEnemyKilled(deadEnemy) {
         _perkState._hitRunActive = true;
         _perkState._hitRunTimer = scene.time.now + 3000;
     }
+    // Kill Sprint: +8% speed per kill, stacks up to 3×, each stack lasts 4s
+    if (_perkState.killSprint && loadout.chassis === 'light') {
+        if (CHASSIS.light.killSpeedStacks < 3) {
+            CHASSIS.light.killSpeedStacks++;
+            _perkState.speedMult = (_perkState.speedMult || 1) * 1.08;
+            const _ksScene = GAME.scene.scenes[0];
+            _ksScene.time.delayedCall(4000, () => {
+                if (CHASSIS.light.killSpeedStacks > 0) {
+                    CHASSIS.light.killSpeedStacks--;
+                    _perkState.speedMult = Math.max(1, (_perkState.speedMult || 1) / 1.08);
+                }
+            });
+        }
+    }
     // Spectre: every kill spawns a shadow clone (max 2, lasts 4s, deals 50% dmg)
     if (_perkState.lightSpectre && player?.active && isDeployed) {
         _spawnSpectreClone();
