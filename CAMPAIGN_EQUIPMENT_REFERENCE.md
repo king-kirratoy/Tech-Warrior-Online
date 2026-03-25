@@ -608,3 +608,109 @@ Drops are chassis-filtered via `CHASSIS_SHIELDS`. 5 shields are universal (all c
 - **Implementation**: `triggerMatrixBarrier(scene, time)` — sets `_matrixBarrierActive = true` for 3 s; `_matrixBarrierCooldown = time + 60 000`. `isMatrixBarrierActive()` checked before processing player damage.
 
 ---
+
+## Section 4: Armor
+
+Armor items occupy the `armor` slot (`_equipped.armor`). There is only one category: **pure stat armor** (`baseType: 'armor'`). There are no armor system items (no systemKey, no gameplay ability activated on equip).
+
+Armor drops have base weight **10** in the type selection table (out of ~100 total weight).
+Medics boost armor weight ×2 (to 20); no other enemy type has a specific armor bias.
+
+**No chassis restrictions** — armor generation in `_selectBaseItem()` applies no chassis filtering. Any chassis can receive and equip any armor sub type.
+
+### Armor Affixes
+
+All armor items draw from the following affix pool (`AFFIX_POOL` entries with `types` including `'armor'`):
+
+| Affix key | Label | Range | Weight |
+|---|---|---|---|
+| `coreHP` | +{v} Core HP | 10–100 | 8 |
+| `allHP` | +{v} All Part HP | 5–30 | 4 |
+| `dr` | +{v}% Damage Reduction | 1–12 | 5 |
+| `autoRepair` | +{v} HP/sec Regen | 1–6 | 4 |
+
+> `allHP` also appears on `augment` type items — it raises every part's HP simultaneously (core, arms, legs).
+> `dr` also appears on `legs` items — rolling it on armor is independent from rolling it on legs.
+> `autoRepair` also appears on `augment` items.
+
+---
+
+### Armor Sub Types
+
+#### Light Plating
+- **Display name**: Light Plating
+- **Sub type key**: `light_plate`
+- **Base stats**: coreHP: 20, dr: 0.02
+- **Chassis**: All (no restriction)
+- **Affix pool**: coreHP, allHP, dr, autoRepair
+- **Drop sources**: Regular enemies, medics (boosted ×2), elites, commanders, bosses (regular drops)
+
+---
+
+#### Medium Plating
+- **Display name**: Medium Plating
+- **Sub type key**: `medium_plate`
+- **Base stats**: coreHP: 40, dr: 0.05
+- **Chassis**: All (no restriction)
+- **Affix pool**: coreHP, allHP, dr, autoRepair
+- **Drop sources**: Regular enemies, medics (boosted ×2), elites, commanders, bosses (regular drops)
+
+---
+
+#### Heavy Plating
+- **Display name**: Heavy Plating
+- **Sub type key**: `heavy_plate`
+- **Base stats**: coreHP: 60, dr: 0.08
+- **Chassis**: All (no restriction)
+- **Affix pool**: coreHP, allHP, dr, autoRepair
+- **Drop sources**: Regular enemies, medics (boosted ×2), elites, commanders, bosses (regular drops)
+
+---
+
+#### Reactive Plating
+- **Display name**: Reactive Plating
+- **Sub type key**: `reactive_plate`
+- **Base stats**: coreHP: 30, dr: 0.04
+- **Chassis**: All (no restriction)
+- **Affix pool**: coreHP, allHP, dr, autoRepair
+- **Drop sources**: Regular enemies, medics (boosted ×2), elites, commanders, bosses (regular drops)
+
+---
+
+### Unique / Boss-Drop Armor Items
+
+Unique armor items drop exclusively from boss kills (25% Legendary, 75% Epic chance per drop).
+All three unique armor items are Epic rarity. None have a Legendary counterpart.
+Chassis filtering does **not** apply at drop time; equip is unrestricted (baseType `armor`).
+
+---
+
+#### Sentinel's Plating *(Epic — Warden boss, rounds 5/25/45…)*
+- **Key**: `sentinels_plating` | **Rarity**: Epic | **Base type**: `armor`
+- **Base stats**: coreHP: 55, dr: 0.06
+- **Fixed affixes**: +30 Core HP, +4% Damage Reduction
+- **Unique effect** (`shieldDR`): While shield is at maximum capacity, gain an additional +12% damage reduction.
+- **Chassis**: All (baseType `armor`, no chassis restriction)
+- **Implementation**: Effect key registered in `_gearState._uniqueEffects`; `shieldDR` is checked in damage processing when `_equipped.shield` is at full HP
+
+---
+
+#### Unstoppable Core *(Epic — Juggernaut boss, rounds 20/40/60…)*
+- **Key**: `unstoppable_core` | **Rarity**: Epic | **Base type**: `armor`
+- **Base stats**: coreHP: 70, dr: 0.05
+- **Fixed affixes**: +15 All Part HP, +6% Damage Reduction
+- **Unique effect** (`impactArmor`): When hit for more than 25 damage in a single hit, gain +15% bonus DR for 3 seconds.
+- **Chassis**: All (baseType `armor`, no chassis restriction)
+- **Implementation**: Effect key registered in `_gearState._uniqueEffects`; hit-magnitude check triggers a timed DR boost
+
+---
+
+#### Swarm Carapace *(Epic — Swarm boss, rounds 25/65/105…)*
+- **Key**: `swarm_carapace` | **Rarity**: Epic | **Base type**: `armor`
+- **Base stats**: coreHP: 60, dr: 0.04
+- **Fixed affixes**: +20 All Part HP, +5% Damage Reduction
+- **Unique effect** (`adaptiveArmor`): Successive hits from the same enemy deal 10% less damage per hit, stacking up to a 40% reduction.
+- **Chassis**: All (baseType `armor`, no chassis restriction)
+- **Implementation**: Effect key registered in `_gearState._uniqueEffects`; per-enemy hit counter tracked; resets when a different enemy deals damage
+
+---
