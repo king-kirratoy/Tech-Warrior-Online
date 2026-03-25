@@ -32,7 +32,6 @@ const HUD_NAMES = {
   smg:'SUBMACHINE GUN', mg:'MACHINE GUN', sg:'SHOTGUN', br:'BATTLE RIFLE',
   hr:'HEAVY RIFLE', fth:'FLAMETHROWER', sr:'SNIPER RIFLE', gl:'GRENADE LAUNCHER',
   rl:'ROCKET LAUNCHER', plsm:'PLASMA CANNON', rail:'RAILGUN',
-  siege:'SIEGE CANNON', chain:'CHAINGUN',
   jump:'JUMP JETS', barrier:'BARRIER', rage:'RAGE MODE', emp:'EMP BURST',
   repair:'REPAIR DRONE', atk_drone:'ATTACK DRONE', missile:'MISSILE POD',
   decoy:'DECOY', ghost_step:'GHOST STEP', overclock_burst:'OVERCLOCK BURST',

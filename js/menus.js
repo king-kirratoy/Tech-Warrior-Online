@@ -2666,7 +2666,6 @@ function _cleanupGame() {
     if (_savedCpu !== null) { loadout.cpu = _savedCpu; _savedCpu = null; }
     if (_savedAug !== null) { loadout.aug = _savedAug; _savedAug = null; }
     if (_savedLeg !== null) { loadout.leg = _savedLeg; _savedLeg = null; }
-    _chaingunSpinStart = 0; _chaingunReady = false;
     isJumping = false;
     // Reset visual scales — jump tween may have left torso/player at non-base scale
     if (torso?.active) {

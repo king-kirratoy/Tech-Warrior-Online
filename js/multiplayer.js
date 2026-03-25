@@ -2120,7 +2120,6 @@ function mpNudgeOutOfCover(scene) {
 let _pvpHangarOpen = false;
 let _pvpHangarInMatch = false; // true = opened mid-match via ESC menu
 let _pvpOpenDD = null;         // currently open dropdown slot key
-let _pvpPrevRArm = null;       // R arm value saved before entering 2H mode
 
 function mpShowPvpHangar(inMatch) {
     _pvpHangarOpen = true;
@@ -2204,17 +2203,12 @@ function _pvpBuildDropdown(slotId) {
                      : slotId === 'M' ? loadout.cpu : slotId === 'S' ? loadout.shld
                      : slotId === 'G' ? loadout.leg : loadout.aug;
 
-    const is2H = WEAPONS[loadout.L]?.twoHanded;
     const lHasWeapon = loadout.L && loadout.L !== 'none';
     const rHasWeapon = loadout.R && loadout.R !== 'none';
 
     options.forEach(opt => {
         // Chassis restriction
         if (restrictSet && !restrictSet.has(opt.key)) return;
-        // Light can't use two-handed
-        if (chassis === 'light' && opt.twoHanded) return;
-        // If 2H equipped, R arm is locked
-        if (is2H && slotId === 'R' && opt.key !== loadout.L && opt.key !== 'none') return;
 
         // Check dual-wield / already in use
         const otherArm = slotId === 'L' ? loadout.R : slotId === 'R' ? loadout.L : null;
@@ -2281,10 +2275,9 @@ function _pvpRenderHangar() {
         .find(o => o.key === hexStr) || { label: 'GREEN', hex6: '#00ff00' };
 
     const ch     = typeof CHASSIS !== 'undefined' ? CHASSIS[chassis] : {};
-    const is2H   = WEAPONS[loadout.L]?.twoHanded;
     const lEmpty = !loadout.L || loadout.L === 'none';
     const rEmpty = !loadout.R || loadout.R === 'none';
-    const braceArm = !is2H && (lEmpty !== rEmpty);
+    const braceArm = lEmpty !== rEmpty;
 
     const shldSys  = typeof SHIELD_SYSTEMS !== 'undefined'
         ? (SHIELD_SYSTEMS[loadout.shld] || { maxShield: 0 })
@@ -2324,7 +2317,6 @@ function _pvpRenderHangar() {
     // ── Passives ──
     const passives = [];
     if (braceArm)  passives.push('+25% damage · +15% reload (single-arm brace)');
-    if (is2H)      passives.push('TWO-HANDED · both arms locked · weight counted once');
     if (gyro)      passives.push('leg penalty immunity');
     if (mag)       passives.push('−20% dmg in / +15% dmg out when still');
     if (loadout.aug === 'target_painter')   passives.push('hit marks: +20% dmg on target');
@@ -2402,18 +2394,17 @@ function _pvpRenderHangar() {
     }
     pvpSlotBlock('CPU', 'cpu', loadout.cpu);
     pvpSlotBlock('AUGMENT', 'augment', loadout.aug);
-    const rArmKey2 = is2H ? loadout.L : loadout.R;
     pvpSlotBlock('L ARM', 'weapon', loadout.L);
-    pvpSlotBlock('R ARM', 'weapon', rArmKey2);
+    pvpSlotBlock('R ARM', 'weapon', loadout.R);
     pvpSlotBlock('LEGS', 'legs', loadout.leg);
     pvpSlotBlock('SHIELD', 'shield', loadout.shld);
 
     // ── Dropdown row builder ──
     function ddRow(slotId, labelText) {
         const name   = slotId === 'L' ? weaponName(loadout.L)
-                     : slotId === 'R' ? weaponName(is2H ? loadout.L : loadout.R)
+                     : slotId === 'R' ? weaponName(loadout.R)
                      : _pvpGetSlotLabel(slotId);
-        const locked = is2H && slotId === 'R' ? ' style="opacity:0.45;pointer-events:none;"' : '';
+        const locked = '';
         return `<div class="mp-dd-row"${locked}>
             <span class="mp-dd-label">${labelText}</span>
             <div class="pvp-dd-wrap" style="position:relative;flex:1;">
@@ -2529,24 +2520,10 @@ function _pvpRenderHangar() {
 
 function _pvpSelectSlot(slotId, key) {
     if (slotId === 'L' || slotId === 'R') {
-        const is2H = WEAPONS[key]?.twoHanded;
-        const prevWas2H = WEAPONS[loadout.L]?.twoHanded;
-        if (loadout.chassis === 'light' && is2H) return;
-        if (is2H) {
-            // Entering 2H mode — save current R value (only on first entry)
-            if (!prevWas2H) _pvpPrevRArm = loadout.R;
-            loadout.L = key;
-            loadout.R = key;
-        } else if (slotId === 'L') {
-            if (prevWas2H) {
-                // Leaving 2H mode — restore previous R value
-                loadout.R = _pvpPrevRArm || 'none';
-                _pvpPrevRArm = null;
-            }
+        if (slotId === 'L') {
             loadout.L = key;
             if (loadout.chassis !== 'light' && key !== 'none' && loadout.R === key) loadout.R = 'none';
         } else {
-            if (WEAPONS[loadout.R]?.twoHanded) loadout.L = 'none';
             loadout.R = key;
             if (loadout.chassis !== 'light' && key !== 'none' && loadout.L === key) loadout.L = 'none';
         }

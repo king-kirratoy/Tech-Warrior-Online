@@ -41,7 +41,6 @@ function _buildSlotDetails(slotType, key) {
 
 // ═══════════ DROPDOWN SYSTEM ═══════════
 
-let _wzPrevRArm = null; // R arm value saved before entering 2H mode
 
 function _wzCloseAllDD() {
     document.querySelectorAll('#garage-menu .wz-dd-selected').forEach(el => el.classList.remove('dd-open'));
@@ -92,15 +91,12 @@ function _wzBuildDropdown(slotId) {
     }
 
     const currentKey = loadout[SLOT_ID_MAP[slotId]];
-    const is2H = WEAPONS[loadout.L]?.twoHanded;
     const lHasWeapon = loadout.L && loadout.L !== 'none';
     const rHasWeapon = loadout.R && loadout.R !== 'none';
 
     const _sorted = [...options].sort((a, b) => (a.weight || 0) - (b.weight || 0));
     _sorted.forEach(opt => {
         if (restrictSet && !restrictSet.has(opt.key)) return;
-        if (chassis === 'light' && opt.twoHanded) return;
-        if (is2H && slotId === 'R' && opt.key !== loadout.L && opt.key !== 'none') return;
 
         const otherArm = slotId === 'L' ? loadout.R : slotId === 'R' ? loadout.L : null;
         const isDual = chassis === 'light' && (slotId === 'L' || slotId === 'R') && opt.key !== 'none' && opt.key === otherArm;
@@ -152,34 +148,15 @@ function closeAllDD() { _wzCloseAllDD(); }
 function toggleDD(slotId) { _wzToggleDD(slotId); }
 
 function selectSlot(slotId, key) {
-    // LIGHT chassis: cannot equip two-handed weapons
-    if (loadout.chassis === 'light' && WEAPONS[key]?.twoHanded) return;
-
     if (slotId === 'L' || slotId === 'R') {
-        const is2H = WEAPONS[key]?.twoHanded;
-        const prevWas2H = WEAPONS[loadout.L]?.twoHanded;
-        if (is2H) {
-            // Entering 2H mode — save current R value (only on first entry)
-            if (!prevWas2H) _wzPrevRArm = loadout.R;
+        // Only Light chassis can dual-wield (same weapon in both arms).
+        if (slotId === 'L') {
             loadout.L = key;
-            loadout.R = key;
+            // Non-light: if the other arm already has the same weapon, clear it
+            if (loadout.chassis !== 'light' && key !== 'none' && loadout.R === key) loadout.R = 'none';
         } else {
-            // Normal: set the chosen side.
-            // Only Light chassis can dual-wield (same weapon in both arms).
-            if (slotId === 'L') {
-                if (prevWas2H) {
-                    // Leaving 2H mode — restore previous R value
-                    loadout.R = _wzPrevRArm || 'none';
-                    _wzPrevRArm = null;
-                }
-                loadout.L = key;
-                // Non-light: if the other arm already has the same weapon, clear it
-                if (loadout.chassis !== 'light' && key !== 'none' && loadout.R === key) loadout.R = 'none';
-            } else {
-                if (WEAPONS[loadout.R]?.twoHanded) loadout.L = 'none';
-                loadout.R = key;
-                if (loadout.chassis !== 'light' && key !== 'none' && loadout.L === key) loadout.L = 'none';
-            }
+            loadout.R = key;
+            if (loadout.chassis !== 'light' && key !== 'none' && loadout.L === key) loadout.L = 'none';
         }
     } else {
         // Non-arm slots: use SLOT_ID_MAP to resolve the loadout property
@@ -219,10 +196,9 @@ function refreshGarage() {
     const colorOpt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : [])
         .find(o => o.key === hexStr) || { label: 'GREEN', hex6: '#00ff00' };
     const ch     = typeof CHASSIS !== 'undefined' ? CHASSIS[chassis] : {};
-    const is2H   = WEAPONS[loadout.L]?.twoHanded;
     const lEmpty = !loadout.L || loadout.L === 'none';
     const rEmpty = !loadout.R || loadout.R === 'none';
-    const braceArm = !is2H && (lEmpty !== rEmpty);
+    const braceArm = lEmpty !== rEmpty;
 
     const shldSys  = typeof SHIELD_SYSTEMS !== 'undefined'
         ? (SHIELD_SYSTEMS[loadout.shld] || { maxShield: 0 })
@@ -262,7 +238,6 @@ function refreshGarage() {
     // ── Passives ──
     const passives = [];
     if (braceArm)  passives.push('+25% damage · +15% reload (single-arm brace)');
-    if (is2H)      passives.push('TWO-HANDED · both arms locked · weight counted once');
     if (gyro)      passives.push('leg penalty immunity');
     if (mag)       passives.push('−20% dmg in / +15% dmg out when still');
     if (loadout.aug === 'target_painter')   passives.push('hit marks: +20% dmg on target');
@@ -340,18 +315,17 @@ function refreshGarage() {
     }
     slotBlock('CPU', 'cpu', loadout.cpu);
     slotBlock('AUGMENT', 'augment', loadout.aug);
-    const rArmKey2 = is2H ? loadout.L : loadout.R;
     slotBlock('L ARM', 'weapon', loadout.L);
-    slotBlock('R ARM', 'weapon', rArmKey2);
+    slotBlock('R ARM', 'weapon', loadout.R);
     slotBlock('LEGS', 'legs', loadout.leg);
     slotBlock('SHIELD', 'shield', loadout.shld);
 
     // ── Dropdown row builder ──
     function ddRow(slotId, labelText) {
         const name   = slotId === 'L' ? weaponName(loadout.L)
-                     : slotId === 'R' ? weaponName(is2H ? loadout.L : loadout.R)
+                     : slotId === 'R' ? weaponName(loadout.R)
                      : _wzGetSlotLabel(slotId);
-        const locked = is2H && slotId === 'R' ? ' style="opacity:0.45;pointer-events:none;"' : '';
+        const locked = '';
         return `<div class="mp-dd-row"${locked}>
             <span class="mp-dd-label">${labelText}</span>
             <div class="pvp-dd-wrap" style="position:relative;flex:1;">
@@ -457,7 +431,7 @@ function _calcWeight(lo) {
     const w = (obj, key) => (key && key !== 'none') ? (obj[key]?.weight || 0) : 0;
     // Weight cap applies to weapons only — mod/aug/leg/shield no longer count toward cap
     const lW = w(WEAPONS, lo.L);
-    const rW = (WEAPONS[lo.R]?.twoHanded || WEAPONS[lo.L]?.twoHanded) ? 0 : w(WEAPONS, lo.R);
+    const rW = w(WEAPONS, lo.R);
     return lW + rW;
 }
 

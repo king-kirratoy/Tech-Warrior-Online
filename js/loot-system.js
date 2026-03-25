@@ -139,9 +139,6 @@ const ITEM_BASES = {
 };
 
 // Which weapon keys from WEAPONS are droppable as loot items.
-// 'siege' and 'chain' are excluded: they are 2H weapons that lock both arm slots
-// simultaneously (loadout.L === loadout.R). The loot equip system only sets one arm
-// slot at a time, which would leave the loadout in an invalid 2H state.
 const WEAPON_LOOT_KEYS = ['smg','mg','sg','br','hr','fth','sr','gl','rl','plsm','rail'];
 
 // ── UNIQUE BOSS ITEMS ────────────────────────────────────────────
@@ -374,7 +371,7 @@ const UNIQUE_ITEMS = {
         name: "Titan Fist",
         shortName: 'T.Fist',
         baseType: 'weapon',
-        icon: 'weapon_siege',
+        icon: 'weapon_rl',
         rarity: 'legendary',
         isUnique: true,
         boss: 'titan',
@@ -546,7 +543,7 @@ const AFFIX_POOL = {
     critDmg:      { label:'+{v}% Crit Damage',       min:10, max:60, weight:5,  types:['weapon','augment'] },
     reloadPct:    { label:'-{v}% Reload Time',       min:3,  max:22, weight:8,  types:['weapon','arms'] },
     pellets:      { label:'+{v} Pellets',            min:1,  max:3,  weight:3,  types:['weapon'], subTypes:['sg'] },
-    splashRadius: { label:'+{v}% Blast Radius',      min:10, max:45, weight:5,  types:['weapon'], subTypes:['gl','rl','plsm','siege'] },
+    splashRadius: { label:'+{v}% Blast Radius',      min:10, max:45, weight:5,  types:['weapon'], subTypes:['gl','rl','plsm'] },
     accuracy:     { label:'+{v}% Accuracy',          min:3,  max:15, weight:5,  types:['weapon','arms'] },
 
     // Defensive
@@ -886,21 +883,6 @@ function _drawLootIcon(scene, x, y, iconKey, rarityColor) {
             g.lineBetween(x-12, y, x+12, y); // energy line
             g.fillRect(x-4, y-2, 5, 8);    // grip
             break;
-        case 'siege':
-            g.fillStyle(c, 0.9);
-            g.fillRect(x-10, y-5, 20, 10); // massive barrel
-            g.lineStyle(2, 0xffffff, 0.4);
-            g.strokeRect(x-10, y-5, 20, 10);
-            g.fillRect(x-4, y-5, 6, 14);   // grip
-            break;
-        case 'chain':
-            g.fillStyle(c, 0.9);
-            g.fillRect(x-10, y-3, 20, 6);  // barrel
-            g.fillCircle(x-10, y, 5);      // drum
-            g.lineStyle(1, 0xffffff, 0.3);
-            g.strokeCircle(x-10, y, 5);
-            break;
-
         // ── ARMOR ──
         case 'armor_light':
         case 'armor_medium':

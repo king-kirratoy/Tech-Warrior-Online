@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.44';
+const GAME_VERSION = 'v6.45';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -9,8 +9,8 @@ window.TW = {};
 // ── CHASSIS RESTRICTIONS ─────────────────────────────────────────
 const CHASSIS_WEAPONS = {
     light:  new Set(['none','smg','br','fth','sg','sr']),
-    medium: new Set(['none','mg','br','hr','gl','plsm','sr','siege','chain']),
-    heavy:  new Set(['none','mg','hr','rl','plsm','siege','chain']),
+    medium: new Set(['none','mg','br','hr','gl','plsm','sr']),
+    heavy:  new Set(['none','mg','hr','rl','plsm']),
 };
 // ── CHASSIS CPU RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_CPUS = {
@@ -141,15 +141,6 @@ const WEAPONS = {
     // FORTRESS MODE: 4s +30% DR and 5 HP/s regen, 14s cooldown
     fortress_mode: { name: 'FORTRESS MODE', weight: 30, modeTime: 4000, cooldown: 14000,
                      desc: '4s: +30% DR and 5 HP/s core regen. Immovable fortress.' },
-    // ── TWO-HANDED WEAPONS ──────────────────────────────────────────
-    // SIEGE CANNON: slow, devastating AoE — requires both arms, no secondary possible
-    siege:  { name: 'Siege Cannon',  reload: 4000, dmg: 380, weight: 90, twoHanded: true,
-              bulletSize: 16, speed: 600, explosive: true, radius: 160,
-              desc: 'Two-handed. Massive AoE cannon. Locks both arm slots.' },
-    // CHAINGUN: spins up over 1.5s then fires at extreme rate — requires both arms
-    chain:  { name: 'Chain Gun',     reload: 45,   dmg: 12,  weight: 80, twoHanded: true,
-              bulletSize: 5,  speed: 1100, spinUp: 1500,
-              desc: 'Two-handed. Spins up for 1.5s then fires at extreme rate. Locks both arm slots.' },
 };
 
 // ═══════════ WEAPON DISPLAY NAMES ═══════════
@@ -167,8 +158,6 @@ const WEAPON_NAMES = {
     rl:    'Rocket Launcher',
     plsm:  'Plasma Cannon',
     rail:  'Railgun',
-    siege: 'Siege Cannon',
-    chain: 'Chain Gun',
     none:  'None',
 };
 
@@ -395,8 +384,6 @@ const BOSS_COLORS = {
 const ENEMY_PRIMARY   = ['smg', 'mg', 'br', 'sg', 'hr', 'fth'];
 // All weapons that can go in either arm slot
 const ENEMY_ARM_WEAPONS = ['smg','mg','br','sg','hr','fth','sr','gl','rl','plsm']; // rail excluded: too accurate + hitscan
-// Two-handed weapons (medium/heavy only)
-const ENEMY_2H_WEAPONS  = ['siege','chain'];
 // ENEMY_SECONDARY and ENEMY_MODS are now handled inline in randomEnemyLoadout (full parity with player)
 
 // ── Combat utility sets ───────────────────────────────────────────
@@ -431,9 +418,6 @@ const WEAPON_OPTIONS = [
     { key:'rl',   label:'ROCKET LAUNCHER',    weight:65 },
     { key:'plsm', label:'PLASMA CANNON',  weight:60 },
     { key:'rail',  label:'RAILGUN',        weight:70 },
-    // ── TWO-HANDED ──
-    { key:'siege', label:'SIEGE CANNON ⬡', weight:90, twoHanded:true },
-    { key:'chain', label:'CHAINGUN ⬡',     weight:80, twoHanded:true },
 ];
 
 const MOD_OPTIONS = [
@@ -566,8 +550,6 @@ const SLOT_DESCS = {
     rl:               { title:'RL — ROCKET LAUNCHER', desc:'Massive damage and blast radius. Can self-damage. High risk, high reward.' },
     plsm:             { title:'PLSM — PLASMA CANNON', desc:'Large slow plasma orb. AoE on impact. Deals high damage to clustered enemies.' },
     rail:             { title:'RAIL — RAILGUN', desc:'Instant hitscan beam. Extreme damage. Pierces every enemy in the line. Long reload.' },
-    siege:            { title:'SIEGE CANNON ⬡', desc:'Two-handed. Massive slow cannonball with 160px blast radius. Locks both arms. Medium/Heavy only.' },
-    chain:            { title:'CHAINGUN ⬡',     desc:'Two-handed. 1.5s spin-up then fires at extreme rate. Locks both arms. Medium/Heavy only.' },
     jump:             { title:'JUMP JETS', desc:'Dash forward at high speed. Deals slam AoE damage (40 dmg, 120px) on landing. Afterleg boosts both.' },
     barrier:          { title:'BARRIER', desc:'4 seconds of full damage immunity. Energy barrier absorbs all incoming fire. 3-second lockout after deactivation.' },
     rage:             { title:'RAGE', desc:'3.5s damage boost + brief invincibility frames on activation. Higher cooldown.' },

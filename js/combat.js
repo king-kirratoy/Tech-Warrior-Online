@@ -13,7 +13,7 @@ function fire(scene, side) {
     const _lightReloadMult = loadout.chassis === 'light' ? (CHASSIS.light.passiveReloadBonus || 0.80) : 1.0;
     // Single-arm brace bonus: when the other arm is empty, this arm gets +15% reload speed
     const _otherArm = side === 'L' ? loadout.R : loadout.L;
-    const _braceMult = (!_otherArm || _otherArm === 'none') && !WEAPONS[loadout.L]?.twoHanded ? 0.85 : 1.0;
+    const _braceMult = (!_otherArm || _otherArm === 'none') ? 0.85 : 1.0;
     const _gearReloadMult = 1 - ((_gearState?.reloadPct || 0) / 100);
     const _dualReloadMult = 1 - (typeof getDualReloadBonus === 'function' ? getDualReloadBonus() : 0);
     const reloadActual = ((isRageActive || isAmmoActive) ? weapon.reload * 0.5 : weapon.reload)
@@ -22,43 +22,16 @@ function fire(scene, side) {
     const lastFired    = side === 'L' ? reloadL : reloadR;
     if (now < lastFired) return;
 
-    // ── Chaingun spin-up ─────────────────────────────────────────────
-    if (wKey === 'chain') {
-        const spinUp = weapon.spinUp || 1500;
-        if (!_chaingunSpinStart) {
-            _chaingunSpinStart = now;
-            _chaingunReady = false;
-            // Show spin-up indicator
-            const scene2 = GAME.scene.scenes[0];
-            const spinTxt = scene2.add.text(torso.x, torso.y - 40, '◎ SPINNING UP', {
-                font: 'bold 13px monospace', fill: '#ffcc00',
-                stroke: '#000', strokeThickness: 3
-            }).setOrigin(0.5).setDepth(20);
-            scene2.tweens.add({ targets: spinTxt, y: spinTxt.y - 20, alpha: 0,
-                duration: spinUp, onComplete: () => spinTxt.destroy() });
-        }
-        if (!_chaingunReady) {
-            if (now - _chaingunSpinStart >= spinUp) {
-                _chaingunReady = true;
-            } else {
-                return; // still spinning up
-            }
-        }
-    } else {
-        // Reset chaingun state when firing anything else
-        _chaingunSpinStart = 0;
-        _chaingunReady = false;
-    }
     _shotsFired++; // only count shots that actually fire (after all guards)
 
     // ── Single-arm brace damage bonus ────────────────────────────────
-    // When the other arm is empty (and not a 2H weapon), +25% damage per shot
+    // When the other arm is empty, +25% damage per shot
     const _braceOther = side === 'L' ? loadout.R : loadout.L;
-    const _braceDmgMult = (!_braceOther || _braceOther === 'none') && !WEAPONS[loadout.L]?.twoHanded ? 1.25 : 1.0;
+    const _braceDmgMult = (!_braceOther || _braceOther === 'none') ? 1.25 : 1.0;
 
     // ── Dual-fire damage penalty ─────────────────────────────────────
     // When same weapon in both arms (dual-wield), each arm deals 15% less damage
-    const _isDualWield = loadout.L === loadout.R && loadout.L !== 'none' && !WEAPONS[loadout.L]?.twoHanded;
+    const _isDualWield = loadout.L === loadout.R && loadout.L !== 'none';
     const _dualWieldMult = _isDualWield ? 0.85 : 1.0;
 
     // ── Arm-offset origin ────────────────────────────────────────────
@@ -152,7 +125,7 @@ function fire(scene, side) {
     const _gearDmgPct  = 1 + ((_gearState?.dmgPct || 0) / 100);
     const _colossusMult = (typeof getColossusDmgMult === 'function') ? getColossusDmgMult() : 1.0;
     const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult);
-    // Apply gear splash radius bonus to explosion weapons (GL, RL, PLSM, siege).
+    // Apply gear splash radius bonus to explosion weapons (GL, RL, PLSM).
     const _gearSplashMult = 1 + ((_gearState?.splashRadius || 0) / 100);
     const _wEff = Object.assign({}, weapon, {
         dmg: _effectiveDmg,
@@ -166,8 +139,6 @@ function fire(scene, side) {
         switch (wKey) {
             case 'gl':    fireGL(scene, _wEff, armOx, armOy, aimAngle);   break;
             case 'rl':    fireRL(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-            case 'siege': fireSIEGE(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
-            case 'chain': fireStandard(scene, wKey, _wEff, barrelDist, armOx, armOy, aimAngle); break;
             case 'sg':    fireSG(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
             case 'plsm':  firePLSM(scene, _wEff, armOx, armOy, aimAngle); break;
             case 'sr':    fireSR(scene, _wEff, barrelDist, armOx, armOy, aimAngle); break;
@@ -384,32 +355,6 @@ function fireRL(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
     scene.time.delayedCall(2000, () => {
         if (rocket.active) { rlOverlap.destroy(); particles.stop(); scene.time.delayedCall(400, () => particles.destroy()); rocket.destroy(); }
     });
-}
-
-function fireSIEGE(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
-    armOx = armOx ?? torso.x; armOy = armOy ?? torso.y; aimAngle = aimAngle ?? torso.rotation;
-    // Massive slow cannonball — screen shake on fire, huge explosion on impact
-    scene.cameras.main.shake(200, 0.018);
-    createMuzzleFlash(scene, armOx, armOy, aimAngle, barrelDist + 10, 0xff6600);
-    const ball = scene.add.circle(armOx, armOy, 16, 0xff4400)
-        .setStrokeStyle(3, 0xffaa00).setDepth(14).setAlpha(0.9);
-    scene.physics.add.existing(ball);
-    ball.damageValue = weapon.dmg;
-    bullets.add(ball);
-    scene.physics.velocityFromRotation(aimAngle, weapon.speed || 600, ball.body.velocity);
-    // Pulsing glow while in flight — store tween to stop it on any destroy path
-    const siegeBallTween = scene.tweens.add({ targets: ball, alpha: 0.6, scaleX: 1.3, scaleY: 1.3,
-        duration: 200, yoyo: true, repeat: -1 });
-    ball.once('destroy', () => siegeBallTween.stop());
-    // Impact: massive explosion — store overlap to destroy it when ball is gone.
-    const siegeOverlap = scene.physics.add.overlap(ball, enemies, (b) => {
-        siegeOverlap.destroy();
-        const radius = weapon.radius || 160;
-        createExplosion(scene, b.x, b.y, radius, weapon.dmg);
-        scene.cameras.main.shake(350, 0.03);
-        b.destroy();
-    });
-    scene.time.delayedCall(3000, () => { if (ball.active) { siegeOverlap.destroy(); ball.destroy(); } });
 }
 
 function fireSG(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
