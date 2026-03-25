@@ -14,11 +14,11 @@ function fire(scene, side) {
     // Single-arm brace bonus: when the other arm is empty, this arm gets +15% reload speed
     const _otherArm = side === 'L' ? loadout.R : loadout.L;
     const _braceMult = (!_otherArm || _otherArm === 'none') ? 0.85 : 1.0;
-    const _gearReloadMult = 1 - ((_gearState?.reloadPct || 0) / 100);
+    const _gearReloadMult = 1 - ((_gearState?.fireRatePct || 0) / 100);
     const _dualReloadMult = 1 - (typeof getDualReloadBonus === 'function' ? getDualReloadBonus() : 0);
     // Chain Drive: +25% fire rate (×0.80 reload) when chain 2H weapon is equipped
     const _chainDriveMult = (_perkState.chainDrive && wKey === 'chain') ? 0.80 : 1.0;
-    const reloadActual = ((isRageActive || isAmmoActive) ? weapon.reload * 0.5 : weapon.reload)
+    const reloadActual = ((isRageActive || isAmmoActive) ? weapon.fireRate * 0.5 : weapon.fireRate)
         * (_perkState.reloadMult || 1) * _gearReloadMult * _dualReloadMult * _lightReloadMult * _braceMult
         * (_perkState._overclockBurst ? 0.75 : 1.0) * _chainDriveMult;
     const lastFired    = side === 'L' ? reloadL : reloadR;
@@ -215,7 +215,7 @@ function fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
         });
     }
     sndFire('fth');
-    const reloadTime = Math.round(weapon.reload * (_perkState.reloadMult||1));
+    const reloadTime = Math.round(weapon.fireRate * (_perkState.reloadMult||1));
     if (side === 'L') reloadL = scene.time.now + reloadTime;
     else              reloadR = scene.time.now + reloadTime;
 }
@@ -286,7 +286,7 @@ function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     sndFire('sr'); // Use sniper sound for now
     scene.cameras.main.shake(80, 0.006);
 
-    const reloadTime = Math.round(weapon.reload * (_perkState.reloadMult||1));
+    const reloadTime = Math.round(weapon.fireRate * (_perkState.reloadMult||1));
     if (side === 'L') reloadL = scene.time.now + reloadTime;
     else              reloadR = scene.time.now + reloadTime;
 }

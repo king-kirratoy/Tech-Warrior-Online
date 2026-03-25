@@ -129,7 +129,7 @@ function _updateBarRow(slotId, weaponKey, reloadTimestamp, time) {
         if (st) st.innerText = '';
         return;
     }
-    const total     = WEAPONS[weaponKey]?.reload || 0;
+    const total     = WEAPONS[weaponKey]?.fireRate || 0;
     const remaining = Math.max(0, reloadTimestamp - time);
     const pct       = total > 0 ? Math.round((remaining / total) * 100) : 0;
     fill.style.width = pct + '%';
