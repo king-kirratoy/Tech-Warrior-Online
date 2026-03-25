@@ -808,3 +808,232 @@ Chassis filtering does **not** apply at drop time; equip is unrestricted (baseTy
 - **Boss context**: The Mirror is encountered at rounds 30, 70, 110, and every 40 rounds thereafter. Drop is 75% chance on boss kill (Epic tier).
 
 ---
+
+## Section 6: Legs
+
+Legs items occupy the `legs` slot (`_equipped.legs`). There are two categories:
+
+- **Pure stat legs** (`baseType: 'legs'`): provides only `legHP`, `speedPct`, `dodgePct`, and/or `dr` bonuses; does not activate any leg system.
+- **Leg system** (`baseType: 'leg_system'`): equips to `_equipped.legs` AND sets `loadout.leg = systemKey`, activating the corresponding passive from `LEG_SYSTEMS`.
+
+Legs drops: base weight **6** (pure stat) and **7** (leg_system) in the type selection table.
+Elites boost `leg_system` weight ×2 (to 14) — elites are the primary source of leg system drops.
+No other enemy type has a specific bias toward legs or leg_system.
+
+**Slot notes**: The leg slot key in `loadout` is `leg`; in `_equipped` it is `legs`. When legs are
+destroyed in combat, the active leg system is disabled for the remainder of the round.
+
+### Legs Affixes
+
+All legs items (`legs` and `leg_system`) draw from these affixes (`AFFIX_POOL` entries with `types`
+including `'legs'`). `leg_system` items are remapped to `'legs'` for affix rolling via `_affixTypeMap`
+in `loot-system.js`, so both categories draw from the same pool.
+
+| Affix key | Label | Range | Weight |
+|---|---|---|---|
+| `legHP` | +{v} Leg HP | 5–50 | 6 |
+| `dr` | +{v}% Damage Reduction | 1–12 | 5 |
+| `dodgePct` | +{v}% Dodge Chance | 1–10 | 4 |
+| `speedPct` | +{v}% Move Speed | 2–14 | 6 |
+
+> No offensive affixes (`dmgPct`, `critChance`, etc.) appear in the legs pool. Some leg system
+> base items carry `dmgPct` as a **base stat** (e.g. `sys_mine_layer`), but that value comes from
+> the `ITEM_BASES` entry, not from affix rolls — affixes on that item can only add `legHP`, `dr`,
+> `dodgePct`, or `speedPct`.
+
+---
+
+### Part A — Pure Stat Legs
+
+No chassis restrictions — any chassis can receive and equip these.
+Equips to `_equipped.legs`. Does **not** set `loadout.leg` (no leg system activated).
+Drop weight: **6** with no enemy-type multipliers.
+
+---
+
+#### Actuator
+- **Display name**: Actuator
+- **Sub type key**: `actuator`
+- **Base stats**: legHP: 20, speedPct: 3
+- **Chassis**: All (no restriction)
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+- **Drop sources**: Regular enemies, elites, commanders, bosses (regular drops)
+
+---
+
+#### Booster
+- **Display name**: Booster
+- **Sub type key**: `booster`
+- **Base stats**: legHP: 15, speedPct: 6, dodgePct: 2
+  - Balanced mobility profile — mid-tier leg HP with the highest combined speed + dodge of the three pure stat legs.
+- **Chassis**: All (no restriction)
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+- **Drop sources**: Regular enemies, elites, commanders, bosses (regular drops)
+
+---
+
+#### Dampener
+- **Display name**: Dampener
+- **Sub type key**: `dampener`
+- **Base stats**: legHP: 30, speedPct: −2, dr: 0.03
+  - `speedPct: -2` is a negative base value — trades a small movement penalty for the highest base leg HP and a passive damage reduction bonus. Affixes that roll `speedPct` add on top of the −2 base and can partially or fully offset it.
+- **Chassis**: All (no restriction)
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+- **Drop sources**: Regular enemies, elites, commanders, bosses (regular drops)
+
+---
+
+### Part B — Leg Systems
+
+Leg system items set `loadout.leg = systemKey` on equip, activating the corresponding passive from
+`LEG_SYSTEMS`. Drops are chassis-filtered via `CHASSIS_LEGS` — each chassis only receives its own
+allowed systems. Drop weight: **7** baseline; **14** from elites (×2 multiplier).
+
+**`CHASSIS_LEGS` restrictions (droppable systems only):**
+- **Light only**: `hydraulic_boost`, `sprint_boosters`, `featherweight`
+- **Light + Medium**: `gyro_stabilizer`
+- **Medium only**: `adaptive_stride`
+- **Medium + Heavy**: `mag_anchors`, `mine_layer`
+- **Heavy only**: `tremor_legs`, `siege_stance`, `ironclad_legs`
+
+**Hangar-only leg systems** (in `CHASSIS_LEGS` but no `ITEM_BASES` entry — cannot drop as loot):
+- **Light**: `ghost_legs`, `silent_step`, `reactive_dash`
+- **Medium**: `stabilizer_gyros`, `seismic_dampener`, `reactor_legs`, `power_stride`, `evasion_coils`
+- **Heavy**: `suppressor_legs`, `warlord_stride`
+
+**LEG_SYSTEMS entries absent from all `CHASSIS_LEGS` sets** (defined but unreachable via normal gameplay):
+- `afterleg`, `jump_jets`, `ground_slam` — appear in `LEG_SYSTEMS` but are in no chassis set; cannot be selected in the hangar or dropped as loot.
+
+---
+
+#### Light-Only Leg Systems
+
+##### Hydraulic Boost
+- **Sub type key**: `sys_hydraulic_boost` | **systemKey**: `hydraulic_boost`
+- **Base stats**: speedPct: 5, legHP: 10
+- **Chassis**: Light only
+- **System gameplay**: Passive +20% move speed. While this system is active, legs take 15% less damage from all sources.
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+
+---
+
+##### Sprint Boosters
+- **Sub type key**: `sys_sprint_boosters` | **systemKey**: `sprint_boosters`
+- **Base stats**: speedPct: 8, dodgePct: 2
+- **Chassis**: Light only
+- **System gameplay**: Double-tap the move-forward key for a 0.8 s speed burst (+80% speed). 4 s cooldown between bursts. Highest base `speedPct` of all droppable leg systems.
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+
+---
+
+##### Featherweight
+- **Sub type key**: `sys_featherweight` | **systemKey**: `featherweight`
+- **Base stats**: speedPct: 6, dodgePct: 3
+- **Chassis**: Light only
+- **System gameplay**: Passive +15% reload speed and passive +10% move speed. All-mobile optimization — faster movement and faster weapon cycling simultaneously. Highest base `dodgePct` of all droppable leg systems.
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+
+---
+
+#### Light + Medium Leg Systems
+
+##### Gyro Stabilizer
+- **Sub type key**: `sys_gyro_stabilizer` | **systemKey**: `gyro_stabilizer`
+- **Base stats**: accuracy: 5, legHP: 10
+- **Chassis**: Light and Medium
+- **System gameplay**: Eliminates the leg-damage slowdown penalty — damaged or crippled legs no longer reduce movement speed. Additionally provides passive +10% aim accuracy.
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+  - Note: `accuracy` is a **base stat** on this item; it is not in the `legs` affix pool and cannot appear on affixes rolled for leg items.
+
+---
+
+#### Medium-Only Leg Systems
+
+##### Adaptive Stride
+- **Sub type key**: `sys_adaptive_stride` | **systemKey**: `adaptive_stride`
+- **Base stats**: speedPct: 4, dodgePct: 2
+- **Chassis**: Medium only
+- **System gameplay**: Passive directional speed adaptation — automatically grants +15% move speed when retreating (moving away from the nearest enemy). Improves kiting survivability at no activation cost.
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+
+---
+
+#### Medium + Heavy Leg Systems
+
+##### Mag Anchors
+- **Sub type key**: `sys_mag_anchors` | **systemKey**: `mag_anchors`
+- **Base stats**: dr: 0.03, legHP: 15
+- **Chassis**: Medium and Heavy
+- **System gameplay**: While stationary: take 20% less incoming damage and deal 15% more damage. Rewards positional play and holding angles. Pairs naturally with `siege_stance` (Heavy) to stack the stationary bonuses.
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+
+---
+
+##### Mine Layer
+- **Sub type key**: `sys_mine_layer` | **systemKey**: `mine_layer`
+- **Base stats**: dmgPct: 2, legHP: 10
+- **Chassis**: Medium and Heavy
+- **System gameplay**: Passive — automatically drops a proximity mine every 8 s while the player is in motion. Each mine detonates on contact with an enemy, dealing 80 AoE damage. No activation required; mines accumulate on the battlefield while moving.
+  - Note: `dmgPct: 2` is a base stat on the item; `dmgPct` is not in the legs affix pool and cannot appear as a rolled affix.
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+
+---
+
+#### Heavy-Only Leg Systems
+
+##### Tremor Legs
+- **Sub type key**: `sys_tremor_legs` | **systemKey**: `tremor_legs`
+- **Base stats**: dmgPct: 3, legHP: 20
+- **Chassis**: Heavy only
+- **System gameplay**: After standing still for 2 s, the next movement creates a ground tremor — 40 AoE damage in a 120 px radius centered on the player. Rewards stop-and-go positioning rhythms.
+  - Note: `dmgPct: 3` is a base stat on the item; `dmgPct` is not in the legs affix pool.
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+
+---
+
+##### Siege Stance
+- **Sub type key**: `sys_siege_stance` | **systemKey**: `siege_stance`
+- **Base stats**: dr: 0.04, dmgPct: 3
+- **Chassis**: Heavy only
+- **System gameplay**: While stationary: +25% damage and +20% DR. The player becomes a near-immovable fortress when planted. Combined with the Heavy chassis passive 15% DR (`CHASSIS.heavy.passiveDR`), a stationary Heavy with Siege Stance can reach very high total DR before affix or shield contributions.
+  - Note: `dmgPct: 3` is a base stat on the item; `dmgPct` is not in the legs affix pool.
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+
+---
+
+##### Ironclad Legs
+- **Sub type key**: `sys_ironclad_legs` | **systemKey**: `ironclad_legs`
+- **Base stats**: dr: 0.03, legHP: 25
+- **Chassis**: Heavy only
+- **System gameplay**: Leg HP +80 (system effect on top of item base stats). Legs take 30% less damage from all sources. Maximizes leg survivability to keep the system active deep into combat. Highest base `legHP` of all droppable leg system items.
+- **Affix pool**: legHP, dr, dodgePct, speedPct
+
+---
+
+### Unique / Boss-Drop Leg Items
+
+Unique leg items drop exclusively from boss kills (25% Legendary, 75% Epic chance per drop).
+Both unique leg items have `baseType: 'legs'` — they are pure stat items with no `systemKey` and
+do not activate a leg system. Chassis filtering does **not** apply at drop time; equip is unrestricted.
+
+---
+
+#### Juggernaut Engine *(Legendary — Juggernaut boss, rounds 20/40/60…)*
+- **Key**: `juggernaut_engine` | **Rarity**: Legendary | **Base type**: `legs`
+- **Base stats**: legHP: 40, speedPct: 8
+- **Fixed affixes**: +12% Move Speed, +5% Dodge Chance, +20 Leg HP
+- **Unique effect** (`unstoppable`): Cannot be slowed by any enemy effect. Movement speed bonus is further increased by 20%.
+- **Chassis**: All (baseType `legs`, no chassis restriction)
+- **Implementation**: `unstoppable` effect key registered in `_gearState._uniqueEffects`; slow-application code checks for this key and bypasses the slow when active
+
+---
+
+#### Colossus Frame *(Epic — The Titan boss, rounds 35/75/115…)*
+- **Key**: `colossus_frame` | **Rarity**: Epic | **Base type**: `legs`
+- **Base stats**: legHP: 50, speedPct: 3
+- **Fixed affixes**: +25 All Part HP, +4% Damage Reduction
+- **Unique effect** (`colossusStand`): After remaining stationary for 2 seconds, gain +25% damage and +10% DR until next movement. The buff drops instantly on any movement input.
+- **Chassis**: All (baseType `legs`, no chassis restriction)
+- **Implementation**: `colossusStand` effect key registered in `_gearState._uniqueEffects`; timer starts when player velocity reaches 0; buff clears on any movement
+
+---
