@@ -1486,7 +1486,7 @@ function showShop() {
 
     // ── Slot mappings (Fix 2 + Fix 3) ──
     const _baseTypeToSlot = {
-        armor:         'chest',
+        armor:         'armor',
         arms:          'arms',
         legs:          'legs',
         shield:        'shield',
@@ -1855,7 +1855,7 @@ function _shopShowHover(el, item, preferSide, noCompare) {
     let compareItem = null;
     if (!noCompare) {
         const _slotMap = {
-            weapon:'L', armor:'chest', arms:'arms', legs:'legs',
+            weapon:'L', armor:'armor', arms:'arms', legs:'legs',
             shield:'shield', cpu:'cpu', augment:'augment',
             shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment'
         };
@@ -2371,8 +2371,8 @@ function _restoreFromCloudData(data) {
         _inventory = _cloudClean;
     }
     if (data.equipped && typeof data.equipped === 'object') {
-        const validSlots = ['L','R','chest','arms','legs','shield','cpu','augment'];
-        const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
+        const validSlots = ['L','R','armor','arms','legs','shield','cpu','augment'];
+        const clean = { L:null, R:null, armor:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
         validSlots.forEach(s => { if (data.equipped[s] && typeof data.equipped[s] === 'object' && data.equipped[s].name && data.equipped[s].rarity && data.equipped[s].baseType) clean[s] = data.equipped[s]; });
         _equipped = clean;
     }
