@@ -1299,9 +1299,10 @@ function _buildItemComparisonHTML(newItem) {
         h += `<div style="font-size:11px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:6px;line-height:1.3;">${item.name || '?'}</div>`;
         const entries = Object.entries(item.baseStats || {}).filter(([, v]) => v !== 0);
         entries.forEach(([k, v]) => {
+            const fmtV = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : v;
             h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
             h += `<span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>`;
-            h += `<span style="color:var(--sci-txt);">${v}</span>`;
+            h += `<span style="color:var(--sci-txt);">${fmtV}</span>`;
             h += `</div>`;
         });
         if (!entries.length) h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">No stats</div>`;
@@ -1361,12 +1362,16 @@ function _buildItemComparisonHTML(newItem) {
         const color  = isPositive ? '#44ff88' : '#ff4466';
         let fmtVal;
         if (isInverted && diff < 0) {
-            fmtVal = (diff > -1) ? '+' + Math.round(Math.abs(diff) * 100) + '%' : '+' + Math.abs(diff);
+            fmtVal = (diff > -1) ? '+' + Math.round(Math.abs(diff) * 100) + '%' : '+' + Math.abs(diff) + (_pctStats.has(k) ? '%' : '');
         } else {
             const sign = diff > 0 ? '+' : '';
-            fmtVal = (diff > -1 && diff < 1 && diff !== 0)
-                ? sign + Math.round(diff * 100) + '%'
-                : sign + diff;
+            if (diff > -1 && diff < 1 && diff !== 0) {
+                fmtVal = sign + Math.round(diff * 100) + '%';
+            } else if (_pctStats.has(k)) {
+                fmtVal = sign + diff + '%';
+            } else {
+                fmtVal = sign + diff;
+            }
         }
         return `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">
             <span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>
@@ -1831,7 +1836,8 @@ function _renderGearBonusesPanel() {
         let h = `<div class="bsub">${title}</div>`;
         active.forEach(k => {
             const v  = gs[k];
-            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${_gsLabels[k] || k}</span><span class="lo-bonus-val pos">+${v}</span></div>`;
+            const fmtGv = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : v;
+            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${_gsLabels[k] || k}</span><span class="lo-bonus-val pos">+${fmtGv}</span></div>`;
         });
         return h;
     };
@@ -1995,6 +2001,7 @@ const _hoverStatNames = { dmg:'Damage', reload:'Reload', coreHP:'Core HP', armHP
     modEffPct:'Mod Eff%', lootMult:'Loot%', autoRepair:'Repair', allHP:'All HP',
     absorbPct:'Absorb%', pellets:'Pellets', splashRadius:'Blast%' };
 const _hoverInvertedStats = new Set(['reloadPct','modCdPct','reload']);
+const _pctStats = new Set(['dmgPct','critChance','critDmg','reloadPct','dodgePct','speedPct','modCdPct','modEffPct','absorbPct','shieldRegen','splashRadius','accuracy','lootMult']);
 
 function _buildSingleCardHtml(item, slotLabel) {
     const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
@@ -2011,7 +2018,16 @@ function _buildSingleCardHtml(item, slotLabel) {
             if (_hoverInvertedStats.has(k)) {
                 valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-cyan)');
             }
-            const displayVal = (_hoverInvertedStats.has(k) && v < 0) ? '+' + Math.abs(v) : v;
+            let displayVal;
+            if (_hoverInvertedStats.has(k) && v < 0) {
+                displayVal = '+' + Math.abs(v) + (_pctStats.has(k) ? '%' : '');
+            } else if (k === 'dr') {
+                displayVal = Math.round(v * 100) + '%';
+            } else if (_pctStats.has(k)) {
+                displayVal = v + '%';
+            } else {
+                displayVal = v;
+            }
             html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${_hoverStatNames[k]||k}</span><span style="color:${valColor};">${displayVal}</span></div>`;
         });
     }
@@ -2057,7 +2073,16 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
                 if (_hoverInvertedStats.has(k)) {
                     valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-cyan)');
                 }
-                const displayVal = (_hoverInvertedStats.has(k) && v < 0) ? '+' + Math.abs(v) : v;
+                let displayVal;
+                if (_hoverInvertedStats.has(k) && v < 0) {
+                    displayVal = '+' + Math.abs(v) + (_pctStats.has(k) ? '%' : '');
+                } else if (k === 'dr') {
+                    displayVal = Math.round(v * 100) + '%';
+                } else if (_pctStats.has(k)) {
+                    displayVal = v + '%';
+                } else {
+                    displayVal = v;
+                }
                 h += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${_hoverStatNames[k]||k}</span><span style="color:${valColor};">${displayVal}</span></div>`;
             });
         }

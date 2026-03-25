@@ -43,8 +43,8 @@ const HUD_NAMES = {
   flicker_shield:'FLICKER SHIELD', mirror_shield:'MIRROR SHIELD',
   adaptive_shield:'ADAPTIVE SHIELD', counter_shield:'COUNTER SHIELD',
   pulse_shield:'PULSE SHIELD', layered_shield:'LAYERED SHIELD',
-  overcharge_shld:'OVERCHARGE SHLD', siege_wall:'SIEGE WALL',
-  bulwark_shield:'BULWARK SHIELD', retribution_shld:'RETRIBUTION',
+  overcharge_shld:'OVERCHARGE SHLD', siege_wall:'SIEGE SHIELD',
+  bulwark_shield:'BULWARK SHIELD',
   thermal_shield:'THERMAL SHIELD', titan_shield:'TITAN SHIELD',
 };
 

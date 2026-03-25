@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.54';
+const GAME_VERSION = 'v6.55';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -31,7 +31,7 @@ const CHASSIS_SHIELDS = {
         'adaptive_shield','counter_shield','pulse_shield','layered_shield','overcharge_shld']),
     heavy:  new Set(['none',
         'light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield',
-        'siege_wall','bulwark_shield','retribution_shld','thermal_shield','titan_shield']),
+        'siege_wall','bulwark_shield','thermal_shield','titan_shield']),
 };
 // ── CHASSIS LEG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_LEGS = {
@@ -197,11 +197,9 @@ const SHIELD_SYSTEMS = {
     overcharge_shld: { name: 'OVERCHARGE SHLD', weight: 32,  maxShield: 90,  regenRate: 1.2,  regenDelay: 3,  absorb: 0.50, overchargeSpill: true, desc: '90 HP. Damage absorbed beyond shield HP temporarily adds to core HP buffer.' },
     // ── HEAVY CHASSIS UNIQUE ──────────────────────────────────────
     // Fortress: massive HP + damage reduction while active. Slows you down.
-    siege_wall:      { name: 'SIEGE WALL',      weight: 70,  maxShield: 280, regenRate: 0.3,  regenDelay: 10, absorb: 0.50, activeDR: 0.20, activeSpeedPenalty: 0.20, desc: '280 HP. While shield is up: -20% incoming damage, -20% move speed. Hold the line.' },
+    siege_wall:      { name: 'SIEGE SHIELD',     weight: 70,  maxShield: 280, regenRate: 0.3,  regenDelay: 10, absorb: 0.50, activeDR: 0.20, activeSpeedPenalty: 0.20, desc: '280 HP. While shield is up: -20% incoming damage, -20% move speed. Hold the line.' },
     // Passive armor: 12% DR persists even when shield is fully depleted.
     bulwark_shield:  { name: 'BULWARK SHIELD',  weight: 55,  maxShield: 140, regenRate: 0.5,  regenDelay: 7,  absorb: 0.50, passiveDR: 0.12, desc: '140 HP. Passive 12% DR always active — even when shield is broken.' },
-    // Retribution: charges on absorbed hits; on shield break, explodes for AoE.
-    retribution_shld:{ name: 'RETRIBUTION',     weight: 50,  maxShield: 110, regenRate: 1.8,  regenDelay: 4,  absorb: 0.50, retributionBreak: true, desc: '110 HP. Absorbing hits charges retribution. On break: AoE explosion scaled to charge.' },
     // Contact damage: enemies near you take burn damage while shield is up.
     thermal_shield:  { name: 'THERMAL SHIELD',  weight: 45,  maxShield: 120, regenRate: 0.9,  regenDelay: 5,  absorb: 0.50, thermalAura: 8, thermalRange: 160, desc: '120 HP. Enemies within 160px take 8 dmg/s while your shield is active.' },
     // Bulk + core bonus: very high HP and adds 20 bonus core HP while equipped.
@@ -529,9 +527,8 @@ const SHIELD_OPTIONS = [
     { key:'layered_shield',   label:'LAYERED SHIELD',   weight:38  },
     { key:'overcharge_shld',  label:'OVERCHARGE SHLD',  weight:32  },
     // Heavy unique
-    { key:'siege_wall',       label:'SIEGE WALL',       weight:70  },
+    { key:'siege_wall',       label:'SIEGE SHIELD',     weight:70  },
     { key:'bulwark_shield',   label:'BULWARK SHIELD',   weight:55  },
-    { key:'retribution_shld', label:'RETRIBUTION',      weight:50  },
     { key:'thermal_shield',   label:'THERMAL SHIELD',   weight:45  },
     { key:'titan_shield',     label:'TITAN SHIELD',     weight:65  },
 ];
@@ -608,9 +605,8 @@ const SLOT_DESCS = {
     layered_shield:   { title:'LAYERED SHIELD',   desc:'130 HP in two 65 HP layers. Each regen independently — you always have at least one up.' },
     overcharge_shld:  { title:'OVERCHARGE SHLD',  desc:'90 HP. Damage absorbed beyond shield HP temporarily adds as core HP buffer.' },
     // Heavy unique
-    siege_wall:       { title:'SIEGE WALL',        desc:'280 HP. While active: -20% incoming damage, -20% speed. Plant yourself and hold the line.' },
+    siege_wall:       { title:'SIEGE SHIELD',       desc:'280 HP. While active: -20% incoming damage, -20% speed. Plant yourself and hold the line.' },
     bulwark_shield:   { title:'BULWARK SHIELD',    desc:'140 HP. Passive 12% DR always active — even when shield is fully depleted.' },
-    retribution_shld: { title:'RETRIBUTION',       desc:'110 HP. Absorbed hits charge retribution. On break: AoE explosion scaled to charge.' },
     thermal_shield:   { title:'THERMAL SHIELD',    desc:'120 HP. Enemies within 160px take 8 dmg/s while your shield is active.' },
     titan_shield:     { title:'TITAN SHIELD',      desc:'200 HP / 60% absorb / +20 core HP bonus. Very slow regen. Pure staying power.' },
     // ── NEW LEG SLOT DESCS ────────────────────────────────────────

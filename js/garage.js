@@ -107,7 +107,9 @@ function _wzBuildDropdown(slotId) {
 
         const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[opt.key] : null;
         const descText = (desc && opt.key !== 'none') ? desc.desc : '';
-        const titleText = desc ? desc.title : opt.label;
+        const titleText = (slotId === 'L' || slotId === 'R')
+            ? ((typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[opt.key] : null) || opt.label)
+            : (desc ? desc.title : opt.label);
 
         const div = document.createElement('div');
         div.className = 'dd-option'
