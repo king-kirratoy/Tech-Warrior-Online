@@ -1357,7 +1357,7 @@ function _buildItemComparisonHTML(newItem) {
     const diffRows = allKeys.map(k => {
         const nv   = newStats[k] ?? 0;
         const ev   = oldStats[k] ?? 0;
-        if (k === 'fireRate') {
+        if (k === 'fireRate' || k === 'reload') {
             if (!nv || !ev) return '';
             const spsDiff = (1000 / nv) - (1000 / ev);
             if (Math.abs(spsDiff) < 0.05) return '';
@@ -2009,7 +2009,7 @@ function _renderWeaponBar() {
 }
 
 /** Builds hover card HTML for any item. */
-const _hoverStatNames = { dmg:'Damage', fireRate:'Fire Rate', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP',
+const _hoverStatNames = { dmg:'Damage', fireRate:'Fire Rate', reload:'Fire Rate', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP',
     dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', fireRatePct:'Fire Rate%', dmgPct:'Dmg%',
     critChance:'Crit%', critDmg:'Crit Dmg%', dodgePct:'Dodge%', modCdPct:'Mod CD%',
     modEffPct:'Mod Eff%', lootMult:'Loot%', autoRepair:'Repair', allHP:'All HP',
@@ -2143,7 +2143,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         if (k === 'speed') return;
         const nv = (item.baseStats||{})[k] || 0;
         const ov = (compareItem.baseStats||{})[k] || 0;
-        if (k === 'fireRate') {
+        if (k === 'fireRate' || k === 'reload') {
             if (!nv || !ov) return;
             const spsDiff = (1000 / nv) - (1000 / ov);
             if (Math.abs(spsDiff) < 0.05) return;
