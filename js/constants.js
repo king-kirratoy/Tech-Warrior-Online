@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.57';
+const GAME_VERSION = 'v6.58';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -641,6 +641,13 @@ const SLOT_DESCS = {
     suppressor_aura:  { title:'SUPPRESSOR AURA',  desc:'Enemies within 200px move 15% slower. Passive intimidation field.' },
     colossus_frame:   { title:'COLOSSUS FRAME',   desc:'Core HP +60. Arm HP +40. Leg HP +40. Massive HP boost.' },
     impact_core:      { title:'IMPACT CORE',      desc:'Close kills (<200px): restore 15 core HP and stun nearby enemies 0.5s.' },
+    blast_dampener:   { title:'BLAST DAMPENER',   desc:'Self-damage from explosions reduced by 60%. Use the Rocket Launcher without fear of blowback.' },
+    heavy_loader:     { title:'HEAVY LOADER',     desc:'All weapon reload times reduced by 20%. Motorized autoloader keeps heavy ordnance cycling faster.' },
+    chain_drive:      { title:'CHAIN DRIVE',      desc:'CHAIN 2H weapon: +25% fire rate. Powered chain-feed eliminates cycle hesitation under sustained fire.' },
+    // ── NEW LEG SLOT DESCS (medium/heavy unique) ──────────────────
+    power_stride:     { title:'POWER STRIDE',     desc:'Each kill grants +5% move speed for 3s, stacking up to 3×. Keep moving, keep killing.' },
+    evasion_coils:    { title:'EVASION COILS',    desc:'While moving: incoming damage reduced by 10%. Close-range hits (<150px) reduced by 15%.' },
+    warlord_stride:   { title:'WARLORD STRIDE',   desc:'While leg HP is above 50%: +8% move speed and +10% damage at close range (<180px).' },
 };
 
 // Colour options — head gets the selected colour, torso/body gets darkenColor(colour, 0.4)
