@@ -352,6 +352,27 @@ function onEnemyKilled(deadEnemy) {
             });
         }
     }
+    // Impact Core: close-range kill (<200px) heals 15 core HP and stuns nearby enemies 0.5s
+    if (_perkState.impactCore && player?.active && deadEnemy?.x != null) {
+        const _icDist = Phaser.Math.Distance.Between(player.x, player.y, deadEnemy.x, deadEnemy.y);
+        if (_icDist < 200) {
+            if (player.comp?.core) {
+                player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 15);
+                if (typeof updateBars === 'function') updateBars();
+            }
+            const _icScene = GAME.scene.scenes[0];
+            enemies?.getChildren().forEach(e2 => {
+                if (!e2.active) return;
+                const _stunDist = Phaser.Math.Distance.Between(deadEnemy.x, deadEnemy.y, e2.x, e2.y);
+                if (_stunDist < 150) {
+                    e2.isStunned = true;
+                    _icScene.time.delayedCall(500, () => {
+                        if (e2.active) { e2.isStunned = false; e2.body?.setImmovable(false); }
+                    });
+                }
+            });
+        }
+    }
     // Spectre: every kill spawns a shadow clone (max 2, lasts 4s, deals 50% dmg)
     if (_perkState.lightSpectre && player?.active && isDeployed) {
         _spawnSpectreClone();

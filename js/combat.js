@@ -16,9 +16,11 @@ function fire(scene, side) {
     const _braceMult = (!_otherArm || _otherArm === 'none') ? 0.85 : 1.0;
     const _gearReloadMult = 1 - ((_gearState?.reloadPct || 0) / 100);
     const _dualReloadMult = 1 - (typeof getDualReloadBonus === 'function' ? getDualReloadBonus() : 0);
+    // Chain Drive: +25% fire rate (×0.80 reload) when chain 2H weapon is equipped
+    const _chainDriveMult = (_perkState.chainDrive && wKey === 'chain') ? 0.80 : 1.0;
     const reloadActual = ((isRageActive || isAmmoActive) ? weapon.reload * 0.5 : weapon.reload)
         * (_perkState.reloadMult || 1) * _gearReloadMult * _dualReloadMult * _lightReloadMult * _braceMult
-        * (_perkState._overclockBurst ? 0.75 : 1.0);
+        * (_perkState._overclockBurst ? 0.75 : 1.0) * _chainDriveMult;
     const lastFired    = side === 'L' ? reloadL : reloadR;
     if (now < lastFired) return;
 
@@ -127,7 +129,9 @@ function fire(scene, side) {
     const _gearDmgFlat = (_gearState?.dmgFlat || 0);
     const _gearDmgPct  = 1 + ((_gearState?.dmgPct || 0) / 100);
     const _colossusMult = (typeof getColossusDmgMult === 'function') ? getColossusDmgMult() : 1.0;
-    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult * _reflexMult);
+    // Iron Fortress: +10% damage while stationary 1.5s+
+    const _ironFortressDmgMult = _perkState._ironFortressActive ? 1.10 : 1.0;
+    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult * _reflexMult * _ironFortressDmgMult);
     // Apply gear splash radius bonus to explosion weapons (GL, RL, PLSM).
     const _gearSplashMult = 1 + ((_gearState?.splashRadius || 0) / 100);
     const _wEff = Object.assign({}, weapon, {

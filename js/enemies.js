@@ -749,7 +749,12 @@ function handleEnemyAI(scene, time) {
         // Speed — halved if legs destroyed
         const _baseSpd = CHASSIS[enemy.loadout?.chassis]?.spd || (enemy.isCommander ? 180 : 150);
         const _legsOk  = !enemy.comp || enemy.comp.legs.hp > 0;
-        const speed    = _legsOk ? (enemy.speed || _baseSpd) : _baseSpd * 0.5;
+        let speed      = _legsOk ? (enemy.speed || _baseSpd) : _baseSpd * 0.5;
+        // Suppressor Aura: enemies within 200px move 15% slower
+        if (_perkState.suppressorAura && player) {
+            const _saDist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+            if (_saDist < 200) speed *= 0.85;
+        }
 
         // Detection: vision cone + LOS raycasting (returns true if player is visible)
         const _canSeePlayer = _computeEnemyVisibility(enemy, dist, _activeCoverCache);
