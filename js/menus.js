@@ -1299,9 +1299,9 @@ function _buildItemComparisonHTML(newItem) {
         let h = `<div style="flex:1;min-width:0;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:8px 10px;">`;
         h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;text-transform:uppercase;">${cardLabel}</div>`;
         h += `<div style="font-size:11px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:6px;line-height:1.3;">${item.name || '?'}</div>`;
-        const entries = Object.entries(item.baseStats || {}).filter(([, v]) => v !== 0);
+        const entries = Object.entries(item.baseStats || {}).filter(([k, v]) => v !== 0 && k !== 'speed');
         entries.forEach(([k, v]) => {
-            const fmtV = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : k === 'reload' ? (1000 / v).toFixed(1) + '/sec' : v;
+            const fmtV = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : (k === 'reload' || k === 'fireRate') ? (1000 / v).toFixed(1) + '/sec' : v;
             h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
             h += `<span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>`;
             h += `<span style="color:var(--sci-txt);">${fmtV}</span>`;
@@ -1353,13 +1353,24 @@ function _buildItemComparisonHTML(newItem) {
     // Changes-if-equipped diff section
     const newStats = newItem.baseStats  || {};
     const oldStats = equippedItem.baseStats || {};
-    const allKeys  = [...new Set([...Object.keys(newStats), ...Object.keys(oldStats)])];
+    const allKeys  = [...new Set([...Object.keys(newStats), ...Object.keys(oldStats)])].filter(k => k !== 'speed');
     const diffRows = allKeys.map(k => {
         const nv   = newStats[k] ?? 0;
         const ev   = oldStats[k] ?? 0;
+        if (k === 'fireRate') {
+            if (!nv || !ev) return '';
+            const spsDiff = (1000 / nv) - (1000 / ev);
+            if (Math.abs(spsDiff) < 0.05) return '';
+            const color = spsDiff > 0 ? '#44ff88' : '#ff4466';
+            const sign = spsDiff > 0 ? '+' : '';
+            return `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">
+            <span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>
+            <span style="color:${color};">${sign}${spsDiff.toFixed(1)}/sec</span>
+        </div>`;
+        }
         const diff = nv - ev;
         if (diff === 0) return '';
-        const isInverted = (k === 'fireRate' || k === 'fireRatePct' || k === 'modCdPct');
+        const isInverted = (k === 'fireRatePct' || k === 'modCdPct');
         const isPositive = isInverted ? diff < 0 : diff > 0;
         const color  = isPositive ? '#44ff88' : '#ff4466';
         let fmtVal;
@@ -1461,10 +1472,11 @@ function _renderItemDetail(source, key) {
             dmgPct:'Damage %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Effectiveness %',
             dodgePct:'Dodge %', accuracy:'Accuracy', lootMult:'Loot Quality %' };
         Object.entries(item.baseStats).forEach(([k, v]) => {
+            if (k === 'speed') return;
             const label = statNames[k] || k;
             html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
                 <span style="color:${UI_COLORS.text60};">${label}</span>
-                <span style="color:${UI_COLORS.text90};">${k === 'reload' ? (1000 / v).toFixed(1) + '/sec' : typeof v === 'number' ? (v < 1 && v > 0 ? Math.round(v*100)+'%' : v) : v}</span>
+                <span style="color:${UI_COLORS.text90};">${(k === 'reload' || k === 'fireRate') ? (1000 / v).toFixed(1) + '/sec' : typeof v === 'number' ? (v < 1 && v > 0 ? Math.round(v*100)+'%' : v) : v}</span>
             </div>`;
         });
     }
@@ -2002,7 +2014,7 @@ const _hoverStatNames = { dmg:'Damage', fireRate:'Fire Rate', coreHP:'Core HP', 
     critChance:'Crit%', critDmg:'Crit Dmg%', dodgePct:'Dodge%', modCdPct:'Mod CD%',
     modEffPct:'Mod Eff%', lootMult:'Loot%', autoRepair:'Repair', allHP:'All HP',
     absorbPct:'Absorb%', pellets:'Pellets', splashRadius:'Blast%' };
-const _hoverInvertedStats = new Set(['fireRatePct','modCdPct','fireRate']);
+const _hoverInvertedStats = new Set(['fireRatePct','modCdPct']);
 const _pctStats = new Set(['dmgPct','critChance','critDmg','fireRatePct','dodgePct','speedPct','modCdPct','modEffPct','absorbPct','shieldRegen','splashRadius','accuracy','lootMult']);
 
 function _buildSingleCardHtml(item, slotLabel) {
@@ -2016,6 +2028,7 @@ function _buildSingleCardHtml(item, slotLabel) {
     if (hasStats) {
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (!v) return;
+            if (k === 'speed') return;
             let valColor = 'var(--sci-cyan)';
             if (_hoverInvertedStats.has(k)) {
                 valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-cyan)');
@@ -2025,7 +2038,7 @@ function _buildSingleCardHtml(item, slotLabel) {
                 displayVal = '+' + Math.abs(v) + (_pctStats.has(k) ? '%' : '');
             } else if (k === 'dr') {
                 displayVal = Math.round(v * 100) + '%';
-            } else if (k === 'reload') {
+            } else if (k === 'fireRate' || k === 'reload') {
                 displayVal = (1000 / v).toFixed(1) + '/sec';
             } else if (_pctStats.has(k)) {
                 displayVal = v + '%';
@@ -2073,6 +2086,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         if (hasStats) {
             Object.entries(colItem.baseStats).forEach(([k, v]) => {
                 if (!v) return;
+                if (k === 'speed') return;
                 let valColor = 'var(--sci-cyan)';
                 if (_hoverInvertedStats.has(k)) {
                     valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-cyan)');
@@ -2082,7 +2096,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
                     displayVal = '+' + Math.abs(v) + (_pctStats.has(k) ? '%' : '');
                 } else if (k === 'dr') {
                     displayVal = Math.round(v * 100) + '%';
-                } else if (k === 'reload') {
+                } else if (k === 'fireRate' || k === 'reload') {
                     displayVal = (1000 / v).toFixed(1) + '/sec';
                 } else if (_pctStats.has(k)) {
                     displayVal = v + '%';
@@ -2126,8 +2140,18 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
     const allKeys = new Set([...Object.keys(item.baseStats||{}), ...Object.keys(compareItem.baseStats||{})]);
     let diffHtml = '';
     allKeys.forEach(k => {
+        if (k === 'speed') return;
         const nv = (item.baseStats||{})[k] || 0;
         const ov = (compareItem.baseStats||{})[k] || 0;
+        if (k === 'fireRate') {
+            if (!nv || !ov) return;
+            const spsDiff = (1000 / nv) - (1000 / ov);
+            if (Math.abs(spsDiff) < 0.05) return;
+            const color = spsDiff > 0 ? '#00ff88' : '#ff4d6a';
+            const sign = spsDiff > 0 ? '+' : '';
+            diffHtml += `<div class="lo-hover-diff-row"><span class="lo-hover-diff-lbl">${_hoverStatNames[k]||k}</span><span style="color:${color};">${sign}${spsDiff.toFixed(1)}/sec</span></div>`;
+            return;
+        }
         const diff = nv - ov;
         if (diff === 0) return;
         const isInverted = _hoverInvertedStats.has(k);
