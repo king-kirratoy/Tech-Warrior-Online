@@ -1079,11 +1079,6 @@ function spawnEquipmentDrop(scene, x, y, item) {
     };
 
     _equipmentDrops.push(dropData);
-
-    // Expire after 30s
-    scene.time.delayedCall(30000, () => {
-        _removeEquipmentDrop(scene, dropData, true);
-    });
 }
 
 function _removeEquipmentDrop(scene, drop, fade) {
