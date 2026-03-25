@@ -895,7 +895,6 @@ Equips to `_equipped.mod` and sets `loadout.mod = systemKey`. Filtered by `CHASS
 | `sys_missile` | Missile Pod | `missile` | dmgPct:3 | Medium, Heavy |
 | `sys_decoy` | Decoy Projector | `decoy` | speedPct:2 | Light |
 | `sys_ghost_step` | Ghost Step | `ghost_step` | speedPct:3, dodgePct:2 | Light |
-| `sys_overclock_burst` | Overclock Burst | `overclock_burst` | reloadPct:-3, speedPct:2 | Medium |
 | `sys_fortress_mode` | Fortress Mode | `fortress_mode` | dr:0.03, coreHP:15 | Heavy |
 
 ---

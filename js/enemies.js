@@ -26,9 +26,9 @@ function randomEnemyLoadout() {
     if (chassis === 'light' && L === R) R = 'none';
 
     // ── Chassis-locked mod pools ──
-    const LIGHT_MODS  = ['jump','decoy','barrier','emp','ghost_step'];
-    const MEDIUM_MODS = ['barrier','repair','missile','atk_drone','overclock_burst'];
-    const HEAVY_MODS  = ['rage','repair','atk_drone','missile','fortress_mode'];
+    const LIGHT_MODS  = ['jump','decoy','barrier','ghost_step'];
+    const MEDIUM_MODS = ['barrier','atk_drone','repair','rage'];
+    const HEAVY_MODS  = ['barrier','missile','fortress_mode','emp'];
 
     const modPool = chassis === 'light' ? LIGHT_MODS
                   : chassis === 'medium' ? MEDIUM_MODS

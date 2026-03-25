@@ -422,23 +422,6 @@ const _perks = {
         apply: () => { _perkState.ghostStepWraith=true; } },
 
     // ══════════════════════════════════════════════════════════════
-    // OVERCLOCK BURST PERKS (need 10 reg + 1 leg)
-    // ══════════════════════════════════════════════════════════════
-    ob_extend:       { cat:'overclock_burst', label:'Extended Burst',desc:'Overclock Burst duration +1s (stackable)',      apply: () => { _perkState.obExtend=(_perkState.obExtend||0)+1000; } },
-    ob_cooldown:     { cat:'overclock_burst', label:'Fast Recharge',desc:'Overclock Burst cooldown -20% (stackable)',      apply: () => { _perkState.obCooldown=(_perkState.obCooldown||0)+0.20; } },
-    ob_dmg:          { cat:'overclock_burst', label:'Damage Surge', desc:'Overclock Burst also grants +20% damage',        apply: () => { _perkState.obDmg=(_perkState.obDmg||0)+0.20; } },
-    ob_reload:       { cat:'overclock_burst', label:'Instant Mag',  desc:'Overclock Burst instantly reloads both weapons on activation', apply: () => { _perkState.obReload=true; } },
-    ob_kill_extend:  { cat:'overclock_burst', label:'Kill Sustain', desc:'Kills during Overclock Burst extend duration by 0.5s', apply: () => { _perkState.obKillExtend=true; } },
-    ob_crit:         { cat:'overclock_burst', label:'Overclock Crit',desc:'Overclock Burst: 25% crit chance on all shots',  apply: () => { _perkState.obCrit=true; } },
-    ob_chain:        { cat:'overclock_burst', label:'Chain Reaction',desc:'Kills during Overclock Burst reduce cooldown by 0.5s', apply: () => { _perkState.obChain=true; } },
-    ob_shield:       { cat:'overclock_burst', label:'Shield Charge', desc:'Overclock Burst instantly restores 40 shield HP on activation', apply: () => { _perkState.obShield=true; } },
-    ob_speed_stack:  { cat:'overclock_burst', label:'Momentum',      desc:'Each kill during Overclock Burst adds +5% speed (persists until round end)', apply: () => { _perkState.obSpeedStack=true; } },
-    ob_no_falloff:   { cat:'overclock_burst', label:'Peak Performance',desc:'Overclock Burst ignores all range dropoff penalties while active', apply: () => { _perkState.obNoFalloff=true; } },
-    ob_legendary:    { cat:'overclock_burst', once:true, legendary:true, label:'Overclock Protocol',
-        desc:'LEGENDARY — Overclock Burst is permanent after first activation: no cooldown. Damage bonus stacks to +60%. Fire rate bonus stacks to +60%.',
-        apply: () => { _perkState.obLegendary=true; } },
-
-    // ══════════════════════════════════════════════════════════════
     // FORTRESS MODE PERKS (need 10 reg + 1 leg)
     // ══════════════════════════════════════════════════════════════
     fm_extend:       { cat:'fortress_mode', label:'Extended Hold',desc:'Fortress Mode duration +1.5s (stackable)',          apply: () => { _perkState.fmExtend=(_perkState.fmExtend||0)+1500; } },

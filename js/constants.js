@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.48';
+const GAME_VERSION = 'v6.49';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -15,10 +15,10 @@ const CHASSIS_WEAPONS = {
 // ── CHASSIS CPU RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_CPUS = {
     // Each chassis gets exactly 5 unique options (plus none).
-    // 'jump' and 'decoy' appear on light only; 'rage' on heavy only; etc.
-    light:  new Set(['none','jump','decoy','barrier','emp','ghost_step']),
-    medium: new Set(['none','barrier','repair','missile','atk_drone','overclock_burst']),
-    heavy:  new Set(['none','rage','repair','atk_drone','missile','fortress_mode']),
+    // 'jump' and 'decoy' appear on light only; 'fortress_mode' and 'emp' on heavy only; etc.
+    light:  new Set(['none','barrier','jump','decoy','ghost_step']),
+    medium: new Set(['none','barrier','atk_drone','repair','rage']),
+    heavy:  new Set(['none','barrier','missile','fortress_mode','emp']),
 };
 // ── CHASSIS SHIELD RESTRICTIONS ───────────────────────────────────
 const CHASSIS_SHIELDS = {
@@ -135,9 +135,6 @@ const WEAPONS = {
     // GHOST STEP: brief cloaking dash — 1.5s invisibility, 3s cooldown
     ghost_step: { name: 'GHOST STEP', weight: 20, cloakTime: 1500, cooldown: 7000,
                   desc: 'Cloak for 1.5s. Enemies lose targeting. Ends if you fire.' },
-    // OVERCLOCK BURST: 3s +25% fire rate and +20% move speed, 12s cooldown
-    overclock_burst: { name: 'OVERCLOCK BURST', weight: 25, boostTime: 3000, cooldown: 12000,
-                       desc: '3s burst: +25% fire rate, +20% speed. High cooldown.' },
     // FORTRESS MODE: 4s +30% DR and 5 HP/s regen, 14s cooldown
     fortress_mode: { name: 'FORTRESS MODE', weight: 30, modeTime: 4000, cooldown: 14000,
                      desc: '4s: +30% DR and 5 HP/s core regen. Immovable fortress.' },
@@ -432,7 +429,6 @@ const MOD_OPTIONS = [
     { key:'missile',   label:'MISSILE POD',  weight:35 },
     // Chassis unique
     { key:'ghost_step',       label:'GHOST STEP',       weight:20 },
-    { key:'overclock_burst',  label:'OVERCLOCK BURST',  weight:25 },
     { key:'fortress_mode',    label:'FORTRESS MODE',    weight:30 },
 ];
 
@@ -559,7 +555,6 @@ const SLOT_DESCS = {
     missile:          { title:'MISSILE POD', desc:'Launches 6 homing micro-missiles split across up to 3 nearest enemies. 55 dmg per hit.' },
     decoy:            { title:'DECOY', desc:'Deploys a hologram at your position. Nearby enemies redirect targeting to the decoy for 6 seconds.' },
     ghost_step:       { title:'GHOST STEP', desc:'Cloak for 1.5s — enemies lose targeting lock and will not fire. Deactivates if you fire a weapon.' },
-    overclock_burst:  { title:'OVERCLOCK BURST', desc:'3-second burst: +25% fire rate and +20% movement speed. Long 12s cooldown.' },
     fortress_mode:    { title:'FORTRESS MODE', desc:'4 seconds: +30% damage reduction and 5 HP/s core regeneration. Stand your ground.' },
     target_painter:   { title:'TARGET PAINTER', desc:'Hitting an enemy marks them. Marked enemies take +20% damage from all sources until they die or the mark expires.' },
     threat_analyzer:  { title:'THREAT ANALYZER', desc:'Damaging an enemy reduces their resistance by 15% for 3 seconds. Rewards continuous aggression.' },

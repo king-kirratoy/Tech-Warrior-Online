@@ -109,7 +109,6 @@ const ITEM_BASES = {
     sys_missile:          { baseType:'cpu_system', systemKey:'missile',          name:'Missile Pod',       icon:'mod_missile',  baseStats:{ dmgPct:3 } },
     sys_decoy:            { baseType:'cpu_system', systemKey:'decoy',            name:'Decoy Projector',   icon:'mod_decoy',    baseStats:{ speedPct:2 } },
     sys_ghost_step:       { baseType:'cpu_system', systemKey:'ghost_step',       name:'Ghost Step',        icon:'mod_ghost',    baseStats:{ speedPct:3, dodgePct:2 } },
-    sys_overclock_burst:  { baseType:'cpu_system', systemKey:'overclock_burst',  name:'Overclock Burst',   icon:'mod_oc',       baseStats:{ reloadPct:-3, speedPct:2 } },
     sys_fortress_mode:    { baseType:'cpu_system', systemKey:'fortress_mode',    name:'Fortress Mode',     icon:'mod_fortress', baseStats:{ dr:0.03, coreHP:15 } },
 
     // ── SYSTEM LEGS (leg_system slot → sets loadout.leg) ──
