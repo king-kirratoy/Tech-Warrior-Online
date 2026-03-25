@@ -1127,7 +1127,7 @@ function pickPerk(key, nextRound) {
     _roundClearing = false;
 
     // If player has unequipped loot, show brief equip prompt before next round (campaign only)
-    if (_gameMode === 'campaign' && _inventory.length > 0) {
+    if (_gameMode === 'campaign' && _inventory.filter(i => i !== null).length > 0) {
         _showEquipPrompt(nextRound);
         return;
     }
@@ -1157,7 +1157,8 @@ function _showEquipPrompt(nextRound) {
         document.body.appendChild(overlay);
     }
 
-    document.getElementById('equip-prompt-count').textContent = `${_inventory.length} item${_inventory.length > 1 ? 's' : ''} in backpack`;
+    const _invCount = _inventory.filter(i => i !== null).length;
+    document.getElementById('equip-prompt-count').textContent = `${_invCount} item${_invCount > 1 ? 's' : ''} in backpack`;
     overlay.style.display = 'flex';
     // Ensure cursor is visible so the player can click the prompt buttons
     const _epScene = GAME?.scene?.scenes[0];

@@ -1284,8 +1284,9 @@ function awardMissionReward(missionId) {
             }
         }
         // Add to inventory if there's room
-        if (item && typeof _inventory !== 'undefined' && _inventory.length < (typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30)) {
-            _inventory.push(item);
+        if (item && typeof _inventory !== 'undefined') {
+            const _freeIdx = _inventory.indexOf(null);
+            if (_freeIdx !== -1) _inventory[_freeIdx] = item;
         }
     }
 
@@ -1402,12 +1403,13 @@ function shopBuyItem(shopIdx) {
     const item = _shopStock[shopIdx];
     if (!item) return false;
     if (typeof _scrap === 'undefined' || _scrap < item._shopPrice) return false;
-    if (typeof _inventory !== 'undefined' && _inventory.length >= (typeof INVENTORY_MAX !== 'undefined' ? INVENTORY_MAX : 30)) return false;
+    if (typeof _inventory !== 'undefined' && _inventory.indexOf(null) === -1) return false;
 
     _scrap -= item._shopPrice;
     const bought = { ...item };
     delete bought._shopPrice;
-    _inventory.push(bought);
+    const _shopFreeSlot = _inventory.indexOf(null);
+    _inventory[_shopFreeSlot] = bought;
     _shopStock.splice(shopIdx, 1);
     if (typeof saveInventory === 'function') saveInventory();
     return true;
@@ -1415,11 +1417,11 @@ function shopBuyItem(shopIdx) {
 
 /** Sell an item from inventory. Returns scrap gained. */
 function shopSellItem(invIdx) {
-    if (typeof _inventory === 'undefined' || invIdx < 0 || invIdx >= _inventory.length) return 0;
+    if (typeof _inventory === 'undefined' || invIdx < 0 || invIdx >= INVENTORY_MAX || !_inventory[invIdx]) return 0;
     const item = _inventory[invIdx];
     const price = getItemSellPrice(item);
     _scrap += price;
-    _inventory.splice(invIdx, 1);
+    _inventory[invIdx] = null;
     if (typeof saveInventory === 'function') saveInventory();
     return price;
 }
@@ -1654,7 +1656,7 @@ function showShop() {
 
     // ── Sell detail panel (Fix 1) ──
     let sellDetailHtml = '';
-    if (_selectedSellIdx !== null && typeof _inventory !== 'undefined' && _selectedSellIdx < _inventory.length) {
+    if (_selectedSellIdx !== null && typeof _inventory !== 'undefined' && _selectedSellIdx < INVENTORY_MAX && _inventory[_selectedSellIdx]) {
         const sellItem   = _inventory[_selectedSellIdx];
         const sellItemRc = rc(sellItem);
         const sellPrice  = getItemSellPrice(sellItem);
@@ -1703,7 +1705,7 @@ function showShop() {
     sellItemsHtml += '<div class="shop-sell-grid">';
     const inv = (typeof _inventory !== 'undefined') ? _inventory : [];
     for (let i = 0; i < invMax; i++) {
-        if (i < inv.length) {
+        if (inv[i]) {
             sellItemsHtml += sellSlot(inv[i], i);
         } else {
             sellItemsHtml += '<div class="lo-slot empty"></div>';
@@ -1740,7 +1742,7 @@ function showShop() {
                 <div class="shop-sell-col">
                     <div class="shop-col-hdr">
                         <div class="shop-col-title">Sell</div>
-                        <div class="shop-col-sub">${typeof _inventory !== 'undefined' ? _inventory.length : 0} / ${invMax}</div>
+                        <div class="shop-col-sub">${typeof _inventory !== 'undefined' ? _inventory.filter(i => i !== null).length : 0} / ${invMax}</div>
                     </div>
                     ${sellItemsHtml}
                     ${sellDetailHtml}
@@ -1772,7 +1774,7 @@ function _shopBuy(idx) {
 
 /** Sell an inventory item: removes it, adds it to shop stock as a buyable item, awards scrap. */
 function _shopSell(invIdx) {
-    if (typeof _inventory === 'undefined' || invIdx < 0 || invIdx >= _inventory.length) return;
+    if (typeof _inventory === 'undefined' || invIdx < 0 || invIdx >= INVENTORY_MAX || !_inventory[invIdx]) return;
     const item  = _inventory[invIdx];
     const price = getItemSellPrice(item);
     if (typeof _scrap !== 'undefined') _scrap += price;
@@ -1784,7 +1786,7 @@ function _shopSell(invIdx) {
     _shopItems[cat].push(soldItem);
     _shopRenderCategory(cat);
     // Remove from inventory and re-render sell side + scrap display
-    _inventory.splice(invIdx, 1);
+    _inventory[invIdx] = null;
     if (typeof saveInventory === 'function') saveInventory();
     _selectedSellIdx = null;
     showShop();
@@ -2359,7 +2361,13 @@ function _restoreFromCloudData(data) {
     }
     // Restore inventory
     if (data.inventory && Array.isArray(data.inventory)) {
-        _inventory = data.inventory.filter(it => it && typeof it === 'object' && it.name && it.rarity && it.baseType);
+        const _cloudClean = Array(INVENTORY_MAX).fill(null);
+        data.inventory.forEach((it, i) => {
+            if (i < INVENTORY_MAX && it && typeof it === 'object' && it.name && it.rarity && it.baseType) {
+                _cloudClean[i] = it;
+            }
+        });
+        _inventory = _cloudClean;
     }
     if (data.equipped && typeof data.equipped === 'object') {
         const validSlots = ['L','R','chest','arms','legs','shield','mod','augment'];

@@ -1006,7 +1006,7 @@ function populateInventory() {
     const hdr = document.getElementById('inv-header-count');
     if (hdr) hdr.innerHTML = `<span style="color:rgba(255,255,255,0.35);">SCRAP</span> <span style="color:#e8923a;">${_scrap}</span>`;
     const bpCount = document.getElementById('lo-bp-count');
-    if (bpCount) bpCount.textContent = `${_inventory.length} / ${INVENTORY_MAX}`;
+    if (bpCount) bpCount.textContent = `${_inventory.filter(i => i !== null).length} / ${INVENTORY_MAX}`;
 
     // ── Mech Silhouette with positioned equip slots ──
     const silEl = document.getElementById('inv-mech-silhouette');
@@ -1102,13 +1102,16 @@ function populateInventory() {
                 shield_system:'SHIELD', leg_system:'LEGS', armor:'ARMOR', arms:'ARMS',
                 legs:'LEGS', shield:'SHIELD', mod:'CPU', augment:'AUGMENT'
         };
-        // Render filled item slots
-        _inventory.forEach((item, idx) => {
+        // Render all 20 slots by position — items stay at their stored index
+        for (let i = 0; i < INVENTORY_MAX; i++) {
+            const item = _inventory[i];
+            if (item) {
                 const rd = RARITY_DEFS[item.rarity];
                 const cell = document.createElement('div');
                 cell.className = 'lo-slot';
                 cell.draggable = true;
-                cell.dataset.invIdx = idx;
+                cell.dataset.invIdx = i;
+                cell.dataset.bpIdx = i;
                 cell.title = `${item.name}\n${item.affixes.map(a => a.label).join('\n')}${item.uniqueLabel ? '\n★ ' + item.uniqueLabel : ''}`;
                 const _bpSlotLbl = _bpSlotNames[item.baseType] || '';
                 cell.innerHTML = `
@@ -1118,18 +1121,18 @@ function populateInventory() {
                 `;
                 cell.style.borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : rd.colorStr + '44';
                 // Apply selected state if this item is currently selected
-                if (_invSelectedSource === 'backpack' && _invSelectedKey === idx) {
+                if (_invSelectedSource === 'backpack' && _invSelectedKey === i) {
                     cell.style.borderColor = rd.colorStr + 'ee';
                     cell.style.boxShadow   = `0 0 10px ${rd.colorStr}55`;
                 }
                 cell.addEventListener('mouseover', () => {
-                    if (!(_invSelectedSource === 'backpack' && _invSelectedKey === idx)) {
+                    if (!(_invSelectedSource === 'backpack' && _invSelectedKey === i)) {
                         cell.style.borderColor = rd.colorStr + 'aa';
                         cell.style.boxShadow   = `0 0 8px ${rd.colorStr}33`;
                     }
                 });
                 cell.addEventListener('mouseout', () => {
-                    if (!(_invSelectedSource === 'backpack' && _invSelectedKey === idx)) {
+                    if (!(_invSelectedSource === 'backpack' && _invSelectedKey === i)) {
                         cell.style.borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : rd.colorStr + '44';
                         cell.style.boxShadow   = 'none';
                     }
@@ -1141,9 +1144,9 @@ function populateInventory() {
                     _hideSlotHover();
                     if (item.baseType === 'weapon') {
                         const arm = ev.shiftKey ? 'R' : 'L';
-                        _equipItemToSlot(idx, arm);
+                        _equipItemToSlot(i, arm);
                     } else {
-                        _equipItem(idx);
+                        _equipItem(i);
                     }
                     populateLoadout();
                 });
@@ -1151,7 +1154,7 @@ function populateInventory() {
                 cell.addEventListener('mousedown', () => { _hideSlotHover(); });
                 cell.addEventListener('dragstart', (ev) => {
                     _hideSlotHover();
-                    ev.dataTransfer.setData('text/plain', 'backpack:' + idx);
+                    ev.dataTransfer.setData('text/plain', 'backpack:' + i);
                     cell.classList.add('dragging');
                     // Highlight valid/invalid equip slots
                     const validSlots = _getDragValidSlots(item);
@@ -1169,13 +1172,38 @@ function populateInventory() {
                         slot.classList.remove('drag-valid', 'drag-invalid');
                     });
                 });
+                // Backpack rearrange: accept drops from other backpack slots
+                cell.addEventListener('dragover', (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    cell.classList.add('drag-over');
+                });
+                cell.addEventListener('dragleave', () => { cell.classList.remove('drag-over'); });
+                cell.addEventListener('drop', (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    cell.classList.remove('drag-over');
+                    _onBpCellDrop(ev, i);
+                });
                 bpEl.appendChild(cell);
-        });
-        // Fill remaining slots as empty placeholders (always show 30 total)
-        for (let i = _inventory.length; i < INVENTORY_MAX; i++) {
+            } else {
                 const empty = document.createElement('div');
                 empty.className = 'lo-slot empty';
+                empty.dataset.bpIdx = i;
+                empty.addEventListener('dragover', (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    empty.classList.add('drag-over');
+                });
+                empty.addEventListener('dragleave', () => { empty.classList.remove('drag-over'); });
+                empty.addEventListener('drop', (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    empty.classList.remove('drag-over');
+                    _onBpCellDrop(ev, i);
+                });
                 bpEl.appendChild(empty);
+            }
         }
     }
 
@@ -1184,6 +1212,25 @@ function populateInventory() {
     _invSelectedKey    = null;
     const dp = document.getElementById('inv-detail-panel');
     if (dp) dp.style.display = 'none';
+}
+
+/** Handle a drop onto a backpack cell — rearranges items within the backpack. */
+function _onBpCellDrop(ev, targetIdx) {
+    const data = ev.dataTransfer.getData('text/plain');
+    if (data.startsWith('backpack:')) {
+        const srcIdx = parseInt(data.split(':')[1]);
+        if (srcIdx === targetIdx) return;
+        // Swap source and target positions (works for both empty and occupied targets)
+        const srcItem = _inventory[srcIdx];
+        _inventory[srcIdx] = _inventory[targetIdx];
+        _inventory[targetIdx] = srcItem;
+        if (typeof saveInventory === 'function') saveInventory();
+        populateInventory();
+    } else if (data.startsWith('equipped:')) {
+        // Drop equipped item to backpack — use normal unequip (places in first free slot)
+        const slotKey = data.split(':')[1];
+        _unequipItem(slotKey);
+    }
 }
 
 /** Track currently selected item in the detail panel (for toggle behaviour). */
@@ -1488,8 +1535,11 @@ function _equipItemToSlot(invIdx, slotKey) {
     // Swap: if slot occupied, move old item to inventory
     const old = _equipped[slotKey];
     _equipped[slotKey] = item;
-    _inventory.splice(invIdx, 1);
-    if (old) _inventory.push(old);
+    _inventory[invIdx] = null;
+    if (old) {
+        const _fs = _inventory.indexOf(null);
+        if (_fs !== -1) _inventory[_fs] = old;
+    }
 
     if (typeof loadout !== 'undefined') {
         // Weapons → loadout.L / loadout.R
@@ -1513,13 +1563,14 @@ function _equipItemToSlot(invIdx, slotKey) {
 function _unequipItem(slotKey) {
     const item = _equipped[slotKey];
     if (!item) return;
-    if (_inventory.length >= INVENTORY_MAX) {
+    const _freeSlot = _inventory.indexOf(null);
+    if (_freeSlot === -1) {
         // Inventory full — show feedback so the player knows why nothing happened
         const _sc = GAME?.scene?.scenes[0];
         if (_sc && typeof _showFloatingWarning === 'function') _showFloatingWarning(_sc, 'INVENTORY FULL', UI_COLORS.redAlt);
         return;
     }
-    _inventory.push(item);
+    _inventory[_freeSlot] = item;
     _equipped[slotKey] = null;
 
     if (typeof loadout !== 'undefined') {
@@ -1551,7 +1602,7 @@ function _scrapItem(invIdx) {
     if (!item) return;
     const rd = RARITY_DEFS[item.rarity];
     _scrap += rd.scrapValue;
-    _inventory.splice(invIdx, 1);
+    _inventory[invIdx] = null;
     saveInventory();
     populateInventory();
     _updateInvCount();
@@ -1596,7 +1647,7 @@ function _showArmPicker(invIdx) {
 
 function _updateInvCount() {
     const el = document.getElementById('inv-count');
-    if (el) el.textContent = `${_inventory.length}/${INVENTORY_MAX}`;
+    if (el) el.textContent = `${_inventory.filter(i => i !== null).length}/${INVENTORY_MAX}`;
 }
 
 function _statRow(label, value, colorClass='') {
