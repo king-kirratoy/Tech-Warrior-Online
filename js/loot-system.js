@@ -1131,8 +1131,9 @@ function checkEquipmentPickups(scene) {
         if (!drop.active) return;
         const dist = Phaser.Math.Distance.Between(player.x, player.y, drop.x, drop.y);
         if (dist < 45) {
-            if (_inventory.length < INVENTORY_MAX) {
-                _inventory.push(drop.item);
+            const _freeSlot = _inventory.indexOf(null);
+            if (_freeSlot !== -1) {
+                _inventory[_freeSlot] = drop.item;
                 _showLootPickupNotification(scene, drop.item);
                 if (typeof sndEquipPickup === 'function') sndEquipPickup(drop.item.rarity);
                 else if (typeof _noise === 'function') _noise(0.08, 0.25, 0, 500, 1100);
@@ -1699,7 +1700,7 @@ function equipStarterGear() {
 
 /** Reset all inventory/equipment state for a new run. */
 function resetInventory() {
-    _inventory = [];
+    _inventory = Array(INVENTORY_MAX).fill(null);
     _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
     _scrap = 0;
     _gearState = {};
@@ -1730,7 +1731,13 @@ function loadCampaignInventory() {
         if (inv) {
             const parsed = JSON.parse(inv);
             if (Array.isArray(parsed)) {
-                _inventory = parsed.filter(it => it && typeof it === 'object' && it.name && it.rarity && it.baseType);
+                const clean = Array(INVENTORY_MAX).fill(null);
+                parsed.forEach((it, i) => {
+                    if (i < INVENTORY_MAX && it && typeof it === 'object' && it.name && it.rarity && it.baseType) {
+                        clean[i] = it;
+                    }
+                });
+                _inventory = clean;
             }
         }
         if (eq) {
@@ -1749,7 +1756,7 @@ function loadCampaignInventory() {
         recalcGearStats();
     } catch(e) {
         // If campaign data is corrupt, start fresh with starter gear
-        _inventory = [];
+        _inventory = Array(INVENTORY_MAX).fill(null);
         _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
         _scrap = 0;
     }
