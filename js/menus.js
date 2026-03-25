@@ -627,7 +627,7 @@ function showWarzonePerksOverlay() {
     statsHtml += divRow();
     statsHtml += statRow('L ARM',    wName(loadout.L),    isNone(loadout.L)    ? noneClr : gearClr);
     statsHtml += statRow('R ARM',    wName(loadout.R),    isNone(loadout.R)    ? noneClr : gearClr);
-    statsHtml += statRow('CPU',      gName(loadout.mod),  isNone(loadout.mod)  ? noneClr : gearClr);
+    statsHtml += statRow('CPU',      gName(loadout.cpu),  isNone(loadout.cpu)  ? noneClr : gearClr);
     statsHtml += statRow('SHIELD',   gName(loadout.shld), isNone(loadout.shld) ? noneClr : gearClr);
     statsHtml += statRow('LEGS',     gName(loadout.leg),  isNone(loadout.leg)  ? noneClr : gearClr);
     statsHtml += statRow('AUGMENT',  gName(loadout.aug),  isNone(loadout.aug)  ? noneClr : gearClr);
@@ -1024,7 +1024,7 @@ function populateInventory() {
         // Slot config: left column (top→bottom): CPU, ARMS, L ARM, SHIELD
         //              right column (top→bottom): AUGMENT, ARMOR, R ARM, LEGS
         const _leftSlots  = [
-            { key: 'mod',     label: 'CPU' },
+            { key: 'cpu',     label: 'CPU' },
             { key: 'arms',    label: 'ARMS' },
             { key: 'L',       label: 'L ARM' },
             { key: 'shield',  label: 'SHIELD' },
@@ -1105,9 +1105,9 @@ function populateInventory() {
         };
 
         const _bpSlotNames = {
-                weapon:'WEAPON', mod_system:'CPU', aug_system:'AUGMENT',
+                weapon:'WEAPON', cpu_system:'CPU', aug_system:'AUGMENT',
                 shield_system:'SHIELD', leg_system:'LEGS', armor:'ARMOR', arms:'ARMS',
-                legs:'LEGS', shield:'SHIELD', mod:'CPU', augment:'AUGMENT'
+                legs:'LEGS', shield:'SHIELD', cpu:'CPU', augment:'AUGMENT'
         };
         // Render all 20 slots by position — items stay at their stored index
         for (let i = 0; i < INVENTORY_MAX; i++) {
@@ -1413,9 +1413,9 @@ function _renderItemDetail(source, key) {
 
     const rd = RARITY_DEFS[item.rarity];
     const _invSlotNames = {
-        weapon:'WEAPON', mod_system:'CPU', aug_system:'AUGMENT',
+        weapon:'WEAPON', cpu_system:'CPU', aug_system:'AUGMENT',
         shield_system:'SHIELD', leg_system:'LEGS', armor:'ARMOR', arms:'ARMS',
-        legs:'LEGS', shield:'SHIELD', mod:'CPU', augment:'AUGMENT'
+        legs:'LEGS', shield:'SHIELD', cpu:'CPU', augment:'AUGMENT'
     };
     const _slotLabel = _invSlotNames[item.baseType] || '';
     const _uniqueBadge = item.isUnique ? `<span style="font-size:9px;letter-spacing:2px;color:${UI_COLORS.gold};margin-left:10px;background:${UI_COLORS.gold12};padding:2px 6px;border:1px solid ${UI_COLORS.gold30};border-radius:3px;">★ UNIQUE</span>` : '';
@@ -1475,7 +1475,7 @@ function _renderItemDetail(source, key) {
     // System ability (hybrid system items)
     if (item.systemKey) {
         const _sysDesc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[item.systemKey]) ? SLOT_DESCS[item.systemKey] : null;
-        const _sysTypeLabel = { shield_system:'SHIELD SYSTEM', mod_system:'CPU MODULE', leg_system:'LEG SYSTEM', aug_system:'AUGMENT SYSTEM' };
+        const _sysTypeLabel = { shield_system:'SHIELD SYSTEM', cpu_system:'CPU MODULE', leg_system:'LEG SYSTEM', aug_system:'AUGMENT SYSTEM' };
         html += `<div style="border-top:2px solid ${UI_COLORS.cyan20};margin-top:10px;padding-top:10px;background:${UI_COLORS.cyanSurface03};border-radius:4px;padding:10px;">`;
         html += `<div style="font-size:9px;letter-spacing:3px;color:${UI_COLORS.cyan50};margin-bottom:6px;">${_sysTypeLabel[item.baseType] || 'SYSTEM'}</div>`;
         html += `<div style="font-size:12px;color:${UI_COLORS.teal};letter-spacing:1px;margin-bottom:4px;">Activates: ${item.systemKey.replace(/_/g,' ').toUpperCase()}</div>`;
@@ -1506,9 +1506,9 @@ function _renderItemDetail(source, key) {
 function _getSlotForItem(item) {
     if (item.baseType === 'weapon') return null; // weapon needs L or R choice
     const map = {
-        armor:'chest', arms:'arms', legs:'legs', shield:'shield', mod:'mod', augment:'augment',
+        armor:'chest', arms:'arms', legs:'legs', shield:'shield', cpu:'cpu', augment:'augment',
         // System items map to the same equip slots
-        shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment'
+        shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment'
     };
     return map[item.baseType] || null;
 }
@@ -1555,7 +1555,7 @@ function _equipItemToSlot(invIdx, slotKey) {
         }
         // System items → activate the actual GAME system
         if (item.systemKey) {
-            const _sysLoadoutMap = { shield_system:'shld', mod_system:'mod', leg_system:'leg', aug_system:'aug' };
+            const _sysLoadoutMap = { shield_system:'shld', cpu_system:'cpu', leg_system:'leg', aug_system:'aug' };
             const loadoutKey = _sysLoadoutMap[item.baseType];
             if (loadoutKey) loadout[loadoutKey] = item.systemKey;
         }
@@ -1587,12 +1587,12 @@ function _unequipItem(slotKey) {
         }
         // System items → revert to 'none' (or starter default)
         if (item.systemKey) {
-            const _sysLoadoutMap = { shield_system:'shld', mod_system:'mod', leg_system:'leg', aug_system:'aug' };
+            const _sysLoadoutMap = { shield_system:'shld', cpu_system:'cpu', leg_system:'leg', aug_system:'aug' };
             const loadoutKey = _sysLoadoutMap[item.baseType];
             if (loadoutKey) {
                 // Revert to starter loadout default for this slot
                 const starter = (typeof STARTER_LOADOUTS !== 'undefined') ? STARTER_LOADOUTS[loadout.chassis] : null;
-                const _starterKeyMap = { shld:'shld', mod:'mod', leg:'leg', aug:'aug' };
+                const _starterKeyMap = { shld:'shld', cpu:'cpu', leg:'leg', aug:'aug' };
                 loadout[loadoutKey] = starter ? (starter[loadoutKey === 'shld' ? 'shld' : loadoutKey] || 'none') : 'none';
             }
         }
@@ -1978,7 +1978,7 @@ function _renderWeaponBar() {
     const items = [
         _wbItem('L ARM', loadout.L),
         _wbItem('R ARM', loadout.R),
-        _wbItem('CPU MOD', loadout.mod),
+        _wbItem('CPU MOD', loadout.cpu),
     ].filter(Boolean);
 
     if (items.length === 0) {
@@ -2122,13 +2122,13 @@ function _showSlotHover(el, slotKey, itemOverride) {
     _hoverActiveEl = el;
     _hoverActiveSlotKey = slotKey;
     _hoverActiveItem = itemOverride || (_equipped && _equipped[slotKey]) || null;
-    const _slotNames = { L:'Weapon', R:'Weapon', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', mod:'CPU Mod', augment:'Augment' };
+    const _slotNames = { L:'Weapon', R:'Weapon', chest:'Armor', arms:'Arms', legs:'Legs', shield:'Shield', cpu:'CPU Mod', augment:'Augment' };
 
     let item, slotLabel, compareItem;
     if (itemOverride) {
         // Backpack item passed directly
         item = itemOverride;
-        const bpSlotNames = { weapon:'Weapon', mod_system:'CPU', aug_system:'Augment',
+        const bpSlotNames = { weapon:'Weapon', cpu_system:'CPU', aug_system:'Augment',
             shield_system:'Shield', leg_system:'Legs', armor:'Armor', arms:'Arms' };
         slotLabel = bpSlotNames[item.baseType] || item.baseType || '';
         // Find equipped item for same slot to compare
@@ -2142,7 +2142,7 @@ function _showSlotHover(el, slotKey, itemOverride) {
                 compareItem = _equipped[_hoverAlt];
             }
         } else {
-            const slotMap = { mod_system:'mod', aug_system:'augment',
+            const slotMap = { cpu_system:'cpu', aug_system:'augment',
                 shield_system:'shield', leg_system:'legs', armor:'chest', arms:'arms' };
             const eqKey = slotMap[item.baseType];
             if (eqKey && _equipped && _equipped[eqKey]) {
@@ -2663,7 +2663,7 @@ function _cleanupGame() {
     // Restore weapons/mod destroyed during play
     if (_savedL   !== null) { loadout.L   = _savedL;   _savedL   = null; }
     if (_savedR   !== null) { loadout.R   = _savedR;   _savedR   = null; }
-    if (_savedMod !== null) { loadout.mod = _savedMod; _savedMod = null; }
+    if (_savedCpu !== null) { loadout.cpu = _savedCpu; _savedCpu = null; }
     if (_savedAug !== null) { loadout.aug = _savedAug; _savedAug = null; }
     if (_savedLeg !== null) { loadout.leg = _savedLeg; _savedLeg = null; }
     _chaingunSpinStart = 0; _chaingunReady = false;

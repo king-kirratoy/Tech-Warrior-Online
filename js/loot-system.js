@@ -69,10 +69,10 @@ const ITEM_BASES = {
     regen_cell:     { baseType:'shield', name:'Regen Cell',       icon:'shield_regen', baseStats:{ shieldHP:5,  shieldRegen:15 } },
     absorb_matrix:  { baseType:'shield', name:'Absorb Matrix',    icon:'shield_abs',   baseStats:{ shieldHP:25, absorbPct:5 } },
 
-    // ── MOD CHIPS (mod slot) ──
-    cooldown_chip:  { baseType:'mod', name:'Cooldown Chip',       icon:'mod_cd',       baseStats:{ modCdPct:-8 } },
-    amplifier:      { baseType:'mod', name:'Amplifier',           icon:'mod_amp',      baseStats:{ modEffPct:10 } },
-    overcharge:     { baseType:'mod', name:'Overcharge Module',   icon:'mod_oc',       baseStats:{ modCdPct:-5, modEffPct:5 } },
+    // ── CPU CHIPS (cpu slot) ──
+    cooldown_chip:  { baseType:'cpu', name:'Cooldown Chip',       icon:'mod_cd',       baseStats:{ modCdPct:-8 } },
+    amplifier:      { baseType:'cpu', name:'Amplifier',           icon:'mod_amp',      baseStats:{ modEffPct:10 } },
+    overcharge:     { baseType:'cpu', name:'Overcharge Module',   icon:'mod_oc',       baseStats:{ modCdPct:-5, modEffPct:5 } },
 
     // ── AUGMENT CORES (augment slot) ──
     targeting_array: { baseType:'augment', name:'Targeting Array', icon:'aug_target',   baseStats:{ critChance:3, accuracy:5 } },
@@ -99,18 +99,18 @@ const ITEM_BASES = {
     sys_bulwark_shield:  { baseType:'shield_system', systemKey:'bulwark_shield',  name:'Bulwark Shield',   icon:'shld_bulwark', baseStats:{ shieldHP:25, dr:0.04 } },
     sys_titan_shield:    { baseType:'shield_system', systemKey:'titan_shield',    name:'Titan Shield',     icon:'shld_titan',   baseStats:{ shieldHP:30, dr:0.05 } },
 
-    // ── SYSTEM MODS (mod_system slot → sets loadout.mod) ──
-    sys_jump:             { baseType:'mod_system', systemKey:'jump',             name:'Jump Jets',         icon:'mod_jump',     baseStats:{ speedPct:3 } },
-    sys_barrier:          { baseType:'mod_system', systemKey:'barrier',          name:'Barrier Module',    icon:'mod_barrier',  baseStats:{ shieldHP:10, dr:0.02 } },
-    sys_rage:             { baseType:'mod_system', systemKey:'rage',             name:'Rage Inducer',      icon:'mod_rage',     baseStats:{ dmgPct:4 } },
-    sys_emp:              { baseType:'mod_system', systemKey:'emp',              name:'EMP Burst',         icon:'mod_emp',      baseStats:{ modCdPct:-5 } },
-    sys_repair:           { baseType:'mod_system', systemKey:'repair',           name:'Repair Drone',      icon:'mod_repair',   baseStats:{ autoRepair:1 } },
-    sys_atk_drone:        { baseType:'mod_system', systemKey:'atk_drone',       name:'Attack Drone',      icon:'mod_drone',    baseStats:{ dmgPct:2 } },
-    sys_missile:          { baseType:'mod_system', systemKey:'missile',          name:'Missile Pod',       icon:'mod_missile',  baseStats:{ dmgPct:3 } },
-    sys_decoy:            { baseType:'mod_system', systemKey:'decoy',            name:'Decoy Projector',   icon:'mod_decoy',    baseStats:{ speedPct:2 } },
-    sys_ghost_step:       { baseType:'mod_system', systemKey:'ghost_step',       name:'Ghost Step',        icon:'mod_ghost',    baseStats:{ speedPct:3, dodgePct:2 } },
-    sys_overclock_burst:  { baseType:'mod_system', systemKey:'overclock_burst',  name:'Overclock Burst',   icon:'mod_oc',       baseStats:{ reloadPct:-3, speedPct:2 } },
-    sys_fortress_mode:    { baseType:'mod_system', systemKey:'fortress_mode',    name:'Fortress Mode',     icon:'mod_fortress', baseStats:{ dr:0.03, coreHP:15 } },
+    // ── SYSTEM CPU (cpu_system slot → sets loadout.cpu) ──
+    sys_jump:             { baseType:'cpu_system', systemKey:'jump',             name:'Jump Jets',         icon:'mod_jump',     baseStats:{ speedPct:3 } },
+    sys_barrier:          { baseType:'cpu_system', systemKey:'barrier',          name:'Barrier Module',    icon:'mod_barrier',  baseStats:{ shieldHP:10, dr:0.02 } },
+    sys_rage:             { baseType:'cpu_system', systemKey:'rage',             name:'Rage Inducer',      icon:'mod_rage',     baseStats:{ dmgPct:4 } },
+    sys_emp:              { baseType:'cpu_system', systemKey:'emp',              name:'EMP Burst',         icon:'mod_emp',      baseStats:{ modCdPct:-5 } },
+    sys_repair:           { baseType:'cpu_system', systemKey:'repair',           name:'Repair Drone',      icon:'mod_repair',   baseStats:{ autoRepair:1 } },
+    sys_atk_drone:        { baseType:'cpu_system', systemKey:'atk_drone',       name:'Attack Drone',      icon:'mod_drone',    baseStats:{ dmgPct:2 } },
+    sys_missile:          { baseType:'cpu_system', systemKey:'missile',          name:'Missile Pod',       icon:'mod_missile',  baseStats:{ dmgPct:3 } },
+    sys_decoy:            { baseType:'cpu_system', systemKey:'decoy',            name:'Decoy Projector',   icon:'mod_decoy',    baseStats:{ speedPct:2 } },
+    sys_ghost_step:       { baseType:'cpu_system', systemKey:'ghost_step',       name:'Ghost Step',        icon:'mod_ghost',    baseStats:{ speedPct:3, dodgePct:2 } },
+    sys_overclock_burst:  { baseType:'cpu_system', systemKey:'overclock_burst',  name:'Overclock Burst',   icon:'mod_oc',       baseStats:{ reloadPct:-3, speedPct:2 } },
+    sys_fortress_mode:    { baseType:'cpu_system', systemKey:'fortress_mode',    name:'Fortress Mode',     icon:'mod_fortress', baseStats:{ dr:0.03, coreHP:15 } },
 
     // ── SYSTEM LEGS (leg_system slot → sets loadout.leg) ──
     sys_hydraulic_boost:  { baseType:'leg_system', systemKey:'hydraulic_boost',  name:'Hydraulic Boost',   icon:'leg_hydro',    baseStats:{ speedPct:5, legHP:10 } },
@@ -226,7 +226,7 @@ const UNIQUE_ITEMS = {
     blueprint_core: {
         name: "Blueprint Core",
         shortName: 'B.Core',
-        baseType: 'mod',
+        baseType: 'cpu',
         icon: 'mod_oc',
         rarity: 'legendary',
         isUnique: true,
@@ -410,7 +410,7 @@ const UNIQUE_ITEMS = {
     core_reactor: {
         name: "Core Reactor",
         shortName: 'C.Reactor',
-        baseType: 'mod',
+        baseType: 'cpu',
         icon: 'mod_chip',
         rarity: 'legendary',
         isUnique: true,
@@ -562,8 +562,8 @@ const AFFIX_POOL = {
 
     // Utility
     speedPct:     { label:'+{v}% Move Speed',        min:2,  max:14, weight:6,  types:['legs','augment'] },
-    modCdPct:     { label:'-{v}% Mod Cooldown',      min:3,  max:22, weight:6,  types:['mod'] },
-    modEffPct:    { label:'+{v}% Mod Effectiveness',  min:5,  max:30, weight:5, types:['mod'] },
+    modCdPct:     { label:'-{v}% Mod Cooldown',      min:3,  max:22, weight:6,  types:['cpu'] },
+    modEffPct:    { label:'+{v}% Mod Effectiveness',  min:5,  max:30, weight:5, types:['cpu'] },
     lootMult:     { label:'+{v}% Loot Quality',      min:3,  max:18, weight:3,  types:['augment'] },
     autoRepair:   { label:'+{v} HP/sec Regen',       min:1,  max:6,  weight:4,  types:['armor','augment'] },
 };
@@ -574,7 +574,7 @@ let _inventory = [];
 let _equipped = {
     L: null, R: null,
     chest: null, arms: null, legs: null,
-    shield: null, mod: null, augment: null
+    shield: null, cpu: null, augment: null
 };
 let _gearState = {};
 let _scrap = 0;
@@ -663,13 +663,13 @@ function rollAffixes(baseType, subType, rarity) {
 function _selectItemType(enemyData) {
     const weights = {
         weapon: 30, armor: 10, arms: 8, legs: 6,
-        shield: 6, mod: 6, augment: 6,
+        shield: 6, cpu: 6, augment: 6,
         // System drops — the main way to get new equipment
-        shield_system: 8, mod_system: 7, leg_system: 7, aug_system: 6
+        shield_system: 8, cpu_system: 7, leg_system: 7, aug_system: 6
     };
     if (enemyData?.isMedic) { weights.shield_system *= 2; weights.shield *= 2; weights.armor *= 2; }
-    if (enemyData?.isCommander) { weights.weapon *= 2; weights.mod_system *= 2; }
-    if (enemyData?.isBoss) { weights.mod_system *= 2; weights.aug_system *= 2; weights.shield_system *= 2; }
+    if (enemyData?.isCommander) { weights.weapon *= 2; weights.cpu_system *= 2; }
+    if (enemyData?.isBoss) { weights.cpu_system *= 2; weights.aug_system *= 2; weights.shield_system *= 2; }
     if (enemyData?.isElite) { weights.leg_system *= 2; weights.shield_system *= 1.5; }
 
     const total = Object.values(weights).reduce((s, v) => s + v, 0);
@@ -695,8 +695,8 @@ function _selectBaseItem(baseType) {
     if (baseType === 'shield_system') {
         const allowed = typeof CHASSIS_SHIELDS !== 'undefined' ? CHASSIS_SHIELDS[ch] : null;
         if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
-    } else if (baseType === 'mod_system') {
-        const allowed = typeof CHASSIS_MODS !== 'undefined' ? CHASSIS_MODS[ch] : null;
+    } else if (baseType === 'cpu_system') {
+        const allowed = typeof CHASSIS_CPUS !== 'undefined' ? CHASSIS_CPUS[ch] : null;
         if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
     } else if (baseType === 'leg_system') {
         const allowed = typeof CHASSIS_LEGS !== 'undefined' ? CHASSIS_LEGS[ch] : null;
@@ -755,7 +755,7 @@ function generateItem(round, enemyData) {
     }
 
     // Roll affixes — system items use their parent slot type for affix pool
-    const _affixTypeMap = { shield_system:'shield', mod_system:'mod', leg_system:'legs', aug_system:'augment' };
+    const _affixTypeMap = { shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment' };
     const affixType = _affixTypeMap[baseType] || baseType;
     const affixes = rollAffixes(affixType, subType, rarity);
 
@@ -1307,7 +1307,7 @@ function recalcGearStats() {
     };
 
     const slots = [_equipped.L, _equipped.R, _equipped.chest, _equipped.arms,
-                   _equipped.legs, _equipped.shield, _equipped.mod, _equipped.augment];
+                   _equipped.legs, _equipped.shield, _equipped.cpu, _equipped.augment];
 
     slots.forEach(item => {
         if (!item) return;
@@ -1701,7 +1701,7 @@ function equipStarterGear() {
 /** Reset all inventory/equipment state for a new run. */
 function resetInventory() {
     _inventory = Array(INVENTORY_MAX).fill(null);
-    _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
+    _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
     _scrap = 0;
     _gearState = {};
     equipStarterGear();
@@ -1743,8 +1743,8 @@ function loadCampaignInventory() {
         if (eq) {
             const parsed = JSON.parse(eq);
             if (parsed && typeof parsed === 'object') {
-                const validSlots = ['L','R','chest','arms','legs','shield','mod','augment'];
-                const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
+                const validSlots = ['L','R','chest','arms','legs','shield','cpu','augment'];
+                const clean = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
                 validSlots.forEach(s => {
                     if (parsed[s] && typeof parsed[s] === 'object' && parsed[s].name && parsed[s].rarity && parsed[s].baseType) clean[s] = parsed[s];
                 });
@@ -1757,7 +1757,7 @@ function loadCampaignInventory() {
     } catch(e) {
         // If campaign data is corrupt, start fresh with starter gear
         _inventory = Array(INVENTORY_MAX).fill(null);
-        _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, mod:null, augment:null };
+        _equipped = { L:null, R:null, chest:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
         _scrap = 0;
     }
 }
@@ -1772,7 +1772,7 @@ function saveCampaignProgress() {
             color: loadout.color,
             L: loadout.L,
             R: loadout.R,
-            mod: loadout.mod,
+            cpu: loadout.cpu,
             aug: loadout.aug,
             leg: loadout.leg,
             shld: loadout.shld,

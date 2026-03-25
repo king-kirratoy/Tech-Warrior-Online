@@ -79,7 +79,7 @@ function _wzBuildDropdown(slotId) {
         restrictSet = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[chassis] : null;
     } else if (slotId === 'M') {
         options = typeof MOD_OPTIONS !== 'undefined' ? MOD_OPTIONS : [];
-        restrictSet = typeof CHASSIS_MODS !== 'undefined' ? CHASSIS_MODS[chassis] : null;
+        restrictSet = typeof CHASSIS_CPUS !== 'undefined' ? CHASSIS_CPUS[chassis] : null;
     } else if (slotId === 'S') {
         options = typeof SHIELD_OPTIONS !== 'undefined' ? SHIELD_OPTIONS : [];
         restrictSet = typeof CHASSIS_SHIELDS !== 'undefined' ? CHASSIS_SHIELDS[chassis] : null;
@@ -254,7 +254,7 @@ function refreshGarage() {
     }
     const wL   = WEAPONS[loadout.L];
     const wR   = WEAPONS[loadout.R];
-    const modW = WEAPONS[loadout.mod];
+    const modW = WEAPONS[loadout.cpu];
     const lRate = fmtReload(wL);
     const rRate = fmtReload(wR);
     const modCd = modW?.cooldown ? Math.round(modW.cooldown * (oc ? 0.88 : 1.0) / 1000) + 's cd' : null;
@@ -338,7 +338,7 @@ function refreshGarage() {
         });
         statsHtml += statRow(label, nameSpan + sep + detailSpans.join(sep), '');
     }
-    slotBlock('CPU', 'cpu', loadout.mod);
+    slotBlock('CPU', 'cpu', loadout.cpu);
     slotBlock('AUGMENT', 'augment', loadout.aug);
     const rArmKey2 = is2H ? loadout.L : loadout.R;
     slotBlock('L ARM', 'weapon', loadout.L);
@@ -469,7 +469,7 @@ function deployMech() {
 
     // HEAVY: strip forbidden items if somehow equipped
     if (loadout.chassis === 'heavy') {
-        if (loadout.mod === 'jump')    loadout.mod = 'none';
+        if (loadout.cpu === 'jump')    loadout.cpu = 'none';
         if (loadout.leg === 'afterleg') loadout.leg = 'none';
     }
 
@@ -570,7 +570,7 @@ function deployMech() {
     // Save weapon loadout before drop (module-level, survives player.destroy())
     _savedL   = loadout.L;
     _savedR   = loadout.R;
-    _savedMod = loadout.mod;
+    _savedCpu = loadout.cpu;
     _savedAug = loadout.aug;
     _savedLeg = loadout.leg;
 
@@ -627,7 +627,7 @@ function _applyStarterLoadout(ch) {
     const starter = STARTER_LOADOUTS[ch] || STARTER_LOADOUTS.medium;
     loadout.L    = starter.L;
     loadout.R    = starter.R;
-    loadout.mod  = starter.mod;
+    loadout.cpu  = starter.cpu;
     loadout.aug  = starter.aug;
     loadout.leg  = starter.leg;
     loadout.shld = starter.shld;

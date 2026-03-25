@@ -56,7 +56,7 @@ function mpConnect(serverUrl) {
                 chassis: loadout.chassis,
                 L: loadout.L,
                 R: loadout.R,
-                mod: loadout.mod,
+                cpu: loadout.cpu,
                 shld: loadout.shld,
                 leg: loadout.leg,
                 aug: loadout.aug
@@ -914,7 +914,7 @@ function mpDeployPVP() {
 
     // Save weapon loadout
     _savedL = loadout.L; _savedR = loadout.R;
-    _savedMod = loadout.mod; _savedAug = loadout.aug; _savedLeg = loadout.leg;
+    _savedCpu = loadout.cpu; _savedAug = loadout.aug; _savedLeg = loadout.leg;
 
     // Drop-in animation
     const normalScale = CHASSIS[loadout.chassis].scale;
@@ -1189,7 +1189,7 @@ function mpStartMatch() {
         loadout: {
             chassis: loadout.chassis,
             L: loadout.L, R: loadout.R,
-            mod: loadout.mod, shld: loadout.shld,
+            cpu: loadout.cpu, shld: loadout.shld,
             leg: loadout.leg, aug: loadout.aug
         }
     });
@@ -1578,7 +1578,7 @@ function mpRespawnPlayer() {
 
     // Restore weapons
     loadout.L = _savedL; loadout.R = _savedR;
-    loadout.mod = _savedMod; loadout.aug = _savedAug; loadout.leg = _savedLeg;
+    loadout.cpu = _savedCpu; loadout.aug = _savedAug; loadout.leg = _savedLeg;
 
     // Re-enable
     _mpAlive = true;
@@ -2165,7 +2165,7 @@ function _pvpToggleDD(slotId) {
 
 function _pvpGetSlotLabel(slotId) {
     const key = slotId === 'L' ? loadout.L : slotId === 'R' ? loadout.R
-              : slotId === 'M' ? loadout.mod : slotId === 'S' ? loadout.shld
+              : slotId === 'M' ? loadout.cpu : slotId === 'S' ? loadout.shld
               : slotId === 'G' ? loadout.leg : loadout.aug;
     if (!key || key === 'none') return 'NONE';
     const desc = typeof SLOT_DESCS !== 'undefined' ? SLOT_DESCS[key] : null;
@@ -2188,7 +2188,7 @@ function _pvpBuildDropdown(slotId) {
         restrictSet = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[chassis] : null;
     } else if (slotId === 'M') {
         options = typeof MOD_OPTIONS !== 'undefined' ? MOD_OPTIONS : [];
-        restrictSet = typeof CHASSIS_MODS !== 'undefined' ? CHASSIS_MODS[chassis] : null;
+        restrictSet = typeof CHASSIS_CPUS !== 'undefined' ? CHASSIS_CPUS[chassis] : null;
     } else if (slotId === 'S') {
         options = typeof SHIELD_OPTIONS !== 'undefined' ? SHIELD_OPTIONS : [];
         restrictSet = typeof CHASSIS_SHIELDS !== 'undefined' ? CHASSIS_SHIELDS[chassis] : null;
@@ -2201,7 +2201,7 @@ function _pvpBuildDropdown(slotId) {
     }
 
     const currentKey = slotId === 'L' ? loadout.L : slotId === 'R' ? loadout.R
-                     : slotId === 'M' ? loadout.mod : slotId === 'S' ? loadout.shld
+                     : slotId === 'M' ? loadout.cpu : slotId === 'S' ? loadout.shld
                      : slotId === 'G' ? loadout.leg : loadout.aug;
 
     const is2H = WEAPONS[loadout.L]?.twoHanded;
@@ -2316,7 +2316,7 @@ function _pvpRenderHangar() {
     }
     const wL   = WEAPONS[loadout.L];
     const wR   = WEAPONS[loadout.R];
-    const modW = WEAPONS[loadout.mod];
+    const modW = WEAPONS[loadout.cpu];
     const lRate = fmtReload(wL);
     const rRate = fmtReload(wR);
     const modCd = modW?.cooldown ? Math.round(modW.cooldown * (oc ? 0.88 : 1.0) / 1000) + 's cd' : null;
@@ -2400,7 +2400,7 @@ function _pvpRenderHangar() {
         });
         statsHtml += statRow(label, nameSpan + sep + detailSpans.join(sep), '');
     }
-    pvpSlotBlock('CPU', 'cpu', loadout.mod);
+    pvpSlotBlock('CPU', 'cpu', loadout.cpu);
     pvpSlotBlock('AUGMENT', 'augment', loadout.aug);
     const rArmKey2 = is2H ? loadout.L : loadout.R;
     pvpSlotBlock('L ARM', 'weapon', loadout.L);
@@ -2551,7 +2551,7 @@ function _pvpSelectSlot(slotId, key) {
             if (loadout.chassis !== 'light' && key !== 'none' && loadout.L === key) loadout.L = 'none';
         }
     } else if (slotId === 'M') {
-        loadout.mod = key;
+        loadout.cpu = key;
     } else if (slotId === 'S') {
         loadout.shld = key;
     } else if (slotId === 'G') {
@@ -2566,7 +2566,7 @@ function _pvpSetChassis(ch) {
     loadout.chassis = ch;
     if (!CHASSIS_WEAPONS[ch]?.has(loadout.L)) loadout.L = 'none';
     if (!CHASSIS_WEAPONS[ch]?.has(loadout.R)) loadout.R = 'none';
-    if (!CHASSIS_MODS[ch]?.has(loadout.mod)) loadout.mod = 'none';
+    if (!CHASSIS_CPUS[ch]?.has(loadout.cpu)) loadout.cpu = 'none';
     if (!CHASSIS_SHIELDS[ch]?.has(loadout.shld)) loadout.shld = 'none';
     if (!CHASSIS_LEGS[ch]?.has(loadout.leg)) loadout.leg = 'none';
     if (!CHASSIS_AUGS[ch]?.has(loadout.aug)) loadout.aug = 'none';

@@ -2043,7 +2043,7 @@ function spawnMirror(scene) {
     e.loadout = {
         chassis: loadout.chassis || 'medium',
         primary: loadout.L || 'smg', secondary: loadout.R || 'none',
-        mod: loadout.mod || 'none', shld: loadout.shld || 'none',
+        cpu: loadout.cpu || 'none', shld: loadout.shld || 'none',
         leg: loadout.leg || 'none', aug: loadout.aug || 'none'
     };
     e.behavior = 'mirror'; e.isBoss = true; e.bossType = 'mirror';

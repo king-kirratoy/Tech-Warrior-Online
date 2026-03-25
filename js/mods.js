@@ -882,7 +882,7 @@ function activateMod(scene, time) {
     if (typeof spawnModCover === 'function') spawnModCover(scene);
     // Core Reactor: mod activation damage pulse
     if (typeof triggerCoreOverload === 'function') triggerCoreOverload(scene);
-    switch (loadout.mod) {
+    switch (loadout.cpu) {
         case 'jump':      activateJump(scene);           break;
         case 'barrier':   activateShield(scene);         break;
         case 'rage':      activateRage(scene);           break;
