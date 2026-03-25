@@ -1285,15 +1285,6 @@ function _setCompareArm(arm) {
 function _buildItemComparisonHTML(newItem) {
     if (!newItem || !newItem.baseStats) return '';
 
-    const statNames = {
-        dmg:'Damage', reload:'Fire Rate', pellets:'Pellets', speed:'Projectile Speed',
-        range:'Range', radius:'Blast Radius', burst:'Burst Count', coreHP:'Core HP', armHP:'Arm HP',
-        legHP:'Leg HP', dr:'Damage Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %',
-        absorbPct:'Shield Absorb %', speedPct:'Move Speed %', fireRatePct:'Fire Rate %',
-        dmgPct:'Damage %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Effectiveness %',
-        dodgePct:'Dodge %', accuracy:'Accuracy', lootMult:'Loot Quality %'
-    };
-
     function _statCard(item, cardLabel) {
         const rd = (item && RARITY_DEFS && RARITY_DEFS[item.rarity]) ? RARITY_DEFS[item.rarity] : { colorStr: UI_COLORS.text60 };
         let h = `<div style="flex:1;min-width:0;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:8px 10px;">`;
@@ -1303,7 +1294,7 @@ function _buildItemComparisonHTML(newItem) {
         entries.forEach(([k, v]) => {
             const fmtV = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : (k === 'reload' || k === 'fireRate') ? (1000 / v).toFixed(1) + '/sec' : v;
             h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
-            h += `<span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>`;
+            h += `<span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span>`;
             h += `<span style="color:var(--sci-txt);">${fmtV}</span>`;
             h += `</div>`;
         });
@@ -1364,7 +1355,7 @@ function _buildItemComparisonHTML(newItem) {
             const color = spsDiff > 0 ? '#44ff88' : '#ff4466';
             const sign = spsDiff > 0 ? '+' : '';
             return `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">
-            <span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>
+            <span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span>
             <span style="color:${color};">${sign}${spsDiff.toFixed(1)}/sec</span>
         </div>`;
         }
@@ -1387,7 +1378,7 @@ function _buildItemComparisonHTML(newItem) {
             }
         }
         return `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">
-            <span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>
+            <span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span>
             <span style="color:${color};">${fmtVal}</span>
         </div>`;
     }).filter(Boolean).join('');
@@ -1465,15 +1456,9 @@ function _renderItemDetail(source, key) {
     // Base stats
     html += `<div style="border-top:1px solid ${UI_COLORS.gold10};padding-top:10px;">`;
     if (item.baseStats) {
-        const statNames = { dmg:'Damage', reload:'Fire Rate', pellets:'Pellets', speed:'Projectile Speed',
-            range:'Range', radius:'Blast Radius', burst:'Burst Count', coreHP:'Core HP', armHP:'Arm HP',
-            legHP:'Leg HP', dr:'Damage Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %',
-            absorbPct:'Shield Absorb %', speedPct:'Move Speed %', fireRatePct:'Fire Rate %',
-            dmgPct:'Damage %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Effectiveness %',
-            dodgePct:'Dodge %', accuracy:'Accuracy', lootMult:'Loot Quality %' };
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (k === 'speed') return;
-            const label = statNames[k] || k;
+            const label = STAT_DISPLAY_NAMES[k] || _camelToTitle(k);
             html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
                 <span style="color:${UI_COLORS.text60};">${label}</span>
                 <span style="color:${UI_COLORS.text90};">${(k === 'reload' || k === 'fireRate') ? (1000 / v).toFixed(1) + '/sec' : typeof v === 'number' ? (v < 1 && v > 0 ? Math.round(v*100)+'%' : v) : v}</span>
@@ -1830,15 +1815,6 @@ function _renderGearBonusesPanel() {
         return;
     }
     gearPanel.style.display = 'block';
-    const _gsLabels = {
-        dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
-        fireRatePct:'Fire Rate %', pellets:'Bonus Pellets', splashRadius:'Blast Radius %',
-        coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All Part HP',
-        dr:'Damage Reduction %', shieldHP:'Shield Capacity', shieldRegen:'Shield Regen %',
-        dodgePct:'Dodge Chance %', speedPct:'Move Speed %', modCdPct:'Mod Cooldown %',
-        modEffPct:'Mod Effectiveness %', lootMult:'Loot Quality %', autoRepair:'HP/sec Regen',
-        absorbPct:'Shield Absorb %'
-    };
     const offKeys  = ['dmgFlat','dmgPct','critChance','critDmg','fireRatePct','pellets','splashRadius'];
     const defKeys  = ['coreHP','armHP','legHP','allHP','dr','shieldHP','shieldRegen','dodgePct','absorbPct'];
     const utilKeys = ['speedPct','modCdPct','modEffPct','lootMult','autoRepair'];
@@ -1851,7 +1827,7 @@ function _renderGearBonusesPanel() {
         active.forEach(k => {
             const v  = gs[k];
             const fmtGv = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : v;
-            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${_gsLabels[k] || k}</span><span class="lo-bonus-val pos">+${fmtGv}</span></div>`;
+            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span class="lo-bonus-val pos">+${fmtGv}</span></div>`;
         });
         return h;
     };
@@ -2008,12 +1984,26 @@ function _renderWeaponBar() {
     }
 }
 
+/** Canonical stat key → player-facing display name. Used by all item cards, hover cards, and comparison views. */
+const STAT_DISPLAY_NAMES = {
+    dmg:'Damage', dmgFlat:'Damage', dmgPct:'Damage %',
+    critChance:'Crit Chance %', critDmg:'Crit Damage %',
+    fireRate:'Fire Rate', reload:'Fire Rate', fireRatePct:'Fire Rate %',
+    coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All HP',
+    dr:'Damage Reduction %',
+    shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %', maxShield:'Shield HP',
+    dodgePct:'Dodge %', speedPct:'Speed %',
+    modCdPct:'CPU Cooldown %', modEffPct:'CPU Effect %',
+    lootMult:'Loot Quality %', autoRepair:'Auto Repair',
+    pellets:'Pellets', splashRadius:'Blast Radius %',
+    accuracy:'Accuracy %',
+    speed:'Projectile Speed', range:'Range', radius:'Blast Radius', burst:'Burst Count',
+};
+/** Converts a camelCase key to Title Case with spaces as a fallback display label. */
+function _camelToTitle(key) {
+    return key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+}
 /** Builds hover card HTML for any item. */
-const _hoverStatNames = { dmg:'Damage', fireRate:'Fire Rate', reload:'Fire Rate', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP',
-    dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', fireRatePct:'Fire Rate%', dmgPct:'Dmg%',
-    critChance:'Crit%', critDmg:'Crit Dmg%', dodgePct:'Dodge%', modCdPct:'Mod CD%',
-    modEffPct:'Mod Eff%', lootMult:'Loot%', autoRepair:'Repair', allHP:'All HP',
-    absorbPct:'Absorb%', pellets:'Pellets', splashRadius:'Blast%' };
 const _hoverInvertedStats = new Set(['fireRatePct','modCdPct']);
 const _pctStats = new Set(['dmgPct','critChance','critDmg','fireRatePct','dodgePct','speedPct','modCdPct','modEffPct','absorbPct','shieldRegen','splashRadius','accuracy','lootMult']);
 
@@ -2045,7 +2035,7 @@ function _buildSingleCardHtml(item, slotLabel) {
             } else {
                 displayVal = v;
             }
-            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${_hoverStatNames[k]||k}</span><span style="color:${valColor};">${displayVal}</span></div>`;
+            html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span style="color:${valColor};">${displayVal}</span></div>`;
         });
     }
     if (hasStats && hasAffixes) html += '<div class="lo-hover-divider"></div>';
@@ -2103,7 +2093,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
                 } else {
                     displayVal = v;
                 }
-                h += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${_hoverStatNames[k]||k}</span><span style="color:${valColor};">${displayVal}</span></div>`;
+                h += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span style="color:${valColor};">${displayVal}</span></div>`;
             });
         }
         if (hasStats && hasAffixes) h += '<div class="lo-hover-divider"></div>';
@@ -2149,7 +2139,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
             if (Math.abs(spsDiff) < 0.05) return;
             const color = spsDiff > 0 ? '#00ff88' : '#ff4d6a';
             const sign = spsDiff > 0 ? '+' : '';
-            diffHtml += `<div class="lo-hover-diff-row"><span class="lo-hover-diff-lbl">${_hoverStatNames[k]||k}</span><span style="color:${color};">${sign}${spsDiff.toFixed(1)}/sec</span></div>`;
+            diffHtml += `<div class="lo-hover-diff-row"><span class="lo-hover-diff-lbl">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span style="color:${color};">${sign}${spsDiff.toFixed(1)}/sec</span></div>`;
             return;
         }
         const diff = nv - ov;
@@ -2158,7 +2148,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         const isGood = isInverted ? diff < 0 : diff > 0;
         const color = isGood ? '#00ff88' : '#ff4d6a';
         const diffDisplay = (isInverted && diff < 0) ? '+' + Math.abs(diff) : (diff > 0 ? '+' + diff : '' + diff);
-        diffHtml += `<div class="lo-hover-diff-row"><span class="lo-hover-diff-lbl">${_hoverStatNames[k]||k}</span><span style="color:${color};">${diffDisplay}</span></div>`;
+        diffHtml += `<div class="lo-hover-diff-row"><span class="lo-hover-diff-lbl">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span style="color:${color};">${diffDisplay}</span></div>`;
     });
     if (diffHtml) {
         html += '<div class="lo-hover-cmp-diff">';
