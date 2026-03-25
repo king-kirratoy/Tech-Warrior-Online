@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.50';
+const GAME_VERSION = 'v6.51';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -247,6 +247,10 @@ const AUGMENTS = {
     suppressor_aura: { name: 'SUPPRESSOR AURA',weight: 38,  desc: 'Enemies within 200px have -15% move speed. Passive intimidation field.' },
     colossus_frame:  { name: 'COLOSSUS FRAME', weight: 45,  desc: 'Core HP +60. Arm and leg HP +40. Built to absorb punishment.' },
     impact_core:     { name: 'IMPACT CORE',    weight: 32,  desc: 'Close-range kills (<200px) restore 15 core HP and stun nearby enemies for 0.5s.' },
+    // ── HEAVY WEAPON MASTERY ──────────────────────────────────────
+    blast_dampener:  { name: 'BLAST DAMPENER', weight: 30,  desc: 'Self-damage from explosions reduced by 60%. Use the Rocket Launcher without fear of blowback.' },
+    heavy_loader:    { name: 'HEAVY LOADER',   weight: 35,  desc: 'All weapon reload times reduced by 20%. Motorized autoloader keeps heavy ordnance cycling faster.' },
+    chain_drive:     { name: 'CHAIN DRIVE',    weight: 32,  desc: 'CHAIN 2H weapon: +25% fire rate. Powered chain-feed eliminates cycle hesitation under sustained fire.' },
 };
 
 // ═══════════ LEGS ═══════════
