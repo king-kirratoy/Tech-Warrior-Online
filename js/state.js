@@ -98,6 +98,7 @@ let _lastPlayerDamageTime  = 0;
 let isJumping       = false;
 let isShieldActive  = false;
 let isRageActive    = false;
+let _rageDmgMult    = 1.0;
 let isAmmoActive    = false;  // loot: 50% reload reduction for 8s
 let isChargeActive  = false;  // loot: 50% mod cooldown reduction for 10s
 

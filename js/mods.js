@@ -270,11 +270,13 @@ function activateEMP(scene, time) {
 function activateRage(scene) {
     sndRage();
     isRageActive = true;
+    _rageDmgMult = 1.15;
     refreshMechColor();
     const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
     const _rageDur = WEAPONS.rage.rageTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * (_perkState.rageDurMult || 1) * _gearModEffMult;
     scene.time.delayedCall(_rageDur, () => {
         isRageActive = false;
+        _rageDmgMult = 1.0;
         refreshMechColor();
         lastModTime = GAME.scene.scenes[0].time.now;
     });

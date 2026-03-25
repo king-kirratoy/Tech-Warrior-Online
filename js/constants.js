@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.49';
+const GAME_VERSION = 'v6.50';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -122,7 +122,7 @@ const WEAPONS = {
     // RAGE: offensive — brief invincibility on activation, boosted damage
     rage:   { name: 'RAGE',   weight: 30,  rageTime: 3500,                  cooldown: 10500, invincFrames: 500 },
     // EMP: crowd control
-    emp:    { name: 'EMP',    weight: 30,  radius: 380, empSpeed: 380, stunTime: 2400, cooldown: 9000 },
+    emp:    { name: 'EMP',    weight: 30,  radius: 570, empSpeed: 380, stunTime: 2400, cooldown: 9000 },
     // REPAIR DRONE: sustain — repairs most-damaged limb over time
     repair: { name: 'REPAIR', weight: 20,  healAmount: 40, healTicks: 5, tickDelay: 500, cooldown: 12000 },
     // ATTACK DRONE: offensive — deploys a turret that auto-fires at nearest enemy
@@ -549,7 +549,7 @@ const SLOT_DESCS = {
     jump:             { title:'JUMP JETS', desc:'Dash forward at high speed. Deals slam AoE damage (40 dmg, 120px) on landing. Afterleg boosts both.' },
     barrier:          { title:'BARRIER', desc:'4 seconds of full damage immunity. Energy barrier absorbs all incoming fire. 3-second lockout after deactivation.' },
     rage:             { title:'RAGE', desc:'3.5s damage boost + brief invincibility frames on activation. Higher cooldown.' },
-    emp:              { title:'EMP BURST', desc:'Expanding ring stuns all enemies within 380px for 2.4 seconds. Great vs groups.' },
+    emp:              { title:'EMP BURST', desc:'Expanding ring stuns all enemies within 570px for 2.4 seconds. Great vs groups.' },
     repair:           { title:'REPAIR DRONE', desc:'Heals your most-damaged limb for 40 HP delivered over 5 ticks. Pulse visual confirms activation.' },
     atk_drone:        { title:'ATTACK DRONE', desc:'Deploys an auto-turret that fires 24 dmg bolts at the nearest enemy every 0.6s for 8 seconds.' },
     missile:          { title:'MISSILE POD', desc:'Launches 6 homing micro-missiles split across up to 3 nearest enemies. 55 dmg per hit.' },
