@@ -1320,6 +1320,7 @@ function handleBulletEnemyOverlap(scene, bullet, enemy) {
 /** Apply SMG/bullet range dropoff to base damage. Returns adjusted dmg value. */
 function _calcBulletDamage(bullet) {
     let dmg = bullet.damageValue || 2;
+    if (isRageActive && typeof _rageDmgMult === 'number') dmg = Math.round(dmg * _rageDmgMult);
     if (bullet.rangeDropoff && bullet._originX !== undefined) {
         const tDist = Phaser.Math.Distance.Between(bullet._originX, bullet._originY, bullet.x, bullet.y);
         if (tDist > bullet.rangeDropoff) {
