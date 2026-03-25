@@ -165,7 +165,7 @@ function returnToHangar() {
         // Simulation: full wipe — each run starts from scratch
         if (_round > 1 || _totalKills > 0) _capturePendingRun();
         resetInventory();
-        _applyStarterLoadout(loadout.chassis);
+        resetLoadout(); // reset to Light chassis starter — warzone never persists selections
     }
     _round      = (_gameMode === 'campaign') ? _round : 1;
     CHASSIS.medium.modCooldownMult = 0.85; // restore from tactical_uplink modification
@@ -420,6 +420,8 @@ function startGame(mode) {
             modeLabel.textContent = 'WARZONE';
             modeLabel.style.color = UI_COLORS.cyan35;
         }
+        // Reset to Light chassis starter loadout — warzone always starts fresh
+        if (typeof resetLoadout === 'function') resetLoadout();
         startHangarGrid();
         // Ensure garage UI matches loadout state
         try { refreshGarage(); } catch(e) {}
