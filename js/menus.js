@@ -1284,10 +1284,10 @@ function _buildItemComparisonHTML(newItem) {
     if (!newItem || !newItem.baseStats) return '';
 
     const statNames = {
-        dmg:'Damage', reload:'Reload (ms)', pellets:'Pellets', speed:'Projectile Speed',
+        dmg:'Damage', reload:'Fire Rate', pellets:'Pellets', speed:'Projectile Speed',
         range:'Range', radius:'Blast Radius', burst:'Burst Count', coreHP:'Core HP', armHP:'Arm HP',
         legHP:'Leg HP', dr:'Damage Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %',
-        absorbPct:'Shield Absorb %', speedPct:'Move Speed %', reloadPct:'Reload Speed %',
+        absorbPct:'Shield Absorb %', speedPct:'Move Speed %', reloadPct:'Fire Rate %',
         dmgPct:'Damage %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Effectiveness %',
         dodgePct:'Dodge %', accuracy:'Accuracy', lootMult:'Loot Quality %'
     };
@@ -1299,7 +1299,7 @@ function _buildItemComparisonHTML(newItem) {
         h += `<div style="font-size:11px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:6px;line-height:1.3;">${item.name || '?'}</div>`;
         const entries = Object.entries(item.baseStats || {}).filter(([, v]) => v !== 0);
         entries.forEach(([k, v]) => {
-            const fmtV = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : v;
+            const fmtV = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : k === 'reload' ? (1000 / v).toFixed(1) + '/sec' : v;
             h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
             h += `<span style="color:rgba(255,255,255,0.45);">${statNames[k] || k}</span>`;
             h += `<span style="color:var(--sci-txt);">${fmtV}</span>`;
@@ -1452,17 +1452,17 @@ function _renderItemDetail(source, key) {
     // Base stats
     html += `<div style="border-top:1px solid ${UI_COLORS.gold10};padding-top:10px;">`;
     if (item.baseStats) {
-        const statNames = { dmg:'Damage', reload:'Reload (ms)', pellets:'Pellets', speed:'Projectile Speed',
+        const statNames = { dmg:'Damage', reload:'Fire Rate', pellets:'Pellets', speed:'Projectile Speed',
             range:'Range', radius:'Blast Radius', burst:'Burst Count', coreHP:'Core HP', armHP:'Arm HP',
             legHP:'Leg HP', dr:'Damage Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %',
-            absorbPct:'Shield Absorb %', speedPct:'Move Speed %', reloadPct:'Reload Speed %',
+            absorbPct:'Shield Absorb %', speedPct:'Move Speed %', reloadPct:'Fire Rate %',
             dmgPct:'Damage %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Effectiveness %',
             dodgePct:'Dodge %', accuracy:'Accuracy', lootMult:'Loot Quality %' };
         Object.entries(item.baseStats).forEach(([k, v]) => {
             const label = statNames[k] || k;
             html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
                 <span style="color:${UI_COLORS.text60};">${label}</span>
-                <span style="color:${UI_COLORS.text90};">${typeof v === 'number' ? (v < 1 && v > 0 ? Math.round(v*100)+'%' : v) : v}</span>
+                <span style="color:${UI_COLORS.text90};">${k === 'reload' ? (1000 / v).toFixed(1) + '/sec' : typeof v === 'number' ? (v < 1 && v > 0 ? Math.round(v*100)+'%' : v) : v}</span>
             </div>`;
         });
     }
@@ -1818,7 +1818,7 @@ function _renderGearBonusesPanel() {
     gearPanel.style.display = 'block';
     const _gsLabels = {
         dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
-        reloadPct:'Reload Speed %', pellets:'Bonus Pellets', splashRadius:'Blast Radius %',
+        reloadPct:'Fire Rate %', pellets:'Bonus Pellets', splashRadius:'Blast Radius %',
         coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All Part HP',
         dr:'Damage Reduction %', shieldHP:'Shield Capacity', shieldRegen:'Shield Regen %',
         dodgePct:'Dodge Chance %', speedPct:'Move Speed %', modCdPct:'Mod Cooldown %',
@@ -1938,7 +1938,7 @@ function _renderWeaponBar() {
         const ch = loadout.chassis;
         const _cTraits = ch === 'light'
             ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped (−15% dmg per arm)'],
-               ['Reload Speed','+20% passive reload speed on all weapons'],
+               ['Fire Rate','+20% passive fire rate on all weapons'],
                ['Fragile Arms','Arms have 30% less base HP than Medium chassis']]
             : ch === 'medium'
             ? [['Mod Cooldowns','All mod cooldowns reduced by −15%'],
@@ -1995,8 +1995,8 @@ function _renderWeaponBar() {
 }
 
 /** Builds hover card HTML for any item. */
-const _hoverStatNames = { dmg:'Damage', reload:'Reload', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP',
-    dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', reloadPct:'Reload%', dmgPct:'Dmg%',
+const _hoverStatNames = { dmg:'Damage', reload:'Fire Rate', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP',
+    dr:'DR%', shieldHP:'Shield HP', speedPct:'Speed%', reloadPct:'Fire Rate%', dmgPct:'Dmg%',
     critChance:'Crit%', critDmg:'Crit Dmg%', dodgePct:'Dodge%', modCdPct:'Mod CD%',
     modEffPct:'Mod Eff%', lootMult:'Loot%', autoRepair:'Repair', allHP:'All HP',
     absorbPct:'Absorb%', pellets:'Pellets', splashRadius:'Blast%' };
@@ -2023,6 +2023,8 @@ function _buildSingleCardHtml(item, slotLabel) {
                 displayVal = '+' + Math.abs(v) + (_pctStats.has(k) ? '%' : '');
             } else if (k === 'dr') {
                 displayVal = Math.round(v * 100) + '%';
+            } else if (k === 'reload') {
+                displayVal = (1000 / v).toFixed(1) + '/sec';
             } else if (_pctStats.has(k)) {
                 displayVal = v + '%';
             } else {
@@ -2078,6 +2080,8 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
                     displayVal = '+' + Math.abs(v) + (_pctStats.has(k) ? '%' : '');
                 } else if (k === 'dr') {
                     displayVal = Math.round(v * 100) + '%';
+                } else if (k === 'reload') {
+                    displayVal = (1000 / v).toFixed(1) + '/sec';
                 } else if (_pctStats.has(k)) {
                     displayVal = v + '%';
                 } else {
