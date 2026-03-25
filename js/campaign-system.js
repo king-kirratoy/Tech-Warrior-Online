@@ -1444,12 +1444,12 @@ const _shopRarityColors = {
 
 /** Stat display names for comparison panel. */
 const _shopStatNames = {
-    dmgFlat:'Flat Damage', dmgPct:'Damage %', critChance:'Crit %', critDmg:'Crit Dmg %',
+    dmgFlat:'Damage', dmgPct:'Damage %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
     fireRatePct:'Fire Rate %', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All HP',
-    dr:'Dmg Reduction', shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %',
-    dodgePct:'Dodge %', speedPct:'Move Speed %', modCdPct:'Mod CD %', modEffPct:'Mod Eff %',
+    dr:'Damage Reduction %', shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %',
+    dodgePct:'Dodge %', speedPct:'Speed %', modCdPct:'CPU Cooldown %', modEffPct:'CPU Effect %',
     lootMult:'Loot Quality %', autoRepair:'Auto Repair', pellets:'Pellets', splashRadius:'Blast Radius %',
-    accuracy:'Accuracy', dmg:'Damage', reload:'Fire Rate'
+    accuracy:'Accuracy %', dmg:'Damage', reload:'Fire Rate', maxShield:'Shield HP'
 };
 
 /** Get the total computed stats for an item (baseStats + affixes). */
@@ -2192,10 +2192,10 @@ function _showUpgradesPanel() {
         html += `<div style="padding:10px 14px;background:${UI_COLORS.cyanSurface03};border:1px solid ${UI_COLORS.cyan10};border-radius:4px;max-width:${gridW}px;margin-bottom:12px;">`;
         html += `<div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:6px;">ACTIVE BONUSES</div>`;
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
-        const statLabels = { coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', spd:'Speed',
-            dmgMult:'Damage', reloadMult:'Fire Rate', critChance:'Crit Chance', critDmg:'Crit Damage',
-            shieldRegen:'Shield Regen', blastMult:'Blast Radius', dodgeChance:'Dodge',
-            dr:'Dmg Reduction', modCdMult:'Mod Cooldown', autoRepair:'Auto Repair' };
+        const statLabels = { coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', spd:'Speed %',
+            dmgMult:'Damage %', reloadMult:'Fire Rate %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
+            shieldRegen:'Shield Regen %', blastMult:'Blast Radius %', dodgeChance:'Dodge %',
+            dr:'Damage Reduction %', modCdMult:'CPU Cooldown %', autoRepair:'Auto Repair' };
         const pctStats = new Set(['dmgMult','reloadMult','critChance','critDmg','shieldRegen','blastMult','dodgeChance','dr','modCdMult']);
         for (const [k, v] of activeStats) {
             const label = statLabels[k] || k;
