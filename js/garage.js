@@ -504,7 +504,10 @@ function deployMech() {
     const hitR   = loadout.chassis === 'light' ? 16 : loadout.chassis === 'medium' ? 22 : 30;
     const hitOff = loadout.chassis === 'light' ? -8  : loadout.chassis === 'medium' ? -10 : -12;
     player.body.setCircle(hitR);
-    player.body.setOffset(-hitR, hitOff);
+    // Center the circle within the scaled sprite bounds.
+    // Formula: (legW * scale / 2) - hitR compensates for Phaser's displayWidth-based body positioning.
+    const hitOffX = Math.round(legW * s.scale / 2 - hitR);
+    player.body.setOffset(hitOffX, hitOff);
     player.setScale(s.scale);
     player.body.setCollideWorldBounds(true);
 
