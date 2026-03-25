@@ -447,6 +447,13 @@ function proceedToMainMenu() {
         _updateCampaignButton();
         _updateMainMenuStats();
         setTimeout(() => { mm.style.opacity = '1'; }, 20);
+        // Kick off cloud load immediately; update stats when it resolves
+        if (typeof _loadCampaignData === 'function') {
+            _loadCampaignData().then(() => {
+                const menuEl = document.getElementById('main-menu');
+                if (menuEl && menuEl.style.display !== 'none') _updateMainMenuStats();
+            }).catch(() => {});
+        }
     }, 500);
 }
 
