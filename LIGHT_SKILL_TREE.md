@@ -53,14 +53,14 @@ Jump, Barrier, Decoy, Ghost Step (no EMP)
 | 3 | +6% SMG Damage | Tungsten Core | Hardened SMG projectiles |
 | N | +8% SMG Damage, +3% SMG Crit Damage | Overcharged Rounds | Supercharged rounds hit and crit harder |
 
-### SMG SUB-CLUSTER 2: Fire Rate / Reload (4 nodes)
+### SMG SUB-CLUSTER 2: Fire Rate (4 nodes)
 
 | # | Stat | Name | Description |
 |---|------|------|-------------|
 | 1 | +3% SMG Fire Rate | Trigger Tuning | SMG fires 3% faster |
 | 2 | +5% SMG Fire Rate | Motorized Feed | Accelerated round cycling |
-| 3 | -5% SMG Reload | Quick Magazine | SMG reloads 5% faster |
-| N | +6% SMG Fire Rate, -5% SMG Reload | Lead Storm | Maximum cycling speed with rapid mag swaps |
+| 3 | +5% SMG Fire Rate | Quick Magazine | SMG fires 5% faster |
+| N | +6% SMG Fire Rate, +5% SMG Fire Rate | Lead Storm | Maximum cycling speed |
 
 ### SMG SUB-CLUSTER 3: Crit Synergy (3 nodes)
 
@@ -96,7 +96,7 @@ Jump, Barrier, Decoy, Ghost Step (no EMP)
 |---|------|------|-------------|
 | 1 | +5% SG Damage within 100 units | Close Quarters | Bonus damage at point blank |
 | 2 | +8% SG Damage within 100 units | Breach Specialist | Devastating up close |
-| N | +12% SG Damage within 100 units, -3% SG Reload | Pointblank Protocol | Maximum lethality at close range |
+| N | +12% SG Damage within 100 units, +3% SG Fire Rate | Pointblank Protocol | Maximum lethality at close range |
 
 ### SHOTGUN SUB-CLUSTER 3: Spread / Pellet Count (3 nodes)
 
@@ -291,9 +291,9 @@ Jump, Barrier, Decoy, Ghost Step (no EMP)
 |---|------|------|-------------|
 | 1 | +3% Move Speed | Servo Boost | Slightly faster movement |
 | 2 | +3% Move Speed | Hydraulic Upgrade | Improved leg servos |
-| 3 | -3% All Reload | Quick Hands | All weapons reload 3% faster |
-| 4 | -4% All Reload | Streamlined Magazines | Faster magazine cycling |
-| N | +5% Move Speed, -5% All Reload | Lightning Reflexes | Faster in every way |
+| 3 | +3% All Fire Rate | Quick Hands | All weapons fire 3% faster |
+| 4 | +4% All Fire Rate | Streamlined Action | Faster weapon cycling |
+| N | +5% Move Speed, +5% All Fire Rate | Lightning Reflexes | Faster in every way |
 
 ---
 
@@ -369,7 +369,7 @@ These are simple stat nodes that form the paths between clusters. They use small
 | Crit Chance | ~5 | +1%, +2% |
 | Crit Damage | ~5 | +2%, +3% |
 | Move Speed | ~5 | +2%, +3% |
-| Reload Speed | ~5 | -2%, -3% |
+| Fire Rate | ~5 | +2%, +3% |
 | Dodge | ~4 | +1%, +2% |
 | Shield Regen | ~4 | +3%, +5% |
 | Mod Cooldown | ~4 | -2%, -3% |
