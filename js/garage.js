@@ -349,7 +349,7 @@ function refreshGarage() {
             <button id="hangar-mm-btn" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;" onclick="returnToMainMenu()">‹ Back</button>
             <div class="mp-screen-title">WARZONE</div>
             <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
-                <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;" onclick="deployMech()"${deployDisabled}>Deploy Mech ›</button>
+                <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;" onclick="deployMech()"${deployDisabled}>Deploy ›</button>
             </div>
         </div>
 

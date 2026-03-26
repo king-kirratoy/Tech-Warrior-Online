@@ -763,7 +763,7 @@ function showMissionSelect() {
     // ── Top bar ──
     html += '<div class="cm-top" style="position:relative;">';
     html += `<button onclick="_closeMissionSelect()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">&#8249; Back</button>`;
-    html += `<span style="position:absolute;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:4px;color:var(--sci-txt);text-transform:uppercase;pointer-events:none;">CAMPAIGN</span>`;
+    html += `<span style="position:absolute;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:4px;color:var(--sci-cyan);text-transform:uppercase;pointer-events:none;">CAMPAIGN</span>`;
     html += `<span style="position:absolute;left:50%;transform:translateX(-50%);margin-top:22px;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);pointer-events:none;">LVL ${_campaignState.playerLevel} &nbsp;·&nbsp; ${xpCur} / ${xpNeeded} XP</span>`;
     html += `<button onclick="_openShopFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;margin-left:auto;">Supply Shop</button>`;
     html += `<button onclick="_openSkillTreeFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">Skill Tree</button>`;

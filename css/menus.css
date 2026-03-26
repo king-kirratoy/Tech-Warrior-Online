@@ -1014,7 +1014,7 @@
 }
 
 .lb-title {
-  color: var(--sci-txt);
+  color: var(--sci-cyan);
   font-size: 11px;
   left: 50%;
   letter-spacing: 4px;
@@ -1125,7 +1125,7 @@
 }
 
 .mp-screen-title {
-  color: var(--sci-txt);
+  color: var(--sci-cyan);
   font-family: var(--font-mono);
   font-size: 11px;
   left: 50%;
@@ -1378,7 +1378,7 @@
 }
 
 .shop-title {
-  color: var(--sci-txt);
+  color: var(--sci-cyan);
   font-size: 11px;
   left: 50%;
   letter-spacing: 4px;
