@@ -29,9 +29,8 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   padding: 44px;
-  padding-top: 60px;
 }
 
 /* --- Eyebrow + Title --- */
