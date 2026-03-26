@@ -1139,7 +1139,7 @@ function _showLootPickupNotification(scene, item) {
     const yOffset = _lootNotifications.length * 36;
 
     const baseX = 10;
-    const baseY = 80 + yOffset;
+    const baseY = 122 + yOffset;
 
     // Build notification text
     const affixText = item.affixes.length > 0
