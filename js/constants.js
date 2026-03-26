@@ -31,9 +31,9 @@ const CHASSIS_SHIELDS = {
 };
 // ── CHASSIS LEG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_LEGS = {
-    light:  new Set(['none','hydraulic_boost','gyro_stabilizer','sprint_boosters','featherweight','ghost_legs']),
-    medium: new Set(['none','gyro_stabilizer','mag_anchors','mine_layer','seismic_dampener','reactor_legs']),
-    heavy:  new Set(['none','mag_anchors','mine_layer','tremor_legs','suppressor_legs','warlord_stride']),
+    light:  new Set(['none','hydraulic_boost','seismic_dampener','featherweight','ghost_legs']),
+    medium: new Set(['none','gyro_stabilizer','mine_layer','sprint_boosters','reactor_legs']),
+    heavy:  new Set(['none','mag_anchors','tremor_legs','suppressor_legs','warlord_stride']),
 };
 // ── CHASSIS AUG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_AUGS = {
