@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.71';
+const GAME_VERSION = 'v6.72';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -31,15 +31,15 @@ const CHASSIS_SHIELDS = {
 };
 // ── CHASSIS LEG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_LEGS = {
-    light:  new Set(['none','hydraulic_boost','gyro_stabilizer','sprint_boosters','featherweight','ghost_legs']),
-    medium: new Set(['none','gyro_stabilizer','mag_anchors','mine_layer','seismic_dampener','reactor_legs']),
-    heavy:  new Set(['none','mag_anchors','mine_layer','tremor_legs','suppressor_legs','warlord_stride']),
+    light:  new Set(['none','hydraulic_boost','seismic_dampener','featherweight','ghost_legs']),
+    medium: new Set(['none','gyro_stabilizer','mine_layer','sprint_boosters','reactor_legs']),
+    heavy:  new Set(['none','mag_anchors','tremor_legs','suppressor_legs','warlord_stride']),
 };
 // ── CHASSIS AUG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_AUGS = {
     // Light: bullet synergy, FTH, jump/dodge synergy
-    light:  new Set(['none','target_painter','threat_analyzer','ballistic_weave','neural_accel','thermal_core']),
-    medium: new Set(['none','target_painter','threat_analyzer','overclock_cpu','reactive_plating','multi_drone','field_processor']),
+    light:  new Set(['none','threat_analyzer','ballistic_weave','neural_accel','thermal_core']),
+    medium: new Set(['none','target_painter','overclock_cpu','multi_drone','field_processor']),
     heavy:  new Set(['none','reactive_plating','war_machine','suppressor_aura','heavy_loader']),
 };
 
