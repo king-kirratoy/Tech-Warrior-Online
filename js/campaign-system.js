@@ -2354,7 +2354,8 @@ function _restoreFromCloudData(data) {
         loadout.R = cp.R || 'none';
         loadout.cpu = cp.cpu || 'none';
         loadout.aug = cp.aug || 'none';
-        loadout.leg = cp.leg || 'none';
+        const _cpLeg = cp.leg || 'none';
+        loadout.leg = (typeof REMOVED_LEGS !== 'undefined' && REMOVED_LEGS.includes(_cpLeg)) ? 'none' : _cpLeg;
         const _cpShld = cp.shld || 'none';
         loadout.shld = (typeof REMOVED_SHIELDS !== 'undefined' && REMOVED_SHIELDS.includes(_cpShld)) ? 'none' : _cpShld;
         _round = cp.round || 1;
@@ -2366,6 +2367,8 @@ function _restoreFromCloudData(data) {
         const _cloudClean = Array(INVENTORY_MAX).fill(null);
         data.inventory.forEach((it, i) => {
             if (i < INVENTORY_MAX && it && typeof it === 'object' && it.name && it.rarity && it.baseType) {
+                // Skip items whose subType is a removed leg key
+                if (typeof REMOVED_LEGS !== 'undefined' && REMOVED_LEGS.includes(it.subType)) return;
                 _cloudClean[i] = it;
             }
         });
@@ -2423,7 +2426,8 @@ async function _loadCampaignData() {
             loadout.R       = saved.R       || 'none';
             loadout.cpu     = saved.cpu     || 'none';
             loadout.aug     = saved.aug     || 'none';
-            loadout.leg     = saved.leg     || 'none';
+            const _savedLeg = saved.leg || 'none';
+            loadout.leg     = (typeof REMOVED_LEGS !== 'undefined' && REMOVED_LEGS.includes(_savedLeg)) ? 'none' : _savedLeg;
             loadout.shld    = saved.shld    || 'none';
             _round          = saved.round   || 1;
             _totalKills     = saved.totalKills || 0;

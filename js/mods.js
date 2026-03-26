@@ -487,42 +487,20 @@ function applyLegSystem() {
         case 'ghost_legs':
             // Passive: speed burst on taking damage — handled in processPlayerDamage
             break;
-        case 'silent_step':
-            // Passive: handled in enemy vision detection — no apply needed
-            break;
         case 'sprint_boosters':
             // Double-tap handled in input detection
-            break;
-        case 'reactive_dash':
-            // Threshold trigger — handled in processPlayerDamage leg check
-            break;
-        case 'stabilizer_gyros':
-            // Stationary bonus — handled in update loop like mag_anchors
             break;
         case 'jump_jets':
             // Only reachable on light chassis (where jump mod is available)
             _perkState.jumpCharges = (_perkState.jumpCharges || 1) + 1;
             _perkState._jumpChargesLeft = _perkState.jumpCharges;
             break;
-        case 'adaptive_stride':
         case 'seismic_dampener':
         case 'reactor_legs':
         case 'tremor_legs':
-        case 'siege_stance':
-        case 'ironclad_legs':
         case 'suppressor_legs':
             // Handled in update loop
             break;
-        // ── NEW MEDIUM LEGS ──────────────────────────────────────
-        case 'power_stride':
-            // Kill-triggered speed stack — handled in onEnemyKilled
-            _perkState._powerStrideStacks = 0;
-            _perkState._powerStrideTimer  = 0;
-            break;
-        case 'evasion_coils':
-            // Passive: dodge distance/cooldown boost — handled in dodge logic
-            break;
-        // ── NEW HEAVY LEG ────────────────────────────────────────
         case 'warlord_stride':
             // Passive: speed/dmg when legs healthy — handled in update loop
             break;
