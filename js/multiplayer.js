@@ -2441,14 +2441,14 @@ function _pvpRenderHangar() {
         topRightBtn = `
             <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
                 <div style="display:flex;gap:8px;align-items:center;">
-                    <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Deploy Mech ›</button>
+                    <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Deploy ›</button>
                     <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="flex:0 0 auto;width:auto;">Quit Match</button>
                 </div>
             </div>`;
     } else {
         topRightBtn = `
             <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
-                <button id="pvp-join-btn" onclick="_pvpJoinLobby()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Join Lobby ›</button>
+                <button id="pvp-join-btn" onclick="_pvpJoinLobby()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Lobby ›</button>
             </div>`;
     }
 
