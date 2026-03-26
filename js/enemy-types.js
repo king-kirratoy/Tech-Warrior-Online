@@ -223,7 +223,7 @@ function spawnSpecialEnemy(scene, typeKey) {
         primary,
         secondary: 'none',
         mod: def.chassis === 'medium' ? Phaser.Math.RND.pick(['repair', 'barrier']) : 'none',
-        shld: def.chassis === 'heavy' ? 'heavy_shield' : 'standard_shield',
+        shld: def.chassis === 'heavy' ? 'bulwark_shield' : 'adaptive_shield',
         leg: 'none',
         aug: 'none'
     };

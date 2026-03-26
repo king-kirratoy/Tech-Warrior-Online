@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.65';
+const GAME_VERSION = 'v6.66';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -22,16 +22,12 @@ const CHASSIS_CPUS = {
 };
 // ── CHASSIS SHIELD RESTRICTIONS ───────────────────────────────────
 const CHASSIS_SHIELDS = {
-    // All chassis get the 5 universal shields + their 5 chassis-unique shields
     light:  new Set(['none',
-        'light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield',
-        'micro_shield','flicker_shield','phase_shield','smoke_burst','mirror_shield']),
+        'micro_shield','flicker_shield','smoke_burst','mirror_shield']),
     medium: new Set(['none',
-        'light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield',
-        'adaptive_shield','counter_shield','pulse_shield','layered_shield','overcharge_shld']),
+        'fortress_shield','adaptive_shield','layered_shield','overcharge_shld']),
     heavy:  new Set(['none',
-        'light_shield','standard_shield','heavy_shield','reactive_shield','fortress_shield',
-        'siege_wall','bulwark_shield','thermal_shield','titan_shield']),
+        'bulwark_shield','thermal_shield','titan_shield']),
 };
 // ── CHASSIS LEG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_LEGS = {
@@ -169,42 +165,25 @@ const WEAPON_NAMES = {
 
 const SHIELD_SYSTEMS = {
     none:            { name: 'NONE',            weight: 0,   maxShield: 0,   regenRate: 0,    regenDelay: 0,  absorb: 0.50, desc: 'No shield system.' },
-    // ── UNIVERSAL (all chassis) ───────────────────────────────────
-    // Fast Cycle: low HP, near-instant regen. Burn it freely — it comes right back.
-    light_shield:    { name: 'LIGHT SHIELD',    weight: 15,  maxShield: 60,  regenRate: 6.0,  regenDelay: 1,  absorb: 0.50, desc: 'Low HP (60) but regens in ~1s. Cycle it constantly. No downtime if you stay mobile.' },
-    // Balanced: nothing special, nothing lacking. The dependable baseline.
-    standard_shield: { name: 'STD. SHIELD',     weight: 25,  maxShield: 100, regenRate: 1.2,  regenDelay: 4,  absorb: 0.50, desc: 'Reliable 100 HP, standard 50% absorb, 4s regen delay. No gimmick — just solid.' },
-    // Absorb Quality: same HP as standard but 70% absorb. Regen is slower to compensate.
-    heavy_shield:    { name: 'HEAVY SHIELD',    weight: 40,  maxShield: 100, regenRate: 0.6,  regenDelay: 7,  absorb: 0.70, desc: '100 HP but absorbs 70% of each hit (vs. 50%). Regen is slow — protect the shield.' },
-    // Responsive: fast regen, invuln flash on break. Breaking it is part of the rhythm.
-    reactive_shield: { name: 'REACTIVE SHIELD', weight: 45,  maxShield: 80,  regenRate: 4.0,  regenDelay: 2,  absorb: 0.50, desc: '80 HP, 2s regen. On break: 0.3s invulnerability window. Designed to break and recover.' },
-    // Raw Mass: enormous HP but only absorbs 25% — most damage bleeds through.
-    fortress_shield: { name: 'FORTRESS SHIELD', weight: 60,  maxShield: 240, regenRate: 0.4,  regenDelay: 9,  absorb: 0.25, desc: '240 HP but only 25% absorb — damage bleeds through. A speed bump, not a wall.' },
     // ── LIGHT CHASSIS UNIQUE ──────────────────────────────────────
     // Pure cycle: 30 HP but regen starts after 1s. Almost always up.
     micro_shield:    { name: 'MICRO SHIELD',    weight: 12,  maxShield: 30,  regenRate: 10.0, regenDelay: 1,  absorb: 0.50, desc: 'Paper thin (30 HP), instant 1s regen. Always cycling. Best with high mobility.' },
     // Rhythm blocker: absorbs every other hit entirely, HP never depletes.
     flicker_shield:  { name: 'FLICKER SHIELD',  weight: 22,  maxShield: 80,  regenRate: 0,    regenDelay: 0,  absorb: 0.50, flickerBlock: true, desc: 'Alternates active/inactive each hit. Blocks every second hit completely. No regen needed.' },
-    // Reactive hit window: brief invuln on every shield hit (not just break).
-    phase_shield:    { name: 'PHASE SHIELD',    weight: 20,  maxShield: 70,  regenRate: 1.5,  regenDelay: 3,  absorb: 0.50, phaseInvuln: 0.25, desc: '70 HP. Each hit triggers 0.25s invulnerability. Consistent hit mitigation.' },
     // Break escape: on shield break, gain a speed burst to disengage.
     smoke_burst:     { name: 'SMOKE BURST',     weight: 18,  maxShield: 60,  regenRate: 2.0,  regenDelay: 3,  absorb: 0.50, breakSpeedBurst: true, desc: '60 HP. On break: +70% speed for 2s. Converts being overwhelmed into an escape.' },
     // Punish attacker: reflects 35% of absorbed damage back at the source.
     mirror_shield:   { name: 'MIRROR SHIELD',   weight: 28,  maxShield: 70,  regenRate: 1.0,  regenDelay: 4,  absorb: 0.50, reflectPct: 0.35, desc: '70 HP. Reflects 35% of absorbed damage back at the attacker.' },
     // ── MEDIUM CHASSIS UNIQUE ─────────────────────────────────────
+    // Raw Mass: enormous HP but only absorbs 25% — most damage bleeds through.
+    fortress_shield: { name: 'FORTRESS SHIELD', weight: 60,  maxShield: 240, regenRate: 0.4,  regenDelay: 9,  absorb: 0.25, desc: '240 HP but only 25% absorb — damage bleeds through. A speed bump, not a wall.' },
     // Sustained fighter: absorb scales 50→80% over 4 consecutive hits.
     adaptive_shield: { name: 'ADAPTIVE SHIELD', weight: 30,  maxShield: 90,  regenRate: 1.0,  regenDelay: 5,  absorb: 0.50, adaptiveMax: 0.80, desc: '90 HP. Each consecutive hit increases absorb by 10% (max 80%). Rewards staying in the fight.' },
-    // Charge-and-release: stores energy from hits, discharge on mod for AoE burst.
-    counter_shield:  { name: 'COUNTER SHIELD',  weight: 35,  maxShield: 90,  regenRate: 1.1,  regenDelay: 4,  absorb: 0.50, counterCharge: 40, desc: '90 HP. Every 40 shield damage charges a counter-strike. Discharge on mod activation: 80 AoE dmg.' },
-    // Tactical reset: on break, EMP stuns all enemies within 250px for 1.8s.
-    pulse_shield:    { name: 'PULSE SHIELD',    weight: 28,  maxShield: 80,  regenRate: 3.0,  regenDelay: 2,  absorb: 0.50, breakEMP: true, desc: '80 HP, fast 2s regen. On break: EMP stuns enemies within 250px for 1.8s.' },
     // Two lives: two independent 65 HP layers. Each regen separately.
     layered_shield:  { name: 'LAYERED SHIELD',  weight: 38,  maxShield: 130, regenRate: 0.8,  regenDelay: 5,  absorb: 0.50, layered: true, layer1Max: 65, layer2Max: 65, desc: '130 HP across two 65 HP layers. Each layer regens independently once broken.' },
     // Overflow: excess absorbed damage spills into temporary core HP.
     overcharge_shld: { name: 'OVERCHARGE SHLD', weight: 32,  maxShield: 90,  regenRate: 1.2,  regenDelay: 3,  absorb: 0.50, overchargeSpill: true, desc: '90 HP. Damage absorbed beyond shield HP temporarily adds to core HP buffer.' },
     // ── HEAVY CHASSIS UNIQUE ──────────────────────────────────────
-    // Fortress: massive HP + damage reduction while active. Slows you down.
-    siege_wall:      { name: 'SIEGE SHIELD',     weight: 70,  maxShield: 280, regenRate: 0.3,  regenDelay: 10, absorb: 0.50, activeDR: 0.20, activeSpeedPenalty: 0.20, desc: '280 HP. While shield is up: -20% incoming damage, -20% move speed. Hold the line.' },
     // Passive armor: 12% DR persists even when shield is fully depleted.
     bulwark_shield:  { name: 'BULWARK SHIELD',  weight: 55,  maxShield: 140, regenRate: 0.5,  regenDelay: 7,  absorb: 0.50, passiveDR: 0.12, desc: '140 HP. Passive 12% DR always active — even when shield is broken.' },
     // Contact damage: enemies near you take burn damage while shield is up.
@@ -296,9 +275,9 @@ const LEG_SYSTEMS = {
 // ── STARTER LOADOUTS ─────────────────────────────────────────────
 /** Starter loadouts per chassis — barebones gear to find the rest through loot. */
 const STARTER_LOADOUTS = {
-    light:  { L: 'smg',  R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'light_shield' },
-    medium: { L: 'mg',   R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'standard_shield' },
-    heavy:  { L: 'hr',   R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'heavy_shield' },
+    light:  { L: 'smg',  R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'none' },
+    medium: { L: 'mg',   R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'none' },
+    heavy:  { L: 'hr',   R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'none' },
 };
 
 // ═══════════ UI CONFIG ═══════════
@@ -515,26 +494,17 @@ const LEG_OPTIONS = [
 
 const SHIELD_OPTIONS = [
     { key:'none',             label:'NONE',             weight:0   },
-    // Universal
-    { key:'light_shield',     label:'LIGHT SHIELD',     weight:15  },
-    { key:'standard_shield',  label:'STD. SHIELD',      weight:25  },
-    { key:'heavy_shield',     label:'HEAVY SHIELD',     weight:40  },
-    { key:'reactive_shield',  label:'REACTIVE SHIELD',  weight:45  },
-    { key:'fortress_shield',  label:'FORTRESS SHIELD',  weight:60  },
     // Light unique
-    { key:'phase_shield',     label:'PHASE SHIELD',     weight:20  },
-    { key:'smoke_burst',      label:'SMOKE BURST',      weight:18  },
     { key:'micro_shield',     label:'MICRO SHIELD',     weight:12  },
     { key:'flicker_shield',   label:'FLICKER SHIELD',   weight:22  },
+    { key:'smoke_burst',      label:'SMOKE BURST',      weight:18  },
     { key:'mirror_shield',    label:'MIRROR SHIELD',    weight:28  },
     // Medium unique
+    { key:'fortress_shield',  label:'FORTRESS SHIELD',  weight:60  },
     { key:'adaptive_shield',  label:'ADAPTIVE SHIELD',  weight:30  },
-    { key:'counter_shield',   label:'COUNTER SHIELD',   weight:35  },
-    { key:'pulse_shield',     label:'PULSE SHIELD',     weight:28  },
     { key:'layered_shield',   label:'LAYERED SHIELD',   weight:38  },
     { key:'overcharge_shld',  label:'OVERCHARGE SHLD',  weight:32  },
     // Heavy unique
-    { key:'siege_wall',       label:'SIEGE SHIELD',     weight:70  },
     { key:'bulwark_shield',   label:'BULWARK SHIELD',   weight:55  },
     { key:'thermal_shield',   label:'THERMAL SHIELD',   weight:45  },
     { key:'titan_shield',     label:'TITAN SHIELD',     weight:65  },
@@ -583,10 +553,6 @@ const SLOT_DESCS = {
     mag_anchors:      { title:'MAG ANCHORS', desc:'While stationary: take 20% less damage and deal 15% more damage. Rewards positional play.' },
     mine_layer:       { title:'MINE LAYER', desc:'Drops a proximity mine every 8 seconds while moving. Each mine deals 80 AoE damage on trigger.' },
     afterleg:         { title:'AFTERLEG', desc:'JUMP mod travels 50% farther. Landing shockwave deals 60 dmg in 150px. Disabled if legs destroyed.' },
-    light_shield:    { title:'LIGHT SHIELD',    desc:'60 HP / 50% absorb. Regens in ~1s. Burn it freely — it comes right back. Best for aggressive play.' },
-    standard_shield: { title:'STD. SHIELD',     desc:'100 HP / 50% absorb / 4s regen. No gimmick, no weakness. The dependable baseline.' },
-    heavy_shield:    { title:'HEAVY SHIELD',    desc:'100 HP but 70% absorb — each hit does 30% less. Slow 7s regen is the tradeoff.' },
-    reactive_shield: { title:'REACTIVE SHIELD', desc:'80 HP, 2s regen. On break: 0.3s invulnerability window. Designed to break and recover fast.' },
     fortress_shield: { title:'FORTRESS SHIELD', desc:'240 HP but only 25% absorb — most damage bleeds through. A speed bump, not a wall.' },
     col_00ff00: { title:'GREEN',         desc:'Head: bright green. Torso and shoulders: dark green.' },
     col_00ccff: { title:'ELECTRIC BLUE', desc:'Head: electric cyan-blue. Torso and shoulders: deep navy.' },
@@ -602,17 +568,13 @@ const SLOT_DESCS = {
     // Light unique
     micro_shield:     { title:'MICRO SHIELD',     desc:'30 HP / instant 1s regen. Paper thin but always cycling. Best with max mobility.' },
     flicker_shield:   { title:'FLICKER SHIELD',   desc:'80 HP. Blocks every other hit completely — HP never changes. Beats rapid-fire enemies.' },
-    phase_shield:     { title:'PHASE SHIELD',     desc:'70 HP. Each hit that lands gives 0.25s invulnerability. Consistent hit mitigation.' },
     smoke_burst:      { title:'SMOKE BURST',      desc:'60 HP. Shield break triggers +70% speed for 2s. Converts being overwhelmed into escape.' },
     mirror_shield:    { title:'MIRROR SHIELD',    desc:'70 HP. Reflects 35% of absorbed damage back at the attacker.' },
     // Medium unique
     adaptive_shield:  { title:'ADAPTIVE SHIELD',  desc:'90 HP. Each consecutive hit raises absorb by 10% (cap 80%). Rewards staying in the fight.' },
-    counter_shield:   { title:'COUNTER SHIELD',   desc:'90 HP. Every 40 shield damage charges a counter. On mod activation: 80 AoE damage.' },
-    pulse_shield:     { title:'PULSE SHIELD',     desc:'80 HP / 2s regen. On break: EMP stuns all enemies within 250px for 1.8s.' },
     layered_shield:   { title:'LAYERED SHIELD',   desc:'130 HP in two 65 HP layers. Each regen independently — you always have at least one up.' },
     overcharge_shld:  { title:'OVERCHARGE SHLD',  desc:'90 HP. Damage absorbed beyond shield HP temporarily adds as core HP buffer.' },
     // Heavy unique
-    siege_wall:       { title:'SIEGE SHIELD',       desc:'280 HP. While active: -20% incoming damage, -20% speed. Plant yourself and hold the line.' },
     bulwark_shield:   { title:'BULWARK SHIELD',    desc:'140 HP. Passive 12% DR always active — even when shield is fully depleted.' },
     thermal_shield:   { title:'THERMAL SHIELD',    desc:'120 HP. Enemies within 160px take 8 dmg/s while your shield is active.' },
     titan_shield:     { title:'TITAN SHIELD',      desc:'200 HP / 60% absorb / +20 core HP bonus. Very slow regen. Pure staying power.' },

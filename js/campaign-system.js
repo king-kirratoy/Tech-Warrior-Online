@@ -1975,7 +1975,7 @@ function loadLoadoutSlot(slotIdx) {
     loadout.cpu     = slot.cpu     || 'none';
     loadout.aug     = slot.aug     || 'none';
     loadout.leg     = slot.leg     || 'none';
-    loadout.shld    = slot.shld    || 'light_shield';
+    loadout.shld    = slot.shld    || 'none';
     loadout.color   = slot.color   || 0x00ff00;
 
     // Refresh garage UI if available
@@ -2355,7 +2355,8 @@ function _restoreFromCloudData(data) {
         loadout.cpu = cp.cpu || 'none';
         loadout.aug = cp.aug || 'none';
         loadout.leg = cp.leg || 'none';
-        loadout.shld = cp.shld || 'light_shield';
+        const _cpShld = cp.shld || 'none';
+        loadout.shld = (typeof REMOVED_SHIELDS !== 'undefined' && REMOVED_SHIELDS.includes(_cpShld)) ? 'none' : _cpShld;
         _round = cp.round || 1;
         _totalKills = cp.totalKills || 0;
         _perksEarned = cp.perksEarned || 0;
@@ -2423,7 +2424,7 @@ async function _loadCampaignData() {
             loadout.cpu     = saved.cpu     || 'none';
             loadout.aug     = saved.aug     || 'none';
             loadout.leg     = saved.leg     || 'none';
-            loadout.shld    = saved.shld    || 'light_shield';
+            loadout.shld    = saved.shld    || 'none';
             _round          = saved.round   || 1;
             _totalKills     = saved.totalKills || 0;
             _perksEarned    = saved.perksEarned || 0;

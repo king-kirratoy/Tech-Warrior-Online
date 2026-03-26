@@ -1038,12 +1038,6 @@ function _applyPassiveShieldAbsorption(amt) {
     if (_prevShield > 0 && player.shield <= 0) {
         const _sc = GAME.scene.scenes[0];
 
-        // Reactive Shield: invuln window on break
-        if (loadout.shld === 'reactive_shield' && !player._reactInvulnActive) {
-            player._reactInvulnActive = true;
-            _sc?.time.delayedCall(300, () => { player._reactInvulnActive = false; });
-        }
-
         // Smoke Burst: speed burst on break
         if (_ss.breakSpeedBurst && player.body) {
             player._smokeBurstActive = true;
@@ -1072,9 +1066,6 @@ function _applyPassiveShieldAbsorption(amt) {
         }
 
     }
-
-    // ── Reactive invuln window blocks further damage ──
-    if (player._reactInvulnActive) { amt = 0; }
 
     return amt; // return modified amt (caller updates its local variable)
 }
