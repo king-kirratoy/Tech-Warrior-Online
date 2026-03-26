@@ -1310,3 +1310,123 @@ No chassis restriction applies at drop time. Fixed affixes are always rolled wit
 - **Implementation**: `swarmBurst` effect key registered in `_gearState._uniqueEffects`; kill event handler checks for the key and spawns 2 homing drone projectiles at the kill location
 
 ---
+
+## Section 8: Summary Tables
+
+---
+
+### Table 1 — Equippable Options per Slot per Chassis
+
+Counts all distinct base item options (stat items + system items) available to each chassis in each gear
+slot. Source: `CHASSIS_WEAPONS`, `CHASSIS_CPUS`, `CHASSIS_SHIELDS`, `CHASSIS_LEGS`, `CHASSIS_AUGS`
+in `js/constants.js`; armor and arms sub-type counts from `js/loot-system.js` (no chassis restriction).
+`'none'` is excluded from all counts. Unique boss-drop items are **not** counted here — see Table 2.
+
+| Slot | Light | Medium | Heavy | Notes |
+|---|:---:|:---:|:---:|---|
+| **Weapon** *(per arm slot)* | 3 | 4 | 4 | L chassis: `smg`, `fth`, `sg`. M: `mg`, `br`, `sr`, `rail`. H: `hr`, `rl`, `plsm`, `gl`. Each mech has two independent arm slots (L/R). |
+| **CPU** | 4 | 4 | 4 | System items only (from `CHASSIS_CPUS`). `barrier` is the one option shared across all three chassis; remaining 3 per chassis are exclusive. |
+| **Shield** | 10 | 10 | 9 | 5 universal shields shared by all chassis + 5 Light-exclusive, 5 Medium-exclusive, 4 Heavy-exclusive. |
+| **Armor** | 4 | 4 | 4 | No chassis restriction. Sub types: `light_plate`, `medium_plate`, `heavy_plate`, `reactive_plate`. |
+| **Arms** | 3 | 3 | 3 | No chassis restriction. Sub types: `servo_enhancer`, `stabilizer`, `power_coupler`. |
+| **Legs** | 10 | 12 | 10 | 3 pure-stat legs (all chassis) + 7 / 9 / 7 leg systems from `CHASSIS_LEGS`. |
+| **Augment** | 16 | 15 | 13 | 3 pure-stat augments (all chassis) + 13 / 12 / 10 aug systems from `CHASSIS_AUGS`. |
+
+#### Leg breakdown (pure stat + systems)
+
+| Chassis | Pure Stat Legs | Leg Systems (from `CHASSIS_LEGS`) | Total |
+|---|:---:|---|:---:|
+| Light | 3 | `hydraulic_boost`, `gyro_stabilizer`, `sprint_boosters`, `featherweight`, `ghost_legs`, `silent_step`, `reactive_dash` (7) | **10** |
+| Medium | 3 | `gyro_stabilizer`, `mag_anchors`, `mine_layer`, `stabilizer_gyros`, `adaptive_stride`, `seismic_dampener`, `reactor_legs`, `power_stride`, `evasion_coils` (9) | **12** |
+| Heavy | 3 | `mag_anchors`, `mine_layer`, `tremor_legs`, `siege_stance`, `ironclad_legs`, `suppressor_legs`, `warlord_stride` (7) | **10** |
+
+> Pure stat legs: `actuator`, `booster`, `dampener` — no chassis restriction, same 3 for all.
+
+#### Augment breakdown (pure stat + systems)
+
+| Chassis | Pure Stat Augments | Aug Systems (from `CHASSIS_AUGS`) | Total |
+|---|:---:|---|:---:|
+| Light | 3 | `target_painter`, `threat_analyzer`, `ballistic_weave`, `targeting_scope`, `neural_accel`, `ghost_circuit`, `reflex_amp`, `kill_sprint`, `predator_lens`, `shadow_core`, `fuel_injector`, `thermal_core`, `pyromaniac_chip` (13) | **16** |
+| Medium | 3 | `target_painter`, `threat_analyzer`, `overclock_cpu`, `reactive_plating`, `combat_ai`, `drone_relay`, `multi_drone`, `tactical_uplink`, `field_processor`, `system_sync`, `adaptive_core`, `echo_targeting` (12) | **15** |
+| Heavy | 3 | `reactive_plating`, `scrap_cannon`, `war_machine`, `iron_fortress`, `suppressor_aura`, `colossus_frame`, `impact_core`, `blast_dampener`, `heavy_loader`, `chain_drive` (10) | **13** |
+
+> Pure stat augments: `targeting_array`, `neural_link`, `combat_matrix` — no chassis restriction, same 3 for all.
+
+---
+
+### Table 2 — Boss Unique Items by Gear Slot
+
+All 16 unique items from `UNIQUE_ITEMS` in `js/loot-system.js`, organized by the gear slot they occupy.
+Each boss guarantees 1 drop per kill: 25% chance Legendary, 75% chance Epic.
+Chassis filtering does **not** apply at drop time — any chassis can receive any unique.
+Equip restrictions (if any) are enforced at equip time from the item's `subType`.
+
+Items are listed in boss encounter order (first appearance round).
+
+#### Weapon Slot — 3 unique items
+
+| Item | Boss Source | First Round | Rarity | Chassis at Equip | One-Line Effect |
+|---|---|:---:|:---:|:---:|---|
+| **Razor Edge** | Twin Razors | R10 | Legendary | Light only (`smg` sub type) | TWIN FANGS: Every 3rd shot fires twice — a duplicate projectile is spawned |
+| **Mirror Shard** | The Mirror | R30 | Legendary | All (no sub type) | MIRROR SHOT: Bullets reflect off cover/walls once, dealing 60% damage on ricochet *(stub — not yet implemented)* |
+| **Titan Fist** | The Titan | R35 | Legendary | All (no sub type) | TITAN SMASH: Every 5th shot creates a 120 px AoE shockwave dealing 50% of shot damage |
+
+#### CPU Slot — 2 unique items
+
+| Item | Boss Source | First Round | Rarity | Chassis at Equip | One-Line Effect |
+|---|---|:---:|:---:|:---:|---|
+| **Blueprint Core** | The Architect | R15 | Legendary | All | FABRICATOR: Each mod activation spawns a temporary destructible cover wall at the player's position |
+| **Core Reactor** | The Core | R40 | Legendary | All | CORE OVERLOAD: Each mod activation releases a 200 px energy pulse dealing 80 damage to all enemies in range |
+
+#### Shield Slot — 2 unique items
+
+| Item | Boss Source | First Round | Rarity | Chassis at Equip | One-Line Effect |
+|---|---|:---:|:---:|:---:|---|
+| **Warden's Aegis** | The Warden | R5 | Legendary | All | FRONTAL AEGIS: While shield is active, frontal hits (within ±60° of torso facing) deal 40% less damage |
+| **Matrix Shield** | The Core | R40 | Epic | All | MATRIX: Shield break grants 3 s of full invulnerability; 60 s cooldown between triggers |
+
+#### Armor Slot — 3 unique items
+
+| Item | Boss Source | First Round | Rarity | Chassis at Equip | One-Line Effect |
+|---|---|:---:|:---:|:---:|---|
+| **Sentinel's Plating** | The Warden | R5 | Epic | All | SENTINEL STANCE: While shield is at maximum HP, gain +12% additional damage reduction |
+| **Unstoppable Core** | The Juggernaut | R20 | Epic | All | IMPACT ARMOR: Taking a single hit for >25 damage grants +15% bonus DR for 3 seconds |
+| **Swarm Carapace** | The Swarm | R25 | Epic | All | ADAPTIVE: Successive hits from the same enemy deal 10% less damage per hit, stacking up to 40% reduction |
+
+#### Arms Slot — 2 unique items
+
+| Item | Boss Source | First Round | Rarity | Chassis at Equip | One-Line Effect |
+|---|---|:---:|:---:|:---:|---|
+| **Twinned Servo** | Twin Razors | R10 | Epic | All | SYNC SERVOS: When both arm slots have weapons equipped, reload speed is boosted by 30% |
+| **Echo Frame** | The Mirror | R30 | Epic | All | ECHO: Mod activation fires a phantom copy of the last shot fired (no on-hit effects) |
+
+#### Legs Slot — 2 unique items
+
+| Item | Boss Source | First Round | Rarity | Chassis at Equip | One-Line Effect |
+|---|---|:---:|:---:|:---:|---|
+| **Juggernaut Engine** | The Juggernaut | R20 | Legendary | All | UNSTOPPABLE: Cannot be slowed by any effect; movement speed bonus further increased by 20% |
+| **Colossus Frame** | The Titan | R35 | Epic | All | COLOSSUS: Standing still for 2 s grants +25% damage and +10% DR; buff drops on any movement input |
+
+#### Augment Slot — 2 unique items
+
+| Item | Boss Source | First Round | Rarity | Chassis at Equip | One-Line Effect |
+|---|---|:---:|:---:|:---:|---|
+| **Architect's Array** | The Architect | R15 | Epic | All | OVERCLOCK: All mod activation durations and effects are extended by 50% |
+| **Hive Mind** | The Swarm | R25 | Legendary | All | SWARM BURST: Each kill spawns 2 homing micro-drones that seek the nearest enemy, dealing 15 damage each |
+
+---
+
+#### Boss–Drop Cross-Reference
+
+| Boss | First Round | Legendary Drop | Slot | Epic Drop | Slot |
+|---|:---:|---|:---:|---|:---:|
+| The Warden | R5 | Warden's Aegis | Shield | Sentinel's Plating | Armor |
+| Twin Razors | R10 | Razor Edge | Weapon | Twinned Servo | Arms |
+| The Architect | R15 | Blueprint Core | CPU | Architect's Array | Augment |
+| The Juggernaut | R20 | Juggernaut Engine | Legs | Unstoppable Core | Armor |
+| The Swarm | R25 | Hive Mind | Augment | Swarm Carapace | Armor |
+| The Mirror | R30 | Mirror Shard | Weapon | Echo Frame | Arms |
+| The Titan | R35 | Titan Fist | Weapon | Colossus Frame | Legs |
+| The Core | R40 | Core Reactor | CPU | Matrix Shield | Shield |
+
+> Bosses recur on a fixed interval after their first appearance (e.g. Warden repeats every 20 rounds: R5, R25, R45…; The Core repeats every 40 rounds: R40, R80, R120…). Each recurrence is a fresh drop roll.
