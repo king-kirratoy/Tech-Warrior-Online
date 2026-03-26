@@ -490,11 +490,6 @@ function _triggerExtraction(scene) {
             }
         }
 
-        // Phase 4: Apply chassis upgrades if leveled up
-        if (xpResult.leveledUp && typeof applyChassisUpgrades === 'function') {
-            applyChassisUpgrades();
-        }
-
         saveCampaignProgress();
         if (typeof saveCampaignState === 'function') saveCampaignState();
         saveInventory();

@@ -270,7 +270,6 @@ function goToMainMenu() {
     const mbp  = document.getElementById('mission-briefing-popup'); if (mbp) mbp.style.display = 'none';
     const sho  = document.getElementById('shop-overlay'); if (sho) sho.style.display = 'none';
     const lso  = document.getElementById('loadout-slots-overlay'); if (lso) lso.style.display = 'none';
-    const ugo  = document.getElementById('upgrades-overlay'); if (ugo) ugo.style.display = 'none';
     window._activeCampaignConfig = null;
     // Restore chassis selector (may have been hidden in campaign mode)
     const chassisRow2 = document.getElementById('chassis-select-row');
@@ -376,8 +375,6 @@ function startGame(mode) {
             })
             .finally(() => {
                 if (resumeBtn && origHtml !== null) { resumeBtn.disabled = false; resumeBtn.innerHTML = origHtml; }
-                // Apply chassis upgrades based on pilot level
-                if (typeof applyChassisUpgrades === 'function') applyChassisUpgrades();
                 // Generate initial shop stock
                 if (typeof refreshShopStock === 'function') refreshShopStock();
                 // Fade out menu, show mission select
@@ -922,7 +919,6 @@ function confirmNewCampaign() {
     _campaignState.chassis = null;
     _campaignState.claimedRewards = {};
     _campaignState.loadoutSlots = [];
-    _campaignState.skillsChosen = [];
     _campaignState.activeModifier = null;
     _campaignState.activeBonusObjective = null;
     _campaignState.bonusObjectiveProgress = 0;
@@ -1053,7 +1049,6 @@ function _startNewCampaignWithChassis(chassisType) {
     const overlay = document.getElementById('mission-select-overlay');
     if (overlay) overlay.style.display = 'none';
     _gameMode = 'campaign';
-    if (typeof applyChassisUpgrades === 'function') applyChassisUpgrades();
     if (typeof refreshShopStock === 'function') refreshShopStock();
     if (typeof showMissionSelect === 'function') showMissionSelect();
 }
@@ -2663,22 +2658,6 @@ function _execDropInTween(scene, normalScale) {
             try { GAME.scene.scenes[0].time.paused = false; } catch(e) {}
             applyAugment();
             applyLegSystem();
-            // Apply skill tree combat bonuses to perkState
-            if (_gameMode === 'campaign' && typeof getSkillTreeBonuses === 'function') {
-                const stb = getSkillTreeBonuses(_campaignState.chassis);
-                if (stb.dmgMult)     _perkState.dmgMult = (_perkState.dmgMult || 1) * (1 + stb.dmgMult);
-                if (stb.reloadMult)  _perkState.reloadMult = (_perkState.reloadMult || 1) * (1 - stb.reloadMult);
-                if (stb.critChance)  _perkState.critChance = (_perkState.critChance || 0) + stb.critChance;
-                if (stb.shieldRegen) _perkState.shieldRegenMult = (_perkState.shieldRegenMult || 1) * (1 + stb.shieldRegen);
-                if (stb.blastMult)   _perkState.blastMult = (_perkState.blastMult || 1) * (1 + stb.blastMult);
-                if (stb.dodgeChance) _perkState.dodgeChance = (_perkState.dodgeChance || 0) + stb.dodgeChance;
-                if (stb.dr)          _perkState.fortress = (_perkState.fortress || 0) + stb.dr;
-                if (stb.critDmg)     _perkState.critDmg = (_perkState.critDmg || 0) + stb.critDmg;
-                if (stb.autoRepair)  _perkState.autoRepair = (_perkState.autoRepair || 0) + stb.autoRepair;
-                if (stb.modCdMult && typeof CHASSIS !== 'undefined' && CHASSIS.medium) {
-                    CHASSIS.medium.modCooldownMult = (CHASSIS.medium.modCooldownMult || 0.85) * (1 - stb.modCdMult);
-                }
-            }
             const sc = GAME.scene.scenes[0];
             // PVP uses its own deploy path (mpDeployPVP) — skip PvE round system entirely
             if (_gameMode !== 'pvp') {
