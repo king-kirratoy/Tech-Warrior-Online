@@ -333,30 +333,9 @@ function respawnMech() {
     deployMech();
 }
 
-/** Campaign death: apply penalty then go to mission select. */
+/** Campaign death: go to mission select. Scrap penalty is applied when death screen appears. */
 function campaignDeathToMissionSelect() {
-    // Apply scrap death penalty
-    let scrapLost = 0;
-    if (typeof applyCampaignDeathPenalty === 'function') {
-        scrapLost = applyCampaignDeathPenalty();
-    }
-    // Save after penalty
-    if (typeof saveCampaignState === 'function') saveCampaignState();
-    saveCampaignProgress();
-    saveInventory();
-
-    // Show scrap loss message briefly on death screen
-    const ds = document.getElementById('death-screen');
-    const title = document.getElementById('death-title');
-    if (title && scrapLost > 0) {
-        title.innerHTML = 'MECH DESTROYED<br><span style="font-size:16px;color:#ff8844;letter-spacing:2px;">-' + scrapLost + ' SCRAP</span>';
-    }
-
-    // After a brief delay, transition to mission select
-    setTimeout(() => {
-        if (title) title.textContent = 'MECH DESTROYED';
-        returnToHangarForMissionSelect();
-    }, 2000);
+    returnToHangarForMissionSelect();
 }
 
 /** Campaign: return from combat to the mission select screen. */
@@ -518,25 +497,68 @@ function showDeathScreen() {
     if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
     document.body.style.cursor = 'default';
     if (_round > _bestRound) _bestRound = _round;
-    // Populate score panel
     const el = id => document.getElementById(id);
-    const _acc = _shotsFired > 0 ? Math.round(_shotsHit / _shotsFired * 100) : 0;
-    if (el('score-round'))     el('score-round').innerText     = _round;
-    if (el('score-kills'))     el('score-kills').innerText     = _totalKills;
-    if (el('score-accuracy'))  el('score-accuracy').innerText  = _acc + '%';
-    if (el('score-dmg-dealt')) el('score-dmg-dealt').innerText = Math.round(_damageDealt);
-    if (el('score-dmg-taken')) el('score-dmg-taken').innerText = Math.round(_damageTaken);
-    if (el('score-perks'))     el('score-perks').innerText     = _perksEarned;
-    // Campaign mode: update death screen primary button
-    const _deathBtn = el('death-btn-primary');
-    if (_deathBtn) {
-        _deathBtn.innerHTML = (_gameMode === 'campaign') ? '&#9733; MISSION SELECT' : '&#8962; MECH HANGAR';
+    if (_gameMode === 'campaign') {
+        // Campaign: show campaign-specific death screen with scrap report
+        _showCampaignDeathScreen();
+    } else {
+        // Warzone: populate score panel and show standard death screen
+        const _acc = _shotsFired > 0 ? Math.round(_shotsHit / _shotsFired * 100) : 0;
+        if (el('score-round'))     el('score-round').innerText     = _round;
+        if (el('score-kills'))     el('score-kills').innerText     = _totalKills;
+        if (el('score-accuracy'))  el('score-accuracy').innerText  = _acc + '%';
+        if (el('score-dmg-dealt')) el('score-dmg-dealt').innerText = Math.round(_damageDealt);
+        if (el('score-dmg-taken')) el('score-dmg-taken').innerText = Math.round(_damageTaken);
+        if (el('score-perks'))     el('score-perks').innerText     = _perksEarned;
+        const _wz = el('death-warzone-content');
+        if (_wz) _wz.style.display = '';
+        const _cp = el('death-campaign-content');
+        if (_cp) _cp.style.display = 'none';
+        const ds = document.getElementById('death-screen');
+        if (ds) ds.style.display = 'flex';
     }
-    const ds = document.getElementById('death-screen');
-    if (ds) ds.style.display = 'flex';
     const _dsc = GAME?.scene?.scenes[0];
     if (_dsc) { try { _dsc.input.setDefaultCursor('default'); } catch(e){} }
     document.body.style.cursor = 'default';
+}
+
+/** Campaign-specific death screen: apply scrap penalty immediately and render campaign layout. */
+function _showCampaignDeathScreen() {
+    // Apply scrap death penalty immediately
+    let scrapLost = 0;
+    if (typeof applyCampaignDeathPenalty === 'function') {
+        scrapLost = applyCampaignDeathPenalty();
+    }
+    if (typeof saveCampaignState === 'function') saveCampaignState();
+    if (typeof saveCampaignProgress === 'function') saveCampaignProgress();
+    if (typeof saveInventory === 'function') saveInventory();
+
+    // Hide warzone content, show campaign content
+    const wz = document.getElementById('death-warzone-content');
+    if (wz) wz.style.display = 'none';
+    const cp = document.getElementById('death-campaign-content');
+    if (cp) {
+        cp.innerHTML =
+            '<div style="font-size:52px;letter-spacing:8px;color:#cc2222;text-shadow:0 0 30px #cc2222;margin-bottom:12px;">MECH DESTROYED</div>' +
+            '<div style="height:1px;background:linear-gradient(to right,transparent,rgba(204,34,34,0.5),transparent);margin:0 auto 14px;width:320px;"></div>' +
+            '<div style="font-size:11px;letter-spacing:6px;color:rgba(255,255,255,0.3);margin-bottom:28px;">CORE SYSTEMS OFFLINE</div>' +
+            '<div style="border:1px solid rgba(0,212,255,0.15);padding:16px 32px;margin:0 auto 24px;display:inline-block;min-width:220px;">' +
+                '<div style="font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.3);margin-bottom:10px;">SALVAGE REPORT</div>' +
+                '<div style="height:1px;background:rgba(0,212,255,0.1);margin-bottom:10px;"></div>' +
+                '<div style="font-size:14px;letter-spacing:3px;color:#e8923a;">-' + scrapLost + ' SCRAP</div>' +
+            '</div>' +
+            '<div style="display:flex;gap:16px;justify-content:center;">' +
+                '<button class="tw-btn tw-btn--ghost" onclick="returnToHangarForMissionSelect()" style="width:190px;border-color:rgba(255,255,255,0.12);">' +
+                    '<span style="color:#e8923a;">&#9733;</span> MISSION SELECT' +
+                '</button>' +
+                '<button class="tw-btn tw-btn--ghost" onclick="returnToMainMenu()" style="width:190px;border-color:rgba(255,255,255,0.12);">' +
+                    '<span style="color:#cc2222;">&#9632;</span> MAIN MENU' +
+                '</button>' +
+            '</div>';
+        cp.style.display = '';
+    }
+    const ds = document.getElementById('death-screen');
+    if (ds) ds.style.display = 'flex';
 }
 
 function togglePause() {

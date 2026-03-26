@@ -414,7 +414,8 @@
 
 <!-- DEATH SCREEN -->
 <div id="death-screen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:99999;flex-direction:column;justify-content:center;align-items:center;font-family:var(--font-mono);">
-    <div style="text-align:center;">
+    <!-- Warzone death screen (shown for simulation mode) -->
+    <div id="death-warzone-content" style="text-align:center;">
         <div id="death-title" style="font-size:52px;letter-spacing:8px;color:#ff0000;text-shadow:0 0 30px #ff0000;margin-bottom:6px;">MECH DESTROYED</div>
         <div style="font-size:13px;color:var(--text-dim);letter-spacing:3px;margin-bottom:28px;">CORE SYSTEMS OFFLINE</div>
         <!-- Score Panel -->
@@ -446,7 +447,7 @@
         </div>
         <br>
         <div id="death-buttons" style="display:flex;gap:20px;justify-content:center;">
-            <button id="death-btn-primary" class="tw-btn" onclick="_gameMode==='campaign' ? campaignDeathToMissionSelect() : returnToHangar()" style="width:220px;">
+            <button id="death-btn-primary" class="tw-btn" onclick="returnToHangar()" style="width:220px;">
                 &#8962; MECH HANGAR
             </button>
             <button class="tw-btn tw-btn--danger" onclick="returnToMainMenu()" style="width:220px;">
@@ -454,6 +455,8 @@
             </button>
         </div>
     </div>
+    <!-- Campaign death screen (shown for campaign mode, populated by JS) -->
+    <div id="death-campaign-content" style="display:none;text-align:center;"></div>
 </div>
 <!-- IN-GAME PAUSE BUTTON -->
 <div id="top-left-btns" style="display:none;position:fixed;top:20px;left:24px;z-index:9999;gap:10px;align-items:center;"></div>
