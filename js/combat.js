@@ -859,12 +859,6 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     }
     // Mag Anchors: -20% incoming damage while stationary
     if (_perkState._magAnchorsActive) amt *= 0.80;
-    // Evasion Coils: 10% DR while moving, 15% DR vs close-range hits
-    if (loadout.leg === 'evasion_coils' && _perkState.legSystemActive) {
-        const _moving = player?.body && (Math.abs(player.body.velocity.x) + Math.abs(player.body.velocity.y)) > 20;
-        if (_moving) amt = Math.round(amt * 0.90);
-        // Close-range reduction is applied from attacker position if available (approximated)
-    }
     // Iron Fortress: +15% DR while stationary 1.5s+
     if (_perkState._ironFortressActive) amt = Math.round(amt * 0.85);
     // Reactive Plating: each hit adds 5% DR, max 5 stacks

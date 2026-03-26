@@ -48,7 +48,7 @@ function randomEnemyLoadout() {
     // ── Chassis-locked leg pools ──
     const LIGHT_LEGS  = ['hydraulic_boost','gyro_stabilizer','afterleg','sprint_coils','stealth_treads'];
     const MEDIUM_LEGS = ['hydraulic_boost','gyro_stabilizer','mag_anchors','mine_layer','assault_stride'];
-    const HEAVY_LEGS  = ['gyro_stabilizer','mag_anchors','mine_layer','fortress_treads','siege_stance'];
+    const HEAVY_LEGS  = ['gyro_stabilizer','mag_anchors','mine_layer','fortress_treads'];
 
     const legPool = chassis === 'light' ? LIGHT_LEGS
                   : chassis === 'medium' ? MEDIUM_LEGS
@@ -1763,7 +1763,7 @@ function spawnArchitect(scene) {
     const p = _bossSpawnPos();
     const e = _buildBossEnemy(scene, p.x, p.y, 'medium', BOSS_COLORS.architect, 4.0, 0.95);
     e.loadout = { chassis:'medium', primary:'hr', secondary:'emp',
-                  mod:'barrier', shld:'adaptive_shield', leg:'stabilizer_gyros', aug:'targeting_scope' };
+                  mod:'barrier', shld:'adaptive_shield', leg:'gyro_stabilizer', aug:'targeting_scope' };
     e.behavior = 'sniper'; e.isBoss = true; e.bossType = 'architect';
     _addBossLabel(scene, e, '[ THE ARCHITECT ]', 0x00cccc, 68);
     _addBossHPBar(scene, e, 0x00cccc, 'THE ARCHITECT');
@@ -1817,7 +1817,7 @@ function spawnJuggernaut(scene) {
     const p = _bossSpawnPos();
     const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', BOSS_COLORS.juggernaut, 5.0, 0.8);
     e.loadout = { chassis:'heavy', primary:'mg', secondary:'rl',
-                  mod:'rage', shld:'titan_shield', leg:'siege_stance', aug:'reactive_plating' };
+                  mod:'rage', shld:'titan_shield', leg:'tremor_legs', aug:'reactive_plating' };
     e.behavior = 'circle'; e.isBoss = true; e.bossType = 'juggernaut';
     e._jugPhase = 1; e._jugCharging = false;
     _addBossLabel(scene, e, '[ JUGGERNAUT ]', 0xff2200, 80);
@@ -2126,7 +2126,7 @@ function spawnTitan(scene) {
     const titanColors = { body: 0x1a1000, head: 0xff8800, eye: 0xffcc00 };
     const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', titanColors, 8.0, 0.55);
     e.loadout = { chassis:'heavy', primary:'rl', secondary:'mg',
-                  mod:'fortress_mode', shld:'titan_shield', leg:'siege_stance', aug:'reactive_plating' };
+                  mod:'fortress_mode', shld:'titan_shield', leg:'suppressor_legs', aug:'reactive_plating' };
     e.behavior = 'patrol'; e.isBoss = true; e.bossType = 'titan';
     e._titanPhase = 1;
     e._passiveDR = 0.25;

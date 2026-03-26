@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.66';
+const GAME_VERSION = 'v6.67';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -31,11 +31,9 @@ const CHASSIS_SHIELDS = {
 };
 // ── CHASSIS LEG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_LEGS = {
-    light:  new Set(['none','hydraulic_boost','gyro_stabilizer','sprint_boosters','featherweight','ghost_legs','silent_step','reactive_dash']),
-    medium: new Set(['none','gyro_stabilizer','mag_anchors','mine_layer','stabilizer_gyros','adaptive_stride','seismic_dampener','reactor_legs',
-                     'power_stride','evasion_coils']),
-    heavy:  new Set(['none','mag_anchors','mine_layer','tremor_legs','siege_stance','ironclad_legs','suppressor_legs',
-                     'warlord_stride']),
+    light:  new Set(['none','hydraulic_boost','gyro_stabilizer','sprint_boosters','featherweight','ghost_legs']),
+    medium: new Set(['none','gyro_stabilizer','mag_anchors','mine_layer','seismic_dampener','reactor_legs']),
+    heavy:  new Set(['none','mag_anchors','mine_layer','tremor_legs','suppressor_legs','warlord_stride']),
 };
 // ── CHASSIS AUG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_AUGS = {
@@ -251,24 +249,15 @@ const LEG_SYSTEMS = {
     sprint_boosters: { name: 'SPRINT BOOST',  weight: 28,  desc: 'Double-tap W for a 0.8s speed burst (+80%). 4s cooldown.' },
     featherweight:   { name: 'FEATHERWEIGHT', weight: 15,  desc: '+15% reload speed and +10% move speed. Light frame optimization — faster in every way.' },
     ghost_legs:      { name: 'GHOST LEGS',    weight: 22,  desc: 'Taking damage while moving gives 0.2s speed burst. Hard to pin down.' },
-    silent_step:     { name: 'SILENT STEP',   weight: 20,  desc: 'Enemies lose vision of you 40% faster when moving. Flanking radius extended.' },
-    reactive_dash:   { name: 'REACTIVE DASH', weight: 30,  desc: 'When legs drop below 50% HP, automatically trigger a short dodge dash.' },
     // ── MEDIUM CHASSIS UNIQUE ─────────────────────────────────────
-    stabilizer_gyros:{ name: 'STABILIZER GYR',weight: 28,  desc: 'While stationary: +15% accuracy and +8% damage. Encourages deliberate positioning.' },
     jump_jets:       { name: 'JUMP JETS',     weight: 32,  desc: 'JUMP mod gains an additional charge (2 uses per cooldown).' },
-    adaptive_stride: { name: 'ADAPTIVE STRIDE',weight: 25, desc: 'Automatically adjust speed: +15% faster when retreating, better kiting.' },
     seismic_dampener:{ name: 'SEISMIC DAMP.', weight: 30,  desc: 'Leg damage reduced by 25%. Stomps on landing deal +30% slam damage.' },
     reactor_legs:    { name: 'REACTOR LEGS',  weight: 35,  desc: 'Mod cooldowns reduce by 1s each time you move 300px. Rewards mobility.' },
     // ── HEAVY CHASSIS UNIQUE ──────────────────────────────────────
     tremor_legs:     { name: 'TREMOR LEGS',   weight: 45,  desc: 'After standing still 2s, moving creates a tremor: 40 AoE dmg, 120px radius.' },
-    siege_stance:    { name: 'SIEGE STANCE',  weight: 40,  desc: 'While stationary: +25% damage, +20% DR. Plants you but makes you a fortress.' },
-    ironclad_legs:   { name: 'IRONCLAD LEGS', weight: 38,  desc: 'Leg HP +80. Legs take 30% less damage. Much harder to cripple.' },
     ground_slam:     { name: 'GROUND SLAM',   weight: 42,  desc: 'JUMP landing AoE doubled in radius and damage. Turn landing into a weapon.' },
     suppressor_legs: { name: 'SUPPRESSOR LEG',weight: 35,  desc: 'Enemies within 220px move 20% slower. Passive suppression aura from heavy frame.' },
-    // ── MEDIUM CHASSIS UNIQUE (replacing jump-dependent legs) ─────
-    power_stride:    { name: 'POWER STRIDE',   weight: 28,  desc: 'Each kill grants +5% move speed for 3s, stacking up to 3×. Keep moving, keep killing.' },
-    evasion_coils:   { name: 'EVASION COILS',  weight: 30,  desc: 'While moving, incoming damage reduced by 10%. Close-range hits (<150px) reduced by 15%.' },
-    // ── HEAVY CHASSIS UNIQUE (replacing jump-dependent leg) ───────
+    // ── HEAVY CHASSIS UNIQUE ──────────────────────────────────────
     warlord_stride:  { name: 'WARLORD STRIDE', weight: 38,  desc: 'While leg HP is above 50%: +8% move speed and +10% damage at close range (<180px).' },
 };
 
@@ -473,23 +462,14 @@ const LEG_OPTIONS = [
     { key:'sprint_boosters',   label:'SPRINT BOOSTERS',   weight:28  },
     { key:'featherweight',     label:'FEATHERWEIGHT',     weight:15  },
     { key:'ghost_legs',        label:'GHOST LEGS',        weight:22  },
-    { key:'silent_step',       label:'SILENT STEP',       weight:20  },
-    { key:'reactive_dash',     label:'REACTIVE DASH',     weight:30  },
     // Medium unique
-    { key:'stabilizer_gyros',  label:'STABILIZER GYROS',  weight:28  },
     { key:'jump_jets',         label:'JUMP JETS',         weight:32  },
-    { key:'adaptive_stride',   label:'ADAPTIVE STRIDE',   weight:25  },
     { key:'seismic_dampener',  label:'SEISMIC DAMPENER',  weight:30  },
     { key:'reactor_legs',      label:'REACTOR LEGS',      weight:35  },
     // Heavy unique
     { key:'tremor_legs',       label:'TREMOR LEGS',       weight:45  },
-    { key:'siege_stance',      label:'SIEGE STANCE',      weight:40  },
-    { key:'ironclad_legs',     label:'IRONCLAD LEGS',     weight:38  },
     { key:'suppressor_legs',   label:'SUPPRESSOR LEGS',   weight:35  },
     { key:'warlord_stride',    label:'WARLORD STRIDE',    weight:38  },
-    // Medium unique (replacing jump-dependent legs)
-    { key:'power_stride',      label:'POWER STRIDE',      weight:28  },
-    { key:'evasion_coils',     label:'EVASION COILS',      weight:30  },
 ];
 
 const SHIELD_OPTIONS = [
@@ -582,16 +562,10 @@ const SLOT_DESCS = {
     sprint_boosters:  { title:'SPRINT BOOSTERS',  desc:'Double-tap W for 0.8s speed burst (+80%). 4s cooldown.' },
     featherweight:    { title:'FEATHERWEIGHT',    desc:'+15% reload speed and +10% move speed. Light frame optimization — faster in every way.' },
     ghost_legs:       { title:'GHOST LEGS',       desc:'Taking damage while moving triggers a 0.2s speed burst. Hard to pin down.' },
-    silent_step:      { title:'SILENT STEP',      desc:'Enemies lose vision 40% faster when you are moving. Wider flanking window.' },
-    reactive_dash:    { title:'REACTIVE DASH',    desc:'Auto-dash when legs drop below 50% HP. Survive the first hit.' },
-    stabilizer_gyros: { title:'STABILIZER GYROS',   desc:'While stationary: +15% accuracy and +8% damage. Reward holding position.' },
     jump_jets:        { title:'JUMP JETS',       desc:'JUMP mod gains a second charge. Two repositions per cooldown.' },
-    adaptive_stride:  { title:'ADAPTIVE STRIDE',    desc:'+15% speed when retreating. Better kiting tool for medium builds.' },
     seismic_dampener: { title:'SEISMIC DAMPENER',   desc:'Legs take 25% less damage. Landing slams deal +30% more.' },
     reactor_legs:     { title:'REACTOR LEGS',    desc:'Mod cooldowns reduce 1s per 300px moved. Rewards constant movement.' },
     tremor_legs:      { title:'TREMOR LEGS',      desc:'After 2s stationary, next movement creates 40 AoE dmg tremor at 120px.' },
-    siege_stance:     { title:'SIEGE STANCE',     desc:'While stationary: +25% damage, +20% DR. A true fortress build.' },
-    ironclad_legs:    { title:'IRONCLAD LEGS',    desc:'Leg HP +80. Legs take 30% less damage. Near-impossible to cripple.' },
     ground_slam:      { title:'GROUND SLAM',      desc:'JUMP landing AoE doubled in radius and damage. Use landing as a weapon.' },
     suppressor_legs:  { title:'SUPPRESSOR LEGS',  desc:'Enemies within 220px move 20% slower. Passive suppression from heavy frame.' },
     // ── NEW AUG SLOT DESCS ────────────────────────────────────────
@@ -613,9 +587,6 @@ const SLOT_DESCS = {
     blast_dampener:   { title:'BLAST DAMPENER',   desc:'Self-damage from explosions reduced by 60%. Use the Rocket Launcher without fear of blowback.' },
     heavy_loader:     { title:'HEAVY LOADER',     desc:'All weapon reload times reduced by 20%. Motorized autoloader keeps heavy ordnance cycling faster.' },
     chain_drive:      { title:'CHAIN DRIVE',      desc:'CHAIN 2H weapon: +25% fire rate. Powered chain-feed eliminates cycle hesitation under sustained fire.' },
-    // ── NEW LEG SLOT DESCS (medium/heavy unique) ──────────────────
-    power_stride:     { title:'POWER STRIDE',     desc:'Each kill grants +5% move speed for 3s, stacking up to 3×. Keep moving, keep killing.' },
-    evasion_coils:    { title:'EVASION COILS',    desc:'While moving: incoming damage reduced by 10%. Close-range hits (<150px) reduced by 15%.' },
     warlord_stride:   { title:'WARLORD STRIDE',   desc:'While leg HP is above 50%: +8% move speed and +10% damage at close range (<180px).' },
 };
 

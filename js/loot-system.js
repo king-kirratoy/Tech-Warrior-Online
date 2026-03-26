@@ -113,9 +113,6 @@ const ITEM_BASES = {
     sys_sprint_boosters:  { baseType:'leg_system', systemKey:'sprint_boosters',  name:'Sprint Boosters',   icon:'leg_sprint',   baseStats:{ speedPct:8, dodgePct:2 } },
     sys_featherweight:    { baseType:'leg_system', systemKey:'featherweight',    name:'Featherweight',     icon:'leg_feather',  baseStats:{ speedPct:6, dodgePct:3 } },
     sys_tremor_legs:      { baseType:'leg_system', systemKey:'tremor_legs',      name:'Tremor Legs',       icon:'leg_tremor',   baseStats:{ dmgPct:3, legHP:20 } },
-    sys_siege_stance:     { baseType:'leg_system', systemKey:'siege_stance',     name:'Siege Stance',      icon:'leg_siege',    baseStats:{ dr:0.04, dmgPct:3 } },
-    sys_ironclad_legs:    { baseType:'leg_system', systemKey:'ironclad_legs',    name:'Ironclad Legs',     icon:'leg_iron',     baseStats:{ dr:0.03, legHP:25 } },
-    sys_adaptive_stride:  { baseType:'leg_system', systemKey:'adaptive_stride',  name:'Adaptive Stride',   icon:'leg_adapt',    baseStats:{ speedPct:4, dodgePct:2 } },
 
     // ── SYSTEM AUGMENTS (aug_system slot → sets loadout.aug) ──
     sys_target_painter:   { baseType:'aug_system', systemKey:'target_painter',   name:'Target Painter',    icon:'aug_painter',  baseStats:{ dmgPct:3, accuracy:3 } },
@@ -1689,6 +1686,12 @@ const REMOVED_SHIELDS = [
     'siege_wall', 'counter_shield', 'pulse_shield', 'phase_shield',
 ];
 
+// Keys removed in the leg consolidation pass — migrate old saves on load.
+const REMOVED_LEGS = [
+    'siege_stance', 'ironclad_legs', 'power_stride', 'evasion_coils',
+    'adaptive_stride', 'stabilizer_gyros', 'reactive_dash', 'silent_step',
+];
+
 function saveInventory() {
     if (typeof _gameMode === 'undefined' || _gameMode !== 'campaign') return;
     try {
@@ -1713,6 +1716,8 @@ function loadCampaignInventory() {
                     if (i < INVENTORY_MAX && it && typeof it === 'object' && it.name && it.rarity && it.baseType) {
                         // Migration: discard items whose systemKey is a removed shield
                         if (it.baseType === 'shield_system' && REMOVED_SHIELDS.includes(it.systemKey)) return;
+                        // Migration: discard items whose systemKey is a removed leg
+                        if (it.baseType === 'leg_system' && REMOVED_LEGS.includes(it.systemKey)) return;
                         clean[i] = it;
                     }
                 });
@@ -1728,6 +1733,8 @@ function loadCampaignInventory() {
                     if (parsed[s] && typeof parsed[s] === 'object' && parsed[s].name && parsed[s].rarity && parsed[s].baseType) {
                         // Migration: discard equipped shield if it's a removed shield
                         if (s === 'shield' && parsed[s].baseType === 'shield_system' && REMOVED_SHIELDS.includes(parsed[s].systemKey)) return;
+                        // Migration: discard equipped legs if it's a removed leg
+                        if (s === 'legs' && parsed[s].baseType === 'leg_system' && REMOVED_LEGS.includes(parsed[s].systemKey)) return;
                         clean[s] = parsed[s];
                     }
                 });
