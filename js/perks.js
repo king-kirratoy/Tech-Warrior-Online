@@ -1005,6 +1005,19 @@ const _perks = {
         desc:'LEGENDARY — Heavy: +200 core HP. All incoming damage reduced by 30%. You cannot be pushed, stunned, or slowed by any source.',
         apply: () => { _perkState.heavyTitan=true; } },
 
+    // ══════════════════════════════════════════════════════════════
+    // SIPHON PERKS
+    // ══════════════════════════════════════════════════════════════
+    siphon_deep_drain:   { cat:'siphon', label:'Deep Drain',        desc:'Siphon heals 2× against targets below 40% HP',                              apply: () => { _perkState.siphonDeepDrain=true; } },
+    siphon_corrode:      { cat:'siphon', label:'Corroded Tether',   desc:'Enemies in beam take +15% damage from all sources',                          apply: () => { _perkState.siphonCorrode=(_perkState.siphonCorrode||0)+0.15; } },
+    siphon_range:        { cat:'siphon', label:'Extended Filament', desc:'Beam range +30%',                                                             apply: () => { _perkState.siphonRangeMult=(_perkState.siphonRangeMult||1)*1.30; } },
+    siphon_efficiency:   { cat:'siphon', label:'Thermal Recycler',  desc:'Heat buildup reduced by 25%',                                                apply: () => { _perkState.siphonHeatMult=(_perkState.siphonHeatMult||1)*0.75; } },
+    siphon_parasite:     { cat:'siphon', label:'Parasitic Link',    desc:'+10% move speed while beam is firing',                                       apply: () => { _perkState.siphonParasite=true; } },
+    siphon_wide:         { cat:'siphon', once:true, label:'Diffusion Lens',   desc:'Beam width +50%',                                                    apply: () => { _perkState.siphonWideMult=(_perkState.siphonWideMult||1)*1.50; } },
+    siphon_leech_shield: { cat:'siphon', once:true, legendary:true, label:'Shield Leech',
+        desc:'LEGENDARY — Siphon restores shield HP instead of core HP when shield is damaged',
+        apply: () => { _perkState.siphonLeechShield=true; } },
+
 };
 
 // ═══════════ PERK MENU ═══════════
