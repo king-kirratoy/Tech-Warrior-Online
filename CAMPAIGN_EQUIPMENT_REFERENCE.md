@@ -1037,3 +1037,276 @@ do not activate a leg system. Chassis filtering does **not** apply at drop time;
 - **Implementation**: `colossusStand` effect key registered in `_gearState._uniqueEffects`; timer starts when player velocity reaches 0; buff clears on any movement
 
 ---
+
+## Section 7: Augment
+
+Augments occupy the `aug` loadout slot (`_equipped.augment` in `_equipped`; `loadout.aug` in `loadout`).
+There are two distinct item categories:
+
+- **Pure stat augment** (`baseType: 'augment'`): Provides only passive stat bonuses. Does **not** set `loadout.aug` to an AUGMENTS system key and does not activate any augment system behavior.
+- **Augment system** (`baseType: 'aug_system'`): Provides item base stats **and** equips a named augment system — sets `loadout.aug = systemKey`, activating the corresponding `AUGMENTS[systemKey]` passive in-game effect. Chassis-restricted via `CHASSIS_AUGS`.
+
+Drop weights: `augment` = 6, `aug_system` = 6 (same base weight).
+Boss kills double `aug_system` weight (×2). Chassis filtering for `aug_system` runs at item-generation time.
+
+---
+
+### Augment Affixes
+
+Both `augment` and `aug_system` items draw from the same affix pool. The loot system maps
+`aug_system` → `augment` when selecting rollable affixes (`_affixTypeMap` in `generateItem()`).
+No sub-type restrictions apply to any augment affix.
+
+| Affix key | Label | Range | Weight | Notes |
+|---|---|---|---|---|
+| `dmgPct` | +{v}% Damage | 3–28 | 8 | |
+| `critChance` | +{v}% Crit Chance | 2–18 | 7 | |
+| `critDmg` | +{v}% Crit Damage | 10–60 | 5 | |
+| `allHP` | +{v} All Part HP | 5–30 | 4 | |
+| `speedPct` | +{v}% Move Speed | 2–14 | 6 | |
+| `lootMult` | +{v}% Loot Quality | 3–18 | 3 | |
+| `autoRepair` | +{v} HP/sec Regen | 1–6 | 4 | |
+
+> Note: `fireRatePct` and `modCdPct` are **not** rollable augment affixes (those are `weapon`/`arms`
+> and `cpu`-typed respectively). When they appear in an `aug_system`'s `baseStats`, they are fixed
+> item base stats baked into the item definition — not rolled affixes.
+
+---
+
+## Part A — Pure Stat Augments (`baseType: 'augment'`)
+
+Pure stat augments are defined in `ITEM_DEFS` in `js/loot-system.js`. They provide passive stat
+bonuses from their `baseStats` (scaled by `levelMult` and `rarityDef.statMult`) and from rolled
+affixes. They do **not** restrict by chassis — any chassis can equip any pure stat augment.
+
+---
+
+#### Targeting Array
+- **Sub type key**: `targeting_array`
+- **Base stats**: critChance: 3, accuracy: 5
+- **Chassis**: No restriction — all chassis
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+
+---
+
+#### Neural Link
+- **Sub type key**: `neural_link`
+- **Base stats**: lootMult: 5
+- **Chassis**: No restriction — all chassis
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+- **Note**: Purely a loot-quality item. `lootMult` increases drop quality, stacking with rarity and round scaling.
+
+---
+
+#### Combat Matrix
+- **Sub type key**: `combat_matrix`
+- **Base stats**: dmgPct: 3, speedPct: 2
+- **Chassis**: No restriction — all chassis
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+
+---
+
+## Part B — Augment Systems (`baseType: 'aug_system'`)
+
+Augment systems are defined in `ITEM_DEFS` in `js/loot-system.js`. Equipping one calls the
+loot equip path which sets `loadout.aug = systemKey`, activating the corresponding entry in the
+`AUGMENTS` constant from `js/constants.js`. Only 11 of the full AUGMENTS roster have droppable
+`aug_system` loot items; the remaining AUGMENTS entries (e.g. `kill_sprint`, `multi_drone`,
+`iron_fortress`-warzone entries, etc.) are accessible via the Warzone hangar dropdown only.
+
+Chassis filtering is applied at generation time via `CHASSIS_AUGS` — a player running a Light
+chassis will never receive a Medium-only or Heavy-only aug_system drop.
+
+---
+
+### Light Chassis Only
+
+Both Light-only aug_system items synergize with the Light chassis's JUMP mod and dodge identity.
+
+---
+
+#### Ghost Circuit
+- **Sub type key**: `sys_ghost_circuit` | **systemKey**: `ghost_circuit`
+- **Base stats**: dodgePct: 3, speedPct: 3
+- **Chassis**: Light only
+- **System gameplay**: After landing from a JUMP, the player becomes invisible to all enemies for 2 seconds. Enemies targeting the player lose lock during the stealth window. Pairs with the JUMP mod for repeated repositioning and ambush plays.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+
+---
+
+#### Reflex Amp
+- **Sub type key**: `sys_reflex_amp` | **systemKey**: `reflex_amp`
+- **Base stats**: fireRatePct: −4, dodgePct: 2
+- **Chassis**: Light only
+- **System gameplay**: The first shot fired after a JUMP landing or dodge deals +40% bonus damage. The damage window applies to the single next projectile only — burst and multi-pellet weapons consume it on the first pellet/burst.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+- **Note**: `fireRatePct: −4` in `baseStats` is a fixed item stat (faster fire rate — negative = shorter interval). It is not a rollable affix.
+
+---
+
+### Light and Medium Chassis
+
+These aug_systems drop for both Light and Medium chassis runs.
+
+---
+
+#### Target Painter
+- **Sub type key**: `sys_target_painter` | **systemKey**: `target_painter`
+- **Base stats**: dmgPct: 3, accuracy: 3
+- **Chassis**: Light, Medium
+- **System gameplay**: Hitting any enemy marks them. All damage dealt to marked enemies from any source (player weapons, drones, explosions) is increased by +20%. The mark persists until the enemy dies.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+
+---
+
+#### Threat Analyzer
+- **Sub type key**: `sys_threat_analyzer` | **systemKey**: `threat_analyzer`
+- **Base stats**: critChance: 2, accuracy: 3
+- **Chassis**: Light, Medium
+- **System gameplay**: Dealing damage to an enemy reduces their effective resistances by 15% for 3 seconds. The debuff refreshes on each hit and applies to shield absorption as well as flat damage reduction.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+
+---
+
+### Medium Chassis Only
+
+Medium-only aug_systems support the Medium chassis identity of cooldown mastery, drone coordination, and mod-cycle dominance.
+
+---
+
+#### Overclock CPU
+- **Sub type key**: `sys_overclock_cpu` | **systemKey**: `overclock_cpu`
+- **Base stats**: fireRatePct: −5, modCdPct: −3
+- **Chassis**: Medium only
+- **System gameplay**: All weapon reload times and all mod cooldowns are reduced by 12%. Stacks multiplicatively with the Medium chassis's native −15% cooldown mastery. The combined reduction makes sustained-fire and fast mod cycling the Medium's primary combat identity.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+- **Note**: Both `fireRatePct: −5` and `modCdPct: −3` in `baseStats` are fixed item stats (inverted — negative = beneficial). Neither is a rollable affix for augments.
+
+---
+
+#### Combat AI
+- **Sub type key**: `sys_combat_ai` | **systemKey**: `combat_ai`
+- **Base stats**: critChance: 3, dmgPct: 2
+- **Chassis**: Medium only
+- **System gameplay**: The active attack drone focuses the player's current target, concentrating drone fire on the same enemy the player is shooting. Without this aug, the drone targets independently. Requires an attack drone CPU (e.g. Drone Commander mod) to have any effect.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+
+---
+
+#### Drone Relay
+- **Sub type key**: `sys_drone_relay` | **systemKey**: `drone_relay`
+- **Base stats**: dmgPct: 2, modCdPct: −3
+- **Chassis**: Medium only
+- **System gameplay**: The attack drone fires 40% faster and gains +60 bonus HP. The HP bonus survives round transitions until the drone is destroyed. Requires an attack drone CPU to be active.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+- **Note**: `modCdPct: −3` in `baseStats` is a fixed item stat (inverted — negative = shorter cooldown). Not a rollable affix for augments.
+
+---
+
+### Medium and Heavy Chassis
+
+---
+
+#### Reactive Plating
+- **Sub type key**: `sys_reactive_plating` | **systemKey**: `reactive_plating`
+- **Base stats**: dr: 0.03, coreHP: 10
+- **Chassis**: Medium, Heavy
+- **System gameplay**: Each time the player takes damage, a stack of 5% damage reduction is added (maximum 5 stacks = 25% bonus DR). All stacks reset at the end of each round. The Heavy chassis's existing passive 15% DR adds to this, making Reactive Plating especially potent on Heavy.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+
+---
+
+### Heavy Chassis Only
+
+Heavy-only aug_systems reinforce the Heavy chassis's attrition, suppression, and close-quarters dominance.
+
+---
+
+#### Scrap Cannon
+- **Sub type key**: `sys_scrap_cannon` | **systemKey**: `scrap_cannon`
+- **Base stats**: dmgPct: 4
+- **Chassis**: Heavy only
+- **System gameplay**: When an enemy limb (arm or leg) is destroyed, it explodes for 30 AoE damage to all enemies within the blast radius. Works on both standard enemies and elite/boss limb destruction events. Scales with round level via standard damage multipliers.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+
+---
+
+#### War Machine
+- **Sub type key**: `sys_war_machine` | **systemKey**: `war_machine`
+- **Base stats**: dmgPct: 5, dr: 0.02
+- **Chassis**: Heavy only
+- **System gameplay**: Grants passive core HP regeneration of 2 HP/sec, but only after 4 consecutive seconds without taking damage. The regen timer resets to zero on any damage hit. Uses the same regen parameters as `CHASSIS.heavy.passiveRegenRate` / `CHASSIS.heavy.passiveRegenDelay`.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+
+---
+
+#### Iron Fortress
+- **Sub type key**: `sys_iron_fortress` | **systemKey**: `iron_fortress`
+- **Base stats**: dr: 0.05, coreHP: 15
+- **Chassis**: Heavy only
+- **System gameplay**: After standing stationary for 1.5 seconds, the player gains +15% damage reduction and +10% bonus damage. Both bonuses drop instantly when any movement input is detected. Pairs with Siege Stance leg system and Mag Anchors for maximum stationary-fortress builds.
+- **Affix pool**: dmgPct, critChance, critDmg, allHP, speedPct, lootMult, autoRepair
+
+---
+
+### Augment Systems Not Available as Loot Drops
+
+The following `AUGMENTS` entries exist in `CHASSIS_AUGS` but have **no corresponding `aug_system`
+entry in `ITEM_DEFS`**. They can only be equipped via the Warzone hangar dropdown — they do not
+drop in campaign runs.
+
+| systemKey | Chassis | Description |
+|---|---|---|
+| `ballistic_weave` | Light | +10% bullet speed; bullets ignore 20% of enemy shields |
+| `targeting_scope` | Light | SR/RAIL: +15% dmg per 200 px range |
+| `neural_accel` | Light | First 3s after JUMP landing: all weapons deal 2× damage |
+| `kill_sprint` | Light | Each kill grants +8% move speed for 4s (up to 3 stacks) |
+| `predator_lens` | Light | Enemies >400 px highlighted; +10% damage vs highlighted |
+| `shadow_core` | Light | While moving: all incoming damage reduced by 12% |
+| `fuel_injector` | Light | FTH range +40%, cone width +30% |
+| `thermal_core` | Light | FTH always ignites on hit; ignite duration +1s |
+| `pyromaniac_chip` | Light | Ignited enemies spread fire to one adjacent enemy on death |
+| `multi_drone` | Medium | Deploy 2 attack drones simultaneously instead of 1 |
+| `tactical_uplink` | Medium | Mod cooldowns −10% additional; stacks with Cooldown Mastery |
+| `field_processor` | Medium | After 3 hits same enemy: +15% damage to that target permanently |
+| `system_sync` | Medium | Activating any mod heals 20 HP on most-damaged limb |
+| `adaptive_core` | Medium | Each round survived: +3% base DR (max +15%) |
+| `echo_targeting` | Medium | Hitting enemy reveals all enemies within 300 px for 3s |
+| `suppressor_aura` | Heavy | Enemies within 200 px: −15% move speed |
+| `colossus_frame` | Heavy | Core HP +60; Arm and Leg HP +40 |
+| `impact_core` | Heavy | Close-range kills (<200 px): restore 15 core HP, stun nearby 0.5s |
+| `blast_dampener` | Heavy | Self-damage from explosions reduced by 60% |
+| `heavy_loader` | Heavy | All weapon reload times −20% |
+| `chain_drive` | Heavy | CHAIN 2H weapon: +25% fire rate |
+
+---
+
+### Unique / Boss-Drop Augment Items
+
+Unique augment items have `baseType: 'augment'` (not `aug_system`). They do **not** set
+`loadout.aug` to a system key — they provide only passive stat bonuses and a unique effect.
+No chassis restriction applies at drop time. Fixed affixes are always rolled with their exact values.
+
+---
+
+#### Architect's Array *(Epic — The Architect boss, rounds 15/35/55…)*
+- **Key**: `architects_array` | **Rarity**: Epic | **Base type**: `augment`
+- **Base stats**: modEffPct: 20
+- **Fixed affixes**: −8% Mod Cooldown, +25% Mod Effectiveness
+- **Unique effect** (`modAmplify`): All mod durations and effects are extended by 50%.
+- **Unique label**: OVERCLOCK: Mod effects last 50% longer
+- **Chassis**: All (no chassis restriction at drop time; augment slot is chassis-unrestricted for pure stat augments)
+- **Implementation**: `modAmplify` effect key registered in `_gearState._uniqueEffects`; mod duration reads check for this key and multiply the active duration by 1.5
+
+---
+
+#### Hive Mind *(Legendary — The Swarm boss, rounds 25/65/105…)*
+- **Key**: `hive_mind` | **Rarity**: Legendary | **Base type**: `augment`
+- **Base stats**: dmgPct: 8, modEffPct: 10
+- **Fixed affixes**: +10% Damage, +8% Crit Chance, +6% Mod Cooldown *(positive — note: fixed affix value stored as positive; display as a cost)*
+- **Unique effect** (`swarmBurst`): Each kill spawns 2 micro-drones that home in on the nearest enemy, dealing 15 damage each (30 total per kill if both connect).
+- **Unique label**: SWARM BURST: Kills release homing drones that seek nearby enemies
+- **Chassis**: All (no chassis restriction)
+- **Implementation**: `swarmBurst` effect key registered in `_gearState._uniqueEffects`; kill event handler checks for the key and spawns 2 homing drone projectiles at the kill location
+
+---
