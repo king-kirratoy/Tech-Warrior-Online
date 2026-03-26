@@ -502,20 +502,8 @@ function showDeathScreen() {
         // Campaign: show campaign-specific death screen with scrap report
         _showCampaignDeathScreen();
     } else {
-        // Warzone: populate score panel and show standard death screen
-        const _acc = _shotsFired > 0 ? Math.round(_shotsHit / _shotsFired * 100) : 0;
-        if (el('score-round'))     el('score-round').innerText     = _round;
-        if (el('score-kills'))     el('score-kills').innerText     = _totalKills;
-        if (el('score-accuracy'))  el('score-accuracy').innerText  = _acc + '%';
-        if (el('score-dmg-dealt')) el('score-dmg-dealt').innerText = Math.round(_damageDealt);
-        if (el('score-dmg-taken')) el('score-dmg-taken').innerText = Math.round(_damageTaken);
-        if (el('score-perks'))     el('score-perks').innerText     = _perksEarned;
-        const _wz = el('death-warzone-content');
-        if (_wz) _wz.style.display = '';
-        const _cp = el('death-campaign-content');
-        if (_cp) _cp.style.display = 'none';
-        const ds = document.getElementById('death-screen');
-        if (ds) ds.style.display = 'flex';
+        // Warzone: render combat report layout
+        _showWarzoneDeathScreen();
     }
     const _dsc = GAME?.scene?.scenes[0];
     if (_dsc) { try { _dsc.input.setDefaultCursor('default'); } catch(e){} }
@@ -556,6 +544,53 @@ function _showCampaignDeathScreen() {
                 '</button>' +
             '</div>';
         cp.style.display = '';
+    }
+    const ds = document.getElementById('death-screen');
+    if (ds) ds.style.display = 'flex';
+}
+
+/** Warzone-specific death screen: render combat report matching campaign layout. */
+function _showWarzoneDeathScreen() {
+    const wz = document.getElementById('death-warzone-content');
+    const cp = document.getElementById('death-campaign-content');
+    if (cp) cp.style.display = 'none';
+    if (wz) {
+        const _roundNum  = _round;
+        const _kills     = _totalKills;
+        const _dmgDealt  = Math.round(_damageDealt);
+        const _dmgTaken  = Math.round(_damageTaken);
+        const _divider   = '<div style="width:1px;background:rgba(0,212,255,0.1);"></div>';
+        const _statCell  = (label, value) =>
+            '<div style="padding:8px 20px;text-align:center;">' +
+                '<div style="font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.3);margin-bottom:6px;">' + label + '</div>' +
+                '<div style="font-size:22px;color:#e8923a;">' + value + '</div>' +
+            '</div>';
+        wz.innerHTML =
+            '<div style="font-size:52px;letter-spacing:8px;color:#cc2222;text-shadow:0 0 30px #cc2222;margin-bottom:12px;">MECH DESTROYED</div>' +
+            '<div style="height:1px;background:linear-gradient(to right,transparent,rgba(204,34,34,0.5),transparent);margin:0 auto 14px;width:320px;"></div>' +
+            '<div style="font-size:11px;letter-spacing:6px;color:rgba(255,255,255,0.3);margin-bottom:28px;">CORE SYSTEMS OFFLINE</div>' +
+            '<div style="border:1px solid rgba(0,212,255,0.15);padding:16px 32px;margin:0 auto 24px;display:inline-block;min-width:220px;">' +
+                '<div style="font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.3);margin-bottom:10px;">COMBAT REPORT</div>' +
+                '<div style="height:1px;background:rgba(0,212,255,0.1);margin-bottom:10px;"></div>' +
+                '<div style="display:flex;gap:0;">' +
+                    _statCell('ROUND', _roundNum) +
+                    _divider +
+                    _statCell('KILLS', _kills) +
+                    _divider +
+                    _statCell('DMG DEALT', _dmgDealt) +
+                    _divider +
+                    _statCell('DMG TAKEN', _dmgTaken) +
+                '</div>' +
+            '</div>' +
+            '<div style="display:flex;gap:16px;justify-content:center;">' +
+                '<button id="death-btn-primary" class="tw-btn tw-btn--ghost" onclick="returnToHangar()" style="width:190px;border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);font-size:11px;letter-spacing:4px;">' +
+                    '<span style="color:#e8923a;">&#9651;</span> MECH HANGAR' +
+                '</button>' +
+                '<button class="tw-btn tw-btn--ghost" onclick="returnToMainMenu()" style="width:190px;border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);font-size:11px;letter-spacing:4px;">' +
+                    '<span style="color:#cc2222;">&#9632;</span> MAIN MENU' +
+                '</button>' +
+            '</div>';
+        wz.style.display = '';
     }
     const ds = document.getElementById('death-screen');
     if (ds) ds.style.display = 'flex';

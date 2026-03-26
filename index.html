@@ -414,47 +414,8 @@
 
 <!-- DEATH SCREEN -->
 <div id="death-screen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:99999;flex-direction:column;justify-content:center;align-items:center;font-family:var(--font-mono);">
-    <!-- Warzone death screen (shown for simulation mode) -->
-    <div id="death-warzone-content" style="text-align:center;">
-        <div id="death-title" style="font-size:52px;letter-spacing:8px;color:#ff0000;text-shadow:0 0 30px #ff0000;margin-bottom:6px;">MECH DESTROYED</div>
-        <div style="font-size:13px;color:var(--text-dim);letter-spacing:3px;margin-bottom:28px;">CORE SYSTEMS OFFLINE</div>
-        <!-- Score Panel -->
-        <div style="display:inline-flex;gap:0;margin-bottom:24px;background:rgba(12,16,20,0.85);border:1px solid rgba(0,255,255,0.3);border-radius:12px;box-shadow:0 0 10px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.1);overflow:hidden;">
-            <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
-                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Round</div>
-                <div id="score-round" style="font-size:28px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 10px rgba(0,255,255,0.6);">1</div>
-            </div>
-            <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
-                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Kills</div>
-                <div id="score-kills" style="font-size:28px;letter-spacing:4px;color:var(--green-accent);text-shadow:0 0 10px rgba(0,255,136,0.6);">0</div>
-            </div>
-            <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
-                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Accuracy</div>
-                <div id="score-accuracy" style="font-size:28px;letter-spacing:4px;color:var(--amber);text-shadow:0 0 10px rgba(255,170,0,0.6);">0%</div>
-            </div>
-            <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
-                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Dmg Dealt</div>
-                <div id="score-dmg-dealt" style="font-size:28px;letter-spacing:4px;color:#ff6600;text-shadow:0 0 10px rgba(255,102,0,0.6);">0</div>
-            </div>
-            <div style="padding:14px 22px;text-align:center;border-right:1px solid rgba(0,255,255,0.15);">
-                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Dmg Taken</div>
-                <div id="score-dmg-taken" style="font-size:28px;letter-spacing:4px;color:#ff2244;text-shadow:0 0 10px rgba(255,34,68,0.6);">0</div>
-            </div>
-            <div style="padding:14px 22px;text-align:center;">
-                <div style="font-size:9px;letter-spacing:3px;color:rgba(0,255,255,0.5);text-transform:uppercase;margin-bottom:6px;">Perks</div>
-                <div id="score-perks" style="font-size:28px;letter-spacing:4px;color:var(--purple);text-shadow:0 0 10px rgba(200,136,255,0.6);">0</div>
-            </div>
-        </div>
-        <br>
-        <div id="death-buttons" style="display:flex;gap:20px;justify-content:center;">
-            <button id="death-btn-primary" class="tw-btn" onclick="returnToHangar()" style="width:220px;">
-                &#8962; MECH HANGAR
-            </button>
-            <button class="tw-btn tw-btn--danger" onclick="returnToMainMenu()" style="width:220px;">
-                &#9632; MAIN MENU
-            </button>
-        </div>
-    </div>
+    <!-- Warzone death screen (shown for simulation mode, populated by JS) -->
+    <div id="death-warzone-content" style="text-align:center;"></div>
     <!-- Campaign death screen (shown for campaign mode, populated by JS) -->
     <div id="death-campaign-content" style="display:none;text-align:center;"></div>
 </div>
