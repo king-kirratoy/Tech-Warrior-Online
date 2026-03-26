@@ -1088,7 +1088,7 @@ const SKILL_TREES = {
         { id:'h_all2',     x:5, y:6, label:'+25 All HP, +5 Spd', desc:'Titan systems upgrade.',            stats:{ coreHP:25, armHP:15, legHP:15, spd:5 }, requires:['h_all1','h_spd2'] },
         { id:'h_repair1',  x:6, y:6, label:'+2 Auto-Repair',     desc:'Nanite repair system.',             stats:{ autoRepair:2 }, requires:['h_mod2'] },
         // ── ROW 7: Capstones ──
-        { id:'h_siege',    x:0, y:7, label:'Siege Artillery',    desc:'+18% Dmg, +20% Blast Radius.',     stats:{ dmgMult:0.18, blastMult:0.20 }, requires:['h_blast4','h_dmg5'] },
+        { id:'h_siege',    x:0, y:7, label:'Heavy Ordnance',     desc:'+18% Dmg, +20% Blast Radius.',     stats:{ dmgMult:0.18, blastMult:0.20 }, requires:['h_blast4','h_dmg5'] },
         { id:'h_jugg',     x:3, y:7, label:'Juggernaut',         desc:'+8% DR, +60 Core HP.',             stats:{ dr:0.08, coreHP:60 }, requires:['h_dr5','h_core4'] },
         { id:'h_titan',    x:5, y:7, label:'Titan',              desc:'+30 All HP, +8 Spd, +3 Repair.',   stats:{ coreHP:30, armHP:20, legHP:20, spd:8, autoRepair:3 }, requires:['h_all2','h_repair1'] },
     ]

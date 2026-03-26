@@ -25,7 +25,7 @@
 | `js/enemies.js` | Enemy spawning, full AI state machine, enemy firing, 8 boss spawners, and DOM boss HP bar helpers. |
 | `js/rounds.js` | Round init, enemy spawn dispatch, kill tracking, extraction point system, and round banner. |
 | `js/hud.js` | All HUD update functions: weapon slots, HP/shield bars, paper doll, minimap, cooldown overlays, crosshair, HUD reset. Siphon heat is shown inline in the L ARM / R ARM weapon bar rows (heat %, color-coded green→yellow→red, OVERHEAT pulse) via `_updateBarRow()` per-arm heat logic; the separate HEAT row was removed in v6.71. Layered shield: `updateBars()` renders a subtle cyan divider at 50% of the shield bar via CSS gradient on the `.wr-bar-bg` container. |
-| `js/garage.js` | Warzone hangar UI: dropdown system, slot selection with 2H locking, and full hangar renderer. |
+| `js/garage.js` | Warzone hangar UI: dropdown system, slot selection (dual-wield for light; no duplicate weapons for medium/heavy), and full hangar renderer. |
 | `js/menus.js` | All menu and overlay logic: main menu, hangar nav, death screen, pause, loadout overlay, hover card system, inventory management, leaderboard, and game cleanup. |
 | `js/loot-system.js` | ARPG loot layer: item generation, rarity/affix system, inventory/equipment management, ground drops (campaign only), unique item effects, campaign cloud save, and save migration arrays (`REMOVED_SHIELDS`, `REMOVED_LEGS`, `REMOVED_AUGMENTS`). |
 | `js/enemy-types.js` | Special enemy type definitions (`ENEMY_TYPE_DEFS`), elite modifier system (`ELITE_MODIFIERS`), and all type/modifier lifecycle functions. |
