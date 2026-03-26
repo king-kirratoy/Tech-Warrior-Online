@@ -437,6 +437,10 @@ function deployMech() {
     if (_gameMode === 'campaign' && typeof applyChassisUpgrades === 'function') {
         applyChassisUpgrades();
     }
+    // Reset kill counter at the start of every new warzone run
+    if (_gameMode !== 'campaign' && _gameMode !== 'pvp') {
+        _totalKills = 0;
+    }
 
     // HEAVY: strip forbidden items if somehow equipped
     if (loadout.chassis === 'heavy') {

@@ -2623,7 +2623,10 @@ function _execDropInTween(scene, normalScale) {
             // PVP uses its own deploy path (mpDeployPVP) — skip PvE round system entirely
             if (_gameMode !== 'pvp') {
                 // Kick off round system on first deploy / respawn
-                document.getElementById('round-hud').style.display = 'flex';
+                // Campaign uses boss HP bars / mission UI — round-hud is hidden there
+                if (_gameMode !== 'campaign') {
+                    document.getElementById('round-hud').style.display = 'flex';
+                }
                 if (_gameMode === 'campaign' && typeof getCampaignMission === 'function') {
                     const _cm = getCampaignMission();
                     if (_cm) {

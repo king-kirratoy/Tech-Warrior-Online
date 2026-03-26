@@ -2,6 +2,11 @@
 
 function updateRoundHUD() {
     const el = document.getElementById('round-hud');
+    // Round/kill counter is simulation and pvp only — hide entirely in campaign
+    if (_gameMode === 'campaign') {
+        if (el) el.style.display = 'none';
+        return;
+    }
     if (el) el.style.display = 'flex';
     const rn = document.getElementById('round-num');
     const rr = document.getElementById('round-remaining');
