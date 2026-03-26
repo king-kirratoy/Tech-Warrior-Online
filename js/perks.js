@@ -747,7 +747,7 @@ const _perks = {
     scrap_collector:     { cat:'universal', label:'Scrap Collector',   desc:'Every 10 kills: gain a random temporary buff for 15s',                 apply: () => { _perkState.scrapCollector=true; } },
     resource_recycler:   { cat:'universal', label:'Resource Recycler', desc:'Loot orbs grant 50% more benefit (stackable)',                         apply: () => { _perkState.resourceRecycler=(_perkState.resourceRecycler||0)+0.50; } },
     field_medic_univ:    { cat:'universal', label:'Field Medic',       desc:'Loot health orbs restore 50% more HP (stackable)',                     apply: () => { _perkState.fieldMedic=(_perkState.fieldMedic||0)+0.50; } },
-    munitions_expert:    { cat:'universal', label:'Munitions Expert',  desc:'Explosive damage +15% (GL, RL, Siege) (stackable)',                    apply: () => { _perkState.munitionsExpert=(_perkState.munitionsExpert||0)+0.15; } },
+    munitions_expert:    { cat:'universal', label:'Munitions Expert',  desc:'Explosive damage +15% (GL, RL) (stackable)',                           apply: () => { _perkState.munitionsExpert=(_perkState.munitionsExpert||0)+0.15; } },
 
     // ── UNIVERSAL TRADEOFFS (5 new) ──────────────────────────────
     reckless_charge:     { cat:'universal', once:true, label:'Reckless Charge',  desc:'+20% speed, +15% damage, but shield max HP halved',          apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.20; _perkState.dmgMult=(_perkState.dmgMult||1)*1.15; player.maxShield=Math.round(player.maxShield*0.50); player.shield=Math.min(player.shield,player.maxShield); } },

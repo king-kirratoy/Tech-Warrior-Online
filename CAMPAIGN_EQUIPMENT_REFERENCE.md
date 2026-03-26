@@ -35,10 +35,6 @@ Only keys in `WEAPON_LOOT_KEYS` can drop: `smg`, `mg`, `sg`, `br`, `hr`, `fth`, 
 Weapon drops are **filtered by the player's current chassis** at generation time (via `CHASSIS_WEAPONS`).
 Each chassis only receives weapons it can equip — there is no cross-chassis weapon contamination in drops.
 
-**Cannot drop as loot**: `siege` (Siege Cannon) and `chain` (Chain Gun) — both are 2H weapons
-that require locking both arm slots simultaneously; the one-slot-at-a-time loot equip system
-cannot handle them safely.
-
 ### Weapon Affixes
 
 All weapons draw from the following affix pool (`AFFIX_POOL` entries with `types: ['weapon']`):
@@ -1277,7 +1273,6 @@ drop in campaign runs.
 | `impact_core` | Heavy | Close-range kills (<200 px): restore 15 core HP, stun nearby 0.5s |
 | `blast_dampener` | Heavy | Self-damage from explosions reduced by 60% |
 | `heavy_loader` | Heavy | All weapon reload times −20% |
-| `chain_drive` | Heavy | CHAIN 2H weapon: +25% fire rate |
 
 ---
 
@@ -1348,7 +1343,7 @@ in `js/constants.js`; armor and arms sub-type counts from `js/loot-system.js` (n
 |---|:---:|---|:---:|
 | Light | 3 | `target_painter`, `threat_analyzer`, `ballistic_weave`, `targeting_scope`, `neural_accel`, `ghost_circuit`, `reflex_amp`, `kill_sprint`, `predator_lens`, `shadow_core`, `fuel_injector`, `thermal_core`, `pyromaniac_chip` (13) | **16** |
 | Medium | 3 | `target_painter`, `threat_analyzer`, `overclock_cpu`, `reactive_plating`, `combat_ai`, `drone_relay`, `multi_drone`, `tactical_uplink`, `field_processor`, `system_sync`, `adaptive_core`, `echo_targeting` (12) | **15** |
-| Heavy | 3 | `reactive_plating`, `scrap_cannon`, `war_machine`, `iron_fortress`, `suppressor_aura`, `colossus_frame`, `impact_core`, `blast_dampener`, `heavy_loader`, `chain_drive` (10) | **13** |
+| Heavy | 3 | `reactive_plating`, `scrap_cannon`, `war_machine`, `iron_fortress`, `suppressor_aura`, `colossus_frame`, `impact_core`, `blast_dampener`, `heavy_loader` (9) | **12** |
 
 > Pure stat augments: `targeting_array`, `neural_link`, `combat_matrix` — no chassis restriction, same 3 for all.
 
