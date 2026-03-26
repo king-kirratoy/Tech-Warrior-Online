@@ -138,7 +138,7 @@ const ITEM_BASES = {
 };
 
 // Which weapon keys from WEAPONS are droppable as loot items.
-const WEAPON_LOOT_KEYS = ['smg','mg','sg','br','hr','fth','sr','gl','rl','plsm','rail'];
+const WEAPON_LOOT_KEYS = ['smg','mg','sg','br','hr','fth','sr','gl','rl','plsm','rail','siphon'];
 
 // ── UNIQUE BOSS ITEMS ────────────────────────────────────────────
 // Each boss has 1 Legendary + 1 Epic unique drop. Unique items have
