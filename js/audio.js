@@ -300,6 +300,94 @@ function sndBossDefeat() {
     _tone(440,'sine',0.12,0.25,660,0.45); _tone(660,'sine',0.12,0.20,880,0.55); _tone(880,'sine',0.14,0.16,1200,0.65);
 }
 
+// ── Siphon beam continuous hum ────────────────────────────────────
+// Persistent oscillator nodes kept alive while the beam fires.
+let _siphonHumOsc  = null;
+let _siphonHumGain = null;
+let _siphonLfoOsc  = null;
+let _siphonLfoGain = null;
+
+/** Start the siphon hum.  heatFraction 0–1 maps pitch 80–120 Hz. */
+function sndSiphonBeamStart(heatFraction) {
+    try {
+        const ac = _getAC();
+        if (!ac || _siphonHumOsc) return; // not ready or already running
+        const freq     = 80 + heatFraction * 40;
+        const baseVol  = 0.22 * _masterVol;
+
+        _siphonHumGain = ac.createGain();
+        _siphonHumGain.gain.setValueAtTime(0.001, ac.currentTime);
+        _siphonHumGain.gain.linearRampToValueAtTime(baseVol, ac.currentTime + 0.08);
+
+        _siphonHumOsc = ac.createOscillator();
+        _siphonHumOsc.type = 'triangle';
+        _siphonHumOsc.frequency.setValueAtTime(freq, ac.currentTime);
+        _siphonHumOsc.connect(_siphonHumGain);
+        _siphonHumGain.connect(ac.destination);
+
+        // LFO: 2.5 Hz sine modulates hum gain for pulsing effect
+        _siphonLfoGain = ac.createGain();
+        _siphonLfoGain.gain.setValueAtTime(baseVol * 0.55, ac.currentTime);
+        _siphonLfoOsc = ac.createOscillator();
+        _siphonLfoOsc.type = 'sine';
+        _siphonLfoOsc.frequency.setValueAtTime(2.5, ac.currentTime);
+        _siphonLfoOsc.connect(_siphonLfoGain);
+        _siphonLfoGain.connect(_siphonHumGain.gain);
+
+        _siphonHumOsc.start(ac.currentTime);
+        _siphonLfoOsc.start(ac.currentTime);
+        _activeNodes += 2;
+        _lastNodeStartTime = performance.now();
+    } catch(e) {}
+}
+
+/** Update hum pitch as heat changes (called every frame while firing). */
+function sndSiphonBeamUpdate(heatFraction) {
+    try {
+        if (!_siphonHumOsc || !_ac) return;
+        const freq = 80 + heatFraction * 40;
+        _siphonHumOsc.frequency.setValueAtTime(freq, _ac.currentTime);
+    } catch(e) {}
+}
+
+/** Fade out and stop the siphon hum. */
+function sndSiphonBeamStop() {
+    try {
+        if (!_siphonHumOsc || !_ac) return;
+        const ac   = _ac;
+        const osc  = _siphonHumOsc;
+        const lfo  = _siphonLfoOsc;
+        // Null out refs immediately so re-entrant calls are no-ops
+        _siphonHumOsc  = null;
+        _siphonHumGain = null;
+        _siphonLfoOsc  = null;
+        _siphonLfoGain = null;
+        // Short fade-out to avoid click artifacts
+        try {
+            const g = osc.context ? osc.context : ac;
+            osc.disconnect();
+            lfo.disconnect();
+        } catch(e) {}
+        const fadeGain = ac.createGain();
+        fadeGain.gain.setValueAtTime(0.22 * _masterVol, ac.currentTime);
+        fadeGain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.08);
+        osc.connect(fadeGain);
+        fadeGain.connect(ac.destination);
+        setTimeout(() => {
+            try { osc.stop(); } catch(e) {}
+            try { lfo.stop(); } catch(e) {}
+            _activeNodes = Math.max(0, _activeNodes - 2);
+        }, 100);
+    } catch(e) {}
+}
+
+/** Brief sawtooth buzz when the siphon overheats. */
+function sndSiphonOverheat() {
+    if (!_canPlay('siphon_ovheat', 500)) return;
+    _noise(0.10, 0.35, 0, 0, 300);
+    _tone(55, 'sawtooth', 0.10, 0.20, 28);
+}
+
 // ── AudioContext lifecycle handlers ──────────────────────────────
 // Set _audioReady on the first user gesture so _getAC() is only called
 // after the browser allows AudioContext creation without autoplay restriction.

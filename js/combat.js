@@ -3,6 +3,10 @@
 // ── Siphon beam module state ──────────────────────────────────────
 // Tracks enemies currently slowed by the active siphon beam.
 let _siphonSlowedEnemies = new Set();
+// Phaser Graphics object for beam visual (created once, reused every frame).
+let _siphonGfx = null;
+// Timestamp for throttling heal-number display (max once per 500ms).
+let _siphonHealTextThrottle = 0;
 
 function fire(scene, side) {
     if (!isDeployed || isJumping || _isPaused) return;
@@ -351,10 +355,16 @@ function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
 
     const ex = ox + Math.cos(aimAngle) * rayLen;
     const ey = oy + Math.sin(aimAngle) * rayLen;
+
+    // Store beam geometry for per-frame rendering in updateSiphonBeam
+    player._siphonBeamRayLen = rayLen;
+    player._siphonBeamSide   = side;
+
     const dx = ex - ox, dy = ey - oy;
     const lenSq = dx*dx + dy*dy;
     const halfWidth = weapon.beamWidth / 2;  // 10 px
     const _newHitSet = new Set();
+    let _siphonHealThisTick = 0;
 
     enemies.getChildren().forEach(e => {
         if (!e.active || lenSq <= 0) return;
@@ -381,8 +391,10 @@ function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
 
         // Siphon heal: siphonHpPerSec / 10 per 100ms tick
         if (player?.comp?.core) {
+            const _coreBefore = player.comp.core.hp;
             player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + weapon.siphonHpPerSec / 10);
             player.hp = Object.values(player.comp).reduce((s, c) => s + c.hp, 0);
+            _siphonHealThisTick += player.comp.core.hp - _coreBefore;
         }
     });
 
@@ -404,16 +416,38 @@ function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     //            Apply slow + damageRemotePlayer() calls when PVP beam is added.
 
     if (_newHitSet.size > 0) { updateBars(); updatePaperDoll(); }
+
+    // ── Green heal float above player ─────────────────────────────────
+    const _now = scene.time.now;
+    if (_siphonHealThisTick > 0 && _now - _siphonHealTextThrottle >= 500) {
+        _siphonHealTextThrottle = _now;
+        const _healAmt = Math.round(_siphonHealThisTick);
+        const _htx = scene.add.text(player.x, player.y - 30, `+${_healAmt}`, {
+            font: 'bold 18px monospace',
+            fill: '#00ff88',
+            stroke: '#003322',
+            strokeThickness: 3,
+        }).setOrigin(0.5).setDepth(101);
+        scene.tweens.add({
+            targets: _htx, y: player.y - 110, alpha: 0,
+            duration: 1000, ease: 'Cubic.easeOut',
+            onComplete: () => _htx.destroy(),
+        });
+    }
 }
 
 // ── Per-frame siphon beam update ──────────────────────────────────
 // Must be called once per frame BEFORE handlePlayerFiring() so that
 // _siphonFiring is reset before fire() potentially sets it again.
 function updateSiphonBeam(scene) {
-    if (!player?.active || !isDeployed) return;
+    if (!player?.active || !isDeployed) {
+        _siphonBeamHide();
+        return;
+    }
     if (loadout.L !== 'siphon' && loadout.R !== 'siphon') {
         // No siphon equipped — ensure any lingering slows are cleaned up
         if (_siphonSlowedEnemies.size > 0) _clearAllSiphonSlows();
+        _siphonBeamHide();
         return;
     }
 
@@ -422,6 +456,8 @@ function updateSiphonBeam(scene) {
 
     const wasFiring = player._siphonFiring;
     player._siphonFiring = false;  // reset; fire() will re-set if button held this frame
+
+    const prevOverheat = player._siphonOverheat;
 
     if (wasFiring && !player._siphonOverheat) {
         // Accumulate heat per frame while beam is active
@@ -444,7 +480,77 @@ function updateSiphonBeam(scene) {
         }
     }
 
+    // ── Overheat event: play buzz and stop hum ───────────────────────
+    if (!prevOverheat && player._siphonOverheat) {
+        if (typeof sndSiphonOverheat === 'function') sndSiphonOverheat();
+        if (typeof sndSiphonBeamStop === 'function') sndSiphonBeamStop();
+    }
+
+    const heatFraction = (player._siphonHeat || 0) / weapon.heatMax;
+
+    // ── Beam visual rendering ────────────────────────────────────────
+    if (wasFiring && !player._siphonOverheat) {
+        // Recalculate live arm origin and aim direction for smooth rendering
+        const _bSide  = loadout.chassis === 'light' ? 12 : loadout.chassis === 'medium' ? 26 : 42;
+        const _bd     = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
+        const _side   = loadout.L === 'siphon' ? 'L' : 'R';
+        const _pSign  = _side === 'L' ? -1 : 1;
+        const _pAngle = torso.rotation + _pSign * Math.PI / 2;
+        const _bOx    = torso.x + Math.cos(_pAngle) * _bSide;
+        const _bOy    = torso.y + Math.sin(_pAngle) * _bSide;
+        const _bMx    = scene.input.activePointer.worldX;
+        const _bMy    = scene.input.activePointer.worldY;
+        const _bAim   = Math.atan2(_bMy - _bOy, _bMx - _bOx);
+        const _ox     = _bOx + Math.cos(_bAim) * _bd;
+        const _oy     = _bOy + Math.sin(_bAim) * _bd;
+        const _rayLen = player._siphonBeamRayLen !== undefined ? player._siphonBeamRayLen : weapon.range;
+        const _ex     = _ox + Math.cos(_bAim) * _rayLen;
+        const _ey     = _oy + Math.sin(_bAim) * _rayLen;
+
+        if (!_siphonGfx) {
+            _siphonGfx = scene.add.graphics().setDepth(50);
+        }
+        _siphonGfx.setVisible(true);
+        _siphonGfx.clear();
+        // Glow layer: wide, low alpha
+        _siphonGfx.lineStyle(14, 0x00ff88, 0.22);
+        _siphonGfx.beginPath();
+        _siphonGfx.moveTo(_ox, _oy);
+        _siphonGfx.lineTo(_ex, _ey);
+        _siphonGfx.strokePath();
+        // Mid glow
+        _siphonGfx.lineStyle(9, 0x00ff88, 0.45);
+        _siphonGfx.beginPath();
+        _siphonGfx.moveTo(_ox, _oy);
+        _siphonGfx.lineTo(_ex, _ey);
+        _siphonGfx.strokePath();
+        // Main beam
+        _siphonGfx.lineStyle(6, 0x00ff88, 0.85);
+        _siphonGfx.beginPath();
+        _siphonGfx.moveTo(_ox, _oy);
+        _siphonGfx.lineTo(_ex, _ey);
+        _siphonGfx.strokePath();
+
+        // ── Audio: start or update hum ───────────────────────────────
+        if (typeof sndSiphonBeamStart === 'function') sndSiphonBeamStart(heatFraction);
+        if (typeof sndSiphonBeamUpdate === 'function') sndSiphonBeamUpdate(heatFraction);
+    } else {
+        _siphonBeamHide();
+        // Stop hum when not firing (stop is idempotent if already stopped)
+        if (!wasFiring || player._siphonOverheat) {
+            if (typeof sndSiphonBeamStop === 'function') sndSiphonBeamStop();
+        }
+    }
+
     if (typeof updateSiphonHeatBar === 'function') updateSiphonHeatBar();
+}
+
+// ── Hide and clear the siphon beam graphics ──────────────────────
+function _siphonBeamHide() {
+    if (_siphonGfx) {
+        _siphonGfx.clear();
+        _siphonGfx.setVisible(false);
+    }
 }
 
 function _clearAllSiphonSlows() {

@@ -16,10 +16,10 @@
 | `js/constants.js` | All immutable game data: chassis, weapons (including `siphon` beam weapon), shields, augments, legs, cover, arenas, enemy color palettes, restriction Sets, starter loadouts, `SLOT_ID_MAP`, and `GAME_CONFIG`. |
 | `js/state.js` | All mutable runtime globals: Phaser object refs, game-mode flags, round/combat state, `loadout`, `_perkState`, extraction state, loot pickups, and leaderboard run state. |
 | `js/utils.js` | Pure helpers: color utilities, chassis HP calculation, HUD name lookup, and visual FX spawners (damage text, sparks, muzzle flash, debris, footprint). |
-| `js/audio.js` | Web Audio API synthesizer with 23 sound functions, throttle/node-cap system, and first-gesture/tab-visibility lifecycle. |
+| `js/audio.js` | Web Audio API synthesizer with 27 sound functions, throttle/node-cap system, and first-gesture/tab-visibility lifecycle. Siphon beam sounds: persistent hum (`sndSiphonBeamStart/Update/Stop`) with triangle oscillator (80–120 Hz, heat-driven pitch) and 2.5 Hz LFO pulse; overheat buzz (`sndSiphonOverheat`). |
 | `js/mechs.js` | Mech construction, per-frame visual sync, chassis movement effects, rage ghosts, and spectre clone logic. |
 | `js/cover.js` | Cover placement, battlefield generation, and cover damage/destruction. |
-| `js/combat.js` | All weapon firing functions, damage processing, shield absorption, area effects, mine mechanics, and siphon beam logic (`fireSIPHON`, `updateSiphonBeam`, `_clearAllSiphonSlows`). |
+| `js/combat.js` | All weapon firing functions, damage processing, shield absorption, area effects, mine mechanics, and siphon beam logic (`fireSIPHON`, `updateSiphonBeam`, `_clearAllSiphonSlows`, `_siphonBeamHide`). Beam rendering: per-frame Phaser Graphics draw (glow + main line, 0x00ff88) while `player._siphonFiring` is true; green heal float numbers above player (throttled 500ms). |
 | `js/mods.js` | All 18 mod-activation functions, drone builder helpers, and augment/leg application. |
 | `js/perks.js` | Master perk dictionary (~400+ entries), perk pool selection, perk menu render/pick, equip prompt, and per-round perk reset. |
 | `js/enemies.js` | Enemy spawning, full AI state machine, enemy firing, 8 boss spawners, and DOM boss HP bar helpers. |
