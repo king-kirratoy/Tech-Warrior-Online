@@ -47,11 +47,9 @@ function fire(scene, side) {
     const _braceMult = (!_otherArm || _otherArm === 'none') ? 0.85 : 1.0;
     const _gearReloadMult = 1 - ((_gearState?.fireRatePct || 0) / 100);
     const _dualReloadMult = 1 - (typeof getDualReloadBonus === 'function' ? getDualReloadBonus() : 0);
-    // Chain Drive: +25% fire rate (×0.80 reload) when chain 2H weapon is equipped
-    const _chainDriveMult = (_perkState.chainDrive && wKey === 'chain') ? 0.80 : 1.0;
     const reloadActual = ((isRageActive || isAmmoActive) ? weapon.fireRate * 0.5 : weapon.fireRate)
         * (_perkState.reloadMult || 1) * _gearReloadMult * _dualReloadMult * _lightReloadMult * _braceMult
-        * (_perkState._overclockBurst ? 0.75 : 1.0) * _chainDriveMult;
+        * (_perkState._overclockBurst ? 0.75 : 1.0);
     const lastFired    = side === 'L' ? reloadL : reloadR;
     if (now < lastFired) return;
 
@@ -128,16 +126,6 @@ function fire(scene, side) {
     // Build-specific multipliers
     const _neuralMult  = (_perkState._neuralAccelActive && _perkState.neuralAccel) ? 2.0 : 1.0;
     const _phantomMult = _perkState._phantomShotReady ? 4.0 : 1.0;
-    // Reflex Amp: +40% on first shot after JUMP landing or dodge
-    const _reflexMult  = (_perkState.reflexAmp && _perkState._reflexAmpReady) ? 1.4 : 1.0;
-    if (_perkState._reflexAmpReady) _perkState._reflexAmpReady = false;
-    // Targeting Scope: SR/RAIL +15% per 200px to cursor
-    let _scopeMult = 1.0;
-    if (_perkState.targetingScope && (wKey === 'sr' || wKey === 'rail')) {
-        const _tsDist = Phaser.Math.Distance.Between(torso.x, torso.y,
-            scene.input.activePointer.worldX, scene.input.activePointer.worldY);
-        _scopeMult = 1 + (_tsDist / 200) * 0.15;
-    }
     // Penetrator: SR +20% per 200px
     let _penetratorMult = 1.0;
     if (_perkState.penetrator > 0 && wKey === 'sr') {
@@ -160,9 +148,7 @@ function fire(scene, side) {
     const _gearDmgFlat = (_gearState?.dmgFlat || 0);
     const _gearDmgPct  = 1 + ((_gearState?.dmgPct || 0) / 100);
     const _colossusMult = (typeof getColossusDmgMult === 'function') ? getColossusDmgMult() : 1.0;
-    // Iron Fortress: +10% damage while stationary 1.5s+
-    const _ironFortressDmgMult = _perkState._ironFortressActive ? 1.10 : 1.0;
-    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _scopeMult * _penetratorMult * _capBonus * _colossusMult * _reflexMult * _ironFortressDmgMult);
+    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _penetratorMult * _capBonus * _colossusMult);
     // Apply gear splash radius bonus to explosion weapons (GL, RL, PLSM).
     const _gearSplashMult = 1 + ((_gearState?.splashRadius || 0) / 100);
     const _wEff = Object.assign({}, weapon, {
@@ -205,10 +191,9 @@ function fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
         scene.input.activePointer.worldY - torso.y,
         scene.input.activePointer.worldX - torso.x
     );
-    const _fuelBoost = _perkState.fuelInjector ? 1.40 : 1.0;
-    const maxRange = (weapon.range || 350) * (1 + (_perkState.fthRange||0)) * _fuelBoost;
+    const maxRange = (weapon.range || 350) * (1 + (_perkState.fthRange||0));
     const _coneWidthMult = 1 + (_perkState.fthCone || 0);
-    const coneSteps = _perkState.fuelInjector ? 4 : 2;
+    const coneSteps = 2;
     const coneAngleStep = 0.055 * _coneWidthMult;
     const dmg = Math.round(weapon.dmg);
     for (let i = -coneSteps; i <= coneSteps; i++) {
@@ -765,11 +750,6 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     }
     // Fortress Mode (Heavy mod): 30% DR while active
     if (_perkState._fortressDR > 0) amt = Math.round(amt * (1 - _perkState._fortressDR));
-    // Shadow Core aug: 12% DR while moving
-    if (_perkState.shadowCore && player?.body) {
-        const _spd = Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2);
-        if (_spd > 20) amt = Math.round(amt * 0.88);
-    }
     // HEAVY passive: 15% damage reduction always active
     if (loadout.chassis === 'heavy') amt = Math.round(amt * (1 - (CHASSIS.heavy.passiveDR || 0.15)));
     // Bulwark Shield: 12% DR always active (even when shield depleted)
@@ -809,8 +789,8 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     if (typeof getColossusDR === 'function') { const cdr = getColossusDR(); if (cdr > 0) amt = Math.round(amt * (1 - cdr)); }
     // Matrix Barrier: invulnerability bubble
     if (typeof isMatrixBarrierActive === 'function' && isMatrixBarrierActive()) return;
-    // Gear total DR (+ Adaptive Core per-round bonus)
-    const _totalDR = (_perkState.fortress || 0) + ((_gearState?.dr || 0) / 100) + (_perkState._adaptiveCoreDR || 0);
+    // Gear total DR
+    const _totalDR = (_perkState.fortress || 0) + ((_gearState?.dr || 0) / 100);
     if (_totalDR > 0) amt = Math.round(amt * (1 - Math.min(0.75, _totalDR)));
     // Phantom dodge chance
     const _totalDodge = (_perkState.dodgeChance || 0) + ((_gearState?.dodgePct || 0) / 100);
@@ -820,7 +800,6 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
             font:'bold 18px monospace', fill:'#88ff88', stroke:'#000', strokeThickness:3
         }).setDepth(20);
         scene.tweens.add({ targets:dodgeTxt, y:dodgeTxt.y-30, alpha:0, duration:700, onComplete:()=>dodgeTxt.destroy() });
-        if (_perkState.reflexAmp) _perkState._reflexAmpReady = true;
         return;
     }
     // Glass Step: first hit per round is always dodged
@@ -831,7 +810,6 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
             font:'bold 16px monospace', fill:'#88ffff', stroke:'#000', strokeThickness:3
         }).setOrigin(0.5).setDepth(20);
         scene3.tweens.add({ targets:dodgeTxt, y:dodgeTxt.y-28, alpha:0, duration:700, onComplete:()=>dodgeTxt.destroy() });
-        if (_perkState.reflexAmp) _perkState._reflexAmpReady = true;
         return;
     }
     player.isProcessingDamage = true;
@@ -859,8 +837,6 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     }
     // Mag Anchors: -20% incoming damage while stationary
     if (_perkState._magAnchorsActive) amt *= 0.80;
-    // Iron Fortress: +15% DR while stationary 1.5s+
-    if (_perkState._ironFortressActive) amt = Math.round(amt * 0.85);
     // Reactive Plating: each hit adds 5% DR, max 5 stacks
     if (_perkState.reactivePlating) {
         _perkState._reactivePlatingStacks = Math.min(5, (_perkState._reactivePlatingStacks||0) + 1);
@@ -1156,11 +1132,6 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     }
     // Target Painter: painted enemy takes +20% damage
     if (_perkState.targetPainter && _perkState._paintedEnemy === e) amt *= 1.20;
-    // Predator Lens: +10% damage vs enemies >400px away
-    if (_perkState.predatorLens && player) {
-        const _plDist = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
-        if (_plDist > 400) amt *= 1.10;
-    }
     // Per-enemy damage multiplier (Threat Analyzer debuff)
     if (e._dmgMult) amt *= e._dmgMult;
     // Elite modifier damage handling (enforcer shield gate, shielded overshield, cloak DR)
@@ -1224,11 +1195,6 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             const sc5 = GAME.scene.scenes[0];
             if (sc5) spawnLoot(sc5, e.x + (Math.random()-0.5)*30, e.y + (Math.random()-0.5)*30);
         }
-        if (_perkState.scrapCannon && e.comp[target].hp <= 0 && !e["_scrapFired_" + target]) {
-            e["_scrapFired_" + target] = true;
-            const scene = GAME.scene.scenes[0];
-            createExplosion(scene, e.x, e.y, 45, 30);
-        }
         // Arm destroyed — disable that weapon slot so enemy stops firing from it
         if (e.comp[target].hp <= 0) {
             if (target === 'lArm' && e.loadout?.L && e.loadout.L !== 'none') {
@@ -1246,14 +1212,6 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             }
         }
         // (Salvage Protocol loot drop already handled above via _salvageDrop_ flag)
-        // Enemy Scrap Cannon augment
-        if (e._augState?.scrapCannon && e.comp[target].hp <= 0 && !e["_eScrapFired_" + target]) {
-            e["_eScrapFired_" + target] = true;
-            const scene = GAME.scene.scenes[0];
-            createExplosion(scene, e.x, e.y, 40, 0);
-            processPlayerDamage(25, 0, true);
-        }
-        // (Duplicate enemy Scrap Cannon block removed — already handled above)
     }
 
     // Incendiary Rounds: chance to ignite on hit
@@ -1312,30 +1270,7 @@ function _resolveEnemyDeath(e) {
         sndEnemyDeath(false);
         scene.cameras.main.shake(250, 0.008);
         createExplosion(scene, e.x, e.y, 60, 0);
-        if (_perkState.pyromaniacChip && e._burning) {
-            let _nearestUnburned = null, _nDist = Infinity;
-            enemies.getChildren().forEach(e2 => {
-                if (!e2.active || e2 === e || e2._burning) return;
-                const d2 = Phaser.Math.Distance.Between(e.x, e.y, e2.x, e2.y);
-                if (d2 < 300 && d2 < _nDist) { _nDist = d2; _nearestUnburned = e2; }
-            });
-            if (_nearestUnburned) {
-                _nearestUnburned._burning = true;
-                let _fbt = 0;
-                const _fbTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
-                    if (!_nearestUnburned.active || _fbt >= 5) { _nearestUnburned._burning = false; _fbTimer.remove(); return; }
-                    damageEnemy(_nearestUnburned, 5, 0);
-                    _fbt++;
-                    const fs = scene.add.circle(_nearestUnburned.x+(Math.random()-0.5)*16, _nearestUnburned.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);
-                    scene.tweens.add({ targets: fs, alpha:0, y:fs.y-8, duration:300, onComplete:()=>fs.destroy() });
-                }});
-                const fireArc = scene.add.graphics().setDepth(12);
-                fireArc.lineStyle(3, 0xff6600, 0.8);
-                fireArc.lineBetween(e.x, e.y, _nearestUnburned.x, _nearestUnburned.y);
-                scene.tweens.add({ targets: fireArc, alpha: 0, duration: 300, onComplete: () => fireArc.destroy() });
-            }
-        }
-        if (_perkState.inferno && e._burning && !_perkState.pyromaniacChip) {
+        if (_perkState.inferno && e._burning) {
             let _iTarget = null, _iDist = Infinity;
             enemies.getChildren().forEach(e2 => {
                 if (!e2.active || e2 === e || e2._burning) return;
@@ -1421,8 +1356,7 @@ function createExplosion(scene, x, y, radius, damage) {
         const dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
         if (dist < radius && !playerDamageDealt) {
             playerDamageDealt = true;
-            const _selfDmgMult = _perkState.blastDampener ? 0.40 : 1.0;
-            processPlayerDamage(Math.floor(damage * 0.75 * _selfDmgMult), null, true);
+            processPlayerDamage(Math.floor(damage * 0.75), null, true);
             scene.cameras.main.shake(200, 0.01);
         }
     }
@@ -1562,15 +1496,6 @@ function handleBulletEnemyOverlap(scene, bullet, enemy) {
             enemy._fpBonused = true;
             enemy._dmgMult = (enemy._dmgMult || 1) * 1.15;
         }
-    }
-    // Echo Targeting: hitting an enemy reveals all enemies within 300px for 3s
-    if (_perkState.echoTargeting && enemies) {
-        const _echoNow = scene.time.now;
-        enemies.getChildren().forEach(e2 => {
-            if (!e2.active) return;
-            const _echoDist = Phaser.Math.Distance.Between(enemy.x, enemy.y, e2.x, e2.y);
-            if (_echoDist <= 300) e2._echoRevealedUntil = _echoNow + 3000;
-        });
     }
     damageEnemy(enemy, dmg, bAngle, false, bulletShieldPierce);
 

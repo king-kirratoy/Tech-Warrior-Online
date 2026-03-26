@@ -2353,7 +2353,8 @@ function _restoreFromCloudData(data) {
         loadout.L = cp.L || 'smg';
         loadout.R = cp.R || 'none';
         loadout.cpu = cp.cpu || 'none';
-        loadout.aug = cp.aug || 'none';
+        const _cpAug = cp.aug || 'none';
+        loadout.aug = (typeof REMOVED_AUGMENTS !== 'undefined' && REMOVED_AUGMENTS.includes(_cpAug)) ? 'none' : _cpAug;
         const _cpLeg = cp.leg || 'none';
         loadout.leg = (typeof REMOVED_LEGS !== 'undefined' && REMOVED_LEGS.includes(_cpLeg)) ? 'none' : _cpLeg;
         const _cpShld = cp.shld || 'none';
@@ -2367,8 +2368,9 @@ function _restoreFromCloudData(data) {
         const _cloudClean = Array(INVENTORY_MAX).fill(null);
         data.inventory.forEach((it, i) => {
             if (i < INVENTORY_MAX && it && typeof it === 'object' && it.name && it.rarity && it.baseType) {
-                // Skip items whose subType is a removed leg key
+                // Skip items whose subType is a removed leg or augment key
                 if (typeof REMOVED_LEGS !== 'undefined' && REMOVED_LEGS.includes(it.subType)) return;
+                if (typeof REMOVED_AUGMENTS !== 'undefined' && REMOVED_AUGMENTS.includes(it.subType)) return;
                 _cloudClean[i] = it;
             }
         });
@@ -2425,7 +2427,8 @@ async function _loadCampaignData() {
             loadout.L       = saved.L       || 'smg';
             loadout.R       = saved.R       || 'none';
             loadout.cpu     = saved.cpu     || 'none';
-            loadout.aug     = saved.aug     || 'none';
+            const _savedAug = saved.aug || 'none';
+            loadout.aug     = (typeof REMOVED_AUGMENTS !== 'undefined' && REMOVED_AUGMENTS.includes(_savedAug)) ? 'none' : _savedAug;
             const _savedLeg = saved.leg || 'none';
             loadout.leg     = (typeof REMOVED_LEGS !== 'undefined' && REMOVED_LEGS.includes(_savedLeg)) ? 'none' : _savedLeg;
             loadout.shld    = saved.shld    || 'none';

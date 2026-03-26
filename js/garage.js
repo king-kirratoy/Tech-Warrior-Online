@@ -245,7 +245,6 @@ function refreshGarage() {
     if (loadout.aug === 'target_painter')   passives.push('hit marks: +20% dmg on target');
     if (loadout.aug === 'threat_analyzer')  passives.push('hit debuff: −15% resist 3s');
     if (loadout.aug === 'reactive_plating') passives.push('on hit: +5% DR stack (max 5)');
-    if (loadout.aug === 'scrap_cannon')     passives.push('limb destroy: 30 AoE');
     if (loadout.leg === 'mine_layer')       passives.push('drop mine every 8s moving');
     if (loadout.leg === 'afterleg')         passives.push('jump +50% dist · land shockwave');
 

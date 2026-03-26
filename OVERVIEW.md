@@ -13,7 +13,7 @@
 | `css/hud.css` | In-game HUD styles: console frame, paper doll, weapon bar rows, and HUD-specific color tokens. |
 | `css/garage.css` | Hangar UI, perk cards, stats panel, dropdown system, and the full `.lo-*` loadout overlay class family. |
 | `css/menus.css` | Main menu, pause, callsign, leaderboard, PVP hangar, multiplayer lobby, death screen, warzone perks overlay, drag-and-drop, chassis selector cards, and typography utilities. |
-| `js/constants.js` | All immutable game data: chassis, weapons (including `siphon` beam weapon), shields (11 total: 4 light, 4 medium including `fortress_shield`, 3 heavy), augments, legs (13 total: 5 universal + 3 light + 3 medium + 2 heavy), cover, arenas, enemy color palettes, restriction Sets, starter loadouts, `SLOT_ID_MAP`, and `GAME_CONFIG`. |
+| `js/constants.js` | All immutable game data: chassis, weapons (including `siphon` beam weapon), shields (11 total: 4 light, 4 medium including `fortress_shield`, 3 heavy), augments (12 total: none + 11 active — 20 removed in v6.68), legs (13 total: 5 universal + 3 light + 3 medium + 2 heavy), cover, arenas, enemy color palettes, restriction Sets, starter loadouts, `SLOT_ID_MAP`, and `GAME_CONFIG`. |
 | `js/state.js` | All mutable runtime globals: Phaser object refs, game-mode flags, round/combat state, `loadout`, `_perkState`, extraction state, loot pickups, and leaderboard run state. |
 | `js/utils.js` | Pure helpers: color utilities, chassis HP calculation, HUD name lookup, and visual FX spawners (damage text, sparks, muzzle flash, debris, footprint). |
 | `js/audio.js` | Web Audio API synthesizer with 27 sound functions, throttle/node-cap system, and first-gesture/tab-visibility lifecycle. Siphon beam sounds: persistent hum (`sndSiphonBeamStart/Update/Stop`) with triangle oscillator (80–120 Hz, heat-driven pitch) and 2.5 Hz LFO pulse; overheat buzz (`sndSiphonOverheat`). |
@@ -27,7 +27,7 @@
 | `js/hud.js` | All HUD update functions: weapon slots, HP/shield bars, paper doll, minimap, cooldown overlays, crosshair, HUD reset, and siphon heat bar (`updateSiphonHeatBar`). |
 | `js/garage.js` | Warzone hangar UI: dropdown system, slot selection with 2H locking, and full hangar renderer. |
 | `js/menus.js` | All menu and overlay logic: main menu, hangar nav, death screen, pause, loadout overlay, hover card system, inventory management, leaderboard, and game cleanup. |
-| `js/loot-system.js` | ARPG loot layer: item generation, rarity/affix system, inventory/equipment management, ground drops (campaign only), unique item effects, and campaign cloud save. |
+| `js/loot-system.js` | ARPG loot layer: item generation, rarity/affix system, inventory/equipment management, ground drops (campaign only), unique item effects, campaign cloud save, and save migration arrays (`REMOVED_SHIELDS`, `REMOVED_LEGS`, `REMOVED_AUGMENTS`). |
 | `js/enemy-types.js` | Special enemy type definitions (`ENEMY_TYPE_DEFS`), elite modifier system (`ELITE_MODIFIERS`), and all type/modifier lifecycle functions. |
 | `js/arena-objectives.js` | Arena layout generators (4 arenas), objective system (4 types), lifecycle functions, and `_arenaState` export. |
 | `js/campaign-system.js` | Campaign missions, XP system, mission modifiers, enemy composition, campaign flow, localStorage save/load, mission select overlay, supply shop, loadout slots, and skill tree. |
