@@ -179,7 +179,8 @@ function returnToHangar() {
     _shotsFired   = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0;
     _lastOfferedPerks = [];
     _perkState = _resetPerkState(); // shared factory — see _resetPerkState()
-    window._spectreClones = [];
+    _spectreClones.forEach(c => { try { c.torso?.destroy(); c.label?.destroy(); c.fire?.remove(); c.drift?.remove(); } catch(ex) {} });
+    _spectreClones = [];
     _lastKillTime = 0;
     window._missionStartTime = null;
     // Keep loadout — player keeps their build configuration
@@ -237,7 +238,8 @@ function goToMainMenu() {
     _perkState = _resetPerkState(); // shared factory — see _resetPerkState()
     _pickedPerks = [];
     _lastOfferedPerks = [];
-    window._spectreClones = [];
+    _spectreClones.forEach(c => { try { c.torso?.destroy(); c.label?.destroy(); c.fire?.remove(); c.drift?.remove(); } catch(ex) {} });
+    _spectreClones = [];
     _lastKillTime = 0;
     window._missionStartTime = null;
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
@@ -320,7 +322,8 @@ function respawnMech() {
         _round = 1; _roundKills = 0; _totalKills = 0; _roundTotal = 0;
     }
     _perkState = _resetPerkState();
-    window._spectreClones = [];
+    _spectreClones.forEach(c => { try { c.torso?.destroy(); c.label?.destroy(); c.fire?.remove(); c.drift?.remove(); } catch(ex) {} });
+    _spectreClones = [];
     _pickedPerks = [];
     _shotsFired = 0; _shotsHit = 0; _damageDealt = 0; _damageTaken = 0; _perksEarned = 0;
     _roundClearing = false;

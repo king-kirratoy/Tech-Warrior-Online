@@ -340,7 +340,7 @@ function onEnemyKilled(deadEnemy) {
     }
     // Spectre: every kill spawns a shadow clone (max 2, lasts 4s, deals 50% dmg)
     if (_perkState.lightSpectre && player?.active && isDeployed) {
-        _spawnSpectreClone();
+        if (typeof _spawnSpectreClone === 'function') _spawnSpectreClone();
     }
 
     // Predator: long-range kill charges next shot

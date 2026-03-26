@@ -304,7 +304,7 @@ function _spawnSpectreClone() {
   cloneTorso.setPosition(spawnX, spawnY);
   cloneTorso.setAlpha(0.35);
   cloneTorso.setDepth(9);
-  cloneTorso.setTint(0x8844ff);
+  cloneTorso.list.forEach(shape => { if (shape.setTint) shape.setTint(0x8844ff); });
   cloneTorso.setRotation(torso?.rotation || 0);
 
   const cloneLabel = scene.add.text(spawnX, spawnY - 36, 'SPECTRE', {
