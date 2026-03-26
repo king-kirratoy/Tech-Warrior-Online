@@ -339,9 +339,6 @@ function refreshGarage() {
         </div>`;
     }
 
-    // ── Dual-explosive warning ──
-    const bothExplosive = typeof EXPLOSIVE_KEYS !== 'undefined' && EXPLOSIVE_KEYS.has(loadout.L) && EXPLOSIVE_KEYS.has(loadout.R);
-
     // ── Deploy button validation ──
     const noWeapons = lEmpty && rEmpty;
     const deployDisabled = noWeapons ? ' style="opacity:0.45;pointer-events:none;"' : '';
@@ -406,7 +403,6 @@ function refreshGarage() {
                     ${ddRow('R', 'R.Arm')}
                     ${ddRow('G', 'Legs')}
                     ${ddRow('S', 'Shield')}
-                    ${bothExplosive ? '<div style="font-size:9px;letter-spacing:1px;color:var(--sci-gold);margin-top:8px;">⚠ Dual explosive — high self-damage risk</div>' : ''}
                 </div>
 
             </div><!-- /mp-left -->
