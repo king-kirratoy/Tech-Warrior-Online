@@ -38,8 +38,8 @@ const CHASSIS_LEGS = {
 // ── CHASSIS AUG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_AUGS = {
     // Light: bullet synergy, FTH, jump/dodge synergy
-    light:  new Set(['none','target_painter','threat_analyzer','ballistic_weave','neural_accel','thermal_core']),
-    medium: new Set(['none','target_painter','threat_analyzer','overclock_cpu','reactive_plating','multi_drone','field_processor']),
+    light:  new Set(['none','threat_analyzer','ballistic_weave','neural_accel','thermal_core']),
+    medium: new Set(['none','target_painter','overclock_cpu','multi_drone','field_processor']),
     heavy:  new Set(['none','reactive_plating','war_machine','suppressor_aura','heavy_loader']),
 };
 
