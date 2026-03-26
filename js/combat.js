@@ -1,5 +1,9 @@
 // ═══════════ FIRING FUNCTIONS ═══════════
 
+// ── Siphon beam module state ──────────────────────────────────────
+// Tracks enemies currently slowed by the active siphon beam.
+let _siphonSlowedEnemies = new Set();
+
 function fire(scene, side) {
     if (!isDeployed || isJumping || _isPaused) return;
 
@@ -9,6 +13,29 @@ function fire(scene, side) {
 
     const weapon = WEAPONS[wKey];
     if (!weapon) return;
+
+    // ── Beam weapons (siphon) — bypass reload-mult calculations ──────────
+    if (weapon.beam) {
+        // Mark as firing every frame the button is held (used by updateSiphonBeam)
+        if (!player._siphonOverheat) player._siphonFiring = true;
+        // Damage tick: fire only every weapon.fireRate ms
+        const _beamLast = side === 'L' ? reloadL : reloadR;
+        if (now >= _beamLast) {
+            const _bd    = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
+            const _bSide = loadout.chassis === 'light' ? 12 : loadout.chassis === 'medium' ? 26 : 42;
+            const _pSign = side === 'L' ? -1 : 1;
+            const _pAngle = torso.rotation + _pSign * Math.PI / 2;
+            const _bOx = torso.x + Math.cos(_pAngle) * _bSide;
+            const _bOy = torso.y + Math.sin(_pAngle) * _bSide;
+            const _bMx = scene.input.activePointer.worldX;
+            const _bMy = scene.input.activePointer.worldY;
+            const _bAim = Math.atan2(_bMy - _bOy, _bMx - _bOx);
+            fireSIPHON(scene, weapon, side, _bd, _bOx, _bOy, _bAim);
+            if (side === 'L') reloadL = now + weapon.fireRate;
+            else              reloadR = now + weapon.fireRate;
+        }
+        return;
+    }
 
     const _lightReloadMult = loadout.chassis === 'light' ? (CHASSIS.light.passiveReloadBonus || 0.80) : 1.0;
     // Single-arm brace bonus: when the other arm is empty, this arm gets +15% reload speed
@@ -289,6 +316,147 @@ function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     const reloadTime = Math.round(weapon.fireRate * (_perkState.reloadMult||1));
     if (side === 'L') reloadL = scene.time.now + reloadTime;
     else              reloadR = scene.time.now + reloadTime;
+}
+
+// ── SIPHON beam firing ────────────────────────────────────────────
+// Called every weapon.fireRate ms (100ms) while the fire button is held.
+// Casts a ray from the arm origin, checks cover for truncation, then
+// damages / slows / siphons HP from every enemy in the beam's width.
+function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
+    if (player._siphonOverheat) return;
+
+    const ox = armOx + Math.cos(aimAngle) * barrelDist;
+    const oy = armOy + Math.sin(aimAngle) * barrelDist;
+    let rayLen = weapon.range;  // 280 px
+
+    // Truncate ray at first cover obstruction (step-march — same technique as rail)
+    if (coverObjects) {
+        const steps = 20;
+        for (let i = 1; i <= steps; i++) {
+            const t = i / steps;
+            const tx = ox + Math.cos(aimAngle) * rayLen * t;
+            const ty = oy + Math.sin(aimAngle) * rayLen * t;
+            let blocked = false;
+            coverObjects.getChildren().forEach(c => {
+                if (!c.active || blocked) return;
+                // Use center coords (coverCX/CY) per CLAUDE.md cover origin rule
+                const cx = c.coverCX !== undefined ? c.coverCX : c.x + (c.width||60)/2;
+                const cy = c.coverCY !== undefined ? c.coverCY : c.y + (c.height||60)/2;
+                const hw = (c.width||60)/2, hh = (c.height||60)/2;
+                if (tx > cx - hw && tx < cx + hw && ty > cy - hh && ty < cy + hh) blocked = true;
+            });
+            if (blocked) { rayLen = rayLen * ((i - 1) / steps); break; }
+        }
+    }
+
+    const ex = ox + Math.cos(aimAngle) * rayLen;
+    const ey = oy + Math.sin(aimAngle) * rayLen;
+    const dx = ex - ox, dy = ey - oy;
+    const lenSq = dx*dx + dy*dy;
+    const halfWidth = weapon.beamWidth / 2;  // 10 px
+    const _newHitSet = new Set();
+
+    enemies.getChildren().forEach(e => {
+        if (!e.active || lenSq <= 0) return;
+        // Point-to-segment distance
+        let t = ((e.x - ox)*dx + (e.y - oy)*dy) / lenSq;
+        t = Math.max(0, Math.min(1, t));
+        const nearX = ox + t*dx, nearY = oy + t*dy;
+        const dist = Phaser.Math.Distance.Between(nearX, nearY, e.x, e.y);
+        if (dist > halfWidth) return;
+
+        // Damage per tick — noCrit=true (weapon.noCrit flag honoured via 6th param)
+        damageEnemy(e, weapon.dmg, aimAngle, false, false, true);
+        showDamageText(scene, e.x, e.y, weapon.dmg);
+        _shotsHit++;
+
+        // Apply slow (store original speed once on first application)
+        if (!e._siphonSlowed) {
+            e._siphonOrigSpeed = e.speed;
+            e.speed = Math.max(1, Math.round(e.speed * (1 - weapon.slowPct)));
+            e._siphonSlowed = true;
+            e._slowed = true;
+        }
+        _newHitSet.add(e);
+
+        // Siphon heal: siphonHpPerSec / 10 per 100ms tick
+        if (player?.comp?.core) {
+            player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + weapon.siphonHpPerSec / 10);
+            player.hp = Object.values(player.comp).reduce((s, c) => s + c.hp, 0);
+        }
+    });
+
+    // Frame-accurate slow cleanup: remove slow from enemies that left the beam this tick
+    _siphonSlowedEnemies.forEach(e => {
+        if (!e.active || !_newHitSet.has(e)) {
+            if (e.active) {
+                e.speed = e._siphonOrigSpeed !== undefined ? e._siphonOrigSpeed : e.speed;
+                e._slowed = false;
+                e._siphonSlowed = false;
+                delete e._siphonOrigSpeed;
+            }
+            _siphonSlowedEnemies.delete(e);
+        }
+    });
+    _newHitSet.forEach(e => _siphonSlowedEnemies.add(e));
+
+    // TODO(pvp): siphon beam vs remote players not yet implemented for PVP mode.
+    //            Apply slow + damageRemotePlayer() calls when PVP beam is added.
+
+    if (_newHitSet.size > 0) { updateBars(); updatePaperDoll(); }
+}
+
+// ── Per-frame siphon beam update ──────────────────────────────────
+// Must be called once per frame BEFORE handlePlayerFiring() so that
+// _siphonFiring is reset before fire() potentially sets it again.
+function updateSiphonBeam(scene) {
+    if (!player?.active || !isDeployed) return;
+    if (loadout.L !== 'siphon' && loadout.R !== 'siphon') {
+        // No siphon equipped — ensure any lingering slows are cleaned up
+        if (_siphonSlowedEnemies.size > 0) _clearAllSiphonSlows();
+        return;
+    }
+
+    const weapon = WEAPONS.siphon;
+    const dt = GAME.loop.delta;
+
+    const wasFiring = player._siphonFiring;
+    player._siphonFiring = false;  // reset; fire() will re-set if button held this frame
+
+    if (wasFiring && !player._siphonOverheat) {
+        // Accumulate heat per frame while beam is active
+        player._siphonHeat = Math.min(weapon.heatMax,
+            player._siphonHeat + weapon.heatPerSec * (dt / 1000));
+        if (player._siphonHeat >= weapon.heatMax) {
+            player._siphonOverheat = true;
+            player._siphonHeat = weapon.heatMax;
+            _clearAllSiphonSlows();
+        }
+    } else {
+        // Cool down: not firing or overheated
+        player._siphonHeat = Math.max(0,
+            player._siphonHeat - weapon.heatCoolPerSec * (dt / 1000));
+        if (player._siphonOverheat && player._siphonHeat <= 0) {
+            player._siphonOverheat = false;
+        }
+        if (!wasFiring && _siphonSlowedEnemies.size > 0) {
+            _clearAllSiphonSlows();
+        }
+    }
+
+    if (typeof updateSiphonHeatBar === 'function') updateSiphonHeatBar();
+}
+
+function _clearAllSiphonSlows() {
+    _siphonSlowedEnemies.forEach(e => {
+        if (e.active) {
+            e.speed = e._siphonOrigSpeed !== undefined ? e._siphonOrigSpeed : e.speed;
+            e._slowed = false;
+            e._siphonSlowed = false;
+            delete e._siphonOrigSpeed;
+        }
+    });
+    _siphonSlowedEnemies.clear();
 }
 
 function fireGL(scene, weapon, armOx, armOy, aimAngle) {
@@ -805,7 +973,7 @@ function _applyPassiveShieldAbsorption(amt) {
     return amt; // return modified amt (caller updates its local variable)
 }
 
-function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce = false) {
+function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce = false, noCrit = false) {
     if (!e.active || e.health <= 0) return;
     e._justHit = true; // alert AI — player may be behind vision cone
     // Swarm shared HP pool — damage goes to swarm state, not individual unit
@@ -927,9 +1095,9 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         amt *= (1 + 0.50 * _perkState.predatorStacks);
         _perkState._predatorCharged = false;
     }
-    // Critical hit
+    // Critical hit — skipped when noCrit flag is set (e.g. siphon beam)
     const _totalCrit = (_perkState.critChance || 0) + ((_gearState?.critChance || 0) / 100);
-    if (!explosive && _totalCrit > 0 && Math.random() < _totalCrit) {
+    if (!explosive && !noCrit && _totalCrit > 0 && Math.random() < _totalCrit) {
         // Base crit = 2× damage. _gearState.critDmg adds extra multiplier (e.g. +15 → 2.15×).
         const _critMult = 2 + ((_gearState?.critDmg || 0) / 100);
         amt *= _critMult;

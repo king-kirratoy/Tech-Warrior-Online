@@ -249,6 +249,7 @@ function update(time) {
     // Skip PvE enemy AI in PVP (enemies group is empty but avoid any edge cases)
     if (_gameMode !== 'pvp') handleEnemyAI(this, time);
     handlePlayerMovement(this, time);
+    updateSiphonBeam(this);
     handlePlayerFiring(this);
     handleRageGhosts(this, time);
     syncVisuals(this, time);

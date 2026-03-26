@@ -19,12 +19,12 @@
 | `js/audio.js` | Web Audio API synthesizer with 23 sound functions, throttle/node-cap system, and first-gesture/tab-visibility lifecycle. |
 | `js/mechs.js` | Mech construction, per-frame visual sync, chassis movement effects, rage ghosts, and spectre clone logic. |
 | `js/cover.js` | Cover placement, battlefield generation, and cover damage/destruction. |
-| `js/combat.js` | All weapon firing functions, damage processing, shield absorption, area effects, and mine mechanics. |
+| `js/combat.js` | All weapon firing functions, damage processing, shield absorption, area effects, mine mechanics, and siphon beam logic (`fireSIPHON`, `updateSiphonBeam`, `_clearAllSiphonSlows`). |
 | `js/mods.js` | All 18 mod-activation functions, drone builder helpers, and augment/leg application. |
 | `js/perks.js` | Master perk dictionary (~400+ entries), perk pool selection, perk menu render/pick, equip prompt, and per-round perk reset. |
 | `js/enemies.js` | Enemy spawning, full AI state machine, enemy firing, 8 boss spawners, and DOM boss HP bar helpers. |
 | `js/rounds.js` | Round init, enemy spawn dispatch, kill tracking, extraction point system, and round banner. |
-| `js/hud.js` | All HUD update functions: weapon slots, HP/shield bars, paper doll, minimap, cooldown overlays, crosshair, and HUD reset. |
+| `js/hud.js` | All HUD update functions: weapon slots, HP/shield bars, paper doll, minimap, cooldown overlays, crosshair, HUD reset, and siphon heat bar (`updateSiphonHeatBar`). |
 | `js/garage.js` | Warzone hangar UI: dropdown system, slot selection with 2H locking, and full hangar renderer. |
 | `js/menus.js` | All menu and overlay logic: main menu, hangar nav, death screen, pause, loadout overlay, hover card system, inventory management, leaderboard, and game cleanup. |
 | `js/loot-system.js` | ARPG loot layer: item generation, rarity/affix system, inventory/equipment management, ground drops (campaign only), unique item effects, and campaign cloud save. |

@@ -429,5 +429,10 @@ function _initPlayerHP(scene, s) {
         player.hp     += _shldSys.coreBonus;
         if (player.comp?.core) { player.comp.core.max += _shldSys.coreBonus; player.comp.core.hp += _shldSys.coreBonus; }
     }
+    // Siphon beam state — reset on every deploy/respawn
+    player._siphonHeat     = 0;
+    player._siphonOverheat = false;
+    player._siphonFiring   = false;
+    player._siphonLine     = null;
 }
 

@@ -129,6 +129,16 @@ function _updateBarRow(slotId, weaponKey, reloadTimestamp, time) {
         if (st) st.innerText = '';
         return;
     }
+    // Beam weapons: show active/ready state — heat is shown on dedicated heat bar
+    if (WEAPONS[weaponKey]?.beam) {
+        fill.style.width = player?._siphonFiring ? '100%' : '0%';
+        if (st) {
+            if (player?._siphonOverheat)        st.innerText = 'OVR';
+            else if (player?._siphonFiring)     st.innerText = 'ON';
+            else                                st.innerText = 'RDY';
+        }
+        return;
+    }
     const total     = WEAPONS[weaponKey]?.fireRate || 0;
     const remaining = Math.max(0, reloadTimestamp - time);
     const pct       = total > 0 ? Math.round((remaining / total) * 100) : 0;
@@ -489,4 +499,44 @@ function _resetHUDState() {
     const txtR = document.getElementById('txt-R');
     if (txtL) { txtL.innerText = (loadout.L || 'none').toUpperCase(); txtL.style.fontSize = ''; }
     if (txtR) { txtR.innerText = (loadout.R || 'none').toUpperCase(); txtR.style.fontSize = ''; }
+    // Hide siphon heat bar on reset
+    const _heatRow = document.getElementById('slot-siphon-heat');
+    if (_heatRow) _heatRow.style.display = 'none';
+}
+
+// ── Siphon heat bar ───────────────────────────────────────────────
+/** Update the siphon heat bar fill, colour, and overheat pulse. Called from updateSiphonBeam(). */
+function updateSiphonHeatBar() {
+    const row = document.getElementById('slot-siphon-heat');
+    if (!row) return;
+    const hasSiphon = (loadout.L === 'siphon' || loadout.R === 'siphon');
+    row.style.display = hasSiphon ? 'flex' : 'none';
+    if (!hasSiphon || !player?.active) return;
+
+    const weapon = WEAPONS.siphon;
+    const heat   = player._siphonHeat || 0;
+    const pct    = Math.min(100, (heat / weapon.heatMax) * 100);
+    const fill   = document.getElementById('siphon-heat-fill');
+    const st     = document.getElementById('wr-st-siphon');
+
+    if (fill) {
+        fill.style.width = pct + '%';
+        if (player._siphonOverheat) {
+            fill.style.background = '#ff2200';
+            fill.style.animation  = 'siphonOverheatPulse 0.35s ease-in-out infinite alternate';
+        } else if (pct >= 80) {
+            fill.style.background = '#ff4400';
+            fill.style.animation  = '';
+        } else if (pct >= 60) {
+            fill.style.background = '#ffaa00';
+            fill.style.animation  = '';
+        } else {
+            fill.style.background = '#00ff88';
+            fill.style.animation  = '';
+        }
+    }
+    if (st) {
+        st.innerText  = player._siphonOverheat ? 'OVERHEAT' : Math.round(pct) + '%';
+        st.style.color = player._siphonOverheat ? '#ff2200' : pct >= 80 ? '#ff4400' : pct >= 60 ? '#ffaa00' : '#00ff88';
+    }
 }
