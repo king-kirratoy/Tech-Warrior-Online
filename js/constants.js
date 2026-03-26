@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.67';
+const GAME_VERSION = 'v6.68';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -37,28 +37,23 @@ const CHASSIS_LEGS = {
 };
 // ── CHASSIS AUG RESTRICTIONS ──────────────────────────────────────
 const CHASSIS_AUGS = {
-    // Light: mobility/aggression + FTH-specific (only chassis with FTH) + jump/dodge synergy
-    light:  new Set(['none','target_painter','threat_analyzer','ballistic_weave','targeting_scope','neural_accel','ghost_circuit','reflex_amp','kill_sprint','predator_lens','shadow_core',
-                     'fuel_injector','thermal_core','pyromaniac_chip']),
-    medium: new Set(['none','target_painter','threat_analyzer','overclock_cpu','reactive_plating','combat_ai','drone_relay','multi_drone','tactical_uplink','field_processor','system_sync','adaptive_core','echo_targeting']),
-    heavy:  new Set(['none','reactive_plating','scrap_cannon','war_machine','iron_fortress','suppressor_aura','colossus_frame','impact_core',
-                     'blast_dampener','heavy_loader','chain_drive']),
+    // Light: bullet synergy, FTH, jump/dodge synergy
+    light:  new Set(['none','target_painter','threat_analyzer','ballistic_weave','neural_accel','thermal_core']),
+    medium: new Set(['none','target_painter','threat_analyzer','overclock_cpu','reactive_plating','multi_drone','field_processor']),
+    heavy:  new Set(['none','reactive_plating','war_machine','suppressor_aura','heavy_loader']),
 };
 
 // ⚠️ MUTATED AT RUNTIME — applyChassisUpgrades() (campaign-system.js) writes upgrade HP
-// values into this object; tactical_uplink aug writes CHASSIS.medium.modCooldownMult;
-// goToMainMenu() restores modCooldownMult to its original value.
+// values into this object; goToMainMenu() restores modCooldownMult to its original value.
 const CHASSIS = {
     // max = weight limit.
-    // Light: dual-fire, fast, fragile. Unique: kill sprint, ghost dodge, shadow mobility.
-    // Medium: cooldown mastery, adaptive targeting, system sync.
-    // Heavy: passive regen, immovable fortress, suppression aura.
+    // Light: dual-fire, fast, fragile.
+    // Medium: cooldown mastery, shield absorb bonus.
+    // Heavy: passive regen, suppression aura.
     light:  { max: 160, spd: 250, scale: 0.7, coreHP: 212, armHP: 120, legHP: 152,
               dualFire: true,
               passiveReloadBonus: 0.80,
-              killSpeedStacks: 0,            // kill_sprint aug state
-              shadowDRWhileMoving: 0.12,     // shadow_core aug: 12% DR while moving
-              identity: 'Dual-fire, fast mobility, fragile arms. Unique: kill sprint, shadow DR, ghost evasion.' },
+              identity: 'Dual-fire, fast mobility, fragile arms.' },
     medium: { max: 240, spd: 210, scale: 1.0, coreHP: 272, armHP: 180, legHP: 212,
               modCooldownMult: 0.85,
               killCooldownReduction: 500,
@@ -198,41 +193,20 @@ const AUGMENTS = {
     threat_analyzer:{ name: 'THREAT ANALY.',  weight: 20,  desc: 'Damaged enemies have their resistances reduced by 15% for 3s.' },
     overclock_cpu:  { name: 'OVERCLOCK CPU',  weight: 30,  desc: 'All weapon reload times and mod cooldowns reduced by 12%.' },
     reactive_plating:{ name: 'REACT. PLATING',weight: 30,  desc: 'Taking damage grants a stacking 5% damage reduction (max 5 stacks, resets on round end).' },
-    scrap_cannon:   { name: 'SCRAP CANNON',   weight: 40,  desc: 'Destroyed enemy limbs explode for 30 AoE damage to nearby enemies.' },
     // ── DRONE COMMANDER ────────────────────────────────────────
-    drone_relay:     { name: 'DRONE RELAY',    weight: 30,  desc: 'Attack Drone fires 40% faster and gains +60 bonus HP.' },
-    combat_ai:       { name: 'COMBAT AI',      weight: 25,  desc: 'Drone focuses your current target for coordinated fire.' },
     multi_drone:     { name: 'MULTI-DRONE',    weight: 50,  desc: 'Deploy 2 attack drones simultaneously instead of 1.' },
     // ── GHOST ASSASSIN ─────────────────────────────────────────
-    targeting_scope: { name: 'TARGET SCOPE',   weight: 30,  desc: 'SR/RAIL: +15% damage per 200px distance to target.' },
     ballistic_weave: { name: 'BALLST. WEAVE',  weight: 25,  desc: '+10% bullet speed. Bullets ignore 20% of enemy shields.' },
     neural_accel:    { name: 'NEURAL ACCEL.',  weight: 35,  desc: 'First 3s after landing from JUMP: all weapons deal 2× damage.' },
     // ── INFERNO WALL ───────────────────────────────────────────
-    fuel_injector:   { name: 'FUEL INJECTOR',  weight: 30,  desc: 'FTH range +40%, cone width +30%.' },
     thermal_core:    { name: 'THERMAL CORE',   weight: 25,  desc: 'FTH always ignites on hit. Ignite duration +1s.' },
-    pyromaniac_chip: { name: 'PYRO CHIP',      weight: 35,  desc: 'Ignited enemies spread fire to one adjacent enemy on death.' },
-    // ── LIGHT CHASSIS UNIQUE ──────────────────────────────────────
-    ghost_circuit:   { name: 'GHOST CIRCUIT',  weight: 25,  desc: 'After a JUMP landing, you are invisible to enemies for 2s.' },
-    reflex_amp:      { name: 'REFLEX AMP',     weight: 20,  desc: 'First shot fired after a dodge or JUMP deals +40% damage.' },
-    kill_sprint:     { name: 'KILL SPRINT',    weight: 22,  desc: 'Each kill grants +8% move speed for 4s (stacks up to 3×).' },
-    predator_lens:   { name: 'PREDATOR LENS',  weight: 28,  desc: 'Enemies at >400px distance are highlighted. +10% damage vs highlighted targets.' },
-    shadow_core:     { name: 'SHADOW CORE',    weight: 30,  desc: 'While moving, all incoming damage reduced by 12%.' },
     // ── MEDIUM CHASSIS UNIQUE ─────────────────────────────────────
-    tactical_uplink: { name: 'TACTICAL UPLINK',weight: 28,  desc: 'Mod cooldowns reduced by additional 10%. Stacks with Cooldown Mastery.' },
     field_processor: { name: 'FIELD PROCESSOR',weight: 25,  desc: 'After 3 hits on the same enemy, deal +15% damage to that target permanently.' },
-    system_sync:     { name: 'SYSTEM SYNC',    weight: 30,  desc: 'Activating any mod heals 20 HP on your most-damaged limb.' },
-    adaptive_core:   { name: 'ADAPTIVE CORE',  weight: 32,  desc: 'Each round survived increases your base DR by 3% (max +15%).' },
-    echo_targeting:  { name: 'ECHO TARGETING', weight: 26,  desc: 'Hitting an enemy reveals all enemies within 300px for 3s.' },
     // ── HEAVY CHASSIS UNIQUE ──────────────────────────────────────
     war_machine:     { name: 'WAR MACHINE',    weight: 35,  desc: 'Passive core regeneration: 2 HP/s after 4s without taking damage.' },
-    iron_fortress:   { name: 'IRON FORTRESS',  weight: 40,  desc: 'When stationary 1.5s+: +15% DR and +10% damage bonus.' },
     suppressor_aura: { name: 'SUPPRESSOR AURA',weight: 38,  desc: 'Enemies within 200px have -15% move speed. Passive intimidation field.' },
-    colossus_frame:  { name: 'COLOSSUS FRAME', weight: 45,  desc: 'Core HP +60. Arm and leg HP +40. Built to absorb punishment.' },
-    impact_core:     { name: 'IMPACT CORE',    weight: 32,  desc: 'Close-range kills (<200px) restore 15 core HP and stun nearby enemies for 0.5s.' },
     // ── HEAVY WEAPON MASTERY ──────────────────────────────────────
-    blast_dampener:  { name: 'BLAST DAMPENER', weight: 30,  desc: 'Self-damage from explosions reduced by 60%. Use the Rocket Launcher without fear of blowback.' },
     heavy_loader:    { name: 'HEAVY LOADER',   weight: 35,  desc: 'All weapon reload times reduced by 20%. Motorized autoloader keeps heavy ordnance cycling faster.' },
-    chain_drive:     { name: 'CHAIN DRIVE',    weight: 32,  desc: 'CHAIN 2H weapon: +25% fire rate. Powered chain-feed eliminates cycle hesitation under sustained fire.' },
 };
 
 // ═══════════ LEGS ═══════════
@@ -415,39 +389,18 @@ const AUG_OPTIONS = [
     { key:'target_painter',    label:'TARGET PAINTER',    weight:20  },
     { key:'threat_analyzer',   label:'THREAT ANALYZER',   weight:20  },
     { key:'ballistic_weave',   label:'BALLISTIC WEAVE',   weight:25  },
-    { key:'combat_ai',         label:'COMBAT AI',         weight:25  },
     { key:'thermal_core',      label:'THERMAL CORE',      weight:25  },
     { key:'overclock_cpu',     label:'OVERCLOCK CPU',     weight:30  },
-    { key:'drone_relay',       label:'DRONE RELAY',       weight:30  },
-    { key:'fuel_injector',     label:'FUEL INJECTOR',     weight:30  },
-    { key:'targeting_scope',   label:'TARGETING SCOPE',   weight:30  },
     { key:'reactive_plating',  label:'REACTIVE PLATING',  weight:30  },
     { key:'neural_accel',      label:'NEURAL ACCEL.',     weight:35  },
-    { key:'pyromaniac_chip',   label:'PYRO CHIP',         weight:35  },
-    { key:'scrap_cannon',      label:'SCRAP CANNON',      weight:40  },
     { key:'multi_drone',       label:'MULTI-DRONE',       weight:50  },
-    // Light unique
-    { key:'ghost_circuit',     label:'GHOST CIRCUIT',     weight:25  },
-    { key:'reflex_amp',        label:'REFLEX AMP',        weight:20  },
-    { key:'kill_sprint',       label:'KILL SPRINT',       weight:22  },
-    { key:'predator_lens',     label:'PREDATOR LENS',     weight:28  },
-    { key:'shadow_core',       label:'SHADOW CORE',       weight:30  },
     // Medium unique
-    { key:'tactical_uplink',   label:'TACTICAL UPLINK',   weight:28  },
     { key:'field_processor',   label:'FIELD PROCESSOR',   weight:25  },
-    { key:'system_sync',       label:'SYSTEM SYNC',       weight:30  },
-    { key:'adaptive_core',     label:'ADAPTIVE CORE',     weight:32  },
-    { key:'echo_targeting',    label:'ECHO TARGETING',    weight:26  },
     // Heavy unique
     { key:'war_machine',       label:'WAR MACHINE',       weight:35  },
-    { key:'iron_fortress',     label:'IRON FORTRESS',     weight:40  },
     { key:'suppressor_aura',   label:'SUPPRESSOR AURA',   weight:38  },
-    { key:'colossus_frame',    label:'COLOSSUS FRAME',    weight:45  },
-    { key:'impact_core',       label:'IMPACT CORE',       weight:32  },
     // Heavy weapon mastery
-    { key:'blast_dampener',    label:'BLAST DAMPENER',    weight:30  },
     { key:'heavy_loader',      label:'HEAVY LOADER',      weight:35  },
-    { key:'chain_drive',       label:'CHAIN DRIVE',       weight:32  },
 ];
 
 const LEG_OPTIONS = [
@@ -518,16 +471,10 @@ const SLOT_DESCS = {
     threat_analyzer:  { title:'THREAT ANALYZER', desc:'Damaging an enemy reduces their resistance by 15% for 3 seconds. Rewards continuous aggression.' },
     overclock_cpu:    { title:'OVERCLOCK CPU', desc:'Reduces all weapon reload times and mod cooldowns by 12%. Applied passively on deploy.' },
     reactive_plating: { title:'REACTIVE PLATING', desc:'Each hit you receive adds a 5% damage reduction stack, up to 5 stacks max. Resets at round start.' },
-    scrap_cannon:     { title:'SCRAP CANNON', desc:'When an enemy part is destroyed, it explodes for 30 AoE damage to nearby enemies.' },
-    drone_relay:      { title:'DRONE RELAY',      desc:'Attack Drone fires 40% faster and has +60 bonus HP before being destroyed.' },
-    combat_ai:        { title:'COMBAT AI',         desc:'Drone focuses your current painted/attacked target for coordinated fire.' },
     multi_drone:      { title:'MULTI-DRONE',       desc:'Deploy 2 attack drones simultaneously instead of 1. High weight cost.' },
-    targeting_scope:  { title:'TARGETING SCOPE',   desc:'SR and RAIL gain +15% damage per 200px distance to the target.' },
     ballistic_weave:  { title:'BALLISTIC WEAVE',   desc:'All bullets travel 10% faster and ignore 20% of enemy shield absorption.' },
     neural_accel:     { title:'NEURAL ACCEL.',     desc:'For 3 seconds after landing from JUMP, all weapons deal 2x damage.' },
-    fuel_injector:    { title:'FUEL INJECTOR',     desc:'FTH range +40%, flame cone width +30%. More particles per burst.' },
     thermal_core:     { title:'THERMAL CORE',      desc:'FTH hits always ignite enemies (100% chance). Ignite duration +1s.' },
-    pyromaniac_chip:  { title:'PYROMANIAC CHIP',   desc:'Ignited enemies spread fire to nearest non-burning enemy within 300px on death.' },
     hydraulic_boost:  { title:'HYDRO BOOST', desc:'+20% movement speed. Legs take 15% less damage. Disabled if legs are destroyed.' },
     gyro_stabilizer:  { title:'GYRO STABILIZER', desc:'Eliminates the speed penalty from damaged legs. Improves aim stability. Disabled if legs destroyed.' },
     mag_anchors:      { title:'MAG ANCHORS', desc:'While stationary: take 20% less damage and deal 15% more damage. Rewards positional play.' },
@@ -569,24 +516,10 @@ const SLOT_DESCS = {
     ground_slam:      { title:'GROUND SLAM',      desc:'JUMP landing AoE doubled in radius and damage. Use landing as a weapon.' },
     suppressor_legs:  { title:'SUPPRESSOR LEGS',  desc:'Enemies within 220px move 20% slower. Passive suppression from heavy frame.' },
     // ── NEW AUG SLOT DESCS ────────────────────────────────────────
-    ghost_circuit:    { title:'GHOST CIRCUIT',    desc:'After JUMP landing: invisible to enemies for 2s.' },
-    reflex_amp:       { title:'REFLEX AMP',       desc:'First shot after a dodge or JUMP landing deals +40% damage.' },
-    kill_sprint:      { title:'KILL SPRINT',      desc:'Each kill: +8% speed for 4s, stacks up to 3×.' },
-    predator_lens:    { title:'PREDATOR LENS',    desc:'Enemies >400px away are highlighted. +10% damage vs highlighted.' },
-    shadow_core:      { title:'SHADOW CORE',      desc:'While moving: all incoming damage reduced by 12%.' },
-    tactical_uplink:  { title:'TACTICAL UPLINK',    desc:'Mod cooldowns reduced additional 10%. Stacks with Cooldown Mastery.' },
     field_processor:  { title:'FIELD PROCESSOR',    desc:'3 hits on same enemy: +15% damage to that target permanently.' },
-    system_sync:      { title:'SYSTEM SYNC',     desc:'Activating any mod heals 20 HP to most-damaged limb.' },
-    adaptive_core:    { title:'ADAPTIVE CORE',   desc:'Each round survived: +3% base DR (max +15%).' },
-    echo_targeting:   { title:'ECHO TARGETING',  desc:'Hitting an enemy reveals all enemies within 300px for 3s.' },
     war_machine:      { title:'WAR MACHINE',      desc:'Passive core regen 2 HP/s after 4s without taking damage.' },
-    iron_fortress:    { title:'IRON FORTRESS',    desc:'Stationary 1.5s+: +15% DR and +10% damage bonus.' },
     suppressor_aura:  { title:'SUPPRESSOR AURA',  desc:'Enemies within 200px move 15% slower. Passive intimidation field.' },
-    colossus_frame:   { title:'COLOSSUS FRAME',   desc:'Core HP +60. Arm HP +40. Leg HP +40. Massive HP boost.' },
-    impact_core:      { title:'IMPACT CORE',      desc:'Close kills (<200px): restore 15 core HP and stun nearby enemies 0.5s.' },
-    blast_dampener:   { title:'BLAST DAMPENER',   desc:'Self-damage from explosions reduced by 60%. Use the Rocket Launcher without fear of blowback.' },
     heavy_loader:     { title:'HEAVY LOADER',     desc:'All weapon reload times reduced by 20%. Motorized autoloader keeps heavy ordnance cycling faster.' },
-    chain_drive:      { title:'CHAIN DRIVE',      desc:'CHAIN 2H weapon: +25% fire rate. Powered chain-feed eliminates cycle hesitation under sustained fire.' },
     warlord_stride:   { title:'WARLORD STRIDE',   desc:'While leg HP is above 50%: +8% move speed and +10% damage at close range (<180px).' },
 };
 

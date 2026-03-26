@@ -103,7 +103,6 @@ const _perks = {
     painter_lock:    { cat:'target_painter',   label:'Target Lock', desc:'Painter: marked enemies stay marked 2s longer', apply: () => { _perkState.painterDuration=(_perkState.painterDuration||0)+2000; } },
     analyzer_deep:   { cat:'threat_analyzer',  label:'Deep Scan',   desc:'Analyzer: resistance reduction increases to 25%', apply: () => { _perkState.analyzerDepth=true; } },
     plating_stacks:  { cat:'reactive_plating', label:'Dense Weave', desc:'Reactive Plating: max stacks increased to 8', apply: () => { _perkState.platingMaxStacks=8; } },
-    scrap_chain:     { cat:'scrap_cannon',     label:'Shrapnel',    desc:'Scrap Cannon: explosion chains once to nearby enemy', apply: () => { _perkState.scrapChain=true; } },
     // ── LEG SYSTEM PERKS ───────────────────────────────────────────────
     boost_overdrive: { cat:'hydraulic_boost',  label:'Overdrive',    desc:'Hydro Boost: speed bonus increased to +35%', apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.15; } },
     mine_cluster:    { cat:'mine_layer',        label:'Cluster Mine', desc:'Mine Layer: mines spawn 3 submunitions on detonation', apply: () => { _perkState.mineCluster=true; } },
@@ -714,19 +713,6 @@ const _perks = {
         desc:'LEGENDARY — Reactive Plating stacks never reset. Max 10 stacks. At max: full DR (take 0 damage), heal 5 HP/s, and deal +20% damage.',
         apply: () => { _perkState.rpLegendary=true; } },
 
-    // ── SCRAP CANNON ───────────────────────────────────────────────
-    sc_dmg:          { cat:'scrap_cannon', label:'Heavy Shrapnel',desc:'Scrap Cannon explosion damage +30 (stackable)',         apply: () => { _perkState.scDmg=(_perkState.scDmg||0)+30; } },
-    sc_radius2:      { cat:'scrap_cannon', label:'Wide Burst',    desc:'Scrap Cannon explosion radius +40% (stackable)',        apply: () => { _perkState.scRadius=(_perkState.scRadius||0)+0.40; } },
-    sc_chain8:       { cat:'scrap_cannon', label:'Chain Scrap',   desc:'Scrap Cannon explosions trigger on non-limb kills too', apply: () => { _perkState.scChain8=true; } },
-    sc_count:        { cat:'scrap_cannon', label:'Scatter Shot',  desc:'Scrap Cannon: explosion spawns 4 fragments (20 dmg each, random direction)', apply: () => { _perkState.scCount=true; } },
-    sc_slow:         { cat:'scrap_cannon', label:'Scrap Shred',   desc:'Scrap Cannon explosion slows survivors 30% for 2s',    apply: () => { _perkState.scSlow=true; } },
-    sc_ignite:       { cat:'scrap_cannon', label:'Burning Scrap', desc:'Scrap Cannon explosion ignites all enemies hit',        apply: () => { _perkState.scIgnite=true; } },
-    sc_heal:         { cat:'scrap_cannon', label:'Salvage',       desc:'Scrap Cannon explosion heals you 10 HP',               apply: () => { _perkState.scHeal=true; } },
-    sc_emp4:         { cat:'scrap_cannon', label:'EMP Shrapnel',  desc:'Scrap Cannon explosion stuns enemies for 0.8s',        apply: () => { _perkState.scEmp4=true; } },
-    sc_passive:      { cat:'scrap_cannon', label:'Always Armed',  desc:'Scrap Cannon can trigger from non-explosive non-limb kills (any kill type)', apply: () => { _perkState.scPassive=true; } },
-    sc_legendary:    { cat:'scrap_cannon', once:true, legendary:true, label:'Scrap God',
-        desc:'LEGENDARY — Every kill triggers Scrap Cannon (not just limb kills). Explosion damage 200, radius 200px. Chains infinitely.',
-        apply: () => { _perkState.scLegendary=true; } },
 
     // ══════════════════════════════════════════════════════════════
     // NEW PERKS — 100 additional perks for variety
@@ -1125,7 +1111,6 @@ function resetRoundPerks() {
     // Kill-based counters
     _perkState._killStreakCount   = 0;
     _perkState._killStreakActive  = false;
-    CHASSIS.light.killSpeedStacks = 0;
     _perkState._pressureTarget   = null;
     _perkState._pressureStacks   = 0;
     _perkState.overwatchKills     = 0;

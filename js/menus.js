@@ -168,7 +168,7 @@ function returnToHangar() {
         resetLoadout(); // reset to Light chassis starter — warzone never persists selections
     }
     _round      = (_gameMode === 'campaign') ? _round : 1;
-    CHASSIS.medium.modCooldownMult = 0.85; // restore from tactical_uplink modification
+    CHASSIS.medium.modCooldownMult = 0.85; // restore to baseline
     _roundKills = 0;
     _roundTotal = 0;
     _roundActive  = false;
@@ -233,7 +233,7 @@ function goToMainMenu() {
     _round = 1; _roundKills = 0; _roundTotal = 0; _totalKills = 0; _roundActive = false;
     _extractionActive = false; _extractionPoint = null; _extractionVisuals = null; _extractionPromptShown = false;
     _lArmDestroyed = false; _rArmDestroyed = false; _legsDestroyed = false;
-    CHASSIS.medium.modCooldownMult = 0.85; // restore from tactical_uplink modification
+    CHASSIS.medium.modCooldownMult = 0.85; // restore to baseline
     _perkState = _resetPerkState(); // shared factory — see _resetPerkState()
     _pickedPerks = [];
     _lastOfferedPerks = [];

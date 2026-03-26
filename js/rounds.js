@@ -80,10 +80,6 @@ function startRound(roundNum) {
     _round      = roundNum;
     _roundKills = 0;
     resetRoundPerks();
-    // Adaptive Core: each round survived grants +3% DR (max +15%)
-    if (_perkState.adaptiveCore && roundNum > 1) {
-        _perkState._adaptiveCoreDR = Math.min(0.15, (_perkState._adaptiveCoreDR || 0) + 0.03);
-    }
     _roundActive = true;
     const scene = GAME.scene.scenes[0];
 
@@ -337,41 +333,6 @@ function onEnemyKilled(deadEnemy) {
         }
         _perkState._hitRunActive = true;
         _perkState._hitRunTimer = scene.time.now + 3000;
-    }
-    // Kill Sprint: +8% speed per kill, stacks up to 3×, each stack lasts 4s
-    if (_perkState.killSprint && loadout.chassis === 'light') {
-        if (CHASSIS.light.killSpeedStacks < 3) {
-            CHASSIS.light.killSpeedStacks++;
-            _perkState.speedMult = (_perkState.speedMult || 1) * 1.08;
-            const _ksScene = GAME.scene.scenes[0];
-            _ksScene.time.delayedCall(4000, () => {
-                if (CHASSIS.light.killSpeedStacks > 0) {
-                    CHASSIS.light.killSpeedStacks--;
-                    _perkState.speedMult = Math.max(1, (_perkState.speedMult || 1) / 1.08);
-                }
-            });
-        }
-    }
-    // Impact Core: close-range kill (<200px) heals 15 core HP and stuns nearby enemies 0.5s
-    if (_perkState.impactCore && player?.active && deadEnemy?.x != null) {
-        const _icDist = Phaser.Math.Distance.Between(player.x, player.y, deadEnemy.x, deadEnemy.y);
-        if (_icDist < 200) {
-            if (player.comp?.core) {
-                player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 15);
-                if (typeof updateBars === 'function') updateBars();
-            }
-            const _icScene = GAME.scene.scenes[0];
-            enemies?.getChildren().forEach(e2 => {
-                if (!e2.active) return;
-                const _stunDist = Phaser.Math.Distance.Between(deadEnemy.x, deadEnemy.y, e2.x, e2.y);
-                if (_stunDist < 150) {
-                    e2.isStunned = true;
-                    _icScene.time.delayedCall(500, () => {
-                        if (e2.active) { e2.isStunned = false; e2.body?.setImmovable(false); }
-                    });
-                }
-            });
-        }
     }
     // Spectre: every kill spawns a shadow clone (max 2, lasts 4s, deals 50% dmg)
     if (_perkState.lightSpectre && player?.active && isDeployed) {

@@ -265,17 +265,6 @@ function handlePlayerMovement(scene, time) {
     _perkState._magAnchorsActive = (loadout.leg === 'mag_anchors' && _perkState.legSystemActive &&
         Math.abs(player.body.velocity.x) + Math.abs(player.body.velocity.y) < 15);
 
-    // Iron Fortress aug: track stationary duration → grant DR+dmg bonus after 1.5s
-    if (_perkState.ironFortress) {
-        const _ifMoving = Math.abs(player.body.velocity.x) + Math.abs(player.body.velocity.y) > 15;
-        if (_ifMoving) {
-            _perkState._ironFortressTimer = 0;
-            _perkState._ironFortressActive = false;
-        } else {
-            _perkState._ironFortressTimer = (_perkState._ironFortressTimer || 0) + GAME.loop.delta;
-            _perkState._ironFortressActive = _perkState._ironFortressTimer > 1500;
-        }
-    }
 }
 
 /** Primary (M1) and secondary (RMB) weapon firing. */

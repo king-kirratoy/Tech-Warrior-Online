@@ -345,17 +345,6 @@ function activateJump(scene) {
                     _perkState._phantomShotReady = false;
                 }, 3000);
             }
-            // Reflex Amp: next shot after landing deals +40% damage
-            if (_perkState.reflexAmp) _perkState._reflexAmpReady = true;
-            // Ghost Circuit: invisible to enemies for 2s after landing
-            if (_perkState.ghostCircuit && player?.active) {
-                player._ghostExitActive = true;
-                if (torso) torso.setAlpha(0.15);
-                GAME.scene.scenes[0].time.delayedCall(2000, () => {
-                    player._ghostExitActive = false;
-                    if (torso?.active) torso.setAlpha(1.0);
-                });
-            }
             // ── SLAM LANDING DAMAGE ──────────────────────────────
             const slamDmg = (WEAPONS.jump.slamDmg || 40) + (_perkState.jumpSlam || 0);
             const slamR   = (loadout.leg === 'afterleg' && _perkState.legSystemActive)
@@ -399,63 +388,22 @@ function applyAugment() {
         case 'target_painter':    _perkState.targetPainter = true; break;
         case 'threat_analyzer':   _perkState.threatAnalyzer = true; break;
         case 'reactive_plating':  _perkState.reactivePlating = true; break;
-        case 'scrap_cannon':      _perkState.scrapCannon = true; break;
         // ── Drone Commander augments ──
-        case 'drone_relay':       _perkState.droneRelay = true; break;
-        case 'combat_ai':         _perkState.combatAI = true; break;
         case 'multi_drone':       _perkState.multiDrone = true; break;
         // ── Ghost Assassin augments ──
-        case 'targeting_scope':   _perkState.targetingScope = true; break;
         case 'ballistic_weave':   _perkState.ballisticWeave = true; break;
         case 'neural_accel':      _perkState.neuralAccel = true; break;
         // ── Inferno Wall augments ──
-        case 'fuel_injector':
-            _perkState.fuelInjector = true;
-            _perkState.fthCone = (_perkState.fthCone || 0) + 0.30;
-            break;
         case 'thermal_core':      _perkState.thermalCore = true; break;
-        case 'pyromaniac_chip':   _perkState.pyromaniacChip = true; break;
-        // ── LIGHT CHASSIS UNIQUE ───────────────────────────────────
-        case 'ghost_circuit':     _perkState.ghostCircuit   = true; break;
-        case 'reflex_amp':        _perkState.reflexAmp      = true; break;
-        case 'kill_sprint':       _perkState.killSprint     = true; break;
-        case 'predator_lens':     _perkState.predatorLens   = true; break;
-        case 'shadow_core':       _perkState.shadowCore     = true; break;
         // ── MEDIUM CHASSIS UNIQUE ──────────────────────────────────
-        case 'tactical_uplink':
-            CHASSIS.medium.modCooldownMult = Math.max(0.60, (CHASSIS.medium.modCooldownMult||0.85) * 0.90);
-            break;
         case 'field_processor':   _perkState.fieldProcessor = true; break;
-        case 'system_sync':       _perkState.systemSync     = true; break;
-        case 'adaptive_core':     _perkState.adaptiveCoreAug = true; break;
-        case 'echo_targeting':    _perkState.echoTargeting  = true; break;
         // ── HEAVY CHASSIS UNIQUE ───────────────────────────────────
         case 'war_machine':       _perkState.warMachine     = true; break;
-        case 'iron_fortress':     _perkState.ironFortress   = true; break;
         case 'suppressor_aura':   _perkState.suppressorAura = true; break;
-        case 'colossus_frame':
-            if (player?.comp) {
-                player.comp.core.hp  = Math.min(player.comp.core.max + 60, player.comp.core.hp + 60);
-                player.comp.core.max += 60;
-                player.comp.lArm.hp  = Math.min(player.comp.lArm.max + 40, player.comp.lArm.hp + 40);
-                player.comp.lArm.max += 40;
-                player.comp.rArm.hp  = Math.min(player.comp.rArm.max + 40, player.comp.rArm.hp + 40);
-                player.comp.rArm.max += 40;
-                player.comp.legs.hp  = Math.min(player.comp.legs.max + 40, player.comp.legs.hp + 40);
-                player.comp.legs.max += 40;
-            }
-            break;
-        case 'impact_core':       _perkState.impactCore     = true; break;
         // ── HEAVY WEAPON MASTERY ──────────────────────────────────
-        case 'blast_dampener':
-            _perkState.blastDampener = true;
-            break;
         case 'heavy_loader':
             _perkState.heavyLoader = true;
             _perkState.reloadMult  = (_perkState.reloadMult || 1) * 0.80;
-            break;
-        case 'chain_drive':
-            _perkState.chainDrive = true;
             break;
     }
 }
@@ -511,9 +459,8 @@ function applyLegSystem() {
 
 function _spawnDrone(scene, offsetX, offsetY, isAuto) {
     const mod = WEAPONS.atk_drone;
-    // Drone Relay: fires 40% faster, +60 HP (tracked as _droneHP)
-    const fireDelay  = _perkState.droneRelay ? Math.round(mod.droneReload * 0.60) : mod.droneReload;
-    const droneHP    = _perkState.droneRelay ? 60 : 0; // 0 = invincible timer-based (original)
+    const fireDelay  = mod.droneReload;
+    const droneHP    = 0; // invincible timer-based
     const droneColor = isAuto ? 0x00ffcc : 0xffaa00;
 
     let droneX = (player?.x || 400) + (offsetX || 0);
@@ -539,19 +486,14 @@ function _spawnDrone(scene, offsetX, offsetY, isAuto) {
 
     const droneTicker = scene.time.addEvent({ delay: fireDelay, loop: true, callback: () => {
         if (!drone.active || !enemies || !player?.active) return;
-        // Combat AI: prefer target you're shooting (painted/attacked)
         let target = null;
-        if (_perkState.combatAI && _perkState._paintedEnemy?.active) {
-            target = _perkState._paintedEnemy;
-        } else {
-            const DRONE_RANGE = 550;
-            let nearDist = DRONE_RANGE;
-            enemies.getChildren().forEach(e => {
-                if (!e.active) return;
-                const d = Phaser.Math.Distance.Between(droneX, droneY, e.x, e.y);
-                if (d < nearDist) { nearDist = d; target = e; }
-            });
-        }
+        const DRONE_RANGE = 550;
+        let nearDist = DRONE_RANGE;
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            const d = Phaser.Math.Distance.Between(droneX, droneY, e.x, e.y);
+            if (d < nearDist) { nearDist = d; target = e; }
+        });
         if (target) {
             const baseDmg = mod.droneDmg;
             const uplink  = 1 + (_perkState.droneUplink || 0);
@@ -602,7 +544,7 @@ function _spawnDrone(scene, offsetX, offsetY, isAuto) {
         }
     }
 
-    // Duration-based destroy (non-auto) or HP-based (auto / drone_relay)
+    // Duration-based destroy (non-auto) or HP-based (auto)
     if (!isAuto) {
         scene.time.delayedCall(mod.droneDuration, destroyDrone);
     } else {
@@ -855,16 +797,6 @@ function activateMod(scene, time) {
     if (typeof spawnModCover === 'function') spawnModCover(scene);
     // Core Reactor: mod activation damage pulse
     if (typeof triggerCoreOverload === 'function') triggerCoreOverload(scene);
-    // System Sync: any mod activation heals 20 HP to the most-damaged limb
-    if (_perkState.systemSync && player?.comp) {
-        const _ssParts = Object.entries(player.comp).sort((a, b) => (a[1].hp / a[1].max) - (b[1].hp / b[1].max));
-        const [, _ssPart] = _ssParts[0];
-        if (_ssPart && _ssPart.hp < _ssPart.max) {
-            _ssPart.hp = Math.min(_ssPart.max, _ssPart.hp + 20);
-            if (typeof updatePaperDoll === 'function') updatePaperDoll();
-            if (typeof updateBars === 'function') updateBars();
-        }
-    }
     switch (loadout.cpu) {
         case 'jump':      activateJump(scene);           break;
         case 'barrier':   activateShield(scene);         break;

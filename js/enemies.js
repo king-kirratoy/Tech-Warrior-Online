@@ -59,8 +59,8 @@ function randomEnemyLoadout() {
 
     // ── Chassis-locked aug pools ──
     const LIGHT_AUGS  = ['reflex_booster','overclock_cpu','threat_scanner','stealth_coating','burst_capacitor'];
-    const MEDIUM_AUGS = ['target_painter','threat_analyzer','overclock_cpu','reactive_plating','scrap_cannon'];
-    const HEAVY_AUGS  = ['reactive_plating','scrap_cannon','threat_analyzer','ironclad_core','colossus_plating'];
+    const MEDIUM_AUGS = ['target_painter','threat_analyzer','overclock_cpu','reactive_plating'];
+    const HEAVY_AUGS  = ['reactive_plating','threat_analyzer','ironclad_core','colossus_plating'];
 
     const augPool = chassis === 'light' ? LIGHT_AUGS
                   : chassis === 'medium' ? MEDIUM_AUGS
@@ -169,7 +169,6 @@ function spawnEnemy(scene) {
     e._augState = {};
     e._reloadMult = ((loadoutE.aug === 'overclock_cpu') ? 0.88 : 1.0) * _eChassisReload;
     if (loadoutE.aug === 'reactive_plating') e._augState.reactivePlatingStacks = 0;
-    if (loadoutE.aug === 'scrap_cannon')     e._augState.scrapCannon = true;
 
     // Per-enemy chassis effect state
     e.fxFootTimer  = 0;
@@ -242,7 +241,7 @@ function spawnCommander(scene) {
     const loadoutE  = { chassis: 'heavy', primary, secondary, mod,
                         shld: 'bulwark_shield',
                         leg:  Phaser.Math.RND.pick(['mag_anchors', 'afterleg']),
-                        aug:  Phaser.Math.RND.pick(['reactive_plating', 'scrap_cannon']) };
+                        aug:  'reactive_plating' };
 
     // Hitbox
     const e = scene.add.rectangle(x, y, 60, 60, 0x000000, 0);
@@ -289,7 +288,6 @@ function spawnCommander(scene) {
     e._reloadMult  = (loadoutE.aug === 'overclock_cpu') ? 0.88 : 1.0;
     e._augState    = {};
     if (loadoutE.aug === 'reactive_plating') e._augState.reactivePlatingStacks = 0;
-    if (loadoutE.aug === 'scrap_cannon')     e._augState.scrapCannon = true;
     e.fxFootTimer = 0; e.fxFootSide = 1;
     e.fxShockTimer = 0;
     e.fxLastX = x; e.fxLastY = y;
@@ -1283,30 +1281,6 @@ function _syncEnemyVisuals(scene, enemy, time) {
             }
         });
     }
-    // Predator Lens: highlight enemies >400px (red-orange outline)
-    if (_perkState.predatorLens && player) {
-        const _plDist = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
-        const _shouldHL = _plDist > 400;
-        if (_shouldHL !== enemy._predatorHighlight) {
-            enemy._predatorHighlight = _shouldHL;
-            enemy.torso?.list?.forEach(s => {
-                if (s.setStrokeStyle) s.setStrokeStyle(_shouldHL ? 2 : 0, 0xff4400);
-            });
-        }
-    } else if (enemy._predatorHighlight) {
-        enemy._predatorHighlight = false;
-        enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(0); });
-    }
-    // Echo Targeting: teal outline on revealed enemies
-    if (enemy._echoRevealedUntil && time < enemy._echoRevealedUntil) {
-        if (!enemy._echoHighlight) {
-            enemy._echoHighlight = true;
-            enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(2, 0x00ffcc); });
-        }
-    } else if (enemy._echoHighlight) {
-        enemy._echoHighlight = false;
-        enemy.torso?.list?.forEach(s => { if (s.setStrokeStyle) s.setStrokeStyle(0); });
-    }
     // Chassis movement FX
     syncEnemyChassisEffect(scene, time, enemy);
 }
@@ -1763,7 +1737,7 @@ function spawnArchitect(scene) {
     const p = _bossSpawnPos();
     const e = _buildBossEnemy(scene, p.x, p.y, 'medium', BOSS_COLORS.architect, 4.0, 0.95);
     e.loadout = { chassis:'medium', primary:'hr', secondary:'emp',
-                  mod:'barrier', shld:'adaptive_shield', leg:'gyro_stabilizer', aug:'targeting_scope' };
+                  mod:'barrier', shld:'adaptive_shield', leg:'gyro_stabilizer', aug:'none' };
     e.behavior = 'sniper'; e.isBoss = true; e.bossType = 'architect';
     _addBossLabel(scene, e, '[ THE ARCHITECT ]', 0x00cccc, 68);
     _addBossHPBar(scene, e, 0x00cccc, 'THE ARCHITECT');

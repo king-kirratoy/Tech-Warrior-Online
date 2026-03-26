@@ -119,13 +119,7 @@ const ITEM_BASES = {
     sys_threat_analyzer:  { baseType:'aug_system', systemKey:'threat_analyzer',  name:'Threat Analyzer',   icon:'aug_threat',   baseStats:{ critChance:2, accuracy:3 } },
     sys_overclock_cpu:    { baseType:'aug_system', systemKey:'overclock_cpu',    name:'Overclock CPU',     icon:'aug_cpu',      baseStats:{ fireRatePct:-5, modCdPct:-3 } },
     sys_reactive_plating: { baseType:'aug_system', systemKey:'reactive_plating', name:'Reactive Plating',  icon:'aug_plating',  baseStats:{ dr:0.03, coreHP:10 } },
-    sys_scrap_cannon:     { baseType:'aug_system', systemKey:'scrap_cannon',     name:'Scrap Cannon',      icon:'aug_scrap',    baseStats:{ dmgPct:4 } },
-    sys_ghost_circuit:    { baseType:'aug_system', systemKey:'ghost_circuit',    name:'Ghost Circuit',     icon:'aug_ghost',    baseStats:{ dodgePct:3, speedPct:3 } },
-    sys_reflex_amp:       { baseType:'aug_system', systemKey:'reflex_amp',       name:'Reflex Amp',        icon:'aug_reflex',   baseStats:{ fireRatePct:-4, dodgePct:2 } },
-    sys_combat_ai:        { baseType:'aug_system', systemKey:'combat_ai',        name:'Combat AI',         icon:'aug_ai',       baseStats:{ critChance:3, dmgPct:2 } },
     sys_war_machine:      { baseType:'aug_system', systemKey:'war_machine',      name:'War Machine',       icon:'aug_war',      baseStats:{ dmgPct:5, dr:0.02 } },
-    sys_iron_fortress:    { baseType:'aug_system', systemKey:'iron_fortress',    name:'Iron Fortress',     icon:'aug_iron',     baseStats:{ dr:0.05, coreHP:15 } },
-    sys_drone_relay:      { baseType:'aug_system', systemKey:'drone_relay',      name:'Drone Relay',       icon:'aug_relay',    baseStats:{ dmgPct:2, modCdPct:-3 } },
 };
 
 // Which weapon keys from WEAPONS are droppable as loot items.
@@ -1692,6 +1686,14 @@ const REMOVED_LEGS = [
     'adaptive_stride', 'stabilizer_gyros', 'reactive_dash', 'silent_step',
 ];
 
+// Keys removed in the augment consolidation pass — migrate old saves on load.
+const REMOVED_AUGMENTS = [
+    'chain_drive', 'blast_dampener', 'colossus_frame', 'iron_fortress', 'scrap_cannon',
+    'impact_core', 'adaptive_core', 'system_sync', 'tactical_uplink', 'echo_targeting',
+    'combat_ai', 'drone_relay', 'shadow_core', 'targeting_scope', 'predator_lens',
+    'ghost_circuit', 'pyromaniac_chip', 'kill_sprint', 'reflex_amp', 'fuel_injector',
+];
+
 function saveInventory() {
     if (typeof _gameMode === 'undefined' || _gameMode !== 'campaign') return;
     try {
@@ -1718,6 +1720,8 @@ function loadCampaignInventory() {
                         if (it.baseType === 'shield_system' && REMOVED_SHIELDS.includes(it.systemKey)) return;
                         // Migration: discard items whose systemKey is a removed leg
                         if (it.baseType === 'leg_system' && REMOVED_LEGS.includes(it.systemKey)) return;
+                        // Migration: discard items whose systemKey is a removed augment
+                        if (it.baseType === 'aug_system' && REMOVED_AUGMENTS.includes(it.systemKey)) return;
                         clean[i] = it;
                     }
                 });
@@ -1735,6 +1739,8 @@ function loadCampaignInventory() {
                         if (s === 'shield' && parsed[s].baseType === 'shield_system' && REMOVED_SHIELDS.includes(parsed[s].systemKey)) return;
                         // Migration: discard equipped legs if it's a removed leg
                         if (s === 'legs' && parsed[s].baseType === 'leg_system' && REMOVED_LEGS.includes(parsed[s].systemKey)) return;
+                        // Migration: discard equipped augment if it's a removed augment
+                        if (s === 'augment' && parsed[s].baseType === 'aug_system' && REMOVED_AUGMENTS.includes(parsed[s].systemKey)) return;
                         clean[s] = parsed[s];
                     }
                 });
