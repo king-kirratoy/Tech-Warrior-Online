@@ -52,7 +52,7 @@ let loadout = {
     cpu: 'none',
     aug: 'none',
     leg: 'none',
-    shld: 'light_shield',
+    shld: 'none',
     color: 0x00ff00
 };
 

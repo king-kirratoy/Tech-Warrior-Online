@@ -86,16 +86,10 @@ const ITEM_BASES = {
     // ══════════════════════════════════════════════════════════════
 
     // ── SYSTEM SHIELDS (shield_system slot → sets loadout.shld) ──
-    sys_light_shield:    { baseType:'shield_system', systemKey:'light_shield',    name:'Light Shield',     icon:'shld_light',   baseStats:{ shieldHP:10, shieldRegen:3 } },
-    sys_standard_shield: { baseType:'shield_system', systemKey:'standard_shield', name:'Standard Shield',  icon:'shld_std',     baseStats:{ shieldHP:15, shieldRegen:2 } },
-    sys_heavy_shield:    { baseType:'shield_system', systemKey:'heavy_shield',    name:'Heavy Shield',     icon:'shld_heavy',   baseStats:{ shieldHP:20, dr:0.02 } },
-    sys_reactive_shield: { baseType:'shield_system', systemKey:'reactive_shield', name:'Reactive Shield',  icon:'shld_react',   baseStats:{ shieldHP:12, shieldRegen:5 } },
     sys_fortress_shield: { baseType:'shield_system', systemKey:'fortress_shield', name:'Fortress Shield',  icon:'shld_fort',    baseStats:{ shieldHP:30, dr:0.03 } },
     sys_micro_shield:    { baseType:'shield_system', systemKey:'micro_shield',    name:'Micro Shield',     icon:'shld_micro',   baseStats:{ shieldRegen:8, speedPct:2 } },
     sys_flicker_shield:  { baseType:'shield_system', systemKey:'flicker_shield',  name:'Flicker Shield',   icon:'shld_flicker', baseStats:{ shieldHP:10, dodgePct:3 } },
-    sys_phase_shield:    { baseType:'shield_system', systemKey:'phase_shield',    name:'Phase Shield',     icon:'shld_phase',   baseStats:{ shieldHP:10, speedPct:2 } },
     sys_adaptive_shield: { baseType:'shield_system', systemKey:'adaptive_shield', name:'Adaptive Shield',  icon:'shld_adapt',   baseStats:{ shieldHP:15, dr:0.02 } },
-    sys_counter_shield:  { baseType:'shield_system', systemKey:'counter_shield',  name:'Counter Shield',   icon:'shld_counter', baseStats:{ shieldHP:12, dmgPct:2 } },
     sys_bulwark_shield:  { baseType:'shield_system', systemKey:'bulwark_shield',  name:'Bulwark Shield',   icon:'shld_bulwark', baseStats:{ shieldHP:25, dr:0.04 } },
     sys_titan_shield:    { baseType:'shield_system', systemKey:'titan_shield',    name:'Titan Shield',     icon:'shld_titan',   baseStats:{ shieldHP:30, dr:0.05 } },
 
@@ -1688,6 +1682,13 @@ function resetInventory() {
 // ── SAVE/LOAD ──────────────────────────────────────────────────
 // Simulation mode: gear resets every run (no persistence).
 // Campaign mode: gear persists to localStorage.
+
+// Keys removed in the shield consolidation pass — migrate old saves on load.
+const REMOVED_SHIELDS = [
+    'light_shield', 'standard_shield', 'heavy_shield', 'reactive_shield',
+    'siege_wall', 'counter_shield', 'pulse_shield', 'phase_shield',
+];
+
 function saveInventory() {
     if (typeof _gameMode === 'undefined' || _gameMode !== 'campaign') return;
     try {
@@ -1710,6 +1711,8 @@ function loadCampaignInventory() {
                 const clean = Array(INVENTORY_MAX).fill(null);
                 parsed.forEach((it, i) => {
                     if (i < INVENTORY_MAX && it && typeof it === 'object' && it.name && it.rarity && it.baseType) {
+                        // Migration: discard items whose systemKey is a removed shield
+                        if (it.baseType === 'shield_system' && REMOVED_SHIELDS.includes(it.systemKey)) return;
                         clean[i] = it;
                     }
                 });
@@ -1722,7 +1725,11 @@ function loadCampaignInventory() {
                 const validSlots = ['L','R','armor','arms','legs','shield','cpu','augment'];
                 const clean = { L:null, R:null, armor:null, arms:null, legs:null, shield:null, cpu:null, augment:null };
                 validSlots.forEach(s => {
-                    if (parsed[s] && typeof parsed[s] === 'object' && parsed[s].name && parsed[s].rarity && parsed[s].baseType) clean[s] = parsed[s];
+                    if (parsed[s] && typeof parsed[s] === 'object' && parsed[s].name && parsed[s].rarity && parsed[s].baseType) {
+                        // Migration: discard equipped shield if it's a removed shield
+                        if (s === 'shield' && parsed[s].baseType === 'shield_system' && REMOVED_SHIELDS.includes(parsed[s].systemKey)) return;
+                        clean[s] = parsed[s];
+                    }
                 });
                 _equipped = clean;
             }
@@ -1776,7 +1783,10 @@ function loadCampaignProgress() {
     try {
         const raw = localStorage.getItem('tw_campaign_progress');
         if (!raw) return null;
-        return JSON.parse(raw);
+        const data = JSON.parse(raw);
+        // Migration: reset removed shield keys to 'none'
+        if (data && REMOVED_SHIELDS.includes(data.shld)) data.shld = 'none';
+        return data;
     } catch(e) { return null; }
 }
 

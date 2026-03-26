@@ -36,9 +36,9 @@ function randomEnemyLoadout() {
     const mod = Math.random() < 0.75 ? rnd.pick(modPool) : 'none';
 
     // ── Chassis-locked shield pools ──
-    const LIGHT_SHIELDS  = ['micro_shield','flicker_shield','light_shield','phase_shield','smoke_burst'];
-    const MEDIUM_SHIELDS = ['standard_shield','reactive_shield','mirror_shield','adaptive_shield','counter_shield'];
-    const HEAVY_SHIELDS  = ['heavy_shield','fortress_shield','pulse_shield','layered_shield','overcharge_shld'];
+    const LIGHT_SHIELDS  = ['micro_shield','flicker_shield','smoke_burst','mirror_shield'];
+    const MEDIUM_SHIELDS = ['fortress_shield','adaptive_shield','layered_shield','overcharge_shld'];
+    const HEAVY_SHIELDS  = ['bulwark_shield','thermal_shield','titan_shield'];
 
     const shieldPool = chassis === 'light' ? LIGHT_SHIELDS
                      : chassis === 'medium' ? MEDIUM_SHIELDS
@@ -148,7 +148,7 @@ function spawnEnemy(scene) {
     e._shieldRegenDelay = _eShldSys.regenDelay;
     // Medium chassis: 60% shield absorb (same as player rule)
     const _eBaseAbsorb = loadoutE.chassis === 'medium' ? (CHASSIS.medium.shieldAbsorb || 0.60) : 0.50;
-    e._shieldAbsorb     = (loadoutE.shld === 'reactive_shield') ? 0.65 : _eBaseAbsorb;
+    e._shieldAbsorb     = _eBaseAbsorb;
     e._lastDamageTime   = -99999;
     // Fire grace: block shooting for 2s after spawn regardless of clock state
     e._fireGrace = true;
@@ -240,7 +240,7 @@ function spawnCommander(scene) {
     const secondary = Phaser.Math.RND.pick(['rl', 'plsm']);
     const mod       = Phaser.Math.RND.pick(['rage', 'barrier']);
     const loadoutE  = { chassis: 'heavy', primary, secondary, mod,
-                        shld: 'heavy_shield',
+                        shld: 'bulwark_shield',
                         leg:  Phaser.Math.RND.pick(['mag_anchors', 'afterleg']),
                         aug:  Phaser.Math.RND.pick(['reactive_plating', 'scrap_cannon']) };
 
@@ -342,7 +342,7 @@ function spawnMedic(scene) {
     const _hm = 0.35 * (1 + (_effectiveLvl - 1) * 0.08); // medics have less HP than normal
     const loadoutE = {
         chassis: 'medium', primary: 'smg', secondary: 'none', mod: 'repair',
-        shld: 'standard_shield', leg: 'none', aug: 'none'
+        shld: 'adaptive_shield', leg: 'none', aug: 'none'
     };
     e.loadout     = loadoutE;
     e.isMedic     = true;
@@ -1624,7 +1624,7 @@ function spawnWarden(scene) {
     const p = _bossSpawnPos();
     const e = _buildBossEnemy(scene, p.x, p.y, 'heavy', BOSS_COLORS.warden, 3.0, 0.9);
     e.loadout = { chassis:'heavy', primary:'mg', secondary:'barrier',
-                  mod:'rage', shld:'heavy_shield', leg:'mag_anchors', aug:'reactive_plating' };
+                  mod:'rage', shld:'bulwark_shield', leg:'mag_anchors', aug:'reactive_plating' };
     e.behavior = 'circle'; e.isBoss = true; e.bossType = 'warden';
     _addBossLabel(scene, e, '[ THE WARDEN ]', 0x8800ff, 75);
     _addBossHPBar(scene, e, 0x8800ff, 'THE WARDEN');
