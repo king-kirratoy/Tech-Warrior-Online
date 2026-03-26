@@ -61,6 +61,15 @@ function updateBars() {
         if (shFillH) shFillH.style.width = '0%';
         if (shSt) shSt.innerText = '—';
     }
+    // Layered Shield: subtle divider at 50% of bar to show two layers
+    const _shBarBg = shFillH?.parentElement;
+    if (_shBarBg) {
+        if (loadout?.shld === 'layered_shield') {
+            _shBarBg.style.backgroundImage = 'linear-gradient(to right, transparent 49.5%, rgba(0,220,255,0.45) 50%, transparent 50.5%)';
+        } else {
+            _shBarBg.style.backgroundImage = '';
+        }
+    }
 }
 
 function updatePaperDoll() {

@@ -265,6 +265,22 @@ function handlePlayerMovement(scene, time) {
     _perkState._magAnchorsActive = (loadout.leg === 'mag_anchors' && _perkState.legSystemActive &&
         Math.abs(player.body.velocity.x) + Math.abs(player.body.velocity.y) < 15);
 
+    // Tremor Legs: fire a tremor at a regular interval while moving
+    if (loadout.leg === 'tremor_legs' && _perkState.legSystemActive) {
+        const _tvel = player.body.velocity;
+        const _tMoving = Math.abs(_tvel.x) + Math.abs(_tvel.y) > 20;
+        if (_tMoving) {
+            const _tremorInterval = _perkState.tlCd ? 250 : 500;
+            _perkState._tremorTimer = (_perkState._tremorTimer || 0) + scene.game.loop.delta;
+            if (_perkState._tremorTimer >= _tremorInterval) {
+                _perkState._tremorTimer = 0;
+                if (typeof _triggerTremor === 'function') _triggerTremor(scene);
+            }
+        } else {
+            _perkState._tremorTimer = 0;
+        }
+    }
+
 }
 
 /** Primary (M1) and secondary (RMB) weapon firing. */
