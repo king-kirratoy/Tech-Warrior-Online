@@ -917,7 +917,7 @@ function showPerkMenu(nextRound) {
         const legendaryBadge = p.legendary ? `<div class="perk-legendary-badge">✦ LEGENDARY</div>` : '';
         if (p.legendary) card.classList.add('legendary');
         card.innerHTML = `
-            <div class="perk-slot-label" style="color:${p.legendary ? '#ffd700' : slotColors[idx]}">${p.legendary ? 'LEGENDARY' : slotLabels[idx]} <span style="color:rgba(255,255,255,0.3);font-size:9px;">[${idx+1}]</span></div>
+            <div class="perk-slot-label" style="color:${p.legendary ? '#ffd700' : slotColors[idx]}">${p.legendary ? 'LEGENDARY' : slotLabels[idx]}</div>
             ${stackBadge}
             ${legendaryBadge}
             <div class="perk-card-title" style="${p.legendary ? 'color:#ffd700;' : ''}">${p.label}</div>

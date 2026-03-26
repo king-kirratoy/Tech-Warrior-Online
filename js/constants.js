@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.75';
+const GAME_VERSION = 'v6.76';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -197,7 +197,7 @@ const AUGMENTS = {
     multi_drone:     { name: 'MULTI-DRONE',    weight: 50,  desc: 'Deploy 2 attack drones simultaneously instead of 1.' },
     // ── GHOST ASSASSIN ─────────────────────────────────────────
     ballistic_weave: { name: 'BALLST. WEAVE',  weight: 25,  desc: '+10% bullet speed. Bullets ignore 20% of enemy shields.' },
-    neural_accel:    { name: 'NEURAL ACCEL.',  weight: 35,  desc: 'First 3s after landing from JUMP: all weapons deal 2× damage.' },
+    neural_accel:    { name: 'NEURAL ACCELERANT',  weight: 35,  desc: 'First 3s after landing from JUMP: all weapons deal 2× damage.' },
     // ── INFERNO WALL ───────────────────────────────────────────
     thermal_core:    { name: 'THERMAL CORE',   weight: 25,  desc: 'FTH always ignites on hit. Ignite duration +1s.' },
     // ── MEDIUM CHASSIS UNIQUE ─────────────────────────────────────
@@ -334,10 +334,6 @@ const ENEMY_PRIMARY   = ['smg', 'mg', 'br', 'sg', 'hr', 'fth'];
 const ENEMY_ARM_WEAPONS = ['smg','mg','br','sg','hr','fth','sr','gl','rl','plsm']; // rail excluded: too accurate + hitscan
 // ENEMY_SECONDARY and ENEMY_MODS are now handled inline in randomEnemyLoadout (full parity with player)
 
-// ── Combat utility sets ───────────────────────────────────────────
-// Explosive keys for dual-explosive warning
-const EXPLOSIVE_KEYS = new Set(['gl','rl','plsm','rail']);
-
 // ═══════════ WORLD DIMENSIONS ═══════════
 
 const WORLD_SIZE   = 4000; // map width and height (square world)
@@ -393,7 +389,7 @@ const AUG_OPTIONS = [
     { key:'thermal_core',      label:'THERMAL CORE',      weight:25  },
     { key:'overclock_cpu',     label:'OVERCLOCK CPU',     weight:30  },
     { key:'reactive_plating',  label:'REACTIVE PLATING',  weight:30  },
-    { key:'neural_accel',      label:'NEURAL ACCEL.',     weight:35  },
+    { key:'neural_accel',      label:'NEURAL ACCELERANT', weight:35  },
     { key:'multi_drone',       label:'MULTI-DRONE',       weight:50  },
     // Medium unique
     { key:'field_processor',   label:'FIELD PROCESSOR',   weight:25  },
@@ -475,7 +471,7 @@ const SLOT_DESCS = {
     reactive_plating: { title:'REACTIVE PLATING', desc:'Each hit you receive adds a 5% damage reduction stack, up to 5 stacks max. Resets at round start.' },
     multi_drone:      { title:'MULTI-DRONE',       desc:'Deploy 2 attack drones simultaneously instead of 1. High weight cost.' },
     ballistic_weave:  { title:'BALLISTIC WEAVE',   desc:'All bullets travel 10% faster and ignore 20% of enemy shield absorption.' },
-    neural_accel:     { title:'NEURAL ACCEL.',     desc:'For 3 seconds after landing from JUMP, all weapons deal 2x damage.' },
+    neural_accel:     { title:'NEURAL ACCELERANT', desc:'For 3 seconds after landing from JUMP, all weapons deal 2x damage.' },
     thermal_core:     { title:'THERMAL CORE',      desc:'FTH hits always ignite enemies (100% chance). Ignite duration +1s.' },
     hydraulic_boost:  { title:'HYDRO BOOST', desc:'+20% movement speed. Legs take 15% less damage. Disabled if legs are destroyed.' },
     gyro_stabilizer:  { title:'GYRO STABILIZER', desc:'Eliminates the speed penalty from damaged legs. Improves aim stability. Disabled if legs destroyed.' },
