@@ -1079,6 +1079,22 @@ function _applyPassiveShieldAbsorption(amt) {
         player._shieldCounterChg = (player._shieldCounterChg || 0) + amt * absorb;
     }
 
+    // ── Layered Shield: drain Layer 1 first, then Layer 2 ──
+    if (_ss.layered && player._shieldLayerHP) {
+        const _lNow  = GAME.scene.scenes[0]?.time?.now || 0;
+        const _l1Abs = Math.min(player._shieldLayerHP[0], amt);
+        player._shieldLayerHP[0] -= _l1Abs;
+        const _lRem  = amt - _l1Abs;
+        const _l2Abs = Math.min(player._shieldLayerHP[1], _lRem);
+        player._shieldLayerHP[1] -= _l2Abs;
+        const _lSpill = _lRem - _l2Abs;
+        if (_l1Abs > 0) player._layer1LastDamageTime = _lNow;
+        if (_l2Abs > 0) player._layer2LastDamageTime = _lNow;
+        const _lFloor = _perkState.shieldIndestructible ? 1 : 0;
+        player.shield = Math.max(_lFloor, player._shieldLayerHP[0] + player._shieldLayerHP[1]);
+        return _lSpill; // spillover beyond both layers passes to HP unchanged
+    }
+
     const _prevShield = player.shield;
     const _shieldFloor = _perkState.shieldIndestructible ? 1 : 0;
     player.shield = Math.max(_shieldFloor, player.shield - amt * absorb);
@@ -1230,8 +1246,8 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     }
     // Battle rhythm bonus
     if (_perkState._battleRhythmBonus > 0) amt *= (1 + _perkState._battleRhythmBonus);
-    // Mag Anchors: +15% outgoing damage while stationary
-    if (_perkState._magAnchorsActive) amt *= 1.15;
+    // Mag Anchors: +20% outgoing damage while stationary
+    if (_perkState._magAnchorsActive) amt *= 1.20;
     // Predator: if charged, +50% dmg per stack
     if (_perkState._predatorCharged && _perkState.predatorStacks > 0) {
         amt *= (1 + 0.50 * _perkState.predatorStacks);
@@ -1414,6 +1430,87 @@ function _resolveEnemyDeath(e) {
     } catch(cleanErr) { /* non-fatal */ }
     e.destroy();
     onEnemyKilled(_deadRef);
+}
+
+// ── Tremor Legs: AOE ground-shake triggered while moving ──────────
+function _triggerTremor(scene) {
+    if (!player?.active) return;
+    const _baseDmg    = _perkState.tlLegendary ? 300 : 40 + (_perkState.tlDmg || 0);
+    const _baseRadius = _perkState.tlLegendary ? 300 : 120 * (1 + (_perkState.tlRadius || 0));
+
+    // Visual shockwave ring
+    const _ring = scene.add.circle(player.x, player.y, 10, 0x886622, 0.55).setDepth(8);
+    scene.tweens.add({
+        targets: _ring, scaleX: _baseRadius / 10, scaleY: _baseRadius / 10, alpha: 0, duration: 380,
+        onComplete: () => _ring.destroy(),
+    });
+
+    let _anyHit = false;
+    enemies.getChildren().forEach(e => {
+        if (!e.active) return;
+        if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) > _baseRadius) return;
+        showDamageText(scene, e.x, e.y, _baseDmg);
+        damageEnemy(e, _baseDmg, undefined, true);
+        _anyHit = true;
+        // tlSlow: 40% slow for 2s
+        if (_perkState.tlSlow && !e._tremorSlowed) {
+            e._tremorOrigSpeed = e.speed;
+            e.speed = Math.max(1, Math.round(e.speed * 0.60));
+            e._tremorSlowed = true;
+            e._slowed = true;
+            scene.time.delayedCall(2000, () => {
+                if (!e.active) return;
+                if (e._tremorOrigSpeed !== undefined) e.speed = e._tremorOrigSpeed;
+                delete e._tremorOrigSpeed;
+                e._tremorSlowed = false;
+                e._slowed = false;
+            });
+        }
+        // tlFire: ignite
+        if (_perkState.tlFire && !e._burning) {
+            e._burning = true;
+            let _bt = 0;
+            const _bTimer = scene.time.addEvent({ delay:1000, loop:true, callback:() => {
+                _bt++;
+                if (!e.active || _bt >= 5) { e._burning = false; _bTimer.remove(); return; }
+                damageEnemy(e, 8, undefined, false);
+            }});
+        }
+        // tlEmp: stun 1s
+        if (_perkState.tlEmp && !e.isStunned) {
+            e.isStunned = true;
+            scene.time.delayedCall(1000, () => { if (e.active) e.isStunned = false; });
+        }
+    });
+
+    sndExplosion(false);
+
+    // tlHeal: restore 15 HP on hit
+    if (_perkState.tlHeal && _anyHit && player?.comp?.core) {
+        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + 15);
+        player.hp = Object.values(player.comp).reduce((s, c) => s + c.hp, 0);
+        updateHUD();
+    }
+
+    // tlChain5: second tremor at 50% dmg 1s later
+    if (_perkState.tlChain5) {
+        const _cx = player.x, _cy = player.y;
+        scene.time.delayedCall(1000, () => {
+            if (!player?.active) return;
+            enemies.getChildren().forEach(e => {
+                if (!e.active) return;
+                if (Phaser.Math.Distance.Between(_cx, _cy, e.x, e.y) > _baseRadius) return;
+                const _cd = Math.round(_baseDmg * 0.5);
+                showDamageText(scene, e.x, e.y, _cd);
+                damageEnemy(e, _cd, undefined, true);
+            });
+        });
+    }
+
+    // tlLegendary: also drop 3 mines
+    if (_perkState.tlLegendary && typeof dropMine === 'function') {
+        for (let _m = 0; _m < 3; _m++) dropMine(scene);
+    }
 }
 
 function createExplosion(scene, x, y, radius, damage) {
@@ -1751,13 +1848,41 @@ function _applyHeavyChassisRegen() {
 /** Tick shield HP upward once the regen delay has elapsed since last damage. */
 function _applyShieldRegen(time) {
     if (_perkState.noShieldRegen) return;
-    const secondsSinceHit = (time - lastDamageTime) / 1000;
-    const playerSpeed = player?.body ? Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2) : 999;
+    const playerSpeed    = player?.body ? Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2) : 999;
     const immovableBonus = (_perkState.immovable && playerSpeed < 10) ? 3 : 1;
-    const regenDelay = player._shieldRegenDelay ?? 5;
-    const regenRate  = player._shieldRegenRate  ?? 1.0;
+    const regenDelay     = player._shieldRegenDelay ?? 5;
+    const regenRate      = player._shieldRegenRate  ?? 1.0;
+    const _gearRegenMult = 1 + ((_gearState?.shieldRegen || 0) / 100);
+    const _ss = SHIELD_SYSTEMS[loadout.shld];
+
+    // ── Layered Shield: each layer regens on its own timer ──
+    if (_ss?.layered && player._shieldLayerHP) {
+        const _l1Max = _ss.layer1Max || 65;
+        const _l2Max = _ss.layer2Max || 65;
+        let _layerChanged = false;
+        if (player._shieldLayerHP[0] < _l1Max && player._layer1LastDamageTime > 0) {
+            const _l1Since = (time - player._layer1LastDamageTime) / 1000;
+            if (_l1Since >= regenDelay) {
+                player._shieldLayerHP[0] = Math.min(_l1Max, player._shieldLayerHP[0] + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult * immovableBonus);
+                _layerChanged = true;
+            }
+        }
+        if (player._shieldLayerHP[1] < _l2Max && player._layer2LastDamageTime > 0) {
+            const _l2Since = (time - player._layer2LastDamageTime) / 1000;
+            if (_l2Since >= regenDelay) {
+                player._shieldLayerHP[1] = Math.min(_l2Max, player._shieldLayerHP[1] + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult * immovableBonus);
+                _layerChanged = true;
+            }
+        }
+        if (_layerChanged) {
+            player.shield = player._shieldLayerHP[0] + player._shieldLayerHP[1];
+            updateBars();
+        }
+        return;
+    }
+
+    const secondsSinceHit = (time - lastDamageTime) / 1000;
     if (player.maxShield > 0 && lastDamageTime > 0 && secondsSinceHit >= regenDelay && player.shield < player.maxShield) {
-        const _gearRegenMult = 1 + ((_gearState?.shieldRegen || 0) / 100);
         player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult * immovableBonus);
         if (player.shield >= player.maxShield) {
             player._shieldAdaptStack = 0;  // adaptive_shield: reset on full regen

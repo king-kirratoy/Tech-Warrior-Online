@@ -419,9 +419,11 @@ function _initPlayerHP(scene, s) {
     // Per-shield state
     player._shieldFlickerHit  = false;  // flicker_shield: tracks odd/even hits
     player._shieldAdaptStack  = 0;      // adaptive_shield: consecutive hit count
-    player._shieldLayerHP     = [       // layered_shield: [layer1, layer2]
+    player._shieldLayerHP          = [       // layered_shield: [layer1, layer2]
         _shldSys.layer1Max || 0, _shldSys.layer2Max || 0
     ];
+    player._layer1LastDamageTime   = 0;  // layered_shield: per-layer regen timers
+    player._layer2LastDamageTime   = 0;
     // Titan shield: add core HP bonus
     if (loadout.shld === 'titan_shield' && _shldSys.coreBonus) {
         player.maxHp  += _shldSys.coreBonus;

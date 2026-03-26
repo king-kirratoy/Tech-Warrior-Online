@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.72';
+const GAME_VERSION = 'v6.73';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -217,7 +217,7 @@ const LEG_SYSTEMS = {
     hydraulic_boost:{ name: 'HYDRO BOOST',   weight: 25,  desc: '+20% move speed. Legs take 15% less damage.' },
     gyro_stabilizer:{ name: 'GYRO STAB.',    weight: 25,  desc: 'Eliminates slowdown from damaged legs. Aim accuracy +10%.' },
     mine_layer:     { name: 'MINE LAYER',    weight: 35,  desc: 'Drops a proximity mine every 8s while moving. Mines deal 80 AoE damage.' },
-    mag_anchors:    { name: 'MAG ANCHORS',   weight: 30,  desc: 'While stationary: take 20% less damage and deal 15% more damage.' },
+    mag_anchors:    { name: 'MAG ANCHORS',   weight: 30,  desc: 'While stationary: take 20% less damage and deal 20% more damage.' },
     afterleg:       { name: 'AFTERLEG',      weight: 40,  desc: 'JUMP mod launches farther (+50%). Landing creates a shockwave (60 dmg, 150px).' },
     // ── LIGHT CHASSIS UNIQUE ──────────────────────────────────────
     sprint_boosters: { name: 'SPRINT BOOST',  weight: 28,  desc: 'Double-tap W for a 0.8s speed burst (+80%). 4s cooldown.' },
@@ -228,7 +228,7 @@ const LEG_SYSTEMS = {
     seismic_dampener:{ name: 'SEISMIC DAMP.', weight: 30,  desc: 'Leg damage reduced by 25%. Stomps on landing deal +30% slam damage.' },
     reactor_legs:    { name: 'REACTOR LEGS',  weight: 35,  desc: 'Mod cooldowns reduce by 1s each time you move 300px. Rewards mobility.' },
     // ── HEAVY CHASSIS UNIQUE ──────────────────────────────────────
-    tremor_legs:     { name: 'TREMOR LEGS',   weight: 45,  desc: 'After standing still 2s, moving creates a tremor: 40 AoE dmg, 120px radius.' },
+    tremor_legs:     { name: 'TREMOR LEGS',   weight: 45,  desc: 'While moving: creates a tremor every 500ms — 40 AoE dmg, 120px radius.' },
     ground_slam:     { name: 'GROUND SLAM',   weight: 42,  desc: 'JUMP landing AoE doubled in radius and damage. Turn landing into a weapon.' },
     suppressor_legs: { name: 'SUPPRESSOR LEG',weight: 35,  desc: 'Enemies within 220px move 20% slower. Passive suppression aura from heavy frame.' },
     // ── HEAVY CHASSIS UNIQUE ──────────────────────────────────────
@@ -479,7 +479,7 @@ const SLOT_DESCS = {
     thermal_core:     { title:'THERMAL CORE',      desc:'FTH hits always ignite enemies (100% chance). Ignite duration +1s.' },
     hydraulic_boost:  { title:'HYDRO BOOST', desc:'+20% movement speed. Legs take 15% less damage. Disabled if legs are destroyed.' },
     gyro_stabilizer:  { title:'GYRO STABILIZER', desc:'Eliminates the speed penalty from damaged legs. Improves aim stability. Disabled if legs destroyed.' },
-    mag_anchors:      { title:'MAG ANCHORS', desc:'While stationary: take 20% less damage and deal 15% more damage. Rewards positional play.' },
+    mag_anchors:      { title:'MAG ANCHORS', desc:'While stationary: take 20% less damage and deal 20% more damage. Rewards positional play.' },
     mine_layer:       { title:'MINE LAYER', desc:'Drops a proximity mine every 8 seconds while moving. Each mine deals 80 AoE damage on trigger.' },
     afterleg:         { title:'AFTERLEG', desc:'JUMP mod travels 50% farther. Landing shockwave deals 60 dmg in 150px. Disabled if legs destroyed.' },
     fortress_shield: { title:'FORTRESS SHIELD', desc:'240 HP but only 25% absorb — most damage bleeds through. A speed bump, not a wall.' },
@@ -514,7 +514,7 @@ const SLOT_DESCS = {
     jump_jets:        { title:'JUMP JETS',       desc:'JUMP mod gains a second charge. Two repositions per cooldown.' },
     seismic_dampener: { title:'SEISMIC DAMPENER',   desc:'Legs take 25% less damage. Landing slams deal +30% more.' },
     reactor_legs:     { title:'REACTOR LEGS',    desc:'Mod cooldowns reduce 1s per 300px moved. Rewards constant movement.' },
-    tremor_legs:      { title:'TREMOR LEGS',      desc:'After 2s stationary, next movement creates 40 AoE dmg tremor at 120px.' },
+    tremor_legs:      { title:'TREMOR LEGS',      desc:'While moving: tremor every 500ms — 40 AoE dmg, 120px radius. No stationary required.' },
     ground_slam:      { title:'GROUND SLAM',      desc:'JUMP landing AoE doubled in radius and damage. Use landing as a weapon.' },
     suppressor_legs:  { title:'SUPPRESSOR LEGS',  desc:'Enemies within 220px move 20% slower. Passive suppression from heavy frame.' },
     // ── NEW AUG SLOT DESCS ────────────────────────────────────────
