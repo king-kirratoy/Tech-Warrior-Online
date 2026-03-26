@@ -174,7 +174,7 @@ const _perks = {
     mg_coolant:      { cat:'mg', label:'Coolant System',   desc:'MG fire rate +20% (stackable)',                          apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.80; } },
     mg_shieldbreak:  { cat:'mg', label:'Shield Breaker',   desc:'MG ignores 30% of enemy shield absorption',             apply: () => { _perkState.mgShieldBreak=true; } },
     mg_legendary:    { cat:'mg', once:true, legendary:true, label:'Iron Curtain',
-        desc:'LEGENDARY — MG never needs to reload. Damage ramps +5% every second of continuous fire, up to +50%. Stops when you stop firing.',
+        desc:'LEGENDARY — MG has no fire rate limit. Damage ramps +5% every second of continuous fire, up to +50%. Stops when you stop firing.',
         apply: () => { _perkState.mgIronCurtain=true; } },
 
     // ══════════════════════════════════════════════════════════════
@@ -190,7 +190,7 @@ const _perks = {
     br_tracking:     { cat:'br', label:'Target Tracking',  desc:'BR burst: each successive hit in the burst deals +10% more damage', apply: () => { _perkState.brTracking=true; } },
     br_explosive_tip:{ cat:'br', label:'Explosive Tip',    desc:'BR last bullet in every burst causes a small explosion (30 dmg, 60px)', apply: () => { _perkState.brExplosiveTip=true; } },
     br_legendary:    { cat:'br', once:true, legendary:true, label:'Decimator Protocol',
-        desc:'LEGENDARY — BR fires 6-round bursts. Every 3rd full burst auto-fires an additional burst at no reload cost.',
+        desc:'LEGENDARY — BR fires 6-round bursts. Every 3rd full burst auto-fires an additional burst at no fire rate cost.',
         apply: () => { _perkState.brDecimator=true; } },
 
     // ══════════════════════════════════════════════════════════════
@@ -205,7 +205,7 @@ const _perks = {
     sg_lifesteal:    { cat:'sg', label:'Bloodsoak',        desc:'SG kills heal 8 core HP',                                apply: () => { _perkState.sgLifesteal=true; } },
     sg_buckshot:     { cat:'sg', label:'Dragon Breath',    desc:'SG pellets ignite enemies on hit (30% chance per pellet)',apply: () => { _perkState.sgDragonBreath=true; } },
     sg_legendary:    { cat:'sg', once:true, legendary:true, label:'Point Blank Protocol',
-        desc:'LEGENDARY — SG deals maximum damage regardless of range. Kills with SG at under 120px restore 20 HP and reset reload.',
+        desc:'LEGENDARY — SG deals maximum damage regardless of range. Kills with SG at under 120px restore 20 HP and reset fire rate.',
         apply: () => { _perkState.sgPointBlank=true; } },
 
     // ══════════════════════════════════════════════════════════════
@@ -226,7 +226,7 @@ const _perks = {
     hr_stagger:      { cat:'hr', label:'Heavy Impact',     desc:'HR hits stagger large enemies for 0.5s',                  apply: () => { _perkState.hrStagger=true; } },
     hr_expose:       { cat:'hr', label:'Armor Crack',      desc:'HR hits mark target: +25% damage from all sources for 3s', apply: () => { _perkState.hrExpose=true; } },
     hr_charge_dmg:   { cat:'hr', label:'Overcharge',       desc:'HR +30% damage (stackable)',                             apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.30; } },
-    hr_twin_shot:    { cat:'hr', label:'Twin Shot',        desc:'Every 3rd HR shot fires a second bullet at -50% damage at no reload cost', apply: () => { _perkState.hrTwinShot=true; } },
+    hr_twin_shot:    { cat:'hr', label:'Twin Shot',        desc:'Every 3rd HR shot fires a second bullet at -50% damage at no fire rate cost', apply: () => { _perkState.hrTwinShot=true; } },
     hr_legendary:    { cat:'hr', once:true, legendary:true, label:'Annihilator',
         desc:'LEGENDARY — HR bullets now explode on impact (80px radius, 120 dmg). Cooldown between shots removed.',
         apply: () => { _perkState.hrAnnihilator=true; } },
@@ -241,7 +241,7 @@ const _perks = {
     sr_mark:         { cat:'sr', label:'Death Mark',       desc:'SR hit marks target: they take +30% dmg from all sources for 4s', apply: () => { _perkState.srMark=true; } },
     sr_ghost_bullet: { cat:'sr', label:'Ghost Round',      desc:'SR bullets are invisible until they hit',                 apply: () => { _perkState.srGhostBullet=true; } },
     sr_legendary:    { cat:'sr', once:true, legendary:true, label:'One Shot Protocol',
-        desc:'LEGENDARY — SR deals 600 base damage. Every kill with SR grants 0.5s of invincibility and instantly reloads.',
+        desc:'LEGENDARY — SR deals 600 base damage. Every kill with SR grants 0.5s of invincibility and instantly resets fire rate.',
         apply: () => { _perkState.srOneShot=true; } },
 
     // ══════════════════════════════════════════════════════════════
@@ -257,7 +257,7 @@ const _perks = {
     gl_concuss:      { cat:'gl', label:'Concussive Blast', desc:'GL explosions stun enemies for 1.5s',                    apply: () => { _perkState.glConcuss=true; } },
     gl_chain_det:    { cat:'gl', label:'Chain Detonation', desc:'GL kills trigger a secondary explosion from the corpse',  apply: () => { _perkState.glChainDet=true; } },
     gl_legendary:    { cat:'gl', once:true, legendary:true, label:'Carpet Bomb',
-        desc:'LEGENDARY — GL fires 4 grenades simultaneously in a spread. Explosion radius doubled. Kill with GL fully reloads.',
+        desc:'LEGENDARY — GL fires 4 grenades simultaneously in a spread. Explosion radius doubled. Kill with GL fully resets fire rate.',
         apply: () => { _perkState.glCarpetBomb=true; } },
 
     // ══════════════════════════════════════════════════════════════
@@ -721,7 +721,7 @@ const _perks = {
     // ── UNIVERSAL TRADEOFFS (5 new) ──────────────────────────────
     reckless_charge:     { cat:'universal', once:true, label:'Reckless Charge',  desc:'+20% speed, +15% damage, but shield max HP halved',          apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.20; _perkState.dmgMult=(_perkState.dmgMult||1)*1.15; player.maxShield=Math.round(player.maxShield*0.50); player.shield=Math.min(player.shield,player.maxShield); } },
     blood_pact:          { cat:'universal', once:true, label:'Blood Pact',       desc:'Kills restore 10 HP, but you lose 2 HP/s passively',         apply: () => { _perkState.bloodPact=true; } },
-    overdrive_protocol:  { cat:'universal', once:true, label:'Overdrive Protocol',desc:'+50% fire rate, but reload times doubled',                  apply: () => { _perkState.overdriveProtocol=true; } },
+    overdrive_protocol:  { cat:'universal', once:true, label:'Overdrive Protocol',desc:'+50% fire rate, but fire rate penalty doubled',              apply: () => { _perkState.overdriveProtocol=true; } },
     vampiric_rounds:     { cat:'universal', once:true, label:'Vampiric Rounds',  desc:'All damage dealt restores 3% as HP, but -15% max HP',        apply: () => { _perkState.vampiricRounds=true; Object.values(player.comp).forEach(c=>{c.max=Math.round(c.max*0.85);c.hp=Math.min(c.hp,c.max);}); } },
     kamikaze_protocol:   { cat:'universal', once:true, label:'Kamikaze Protocol',desc:'+60% explosion damage, but all explosions also damage you',  apply: () => { _perkState.kamikazeProtocol=true; _perkState.blastMult=(_perkState.blastMult||1)*1.60; } },
 
@@ -765,7 +765,7 @@ const _perks = {
     // ── BR (5 new) ──────────────────────────────────────────────
     br_armor_crack:      { cat:'br', label:'Armor Crack',        desc:'BR: full burst on same target reduces their DR by 15% for 4s',               apply: () => { _perkState.brArmorCrack=true; } },
     br_recoil_comp:      { cat:'br', label:'Recoil Comp',        desc:'BR: burst spread reduced by 40%, tighter grouping',                          apply: () => { _perkState.brRecoilComp=true; } },
-    br_kill_feed:        { cat:'br', label:'Kill Feed',           desc:'BR: kills instantly reload and grant +20% damage for next burst',            apply: () => { _perkState.brKillFeed=true; } },
+    br_kill_feed:        { cat:'br', label:'Kill Feed',           desc:'BR: kills instantly reset fire rate and grant +20% damage for next burst',   apply: () => { _perkState.brKillFeed=true; } },
     br_double_burst:     { cat:'br', label:'Double Burst',        desc:'BR: fires 2 bursts per trigger pull (second at -25% damage)',                apply: () => { _perkState.brDoubleBurst=true; } },
     br_crit_burst:       { cat:'br', label:'Critical Burst',      desc:'BR: if all bullets of a burst hit, the last deals 3× damage',               apply: () => { _perkState.brCritBurst=true; } },
 
