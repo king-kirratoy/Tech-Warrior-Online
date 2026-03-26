@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.68';
+const GAME_VERSION = 'v6.69';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -366,6 +366,7 @@ const WEAPON_OPTIONS = [
     { key:'rl',   label:'ROCKET LAUNCHER',    weight:65 },
     { key:'plsm', label:'PLASMA CANNON',  weight:60 },
     { key:'rail',  label:'RAILGUN',        weight:70 },
+    { key:'siphon',label:'SIPHON',         weight:25 },
 ];
 
 const MOD_OPTIONS = [
