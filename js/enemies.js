@@ -2446,6 +2446,12 @@ function destroyEnemyWithCleanup(scene, e) {
     if (e._visionConeGfx?.active) e._visionConeGfx.destroy();
     if (e._splitLabel?.active)   e._splitLabel.destroy();
     if (e._onDestroy) e._onDestroy();
+    // Siphon slow cleanup — restore original speed so death doesn't leave state dirty
+    if (e._siphonSlowed) {
+        if (e._siphonOrigSpeed !== undefined) e.speed = e._siphonOrigSpeed;
+        e._siphonSlowed = false;
+        e._slowed = false;
+    }
     e.destroy();
 }
 

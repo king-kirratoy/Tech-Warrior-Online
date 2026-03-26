@@ -794,6 +794,10 @@ function mpBroadcastBullet(x, y, angle, weaponKey, damage, side) {
     if (!_mpSocket || !_mpConnected || !_mpMatchActive) return;
     const w = WEAPONS[weaponKey];
     if (!w) return;
+    // TODO(pvp-siphon): beam weapons (w.beam === true) are not yet broadcast.
+    //   PVP siphon support requires a dedicated 'beam-fired' socket event that
+    //   applies slow + drain to remote players rather than spawning a bullet.
+    if (w.beam) return;
 
     _mpSocket.emit('bullet-fired', {
         x: Math.round(x),

@@ -47,7 +47,14 @@
     flex-direction: column;
     gap: 6px;
     min-width: 340px;
-    height: 98px;
+    min-height: 98px;
+    height: auto;
+}
+
+/* Siphon heat bar overheat pulse */
+@keyframes siphonOverheatPulse {
+    from { opacity: 1; }
+    to   { opacity: 0.35; }
 }
 
 .weapon-row {
