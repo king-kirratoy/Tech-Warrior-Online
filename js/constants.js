@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.61';
+const GAME_VERSION = 'v6.62';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -8,7 +8,7 @@ window.TW = {};
 
 // ── CHASSIS RESTRICTIONS ─────────────────────────────────────────
 const CHASSIS_WEAPONS = {
-    light:  new Set(['none','smg','fth','sg']),
+    light:  new Set(['none','smg','fth','sg','siphon']),
     medium: new Set(['none','mg','br','sr','rail']),
     heavy:  new Set(['none','hr','rl','plsm','gl']),
 };
@@ -138,6 +138,12 @@ const WEAPONS = {
     // FORTRESS MODE: 4s +30% DR and 5 HP/s regen, 14s cooldown
     fortress_mode: { name: 'FORTRESS MODE', weight: 30, modeTime: 4000, cooldown: 14000,
                      desc: '4s: +30% DR and 5 HP/s core regen. Immovable fortress.' },
+    // ── BEAM WEAPONS ────────────────────────────────────────────────
+    // SIPHON: life-drain beam — Light only. Slows target, drains HP, heat-gated.
+    siphon: { name: 'Siphon', dmg: 2, fireRate: 100, speed: 0, range: 280, spread: 0,
+              weight: 25, ammo: Infinity, reload: 0, projCount: 1,
+              beam: true, heatMax: 100, heatPerSec: 20, heatCoolPerSec: 15,
+              slowPct: 0.35, siphonHpPerSec: 4, piercing: true, beamWidth: 20, noCrit: true },
 };
 
 // ═══════════ WEAPON DISPLAY NAMES ═══════════
@@ -155,6 +161,7 @@ const WEAPON_NAMES = {
     rl:    'Rocket Launcher',
     plsm:  'Plasma Cannon',
     rail:  'Railgun',
+    siphon:'Siphon',
     none:  'None',
 };
 
