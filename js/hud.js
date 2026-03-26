@@ -129,13 +129,29 @@ function _updateBarRow(slotId, weaponKey, reloadTimestamp, time) {
         if (st) st.innerText = '';
         return;
     }
-    // Beam weapons: show active/ready state — heat is shown on dedicated heat bar
+    // Beam weapons (siphon): show per-arm heat in this arm's bar row
     if (WEAPONS[weaponKey]?.beam) {
-        fill.style.width = player?._siphonFiring ? '100%' : '0%';
+        const weapon   = WEAPONS.siphon;
+        const heat     = slotId === 'L' ? (player?._siphonHeatL || 0) : (player?._siphonHeatR || 0);
+        const overheat = slotId === 'L' ? player?._siphonOverheatL : player?._siphonOverheatR;
+        const pct      = Math.min(100, (heat / weapon.heatMax) * 100);
+        fill.style.width = pct + '%';
+        if (overheat) {
+            fill.style.background = '#ff2200';
+            fill.style.animation  = 'siphonOverheatPulse 0.35s ease-in-out infinite alternate';
+        } else if (pct >= 80) {
+            fill.style.background = '#ff4400';
+            fill.style.animation  = '';
+        } else if (pct >= 60) {
+            fill.style.background = '#ffaa00';
+            fill.style.animation  = '';
+        } else {
+            fill.style.background = '#00ff88';
+            fill.style.animation  = '';
+        }
         if (st) {
-            if (player?._siphonOverheat)        st.innerText = 'OVR';
-            else if (player?._siphonFiring)     st.innerText = 'ON';
-            else                                st.innerText = 'RDY';
+            st.innerText   = overheat ? 'OVERHEAT' : Math.round(pct) + '%';
+            st.style.color = overheat ? '#ff2200' : pct >= 80 ? '#ff4400' : pct >= 60 ? '#ffaa00' : '#00ff88';
         }
         return;
     }
@@ -499,44 +515,21 @@ function _resetHUDState() {
     const txtR = document.getElementById('txt-R');
     if (txtL) { txtL.innerText = (loadout.L || 'none').toUpperCase(); txtL.style.fontSize = ''; }
     if (txtR) { txtR.innerText = (loadout.R || 'none').toUpperCase(); txtR.style.fontSize = ''; }
-    // Hide siphon heat bar on reset
-    const _heatRow = document.getElementById('slot-siphon-heat');
-    if (_heatRow) _heatRow.style.display = 'none';
+    // Reset arm bar fill styles (clears any leftover siphon heat colours/animations)
+    ['wr-fill-L', 'wr-fill-R'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.background = ''; el.style.animation = ''; el.style.width = '0%'; }
+    });
+    ['wr-st-L', 'wr-st-R'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.color = ''; }
+    });
 }
 
 // ── Siphon heat bar ───────────────────────────────────────────────
-/** Update the siphon heat bar fill, colour, and overheat pulse. Called from updateSiphonBeam(). */
+// Heat is now shown directly in the L ARM / R ARM bar rows via _updateBarRow().
+// This function is retained as a no-op call site from updateSiphonBeam().
 function updateSiphonHeatBar() {
-    const row = document.getElementById('slot-siphon-heat');
-    if (!row) return;
-    const hasSiphon = (loadout.L === 'siphon' || loadout.R === 'siphon');
-    row.style.display = hasSiphon ? 'flex' : 'none';
-    if (!hasSiphon || !player?.active) return;
-
-    const weapon = WEAPONS.siphon;
-    const heat   = player._siphonHeat || 0;
-    const pct    = Math.min(100, (heat / weapon.heatMax) * 100);
-    const fill   = document.getElementById('siphon-heat-fill');
-    const st     = document.getElementById('wr-st-siphon');
-
-    if (fill) {
-        fill.style.width = pct + '%';
-        if (player._siphonOverheat) {
-            fill.style.background = '#ff2200';
-            fill.style.animation  = 'siphonOverheatPulse 0.35s ease-in-out infinite alternate';
-        } else if (pct >= 80) {
-            fill.style.background = '#ff4400';
-            fill.style.animation  = '';
-        } else if (pct >= 60) {
-            fill.style.background = '#ffaa00';
-            fill.style.animation  = '';
-        } else {
-            fill.style.background = '#00ff88';
-            fill.style.animation  = '';
-        }
-    }
-    if (st) {
-        st.innerText  = player._siphonOverheat ? 'OVERHEAT' : Math.round(pct) + '%';
-        st.style.color = player._siphonOverheat ? '#ff2200' : pct >= 80 ? '#ff4400' : pct >= 60 ? '#ffaa00' : '#00ff88';
-    }
+    // Per-arm heat display is handled each frame by updateCooldownOverlays()
+    // via _updateBarRow(), which reads player._siphonHeatL / _siphonHeatR directly.
 }

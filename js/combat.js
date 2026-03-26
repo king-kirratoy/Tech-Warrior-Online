@@ -1,10 +1,12 @@
 // ═══════════ FIRING FUNCTIONS ═══════════
 
 // ── Siphon beam module state ──────────────────────────────────────
-// Tracks enemies currently slowed by the active siphon beam.
-let _siphonSlowedEnemies = new Set();
-// Phaser Graphics object for beam visual (created once, reused every frame).
-let _siphonGfx = null;
+// Per-arm slow tracking sets. Dual-arm: an enemy stays slowed if in either set.
+let _siphonSlowedEnemiesL = new Set();
+let _siphonSlowedEnemiesR = new Set();
+// Per-arm Phaser Graphics objects for beam visuals (created once, reused every frame).
+let _siphonGfxL = null;
+let _siphonGfxR = null;
 // Timestamp for throttling heal-number display (max once per 500ms).
 let _siphonHealTextThrottle = 0;
 
@@ -20,8 +22,12 @@ function fire(scene, side) {
 
     // ── Beam weapons (siphon) — bypass reload-mult calculations ──────────
     if (weapon.beam) {
-        // Mark as firing every frame the button is held (used by updateSiphonBeam)
-        if (!player._siphonOverheat) player._siphonFiring = true;
+        // Mark this arm as firing every frame the button is held (used by updateSiphonBeam)
+        const _armOverheat = side === 'L' ? player._siphonOverheatL : player._siphonOverheatR;
+        if (!_armOverheat) {
+            if (side === 'L') player._siphonFiringL = true;
+            else              player._siphonFiringR = true;
+        }
         // Damage tick: fire only every weapon.fireRate ms
         const _beamLast = side === 'L' ? reloadL : reloadR;
         if (now >= _beamLast) {
@@ -311,8 +317,11 @@ function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
 // Called every weapon.fireRate ms (100ms) while the fire button is held.
 // Casts a ray from the arm origin, checks cover for truncation, then
 // damages / slows / siphons HP from every enemy in the beam's width.
+// Slow does NOT stack across both arms — an enemy hit by both beams is
+// only slowed once. Heal DOES stack — each beam heals independently.
 function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
-    if (player._siphonOverheat) return;
+    const _overheat = side === 'L' ? player._siphonOverheatL : player._siphonOverheatR;
+    if (_overheat) return;
 
     const ox = armOx + Math.cos(aimAngle) * barrelDist;
     const oy = armOy + Math.sin(aimAngle) * barrelDist;
@@ -341,15 +350,19 @@ function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     const ex = ox + Math.cos(aimAngle) * rayLen;
     const ey = oy + Math.sin(aimAngle) * rayLen;
 
-    // Store beam geometry for per-frame rendering in updateSiphonBeam
-    player._siphonBeamRayLen = rayLen;
-    player._siphonBeamSide   = side;
+    // Store per-arm beam geometry for per-frame rendering in updateSiphonBeam
+    if (side === 'L') player._siphonBeamRayLenL = rayLen;
+    else              player._siphonBeamRayLenR  = rayLen;
 
     const dx = ex - ox, dy = ey - oy;
     const lenSq = dx*dx + dy*dy;
     const halfWidth = weapon.beamWidth / 2;  // 10 px
     const _newHitSet = new Set();
     let _siphonHealThisTick = 0;
+
+    // Per-arm slow tracking: use this arm's set; other arm's set for cross-check
+    const _mySlowSet    = side === 'L' ? _siphonSlowedEnemiesL : _siphonSlowedEnemiesR;
+    const _otherSlowSet = side === 'L' ? _siphonSlowedEnemiesR : _siphonSlowedEnemiesL;
 
     enemies.getChildren().forEach(e => {
         if (!e.active || lenSq <= 0) return;
@@ -365,7 +378,7 @@ function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
         showDamageText(scene, e.x, e.y, weapon.dmg);
         _shotsHit++;
 
-        // Apply slow (store original speed once on first application)
+        // Apply slow (store original speed once on first application — no double-stack)
         if (!e._siphonSlowed) {
             e._siphonOrigSpeed = e.speed;
             e.speed = Math.max(1, Math.round(e.speed * (1 - weapon.slowPct)));
@@ -374,7 +387,7 @@ function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
         }
         _newHitSet.add(e);
 
-        // Siphon heal: siphonHpPerSec / 10 per 100ms tick
+        // Siphon heal: siphonHpPerSec / 10 per 100ms tick (stacks from both arms)
         if (player?.comp?.core) {
             const _coreBefore = player.comp.core.hp;
             player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + weapon.siphonHpPerSec / 10);
@@ -383,19 +396,20 @@ function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
         }
     });
 
-    // Frame-accurate slow cleanup: remove slow from enemies that left the beam this tick
-    _siphonSlowedEnemies.forEach(e => {
+    // Frame-accurate slow cleanup: remove slow from enemies that left THIS arm's beam.
+    // Only unslow if the OTHER arm is also not hitting this enemy (no double-slow removal).
+    _mySlowSet.forEach(e => {
         if (!e.active || !_newHitSet.has(e)) {
-            if (e.active) {
+            if (e.active && !_otherSlowSet.has(e)) {
                 e.speed = e._siphonOrigSpeed !== undefined ? e._siphonOrigSpeed : e.speed;
                 e._slowed = false;
                 e._siphonSlowed = false;
                 delete e._siphonOrigSpeed;
             }
-            _siphonSlowedEnemies.delete(e);
+            _mySlowSet.delete(e);
         }
     });
-    _newHitSet.forEach(e => _siphonSlowedEnemies.add(e));
+    _newHitSet.forEach(e => _mySlowSet.add(e));
 
     // TODO(pvp): siphon beam vs remote players not yet implemented for PVP mode.
     //            Apply slow + damageRemotePlayer() calls when PVP beam is added.
@@ -423,7 +437,8 @@ function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
 
 // ── Per-frame siphon beam update ──────────────────────────────────
 // Must be called once per frame BEFORE handlePlayerFiring() so that
-// _siphonFiring is reset before fire() potentially sets it again.
+// _siphonFiringL/R are reset before fire() potentially sets them again.
+// Supports single-arm or dual-arm (light chassis) siphon independently.
 function updateSiphonBeam(scene) {
     if (!player?.active || !isDeployed) {
         _siphonBeamHide();
@@ -431,7 +446,7 @@ function updateSiphonBeam(scene) {
     }
     if (loadout.L !== 'siphon' && loadout.R !== 'siphon') {
         // No siphon equipped — ensure any lingering slows are cleaned up
-        if (_siphonSlowedEnemies.size > 0) _clearAllSiphonSlows();
+        if (_siphonSlowedEnemiesL.size > 0 || _siphonSlowedEnemiesR.size > 0) _clearAllSiphonSlows();
         _siphonBeamHide();
         return;
     }
@@ -439,107 +454,171 @@ function updateSiphonBeam(scene) {
     const weapon = WEAPONS.siphon;
     const dt = GAME.loop.delta;
 
-    const wasFiring = player._siphonFiring;
-    player._siphonFiring = false;  // reset; fire() will re-set if button held this frame
+    // Capture and reset per-arm firing flags (fire() sets them if button held this frame)
+    const wasFiringL = player._siphonFiringL;
+    const wasFiringR = player._siphonFiringR;
+    player._siphonFiringL = false;
+    player._siphonFiringR = false;
 
-    const prevOverheat = player._siphonOverheat;
-
-    if (wasFiring && !player._siphonOverheat) {
-        // Accumulate heat per frame while beam is active
-        player._siphonHeat = Math.min(weapon.heatMax,
-            player._siphonHeat + weapon.heatPerSec * (dt / 1000));
-        if (player._siphonHeat >= weapon.heatMax) {
-            player._siphonOverheat = true;
-            player._siphonHeat = weapon.heatMax;
-            _clearAllSiphonSlows();
+    // ── Per-arm heat: L ───────────────────────────────────────────
+    if (loadout.L === 'siphon') {
+        const prevOverheatL = player._siphonOverheatL;
+        if (wasFiringL && !player._siphonOverheatL) {
+            player._siphonHeatL = Math.min(weapon.heatMax,
+                player._siphonHeatL + weapon.heatPerSec * (dt / 1000));
+            if (player._siphonHeatL >= weapon.heatMax) {
+                player._siphonOverheatL = true;
+                player._siphonHeatL = weapon.heatMax;
+                _clearSiphonSlows('L');
+            }
+        } else {
+            player._siphonHeatL = Math.max(0,
+                player._siphonHeatL - weapon.heatCoolPerSec * (dt / 1000));
+            if (player._siphonOverheatL && player._siphonHeatL <= 0) player._siphonOverheatL = false;
+            if (!wasFiringL && _siphonSlowedEnemiesL.size > 0) _clearSiphonSlows('L');
         }
-    } else {
-        // Cool down: not firing or overheated
-        player._siphonHeat = Math.max(0,
-            player._siphonHeat - weapon.heatCoolPerSec * (dt / 1000));
-        if (player._siphonOverheat && player._siphonHeat <= 0) {
-            player._siphonOverheat = false;
-        }
-        if (!wasFiring && _siphonSlowedEnemies.size > 0) {
-            _clearAllSiphonSlows();
+        if (!prevOverheatL && player._siphonOverheatL) {
+            if (typeof sndSiphonOverheat === 'function') sndSiphonOverheat();
+            if (typeof sndSiphonBeamStop === 'function') sndSiphonBeamStop();
         }
     }
 
-    // ── Overheat event: play buzz and stop hum ───────────────────────
-    if (!prevOverheat && player._siphonOverheat) {
-        if (typeof sndSiphonOverheat === 'function') sndSiphonOverheat();
-        if (typeof sndSiphonBeamStop === 'function') sndSiphonBeamStop();
+    // ── Per-arm heat: R ───────────────────────────────────────────
+    if (loadout.R === 'siphon') {
+        const prevOverheatR = player._siphonOverheatR;
+        if (wasFiringR && !player._siphonOverheatR) {
+            player._siphonHeatR = Math.min(weapon.heatMax,
+                player._siphonHeatR + weapon.heatPerSec * (dt / 1000));
+            if (player._siphonHeatR >= weapon.heatMax) {
+                player._siphonOverheatR = true;
+                player._siphonHeatR = weapon.heatMax;
+                _clearSiphonSlows('R');
+            }
+        } else {
+            player._siphonHeatR = Math.max(0,
+                player._siphonHeatR - weapon.heatCoolPerSec * (dt / 1000));
+            if (player._siphonOverheatR && player._siphonHeatR <= 0) player._siphonOverheatR = false;
+            if (!wasFiringR && _siphonSlowedEnemiesR.size > 0) _clearSiphonSlows('R');
+        }
+        if (!prevOverheatR && player._siphonOverheatR) {
+            if (typeof sndSiphonOverheat === 'function') sndSiphonOverheat();
+            if (typeof sndSiphonBeamStop === 'function') sndSiphonBeamStop();
+        }
     }
 
-    const heatFraction = (player._siphonHeat || 0) / weapon.heatMax;
+    // Heat fraction for audio: use whichever arm is hotter
+    const heatFraction = Math.max(player._siphonHeatL || 0, player._siphonHeatR || 0) / weapon.heatMax;
 
     // ── Beam visual rendering ────────────────────────────────────────
-    if (wasFiring && !player._siphonOverheat) {
-        // Recalculate live arm origin and aim direction for smooth rendering
-        const _bSide  = loadout.chassis === 'light' ? 12 : loadout.chassis === 'medium' ? 26 : 42;
-        const _bd     = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
-        const _side   = loadout.L === 'siphon' ? 'L' : 'R';
-        const _pSign  = _side === 'L' ? -1 : 1;
-        const _pAngle = torso.rotation + _pSign * Math.PI / 2;
-        const _bOx    = torso.x + Math.cos(_pAngle) * _bSide;
-        const _bOy    = torso.y + Math.sin(_pAngle) * _bSide;
-        const _bMx    = scene.input.activePointer.worldX;
-        const _bMy    = scene.input.activePointer.worldY;
-        const _bAim   = Math.atan2(_bMy - _bOy, _bMx - _bOx);
-        const _ox     = _bOx + Math.cos(_bAim) * _bd;
-        const _oy     = _bOy + Math.sin(_bAim) * _bd;
-        const _rayLen = player._siphonBeamRayLen !== undefined ? player._siphonBeamRayLen : weapon.range;
-        const _ex     = _ox + Math.cos(_bAim) * _rayLen;
-        const _ey     = _oy + Math.sin(_bAim) * _rayLen;
+    // Shared geometry constants
+    const _bSide = loadout.chassis === 'light' ? 12 : loadout.chassis === 'medium' ? 26 : 42;
+    const _bd    = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
+    const _bMx   = scene.input.activePointer.worldX;
+    const _bMy   = scene.input.activePointer.worldY;
 
-        if (!_siphonGfx) {
-            _siphonGfx = scene.add.graphics().setDepth(50);
-        }
-        _siphonGfx.setVisible(true);
-        _siphonGfx.clear();
-        // Glow layer: wide, low alpha
-        _siphonGfx.lineStyle(14, 0x00ff88, 0.22);
-        _siphonGfx.beginPath();
-        _siphonGfx.moveTo(_ox, _oy);
-        _siphonGfx.lineTo(_ex, _ey);
-        _siphonGfx.strokePath();
-        // Mid glow
-        _siphonGfx.lineStyle(9, 0x00ff88, 0.45);
-        _siphonGfx.beginPath();
-        _siphonGfx.moveTo(_ox, _oy);
-        _siphonGfx.lineTo(_ex, _ey);
-        _siphonGfx.strokePath();
-        // Main beam
-        _siphonGfx.lineStyle(6, 0x00ff88, 0.85);
-        _siphonGfx.beginPath();
-        _siphonGfx.moveTo(_ox, _oy);
-        _siphonGfx.lineTo(_ex, _ey);
-        _siphonGfx.strokePath();
+    // Ensure per-arm graphics objects exist
+    if (!_siphonGfxL) _siphonGfxL = scene.add.graphics().setDepth(50);
+    if (!_siphonGfxR) _siphonGfxR = scene.add.graphics().setDepth(50);
 
-        // ── Audio: start or update hum ───────────────────────────────
+    let anyBeamVisible = false;
+
+    // L arm beam
+    if (loadout.L === 'siphon' && wasFiringL && !player._siphonOverheatL) {
+        const _pAngle = torso.rotation + (-1) * Math.PI / 2;
+        const _bOx   = torso.x + Math.cos(_pAngle) * _bSide;
+        const _bOy   = torso.y + Math.sin(_pAngle) * _bSide;
+        const _bAim  = Math.atan2(_bMy - _bOy, _bMx - _bOx);
+        const _ox    = _bOx + Math.cos(_bAim) * _bd;
+        const _oy    = _bOy + Math.sin(_bAim) * _bd;
+        const _rayLen = player._siphonBeamRayLenL !== undefined ? player._siphonBeamRayLenL : weapon.range;
+        _drawSiphonBeam(_siphonGfxL, _ox, _oy, _bAim, _rayLen);
+        anyBeamVisible = true;
+    } else {
+        _siphonGfxL.clear();
+        _siphonGfxL.setVisible(false);
+    }
+
+    // R arm beam
+    if (loadout.R === 'siphon' && wasFiringR && !player._siphonOverheatR) {
+        const _pAngle = torso.rotation + (1) * Math.PI / 2;
+        const _bOx   = torso.x + Math.cos(_pAngle) * _bSide;
+        const _bOy   = torso.y + Math.sin(_pAngle) * _bSide;
+        const _bAim  = Math.atan2(_bMy - _bOy, _bMx - _bOx);
+        const _ox    = _bOx + Math.cos(_bAim) * _bd;
+        const _oy    = _bOy + Math.sin(_bAim) * _bd;
+        const _rayLen = player._siphonBeamRayLenR !== undefined ? player._siphonBeamRayLenR : weapon.range;
+        _drawSiphonBeam(_siphonGfxR, _ox, _oy, _bAim, _rayLen);
+        anyBeamVisible = true;
+    } else {
+        _siphonGfxR.clear();
+        _siphonGfxR.setVisible(false);
+    }
+
+    // ── Audio: start/update hum if any beam is active, stop if none ──
+    if (anyBeamVisible) {
         if (typeof sndSiphonBeamStart === 'function') sndSiphonBeamStart(heatFraction);
         if (typeof sndSiphonBeamUpdate === 'function') sndSiphonBeamUpdate(heatFraction);
     } else {
-        _siphonBeamHide();
-        // Stop hum when not firing (stop is idempotent if already stopped)
-        if (!wasFiring || player._siphonOverheat) {
-            if (typeof sndSiphonBeamStop === 'function') sndSiphonBeamStop();
-        }
+        if (typeof sndSiphonBeamStop === 'function') sndSiphonBeamStop();
     }
 
     if (typeof updateSiphonHeatBar === 'function') updateSiphonHeatBar();
 }
 
-// ── Hide and clear the siphon beam graphics ──────────────────────
+// ── Draw one siphon beam (3 layered lines: glow + core) ──────────
+function _drawSiphonBeam(gfx, ox, oy, aimAngle, rayLen) {
+    const ex = ox + Math.cos(aimAngle) * rayLen;
+    const ey = oy + Math.sin(aimAngle) * rayLen;
+    gfx.setVisible(true);
+    gfx.clear();
+    // Glow layer: wide, low alpha
+    gfx.lineStyle(14, 0x00ff88, 0.22);
+    gfx.beginPath();
+    gfx.moveTo(ox, oy);
+    gfx.lineTo(ex, ey);
+    gfx.strokePath();
+    // Mid glow
+    gfx.lineStyle(9, 0x00ff88, 0.45);
+    gfx.beginPath();
+    gfx.moveTo(ox, oy);
+    gfx.lineTo(ex, ey);
+    gfx.strokePath();
+    // Main beam
+    gfx.lineStyle(6, 0x00ff88, 0.85);
+    gfx.beginPath();
+    gfx.moveTo(ox, oy);
+    gfx.lineTo(ex, ey);
+    gfx.strokePath();
+}
+
+// ── Hide and clear both siphon beam graphics ─────────────────────
 function _siphonBeamHide() {
-    if (_siphonGfx) {
-        _siphonGfx.clear();
-        _siphonGfx.setVisible(false);
-    }
+    if (_siphonGfxL) { _siphonGfxL.clear(); _siphonGfxL.setVisible(false); }
+    if (_siphonGfxR) { _siphonGfxR.clear(); _siphonGfxR.setVisible(false); }
+}
+
+// ── Clear slows from a single arm's set ──────────────────────────
+// Only actually unslows an enemy if the other arm is also not hitting it.
+function _clearSiphonSlows(side) {
+    const mySet    = side === 'L' ? _siphonSlowedEnemiesL : _siphonSlowedEnemiesR;
+    const otherSet = side === 'L' ? _siphonSlowedEnemiesR : _siphonSlowedEnemiesL;
+    mySet.forEach(e => {
+        if (!otherSet.has(e)) {
+            if (e.active) {
+                e.speed = e._siphonOrigSpeed !== undefined ? e._siphonOrigSpeed : e.speed;
+                e._slowed = false;
+                e._siphonSlowed = false;
+                delete e._siphonOrigSpeed;
+            }
+        }
+    });
+    mySet.clear();
 }
 
 function _clearAllSiphonSlows() {
-    _siphonSlowedEnemies.forEach(e => {
+    // Merge both sets and unslow everything
+    const allSlowed = new Set([..._siphonSlowedEnemiesL, ..._siphonSlowedEnemiesR]);
+    allSlowed.forEach(e => {
         if (e.active) {
             e.speed = e._siphonOrigSpeed !== undefined ? e._siphonOrigSpeed : e.speed;
             e._slowed = false;
@@ -547,7 +626,8 @@ function _clearAllSiphonSlows() {
             delete e._siphonOrigSpeed;
         }
     });
-    _siphonSlowedEnemies.clear();
+    _siphonSlowedEnemiesL.clear();
+    _siphonSlowedEnemiesR.clear();
 }
 
 function fireGL(scene, weapon, armOx, armOy, aimAngle) {
