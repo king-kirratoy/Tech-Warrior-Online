@@ -1848,8 +1848,6 @@ function _applyHeavyChassisRegen() {
 /** Tick shield HP upward once the regen delay has elapsed since last damage. */
 function _applyShieldRegen(time) {
     if (_perkState.noShieldRegen) return;
-    const playerSpeed    = player?.body ? Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2) : 999;
-    const immovableBonus = (_perkState.immovable && playerSpeed < 10) ? 3 : 1;
     const regenDelay     = player._shieldRegenDelay ?? 5;
     const regenRate      = player._shieldRegenRate  ?? 1.0;
     const _gearRegenMult = 1 + ((_gearState?.shieldRegen || 0) / 100);
@@ -1863,14 +1861,14 @@ function _applyShieldRegen(time) {
         if (player._shieldLayerHP[0] < _l1Max && player._layer1LastDamageTime > 0) {
             const _l1Since = (time - player._layer1LastDamageTime) / 1000;
             if (_l1Since >= regenDelay) {
-                player._shieldLayerHP[0] = Math.min(_l1Max, player._shieldLayerHP[0] + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult * immovableBonus);
+                player._shieldLayerHP[0] = Math.min(_l1Max, player._shieldLayerHP[0] + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult);
                 _layerChanged = true;
             }
         }
         if (player._shieldLayerHP[1] < _l2Max && player._layer2LastDamageTime > 0) {
             const _l2Since = (time - player._layer2LastDamageTime) / 1000;
             if (_l2Since >= regenDelay) {
-                player._shieldLayerHP[1] = Math.min(_l2Max, player._shieldLayerHP[1] + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult * immovableBonus);
+                player._shieldLayerHP[1] = Math.min(_l2Max, player._shieldLayerHP[1] + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult);
                 _layerChanged = true;
             }
         }
@@ -1883,7 +1881,7 @@ function _applyShieldRegen(time) {
 
     const secondsSinceHit = (time - lastDamageTime) / 1000;
     if (player.maxShield > 0 && lastDamageTime > 0 && secondsSinceHit >= regenDelay && player.shield < player.maxShield) {
-        player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult * immovableBonus);
+        player.shield = Math.min(player.maxShield, player.shield + regenRate * (_perkState.shieldRegenMult || 1) * _gearRegenMult);
         if (player.shield >= player.maxShield) {
             player._shieldAdaptStack = 0;  // adaptive_shield: reset on full regen
         }

@@ -24,7 +24,6 @@ function _healPlayerFull() {
     if (_lArmDestroyed) { _lArmDestroyed = false; if (_savedL) loadout.L = _savedL; }
     if (_rArmDestroyed) { _rArmDestroyed = false; if (_savedR) loadout.R = _savedR; }
     updateHUD(); updateBars(); updatePaperDoll();
-    if (_perkState.ammoCache) { isAmmoActive = true; setTimeout(()=>{ isAmmoActive=false; },8000); }
 }
 
 function showRoundBanner(title, sub, duration, onDone) {
