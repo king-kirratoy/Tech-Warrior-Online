@@ -433,10 +433,6 @@ function _calcWeight(lo) {
 }
 
 function deployMech() {
-    // Phase 4: Apply campaign chassis upgrades before deploy
-    if (_gameMode === 'campaign' && typeof applyChassisUpgrades === 'function') {
-        applyChassisUpgrades();
-    }
     // Reset kill counter at the start of every new warzone run
     if (_gameMode !== 'campaign' && _gameMode !== 'pvp') {
         _totalKills = 0;

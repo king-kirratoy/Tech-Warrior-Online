@@ -118,12 +118,6 @@ document.addEventListener('keydown', function(e) {
             if (typeof _closeLoadoutSlots === 'function') _closeLoadoutSlots();
             return;
         }
-        const upOv = document.getElementById('upgrades-overlay');
-        if (upOv && upOv.style.display !== 'none') {
-            e.preventDefault();
-            if (typeof _closeUpgrades === 'function') _closeUpgrades();
-            return;
-        }
     }
 
     // ── Stats / Loadout overlay: Escape closes it ─────────────────

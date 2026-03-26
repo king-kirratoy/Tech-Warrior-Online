@@ -2,7 +2,7 @@
 //  CAMPAIGN MISSION SYSTEM — Phases 3 & 4
 //  Phase 3: Chapters, missions, player leveling, modifiers, bonus
 //           objectives, variable enemy compositions, XP scaling.
-//  Phase 4: Chassis upgrades, hangar shop, mission rewards, loadout slots.
+//  Phase 4: Hangar shop, mission rewards, loadout slots.
 // ═══════════════════════════════════════════════════════════════════
 //
 // ── CROSS-FILE DEPENDENCIES ──────────────────────────────────────
@@ -13,7 +13,6 @@
 //   _campaignState        — active campaign state (current chapter, mission, XP, level, etc.)
 //   MISSION_MODIFIERS     — random modifier definitions
 //   BONUS_OBJECTIVES      — random bonus objective definitions
-//   SKILL_TREES           — skill tree definitions per chassis (Phase 4)
 //   MISSION_REWARDS       — first-clear guaranteed loot per mission (Phase 4)
 //
 // FUNCTIONS CALLED FROM index.html:
@@ -29,8 +28,6 @@
 //   showMissionSelect()         — show mission/chapter select UI
 //   saveCampaignState()         — save full campaign state
 //   loadCampaignState()         — load full campaign state
-//   getSkillTreeBonuses(chassisType) — get bonuses from chosen skills (Phase 4)
-//   applySkillTreeBonuses()     — apply skill-based chassis stat bonuses (Phase 4)
 //   getMissionReward(missionId) — get first-clear reward for a mission (Phase 4)
 //   showShop()                  — show campaign hangar shop UI (Phase 4)
 //   refreshShopStock()          — restock shop inventory (Phase 4)
@@ -268,9 +265,7 @@ let _campaignState = {
     // Phase 4: Claimed first-clear rewards: { 'ch1_m1': true, ... }
     claimedRewards: {},
     // Phase 4: Saved loadout configurations
-    loadoutSlots: [],
-    // Skill tree: array of chosen node IDs
-    skillsChosen: []
+    loadoutSlots: []
 };
 
 // ══════════════════════════════════════════════════════════════════
@@ -766,7 +761,7 @@ function showMissionSelect() {
     html += `<span style="position:absolute;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:4px;color:var(--sci-cyan);text-transform:uppercase;pointer-events:none;">CAMPAIGN</span>`;
     html += `<span style="position:absolute;left:50%;transform:translateX(-50%);margin-top:22px;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);pointer-events:none;">LVL ${_campaignState.playerLevel} &nbsp;·&nbsp; ${xpCur} / ${xpNeeded} XP</span>`;
     html += `<button onclick="_openShopFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;margin-left:auto;">Supply Shop</button>`;
-    html += `<button onclick="_openSkillTreeFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">Skill Tree</button>`;
+    html += `<button class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;opacity:0.45;cursor:default;" disabled title="Coming Soon">Skill Tree</button>`;
     html += `<button onclick="_openLoadoutFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">Loadout</button>`;
     html += '</div>';
 
@@ -852,13 +847,6 @@ function _openShopFromMission() {
     showShop();
 }
 
-/** Open the skill tree overlay from mission select. */
-function _openSkillTreeFromMission() {
-    const overlay = document.getElementById('mission-select-overlay');
-    if (overlay) overlay.style.display = 'none';
-    _showUpgradesPanel();
-}
-
 /** Open the loadout (stats/gear) overlay from mission select. */
 function _openLoadoutFromMission() {
     const overlay = document.getElementById('mission-select-overlay');
@@ -934,268 +922,8 @@ function _closeMissionSelect() {
 // ══════════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════════
-// 4A — SKILL TREE UPGRADES (1 skill point per level)
+// 4A — SKILL TREE (removed — new system TBD)
 // ══════════════════════════════════════════════════════════════════
-
-/** Skill tree definitions per chassis.
- *  Each node: { id, label, desc, stats, requires, x, y }
- *  x/y are grid positions for visual tree layout (x: 0-6 columns, y: 0-9 rows).
- *  Three branches: LEFT=offense, CENTER=defense/hull, RIGHT=utility/mobility */
-const SKILL_TREES = {
-    // ══════════════════════════════════════════════════════════════
-    // LIGHT CHASSIS — Speed, Crit, Dodge focused
-    // ══════════════════════════════════════════════════════════════
-    light: [
-        // ── ROW 0: Entry nodes (3 branches) ──
-        { id:'l_dmg1',     x:0, y:0, label:'+5% Damage',         desc:'Weapon amplifier circuit.',         stats:{ dmgMult:0.05 } },
-        { id:'l_core1',    x:3, y:0, label:'+15 Core HP',        desc:'Reinforce core plating.',           stats:{ coreHP:15 } },
-        { id:'l_spd1',     x:6, y:0, label:'+10 Speed',          desc:'Tune leg actuators.',               stats:{ spd:10 } },
-        // ── ROW 1 ──
-        { id:'l_reload1',  x:0, y:1, label:'+5% Reload',         desc:'Optimized ammo feed.',              stats:{ reloadMult:0.05 }, requires:['l_dmg1'] },
-        { id:'l_crit1',    x:1, y:1, label:'+3% Crit',           desc:'Precision targeting.',              stats:{ critChance:0.03 }, requires:['l_dmg1'] },
-        { id:'l_arm1',     x:2, y:1, label:'+10 Arm HP',         desc:'Reinforce arm joints.',             stats:{ armHP:10 }, requires:['l_core1'] },
-        { id:'l_shld1',    x:4, y:1, label:'+8% Shield Regen',   desc:'Quick-charge capacitors.',          stats:{ shieldRegen:0.08 }, requires:['l_core1'] },
-        { id:'l_dodge1',   x:5, y:1, label:'+3% Dodge',          desc:'Evasive subroutines.',              stats:{ dodgeChance:0.03 }, requires:['l_spd1'] },
-        { id:'l_leg1',     x:6, y:1, label:'+10 Leg HP',         desc:'Composite leg armor.',              stats:{ legHP:10 }, requires:['l_spd1'] },
-        // ── ROW 2 ──
-        { id:'l_reload2',  x:0, y:2, label:'+8% Reload',         desc:'Dual-feed magazine.',               stats:{ reloadMult:0.08 }, requires:['l_reload1'] },
-        { id:'l_crit2',    x:1, y:2, label:'+4% Crit',           desc:'Weak-point analyzer.',              stats:{ critChance:0.04 }, requires:['l_crit1'] },
-        { id:'l_core2',    x:3, y:2, label:'+20 Core HP',        desc:'Layered core shielding.',           stats:{ coreHP:20 }, requires:['l_core1'] },
-        { id:'l_dodge2',   x:5, y:2, label:'+4% Dodge',          desc:'Predictive evasion.',               stats:{ dodgeChance:0.04 }, requires:['l_dodge1'] },
-        { id:'l_spd2',     x:6, y:2, label:'+12 Speed',          desc:'Advanced thrusters.',               stats:{ spd:12 }, requires:['l_spd1'] },
-        // ── ROW 3 ──
-        { id:'l_dmg2',     x:0, y:3, label:'+8% Damage',         desc:'Overclocked weapon rails.',         stats:{ dmgMult:0.08 }, requires:['l_reload1'] },
-        { id:'l_critdmg1', x:1, y:3, label:'+20% Crit Damage',   desc:'Armor-piercing rounds.',           stats:{ critDmg:0.20 }, requires:['l_crit2'] },
-        { id:'l_arm2',     x:2, y:3, label:'+15 Arm HP',         desc:'Hardened arm plating.',             stats:{ armHP:15 }, requires:['l_arm1'] },
-        { id:'l_shld2',    x:4, y:3, label:'+12% Shield Regen',  desc:'Rapid-cycle shield array.',         stats:{ shieldRegen:0.12 }, requires:['l_shld1'] },
-        { id:'l_leg2',     x:5, y:3, label:'+15 Leg HP',         desc:'Carbon-fiber legs.',                stats:{ legHP:15 }, requires:['l_leg1'] },
-        { id:'l_spd3',     x:6, y:3, label:'+15 Speed',          desc:'Afterburner integration.',          stats:{ spd:15 }, requires:['l_spd2'] },
-        // ── ROW 4 ──
-        { id:'l_reload3',  x:0, y:4, label:'+10% Reload',        desc:'Neural-linked auto-loader.',        stats:{ reloadMult:0.10 }, requires:['l_reload2'] },
-        { id:'l_crit3',    x:1, y:4, label:'+5% Crit',           desc:'Thermal imaging scope.',            stats:{ critChance:0.05 }, requires:['l_crit2'] },
-        { id:'l_dr1',      x:3, y:4, label:'+3% DR',             desc:'Reactive nano-plating.',            stats:{ dr:0.03 }, requires:['l_core2'] },
-        { id:'l_dodge3',   x:5, y:4, label:'+5% Dodge',          desc:'Phase-shift module.',               stats:{ dodgeChance:0.05 }, requires:['l_dodge2'] },
-        { id:'l_mod1',     x:6, y:4, label:'-8% Mod CD',         desc:'CPU overclock.',                    stats:{ modCdMult:0.08 }, requires:['l_spd3'] },
-        // ── ROW 5 ──
-        { id:'l_dmg3',     x:0, y:5, label:'+10% Damage',        desc:'Supercharged weapon cores.',        stats:{ dmgMult:0.10 }, requires:['l_dmg2'] },
-        { id:'l_critdmg2', x:1, y:5, label:'+30% Crit Damage',   desc:'Devastator rounds.',               stats:{ critDmg:0.30 }, requires:['l_critdmg1'] },
-        { id:'l_core3',    x:3, y:5, label:'+25 Core HP',        desc:'Reinforced inner hull.',            stats:{ coreHP:25 }, requires:['l_core2','l_dr1'] },
-        { id:'l_spd4',     x:5, y:5, label:'+18 Speed',          desc:'Quantum thrusters.',                stats:{ spd:18 }, requires:['l_dodge3'] },
-        { id:'l_mod2',     x:6, y:5, label:'-12% Mod CD',        desc:'Quantum processing unit.',          stats:{ modCdMult:0.12 }, requires:['l_mod1'] },
-        // ── ROW 6 ──
-        { id:'l_dmg4',     x:0, y:6, label:'+12% Damage',        desc:'Hypervelocity barrels.',            stats:{ dmgMult:0.12 }, requires:['l_dmg3'] },
-        { id:'l_crit4',    x:1, y:6, label:'+6% Crit',           desc:'Neural-linked targeting.',          stats:{ critChance:0.06 }, requires:['l_crit3','l_critdmg1'] },
-        { id:'l_all1',     x:3, y:6, label:'+20 All HP',         desc:'Full chassis reinforcement.',       stats:{ coreHP:20, armHP:12, legHP:12 }, requires:['l_core3','l_arm2'] },
-        { id:'l_dodge4',   x:5, y:6, label:'+6% Dodge',          desc:'Ghost-frame modification.',         stats:{ dodgeChance:0.06 }, requires:['l_dodge3','l_spd4'] },
-        { id:'l_spd5',     x:6, y:6, label:'+20 Speed',          desc:'Experimental drive system.',        stats:{ spd:20 }, requires:['l_spd4'] },
-        // ── ROW 7: Capstones ──
-        { id:'l_glass',    x:0, y:7, label:'Glass Cannon',       desc:'+15% Dmg, +10% Crit, -25 Core HP.', stats:{ dmgMult:0.15, critChance:0.10, coreHP:-25 }, requires:['l_dmg4'] },
-        { id:'l_lethal',   x:1, y:7, label:'Lethal Precision',   desc:'+8% Crit, +40% Crit Damage.',      stats:{ critChance:0.08, critDmg:0.40 }, requires:['l_crit4','l_critdmg2'] },
-        { id:'l_titan',    x:3, y:7, label:'Titanium Frame',     desc:'+30 Core, +20 Arm, +5% DR.',       stats:{ coreHP:30, armHP:20, dr:0.05 }, requires:['l_all1'] },
-        { id:'l_ghost',    x:5, y:7, label:'Ghost Protocol',     desc:'+8% Dodge, +25 Speed.',             stats:{ dodgeChance:0.08, spd:25 }, requires:['l_dodge4','l_spd5'] },
-        { id:'l_apex',     x:6, y:7, label:'Apex Striker',       desc:'-15% Mod CD, +10% Reload.',        stats:{ modCdMult:0.15, reloadMult:0.10 }, requires:['l_mod2'] },
-    ],
-    // ══════════════════════════════════════════════════════════════
-    // MEDIUM CHASSIS — Balanced, Mod Cooldown, Versatility
-    // ══════════════════════════════════════════════════════════════
-    medium: [
-        // ── ROW 0 ──
-        { id:'m_dmg1',     x:0, y:0, label:'+5% Damage',         desc:'Weapon calibration suite.',         stats:{ dmgMult:0.05 } },
-        { id:'m_core1',    x:3, y:0, label:'+20 Core HP',        desc:'Reinforce core hull.',              stats:{ coreHP:20 } },
-        { id:'m_mod1',     x:6, y:0, label:'-5% Mod CD',         desc:'Efficient CPU thermals.',           stats:{ modCdMult:0.05 } },
-        // ── ROW 1 ──
-        { id:'m_reload1',  x:0, y:1, label:'+6% Reload',         desc:'Optimized ammo rack.',              stats:{ reloadMult:0.06 }, requires:['m_dmg1'] },
-        { id:'m_crit1',    x:1, y:1, label:'+3% Crit',           desc:'Targeting algorithms.',             stats:{ critChance:0.03 }, requires:['m_dmg1'] },
-        { id:'m_arm1',     x:2, y:1, label:'+12 Arm HP',         desc:'Servo-assisted joints.',            stats:{ armHP:12 }, requires:['m_core1'] },
-        { id:'m_shld1',    x:4, y:1, label:'+8% Shield Regen',   desc:'Shield capacitor upgrade.',         stats:{ shieldRegen:0.08 }, requires:['m_core1'] },
-        { id:'m_spd1',     x:5, y:1, label:'+8 Speed',           desc:'Balanced thruster output.',          stats:{ spd:8 }, requires:['m_mod1'] },
-        { id:'m_mod2',     x:6, y:1, label:'-8% Mod CD',         desc:'Dual-core CPU module.',             stats:{ modCdMult:0.08 }, requires:['m_mod1'] },
-        // ── ROW 2 ──
-        { id:'m_dmg2',     x:0, y:2, label:'+8% Damage',         desc:'Weapon rail overcharge.',           stats:{ dmgMult:0.08 }, requires:['m_dmg1'] },
-        { id:'m_crit2',    x:1, y:2, label:'+4% Crit',           desc:'Weak-point scanner.',               stats:{ critChance:0.04 }, requires:['m_crit1'] },
-        { id:'m_core2',    x:3, y:2, label:'+25 Core HP',        desc:'Composite core plating.',           stats:{ coreHP:25 }, requires:['m_core1'] },
-        { id:'m_leg1',     x:5, y:2, label:'+15 Leg HP',         desc:'Reinforced leg struts.',            stats:{ legHP:15 }, requires:['m_spd1'] },
-        { id:'m_spd2',     x:6, y:2, label:'+10 Speed',          desc:'Thrust vectoring.',                  stats:{ spd:10 }, requires:['m_spd1'] },
-        // ── ROW 3 ──
-        { id:'m_reload2',  x:0, y:3, label:'+8% Reload',         desc:'Auto-loading mechanism.',           stats:{ reloadMult:0.08 }, requires:['m_reload1'] },
-        { id:'m_critdmg1', x:1, y:3, label:'+20% Crit Damage',   desc:'Penetrator rounds.',               stats:{ critDmg:0.20 }, requires:['m_crit2'] },
-        { id:'m_dr1',      x:2, y:3, label:'+3% DR',             desc:'Ablative armor coating.',           stats:{ dr:0.03 }, requires:['m_arm1'] },
-        { id:'m_shld2',    x:4, y:3, label:'+12% Shield Regen',  desc:'Rapid-cycle array.',                stats:{ shieldRegen:0.12 }, requires:['m_shld1'] },
-        { id:'m_arm2',     x:3, y:3, label:'+15 Arm HP',         desc:'Titanium arm plating.',             stats:{ armHP:15 }, requires:['m_arm1'] },
-        { id:'m_mod3',     x:6, y:3, label:'-10% Mod CD',        desc:'Overclocked processor.',            stats:{ modCdMult:0.10 }, requires:['m_mod2'] },
-        // ── ROW 4 ──
-        { id:'m_dmg3',     x:0, y:4, label:'+10% Damage',        desc:'Overclocked weapons.',              stats:{ dmgMult:0.10 }, requires:['m_dmg2'] },
-        { id:'m_crit3',    x:1, y:4, label:'+5% Crit',           desc:'Combat analytics AI.',              stats:{ critChance:0.05 }, requires:['m_crit2'] },
-        { id:'m_core3',    x:3, y:4, label:'+30 Core HP',        desc:'Layered composite hull.',           stats:{ coreHP:30 }, requires:['m_core2'] },
-        { id:'m_dodge1',   x:5, y:4, label:'+3% Dodge',          desc:'Reactive maneuver jets.',           stats:{ dodgeChance:0.03 }, requires:['m_leg1'] },
-        { id:'m_mod4',     x:6, y:4, label:'-12% Mod CD',        desc:'Quantum processor.',                stats:{ modCdMult:0.12 }, requires:['m_mod3'] },
-        // ── ROW 5 ──
-        { id:'m_reload3',  x:0, y:5, label:'+10% Reload',        desc:'Neural auto-loader.',               stats:{ reloadMult:0.10 }, requires:['m_reload2'] },
-        { id:'m_critdmg2', x:1, y:5, label:'+25% Crit Damage',   desc:'Armor-piercing sabot.',            stats:{ critDmg:0.25 }, requires:['m_critdmg1'] },
-        { id:'m_dr2',      x:2, y:5, label:'+4% DR',             desc:'Active armor response.',            stats:{ dr:0.04 }, requires:['m_dr1'] },
-        { id:'m_shld3',    x:4, y:5, label:'+15% Shield Regen',  desc:'Overcharged shield core.',          stats:{ shieldRegen:0.15 }, requires:['m_shld2'] },
-        { id:'m_leg2',     x:5, y:5, label:'+20 Leg HP',         desc:'Armored leg housing.',              stats:{ legHP:20 }, requires:['m_leg1'] },
-        { id:'m_spd3',     x:6, y:5, label:'+12 Speed',          desc:'Advanced drive system.',            stats:{ spd:12 }, requires:['m_spd2'] },
-        // ── ROW 6 ──
-        { id:'m_dmg4',     x:0, y:6, label:'+12% Damage',        desc:'Supercharged rails.',               stats:{ dmgMult:0.12 }, requires:['m_dmg3'] },
-        { id:'m_crit4',    x:1, y:6, label:'+6% Crit',           desc:'Neural-linked precision.',          stats:{ critChance:0.06 }, requires:['m_crit3'] },
-        { id:'m_all1',     x:3, y:6, label:'+15 All HP, +5 Spd', desc:'Balanced systems upgrade.',         stats:{ coreHP:15, armHP:12, legHP:12, spd:5 }, requires:['m_core3','m_arm2'] },
-        { id:'m_dodge2',   x:5, y:6, label:'+4% Dodge',          desc:'Predictive evasion.',               stats:{ dodgeChance:0.04 }, requires:['m_dodge1'] },
-        { id:'m_mod5',     x:6, y:6, label:'-15% Mod CD',        desc:'Experimental AI core.',             stats:{ modCdMult:0.15 }, requires:['m_mod4'] },
-        // ── ROW 7: Capstones ──
-        { id:'m_war',      x:0, y:7, label:'War Machine',        desc:'+15% Dmg, +8% Crit, +10% Reload.', stats:{ dmgMult:0.15, critChance:0.08, reloadMult:0.10 }, requires:['m_dmg4','m_crit4'] },
-        { id:'m_bastion',  x:2, y:7, label:'Bastion',            desc:'+6% DR, +35 Core HP.',             stats:{ dr:0.06, coreHP:35 }, requires:['m_dr2','m_core3'] },
-        { id:'m_sentinel', x:4, y:7, label:'Sentinel',           desc:'+20% Shield Regen, +5% Dodge.',    stats:{ shieldRegen:0.20, dodgeChance:0.05 }, requires:['m_shld3','m_dodge2'] },
-        { id:'m_apex',     x:6, y:7, label:'Apex Commander',     desc:'-20% Mod CD, +15 Speed.',          stats:{ modCdMult:0.20, spd:15 }, requires:['m_mod5'] },
-    ],
-    // ══════════════════════════════════════════════════════════════
-    // HEAVY CHASSIS — HP, DR, Blast Radius focused
-    // ══════════════════════════════════════════════════════════════
-    heavy: [
-        // ── ROW 0 ──
-        { id:'h_dmg1',     x:0, y:0, label:'+5% Damage',         desc:'Heavy weapon mounts.',              stats:{ dmgMult:0.05 } },
-        { id:'h_core1',    x:3, y:0, label:'+30 Core HP',        desc:'Thick core armor.',                 stats:{ coreHP:30 } },
-        { id:'h_dr1',      x:6, y:0, label:'+2% DR',             desc:'Layered reactive plating.',         stats:{ dr:0.02 } },
-        // ── ROW 1 ──
-        { id:'h_blast1',   x:0, y:1, label:'+8% Blast Radius',   desc:'Expanded warheads.',                stats:{ blastMult:0.08 }, requires:['h_dmg1'] },
-        { id:'h_reload1',  x:1, y:1, label:'+5% Reload',         desc:'Hydraulic auto-loader.',            stats:{ reloadMult:0.05 }, requires:['h_dmg1'] },
-        { id:'h_arm1',     x:2, y:1, label:'+15 Arm HP',         desc:'Reinforced arm housing.',           stats:{ armHP:15 }, requires:['h_core1'] },
-        { id:'h_shld1',    x:4, y:1, label:'+8% Shield Regen',   desc:'Shield capacitors.',                stats:{ shieldRegen:0.08 }, requires:['h_core1'] },
-        { id:'h_leg1',     x:5, y:1, label:'+15 Leg HP',         desc:'Heavy-duty actuators.',             stats:{ legHP:15 }, requires:['h_dr1'] },
-        { id:'h_dr2',      x:6, y:1, label:'+3% DR',             desc:'Active armor response.',            stats:{ dr:0.03 }, requires:['h_dr1'] },
-        // ── ROW 2 ──
-        { id:'h_dmg2',     x:0, y:2, label:'+8% Damage',         desc:'Heavy bore calibration.',           stats:{ dmgMult:0.08 }, requires:['h_dmg1'] },
-        { id:'h_blast2',   x:1, y:2, label:'+10% Blast Radius',  desc:'Cluster munitions.',                stats:{ blastMult:0.10 }, requires:['h_blast1'] },
-        { id:'h_core2',    x:3, y:2, label:'+35 Core HP',        desc:'Reinforced inner hull.',            stats:{ coreHP:35 }, requires:['h_core1'] },
-        { id:'h_spd1',     x:5, y:2, label:'+6 Speed',           desc:'Improved hydraulics.',              stats:{ spd:6 }, requires:['h_leg1'] },
-        { id:'h_dr3',      x:6, y:2, label:'+4% DR',             desc:'Composite ablative layers.',        stats:{ dr:0.04 }, requires:['h_dr2'] },
-        // ── ROW 3 ──
-        { id:'h_dmg3',     x:0, y:3, label:'+10% Damage',        desc:'Overcharged weapon rails.',         stats:{ dmgMult:0.10 }, requires:['h_dmg2'] },
-        { id:'h_crit1',    x:1, y:3, label:'+3% Crit',           desc:'Heavy targeting system.',           stats:{ critChance:0.03 }, requires:['h_reload1'] },
-        { id:'h_arm2',     x:2, y:3, label:'+20 Arm HP',         desc:'Siege-grade arm plating.',          stats:{ armHP:20 }, requires:['h_arm1'] },
-        { id:'h_shld2',    x:4, y:3, label:'+12% Shield Regen',  desc:'Reinforced shield core.',           stats:{ shieldRegen:0.12 }, requires:['h_shld1'] },
-        { id:'h_leg2',     x:5, y:3, label:'+20 Leg HP',         desc:'Armored leg housing.',              stats:{ legHP:20 }, requires:['h_leg1'] },
-        { id:'h_core3',    x:3, y:3, label:'+40 Core HP',        desc:'Titan-class hull.',                 stats:{ coreHP:40 }, requires:['h_core2'] },
-        // ── ROW 4 ──
-        { id:'h_blast3',   x:0, y:4, label:'+12% Blast Radius',  desc:'High-yield warheads.',              stats:{ blastMult:0.12 }, requires:['h_blast2'] },
-        { id:'h_reload2',  x:1, y:4, label:'+8% Reload',         desc:'Motorized ammo belt.',              stats:{ reloadMult:0.08 }, requires:['h_reload1'] },
-        { id:'h_dr4',      x:3, y:4, label:'+5% DR',             desc:'Nanite repair armor.',              stats:{ dr:0.05 }, requires:['h_core3','h_dr3'] },
-        { id:'h_spd2',     x:5, y:4, label:'+8 Speed',           desc:'Reinforced drive train.',           stats:{ spd:8 }, requires:['h_spd1'] },
-        { id:'h_mod1',     x:6, y:4, label:'-8% Mod CD',         desc:'Heavy processor upgrade.',          stats:{ modCdMult:0.08 }, requires:['h_dr3'] },
-        // ── ROW 5 ──
-        { id:'h_dmg4',     x:0, y:5, label:'+12% Damage',        desc:'Supercharged weapon cores.',        stats:{ dmgMult:0.12 }, requires:['h_dmg3'] },
-        { id:'h_crit2',    x:1, y:5, label:'+4% Crit',           desc:'Structural analyzer.',              stats:{ critChance:0.04 }, requires:['h_crit1'] },
-        { id:'h_all1',     x:2, y:5, label:'+20 All HP',         desc:'Full chassis reinforcement.',       stats:{ coreHP:20, armHP:15, legHP:15 }, requires:['h_arm2','h_leg2'] },
-        { id:'h_core4',    x:3, y:5, label:'+50 Core HP',        desc:'Fortress-class hull.',              stats:{ coreHP:50 }, requires:['h_core3'] },
-        { id:'h_shld3',    x:4, y:5, label:'+15% Shield Regen',  desc:'Overcharged shield array.',         stats:{ shieldRegen:0.15 }, requires:['h_shld2'] },
-        { id:'h_mod2',     x:6, y:5, label:'-12% Mod CD',        desc:'Tactical processor.',               stats:{ modCdMult:0.12 }, requires:['h_mod1'] },
-        // ── ROW 6 ──
-        { id:'h_blast4',   x:0, y:6, label:'+15% Blast Radius',  desc:'Tactical warhead system.',          stats:{ blastMult:0.15 }, requires:['h_blast3'] },
-        { id:'h_dmg5',     x:1, y:6, label:'+15% Damage',        desc:'Devastator weapon package.',        stats:{ dmgMult:0.15 }, requires:['h_dmg4','h_crit2'] },
-        { id:'h_dr5',      x:3, y:6, label:'+6% DR',             desc:'Adaptive nano-armor.',              stats:{ dr:0.06 }, requires:['h_dr4'] },
-        { id:'h_all2',     x:5, y:6, label:'+25 All HP, +5 Spd', desc:'Titan systems upgrade.',            stats:{ coreHP:25, armHP:15, legHP:15, spd:5 }, requires:['h_all1','h_spd2'] },
-        { id:'h_repair1',  x:6, y:6, label:'+2 Auto-Repair',     desc:'Nanite repair system.',             stats:{ autoRepair:2 }, requires:['h_mod2'] },
-        // ── ROW 7: Capstones ──
-        { id:'h_siege',    x:0, y:7, label:'Heavy Ordnance',     desc:'+18% Dmg, +20% Blast Radius.',     stats:{ dmgMult:0.18, blastMult:0.20 }, requires:['h_blast4','h_dmg5'] },
-        { id:'h_jugg',     x:3, y:7, label:'Juggernaut',         desc:'+8% DR, +60 Core HP.',             stats:{ dr:0.08, coreHP:60 }, requires:['h_dr5','h_core4'] },
-        { id:'h_titan',    x:5, y:7, label:'Titan',              desc:'+30 All HP, +8 Spd, +3 Repair.',   stats:{ coreHP:30, armHP:20, legHP:20, spd:8, autoRepair:3 }, requires:['h_all2','h_repair1'] },
-    ]
-};
-
-/** Get available skill points = playerLevel - 1 (level 1 has 0 points). */
-function getAvailableSkillPoints() {
-    const total = Math.max(0, _campaignState.playerLevel - 1);
-    const spent = (_campaignState.skillsChosen || []).length;
-    return total - spent;
-}
-
-/** Check if a skill node's prerequisites are met. */
-function _skillNodeAvailable(nodeId, chassisType) {
-    const tree = SKILL_TREES[chassisType];
-    if (!tree) return false;
-    const node = tree.find(n => n.id === nodeId);
-    if (!node) return false;
-    const chosen = _campaignState.skillsChosen || [];
-    if (chosen.includes(nodeId)) return false; // already purchased
-    if (!node.requires) return true; // tier 1 nodes have no requirements
-    return node.requires.every(reqId => chosen.includes(reqId));
-}
-
-/** Purchase a skill node. */
-function purchaseSkillNode(nodeId) {
-    const chassisType = _campaignState.chassis;
-    if (!chassisType) return false;
-    if (getAvailableSkillPoints() <= 0) return false;
-    if (!_skillNodeAvailable(nodeId, chassisType)) return false;
-    if (!_campaignState.skillsChosen) _campaignState.skillsChosen = [];
-    _campaignState.skillsChosen.push(nodeId);
-    saveCampaignState();
-    return true;
-}
-
-/** Compute total stat bonuses from all chosen skill nodes.
- *  Returns { coreHP, armHP, legHP, spd, dmgMult, reloadMult, critChance,
- *            shieldRegen, blastMult, dodgeChance, dr, modCdMult } */
-function getSkillTreeBonuses(chassisType) {
-    const bonuses = { coreHP:0, armHP:0, legHP:0, spd:0, dmgMult:0, reloadMult:0,
-                      critChance:0, critDmg:0, shieldRegen:0, blastMult:0, dodgeChance:0,
-                      dr:0, modCdMult:0, autoRepair:0 };
-    const tree = SKILL_TREES[chassisType];
-    if (!tree) return bonuses;
-    const chosen = _campaignState.skillsChosen || [];
-    for (const nodeId of chosen) {
-        const node = tree.find(n => n.id === nodeId);
-        if (!node) continue;
-        for (const [k, v] of Object.entries(node.stats)) {
-            bonuses[k] = (bonuses[k] || 0) + v;
-        }
-    }
-    return bonuses;
-}
-
-/** Store base chassis values so we can re-apply upgrades cleanly. */
-let _chassisBaseValues = null;
-
-function _snapshotChassisBase() {
-    if (_chassisBaseValues) return; // already captured
-    if (typeof CHASSIS === 'undefined') return;
-    _chassisBaseValues = {};
-    for (const key of Object.keys(CHASSIS)) {
-        _chassisBaseValues[key] = {
-            coreHP: CHASSIS[key].coreHP,
-            armHP: CHASSIS[key].armHP,
-            legHP: CHASSIS[key].legHP,
-            spd: CHASSIS[key].spd
-        };
-    }
-}
-
-/** Apply skill tree upgrades to the CHASSIS object.
- *  Should be called after loading campaign state and before deploy. */
-function applyChassisUpgrades() {
-    if (typeof CHASSIS === 'undefined') return;
-    _snapshotChassisBase();
-
-    for (const key of Object.keys(CHASSIS)) {
-        // Restore base values first
-        if (_chassisBaseValues?.[key]) {
-            CHASSIS[key].coreHP = _chassisBaseValues[key].coreHP;
-            CHASSIS[key].armHP  = _chassisBaseValues[key].armHP;
-            CHASSIS[key].legHP  = _chassisBaseValues[key].legHP;
-            CHASSIS[key].spd    = _chassisBaseValues[key].spd;
-        }
-    }
-    // Apply skill tree bonuses only to the player's chosen chassis
-    const ch = _campaignState.chassis;
-    if (ch && CHASSIS[ch]) {
-        const bonuses = getSkillTreeBonuses(ch);
-        CHASSIS[ch].coreHP += bonuses.coreHP;
-        CHASSIS[ch].armHP  += bonuses.armHP;
-        CHASSIS[ch].legHP  += bonuses.legHP;
-        CHASSIS[ch].spd    += bonuses.spd;
-    }
-}
-
 // ══════════════════════════════════════════════════════════════════
 // 4B — MISSION REWARDS (first-clear guaranteed loot)
 // ══════════════════════════════════════════════════════════════════
@@ -2083,7 +1811,6 @@ saveCampaignState = function() {
             currentMission: _campaignState.currentMission,
             completedMissions: _campaignState.completedMissions,
             chassis: _campaignState.chassis || null,
-            skillsChosen: _campaignState.skillsChosen || [],
             claimedRewards: _campaignState.claimedRewards || {},
             loadoutSlots: _campaignState.loadoutSlots || []
         };
@@ -2103,7 +1830,6 @@ loadCampaignState = function() {
             _campaignState.currentMission = state.currentMission || 0;
             _campaignState.completedMissions = state.completedMissions || {};
             _campaignState.chassis = state.chassis || null;
-            _campaignState.skillsChosen = state.skillsChosen || [];
             _campaignState.claimedRewards = state.claimedRewards || {};
             _campaignState.loadoutSlots = state.loadoutSlots || [];
             return true;
@@ -2112,132 +1838,6 @@ loadCampaignState = function() {
     return false;
 };
 
-// Phase 4F: showMissionSelect now includes shop/loadout/upgrades buttons inline.
-
-/** Show chassis upgrades panel. */
-function _showUpgradesPanel() {
-    let overlay = document.getElementById('upgrades-overlay');
-    if (!overlay) return;
-
-    const ch = _campaignState.chassis || 'medium';
-    const level = _campaignState.playerLevel;
-    const cc = ch === 'light' ? UI_COLORS.chassisLight : ch === 'medium' ? UI_COLORS.chassisMedium : UI_COLORS.chassisHeavy;
-    const tree = SKILL_TREES[ch] || [];
-    const chosen = _campaignState.skillsChosen || [];
-    const availPts = getAvailableSkillPoints();
-
-    // Tree layout dimensions
-    const COLS = 7, NODE_W = 96, NODE_H = 52, GAP_X = 12, GAP_Y = 14;
-    const maxRow = Math.max(...tree.map(n => n.y));
-    const gridW = COLS * (NODE_W + GAP_X) - GAP_X;
-    const gridH = (maxRow + 1) * (NODE_H + GAP_Y) - GAP_Y;
-
-    // Node center positions for SVG lines
-    const nodePos = {};
-    for (const n of tree) {
-        nodePos[n.id] = {
-            cx: n.x * (NODE_W + GAP_X) + NODE_W / 2,
-            cy: n.y * (NODE_H + GAP_Y) + NODE_H / 2
-        };
-    }
-
-    let html = '';
-    html += `<div style="font-size:24px;letter-spacing:6px;color:${cc};text-shadow:0 0 16px ${cc}80;margin-bottom:4px;">SKILL TREE</div>`;
-    html += `<div style="font-size:11px;letter-spacing:2px;color:${cc}88;margin-bottom:4px;">${ch.toUpperCase()} CHASSIS — PILOT LEVEL ${level}</div>`;
-    html += `<div style="font-size:12px;letter-spacing:2px;color:${availPts > 0 ? UI_COLORS.gold : UI_COLORS.text40};margin-bottom:16px;">SKILL POINTS: <span style="font-size:14px;">${availPts}</span></div>`;
-
-    // Tree container with relative positioning
-    html += `<div style="position:relative;width:${gridW}px;height:${gridH}px;margin-bottom:16px;">`;
-
-    // SVG layer for connecting lines
-    html += `<svg style="position:absolute;inset:0;width:${gridW}px;height:${gridH}px;pointer-events:none;z-index:0;">`;
-    for (const node of tree) {
-        if (!node.requires) continue;
-        const to = nodePos[node.id];
-        for (const reqId of node.requires) {
-            const from = nodePos[reqId];
-            if (!from || !to) continue;
-            const bothOwned = chosen.includes(node.id) && chosen.includes(reqId);
-            const oneOwned = chosen.includes(reqId);
-            const lineColor = bothOwned ? cc : oneOwned ? UI_COLORS.gold40 : UI_COLORS.surface08;
-            html += `<line x1="${from.cx}" y1="${from.cy}" x2="${to.cx}" y2="${to.cy}" stroke="${lineColor}" stroke-width="${bothOwned ? 2 : 1}" />`;
-        }
-    }
-    html += '</svg>';
-
-    // Node elements
-    for (const node of tree) {
-        const owned = chosen.includes(node.id);
-        const canBuy = !owned && availPts > 0 && _skillNodeAvailable(node.id, ch);
-        const locked = !owned && !canBuy;
-        const left = node.x * (NODE_W + GAP_X);
-        const top = node.y * (NODE_H + GAP_Y);
-
-        let borderColor, textColor, bg, labelIcon;
-        if (owned) {
-            borderColor = cc; textColor = cc; bg = `${cc}18`; labelIcon = '✓';
-        } else if (canBuy) {
-            borderColor = UI_COLORS.gold; textColor = UI_COLORS.gold; bg = UI_COLORS.gold06; labelIcon = '●';
-        } else {
-            borderColor = UI_COLORS.surface08; textColor = 'rgba(255,255,255,0.45)'; bg = UI_COLORS.bgDark30; labelIcon = '🔒';
-        }
-
-        const onclick = canBuy ? `onclick="_buySkillNode('${node.id}')"` : '';
-        const cursor = canBuy ? 'pointer' : 'default';
-        const shadowStyle = owned ? `box-shadow:0 0 8px ${cc}33;` : canBuy ? `box-shadow:0 0 8px ${UI_COLORS.gold15};` : '';
-
-        html += `<div ${onclick} title="${node.desc}" style="position:absolute;left:${left}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px;padding:4px 6px;background:${bg};border:1px solid ${borderColor};border-radius:4px;cursor:${cursor};transition:all 0.2s;z-index:1;overflow:hidden;box-sizing:border-box;${shadowStyle}" ${canBuy ? `onmouseover="this.style.background='${UI_COLORS.gold12}';this.style.boxShadow='0 0 12px ${UI_COLORS.gold25}'" onmouseout="this.style.background='${bg}';this.style.boxShadow='${canBuy ? `0 0 8px ${UI_COLORS.gold15}` : 'none'}'"` : ''}>`;
-        html += `<div style="font-size:8px;letter-spacing:0.5px;color:${textColor};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${labelIcon} ${node.label}</div>`;
-        html += `<div style="font-size:7px;color:${owned ? UI_COLORS.text50 : 'rgba(255,255,255,0.45)'};line-height:1.3;overflow:hidden;max-height:30px;">${node.desc}</div>`;
-        html += '</div>';
-    }
-    html += '</div>'; // end tree container
-
-    // Summary of current bonuses
-    const bonuses = getSkillTreeBonuses(ch);
-    const activeStats = Object.entries(bonuses).filter(([k, v]) => v !== 0);
-    if (activeStats.length > 0) {
-        html += `<div style="padding:10px 14px;background:${UI_COLORS.cyanSurface03};border:1px solid ${UI_COLORS.cyan10};border-radius:4px;max-width:${gridW}px;margin-bottom:12px;">`;
-        html += `<div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:6px;">ACTIVE BONUSES</div>`;
-        html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
-        const statLabels = { coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', spd:'Speed %',
-            dmgMult:'Damage %', reloadMult:'Fire Rate %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
-            shieldRegen:'Shield Regen %', blastMult:'Blast Radius %', dodgeChance:'Dodge %',
-            dr:'Damage Reduction %', modCdMult:'CPU Cooldown %', autoRepair:'Auto Repair' };
-        const pctStats = new Set(['dmgMult','reloadMult','critChance','critDmg','shieldRegen','blastMult','dodgeChance','dr','modCdMult']);
-        for (const [k, v] of activeStats) {
-            const label = statLabels[k] || k;
-            const isNeg = k === 'modCdMult';
-            const sign = v > 0 ? '+' : '';
-            const display = pctStats.has(k) ? `${sign}${Math.round(v * 100)}%` : `${sign}${v}`;
-            const color = (v > 0 && !isNeg) || (v < 0 && isNeg) ? UI_COLORS.greenPos : v < 0 ? UI_COLORS.red : UI_COLORS.greenPos;
-            html += `<span style="font-size:10px;color:${color};padding:2px 6px;border:1px solid ${color}33;border-radius:3px;">${label}: ${isNeg ? '-' + Math.round(v*100) + '%' : display}</span>`;
-        }
-        html += '</div></div>';
-    }
-
-    html += '<div style="margin-top:8px;">';
-    html += `<button onclick="_closeUpgrades()" class="tw-btn tw-btn--danger">BACK</button>`;
-    html += '</div>';
-
-    overlay.innerHTML = html;
-    overlay.style.display = 'flex';
-}
-
-function _buySkillNode(nodeId) {
-    if (purchaseSkillNode(nodeId)) {
-        // Re-apply chassis upgrades with new skill
-        if (typeof applyChassisUpgrades === 'function') applyChassisUpgrades();
-        _showUpgradesPanel(); // re-render
-    }
-}
-
-function _closeUpgrades() {
-    const overlay = document.getElementById('upgrades-overlay');
-    if (overlay) overlay.style.display = 'none';
-    // Return to mission select
-    if (typeof showMissionSelect === 'function') showMissionSelect();
-}
 
 // ── Cloud save / load ─────────────────────────────────────────────
 
@@ -2256,8 +1856,7 @@ async function saveToCloud() {
             completedMissions: _campaignState.completedMissions,
             chassis: _campaignState.chassis || null,
             claimedRewards: _campaignState.claimedRewards || {},
-            loadoutSlots: _campaignState.loadoutSlots || [],
-            skillsChosen: _campaignState.skillsChosen || []
+            loadoutSlots: _campaignState.loadoutSlots || []
         };
 
         const campaignProgress = {
@@ -2351,7 +1950,6 @@ function _restoreFromCloudData(data) {
         _campaignState.chassis = cs.chassis || null;
         _campaignState.claimedRewards = cs.claimedRewards || {};
         _campaignState.loadoutSlots = cs.loadoutSlots || [];
-        _campaignState.skillsChosen = cs.skillsChosen || [];
     }
     // Restore campaign progress (loadout)
     if (data.campaign_progress) {

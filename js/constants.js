@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.87';
+const GAME_VERSION = 'v6.88';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -43,8 +43,6 @@ const CHASSIS_AUGS = {
     heavy:  new Set(['none','reactive_plating','war_machine','suppressor_aura','heavy_loader']),
 };
 
-// ⚠️ MUTATED AT RUNTIME — applyChassisUpgrades() (campaign-system.js) writes upgrade HP
-// values into this object; goToMainMenu() restores modCooldownMult to its original value.
 const CHASSIS = {
     // max = weight limit.
     // Light: dual-fire, fast, fragile.
