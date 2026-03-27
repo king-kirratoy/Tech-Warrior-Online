@@ -2164,7 +2164,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
     // Builds one column's content (source label + slot label + name + stats + affixes + unique)
     const _mkCol = (colItem, sourceLbl, colSlotLabel) => {
         const rd = RARITY_DEFS[colItem.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
-        let h = `<div class="lo-hover-source-lbl">${sourceLbl}</div>`;
+        let h = `<div class="lo-hover-source-lbl" style="color:${rd.colorStr};">${sourceLbl}</div>`;
         if (colSlotLabel) h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${colSlotLabel}</div>`;
         h += `<div style="font-size:13px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${(colItem.baseType === 'weapon' ? WEAPON_NAMES[colItem.subType] : null) || colItem.name}</div>`;
         h += `<div style="font-size:9px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||colItem.rarity}${colItem.iLvl ? ' · iLvl '+colItem.iLvl : ''}</div>`;
@@ -2210,10 +2210,10 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         return h;
     };
 
-    let html = `<div class="lo-hover-cmp-card" style="border-color:${_rdItem.colorStr};">`;
+    let html = `<div class="lo-hover-cmp-card">`;
     html += '<div class="lo-hover-cmp-cols">';
-    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left" style="border:2px solid ${_rdItem.colorStr};">${_mkCol(item, leftLabel || 'BACKPACK', slotLabel)}</div>`;
-    html += `<div class="lo-hover-cmp-col" style="border:2px solid ${_rdCmp.colorStr};">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
+    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left" style="border:1px solid var(--sci-cyan-border);">${_mkCol(item, leftLabel || 'BACKPACK', slotLabel)}</div>`;
+    html += `<div class="lo-hover-cmp-col" style="border:1px solid var(--sci-cyan-border);">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
     html += '</div>';
 
     // Diff section
@@ -2241,11 +2241,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         diffHtml += `<div class="lo-hover-diff-row"><span class="lo-hover-diff-lbl">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span style="color:${color};">${diffDisplay}</span></div>`;
     });
     if (diffHtml) {
-        html += '<div class="lo-hover-cmp-diff">';
-        html += `<div style="background:${_rdItem.colorStr};height:100%;left:0;position:absolute;top:0;width:2px;"></div>`;
-        html += `<div style="background:${_rdCmp.colorStr};height:100%;position:absolute;right:0;top:0;width:2px;"></div>`;
-        html += `<div style="background:${_rdItem.colorStr};bottom:0;height:2px;left:0;position:absolute;width:50%;"></div>`;
-        html += `<div style="background:${_rdCmp.colorStr};bottom:0;height:2px;position:absolute;right:0;width:50%;"></div>`;
+        html += '<div class="lo-hover-cmp-diff" style="border-left:1px solid var(--sci-cyan-border);border-right:1px solid var(--sci-cyan-border);border-bottom:1px solid var(--sci-cyan-border);">';
         html += '<div class="lo-hover-diff-hdr">Changes if equipped</div>';
         html += diffHtml;
         html += '</div>';
