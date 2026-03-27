@@ -5,7 +5,9 @@
 // ── State ───────────────────────────────────────────────────────
 let _skillTreeData  = null;   // array of node objects for current chassis
 let _stNodeMap      = {};     // id → node lookup
-let _skillTreeState = { allocated: {} };
+let _skillTreeState    = { allocated: {} };
+let _lockedAllocations = {}; // snapshot of saved allocations — permanent, cannot be undone
+let _stChassisKey      = 'light'; // chassis key for current tree
 let _skillTreeSVG   = null;
 let _skillTreeVB    = { x: -450, y: -420, w: 900, h: 840 };
 let _skillTreePanning  = false;
@@ -23,6 +25,10 @@ function showSkillTree() {
 
   // ── Init node data ──
   const chassisKey = (chassis || 'light').toLowerCase();
+  _stChassisKey = chassisKey;
+
+  // Snapshot current saved allocations as permanently locked for this session
+  _lockedAllocations = Object.assign({}, _skillTreeState.allocated);
   _skillTreeData = (typeof SKILL_TREE_DATA !== 'undefined' && SKILL_TREE_DATA[chassisKey])
     ? SKILL_TREE_DATA[chassisKey]
     : (typeof SKILL_TREE_DATA !== 'undefined' ? SKILL_TREE_DATA.light : []);
@@ -92,38 +98,9 @@ function showSkillTree() {
   ].join(';');
   ptsBadge.textContent = `SKILL POINTS: ${skillPts}`;
 
-  // Zoom buttons (absolute top-right, inside top bar area)
-  const zoomWrap = document.createElement('div');
-  zoomWrap.style.cssText = [
-    'position:absolute',
-    'right:12px',
-    'top:50%',
-    'transform:translateY(-50%)',
-    'display:flex',
-    'gap:4px',
-  ].join(';');
-
-  const zoomIn = document.createElement('button');
-  zoomIn.className = 'tw-btn tw-btn--ghost tw-btn--sm';
-  zoomIn.style.cssText = 'width:28px;padding:0;font-size:14px;line-height:1;';
-  zoomIn.textContent = '+';
-  zoomIn.title = 'Zoom in';
-  zoomIn.addEventListener('click', () => _skillTreeZoom(-0.2));
-
-  const zoomOut = document.createElement('button');
-  zoomOut.className = 'tw-btn tw-btn--ghost tw-btn--sm';
-  zoomOut.style.cssText = 'width:28px;padding:0;font-size:14px;line-height:1;';
-  zoomOut.textContent = '−';
-  zoomOut.title = 'Zoom out';
-  zoomOut.addEventListener('click', () => _skillTreeZoom(0.2));
-
-  zoomWrap.appendChild(zoomIn);
-  zoomWrap.appendChild(zoomOut);
-
   topBar.appendChild(backBtn);
   topBar.appendChild(title);
   topBar.appendChild(ptsBadge);
-  topBar.appendChild(zoomWrap);
 
   // ── Sub-header (chassis + level) ──
   const subHeader = document.createElement('div');
@@ -247,6 +224,10 @@ function hideSkillTree() {
     _skillTreeHoverCard = null;
   }
 
+  // Lock in all current allocations and save
+  _lockedAllocations = Object.assign({}, _skillTreeState.allocated);
+  if (typeof saveCampaignState === 'function') saveCampaignState();
+
   // Return to mission select if that's where we came from
   const ms = document.getElementById('mission-select-overlay');
   if (ms && ms.style.display === 'none') {
@@ -298,6 +279,19 @@ function _renderSkillTree() {
 
   // Clear SVG
   while (_skillTreeSVG.firstChild) _skillTreeSVG.removeChild(_skillTreeSVG.firstChild);
+
+  // ── Defs: clipPath for start-node image ──
+  const startNodeDef = _stNodeMap['start'];
+  if (startNodeDef) {
+    const defs = document.createElementNS(NS, 'defs');
+    const clip = document.createElementNS(NS, 'clipPath');
+    clip.setAttribute('id', 'st-start-clip');
+    const clipHex = document.createElementNS(NS, 'polygon');
+    clipHex.setAttribute('points', _hexPointsAt(startNodeDef.x, startNodeDef.y, 30));
+    clip.appendChild(clipHex);
+    defs.appendChild(clip);
+    _skillTreeSVG.appendChild(defs);
+  }
 
   // Precompute all node states
   const states = {};
@@ -368,8 +362,11 @@ function _renderSkillTree() {
 
     // Group
     const g = document.createElementNS(NS, 'g');
-    g.style.cursor = (st === 'available' || (st === 'allocated' && node.t !== 'start' && (_skillTreeState.allocated[node.id] || 0) < node.r))
-      ? 'pointer' : 'default';
+    const _rank  = _skillTreeState.allocated[node.id] || 0;
+    const _lRank = _lockedAllocations[node.id] || 0;
+    const _canAdd  = node.t !== 'start' && (st === 'available' || st === 'allocated') && _rank < (node.r || 1);
+    const _canDe   = node.t !== 'start' && _rank > 0 && _rank > _lRank;
+    g.style.cursor = (_canAdd || _canDe) ? 'pointer' : 'default';
 
     // Hex polygon
     const poly = document.createElementNS(NS, 'polygon');
@@ -379,25 +376,18 @@ function _renderSkillTree() {
     poly.setAttribute('stroke-width', '1.5');
     g.appendChild(poly);
 
-    // Text inside hex
+    // Text / image inside hex
     if (node.t === 'start') {
-      const t1 = document.createElementNS(NS, 'text');
-      t1.setAttribute('x', cx); t1.setAttribute('y', cy - 4);
-      t1.setAttribute('text-anchor', 'middle');
-      t1.setAttribute('font-size', '8');
-      t1.setAttribute('font-family', 'monospace');
-      t1.setAttribute('fill', '#00d4ff');
-      t1.textContent = 'LIGHT';
-      g.appendChild(t1);
-
-      const t2 = document.createElementNS(NS, 'text');
-      t2.setAttribute('x', cx); t2.setAttribute('y', cy + 7);
-      t2.setAttribute('text-anchor', 'middle');
-      t2.setAttribute('font-size', '8');
-      t2.setAttribute('font-family', 'monospace');
-      t2.setAttribute('fill', '#00d4ff');
-      t2.textContent = 'CHASSIS';
-      g.appendChild(t2);
+      const img = document.createElementNS(NS, 'image');
+      img.setAttribute('href', `assets/${_stChassisKey}-mech.png`);
+      img.setAttribute('x', cx - 30);
+      img.setAttribute('y', cy - 30);
+      img.setAttribute('width', '60');
+      img.setAttribute('height', '60');
+      img.setAttribute('clip-path', 'url(#st-start-clip)');
+      img.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      img.style.opacity = '0.85';
+      g.appendChild(img);
     } else if (node.t === 'keystone') {
       const t = document.createElementNS(NS, 'text');
       t.setAttribute('x', cx); t.setAttribute('y', cy + 2);
@@ -454,39 +444,15 @@ function _stShowHover(node, evt) {
   const rank = (node.t === 'start') ? 0 : (_skillTreeState.allocated[node.id] || 0);
   const maxRank = node.r || 0;
 
-  // Available points
-  let totalSpent = 0;
-  Object.values(_skillTreeState.allocated).forEach(r => { totalSpent += r; });
-  const level = (typeof _campaignState !== 'undefined' && _campaignState.playerLevel)
-    ? _campaignState.playerLevel : 1;
-  const pts = level - totalSpent;
-
-  let actionText;
-  if (node.t === 'start') {
-    actionText = 'CORE NODE';
-  } else if (st === 'locked') {
-    actionText = 'LOCKED';
-  } else if (rank >= maxRank) {
-    actionText = 'MAXED';
-  } else if (st === 'available') {
-    actionText = 'CLICK TO ALLOCATE';
-  } else {
-    actionText = pts > 0 ? 'ADD RANK' : 'NO POINTS';
-  }
-  const actionColor = (actionText === 'LOCKED' || actionText === 'MAXED' || actionText === 'NO POINTS')
-    ? 'rgba(255,255,255,0.35)' : '#00ff88';
-
   const rankLine = node.t === 'start'
     ? 'Always active'
     : `Rank ${rank} / ${maxRank}`;
 
   card.innerHTML =
-    `<div style="color:#00ff88;font-size:10px;letter-spacing:1px;margin-bottom:2px">${node.s || ''}</div>` +
-    `<div style="color:#e8923a;font-size:11px;font-weight:bold;letter-spacing:2px">${node.n}</div>` +
+    `<div style="color:#e8923a;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase">${node.n}</div>` +
     `<div style="color:rgba(0,212,255,0.7);font-size:9px;margin-bottom:6px">${rankLine}</div>` +
     `<div style="border-top:1px solid rgba(0,212,255,0.15);margin-bottom:6px"></div>` +
-    `<div style="color:rgba(255,255,255,0.65);font-size:10px;margin-bottom:6px">${node.d}</div>` +
-    `<div style="color:${actionColor};font-size:9px;letter-spacing:2px">${actionText}</div>`;
+    `<div style="color:#00ff88;font-size:10px;letter-spacing:1px">${node.s || ''}</div>`;
 
   card.style.display = 'block';
   _stPositionHover(evt);
@@ -510,33 +476,96 @@ function _stHideHover() {
   if (_skillTreeHoverCard) _skillTreeHoverCard.style.display = 'none';
 }
 
+// ── Allocation helpers ───────────────────────────────────────────
+
+/** Refresh the skill-points badge in the top bar. */
+function _updateSkillPointsBadge() {
+  let totalSpent = 0;
+  Object.values(_skillTreeState.allocated).forEach(r => { totalSpent += r; });
+  const level = (typeof _campaignState !== 'undefined' && _campaignState.playerLevel)
+    ? _campaignState.playerLevel : 1;
+  const pts = level - totalSpent;
+  const badge = document.getElementById('st-skill-points');
+  if (badge) badge.textContent = `SKILL POINTS: ${pts}`;
+  return pts;
+}
+
+/**
+ * Return true if removing one rank from nodeId would not strand any other
+ * allocated node (i.e. every remaining allocated node keeps a path to start).
+ */
+function _canDeallocate(nodeId) {
+  const currentRank = _skillTreeState.allocated[nodeId] || 0;
+  // If decrementing still leaves the node allocated, connectivity is unchanged
+  if (currentRank > 1) return true;
+
+  // Simulate removing the node entirely: BFS from 'start' through allocated nodes
+  const reachable = new Set(['start']);
+  const queue = ['start'];
+
+  // Build a full undirected adjacency map from node.c lists
+  while (queue.length) {
+    const cid = queue.shift();
+    const cn = _stNodeMap[cid];
+    if (!cn) continue;
+    for (const neighborId of (cn.c || [])) {
+      if (reachable.has(neighborId)) continue;
+      if (neighborId === nodeId) continue; // skip the node being removed
+      const neighborAllocated = (neighborId === 'start') ||
+        ((_skillTreeState.allocated[neighborId] || 0) > 0);
+      if (neighborAllocated) {
+        reachable.add(neighborId);
+        queue.push(neighborId);
+      }
+    }
+  }
+
+  // All remaining allocated nodes must be reachable
+  for (const [id, rank] of Object.entries(_skillTreeState.allocated)) {
+    if (id === nodeId) continue;
+    if (!rank || rank <= 0) continue;
+    if (!reachable.has(id)) return false;
+  }
+  return true;
+}
+
 // ── Allocation ───────────────────────────────────────────────────
 
 function _allocateNode(nodeId) {
   const node = _stNodeMap[nodeId];
   if (!node || node.t === 'start') return;
 
-  const st = _stGetNodeState(nodeId);
-  const rank = _skillTreeState.allocated[nodeId] || 0;
-  const maxRank = node.r || 1;
+  const st    = _stGetNodeState(nodeId);
+  const rank  = _skillTreeState.allocated[nodeId] || 0;
+  const maxRank   = node.r || 1;
+  const lockedRank = _lockedAllocations[nodeId] || 0;
 
-  if (rank >= maxRank) return;               // maxed
+  // ── Deallocate path: node is allocated and has pending (non-locked) ranks ──
+  if (rank > 0 && rank > lockedRank) {
+    if (_canDeallocate(nodeId)) {
+      const newRank = rank - 1;
+      if (newRank <= 0) {
+        delete _skillTreeState.allocated[nodeId];
+      } else {
+        _skillTreeState.allocated[nodeId] = newRank;
+      }
+      _updateSkillPointsBadge();
+      _stHideHover();
+      _renderSkillTree();
+      return;
+    }
+    // Cannot deallocate (would strand other nodes) — fall through to try adding rank
+  }
+
+  // ── Allocate path: node not maxed and is available/allocated ──
+  if (rank >= maxRank) return;               // maxed — can't add more
   if (st !== 'available' && st !== 'allocated') return; // locked
 
-  // Count spent points
-  let totalSpent = 0;
-  Object.values(_skillTreeState.allocated).forEach(r => { totalSpent += r; });
-  const level = (typeof _campaignState !== 'undefined' && _campaignState.playerLevel)
-    ? _campaignState.playerLevel : 1;
-  const pts = level - totalSpent;
-  if (pts <= 0) return;  // no points remaining
+  const pts = _updateSkillPointsBadge(); // get current available pts
+  if (pts <= 0) return;
 
   _skillTreeState.allocated[nodeId] = rank + 1;
-
-  // Update points display
-  const badge = document.getElementById('st-skill-points');
-  if (badge) badge.textContent = `SKILL POINTS: ${pts - 1}`;
-
+  _updateSkillPointsBadge();
   _stHideHover();
   _renderSkillTree();
 }
