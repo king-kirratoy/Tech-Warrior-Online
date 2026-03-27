@@ -8,7 +8,7 @@
 
 | File | Purpose |
 |------|---------|
-| `index.html` | HTML shell with all screen divs and canonical `<script>` load order; no inline scripts or styles. `boss-hud` is a sibling of `round-hud` (not nested inside it) so campaign mode hiding `round-hud` does not affect the boss HP bar. `objective-hud` is anchored `top:68px;left:16px` — top-left corner, below the pause button row. |
+| `index.html` | HTML shell with all screen divs and canonical `<script>` load order; no inline scripts or styles. `boss-hud` is a sibling of `round-hud` (not nested inside it) so campaign mode hiding `round-hud` does not affect the boss HP bar. `objective-hud` is anchored `top:0;left:0` — flush to the top-left viewport corner; inner padding (8px top, 18px horizontal) provides visual clearance. `boss-hud` is anchored `top:0` centered — inner padding (10px top) provides clearance from the viewport edge. |
 | `css/base.css` | Design tokens (legacy brand + sci-fi UI palette), `--font-mono`, glow/button geometry tokens, `.tw-btn` system, and universal reset. |
 | `css/hud.css` | In-game HUD styles: console frame, paper doll, weapon bar rows, and HUD-specific color tokens. |
 | `css/garage.css` | Hangar UI, perk cards, stats panel, dropdown system, and the full `.lo-*` loadout overlay class family. |
