@@ -29,8 +29,7 @@
     "c": [
       "node_106",
       "node_107"
-    ],
-    "i": "damage"
+    ]
   },
   {
     "id": "gen_crit",
@@ -43,8 +42,7 @@
     "c": [
       "fth_heat",
       "path_gc"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "path_gc",
@@ -57,8 +55,7 @@
     "c": [
       "gen_crit",
       "node_182"
-    ],
-    "i": "crit_dmg"
+    ]
   },
   {
     "id": "smg_dmg",
@@ -71,8 +68,7 @@
     "c": [
       "node_112",
       "node_114"
-    ],
-    "i": "smg"
+    ]
   },
   {
     "id": "smg_util",
@@ -86,8 +82,7 @@
       "node_113",
       "smg_heat",
       "smg_notable"
-    ],
-    "i": "smg"
+    ]
   },
   {
     "id": "smg_heat",
@@ -101,8 +96,7 @@
       "node_69",
       "node_112",
       "smg_util"
-    ],
-    "i": "heat"
+    ]
   },
   {
     "id": "smg_notable",
@@ -141,8 +135,7 @@
       "node_111",
       "node_138",
       "node_109"
-    ],
-    "i": "damage"
+    ]
   },
   {
     "id": "fth_util",
@@ -156,8 +149,7 @@
       "node_110",
       "node_111",
       "fth_notable"
-    ],
-    "i": "fire_rate"
+    ]
   },
   {
     "id": "fth_heat",
@@ -172,8 +164,7 @@
       "node_110",
       "fth_notable",
       "gen_crit"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "fth_notable",
@@ -194,7 +185,7 @@
     "y": -360,
     "t": "keystone",
     "n": "DEADEYE",
-    "d": "+6% Battle Rifle Damage, +3% Damage per consecutive hit on same target",
+    "d": "+6% Battle Rifle Damage, +2% Damage per consecutive hit on same target",
     "r": 1,
     "c": [
       "node_139"
@@ -212,8 +203,7 @@
       "node_115",
       "node_117",
       "sg_notable"
-    ],
-    "i": "damage"
+    ]
   },
   {
     "id": "sg_notable",
@@ -221,7 +211,7 @@
     "y": 200,
     "t": "notable",
     "n": "Sharpshooter",
-    "d": "+4% Sniper Rifle Damage, +4% Sniper Rifle Crit Chance",
+    "d": "+4% Sniper Rifle Damage, +10% Sniper Rifle Crit Chance",
     "r": 1,
     "c": [
       "node_116",
@@ -234,7 +224,7 @@
     "y": 360,
     "t": "keystone",
     "n": "ONE SHOT ONE KILL",
-    "d": "+6% Sniper Rifle Damage, +50% Headshot Damage, +10% Sniper Rifle Crit Chance",
+    "d": "+6% Sniper Rifle Damage, +10% Sniper Rifle Crit Chance, +4% Sniper Rifle Fire Rate",
     "r": 1,
     "c": [
       "node_135"
@@ -252,8 +242,7 @@
       "node_120",
       "node_122",
       "siph_notable"
-    ],
-    "i": "fire_rate"
+    ]
   },
   {
     "id": "siph_notable",
@@ -286,7 +275,7 @@
     "y": 160,
     "t": "notable",
     "n": "Assassin's Eye",
-    "d": "+3% Crit, +6% Crit Damage",
+    "d": "+10% Crit Chance, +20% Crit Damage",
     "r": 1,
     "c": [
       "node_159"
@@ -317,8 +306,7 @@
       "node_76",
       "node_95",
       "node_96"
-    ],
-    "i": "speed"
+    ]
   },
   {
     "id": "speed_fr",
@@ -332,8 +320,7 @@
       "node_64",
       "node_106",
       "node_105"
-    ],
-    "i": "fire_rate"
+    ]
   },
   {
     "id": "ks_phantom",
@@ -365,7 +352,7 @@
     "y": -160,
     "t": "keystone",
     "n": "BERSERKER",
-    "d": "+20% Rage Damage, +3s Rage Duration, +10% Move Speed during Rage",
+    "d": "+16% Rage Damage, +3s Rage Duration, +8% Move Speed during Rage",
     "r": 1,
     "c": [
       "node_25"
@@ -419,8 +406,7 @@
       "node_92",
       "shield_notable",
       "node_89"
-    ],
-    "i": "shield_regen"
+    ]
   },
   {
     "id": "node_5",
@@ -435,8 +421,7 @@
       "node_46",
       "node_45",
       "node_51"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_6",
@@ -449,8 +434,7 @@
     "c": [
       "node_95",
       "node_98"
-    ],
-    "i": "dodge"
+    ]
   },
   {
     "id": "node_9",
@@ -476,8 +460,7 @@
       "node_104",
       "node_81",
       "node_99"
-    ],
-    "i": "dr"
+    ]
   },
   {
     "id": "node_11",
@@ -514,8 +497,7 @@
     "r": 2,
     "c": [
       "node_76"
-    ],
-    "i": "mod_cd"
+    ]
   },
   {
     "id": "node_23",
@@ -528,8 +510,7 @@
     "c": [
       "node_158",
       "ks_stasis"
-    ],
-    "i": "shield"
+    ]
   },
   {
     "id": "node_25",
@@ -537,13 +518,12 @@
     "y": -160,
     "t": "regular",
     "n": "Rage Boost",
-    "d": "+10% Rage Damage, +5% Rage Cooldown",
+    "d": "+8% Rage Damage, +4% Rage Cooldown",
     "r": 2,
     "c": [
       "ks_meteor",
       "node_195"
-    ],
-    "i": "damage"
+    ]
   },
   {
     "id": "node_27",
@@ -556,8 +536,7 @@
     "c": [
       "node_186",
       "ks_doppel"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_32",
@@ -570,8 +549,7 @@
     "c": [
       "node_131",
       "node_171"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_40",
@@ -584,8 +562,7 @@
     "c": [
       "node_121",
       "node_123"
-    ],
-    "i": "damage"
+    ]
   },
   {
     "id": "node_41",
@@ -600,8 +577,7 @@
       "node_45",
       "node_44",
       "node_48"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_42",
@@ -616,8 +592,7 @@
       "node_47",
       "node_44",
       "node_58"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_43",
@@ -632,8 +607,7 @@
       "node_47",
       "node_46",
       "node_59"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_44",
@@ -648,8 +622,7 @@
       "node_41",
       "node_42",
       "node_72"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_45",
@@ -664,8 +637,7 @@
       "node_5",
       "node_41",
       "node_61"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_46",
@@ -680,8 +652,7 @@
       "node_43",
       "node_5",
       "node_66"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_47",
@@ -696,8 +667,7 @@
       "node_42",
       "node_43",
       "node_68"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_48",
@@ -710,8 +680,7 @@
     "c": [
       "node_41",
       "node_60"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_51",
@@ -724,8 +693,7 @@
     "c": [
       "node_5",
       "node_64"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_58",
@@ -738,8 +706,7 @@
     "c": [
       "node_42",
       "node_76"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_59",
@@ -752,8 +719,7 @@
     "c": [
       "node_43",
       "node_65"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_60",
@@ -769,8 +735,7 @@
       "node_92",
       "node_163",
       "node_164"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_61",
@@ -783,8 +748,7 @@
     "c": [
       "node_45",
       "node_62"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_62",
@@ -797,8 +761,7 @@
     "c": [
       "node_61",
       "node_120"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_64",
@@ -813,8 +776,7 @@
       "speed_fr",
       "node_165",
       "node_166"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_65",
@@ -830,8 +792,7 @@
       "node_103",
       "node_167",
       "node_168"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_66",
@@ -844,8 +805,7 @@
     "c": [
       "node_46",
       "node_67"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_67",
@@ -858,8 +818,7 @@
     "c": [
       "node_66",
       "node_110"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_68",
@@ -872,8 +831,7 @@
     "c": [
       "node_47",
       "node_69"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_69",
@@ -886,8 +844,7 @@
     "c": [
       "node_68",
       "smg_heat"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_70",
@@ -900,8 +857,7 @@
     "c": [
       "node_72",
       "node_115"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_72",
@@ -914,8 +870,7 @@
     "c": [
       "node_44",
       "node_70"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_76",
@@ -930,8 +885,7 @@
       "speed_move",
       "node_162",
       "node_20"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_81",
@@ -957,8 +911,7 @@
     "c": [
       "node_4",
       "node_130"
-    ],
-    "i": "shield"
+    ]
   },
   {
     "id": "node_90",
@@ -972,8 +925,7 @@
       "node_91",
       "shield_notable",
       "node_93"
-    ],
-    "i": "shield_regen"
+    ]
   },
   {
     "id": "node_91",
@@ -986,8 +938,7 @@
     "c": [
       "node_60",
       "node_90"
-    ],
-    "i": "shield"
+    ]
   },
   {
     "id": "node_92",
@@ -1000,8 +951,7 @@
     "c": [
       "node_60",
       "node_4"
-    ],
-    "i": "shield"
+    ]
   },
   {
     "id": "node_93",
@@ -1014,8 +964,7 @@
     "c": [
       "node_90",
       "node_130"
-    ],
-    "i": "shield"
+    ]
   },
   {
     "id": "node_94",
@@ -1042,8 +991,7 @@
       "speed_move",
       "node_6",
       "node_94"
-    ],
-    "i": "speed"
+    ]
   },
   {
     "id": "node_96",
@@ -1057,8 +1005,7 @@
       "speed_move",
       "node_97",
       "node_94"
-    ],
-    "i": "speed"
+    ]
   },
   {
     "id": "node_97",
@@ -1071,8 +1018,7 @@
     "c": [
       "node_96",
       "node_98"
-    ],
-    "i": "dodge"
+    ]
   },
   {
     "id": "node_98",
@@ -1086,8 +1032,7 @@
       "node_6",
       "node_126",
       "node_97"
-    ],
-    "i": "dodge"
+    ]
   },
   {
     "id": "node_99",
@@ -1100,8 +1045,7 @@
     "c": [
       "node_10",
       "node_132"
-    ],
-    "i": "dr"
+    ]
   },
   {
     "id": "node_101",
@@ -1115,8 +1059,7 @@
       "node_103",
       "node_81",
       "node_102"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_102",
@@ -1129,8 +1072,7 @@
     "c": [
       "node_132",
       "node_101"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_103",
@@ -1143,8 +1085,7 @@
     "c": [
       "node_65",
       "node_101"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_104",
@@ -1157,8 +1098,7 @@
     "c": [
       "node_65",
       "node_10"
-    ],
-    "i": "dr"
+    ]
   },
   {
     "id": "node_105",
@@ -1172,8 +1112,7 @@
       "node_108",
       "speed_fr",
       "node_14"
-    ],
-    "i": "fire_rate"
+    ]
   },
   {
     "id": "node_106",
@@ -1187,8 +1126,7 @@
       "speed_fr",
       "gen_dmg",
       "node_14"
-    ],
-    "i": "fire_rate"
+    ]
   },
   {
     "id": "node_107",
@@ -1202,8 +1140,7 @@
       "gen_dmg",
       "node_128",
       "node_108"
-    ],
-    "i": "damage"
+    ]
   },
   {
     "id": "node_108",
@@ -1216,8 +1153,7 @@
     "c": [
       "node_107",
       "node_105"
-    ],
-    "i": "damage"
+    ]
   },
   {
     "id": "node_109",
@@ -1230,8 +1166,7 @@
     "c": [
       "fth_dmg",
       "fth_heat"
-    ],
-    "i": "damage"
+    ]
   },
   {
     "id": "node_110",
@@ -1245,8 +1180,7 @@
       "node_67",
       "fth_util",
       "fth_heat"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_111",
@@ -1260,8 +1194,7 @@
       "fth_util",
       "fth_dmg",
       "node_200"
-    ],
-    "i": "fire_rate"
+    ]
   },
   {
     "id": "node_112",
@@ -1276,8 +1209,7 @@
       "smg_dmg",
       "smg_notable",
       "node_202"
-    ],
-    "i": "heat"
+    ]
   },
   {
     "id": "node_113",
@@ -1291,8 +1223,7 @@
       "node_114",
       "smg_util",
       "node_201"
-    ],
-    "i": "smg"
+    ]
   },
   {
     "id": "node_114",
@@ -1306,8 +1237,7 @@
       "smg_dmg",
       "node_113",
       "node_140"
-    ],
-    "i": "smg"
+    ]
   },
   {
     "id": "node_115",
@@ -1315,14 +1245,13 @@
     "y": 160,
     "t": "regular",
     "n": "Sniper Rifle Crit Chance",
-    "d": "+2% Sniper Rifle Crit Chance",
+    "d": "+5% Sniper Rifle Crit Chance",
     "r": 2,
     "c": [
       "node_70",
       "sg_dmg",
       "node_116"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_116",
@@ -1330,15 +1259,14 @@
     "y": 160,
     "t": "regular",
     "n": "Sniper Rifle Crit Chance",
-    "d": "+2% Sniper Rifle Crit Chance",
+    "d": "+5% Sniper Rifle Crit Chance",
     "r": 2,
     "c": [
       "node_115",
       "node_119",
       "sg_notable",
       "node_203"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_117",
@@ -1352,8 +1280,7 @@
       "sg_dmg",
       "node_118",
       "node_204"
-    ],
-    "i": "damage"
+    ]
   },
   {
     "id": "node_118",
@@ -1361,14 +1288,13 @@
     "y": 240,
     "t": "regular",
     "n": "Sniper Scope",
-    "d": "+5% Sniper Rifle Crit Damage",
+    "d": "+10% Sniper Rifle Crit Damage",
     "r": 2,
     "c": [
       "node_117",
       "node_134",
       "node_119"
-    ],
-    "i": "crit_dmg"
+    ]
   },
   {
     "id": "node_119",
@@ -1376,13 +1302,12 @@
     "y": 200,
     "t": "regular",
     "n": "Sniper Rifle Crit Chance",
-    "d": "+2% Sniper Rifle Crit Chance",
+    "d": "+10% Sniper Rifle Crit Damage",
     "r": 2,
     "c": [
       "node_116",
       "node_118"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_120",
@@ -1396,8 +1321,7 @@
       "node_62",
       "siph_util",
       "node_121"
-    ],
-    "i": "fire_rate"
+    ]
   },
   {
     "id": "node_121",
@@ -1412,8 +1336,7 @@
       "node_40",
       "siph_notable",
       "node_206"
-    ],
-    "i": "fire_rate"
+    ]
   },
   {
     "id": "node_122",
@@ -1427,8 +1350,7 @@
       "siph_util",
       "node_123",
       "node_205"
-    ],
-    "i": "fire_rate"
+    ]
   },
   {
     "id": "node_123",
@@ -1442,8 +1364,7 @@
       "node_122",
       "node_40",
       "node_136"
-    ],
-    "i": "damage"
+    ]
   },
   {
     "id": "node_124",
@@ -1456,8 +1377,7 @@
     "c": [
       "node_137",
       "node_174"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_125",
@@ -1470,8 +1390,7 @@
     "c": [
       "node_137",
       "node_175"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_126",
@@ -1484,8 +1403,7 @@
     "c": [
       "node_98",
       "node_127"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_127",
@@ -1500,8 +1418,7 @@
       "ks_phantom",
       "node_145",
       "node_146"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_128",
@@ -1514,8 +1431,7 @@
     "c": [
       "node_107",
       "node_129"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_129",
@@ -1530,8 +1446,7 @@
       "ks_glass_cannon",
       "node_154",
       "node_153"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_130",
@@ -1545,8 +1460,7 @@
       "node_89",
       "node_93",
       "node_131"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_131",
@@ -1561,8 +1475,7 @@
       "node_11",
       "node_142",
       "node_32"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_132",
@@ -1576,8 +1489,7 @@
       "node_99",
       "node_133",
       "node_102"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_133",
@@ -1592,8 +1504,7 @@
       "node_9",
       "node_149",
       "node_150"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_134",
@@ -1606,8 +1517,7 @@
     "c": [
       "node_118",
       "node_135"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_135",
@@ -1622,8 +1532,7 @@
       "ks_decimator",
       "node_144",
       "node_143"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_136",
@@ -1636,8 +1545,7 @@
     "c": [
       "node_123",
       "node_137"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_137",
@@ -1652,8 +1560,7 @@
       "ks_parasyte",
       "node_124",
       "node_125"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_138",
@@ -1666,8 +1573,7 @@
     "c": [
       "fth_dmg",
       "node_139"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_139",
@@ -1682,8 +1588,7 @@
       "ks_hellfire",
       "node_151",
       "node_152"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_140",
@@ -1696,8 +1601,7 @@
     "c": [
       "node_114",
       "node_141"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_141",
@@ -1712,8 +1616,7 @@
       "ks_bullet_hell",
       "node_147",
       "node_148"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_142",
@@ -1726,8 +1629,7 @@
     "c": [
       "node_131",
       "node_170"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_143",
@@ -1740,8 +1642,7 @@
     "c": [
       "node_135",
       "node_161"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_144",
@@ -1754,8 +1655,7 @@
     "c": [
       "node_135",
       "node_157"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_145",
@@ -1768,8 +1668,7 @@
     "c": [
       "node_127",
       "node_160"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_146",
@@ -1782,8 +1681,7 @@
     "c": [
       "node_127",
       "node_197"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_147",
@@ -1796,8 +1694,7 @@
     "c": [
       "node_141",
       "node_193"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_148",
@@ -1810,8 +1707,7 @@
     "c": [
       "node_141",
       "node_192"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_149",
@@ -1824,8 +1720,7 @@
     "c": [
       "node_133",
       "node_189"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_150",
@@ -1838,8 +1733,7 @@
     "c": [
       "node_133",
       "node_188"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_151",
@@ -1852,8 +1746,7 @@
     "c": [
       "node_139",
       "node_185"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_152",
@@ -1866,8 +1759,7 @@
     "c": [
       "node_139",
       "node_184"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_153",
@@ -1880,8 +1772,7 @@
     "c": [
       "node_129",
       "node_180"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_154",
@@ -1894,8 +1785,7 @@
     "c": [
       "node_129",
       "node_179"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_155",
@@ -1908,8 +1798,7 @@
     "c": [
       "node_159",
       "node_160"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_156",
@@ -1922,8 +1811,7 @@
     "c": [
       "node_157",
       "node_159"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_157",
@@ -1936,8 +1824,7 @@
     "c": [
       "node_144",
       "node_156"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_158",
@@ -1952,8 +1839,7 @@
       "node_169",
       "node_161",
       "node_23"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_159",
@@ -1968,8 +1854,7 @@
       "node_156",
       "node_155",
       "crit_notable"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_160",
@@ -1982,8 +1867,7 @@
     "c": [
       "node_155",
       "node_145"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_161",
@@ -1996,8 +1880,7 @@
     "c": [
       "node_158",
       "node_143"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_162",
@@ -2009,8 +1892,7 @@
     "r": 2,
     "c": [
       "node_76"
-    ],
-    "i": "mod_cd"
+    ]
   },
   {
     "id": "node_163",
@@ -2022,8 +1904,7 @@
     "r": 2,
     "c": [
       "node_60"
-    ],
-    "i": "mod_cd"
+    ]
   },
   {
     "id": "node_164",
@@ -2035,8 +1916,7 @@
     "r": 2,
     "c": [
       "node_60"
-    ],
-    "i": "mod_cd"
+    ]
   },
   {
     "id": "node_165",
@@ -2048,8 +1928,7 @@
     "r": 2,
     "c": [
       "node_64"
-    ],
-    "i": "mod_cd"
+    ]
   },
   {
     "id": "node_166",
@@ -2061,8 +1940,7 @@
     "r": 2,
     "c": [
       "node_64"
-    ],
-    "i": "mod_cd"
+    ]
   },
   {
     "id": "node_167",
@@ -2074,8 +1952,7 @@
     "r": 2,
     "c": [
       "node_65"
-    ],
-    "i": "mod_cd"
+    ]
   },
   {
     "id": "node_168",
@@ -2087,8 +1964,7 @@
     "r": 2,
     "c": [
       "node_65"
-    ],
-    "i": "mod_cd"
+    ]
   },
   {
     "id": "node_169",
@@ -2101,8 +1977,7 @@
     "c": [
       "node_170",
       "node_158"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_170",
@@ -2115,8 +1990,7 @@
     "c": [
       "node_142",
       "node_169"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_171",
@@ -2129,8 +2003,7 @@
     "c": [
       "node_172",
       "node_32"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_172",
@@ -2143,8 +2016,7 @@
     "c": [
       "node_173",
       "node_171"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_173",
@@ -2159,8 +2031,7 @@
       "node_174",
       "node_172",
       "node_198"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_174",
@@ -2173,8 +2044,7 @@
     "c": [
       "node_124",
       "node_173"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_175",
@@ -2187,8 +2057,7 @@
     "c": [
       "node_176",
       "node_125"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_176",
@@ -2201,8 +2070,7 @@
     "c": [
       "node_177",
       "node_175"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_177",
@@ -2217,8 +2085,7 @@
       "node_178",
       "node_176",
       "node_214"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_178",
@@ -2231,8 +2098,7 @@
     "c": [
       "node_179",
       "node_177"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_179",
@@ -2245,8 +2111,7 @@
     "c": [
       "node_154",
       "node_178"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_180",
@@ -2259,8 +2124,7 @@
     "c": [
       "node_181",
       "node_153"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_181",
@@ -2273,8 +2137,7 @@
     "c": [
       "node_182",
       "node_180"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_182",
@@ -2289,8 +2152,7 @@
       "node_183",
       "node_181",
       "node_199"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_183",
@@ -2303,8 +2165,7 @@
     "c": [
       "node_184",
       "node_182"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_184",
@@ -2317,8 +2178,7 @@
     "c": [
       "node_152",
       "node_183"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_185",
@@ -2331,8 +2191,7 @@
     "c": [
       "node_186",
       "node_151"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_186",
@@ -2347,8 +2206,7 @@
       "node_187",
       "node_185",
       "node_27"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_187",
@@ -2361,8 +2219,7 @@
     "c": [
       "node_188",
       "node_186"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_188",
@@ -2375,8 +2232,7 @@
     "c": [
       "node_150",
       "node_187"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_189",
@@ -2389,8 +2245,7 @@
     "c": [
       "node_190",
       "node_149"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_190",
@@ -2403,8 +2258,7 @@
     "c": [
       "node_191",
       "node_189"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_191",
@@ -2419,8 +2273,7 @@
       "node_192",
       "node_190",
       "ks_overclock"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_192",
@@ -2433,8 +2286,7 @@
     "c": [
       "node_148",
       "node_191"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_193",
@@ -2447,8 +2299,7 @@
     "c": [
       "node_194",
       "node_147"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_194",
@@ -2461,8 +2312,7 @@
     "c": [
       "node_195",
       "node_193"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_195",
@@ -2477,8 +2327,7 @@
       "node_196",
       "node_194",
       "node_25"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_196",
@@ -2491,8 +2340,7 @@
     "c": [
       "node_197",
       "node_195"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_197",
@@ -2505,8 +2353,7 @@
     "c": [
       "node_146",
       "node_196"
-    ],
-    "i": "hp"
+    ]
   },
   {
     "id": "node_198",
@@ -2543,8 +2390,7 @@
     "c": [
       "node_111",
       "node_207"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_201",
@@ -2557,8 +2403,7 @@
     "c": [
       "node_113",
       "node_208"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_202",
@@ -2571,8 +2416,7 @@
     "c": [
       "node_112",
       "node_209"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_203",
@@ -2585,8 +2429,7 @@
     "c": [
       "node_116",
       "node_210"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_204",
@@ -2599,8 +2442,7 @@
     "c": [
       "node_117",
       "node_211"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_205",
@@ -2613,8 +2455,7 @@
     "c": [
       "node_122",
       "node_212"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_206",
@@ -2627,8 +2468,7 @@
     "c": [
       "node_121",
       "node_213"
-    ],
-    "i": "crit"
+    ]
   },
   {
     "id": "node_207",
@@ -2641,8 +2481,7 @@
     "c": [
       "node_200",
       "node_186"
-    ],
-    "i": "crit_dmg"
+    ]
   },
   {
     "id": "node_208",
@@ -2655,8 +2494,7 @@
     "c": [
       "node_201",
       "node_191"
-    ],
-    "i": "crit_dmg"
+    ]
   },
   {
     "id": "node_209",
@@ -2669,8 +2507,7 @@
     "c": [
       "node_202",
       "node_195"
-    ],
-    "i": "crit_dmg"
+    ]
   },
   {
     "id": "node_210",
@@ -2683,8 +2520,7 @@
     "c": [
       "node_203",
       "node_159"
-    ],
-    "i": "crit_dmg"
+    ]
   },
   {
     "id": "node_211",
@@ -2697,8 +2533,7 @@
     "c": [
       "node_204",
       "node_158"
-    ],
-    "i": "crit_dmg"
+    ]
   },
   {
     "id": "node_212",
@@ -2711,8 +2546,7 @@
     "c": [
       "node_205",
       "node_173"
-    ],
-    "i": "crit_dmg"
+    ]
   },
   {
     "id": "node_213",
@@ -2725,8 +2559,7 @@
     "c": [
       "node_206",
       "node_177"
-    ],
-    "i": "crit_dmg"
+    ]
   },
   {
     "id": "node_214",
@@ -2739,8 +2572,7 @@
     "c": [
       "node_177",
       "node_215"
-    ],
-    "i": "augment"
+    ]
   },
   {
     "id": "node_215",
