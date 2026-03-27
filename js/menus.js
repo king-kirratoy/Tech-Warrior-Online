@@ -1862,10 +1862,22 @@ function _renderGearBonusesPanel() {
     // ── GEAR BONUSES SUMMARY ──────────────────────────────────
     const gearPanel = document.getElementById('stat-gear-panel');
     const gearInfo  = document.getElementById('stat-gear-info');
+    const gearTitle = document.getElementById('stat-gear-title');
     if (!gearPanel || !gearInfo) return;
     const gs = typeof _gearState !== 'undefined' ? _gearState : {};
     const hasAnyGear = Object.values(gs).some(v => v > 0);
-    if (!hasAnyGear) {
+
+    // Merge skill tree bonuses in campaign mode
+    const stb = (_gameMode === 'campaign' && typeof getSkillTreeBonuses === 'function')
+        ? getSkillTreeBonuses() : {};
+    const hasSkillBonuses = Object.values(stb).some(v => v > 0);
+
+    // Update header to reflect whether skill bonuses are included
+    if (gearTitle) {
+        gearTitle.textContent = (_gameMode === 'campaign') ? 'Gear / Skill Bonuses' : 'Gear Bonuses';
+    }
+
+    if (!hasAnyGear && !hasSkillBonuses) {
         gearPanel.style.display = 'none';
         return;
     }
@@ -1876,11 +1888,11 @@ function _renderGearBonusesPanel() {
     const negKeys  = new Set(['fireRatePct','modCdPct']);
 
     const _renderGroup = (title, keys) => {
-        const active = keys.filter(k => (gs[k] || 0) > 0);
+        const active = keys.filter(k => ((gs[k] || 0) + (stb[k] || 0)) > 0);
         if (active.length === 0) return '';
         let h = `<div class="bsub">${title}</div>`;
         active.forEach(k => {
-            const v  = gs[k];
+            const v  = (gs[k] || 0) + (stb[k] || 0);
             const fmtGv = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : v;
             h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span class="lo-bonus-val pos">+${fmtGv}</span></div>`;
         });
