@@ -1874,7 +1874,8 @@ async function saveToCloud() {
             cpu: loadout.cpu, aug: loadout.aug,
             leg: loadout.leg, shld: loadout.shld,
             totalKills: (typeof _totalKills !== 'undefined') ? _totalKills : 0,
-            perksEarned: (typeof _perksEarned !== 'undefined') ? _perksEarned : 0
+            perksEarned: (typeof _perksEarned !== 'undefined') ? _perksEarned : 0,
+            skillTreeAllocated: (typeof _skillTreeState !== 'undefined') ? _skillTreeState.allocated : {}
         };
 
         const payload = {
@@ -1975,6 +1976,10 @@ function _restoreFromCloudData(data) {
         _round = cp.round || 1;
         _totalKills = cp.totalKills || 0;
         _perksEarned = cp.perksEarned || 0;
+        if (typeof _skillTreeState !== 'undefined') {
+            _skillTreeState.allocated = (cp.skillTreeAllocated && typeof cp.skillTreeAllocated === 'object')
+                ? cp.skillTreeAllocated : {};
+        }
     }
     // Restore inventory
     if (data.inventory && Array.isArray(data.inventory)) {
@@ -2048,6 +2053,10 @@ async function _loadCampaignData() {
             _round          = saved.round   || 1;
             _totalKills     = saved.totalKills || 0;
             _perksEarned    = saved.perksEarned || 0;
+            if (typeof _skillTreeState !== 'undefined') {
+                _skillTreeState.allocated = (saved.skillTreeAllocated && typeof saved.skillTreeAllocated === 'object')
+                    ? saved.skillTreeAllocated : {};
+            }
             loadCampaignInventory();
         }
         if (typeof loadCampaignState === 'function') loadCampaignState();
