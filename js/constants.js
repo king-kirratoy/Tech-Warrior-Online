@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v7.06';
+const GAME_VERSION = 'v7.07';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
@@ -236,9 +236,9 @@ const LEG_SYSTEMS = {
 // ── STARTER LOADOUTS ─────────────────────────────────────────────
 /** Starter loadouts per chassis — barebones gear to find the rest through loot. */
 const STARTER_LOADOUTS = {
-    light:  { L: 'smg',  R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'none' },
-    medium: { L: 'mg',   R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'none' },
-    heavy:  { L: 'hr',   R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'none' },
+    light:  { L: 'smg',  R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'micro_shield' },
+    medium: { L: 'mg',   R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'adaptive_shield' },
+    heavy:  { L: 'hr',   R: 'none', cpu: 'none', aug: 'none', leg: 'none', shld: 'bulwark_shield' },
 };
 
 // ═══════════ UI CONFIG ═══════════

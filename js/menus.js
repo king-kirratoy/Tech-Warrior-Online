@@ -1621,6 +1621,22 @@ function _equipItemToSlot(invIdx, slotKey) {
     }
 
     recalcGearStats();
+    // If a shield system was equipped during an active run, recalc player shield stats
+    if (item.baseType === 'shield_system' && typeof player !== 'undefined' && player?.active && typeof isDeployed !== 'undefined' && isDeployed) {
+        const _ss = (typeof SHIELD_SYSTEMS !== 'undefined' && SHIELD_SYSTEMS[loadout.shld]) || { maxShield:0, regenRate:0, regenDelay:5, absorb:0.50 };
+        const _gShieldHP = (_gearState?.shieldHP || 0);
+        player.maxShield = _ss.maxShield + _gShieldHP;
+        player.shield = Math.min(player.shield || 0, player.maxShield) || player.maxShield;
+        player._shieldRegenRate  = _ss.regenRate;
+        player._shieldRegenDelay = _ss.regenDelay;
+        const _chassisBonus = loadout.chassis === 'medium' ? 0.10 : 0;
+        const _gAbsorb = ((_gearState?.absorbPct || 0) / 100);
+        player._shieldAbsorb = Math.min(0.90, (_ss.absorb ?? 0.50) + _chassisBonus + _gAbsorb);
+        player._shieldFlickerHit = false;
+        player._shieldAdaptStack = 0;
+        player._shieldLayerHP = [_ss.layer1Max || 0, _ss.layer2Max || 0];
+    }
+    if (typeof updateHUD === 'function') updateHUD();
     saveInventory();
     if (typeof _gameMode !== 'undefined' && _gameMode === 'campaign' && typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
     populateInventory();
@@ -1659,6 +1675,22 @@ function _unequipItem(slotKey) {
     }
 
     recalcGearStats();
+    // If a shield system was unequipped during an active run, revert player shield stats
+    if (item.baseType === 'shield_system' && typeof player !== 'undefined' && player?.active && typeof isDeployed !== 'undefined' && isDeployed) {
+        const _ss = (typeof SHIELD_SYSTEMS !== 'undefined' && SHIELD_SYSTEMS[loadout.shld]) || { maxShield:0, regenRate:0, regenDelay:5, absorb:0.50 };
+        const _gShieldHP = (_gearState?.shieldHP || 0);
+        player.maxShield = _ss.maxShield + _gShieldHP;
+        player.shield = Math.min(player.shield || 0, player.maxShield);
+        player._shieldRegenRate  = _ss.regenRate;
+        player._shieldRegenDelay = _ss.regenDelay;
+        const _chassisBonus = loadout.chassis === 'medium' ? 0.10 : 0;
+        const _gAbsorb = ((_gearState?.absorbPct || 0) / 100);
+        player._shieldAbsorb = Math.min(0.90, (_ss.absorb ?? 0.50) + _chassisBonus + _gAbsorb);
+        player._shieldFlickerHit = false;
+        player._shieldAdaptStack = 0;
+        player._shieldLayerHP = [_ss.layer1Max || 0, _ss.layer2Max || 0];
+    }
+    if (typeof updateHUD === 'function') updateHUD();
     saveInventory();
     if (typeof _gameMode !== 'undefined' && _gameMode === 'campaign' && typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
     populateInventory();
