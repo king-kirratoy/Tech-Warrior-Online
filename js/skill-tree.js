@@ -53,14 +53,13 @@ function showSkillTree() {
     'font-family:var(--font-mono)',
   ].join(';');
 
-  // ── Top bar (44 px) ──
+  // ── Top bar ──
   const topBar = document.createElement('div');
   topBar.style.cssText = [
     'position:relative',
     'display:flex',
     'align-items:center',
-    'height:44px',
-    'padding:0 12px',
+    'padding:6px 12px',
     'flex-shrink:0',
     'border-bottom:1px solid rgba(0,212,255,0.18)',
     'background:rgba(0,212,255,0.04)',
@@ -73,19 +72,36 @@ function showSkillTree() {
   backBtn.textContent = '‹ BACK';
   backBtn.addEventListener('click', hideSkillTree);
 
-  // Title (center)
-  const title = document.createElement('span');
-  title.style.cssText = [
+  // Title + sub-text (center column)
+  const titleCol = document.createElement('div');
+  titleCol.style.cssText = [
     'position:absolute',
     'left:50%',
     'transform:translateX(-50%)',
-    'font-size:11px',
-    'letter-spacing:4px',
-    'color:#7ec8e3',
-    'text-transform:uppercase',
+    'display:flex',
+    'flex-direction:column',
+    'align-items:center',
     'pointer-events:none',
   ].join(';');
-  title.textContent = 'SKILL TREE';
+  const titleText = document.createElement('span');
+  titleText.style.cssText = [
+    'font-size:11px',
+    'letter-spacing:4px',
+    'color:#00d4ff',
+    'text-transform:uppercase',
+  ].join(';');
+  titleText.textContent = 'SKILL TREE';
+  const subText = document.createElement('span');
+  subText.style.cssText = [
+    'font-size:9px',
+    'letter-spacing:3px',
+    'color:#cc88ff',
+    'text-transform:uppercase',
+    'margin-top:2px',
+  ].join(';');
+  subText.textContent = `${chassis.toUpperCase()} CHASSIS  ·  PILOT LEVEL ${level}`;
+  titleCol.appendChild(titleText);
+  titleCol.appendChild(subText);
 
   // Skill points (right)
   const ptsBadge = document.createElement('span');
@@ -99,21 +115,8 @@ function showSkillTree() {
   ptsBadge.textContent = `SKILL POINTS: ${skillPts}`;
 
   topBar.appendChild(backBtn);
-  topBar.appendChild(title);
+  topBar.appendChild(titleCol);
   topBar.appendChild(ptsBadge);
-
-  // ── Sub-header (chassis + level) ──
-  const subHeader = document.createElement('div');
-  subHeader.style.cssText = [
-    'text-align:center',
-    'padding:6px 0 4px',
-    'font-size:10px',
-    'letter-spacing:3px',
-    'color:#cc88ff',
-    'text-transform:uppercase',
-    'flex-shrink:0',
-  ].join(';');
-  subHeader.textContent = `${chassis.toUpperCase()} CHASSIS  ·  PILOT LEVEL ${level}`;
 
   // ── SVG canvas ──
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -149,11 +152,10 @@ function showSkillTree() {
   ].join(';');
 
   const legendItems = [
-    { label: 'ALLOCATED', fill: '#00ff88', stroke: '#00ff88' },
-    { label: 'AVAILABLE', fill: 'rgba(0,212,255,0.25)', stroke: '#00d4ff' },
-    { label: 'LOCKED',    fill: 'rgba(255,255,255,0.06)', stroke: 'rgba(255,255,255,0.25)' },
-    { label: 'NOTABLE',   fill: 'rgba(255,160,60,0.25)', stroke: '#ff8c00' },
-    { label: 'KEYSTONE',  fill: 'rgba(180,80,255,0.25)', stroke: '#cc88ff' },
+    { label: 'ALLOCATED', fill: 'rgba(0,212,255,0.15)', stroke: '#00d4ff' },
+    { label: 'LOCKED',    fill: 'rgba(255,255,255,0.03)', stroke: 'rgba(255,255,255,0.25)' },
+    { label: 'NOTABLE',   fill: 'rgba(232,146,58,0.15)', stroke: '#e8923a' },
+    { label: 'KEYSTONE',  fill: 'rgba(204,136,255,0.15)', stroke: '#cc88ff' },
   ];
 
   legendItems.forEach(({ label, fill, stroke }) => {
@@ -204,7 +206,6 @@ function showSkillTree() {
 
   // ── Assemble ──
   overlay.appendChild(topBar);
-  overlay.appendChild(subHeader);
   overlay.appendChild(svg);
   overlay.appendChild(legend);
   document.body.appendChild(overlay);
@@ -316,9 +317,7 @@ function _renderSkillTree() {
       const stB = states[cId];
       let lineColor;
       if (stA === 'allocated' && stB === 'allocated') {
-        lineColor = 'rgba(0,255,136,0.35)';
-      } else if (stA === 'allocated' || stB === 'allocated') {
-        lineColor = 'rgba(0,212,255,0.2)';
+        lineColor = 'rgba(0,212,255,0.35)';
       } else {
         lineColor = 'rgba(255,255,255,0.06)';
       }
@@ -347,17 +346,14 @@ function _renderSkillTree() {
     if (node.t === 'start') {
       fill = 'rgba(0,212,255,0.08)'; stroke = '#00d4ff';
     } else if (node.t === 'keystone') {
-      if (st === 'allocated')      { fill = 'rgba(204,136,255,0.15)'; stroke = '#cc88ff'; }
-      else if (st === 'available') { fill = 'rgba(204,136,255,0.08)'; stroke = 'rgba(204,136,255,0.5)'; }
-      else                         { fill = 'rgba(204,136,255,0.04)'; stroke = 'rgba(204,136,255,0.2)'; }
+      if (st === 'allocated') { fill = 'rgba(204,136,255,0.15)'; stroke = '#cc88ff'; }
+      else                    { fill = 'rgba(204,136,255,0.04)'; stroke = 'rgba(204,136,255,0.2)'; }
     } else if (node.t === 'notable') {
-      if (st === 'allocated')      { fill = 'rgba(232,146,58,0.15)'; stroke = '#e8923a'; }
-      else if (st === 'available') { fill = 'rgba(232,146,58,0.08)'; stroke = 'rgba(232,146,58,0.5)'; }
-      else                         { fill = 'rgba(232,146,58,0.04)'; stroke = 'rgba(232,146,58,0.2)'; }
+      if (st === 'allocated') { fill = 'rgba(232,146,58,0.15)'; stroke = '#e8923a'; }
+      else                    { fill = 'rgba(232,146,58,0.04)'; stroke = 'rgba(232,146,58,0.2)'; }
     } else {
-      if (st === 'allocated')      { fill = 'rgba(0,255,136,0.15)'; stroke = '#00ff88'; }
-      else if (st === 'available') { fill = 'rgba(0,212,255,0.12)'; stroke = '#00d4ff'; }
-      else                         { fill = 'rgba(255,255,255,0.03)'; stroke = 'rgba(255,255,255,0.12)'; }
+      if (st === 'allocated') { fill = 'rgba(0,212,255,0.15)'; stroke = '#00d4ff'; }
+      else                    { fill = 'rgba(255,255,255,0.03)'; stroke = 'rgba(255,255,255,0.12)'; }
     }
 
     // Group
