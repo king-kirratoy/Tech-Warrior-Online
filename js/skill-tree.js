@@ -19,8 +19,8 @@ function showSkillTree() {
   if (document.getElementById('skill-tree-overlay')) return;
 
   // ── Resolve chassis / pilot info ──
-  const chassis = (typeof _campaignState !== 'undefined' && _campaignState.lockedChassis)
-    ? _campaignState.lockedChassis
+  const chassis = (typeof _campaignState !== 'undefined' && _campaignState.chassis)
+    ? _campaignState.chassis
     : 'LIGHT';
 
   // ── Init node data ──
