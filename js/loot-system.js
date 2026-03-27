@@ -49,10 +49,10 @@ const RARITY_DEFS = {
 // Non-weapon items have their own base stats defined here.
 const ITEM_BASES = {
     // ── ARMOR PLATING (armor slot) ──
-    light_plate:    { baseType:'armor', name:'Light Plating',     icon:'armor_light',  baseStats:{ coreHP:20, dr:0.02 } },
-    medium_plate:   { baseType:'armor', name:'Medium Plating',    icon:'armor_medium', baseStats:{ coreHP:40, dr:0.05 } },
-    heavy_plate:    { baseType:'armor', name:'Heavy Plating',     icon:'armor_heavy',  baseStats:{ coreHP:60, dr:0.08 } },
-    reactive_plate: { baseType:'armor', name:'Reactive Plating',  icon:'armor_react',  baseStats:{ coreHP:30, dr:0.04 } },
+    light_plate:    { baseType:'armor', name:'Light Plating',     icon:'armor_light',  baseStats:{ coreHP:20, dr:2 } },
+    medium_plate:   { baseType:'armor', name:'Medium Plating',    icon:'armor_medium', baseStats:{ coreHP:40, dr:5 } },
+    heavy_plate:    { baseType:'armor', name:'Heavy Plating',     icon:'armor_heavy',  baseStats:{ coreHP:60, dr:8 } },
+    reactive_plate: { baseType:'armor', name:'Reactive Plating',  icon:'armor_react',  baseStats:{ coreHP:30, dr:4 } },
 
     // ── ARM REINFORCEMENT (arms slot) ──
     servo_enhancer: { baseType:'arms', name:'Servo Enhancer',     icon:'arm_servo',    baseStats:{ armHP:15, fireRatePct:-5 } },
@@ -62,7 +62,7 @@ const ITEM_BASES = {
     // ── LEG COMPONENTS (legs slot) ──
     actuator:       { baseType:'legs', name:'Actuator',           icon:'leg_actuator', baseStats:{ legHP:20, speedPct:3 } },
     booster:        { baseType:'legs', name:'Booster',            icon:'leg_booster',  baseStats:{ legHP:15, speedPct:6, dodgePct:2 } },
-    dampener:       { baseType:'legs', name:'Dampener',           icon:'leg_dampener', baseStats:{ legHP:30, speedPct:-2, dr:0.03 } },
+    dampener:       { baseType:'legs', name:'Dampener',           icon:'leg_dampener', baseStats:{ legHP:30, speedPct:-2, dr:3 } },
 
     // ── SHIELD MODULES (shield slot) ──
     barrier_core:   { baseType:'shield', name:'Barrier Core',     icon:'shield_core',  baseStats:{ shieldHP:15, shieldRegen:5 } },
@@ -86,16 +86,16 @@ const ITEM_BASES = {
     // ══════════════════════════════════════════════════════════════
 
     // ── SYSTEM SHIELDS (shield_system slot → sets loadout.shld) ──
-    sys_fortress_shield: { baseType:'shield_system', systemKey:'fortress_shield', name:'Fortress Shield',  icon:'shld_fort',    baseStats:{ shieldHP:30, dr:0.03 } },
+    sys_fortress_shield: { baseType:'shield_system', systemKey:'fortress_shield', name:'Fortress Shield',  icon:'shld_fort',    baseStats:{ shieldHP:30, dr:3 } },
     sys_micro_shield:    { baseType:'shield_system', systemKey:'micro_shield',    name:'Micro Shield',     icon:'shld_micro',   baseStats:{ shieldRegen:8, speedPct:2 } },
     sys_flicker_shield:  { baseType:'shield_system', systemKey:'flicker_shield',  name:'Flicker Shield',   icon:'shld_flicker', baseStats:{ shieldHP:10, dodgePct:3 } },
-    sys_adaptive_shield: { baseType:'shield_system', systemKey:'adaptive_shield', name:'Adaptive Shield',  icon:'shld_adapt',   baseStats:{ shieldHP:15, dr:0.02 } },
-    sys_bulwark_shield:  { baseType:'shield_system', systemKey:'bulwark_shield',  name:'Bulwark Shield',   icon:'shld_bulwark', baseStats:{ shieldHP:25, dr:0.04 } },
-    sys_titan_shield:    { baseType:'shield_system', systemKey:'titan_shield',    name:'Titan Shield',     icon:'shld_titan',   baseStats:{ shieldHP:30, dr:0.05 } },
+    sys_adaptive_shield: { baseType:'shield_system', systemKey:'adaptive_shield', name:'Adaptive Shield',  icon:'shld_adapt',   baseStats:{ shieldHP:15, dr:2 } },
+    sys_bulwark_shield:  { baseType:'shield_system', systemKey:'bulwark_shield',  name:'Bulwark Shield',   icon:'shld_bulwark', baseStats:{ shieldHP:25, dr:4 } },
+    sys_titan_shield:    { baseType:'shield_system', systemKey:'titan_shield',    name:'Titan Shield',     icon:'shld_titan',   baseStats:{ shieldHP:30, dr:5 } },
 
     // ── SYSTEM CPU (cpu_system slot → sets loadout.cpu) ──
     sys_jump:             { baseType:'cpu_system', systemKey:'jump',             name:'Jump Jets',         icon:'mod_jump',     baseStats:{ speedPct:3 } },
-    sys_barrier:          { baseType:'cpu_system', systemKey:'barrier',          name:'Barrier Module',    icon:'mod_barrier',  baseStats:{ shieldHP:10, dr:0.02 } },
+    sys_barrier:          { baseType:'cpu_system', systemKey:'barrier',          name:'Barrier Module',    icon:'mod_barrier',  baseStats:{ shieldHP:10, dr:2 } },
     sys_rage:             { baseType:'cpu_system', systemKey:'rage',             name:'Rage Inducer',      icon:'mod_rage',     baseStats:{ dmgPct:4 } },
     sys_emp:              { baseType:'cpu_system', systemKey:'emp',              name:'EMP Burst',         icon:'mod_emp',      baseStats:{ modCdPct:-5 } },
     sys_repair:           { baseType:'cpu_system', systemKey:'repair',           name:'Repair Drone',      icon:'mod_repair',   baseStats:{ autoRepair:1 } },
@@ -103,12 +103,12 @@ const ITEM_BASES = {
     sys_missile:          { baseType:'cpu_system', systemKey:'missile',          name:'Missile Pod',       icon:'mod_missile',  baseStats:{ dmgPct:3 } },
     sys_decoy:            { baseType:'cpu_system', systemKey:'decoy',            name:'Decoy Projector',   icon:'mod_decoy',    baseStats:{ speedPct:2 } },
     sys_ghost_step:       { baseType:'cpu_system', systemKey:'ghost_step',       name:'Ghost Step',        icon:'mod_ghost',    baseStats:{ speedPct:3, dodgePct:2 } },
-    sys_fortress_mode:    { baseType:'cpu_system', systemKey:'fortress_mode',    name:'Fortress Mode',     icon:'mod_fortress', baseStats:{ dr:0.03, coreHP:15 } },
+    sys_fortress_mode:    { baseType:'cpu_system', systemKey:'fortress_mode',    name:'Fortress Mode',     icon:'mod_fortress', baseStats:{ dr:3, coreHP:15 } },
 
     // ── SYSTEM LEGS (leg_system slot → sets loadout.leg) ──
     sys_hydraulic_boost:  { baseType:'leg_system', systemKey:'hydraulic_boost',  name:'Hydraulic Boost',   icon:'leg_hydro',    baseStats:{ speedPct:5, legHP:10 } },
     sys_gyro_stabilizer:  { baseType:'leg_system', systemKey:'gyro_stabilizer',  name:'Gyro Stabilizer',   icon:'leg_gyro',     baseStats:{ accuracy:5, legHP:10 } },
-    sys_mag_anchors:      { baseType:'leg_system', systemKey:'mag_anchors',      name:'Mag Anchors',       icon:'leg_mag',      baseStats:{ dr:0.03, legHP:15 } },
+    sys_mag_anchors:      { baseType:'leg_system', systemKey:'mag_anchors',      name:'Mag Anchors',       icon:'leg_mag',      baseStats:{ dr:3, legHP:15 } },
     sys_mine_layer:       { baseType:'leg_system', systemKey:'mine_layer',       name:'Mine Layer',        icon:'leg_mine',     baseStats:{ dmgPct:2, legHP:10 } },
     sys_sprint_boosters:  { baseType:'leg_system', systemKey:'sprint_boosters',  name:'Sprint Boosters',   icon:'leg_sprint',   baseStats:{ speedPct:8, dodgePct:2 } },
     sys_featherweight:    { baseType:'leg_system', systemKey:'featherweight',    name:'Featherweight',     icon:'leg_feather',  baseStats:{ speedPct:6, dodgePct:3 } },
@@ -118,8 +118,8 @@ const ITEM_BASES = {
     sys_target_painter:   { baseType:'aug_system', systemKey:'target_painter',   name:'Target Painter',    icon:'aug_painter',  baseStats:{ dmgPct:3, accuracy:3 } },
     sys_threat_analyzer:  { baseType:'aug_system', systemKey:'threat_analyzer',  name:'Threat Analyzer',   icon:'aug_threat',   baseStats:{ critChance:2, accuracy:3 } },
     sys_overclock_cpu:    { baseType:'aug_system', systemKey:'overclock_cpu',    name:'Overclock CPU',     icon:'aug_cpu',      baseStats:{ fireRatePct:-5, modCdPct:-3 } },
-    sys_reactive_plating: { baseType:'aug_system', systemKey:'reactive_plating', name:'Reactive Plating',  icon:'aug_plating',  baseStats:{ dr:0.03, coreHP:10 } },
-    sys_war_machine:      { baseType:'aug_system', systemKey:'war_machine',      name:'War Machine',       icon:'aug_war',      baseStats:{ dmgPct:5, dr:0.02 } },
+    sys_reactive_plating: { baseType:'aug_system', systemKey:'reactive_plating', name:'Reactive Plating',  icon:'aug_plating',  baseStats:{ dr:3, coreHP:10 } },
+    sys_war_machine:      { baseType:'aug_system', systemKey:'war_machine',      name:'War Machine',       icon:'aug_war',      baseStats:{ dmgPct:5, dr:2 } },
 };
 
 // Which weapon keys from WEAPONS are droppable as loot items.
@@ -155,7 +155,7 @@ const UNIQUE_ITEMS = {
         rarity: 'epic',
         isUnique: true,
         boss: 'warden',
-        baseStats: { coreHP: 55, dr: 0.06 },
+        baseStats: { coreHP: 55, dr: 6 },
         affixes: [
             { key:'coreHP', stat:'coreHP', value:30, label:'+30 Core HP' },
             { key:'dr', stat:'dr', value:4, label:'+4% Damage Reduction' }
@@ -266,7 +266,7 @@ const UNIQUE_ITEMS = {
         rarity: 'epic',
         isUnique: true,
         boss: 'juggernaut',
-        baseStats: { coreHP: 70, dr: 0.05 },
+        baseStats: { coreHP: 70, dr: 5 },
         affixes: [
             { key:'allHP', stat:'allHP', value:15, label:'+15 All Part HP' },
             { key:'dr', stat:'dr', value:6, label:'+6% Damage Reduction' }
@@ -303,7 +303,7 @@ const UNIQUE_ITEMS = {
         rarity: 'epic',
         isUnique: true,
         boss: 'swarm',
-        baseStats: { coreHP: 60, dr: 0.04 },
+        baseStats: { coreHP: 60, dr: 4 },
         affixes: [
             { key:'allHP', stat:'allHP', value:20, label:'+20 All Part HP' },
             { key:'dr', stat:'dr', value:5, label:'+5% Damage Reduction' }
