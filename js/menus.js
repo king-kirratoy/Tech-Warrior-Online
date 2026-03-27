@@ -1347,7 +1347,7 @@ function _buildItemComparisonHTML(newItem) {
         h += `<div style="font-size:11px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:6px;line-height:1.3;">${item.name || '?'}</div>`;
         const entries = Object.entries(item.baseStats || {}).filter(([k, v]) => v !== 0 && k !== 'speed');
         entries.forEach(([k, v]) => {
-            const fmtV = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : (k === 'reload' || k === 'fireRate') ? (1000 / v).toFixed(1) + '/sec' : v;
+            const fmtV = _pctStats.has(k) ? v + '%' : (k === 'reload' || k === 'fireRate') ? (1000 / v).toFixed(1) + '/sec' : v;
             h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
             h += `<span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span>`;
             h += `<span style="color:var(--sci-txt);">${fmtV}</span>`;
@@ -1927,7 +1927,7 @@ function _renderGearBonusesPanel() {
         let h = `<div class="bsub">${title}</div>`;
         active.forEach(k => {
             const v  = (gs[k] || 0) + (stb[k] || 0);
-            const fmtGv = _pctStats.has(k) ? v + '%' : k === 'dr' ? Math.round(v * 100) + '%' : v;
+            const fmtGv = _pctStats.has(k) ? v + '%' : v;
             h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span class="lo-bonus-val pos">+${fmtGv}</span></div>`;
         });
         return h;
@@ -2106,7 +2106,7 @@ function _camelToTitle(key) {
 }
 /** Builds hover card HTML for any item. */
 const _hoverInvertedStats = new Set(['fireRatePct','modCdPct']);
-const _pctStats = new Set(['dmgPct','critChance','critDmg','fireRatePct','dodgePct','speedPct','modCdPct','modEffPct','absorbPct','shieldRegen','splashRadius','accuracy','lootMult']);
+const _pctStats = new Set(['dmgPct','critChance','critDmg','fireRatePct','dodgePct','speedPct','modCdPct','modEffPct','absorbPct','shieldRegen','splashRadius','accuracy','lootMult','dr']);
 
 function _buildSingleCardHtml(item, slotLabel) {
     const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
@@ -2122,9 +2122,7 @@ function _buildSingleCardHtml(item, slotLabel) {
             if (k === 'speed') return;
             const valColor = 'var(--sci-cyan)';
             let displayVal;
-            if (k === 'dr') {
-                displayVal = Math.round(v * 100) + '%';
-            } else if (k === 'fireRate' || k === 'reload') {
+            if (k === 'fireRate' || k === 'reload') {
                 displayVal = (1000 / v).toFixed(1) + '/sec';
             } else if (_pctStats.has(k)) {
                 displayVal = v + '%';
@@ -2178,9 +2176,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
                 if (k === 'speed') return;
                 const valColor = 'var(--sci-cyan)';
                 let displayVal;
-                if (k === 'dr') {
-                    displayVal = Math.round(v * 100) + '%';
-                } else if (k === 'fireRate' || k === 'reload') {
+                if (k === 'fireRate' || k === 'reload') {
                     displayVal = (1000 / v).toFixed(1) + '/sec';
                 } else if (_pctStats.has(k)) {
                     displayVal = v + '%';
