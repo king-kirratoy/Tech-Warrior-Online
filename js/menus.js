@@ -2216,13 +2216,17 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
     html += `<div class="lo-hover-cmp-col" style="border:1px solid var(--sci-cyan-border);">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
     html += '</div>';
 
-    // Diff section
-    const allKeys = new Set([...Object.keys(item.baseStats||{}), ...Object.keys(compareItem.baseStats||{})]);
+    // Diff section — build combined stats (base + affixes) for accurate net totals
+    const _newCombined = { ...(item.baseStats||{}) };
+    (item.affixes||[]).forEach(a => { if (a.stat) _newCombined[a.stat] = (_newCombined[a.stat]||0) + a.value; });
+    const _oldCombined = { ...(compareItem.baseStats||{}) };
+    (compareItem.affixes||[]).forEach(a => { if (a.stat) _oldCombined[a.stat] = (_oldCombined[a.stat]||0) + a.value; });
+    const allKeys = new Set([...Object.keys(_newCombined), ...Object.keys(_oldCombined)]);
     let diffHtml = '';
     allKeys.forEach(k => {
         if (k === 'speed') return;
-        const nv = (item.baseStats||{})[k] || 0;
-        const ov = (compareItem.baseStats||{})[k] || 0;
+        const nv = _newCombined[k] || 0;
+        const ov = _oldCombined[k] || 0;
         if (k === 'fireRate' || k === 'reload') {
             if (!nv || !ov) return;
             const spsDiff = (1000 / nv) - (1000 / ov);
@@ -2237,7 +2241,9 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         const isInverted = _hoverInvertedStats.has(k);
         const isGood = isInverted ? diff < 0 : diff > 0;
         const color = isGood ? '#00ff88' : '#ff4d6a';
-        const diffDisplay = (isInverted && diff < 0) ? '+' + Math.abs(diff) : (diff > 0 ? '+' + diff : '' + diff);
+        // For inverted stats, flip sign so player sees the benefit (e.g. -15 fireRatePct → "+15%")
+        const displayDiff = isInverted ? -diff : diff;
+        const diffDisplay = (displayDiff > 0 ? '+' : '') + displayDiff + (_pctStats.has(k) ? '%' : '');
         diffHtml += `<div class="lo-hover-diff-row"><span class="lo-hover-diff-lbl">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span style="color:${color};">${diffDisplay}</span></div>`;
     });
     if (diffHtml) {
@@ -2264,10 +2270,14 @@ function _showSlotHover(el, slotKey, itemOverride) {
         // Backpack item passed directly
         item = itemOverride;
         const bpSlotNames = { weapon:'Weapon', cpu_system:'CPU', aug_system:'Augment',
-            shield_system:'Shield', leg_system:'Legs', armor:'Armor', arms:'Arms' };
+            shield_system:'Shield', leg_system:'Legs', armor:'Armor', arms:'Arms',
+            legs:'Legs', shield:'Shield', cpu:'CPU', augment:'Augment' };
         slotLabel = bpSlotNames[item.baseType] || item.baseType || '';
         // Find equipped item for same slot to compare
-        if (item.baseType === 'weapon') {
+        // Weapon detection: check baseType first, then fall back to subType lookup for robustness
+        const _isWeaponItem = item.baseType === 'weapon' ||
+            (item.subType && typeof WEAPONS !== 'undefined' && !!WEAPONS[item.subType]);
+        if (_isWeaponItem) {
             // Default L arm; Shift switches to R arm
             const _hoverArm = _shiftHeld ? 'R' : 'L';
             const _hoverAlt = _shiftHeld ? 'L' : 'R';
@@ -2277,9 +2287,8 @@ function _showSlotHover(el, slotKey, itemOverride) {
                 compareItem = _equipped[_hoverAlt];
             }
         } else {
-            const slotMap = { cpu_system:'cpu', aug_system:'augment',
-                shield_system:'shield', leg_system:'legs', armor:'armor', arms:'arms' };
-            const eqKey = slotMap[item.baseType];
+            // Use _getSlotForItem which correctly maps all non-weapon item types
+            const eqKey = (typeof _getSlotForItem === 'function') ? _getSlotForItem(item) : null;
             if (eqKey && _equipped && _equipped[eqKey]) {
                 compareItem = _equipped[eqKey];
             }
