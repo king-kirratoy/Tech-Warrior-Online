@@ -307,7 +307,7 @@ const SKILL_TREE_DATA = {
     "y": 160,
     "t": "notable",
     "n": "Assassin's Eye",
-    "d": "+3% Crit, +6% Crit Damage",
+    "d": "+10% Crit Chance, +20% Crit Damage",
     "s": "+3% CRIT +6% CRIT DMG",
     "r": 1,
     "c": [
