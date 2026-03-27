@@ -2160,6 +2160,9 @@ function _buildSingleCardHtml(item, slotLabel) {
 function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
     if (!compareItem) return _buildSingleCardHtml(item, slotLabel);
 
+    const _rdItem = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60 };
+    const _rdCmp  = RARITY_DEFS[compareItem.rarity] || { colorStr: UI_COLORS.text60 };
+
     // Builds one column's content (source label + slot label + name + stats + affixes + unique)
     const _mkCol = (colItem, sourceLbl, colSlotLabel) => {
         const rd = RARITY_DEFS[colItem.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
@@ -2211,10 +2214,10 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         return h;
     };
 
-    let html = '<div class="lo-hover-cmp-card">';
+    let html = `<div class="lo-hover-cmp-card" style="border-color:${_rdItem.colorStr};">`;
     html += '<div class="lo-hover-cmp-cols">';
-    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left">${_mkCol(item, leftLabel || 'BACKPACK', slotLabel)}</div>`;
-    html += `<div class="lo-hover-cmp-col">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
+    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left" style="border-top:2px solid ${_rdItem.colorStr};">${_mkCol(item, leftLabel || 'BACKPACK', slotLabel)}</div>`;
+    html += `<div class="lo-hover-cmp-col" style="border-top:2px solid ${_rdCmp.colorStr};">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
     html += '</div>';
 
     // Diff section
@@ -2293,11 +2296,13 @@ function _showSlotHover(el, slotKey, itemOverride) {
     if (!item) { card.style.display = 'none'; return; }
 
     const isCompare = !!compareItem;
+    const _rdBorder = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60 };
     card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem);
     card.style.display = 'block';
     card.style.width = isCompare ? 'auto' : '200px';
     card.style.padding = isCompare ? '0' : '';
     card.style.border = isCompare ? 'none' : '';
+    card.style.borderColor = isCompare ? '' : _rdBorder.colorStr;
 
     // Position: use fixed positioning relative to viewport
     const overlay = document.getElementById('stats-overlay');
@@ -2353,6 +2358,7 @@ function _hideSlotHover() {
         card.style.width = '';
         card.style.padding = '';
         card.style.border = '';
+        card.style.borderColor = '';
     }
 }
 
