@@ -291,7 +291,7 @@ function _drawNodeIcon(g, iconType, cx, cy, state) {
 
   // Group positioned at (cx, cy)
   const ig = document.createElementNS(NS, 'g');
-  ig.setAttribute('transform', `translate(${cx},${cy})`);
+  ig.setAttribute('transform', `translate(${cx},${cy}) scale(1.5)`);
 
   switch (iconType) {
     case 'hp':
