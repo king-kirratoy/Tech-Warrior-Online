@@ -27,8 +27,7 @@ function showSkillTree() {
   const chassisKey = (chassis || 'light').toLowerCase();
   _stChassisKey = chassisKey;
 
-  // Snapshot current saved allocations as permanently locked for this session
-  _lockedAllocations = Object.assign({}, _skillTreeState.allocated);
+  _lockedAllocations = {}; // no longer used for locking; kept for structural compatibility
   _skillTreeData = (typeof SKILL_TREE_DATA !== 'undefined' && SKILL_TREE_DATA[chassisKey])
     ? SKILL_TREE_DATA[chassisKey]
     : (typeof SKILL_TREE_DATA !== 'undefined' ? SKILL_TREE_DATA.light : []);
@@ -137,6 +136,7 @@ function showSkillTree() {
   svg.addEventListener('mouseup',   _skillTreeOnMouseUp);
   svg.addEventListener('mouseleave', _skillTreeOnMouseUp);
   svg.addEventListener('wheel',     _skillTreeOnWheel, { passive: false });
+  svg.addEventListener('contextmenu', evt => evt.preventDefault());
 
   // ── Bottom bar (legend) ──
   const legend = document.createElement('div');
@@ -225,8 +225,7 @@ function hideSkillTree() {
     _skillTreeHoverCard = null;
   }
 
-  // Lock in all current allocations and save
-  _lockedAllocations = Object.assign({}, _skillTreeState.allocated);
+  // Save on close (no locking — allocations remain freely adjustable)
   if (typeof saveCampaignState === 'function') saveCampaignState();
   if (typeof saveCampaignProgress === 'function') saveCampaignProgress();
 
@@ -526,9 +525,8 @@ function _renderSkillTree() {
     // Group
     const g = document.createElementNS(NS, 'g');
     const _rank  = _skillTreeState.allocated[node.id] || 0;
-    const _lRank = _lockedAllocations[node.id] || 0;
     const _canAdd  = node.t !== 'start' && (st === 'available' || st === 'allocated') && _rank < (node.r || 1);
-    const _canDe   = node.t !== 'start' && _rank > 0 && _rank > _lRank;
+    const _canDe   = node.t !== 'start' && _rank > 0;
     g.style.cursor = (_canAdd || _canDe) ? 'pointer' : 'default';
 
     // Hex polygon
@@ -537,6 +535,7 @@ function _renderSkillTree() {
     poly.setAttribute('fill', fill);
     poly.setAttribute('stroke', stroke);
     poly.setAttribute('stroke-width', '1.5');
+    g._poly = poly; // store ref for hover highlight
     g.appendChild(poly);
 
     // Text / image inside hex
@@ -636,11 +635,31 @@ function _renderSkillTree() {
     g.addEventListener('mouseenter', (evt) => {
       if (_skillTreePanning) return;
       _stShowHover(_node, evt);
+      // Visual hint: highlight removable nodes with a warm stroke on hover
+      if (g._poly && _node.t !== 'start') {
+        const nodeRank = _skillTreeState.allocated[_node.id] || 0;
+        if (nodeRank > 0 && (nodeRank > 1 || _canDeallocate(_node.id))) {
+          g._poly.setAttribute('stroke', '#ff9933');
+          g._poly.setAttribute('stroke-width', '2');
+        }
+      }
     });
-    g.addEventListener('mouseleave', () => _stHideHover());
+    g.addEventListener('mouseleave', () => {
+      _stHideHover();
+      // Restore original stroke on leave
+      if (g._poly) {
+        g._poly.setAttribute('stroke', stroke);
+        g._poly.setAttribute('stroke-width', '1.5');
+      }
+    });
     g.addEventListener('click', (evt) => {
       evt.stopPropagation();
       _allocateNode(_node.id);
+    });
+    g.addEventListener('contextmenu', (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      _deallocateNode(_node.id);
     });
 
     _skillTreeSVG.appendChild(g);
@@ -756,41 +775,63 @@ function _canDeallocate(nodeId) {
 
 // ── Allocation ───────────────────────────────────────────────────
 
+/** Show a brief status message in the top bar (auto-clears after 2.5s). */
+function _stShowStatusMsg(msg) {
+  const badge = document.getElementById('st-skill-points');
+  if (!badge) return;
+  const prev = badge.textContent;
+  badge.style.color = '#ff6644';
+  badge.textContent = msg;
+  clearTimeout(badge._statusTimer);
+  badge._statusTimer = setTimeout(() => {
+    badge.style.color = '#00d4ff';
+    badge.textContent = prev;
+    // Refresh badge to actual current value
+    _updateSkillPointsBadge();
+  }, 2500);
+}
+
+/** Left-click: allocate one rank if node is available and points remain. */
 function _allocateNode(nodeId) {
   const node = _stNodeMap[nodeId];
   if (!node || node.t === 'start') return;
 
-  const st    = _stGetNodeState(nodeId);
-  const rank  = _skillTreeState.allocated[nodeId] || 0;
-  const maxRank   = node.r || 1;
-  const lockedRank = _lockedAllocations[nodeId] || 0;
+  const st      = _stGetNodeState(nodeId);
+  const rank    = _skillTreeState.allocated[nodeId] || 0;
+  const maxRank = node.r || 1;
 
-  // ── Deallocate path: node is allocated and has pending (non-locked) ranks ──
-  if (rank > 0 && rank > lockedRank) {
-    if (_canDeallocate(nodeId)) {
-      const newRank = rank - 1;
-      if (newRank <= 0) {
-        delete _skillTreeState.allocated[nodeId];
-      } else {
-        _skillTreeState.allocated[nodeId] = newRank;
-      }
-      _updateSkillPointsBadge();
-      _stHideHover();
-      _renderSkillTree();
-      if (typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
-      return;
-    }
-    // Cannot deallocate (would strand other nodes) — fall through to try adding rank
-  }
+  if (rank >= maxRank) return;
+  if (st !== 'available' && st !== 'allocated') return;
 
-  // ── Allocate path: node not maxed and is available/allocated ──
-  if (rank >= maxRank) return;               // maxed — can't add more
-  if (st !== 'available' && st !== 'allocated') return; // locked
-
-  const pts = _updateSkillPointsBadge(); // get current available pts
+  const pts = _updateSkillPointsBadge();
   if (pts <= 0) return;
 
   _skillTreeState.allocated[nodeId] = rank + 1;
+  _updateSkillPointsBadge();
+  _stHideHover();
+  _renderSkillTree();
+  if (typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
+}
+
+/** Right-click: remove one rank, refunding 1 point. Connectivity-safe. */
+function _deallocateNode(nodeId) {
+  const node = _stNodeMap[nodeId];
+  if (!node || node.t === 'start') return;
+
+  const rank = _skillTreeState.allocated[nodeId] || 0;
+  if (rank <= 0) return;
+
+  if (rank === 1 && !_canDeallocate(nodeId)) {
+    _stShowStatusMsg('Cannot remove — other nodes depend on this path');
+    return;
+  }
+
+  const newRank = rank - 1;
+  if (newRank <= 0) {
+    delete _skillTreeState.allocated[nodeId];
+  } else {
+    _skillTreeState.allocated[nodeId] = newRank;
+  }
   _updateSkillPointsBadge();
   _stHideHover();
   _renderSkillTree();
