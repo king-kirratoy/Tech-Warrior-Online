@@ -494,7 +494,7 @@ function _stShowHover(node, evt) {
   const descLine = (node.d && node.d.trim())
     ? (() => {
         const parts = node.d.split(',').map(p => p.trim()).filter(Boolean);
-        const lineColor = p => /^-\d/.test(p) ? '#cc2222' : '#00ff88';
+        const lineColor = p => /^-\d/.test(p) ? '#ff4d6a' : '#00ff88';
         if (parts.length === 1) {
           return `<div style="color:${lineColor(parts[0])};font-size:10px;letter-spacing:1px">${parts[0]}</div>`;
         }
