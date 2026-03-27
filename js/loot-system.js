@@ -289,7 +289,7 @@ const UNIQUE_ITEMS = {
         affixes: [
             { key:'dmgPct', stat:'dmgPct', value:10, label:'+10% Damage' },
             { key:'critChance', stat:'critChance', value:8, label:'+8% Crit Chance' },
-            { key:'modCdPct', stat:'modCdPct', value:6, label:'+6% Mod Cooldown' }
+            { key:'modCdPct', stat:'modCdPct', value:6, label:'-6% Mod Cooldown' }
         ],
         uniqueEffect: 'swarmBurst',
         uniqueLabel: 'SWARM BURST: Kills release homing drones that seek nearby enemies',
@@ -340,7 +340,7 @@ const UNIQUE_ITEMS = {
         rarity: 'epic',
         isUnique: true,
         boss: 'mirror',
-        baseStats: { armHP: 35, fireRatePct: 5 },
+        baseStats: { armHP: 35, fireRatePct: -5 },
         affixes: [
             { key:'fireRatePct', stat:'fireRatePct', value:8, label:'+8% Fire Rate' },
             { key:'accuracy', stat:'accuracy', value:6, label:'+6% Accuracy' }
@@ -396,9 +396,9 @@ const UNIQUE_ITEMS = {
         rarity: 'legendary',
         isUnique: true,
         boss: 'core',
-        baseStats: { modCdPct: 12, modEffPct: 10 },
+        baseStats: { modCdPct: -12, modEffPct: 10 },
         affixes: [
-            { key:'modCdPct', stat:'modCdPct', value:10, label:'+10% Mod Cooldown' },
+            { key:'modCdPct', stat:'modCdPct', value:10, label:'-10% Mod Cooldown' },
             { key:'modEffPct', stat:'modEffPct', value:12, label:'+12% Mod Effectiveness' },
             { key:'dmgPct', stat:'dmgPct', value:5, label:'+5% Damage' }
         ],
