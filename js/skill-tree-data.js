@@ -6,7 +6,7 @@ const SKILL_TREE_DATA = {
     "y": 0,
     "t": "start",
     "n": "Pilot Core",
-    "d": "Your journey begins here.",
+    "d": "Your journey begins here",
     "s": null,
     "r": 0,
     "c": [
@@ -126,7 +126,7 @@ const SKILL_TREE_DATA = {
     "y": -360,
     "t": "keystone",
     "n": "BULLET HELL",
-    "d": "+6% SMG Damage, +6% SMG Fire Rate, Fires two rounds per shot.",
+    "d": "+6% SMG Damage, +6% SMG Fire Rate, Fires two rounds per shot",
     "s": "SMG MASTERY",
     "r": 1,
     "c": [
@@ -241,7 +241,7 @@ const SKILL_TREE_DATA = {
     "y": 360,
     "t": "keystone",
     "n": "DECIMATOR",
-    "d": "+15% Shotgun. +3 pellets. Same-target +5% each.",
+    "d": "+15% Shotgun, +3 pellets, Same-target +5% each",
     "s": "Shotgun MASTERY",
     "r": 1,
     "c": [
@@ -379,7 +379,7 @@ const SKILL_TREE_DATA = {
     "y": -160,
     "t": "keystone",
     "n": "Meteor Strike",
-    "d": "+25% Jump. Landing 50 AOE. 2s invuln.",
+    "d": "+25% Jump, 50 AOE Landing, 2s invuln",
     "s": "JUMP MASTERY",
     "r": 1,
     "c": [
@@ -392,7 +392,7 @@ const SKILL_TREE_DATA = {
     "y": 460,
     "t": "keystone",
     "n": "Stasis Field",
-    "d": "+3s Barrier. Slows enemies 150u by 40%.",
+    "d": "+3s Barrier, Slows enemies 150u by 40%",
     "s": "BARRIER MASTERY",
     "r": 1,
     "c": [
@@ -405,7 +405,7 @@ const SKILL_TREE_DATA = {
     "y": -460,
     "t": "keystone",
     "n": "Doppelganger",
-    "d": "Decoy fires at 50%. +4s, 100% aggro",
+    "d": "Decoy fires at 50%, +4s, 100% aggro",
     "s": "DECOY MASTERY",
     "r": 1,
     "c": [
