@@ -386,22 +386,68 @@ function _renderSkillTree() {
       img.style.opacity = '0.85';
       g.appendChild(img);
     } else if (node.t === 'keystone') {
+      const kFontSize = 5;
+      const kMaxChars = Math.floor((r * 1.6) / (kFontSize * 0.62));
+      const kWords = node.n.toUpperCase().split(' ');
+      const kLines = [];
+      let kCurrent = '';
+      kWords.forEach(w => {
+        const candidate = kCurrent ? kCurrent + ' ' + w : w;
+        if (candidate.length > kMaxChars && kCurrent) {
+          kLines.push(kCurrent);
+          kCurrent = w;
+        } else {
+          kCurrent = candidate;
+        }
+      });
+      if (kCurrent) kLines.push(kCurrent);
+      const kLineH = kFontSize * 1.3;
+      const kStartY = cy - ((kLines.length - 1) * kLineH) / 2;
       const t = document.createElementNS(NS, 'text');
-      t.setAttribute('x', cx); t.setAttribute('y', cy + 2);
+      t.setAttribute('x', cx);
       t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('font-size', '6');
+      t.setAttribute('font-size', String(kFontSize));
       t.setAttribute('font-family', 'monospace');
       t.setAttribute('fill', stroke);
-      t.textContent = node.n.substring(0, 9).toUpperCase();
+      kLines.forEach((line, i) => {
+        const ts = document.createElementNS(NS, 'tspan');
+        ts.setAttribute('x', cx);
+        ts.setAttribute('y', String(kStartY + i * kLineH));
+        ts.textContent = line;
+        t.appendChild(ts);
+      });
       g.appendChild(t);
     } else if (node.t === 'notable') {
+      const nFontSize = 4.5;
+      const nMaxChars = Math.floor((r * 1.6) / (nFontSize * 0.62));
+      const nWords = node.n.toUpperCase().split(' ');
+      const nLines = [];
+      let nCurrent = '';
+      nWords.forEach(w => {
+        const candidate = nCurrent ? nCurrent + ' ' + w : w;
+        if (candidate.length > nMaxChars && nCurrent) {
+          nLines.push(nCurrent);
+          nCurrent = w;
+        } else {
+          nCurrent = candidate;
+        }
+      });
+      if (nCurrent) nLines.push(nCurrent);
+      const nLineH = nFontSize * 1.3;
+      const nStartY = cy - ((nLines.length - 1) * nLineH) / 2;
       const t = document.createElementNS(NS, 'text');
-      t.setAttribute('x', cx); t.setAttribute('y', cy + 2);
+      t.setAttribute('x', cx);
       t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('font-size', '5.5');
+      t.setAttribute('font-size', String(nFontSize));
       t.setAttribute('font-family', 'monospace');
       t.setAttribute('fill', stroke);
-      t.textContent = node.n.substring(0, 8).toUpperCase();
+      nLines.forEach((line, i) => {
+        const ts = document.createElementNS(NS, 'tspan');
+        ts.setAttribute('x', cx);
+        ts.setAttribute('y', String(nStartY + i * nLineH));
+        ts.textContent = line;
+        t.appendChild(ts);
+      });
       g.appendChild(t);
     } else {
       const rank = _skillTreeState.allocated[node.id] || 0;
