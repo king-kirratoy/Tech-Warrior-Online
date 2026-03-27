@@ -446,7 +446,15 @@ function _stShowHover(node, evt) {
     : `Rank ${rank} / ${maxRank}`;
 
   const descLine = (node.d && node.d.trim())
-    ? `<div style="color:#00ff88;font-size:10px;letter-spacing:1px">${node.d}</div>`
+    ? (() => {
+        const parts = node.d.split(',').map(p => p.trim()).filter(Boolean);
+        if (parts.length === 1) {
+          return `<div style="color:#00ff88;font-size:10px;letter-spacing:1px">${parts[0]}</div>`;
+        }
+        return `<div style="display:flex;flex-direction:column;gap:5px">${
+          parts.map(p => `<div style="color:#00ff88;font-size:10px;letter-spacing:1px">${p}</div>`).join('')
+        }</div>`;
+      })()
     : '';
   card.innerHTML =
     `<div style="color:#e8923a;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase">${node.n}</div>` +
@@ -593,12 +601,11 @@ function _parseSkillStatString(s) {
     [/\+(\d+(?:\.\d+)?) ARM HP/g,          v => add('armHP', +v)],
     [/\+(\d+(?:\.\d+)?) CORE HP/g,         v => add('coreHP', +v)],
     [/\+(\d+(?:\.\d+)?) LEG HP/g,          v => add('legHP', +v)],
-    [/\+(\d+(?:\.\d+)?)% FIRE RATE/g,      v => add('fireRatePct', +v)],
-    [/\+(\d+(?:\.\d+)?)% (?:SMG |SG |MG |BR |SR |GL |RL |HR |PLSM |FTH )?FR/g, v => add('fireRatePct', +v)],
+    [/\+(\d+(?:\.\d+)?)% (?:SMG |Shotgun |SG |MG |BR |SR |GL |RL |HR |PLSM |Flamethrower |FTH |RAIL |SIPHON )?(?:Fire Rate|FIRE RATE|FR)/g, v => add('fireRatePct', +v)],
     [/\+(\d+(?:\.\d+)?)% SPEED/g,          v => add('speedPct', +v)],
     [/\+(\d+(?:\.\d+)?)% DODGE/g,          v => add('dodgePct', +v)],
-    [/\+(\d+(?:\.\d+)?)% DR/g,             v => add('drPct', +v)],
-    [/\+(\d+(?:\.\d+)?)% (?:SMG |SG |MG |BR |SR |GL |RL |HR |PLSM |FTH |RAIL |SIPHON )?DMG/g, v => add('dmgPct', +v)],
+    [/\+(\d+(?:\.\d+)?)% (?:Damage Reduction|DR)/g, v => add('drPct', +v)],
+    [/\+(\d+(?:\.\d+)?)% (?:SMG |Shotgun |SG |MG |BR |SR |GL |RL |HR |PLSM |Flamethrower |FTH |RAIL |SIPHON )?DMG/g, v => add('dmgPct', +v)],
   ];
 
   patterns.forEach(([re, fn]) => {

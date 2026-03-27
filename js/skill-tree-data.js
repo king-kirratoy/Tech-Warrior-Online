@@ -83,7 +83,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "SMG Fire Rate",
     "d": "SMG Fire Rate +2%",
-    "s": "+2% SMG FR",
+    "s": "+2% SMG Fire Rate",
     "r": 2,
     "c": [
       "node_113",
@@ -113,7 +113,7 @@ const SKILL_TREE_DATA = {
     "t": "notable",
     "n": "Bullet Specialist",
     "d": "SMG Damage +4%, SMG Fire Rate +4%",
-    "s": "+4% SMG DMG +4% SMG FR",
+    "s": "+4% SMG DMG +4% SMG Fire Rate",
     "r": 1,
     "c": [
       "node_112",
@@ -138,9 +138,9 @@ const SKILL_TREE_DATA = {
     "x": 200,
     "y": -240,
     "t": "regular",
-    "n": "FTH Damage",
-    "d": "FTH Damage +2%",
-    "s": "+2% FTH DMG",
+    "n": "Flamethrower Damage",
+    "d": "Flamethrower Damage +2%",
+    "s": "+2% Flamethrower DMG",
     "r": 2,
     "c": [
       "node_111",
@@ -168,9 +168,9 @@ const SKILL_TREE_DATA = {
     "x": 200,
     "y": -160,
     "t": "regular",
-    "n": "FTH Heat Control",
-    "d": "FTH Heat -5%",
-    "s": "-5% FTH HEAT",
+    "n": "Flamethrower Heat Control",
+    "d": "Flamethrower Heat -5%",
+    "s": "-5% Flamethrower HEAT",
     "r": 2,
     "c": [
       "node_109",
@@ -185,8 +185,8 @@ const SKILL_TREE_DATA = {
     "y": -200,
     "t": "notable",
     "n": "Flame Specialist",
-    "d": "FTH Damage +4%, Ignite +6%",
-    "s": "+4% FTH DMG +6% IGNITE",
+    "d": "Flamethrower Damage +4%, Ignite +6%",
+    "s": "+4% Flamethrower DMG +6% IGNITE",
     "r": 1,
     "c": [
       "fth_util",
@@ -199,8 +199,8 @@ const SKILL_TREE_DATA = {
     "y": -360,
     "t": "keystone",
     "n": "HELLFIRE",
-    "d": "FTH Damage +6%, Always ignite, Burn Explode 30 AOE",
-    "s": "FTH MASTERY",
+    "d": "Flamethrower Damage +6%, Always ignite, Burn Explode 30 AOE",
+    "s": "Flamethrower MASTERY",
     "r": 1,
     "c": [
       "node_139"
@@ -211,9 +211,9 @@ const SKILL_TREE_DATA = {
     "x": -140,
     "y": 200,
     "t": "regular",
-    "n": "SG Damage",
-    "d": "SG Damage +2%",
-    "s": "+2% SG DMG",
+    "n": "Shotgun Damage",
+    "d": "Shotgun Damage +2%",
+    "s": "+2% Shotgun DMG",
     "r": 2,
     "c": [
       "node_115",
@@ -227,8 +227,8 @@ const SKILL_TREE_DATA = {
     "y": 200,
     "t": "notable",
     "n": "Scatter Specialist",
-    "d": "SG Damage +4%, SG Fire Rate +4%",
-    "s": "+5% SG DMG +8% CLOSE",
+    "d": "Shotgun Damage +4%, Shotgun Fire Rate +4%",
+    "s": "+5% Shotgun DMG +8% CLOSE",
     "r": 1,
     "c": [
       "node_116",
@@ -241,8 +241,8 @@ const SKILL_TREE_DATA = {
     "y": 360,
     "t": "keystone",
     "n": "DECIMATOR",
-    "d": "SG +15%. +3 pellets. Same-target +5% each.",
-    "s": "SG MASTERY",
+    "d": "Shotgun +15%. +3 pellets. Same-target +5% each.",
+    "s": "Shotgun MASTERY",
     "r": 1,
     "c": [
       "node_135"
@@ -366,8 +366,8 @@ const SKILL_TREE_DATA = {
     "y": -420,
     "t": "keystone",
     "n": "OVERCLOCK",
-    "d": "Mod CD -15%, Mod Effects +30%",
-    "s": "-15% CD +30% EFFECT",
+    "d": "Mod Cooldown -15%, Mod Effects +30%",
+    "s": "-15% Cooldown +30% EFFECT",
     "r": 1,
     "c": [
       "node_191"
@@ -490,7 +490,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Composite Plating",
     "d": "Damage Reduction +2%",
-    "s": "+2% DR",
+    "s": "+2% Damage Reduction",
     "r": 2,
     "c": [
       "node_104",
@@ -518,7 +518,7 @@ const SKILL_TREE_DATA = {
     "t": "notable",
     "n": "Lightning Reflexes",
     "d": "Damage +4%, Fire Rate +4%",
-    "s": "+4% DMG +4% FR",
+    "s": "+4% DMG +4% Fire Rate",
     "r": 1,
     "c": [
       "node_105",
@@ -532,7 +532,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "Mod Cooldown -2%",
-    "s": "-2% MOD CD",
+    "s": "-2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_76"
@@ -544,8 +544,8 @@ const SKILL_TREE_DATA = {
     "y": 400,
     "t": "regular",
     "n": "Barrier Boost",
-    "d": "Barrier +1.5s, Barrier CD -5%",
-    "s": "+1.5s BARRIER -5% CD",
+    "d": "Barrier +1.5s, Barrier Cooldown -5%",
+    "s": "+1.5s BARRIER -5% Cooldown",
     "r": 2,
     "c": [
       "node_158",
@@ -558,8 +558,8 @@ const SKILL_TREE_DATA = {
     "y": -160,
     "t": "regular",
     "n": "Jump Boost",
-    "d": "Jump +10%, Jump CD -5%",
-    "s": "+10% JUMP -5% CD",
+    "d": "Jump +10%, Jump Cooldown -5%",
+    "s": "+10% JUMP -5% Cooldown",
     "r": 2,
     "c": [
       "ks_meteor",
@@ -961,7 +961,7 @@ const SKILL_TREE_DATA = {
     "t": "notable",
     "n": "Structural Integrity",
     "d": "All Parts HP +20, Damage Reduction +4%",
-    "s": "+20 ALL HP +4% DR",
+    "s": "+20 ALL HP +4% Damage Reduction",
     "r": 1,
     "c": [
       "node_101",
@@ -1119,7 +1119,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Composite Plating",
     "d": "Damage Reduction +2%",
-    "s": "+2% DR",
+    "s": "+2% Damage Reduction",
     "r": 2,
     "c": [
       "node_10",
@@ -1176,7 +1176,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Composite Plating",
     "d": "Damage Reduction +2%",
-    "s": "+2% DR",
+    "s": "+2% Damage Reduction",
     "r": 2,
     "c": [
       "node_65",
@@ -1247,9 +1247,9 @@ const SKILL_TREE_DATA = {
     "x": 220,
     "y": -200,
     "t": "regular",
-    "n": "FTH Damage",
-    "d": "FTH Damage +2%",
-    "s": "+2% FTH DMG",
+    "n": "Flamethrower Damage",
+    "d": "Flamethrower Damage +2%",
+    "s": "+2% Flamethrower DMG",
     "r": 2,
     "c": [
       "fth_dmg",
@@ -1261,9 +1261,9 @@ const SKILL_TREE_DATA = {
     "x": 160,
     "y": -160,
     "t": "regular",
-    "n": "FTH Heat Control",
-    "d": "FTH Heat -5%",
-    "s": "-5% FTH HEAT",
+    "n": "Flamethrower Heat Control",
+    "d": "Flamethrower Heat -5%",
+    "s": "-5% Flamethrower HEAT",
     "r": 2,
     "c": [
       "node_67",
@@ -1309,7 +1309,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "SMG Fire Rate",
     "d": "SMG Fire Rate +2%",
-    "s": "+2% SMG FR",
+    "s": "+2% SMG Fire Rate",
     "r": 2,
     "c": [
       "node_114",
@@ -1337,9 +1337,9 @@ const SKILL_TREE_DATA = {
     "x": -160,
     "y": 160,
     "t": "regular",
-    "n": "SG Fire Rate",
-    "d": "SG Fire Rate +2%",
-    "s": "+2% SG FR",
+    "n": "Shotgun Fire Rate",
+    "d": "Shotgun Fire Rate +2%",
+    "s": "+2% Shotgun Fire Rate",
     "r": 2,
     "c": [
       "node_70",
@@ -1352,9 +1352,9 @@ const SKILL_TREE_DATA = {
     "x": -200,
     "y": 160,
     "t": "regular",
-    "n": "SG Fire Rate",
-    "d": "SG Fire Rate +2%",
-    "s": "+2% SG FR",
+    "n": "Shotgun Fire Rate",
+    "d": "Shotgun Fire Rate +2%",
+    "s": "+2% Shotgun Fire Rate",
     "r": 2,
     "c": [
       "node_115",
@@ -1368,9 +1368,9 @@ const SKILL_TREE_DATA = {
     "x": -160,
     "y": 240,
     "t": "regular",
-    "n": "SG Damage",
-    "d": "SG Damage +2%",
-    "s": "+2% SG DMG",
+    "n": "Shotgun Damage",
+    "d": "Shotgun Damage +2%",
+    "s": "+2% Shotgun DMG",
     "r": 2,
     "c": [
       "sg_dmg",
@@ -1383,9 +1383,9 @@ const SKILL_TREE_DATA = {
     "x": -200,
     "y": 240,
     "t": "regular",
-    "n": "SG Pellets",
-    "d": "SG Pellet +1",
-    "s": "+1 SG PELLET",
+    "n": "Shotgun Pellets",
+    "d": "Shotgun Pellet +1",
+    "s": "+1 Shotgun PELLET",
     "r": 2,
     "c": [
       "node_117",
@@ -1398,9 +1398,9 @@ const SKILL_TREE_DATA = {
     "x": -220,
     "y": 200,
     "t": "regular",
-    "n": "SG Fire Rate",
-    "d": "SG Fire Rate +2%",
-    "s": "+2% SG FR",
+    "n": "Shotgun Fire Rate",
+    "d": "Shotgun Fire Rate +2%",
+    "s": "+2% Shotgun Fire Rate",
     "r": 2,
     "c": [
       "node_116",
@@ -2029,7 +2029,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "Mod Cooldown -2%",
-    "s": "-2% MOD CD",
+    "s": "-2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_76"
@@ -2042,7 +2042,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "Mod Cooldown -2%",
-    "s": "-2% MOD CD",
+    "s": "-2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_60"
@@ -2055,7 +2055,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "Mod Cooldown -2%",
-    "s": "-2% MOD CD",
+    "s": "-2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_60"
@@ -2068,7 +2068,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "Mod Cooldown -2%",
-    "s": "-2% MOD CD",
+    "s": "-2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_64"
@@ -2081,7 +2081,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "Mod Cooldown -2%",
-    "s": "-2% MOD CD",
+    "s": "-2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_64"
@@ -2094,7 +2094,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "Mod Cooldown -2%",
-    "s": "-2% MOD CD",
+    "s": "-2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_65"
@@ -2107,7 +2107,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "Mod Cooldown -2%",
-    "s": "-2% MOD CD",
+    "s": "-2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_65"
@@ -2538,7 +2538,7 @@ const SKILL_TREE_DATA = {
     "t": "notable",
     "n": "Charged Barrier",
     "d": "Shield HP +20, Fire Rate +4%",
-    "s": "+20 SHIELD +4% FR",
+    "s": "+20 SHIELD +4% Fire Rate",
     "r": 1,
     "c": [
       "node_173"
@@ -2759,8 +2759,8 @@ const SKILL_TREE_DATA = {
     "y": 160,
     "t": "regular",
     "n": "Ghost Step Boost",
-    "d": "Invis +0.3s, Invis CD -5%",
-    "s": "+0.3s INVIS -5% CD",
+    "d": "Invis +0.3s, Invis Cooldown -5%",
+    "s": "+0.3s INVIS -5% Cooldown",
     "r": 1,
     "c": [
       "node_177",
