@@ -2212,8 +2212,8 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
 
     let html = `<div class="lo-hover-cmp-card" style="border-color:${_rdItem.colorStr};">`;
     html += '<div class="lo-hover-cmp-cols">';
-    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left" style="border-top:2px solid ${_rdItem.colorStr};">${_mkCol(item, leftLabel || 'BACKPACK', slotLabel)}</div>`;
-    html += `<div class="lo-hover-cmp-col" style="border-top:2px solid ${_rdCmp.colorStr};">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
+    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left" style="border:2px solid ${_rdItem.colorStr};">${_mkCol(item, leftLabel || 'BACKPACK', slotLabel)}</div>`;
+    html += `<div class="lo-hover-cmp-col" style="border:2px solid ${_rdCmp.colorStr};">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
     html += '</div>';
 
     // Diff section
@@ -2242,6 +2242,10 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
     });
     if (diffHtml) {
         html += '<div class="lo-hover-cmp-diff">';
+        html += `<div style="background:${_rdItem.colorStr};height:100%;left:0;position:absolute;top:0;width:2px;"></div>`;
+        html += `<div style="background:${_rdCmp.colorStr};height:100%;position:absolute;right:0;top:0;width:2px;"></div>`;
+        html += `<div style="background:${_rdItem.colorStr};bottom:0;height:2px;left:0;position:absolute;width:50%;"></div>`;
+        html += `<div style="background:${_rdCmp.colorStr};bottom:0;height:2px;position:absolute;right:0;width:50%;"></div>`;
         html += '<div class="lo-hover-diff-hdr">Changes if equipped</div>';
         html += diffHtml;
         html += '</div>';
