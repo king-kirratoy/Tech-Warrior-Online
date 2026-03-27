@@ -272,6 +272,169 @@ function _hexPointsAt(cx, cy, r) {
   return pts.join(' ');
 }
 
+// ── Node icon renderer ───────────────────────────────────────────
+
+/**
+ * Append a small SVG icon to node group g, centered at (cx, cy).
+ * state: 'allocated' | 'available' | 'locked'
+ */
+function _drawNodeIcon(g, iconType, cx, cy, state) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const opBase = state === 'allocated' ? 0.9 : 0.5;
+
+  // Helper to create an element with attributes
+  function el(tag, attrs) {
+    const e = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+    return e;
+  }
+
+  // Group positioned at (cx, cy)
+  const ig = document.createElementNS(NS, 'g');
+  ig.setAttribute('transform', `translate(${cx},${cy})`);
+
+  switch (iconType) {
+    case 'hp':
+      ig.appendChild(el('path', {
+        d: 'M-1.5,-2 L1.5,-2 L1.5,0 L3,0 L3,1.5 L1.5,1.5 L1.5,3.5 L-1.5,3.5 L-1.5,1.5 L-3,1.5 L-3,0 L-1.5,0 Z',
+        fill: '#00ff88', opacity: String(opBase * 0.7 / 0.7), transform: 'scale(0.55) translate(0,-1)',
+      }));
+      break;
+
+    case 'shield':
+      ig.appendChild(el('path', {
+        d: 'M0,-2.5 L2.5,0 L2.5,2.5 L-2.5,2.5 L-2.5,0 Z',
+        fill: '#3399ff', opacity: String(opBase), transform: 'scale(0.55)',
+      }));
+      break;
+
+    case 'shield_regen': {
+      // Shield outline
+      ig.appendChild(el('path', {
+        d: 'M0,-2.5 L2.5,0 L2.5,2.5 L-2.5,2.5 L-2.5,0 Z',
+        fill: 'none', stroke: '#3399ff', 'stroke-width': '0.6',
+        opacity: String(opBase), transform: 'scale(0.55)',
+      }));
+      // Small arc above
+      ig.appendChild(el('path', {
+        d: 'M-1.2,-1.8 A1.4,1.4 0 0,1 1.2,-1.8',
+        fill: 'none', stroke: '#3399ff', 'stroke-width': '0.6',
+        opacity: String(opBase), transform: 'scale(0.55)',
+      }));
+      break;
+    }
+
+    case 'crit':
+      ig.appendChild(el('polygon', {
+        points: '0,-3 0.8,-0.8 3,-0.8 1.4,0.6 2,3 0,1.5 -2,3 -1.4,0.6 -3,-0.8 -0.8,-0.8',
+        fill: '#ffcc00', opacity: String(opBase), transform: 'scale(0.5)',
+      }));
+      break;
+
+    case 'crit_dmg':
+      ig.appendChild(el('circle', { r: '1.8', fill: 'none', stroke: '#00d4ff', 'stroke-width': '0.6', opacity: String(opBase) }));
+      ig.appendChild(el('circle', { r: '0.6', fill: '#00d4ff', opacity: String(opBase) }));
+      break;
+
+    case 'damage':
+      ig.appendChild(el('polygon', {
+        points: '-2,1.5 0,-2.5 2,1.5',
+        fill: '#ff6644', opacity: String(opBase), transform: 'scale(0.55)',
+      }));
+      break;
+
+    case 'speed':
+      ig.appendChild(el('path', {
+        d: 'M-1.5,1.5 L-0.5,-1 L0.5,1.5 L1.5,-1.5',
+        fill: 'none', stroke: '#00ffaa', 'stroke-width': '1',
+        opacity: String(opBase), transform: 'scale(0.7)',
+      }));
+      break;
+
+    case 'fire_rate':
+      ig.appendChild(el('path', {
+        d: 'M-2,0 L0,-3 L2,0 L0,3 Z',
+        fill: '#ff6600', opacity: String(opBase * 0.5 / 0.5), transform: 'scale(0.5)',
+      }));
+      break;
+
+    case 'dodge': {
+      ig.appendChild(el('circle', { cx: '0', cy: '-1.5', r: '1', fill: 'none', stroke: '#00d4ff', 'stroke-width': '0.5', opacity: String(opBase) }));
+      ig.appendChild(el('line', { x1: '0', y1: '-0.5', x2: '0', y2: '1.5', stroke: '#00d4ff', 'stroke-width': '0.5', opacity: String(opBase) }));
+      ig.appendChild(el('line', { x1: '-1', y1: '0.5', x2: '1', y2: '0.5', stroke: '#00d4ff', 'stroke-width': '0.5', opacity: String(opBase) }));
+      break;
+    }
+
+    case 'dr':
+      ig.appendChild(el('rect', {
+        x: '-1.2', y: '-1.2', width: '2.4', height: '2.4',
+        fill: 'none', stroke: '#ff4444', 'stroke-width': '0.7',
+        opacity: String(opBase), transform: 'scale(0.6)',
+      }));
+      break;
+
+    case 'mod_cd':
+      ig.appendChild(el('path', {
+        d: 'M-2,-2 L2,-2 L2,2 L-2,2 Z M-0.5,-2 L-0.5,-3.5 L0.5,-3.5 L0.5,-2',
+        fill: 'none', stroke: '#cc88ff', 'stroke-width': '0.7',
+        opacity: String(opBase), transform: 'scale(0.55)',
+      }));
+      break;
+
+    case 'augment':
+      ig.appendChild(el('circle', { r: '1.5', fill: 'none', stroke: '#ff9933', 'stroke-width': '0.6', opacity: String(opBase) }));
+      ig.appendChild(el('line', { x1: '1', y1: '1', x2: '2.5', y2: '2.5', stroke: '#ff9933', 'stroke-width': '0.6', opacity: String(opBase) }));
+      break;
+
+    case 'smg': {
+      ig.appendChild(el('rect', { x: '-3', y: '-1.5', width: '6', height: '2', rx: '0.5', fill: '#00d4ff', opacity: String(opBase * 0.6 / 0.6), transform: 'scale(0.55)' }));
+      ig.appendChild(el('rect', { x: '-1.5', y: '0.5', width: '3', height: '1.5', rx: '0.3', fill: '#00d4ff', opacity: String(opBase * 0.4 / 0.4), transform: 'scale(0.55)' }));
+      break;
+    }
+
+    case 'flamethrower':
+      ig.appendChild(el('path', {
+        d: 'M-2,1 Q0,-3 2,1 L1.5,2 L-1.5,2 Z',
+        fill: '#ff6600', opacity: String(opBase), transform: 'scale(0.6)',
+      }));
+      break;
+
+    case 'shotgun': {
+      const sg = document.createElementNS(NS, 'g');
+      sg.setAttribute('transform', 'translate(0,-1)');
+      sg.appendChild(el('circle', { cx: '-1.5', cy: '0', r: '0.8', fill: '#44cc44', opacity: String(opBase) }));
+      sg.appendChild(el('circle', { cx: '1.5', cy: '0', r: '0.8', fill: '#44cc44', opacity: String(opBase) }));
+      sg.appendChild(el('circle', { cx: '0', cy: '1.5', r: '0.8', fill: '#44cc44', opacity: String(opBase) }));
+      ig.appendChild(sg);
+      break;
+    }
+
+    case 'siphon':
+      ig.appendChild(el('line', { x1: '-2.5', y1: '0', x2: '2.5', y2: '0', stroke: '#00ff88', 'stroke-width': '1.2', opacity: String(opBase) }));
+      ig.appendChild(el('circle', { r: '0.7', fill: '#00ff88', opacity: String(opBase * 0.4 / 0.4) }));
+      break;
+
+    case 'heat': {
+      ig.appendChild(el('polygon', {
+        points: '-2,1.5 0,-2 2,1.5',
+        fill: 'none', stroke: '#ff3300', 'stroke-width': '0.8',
+        opacity: String(opBase), transform: 'scale(0.6)',
+      }));
+      ig.appendChild(el('polygon', {
+        points: '-1,2 0,0 1,2',
+        fill: 'none', stroke: '#ff3300', 'stroke-width': '0.8',
+        opacity: String(opBase), transform: 'scale(0.5) translate(0,1)',
+      }));
+      break;
+    }
+
+    default:
+      break;
+  }
+
+  g.appendChild(ig);
+}
+
 // ── Render ───────────────────────────────────────────────────────
 
 function _renderSkillTree() {
@@ -451,10 +614,14 @@ function _renderSkillTree() {
       g.appendChild(t);
     } else {
       const rank = _skillTreeState.allocated[node.id] || 0;
+      const st2 = st; // alias for closure clarity
+      // Icon in upper portion
+      if (node.i) _drawNodeIcon(g, node.i, cx, cy - 4, st2);
+      // Rank text in lower portion (smaller font)
       const t = document.createElementNS(NS, 'text');
-      t.setAttribute('x', cx); t.setAttribute('y', cy + 3);
+      t.setAttribute('x', cx); t.setAttribute('y', cy + 7);
       t.setAttribute('text-anchor', 'middle');
-      t.setAttribute('font-size', '8');
+      t.setAttribute('font-size', '5');
       t.setAttribute('font-family', 'monospace');
       t.setAttribute('fill', stroke);
       t.textContent = `${rank}/${node.r}`;

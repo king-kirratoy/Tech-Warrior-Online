@@ -27,6 +27,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Weapon Calibration",
     "d": "+2% Damage",
+    "i": "damage",
     "s": "+2% DMG",
     "r": 2,
     "c": [
@@ -41,6 +42,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Targeting Matrix",
     "d": "+5% Crit Chance",
+    "i": "crit",
     "s": "+5% CRIT",
     "r": 2,
     "c": [
@@ -55,6 +57,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Crit Damage",
     "d": "+10% Crit Damage",
+    "i": "crit_dmg",
     "s": "+10% CRIT DMG",
     "r": 2,
     "c": [
@@ -69,6 +72,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "SMG Damage",
     "d": "+2% SMG Damage",
+    "i": "smg",
     "s": "+2% SMG DMG",
     "r": 2,
     "c": [
@@ -83,6 +87,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "SMG Fire Rate",
     "d": "+2% SMG Fire Rate",
+    "i": "smg",
     "s": "+2% SMG Fire Rate",
     "r": 2,
     "c": [
@@ -98,6 +103,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "SMG Heat Control",
     "d": "+5% SMG Heat",
+    "i": "heat",
     "s": "+5% SMG HEAT",
     "r": 2,
     "c": [
@@ -140,6 +146,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Flamethrower Damage",
     "d": "+2% Flamethrower Damage",
+    "i": "flamethrower",
     "s": "+2% Flamethrower DMG",
     "r": 2,
     "c": [
@@ -155,6 +162,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Burn Duration",
     "d": "+0.5s Burn",
+    "i": "flamethrower",
     "s": "+0.5s BURN",
     "r": 2,
     "c": [
@@ -170,6 +178,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Flamethrower Heat Control",
     "d": "+5% Flamethrower Heat",
+    "i": "heat",
     "s": "+5% Flamethrower HEAT",
     "r": 2,
     "c": [
@@ -213,6 +222,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Shotgun Damage",
     "d": "+2% Shotgun Damage",
+    "i": "shotgun",
     "s": "+2% Shotgun DMG",
     "r": 2,
     "c": [
@@ -255,6 +265,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Siphon Slow",
     "d": "+2% Siphon Slow",
+    "i": "siphon",
     "s": "+2% SIPHON SLOW",
     "r": 2,
     "c": [
@@ -324,6 +335,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hydraulic Upgrade",
     "d": "+2% Move Speed",
+    "i": "speed",
     "s": "+2% SPEED",
     "r": 2,
     "c": [
@@ -339,6 +351,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Streamlined Action",
     "d": "+2% Fire Rate",
+    "i": "fire_rate",
     "s": "+2% FIRE RATE",
     "r": 2,
     "c": [
@@ -432,6 +445,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Quick Recharge",
     "d": "+5% Shield Regen",
+    "i": "shield_regen",
     "s": "+5% SHIELD REGEN",
     "r": 2,
     "c": [
@@ -447,6 +461,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -463,6 +478,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Servo Boost",
     "d": "+2% Dodge",
+    "i": "dodge",
     "s": "+2% DODGE",
     "r": 2,
     "c": [
@@ -490,6 +506,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Composite Plating",
     "d": "+2% Damage Reduction",
+    "i": "dr",
     "s": "+2% Damage Reduction",
     "r": 2,
     "c": [
@@ -532,6 +549,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "+2% Mod Cooldown",
+    "i": "mod_cd",
     "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
@@ -545,6 +563,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Barrier Boost",
     "d": "+1.5s Barrier, +5% Barrier Cooldown",
+    "i": "shield",
     "s": "+1.5s BARRIER +5% Cooldown",
     "r": 2,
     "c": [
@@ -559,6 +578,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Jump Boost",
     "d": "+10% Jump, +5% Jump Cooldown",
+    "i": "speed",
     "s": "+10% JUMP +5% Cooldown",
     "r": 2,
     "c": [
@@ -573,6 +593,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Decoy Boost",
     "d": "+2s Decoy, Explodes 20 Damage",
+    "i": "damage",
     "s": "+2s DECOY +20 DMG",
     "r": 2,
     "c": [
@@ -587,6 +608,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -601,6 +623,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Siphon Heal",
     "d": "+2% Siphon Heal",
+    "i": "siphon",
     "s": "+5% SIPHON HEAL",
     "r": 2,
     "c": [
@@ -615,6 +638,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -631,6 +655,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -647,6 +672,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -663,6 +689,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -679,6 +706,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -695,6 +723,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -711,6 +740,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -727,6 +757,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -741,6 +772,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -755,6 +787,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -769,6 +802,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -783,6 +817,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -800,6 +835,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -814,6 +850,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -828,6 +865,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -844,6 +882,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -861,6 +900,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -875,6 +915,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -889,6 +930,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -903,6 +945,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -917,6 +960,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -931,6 +975,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -945,6 +990,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -975,6 +1021,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Dense Barrier",
     "d": "+2% Shield Absorb",
+    "i": "shield",
     "s": "+2% SHIELD ABSORB",
     "r": 2,
     "c": [
@@ -989,6 +1036,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Quick Recharge",
     "d": "+2% Shield Regen",
+    "i": "shield_regen",
     "s": "+2% SHIELD REGEN",
     "r": 2,
     "c": [
@@ -1004,6 +1052,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Shield Matrix",
     "d": "+10 Shield HP",
+    "i": "shield",
     "s": "+10 SHIELD HP",
     "r": 2,
     "c": [
@@ -1018,6 +1067,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Shield Matrix",
     "d": "+10 Shield HP",
+    "i": "shield",
     "s": "+10 SHIELD HP",
     "r": 2,
     "c": [
@@ -1032,6 +1082,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Dense Barrier",
     "d": "+2% Shield Absorb",
+    "i": "shield",
     "s": "+2% SHIELD ABSORB",
     "r": 2,
     "c": [
@@ -1060,6 +1111,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hydraulic Upgrade",
     "d": "+2% Move Speed",
+    "i": "speed",
     "s": "+2% SPEED",
     "r": 2,
     "c": [
@@ -1075,6 +1127,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hydraulic Upgrade",
     "d": "+2% Move Speed",
+    "i": "speed",
     "s": "+2% SPEED",
     "r": 2,
     "c": [
@@ -1090,6 +1143,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Servo Boost",
     "d": "+2% Dodge",
+    "i": "dodge",
     "s": "+2% DODGE",
     "r": 2,
     "c": [
@@ -1104,6 +1158,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Servo Boost",
     "d": "+2% Dodge",
+    "i": "dodge",
     "s": "+2% DODGE",
     "r": 2,
     "c": [
@@ -1119,6 +1174,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Composite Plating",
     "d": "+2% Damage Reduction",
+    "i": "dr",
     "s": "+2% Damage Reduction",
     "r": 2,
     "c": [
@@ -1133,6 +1189,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Arm Reinforcement",
     "d": "+20 Arm HP",
+    "i": "hp",
     "s": "+20 ARM HP",
     "r": 2,
     "c": [
@@ -1148,6 +1205,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Core Reinforcement",
     "d": "+20 Core HP",
+    "i": "hp",
     "s": "+20 CORE HP",
     "r": 2,
     "c": [
@@ -1162,6 +1220,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Leg Reinforcement",
     "d": "+20 Leg HP",
+    "i": "hp",
     "s": "+20 LEG HP",
     "r": 2,
     "c": [
@@ -1176,6 +1235,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Composite Plating",
     "d": "+2% Damage Reduction",
+    "i": "dr",
     "s": "+2% Damage Reduction",
     "r": 2,
     "c": [
@@ -1190,6 +1250,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Streamlined Action",
     "d": "+2% Fire Rate",
+    "i": "fire_rate",
     "s": "+2% FIRE RATE",
     "r": 2,
     "c": [
@@ -1205,6 +1266,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Streamlined Action",
     "d": "+2% Fire Rate",
+    "i": "fire_rate",
     "s": "+2% FIRE RATE",
     "r": 2,
     "c": [
@@ -1220,6 +1282,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Weapon Calibration",
     "d": "+2% Damage",
+    "i": "damage",
     "s": "+2% DMG",
     "r": 2,
     "c": [
@@ -1235,6 +1298,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Weapon Calibration",
     "d": "+2% Damage",
+    "i": "damage",
     "s": "+2% DMG",
     "r": 2,
     "c": [
@@ -1249,6 +1313,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Flamethrower Damage",
     "d": "+2% Flamethrower Damage",
+    "i": "flamethrower",
     "s": "+2% Flamethrower DMG",
     "r": 2,
     "c": [
@@ -1263,6 +1328,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Flamethrower Heat Control",
     "d": "+5% Flamethrower Heat",
+    "i": "heat",
     "s": "+5% Flamethrower HEAT",
     "r": 2,
     "c": [
@@ -1278,6 +1344,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Burn Duration",
     "d": "+0.5s Burn",
+    "i": "flamethrower",
     "s": "+0.5s BURN",
     "r": 2,
     "c": [
@@ -1293,6 +1360,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "SMG Heat Control",
     "d": "+5% SMG Heat",
+    "i": "heat",
     "s": "+5% SMG HEAT",
     "r": 2,
     "c": [
@@ -1309,6 +1377,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "SMG Fire Rate",
     "d": "+2% SMG Fire Rate",
+    "i": "smg",
     "s": "+2% SMG Fire Rate",
     "r": 2,
     "c": [
@@ -1324,6 +1393,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "SMG Damage",
     "d": "+2% SMG Damage",
+    "i": "smg",
     "s": "+2% SMG DMG",
     "r": 2,
     "c": [
@@ -1339,6 +1409,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Shotgun Fire Rate",
     "d": "+2% Shotgun Fire Rate",
+    "i": "shotgun",
     "s": "+2% Shotgun Fire Rate",
     "r": 2,
     "c": [
@@ -1354,6 +1425,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Shotgun Fire Rate",
     "d": "+2% Shotgun Fire Rate",
+    "i": "shotgun",
     "s": "+2% Shotgun Fire Rate",
     "r": 2,
     "c": [
@@ -1370,6 +1442,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Shotgun Damage",
     "d": "+2% Shotgun Damage",
+    "i": "shotgun",
     "s": "+2% Shotgun DMG",
     "r": 2,
     "c": [
@@ -1385,6 +1458,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Shotgun Pellets",
     "d": "+1 Shotgun Pellet",
+    "i": "shotgun",
     "s": "+1 Shotgun PELLET",
     "r": 2,
     "c": [
@@ -1400,6 +1474,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Shotgun Fire Rate",
     "d": "+2% Shotgun Fire Rate",
+    "i": "shotgun",
     "s": "+2% Shotgun Fire Rate",
     "r": 2,
     "c": [
@@ -1414,6 +1489,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Siphon Heat Control",
     "d": "+5% Siphon Heat",
+    "i": "heat",
     "s": "+5% SIPHON HEAT",
     "r": 2,
     "c": [
@@ -1429,6 +1505,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Siphon Heat Control",
     "d": "+5% Siphon Heat",
+    "i": "heat",
     "s": "+5% SIPHON HEAT",
     "r": 2,
     "c": [
@@ -1445,6 +1522,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Siphon Slow",
     "d": "+2% Siphon Slow",
+    "i": "siphon",
     "s": "+2% SIPHON SLOW",
     "r": 2,
     "c": [
@@ -1460,6 +1538,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Siphon Heal",
     "d": "+2% Siphon Heal",
+    "i": "siphon",
     "s": "+5% SIPHON HEAL",
     "r": 2,
     "c": [
@@ -1475,6 +1554,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1489,6 +1569,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1503,6 +1584,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1517,6 +1599,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1533,6 +1616,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1547,6 +1631,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1563,6 +1648,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1578,6 +1664,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1594,6 +1681,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1609,6 +1697,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1625,6 +1714,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1639,6 +1729,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1655,6 +1746,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1669,6 +1761,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1685,6 +1778,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1699,6 +1793,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1715,6 +1810,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1729,6 +1825,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1745,6 +1842,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1759,6 +1857,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1773,6 +1872,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1787,6 +1887,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1801,6 +1902,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1815,6 +1917,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1829,6 +1932,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1843,6 +1947,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1857,6 +1962,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1871,6 +1977,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1885,6 +1992,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1899,6 +2007,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1913,6 +2022,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Augment Boost",
     "d": "+2% Augment Effect",
+    "i": "augment",
     "s": "+2% AUGMENT",
     "r": 2,
     "c": [
@@ -1927,6 +2037,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1941,6 +2052,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1955,6 +2067,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1969,6 +2082,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -1985,6 +2099,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2001,6 +2116,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2015,6 +2131,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2029,6 +2146,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "+2% Mod Cooldown",
+    "i": "mod_cd",
     "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
@@ -2042,6 +2160,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "+2% Mod Cooldown",
+    "i": "mod_cd",
     "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
@@ -2055,6 +2174,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "+2% Mod Cooldown",
+    "i": "mod_cd",
     "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
@@ -2068,6 +2188,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "+2% Mod Cooldown",
+    "i": "mod_cd",
     "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
@@ -2081,6 +2202,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "+2% Mod Cooldown",
+    "i": "mod_cd",
     "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
@@ -2094,6 +2216,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "+2% Mod Cooldown",
+    "i": "mod_cd",
     "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
@@ -2107,6 +2230,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Processor Boost",
     "d": "+2% Mod Cooldown",
+    "i": "mod_cd",
     "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
@@ -2120,6 +2244,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2134,6 +2259,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2148,6 +2274,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2162,6 +2289,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2176,6 +2304,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2192,6 +2321,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2206,6 +2336,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2220,6 +2351,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2234,6 +2366,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2250,6 +2383,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2264,6 +2398,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2278,6 +2413,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2292,6 +2428,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2306,6 +2443,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2322,6 +2460,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2336,6 +2475,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2350,6 +2490,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2364,6 +2505,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2380,6 +2522,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2394,6 +2537,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2408,6 +2552,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2422,6 +2567,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2436,6 +2582,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2452,6 +2599,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2466,6 +2614,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2480,6 +2629,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2494,6 +2644,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2510,6 +2661,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2524,6 +2676,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Hull Plating",
     "d": "+10 All Parts HP",
+    "i": "hp",
     "s": "+10 ALL HP",
     "r": 2,
     "c": [
@@ -2564,6 +2717,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Targeting Matrix",
     "d": "+5% Crit Chance",
+    "i": "crit",
     "s": "+5% CRIT",
     "r": 2,
     "c": [
@@ -2578,6 +2732,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Targeting Matrix",
     "d": "+5% Crit Chance",
+    "i": "crit",
     "s": "+5% CRIT",
     "r": 2,
     "c": [
@@ -2592,6 +2747,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Targeting Matrix",
     "d": "+5% Crit Chance",
+    "i": "crit",
     "s": "+5% CRIT",
     "r": 2,
     "c": [
@@ -2606,6 +2762,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Targeting Matrix",
     "d": "+5% Crit Chance",
+    "i": "crit",
     "s": "+5% CRIT",
     "r": 2,
     "c": [
@@ -2620,6 +2777,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Targeting Matrix",
     "d": "+5% Crit Chance",
+    "i": "crit",
     "s": "+5% CRIT",
     "r": 2,
     "c": [
@@ -2634,6 +2792,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Targeting Matrix",
     "d": "+5% Crit Chance",
+    "i": "crit",
     "s": "+5% CRIT",
     "r": 2,
     "c": [
@@ -2648,6 +2807,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Targeting Matrix",
     "d": "+5% Crit Chance",
+    "i": "crit",
     "s": "+5% CRIT",
     "r": 2,
     "c": [
@@ -2662,6 +2822,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Crit Damage",
     "d": "+10% Crit Damage",
+    "i": "crit_dmg",
     "s": "+10% CRIT DMG",
     "r": 2,
     "c": [
@@ -2676,6 +2837,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Crit Damage",
     "d": "+10% Crit Damage",
+    "i": "crit_dmg",
     "s": "+10% CRIT DMG",
     "r": 2,
     "c": [
@@ -2690,6 +2852,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Crit Damage",
     "d": "+10% Crit Damage",
+    "i": "crit_dmg",
     "s": "+10% CRIT DMG",
     "r": 2,
     "c": [
@@ -2704,6 +2867,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Crit Damage",
     "d": "+10% Crit Damage",
+    "i": "crit_dmg",
     "s": "+10% CRIT DMG",
     "r": 2,
     "c": [
@@ -2718,6 +2882,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Crit Damage",
     "d": "+10% Crit Damage",
+    "i": "crit_dmg",
     "s": "+10% CRIT DMG",
     "r": 2,
     "c": [
@@ -2732,6 +2897,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Crit Damage",
     "d": "+10% Crit Damage",
+    "i": "crit_dmg",
     "s": "+10% CRIT DMG",
     "r": 2,
     "c": [
@@ -2746,6 +2912,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Crit Damage",
     "d": "+10% Crit Damage",
+    "i": "crit_dmg",
     "s": "+10% CRIT DMG",
     "r": 2,
     "c": [
@@ -2760,6 +2927,7 @@ const SKILL_TREE_DATA = {
     "t": "regular",
     "n": "Ghost Step Boost",
     "d": "+0.3s Invis, +5% Invis Cooldown",
+    "i": "dodge",
     "s": "+0.3s INVIS +5% Cooldown",
     "r": 1,
     "c": [
