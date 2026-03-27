@@ -448,11 +448,12 @@ function _stShowHover(node, evt) {
   const descLine = (node.d && node.d.trim())
     ? (() => {
         const parts = node.d.split(',').map(p => p.trim()).filter(Boolean);
+        const lineColor = p => /^-\d/.test(p) ? '#cc2222' : '#00ff88';
         if (parts.length === 1) {
-          return `<div style="color:#00ff88;font-size:10px;letter-spacing:1px">${parts[0]}</div>`;
+          return `<div style="color:${lineColor(parts[0])};font-size:10px;letter-spacing:1px">${parts[0]}</div>`;
         }
-        return `<div style="display:flex;flex-direction:column;gap:5px">${
-          parts.map(p => `<div style="color:#00ff88;font-size:10px;letter-spacing:1px">${p}</div>`).join('')
+        return `<div style="display:flex;flex-direction:column;gap:2px">${
+          parts.map(p => `<div style="color:${lineColor(p)};font-size:10px;letter-spacing:1px">${p}</div>`).join('')
         }</div>`;
       })()
     : '';
