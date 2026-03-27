@@ -228,6 +228,7 @@ function hideSkillTree() {
   // Lock in all current allocations and save
   _lockedAllocations = Object.assign({}, _skillTreeState.allocated);
   if (typeof saveCampaignState === 'function') saveCampaignState();
+  if (typeof saveCampaignProgress === 'function') saveCampaignProgress();
 
   // Return to mission select if that's where we came from
   const ms = document.getElementById('mission-select-overlay');
@@ -551,6 +552,7 @@ function _allocateNode(nodeId) {
       _updateSkillPointsBadge();
       _stHideHover();
       _renderSkillTree();
+      if (typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
       return;
     }
     // Cannot deallocate (would strand other nodes) — fall through to try adding rank
@@ -567,6 +569,7 @@ function _allocateNode(nodeId) {
   _updateSkillPointsBadge();
   _stHideHover();
   _renderSkillTree();
+  if (typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
 }
 
 // ── Skill tree bonuses ───────────────────────────────────────────

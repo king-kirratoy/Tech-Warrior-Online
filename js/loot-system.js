@@ -1792,6 +1792,16 @@ function _scheduleCloudSave() {
     }, 2000); // 2-second debounce
 }
 
+/** Debounced campaign save — coalesces rapid saves (skill clicks, drag-and-drop) into one write per 500ms. */
+let _campaignSaveTimeout = null;
+function debouncedCampaignSave() {
+    if (_campaignSaveTimeout) clearTimeout(_campaignSaveTimeout);
+    _campaignSaveTimeout = setTimeout(() => {
+        saveCampaignProgress();
+        _campaignSaveTimeout = null;
+    }, 500);
+}
+
 /** Load campaign progress. Returns the progress object or null. */
 function loadCampaignProgress() {
     try {
