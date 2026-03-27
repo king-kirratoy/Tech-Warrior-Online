@@ -1619,11 +1619,13 @@ function _shopShowHover(el, item, preferSide, noCompare) {
     }
 
     const isCompare = !!compareItem;
+    const _rdBorder = (typeof RARITY_DEFS !== 'undefined' && RARITY_DEFS[item.rarity]) || { colorStr: '#00d4ff' };
     card.innerHTML = _buildHoverHtml(item, slotLabel, compareItem, 'SHOP');
     card.style.display = 'block';
     card.style.width = isCompare ? 'auto' : '200px';
     card.style.padding = isCompare ? '0' : '';
     card.style.border = isCompare ? 'none' : '';
+    card.style.borderColor = isCompare ? '' : _rdBorder.colorStr;
 
     // Position offscreen to measure
     card.style.left = '-9999px';
@@ -1660,6 +1662,7 @@ function _shopHideHover() {
     const card = document.getElementById('shop-hover-card');
     if (card) {
         card.style.display = 'none';
+        card.style.borderColor = '';
         card.innerHTML = '';
     }
 }
