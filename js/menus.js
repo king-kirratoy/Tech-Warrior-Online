@@ -1622,6 +1622,7 @@ function _equipItemToSlot(invIdx, slotKey) {
 
     recalcGearStats();
     saveInventory();
+    if (typeof _gameMode !== 'undefined' && _gameMode === 'campaign' && typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
     populateInventory();
     _updateInvCount();
 }
@@ -1659,6 +1660,7 @@ function _unequipItem(slotKey) {
 
     recalcGearStats();
     saveInventory();
+    if (typeof _gameMode !== 'undefined' && _gameMode === 'campaign' && typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
     populateInventory();
     _updateInvCount();
 }

@@ -1540,6 +1540,7 @@ function _shopRestock() {
     const cost = Math.max(10, Math.round(_campaignState.playerLevel * 5));
     if (typeof _scrap === 'undefined' || _scrap < cost) return;
     _scrap -= cost;
+    if (typeof saveInventory === 'function') saveInventory();
     _selectedShopIdx = null;
     _selectedSellIdx = null;
     refreshShopStock(); // replaces _shopStock entirely, clearing sold-back items
