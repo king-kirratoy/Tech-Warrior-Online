@@ -30,14 +30,16 @@
 | `js/loot-system.js` | ARPG loot layer: item generation, rarity/affix system, inventory/equipment management, ground drops (campaign only), unique item effects, campaign cloud save, and save migration arrays (`REMOVED_SHIELDS`, `REMOVED_LEGS`, `REMOVED_AUGMENTS`). |
 | `js/enemy-types.js` | Special enemy type definitions (`ENEMY_TYPE_DEFS`), elite modifier system (`ELITE_MODIFIERS`), and all type/modifier lifecycle functions. |
 | `js/arena-objectives.js` | Arena layout generators (4 arenas), objective system (4 types), lifecycle functions, and `_arenaState` export. |
-| `js/campaign-system.js` | Campaign missions, XP system, mission modifiers, enemy composition, campaign flow, localStorage save/load, mission select overlay, supply shop, and loadout slots. Skill tree removed in v6.88 — new system TBD. |
+| `js/campaign-system.js` | Campaign missions, XP system, mission modifiers, enemy composition, campaign flow, localStorage save/load, mission select overlay, supply shop, and loadout slots. Skill Tree button wired to `showSkillTree()` in v6.89. |
+| `js/skill-tree-data.js` | `SKILL_TREE_DATA` constant wrapping the light chassis skill tree as a JSON array of 193 nodes (id, x, y, t, n, d, s, r, c). Added in v6.89. |
+| `js/skill-tree.js` | Skill tree overlay: `showSkillTree()` / `hideSkillTree()`, pan/zoom SVG canvas, bottom legend, and Part B stubs. `_skillTreeState`, `_skillTreeVB`, pan/zoom helpers. Added in v6.89. |
 | `js/multiplayer.js` | PVP matchmaking via Socket.IO: connection, remote players, per-frame sync, lobby, PVP HUD, chat, kill feed, respawn, match results, and PVP hangar. |
 | `js/events.js` | All top-level global event listeners: resize, click, keydown (all game states), main-menu key nav, player movement/firing, and inventory drag-and-drop. Tremor Legs timer: fires `_triggerTremor` every 500ms (250ms with tlCd) while velocity > 20; resets timer when stationary. |
 | `js/init.js` | Game startup: animated grid canvas, callsign handlers, Phaser scene lifecycle (`preload`/`create`/`update`), objective round-end polling, and `window.onload` bootstrap. |
 
 **Script load order (bottom of `<body>`):**
 ```
-phaser.min.js → constants.js → state.js → utils.js → audio.js → mechs.js → cover.js → combat.js → mods.js → perks.js → enemies.js → rounds.js → hud.js → garage.js → menus.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → socket.io.min.js → multiplayer.js → events.js → init.js
+phaser.min.js → constants.js → state.js → utils.js → audio.js → mechs.js → cover.js → combat.js → mods.js → perks.js → enemies.js → rounds.js → hud.js → garage.js → menus.js → loot-system.js → enemy-types.js → arena-objectives.js → campaign-system.js → skill-tree-data.js → skill-tree.js → socket.io.min.js → multiplayer.js → events.js → init.js
 ```
 
 ---

@@ -761,7 +761,7 @@ function showMissionSelect() {
     html += `<span style="position:absolute;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:4px;color:var(--sci-cyan);text-transform:uppercase;pointer-events:none;">CAMPAIGN</span>`;
     html += `<span style="position:absolute;left:50%;transform:translateX(-50%);margin-top:22px;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);pointer-events:none;">LVL ${_campaignState.playerLevel} &nbsp;·&nbsp; ${xpCur} / ${xpNeeded} XP</span>`;
     html += `<button onclick="_openShopFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;margin-left:auto;">Supply Shop</button>`;
-    html += `<button class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;opacity:0.45;cursor:default;" disabled title="Coming Soon">Skill Tree</button>`;
+    html += `<button onclick="_openSkillTreeFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">Skill Tree</button>`;
     html += `<button onclick="_openLoadoutFromMission()" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;">Loadout</button>`;
     html += '</div>';
 
@@ -858,6 +858,13 @@ function _openLoadoutFromMission() {
     const statsOv = document.getElementById('stats-overlay');
     if (statsOv) statsOv.style.display = 'flex';
     if (typeof populateLoadout === 'function') populateLoadout();
+}
+
+/** Open the skill tree overlay from mission select. */
+function _openSkillTreeFromMission() {
+    const overlay = document.getElementById('mission-select-overlay');
+    if (overlay) overlay.style.display = 'none';
+    if (typeof showSkillTree === 'function') showSkillTree();
 }
 
 /** Select a chapter tab. */
