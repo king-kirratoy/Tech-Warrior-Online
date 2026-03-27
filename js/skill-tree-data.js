@@ -97,8 +97,8 @@ const SKILL_TREE_DATA = {
     "y": -160,
     "t": "regular",
     "n": "SMG Heat Control",
-    "d": "-5% SMG Heat",
-    "s": "-5% SMG HEAT",
+    "d": "+5% SMG Heat",
+    "s": "+5% SMG HEAT",
     "r": 2,
     "c": [
       "node_69",
@@ -169,8 +169,8 @@ const SKILL_TREE_DATA = {
     "y": -160,
     "t": "regular",
     "n": "Flamethrower Heat Control",
-    "d": "-5% Flamethrower Heat",
-    "s": "-5% Flamethrower HEAT",
+    "d": "+5% Flamethrower Heat",
+    "s": "+5% Flamethrower HEAT",
     "r": 2,
     "c": [
       "node_109",
@@ -366,8 +366,8 @@ const SKILL_TREE_DATA = {
     "y": -420,
     "t": "keystone",
     "n": "OVERCLOCK",
-    "d": "-15% Mod Cooldown, +30% Mod Effects",
-    "s": "-15% Cooldown +30% EFFECT",
+    "d": "+15% Mod Cooldown, +30% Mod Effects",
+    "s": "+15% Cooldown +30% EFFECT",
     "r": 1,
     "c": [
       "node_191"
@@ -531,8 +531,8 @@ const SKILL_TREE_DATA = {
     "y": 40,
     "t": "regular",
     "n": "Processor Boost",
-    "d": "-2% Mod Cooldown",
-    "s": "-2% MOD Cooldown",
+    "d": "+2% Mod Cooldown",
+    "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_76"
@@ -544,8 +544,8 @@ const SKILL_TREE_DATA = {
     "y": 400,
     "t": "regular",
     "n": "Barrier Boost",
-    "d": "+1.5s Barrier, -5% Barrier Cooldown",
-    "s": "+1.5s BARRIER -5% Cooldown",
+    "d": "+1.5s Barrier, +5% Barrier Cooldown",
+    "s": "+1.5s BARRIER +5% Cooldown",
     "r": 2,
     "c": [
       "node_158",
@@ -558,8 +558,8 @@ const SKILL_TREE_DATA = {
     "y": -160,
     "t": "regular",
     "n": "Jump Boost",
-    "d": "+10% Jump, -5% Jump Cooldown",
-    "s": "+10% JUMP -5% Cooldown",
+    "d": "+10% Jump, +5% Jump Cooldown",
+    "s": "+10% JUMP +5% Cooldown",
     "r": 2,
     "c": [
       "ks_meteor",
@@ -1262,8 +1262,8 @@ const SKILL_TREE_DATA = {
     "y": -160,
     "t": "regular",
     "n": "Flamethrower Heat Control",
-    "d": "-5% Flamethrower Heat",
-    "s": "-5% Flamethrower HEAT",
+    "d": "+5% Flamethrower Heat",
+    "s": "+5% Flamethrower HEAT",
     "r": 2,
     "c": [
       "node_67",
@@ -1292,8 +1292,8 @@ const SKILL_TREE_DATA = {
     "y": -160,
     "t": "regular",
     "n": "SMG Heat Control",
-    "d": "-5% SMG Heat",
-    "s": "-5% SMG HEAT",
+    "d": "+5% SMG Heat",
+    "s": "+5% SMG HEAT",
     "r": 2,
     "c": [
       "smg_heat",
@@ -1413,8 +1413,8 @@ const SKILL_TREE_DATA = {
     "y": 160,
     "t": "regular",
     "n": "Siphon Heat Control",
-    "d": "-5% Siphon Heat",
-    "s": "-5% SIPHON HEAT",
+    "d": "+5% Siphon Heat",
+    "s": "+5% SIPHON HEAT",
     "r": 2,
     "c": [
       "node_62",
@@ -1428,8 +1428,8 @@ const SKILL_TREE_DATA = {
     "y": 160,
     "t": "regular",
     "n": "Siphon Heat Control",
-    "d": "-5% Siphon Heat",
-    "s": "-5% SIPHON HEAT",
+    "d": "+5% Siphon Heat",
+    "s": "+5% SIPHON HEAT",
     "r": 2,
     "c": [
       "node_120",
@@ -2028,8 +2028,8 @@ const SKILL_TREE_DATA = {
     "y": -40,
     "t": "regular",
     "n": "Processor Boost",
-    "d": "-2% Mod Cooldown",
-    "s": "-2% MOD Cooldown",
+    "d": "+2% Mod Cooldown",
+    "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_76"
@@ -2041,8 +2041,8 @@ const SKILL_TREE_DATA = {
     "y": 140,
     "t": "regular",
     "n": "Processor Boost",
-    "d": "-2% Mod Cooldown",
-    "s": "-2% MOD Cooldown",
+    "d": "+2% Mod Cooldown",
+    "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_60"
@@ -2054,8 +2054,8 @@ const SKILL_TREE_DATA = {
     "y": 140,
     "t": "regular",
     "n": "Processor Boost",
-    "d": "-2% Mod Cooldown",
-    "s": "-2% MOD Cooldown",
+    "d": "+2% Mod Cooldown",
+    "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_60"
@@ -2067,8 +2067,8 @@ const SKILL_TREE_DATA = {
     "y": 40,
     "t": "regular",
     "n": "Processor Boost",
-    "d": "-2% Mod Cooldown",
-    "s": "-2% MOD Cooldown",
+    "d": "+2% Mod Cooldown",
+    "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_64"
@@ -2080,8 +2080,8 @@ const SKILL_TREE_DATA = {
     "y": -40,
     "t": "regular",
     "n": "Processor Boost",
-    "d": "-2% Mod Cooldown",
-    "s": "-2% MOD Cooldown",
+    "d": "+2% Mod Cooldown",
+    "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_64"
@@ -2093,8 +2093,8 @@ const SKILL_TREE_DATA = {
     "y": -140,
     "t": "regular",
     "n": "Processor Boost",
-    "d": "-2% Mod Cooldown",
-    "s": "-2% MOD Cooldown",
+    "d": "+2% Mod Cooldown",
+    "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_65"
@@ -2106,8 +2106,8 @@ const SKILL_TREE_DATA = {
     "y": -140,
     "t": "regular",
     "n": "Processor Boost",
-    "d": "-2% Mod Cooldown",
-    "s": "-2% MOD Cooldown",
+    "d": "+2% Mod Cooldown",
+    "s": "+2% MOD Cooldown",
     "r": 2,
     "c": [
       "node_65"
@@ -2759,8 +2759,8 @@ const SKILL_TREE_DATA = {
     "y": 160,
     "t": "regular",
     "n": "Ghost Step Boost",
-    "d": "+0.3s Invis, -5% Invis Cooldown",
-    "s": "+0.3s INVIS -5% Cooldown",
+    "d": "+0.3s Invis, +5% Invis Cooldown",
+    "s": "+0.3s INVIS +5% Cooldown",
     "r": 1,
     "c": [
       "node_177",
