@@ -152,10 +152,10 @@ function showSkillTree() {
   ].join(';');
 
   const legendItems = [
-    { label: 'ALLOCATED', fill: 'rgba(0,212,255,0.15)', stroke: '#00d4ff' },
-    { label: 'LOCKED',    fill: 'rgba(255,255,255,0.03)', stroke: 'rgba(255,255,255,0.25)' },
-    { label: 'NOTABLE',   fill: 'rgba(232,146,58,0.15)', stroke: '#e8923a' },
-    { label: 'KEYSTONE',  fill: 'rgba(204,136,255,0.15)', stroke: '#cc88ff' },
+    { label: 'ALLOCATED', fill: '#0a1a1f', stroke: '#00d4ff' },
+    { label: 'LOCKED',    fill: '#12141a', stroke: 'rgba(255,255,255,0.25)' },
+    { label: 'NOTABLE',   fill: '#1a1208', stroke: '#e8923a' },
+    { label: 'KEYSTONE',  fill: '#150e1a', stroke: '#cc88ff' },
   ];
 
   legendItems.forEach(({ label, fill, stroke }) => {
@@ -344,16 +344,16 @@ function _renderSkillTree() {
 
     let fill, stroke;
     if (node.t === 'start') {
-      fill = 'rgba(0,212,255,0.08)'; stroke = '#00d4ff';
+      fill = '#0a1a1f'; stroke = '#00d4ff';
     } else if (node.t === 'keystone') {
-      if (st === 'allocated') { fill = 'rgba(204,136,255,0.15)'; stroke = '#cc88ff'; }
-      else                    { fill = 'rgba(204,136,255,0.04)'; stroke = 'rgba(204,136,255,0.2)'; }
+      if (st === 'allocated') { fill = '#150e1a'; stroke = '#cc88ff'; }
+      else                    { fill = '#13101a'; stroke = 'rgba(204,136,255,0.2)'; }
     } else if (node.t === 'notable') {
-      if (st === 'allocated') { fill = 'rgba(232,146,58,0.15)'; stroke = '#e8923a'; }
-      else                    { fill = 'rgba(232,146,58,0.04)'; stroke = 'rgba(232,146,58,0.2)'; }
+      if (st === 'allocated') { fill = '#1a1208'; stroke = '#e8923a'; }
+      else                    { fill = '#16140e'; stroke = 'rgba(232,146,58,0.2)'; }
     } else {
-      if (st === 'allocated') { fill = 'rgba(0,212,255,0.15)'; stroke = '#00d4ff'; }
-      else                    { fill = 'rgba(255,255,255,0.03)'; stroke = 'rgba(255,255,255,0.12)'; }
+      if (st === 'allocated') { fill = '#0a1a1f'; stroke = '#00d4ff'; }
+      else                    { fill = '#12141a'; stroke = 'rgba(255,255,255,0.12)'; }
     }
 
     // Group
@@ -444,11 +444,14 @@ function _stShowHover(node, evt) {
     ? 'Always active'
     : `Rank ${rank} / ${maxRank}`;
 
+  const descLine = (node.d && node.d.trim())
+    ? `<div style="color:#00ff88;font-size:10px;letter-spacing:1px">${node.d}</div>`
+    : '';
   card.innerHTML =
     `<div style="color:#e8923a;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase">${node.n}</div>` +
     `<div style="color:rgba(0,212,255,0.7);font-size:9px;margin-bottom:6px">${rankLine}</div>` +
     `<div style="border-top:1px solid rgba(0,212,255,0.15);margin-bottom:6px"></div>` +
-    `<div style="color:#00ff88;font-size:10px;letter-spacing:1px">${node.s || ''}</div>`;
+    descLine;
 
   card.style.display = 'block';
   _stPositionHover(evt);
