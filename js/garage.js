@@ -503,6 +503,53 @@ function deployMech() {
     // Component HP + shield — initialize from chassis stats and gear bonuses
     _initPlayerHP(scene, s);
 
+    // Apply skill tree passive bonuses (campaign only)
+    if (_gameMode === 'campaign' && typeof getSkillTreeBonuses === 'function') {
+        const _stb = getSkillTreeBonuses();
+
+        // ── HP bonuses ──
+        const _stCoreHP = (_stb.allHP || 0) + (_stb.coreHP || 0);
+        const _stArmHP  = (_stb.allHP || 0) + (_stb.armHP  || 0);
+        const _stLegHP  = (_stb.allHP || 0) + (_stb.legHP  || 0);
+        if (_stCoreHP > 0) {
+            player.maxHp += _stCoreHP;
+            player.hp    += _stCoreHP;
+            if (player.comp?.core) { player.comp.core.max += _stCoreHP; player.comp.core.hp += _stCoreHP; }
+        }
+        if (_stArmHP > 0) {
+            if (player.comp?.lArm) { player.comp.lArm.max += _stArmHP; player.comp.lArm.hp += _stArmHP; }
+            if (player.comp?.rArm) { player.comp.rArm.max += _stArmHP; player.comp.rArm.hp += _stArmHP; }
+        }
+        if (_stLegHP > 0) {
+            if (player.comp?.legs) { player.comp.legs.max += _stLegHP; player.comp.legs.hp += _stLegHP; }
+        }
+
+        // ── Shield bonuses ──
+        if (_stb.shieldHP > 0) {
+            player.maxShield += _stb.shieldHP;
+            player.shield    += _stb.shieldHP;
+        }
+        if (_stb.shieldRegenPct > 0) {
+            player._shieldRegenRate = (player._shieldRegenRate || 0) * (1 + _stb.shieldRegenPct / 100);
+        }
+        if (_stb.shieldAbsorbPct > 0) {
+            player._shieldAbsorb = Math.min(0.90, (player._shieldAbsorb || 0) + _stb.shieldAbsorbPct / 100);
+        }
+
+        // ── Combat stat bonuses via _perkState ──
+        if (_stb.dmgPct      > 0) _perkState.dmgMult   = (_perkState.dmgMult   || 1) * (1 + _stb.dmgPct      / 100);
+        if (_stb.fireRatePct > 0) _perkState.reloadMult = (_perkState.reloadMult || 1) * (1 - _stb.fireRatePct / 100);
+        if (_stb.critPct     > 0) _perkState.critChance = (_perkState.critChance || 0) + _stb.critPct / 100;
+        if (_stb.speedPct    > 0) _perkState.speedMult  = (_perkState.speedMult  || 1) * (1 + _stb.speedPct    / 100);
+        if (_stb.dodgePct    > 0) _perkState.dodgeChance = (_perkState.dodgeChance || 0) + _stb.dodgePct / 100;
+        if (_stb.drPct       > 0) _perkState.fortress   = (_perkState.fortress   || 0) + _stb.drPct / 100;
+
+        // ── Crit damage via _gearState ──
+        if (_stb.critDmgPct > 0 && typeof _gearState !== 'undefined') {
+            _gearState.critDmg = (_gearState.critDmg || 0) + _stb.critDmgPct;
+        }
+    }
+
     refreshMechColor();
     scene.time.delayedCall(10, () => refreshMechColor()); // One-frame safety flush
 

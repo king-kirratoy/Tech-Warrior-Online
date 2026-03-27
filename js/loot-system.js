@@ -1774,6 +1774,7 @@ function saveCampaignProgress() {
             shld: loadout.shld,
             totalKills: (typeof _totalKills !== 'undefined') ? _totalKills : 0,
             perksEarned: (typeof _perksEarned !== 'undefined') ? _perksEarned : 0,
+            skillTreeAllocated: (typeof _skillTreeState !== 'undefined') ? _skillTreeState.allocated : {},
             savedAt: Date.now()
         };
         localStorage.setItem('tw_campaign_progress', JSON.stringify(progress));

@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v6.89';
+const GAME_VERSION = 'v6.90';
 
 // NAMESPACE window.TW = {};
 window.TW = {};
