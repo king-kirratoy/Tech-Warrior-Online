@@ -1191,8 +1191,8 @@ function populateInventory() {
                 }
                 cell.addEventListener('mouseover', () => {
                     if (!(_invSelectedSource === 'backpack' && _invSelectedKey === i)) {
-                        cell.style.borderColor = rd.colorStr + 'aa';
-                        cell.style.boxShadow   = `0 0 8px ${rd.colorStr}33`;
+                        cell.style.borderColor = item.isUnique ? 'rgba(255,215,0,0.8)' : rd.colorStr + 'aa';
+                        cell.style.boxShadow   = item.isUnique ? '0 0 8px rgba(255,215,0,0.4)' : `0 0 8px ${rd.colorStr}33`;
                     }
                 });
                 cell.addEventListener('mouseout', () => {
@@ -2120,14 +2120,9 @@ function _buildSingleCardHtml(item, slotLabel) {
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (!v) return;
             if (k === 'speed') return;
-            let valColor = 'var(--sci-cyan)';
-            if (_hoverInvertedStats.has(k)) {
-                valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-cyan)');
-            }
+            const valColor = 'var(--sci-cyan)';
             let displayVal;
-            if (_hoverInvertedStats.has(k) && v < 0) {
-                displayVal = '+' + Math.abs(v) + (_pctStats.has(k) ? '%' : '');
-            } else if (k === 'dr') {
+            if (k === 'dr') {
                 displayVal = Math.round(v * 100) + '%';
             } else if (k === 'fireRate' || k === 'reload') {
                 displayVal = (1000 / v).toFixed(1) + '/sec';
@@ -2178,14 +2173,9 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
             Object.entries(colItem.baseStats).forEach(([k, v]) => {
                 if (!v) return;
                 if (k === 'speed') return;
-                let valColor = 'var(--sci-cyan)';
-                if (_hoverInvertedStats.has(k)) {
-                    valColor = v < 0 ? '#00ff88' : (v > 0 ? '#ff4d6a' : 'var(--sci-cyan)');
-                }
+                const valColor = 'var(--sci-cyan)';
                 let displayVal;
-                if (_hoverInvertedStats.has(k) && v < 0) {
-                    displayVal = '+' + Math.abs(v) + (_pctStats.has(k) ? '%' : '');
-                } else if (k === 'dr') {
+                if (k === 'dr') {
                     displayVal = Math.round(v * 100) + '%';
                 } else if (k === 'fireRate' || k === 'reload') {
                     displayVal = (1000 / v).toFixed(1) + '/sec';

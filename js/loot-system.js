@@ -463,7 +463,7 @@ function generateUniqueItem(uniqueKey, round) {
     }));
     // Update labels with scaled values
     affixes.forEach(a => {
-        const prefix = ['fireRatePct','modCdPct'].includes(a.stat) ? '-' : '+';
+        const prefix = a.stat === 'modCdPct' ? '-' : '+';
         a.label = a.label.replace(/[+-]?\d+/, prefix + a.value);
     });
 
