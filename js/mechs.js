@@ -437,6 +437,5 @@ function _initPlayerHP(scene, s) {
     player._siphonOverheatR = false;
     player._siphonFiringL   = false;
     player._siphonFiringR   = false;
-    player._siphonLine      = null;
 }
 

@@ -29,7 +29,6 @@ function activateDecoy(scene, time) {
     }});
 
     // Decoy fires the player's weapons toward nearest enemy every 1.2s
-    let decoyFireTimer = 0;
     const decoyFireEvent = scene.time.addEvent({ delay: 1200, loop: true, callback: () => {
         if (!decoyTorso.active) return;
         let nearest = null, _nearDistD = Infinity;
@@ -200,7 +199,7 @@ function activateRepair(scene, time) {
         scene.time.delayedCall(i * mod.tickDelay, () => {
             if (!player?.comp) return;
             const parts = Object.entries(player.comp).sort((a,b) => (a[1].hp/a[1].max) - (b[1].hp/b[1].max));
-            const [partName, part] = parts[0];
+            const [, part] = parts[0];
             const healAmt = mod.healAmount / ticks;
             if (part && part.hp < part.max) {
                 part.hp = Math.min(part.max, part.hp + healAmt);

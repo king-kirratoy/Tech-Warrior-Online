@@ -1,8 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v7.21';
-
-// NAMESPACE window.TW = {};
-window.TW = {};
+const GAME_VERSION = 'v7.22';
 
 // ═══════════ CHASSIS ═══════════
 
@@ -324,13 +321,6 @@ const BOSS_COLORS = {
     titan:     { body: 0x1a1000, head: 0xff8800, eye: 0xffcc00 },
     core:      { body: 0x001133, head: 0x00ccff, eye: 0x00ffff },
 };
-
-// ── Enemy weapon key lists ────────────────────────────────────────
-// Primary weapon keys available to enemies (excludes none)
-const ENEMY_PRIMARY   = ['smg', 'mg', 'br', 'sg', 'hr', 'fth'];
-// All weapons that can go in either arm slot
-const ENEMY_ARM_WEAPONS = ['smg','mg','br','sg','hr','fth','sr','gl','rl','plsm']; // rail excluded: too accurate + hitscan
-// ENEMY_SECONDARY and ENEMY_MODS are now handled inline in randomEnemyLoadout (full parity with player)
 
 // ═══════════ WORLD DIMENSIONS ═══════════
 

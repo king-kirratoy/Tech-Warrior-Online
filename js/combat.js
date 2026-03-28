@@ -1942,18 +1942,4 @@ function _applyFieldEngineer() {
     part.hp = Math.min(part.max, part.hp + heal);
     updateBars(); updatePaperDoll();
 }
-function _createAfterburn(scene, x, y) {
-    const zone = scene.add.circle(x, y, 40, 0xff4400, 0.35).setDepth(10);
-    let ticks = 0;
-    scene.time.addEvent({ delay:400, repeat:9, callback: () => {
-        if (!zone.active) return;
-        enemies.getChildren().forEach(e => {
-            if (Phaser.Math.Distance.Between(e.x, e.y, x, y) < 45) damageEnemy(e, 5, undefined, false);
-        });
-        ticks++;
-        if (ticks >= 10 && zone.active) zone.destroy();
-    }});
-    scene.tweens.add({ targets:zone, alpha:0, duration:4000, onComplete:()=>{ if(zone.active) zone.destroy(); } });
-}
-
 
