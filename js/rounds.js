@@ -58,12 +58,14 @@ function _clearMapForRound(scene) {
         window._phantomDecoys = [];
     }
     if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { try { if (b.active) b.destroy(); } catch(e){} });
-    // Wipe all loot pickups (orbs + labels)
-    lootPickups.forEach(p => {
-        try { if (p.orb?.active)   p.orb.destroy();   } catch(e) {}
-        try { if (p.label?.active) p.label.destroy(); } catch(e) {}
-    });
-    lootPickups = [];
+    // Scorched Earth perk: wipe all loot pickups at round start
+    if (_perkState.scorchedEarth) {
+        lootPickups.forEach(p => {
+            try { if (p.orb?.active)   p.orb.destroy();   } catch(e) {}
+            try { if (p.label?.active) p.label.destroy(); } catch(e) {}
+        });
+        lootPickups = [];
+    }
     // Teleport player to map center
     if (player?.body) {
         player.x = WORLD_CENTER; player.y = WORLD_CENTER;

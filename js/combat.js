@@ -663,7 +663,7 @@ function fireGL(scene, weapon, armOx, armOy, aimAngle) {
                 startTime   = scene.time.now;
                 timerText.setVisible(true);
                 scene.time.delayedCall(fuseTime, () => {
-                    if (ball.active) { createExplosion(scene, ball.x, ball.y, 100, weapon.dmg); ball.destroy(); timerText.destroy(); }
+                    if (ball.active) { createExplosion(scene, ball.x, ball.y, 100, weapon.dmg, true); ball.destroy(); timerText.destroy(); }
                 });
             }
 
@@ -692,7 +692,7 @@ function fireRL(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
     // Store overlap reference — Phaser does not remove it automatically when rocket is destroyed.
     const rlOverlap = scene.physics.add.overlap(rocket, enemies, (r) => {
         rlOverlap.destroy();
-        createExplosion(scene, r.x, r.y, 80, weapon.dmg);
+        createExplosion(scene, r.x, r.y, 80, weapon.dmg, true);
         particles.stop();
         scene.time.delayedCall(400, () => particles.destroy());
         r.destroy();
@@ -1513,9 +1513,17 @@ function _triggerTremor(scene) {
     }
 }
 
-function createExplosion(scene, x, y, radius, damage) {
-    sndExplosion(radius >= 90);
-    const blast = scene.add.circle(x, y, radius, 0xff6600, 0.6).setDepth(15);
+function createExplosion(scene, x, y, radius, damage, isPlayerExplosion = false) {
+    // Apply player explosion perk multipliers (blastMult is additive bonus, 0 = no bonus)
+    const effRadius = (isPlayerExplosion && _perkState.blastMult > 0)
+        ? radius * (1 + _perkState.blastMult)
+        : radius;
+    const effDamage = (isPlayerExplosion && _perkState.blastMult > 0)
+        ? damage * (1 + _perkState.blastMult)
+        : damage;
+
+    sndExplosion(effRadius >= 90);
+    const blast = scene.add.circle(x, y, effRadius, 0xff6600, 0.6).setDepth(15);
     scene.physics.add.existing(blast);
 
     const targetsHit         = new Set();
@@ -1525,17 +1533,22 @@ function createExplosion(scene, x, y, radius, damage) {
     const blastOverlap = scene.physics.add.overlap(blast, enemies, (_, e) => {
         if (targetsHit.has(e)) return;
         targetsHit.add(e);
-        showDamageText(scene, e.x, e.y, damage);
-        damageEnemy(e, damage, undefined, true);
+        showDamageText(scene, e.x, e.y, effDamage);
+        damageEnemy(e, effDamage, undefined, true);
     });
 
     if (player?.active && !isShieldActive) {
         const dist = Phaser.Math.Distance.Between(x, y, player.x, player.y);
-        if (dist < radius && !playerDamageDealt) {
+        if (dist < effRadius && !playerDamageDealt) {
             playerDamageDealt = true;
-            processPlayerDamage(Math.floor(damage * 0.75), null, true);
+            processPlayerDamage(Math.floor(effDamage * 0.75), null, true);
             scene.cameras.main.shake(200, 0.01);
         }
+    }
+
+    // Kamikaze Protocol: player-triggered explosions also deal self-damage
+    if (isPlayerExplosion && _perkState.kamikazeProtocol && player?.active) {
+        processPlayerDamage(Math.floor(effDamage * 0.20), null, true);
     }
 
     scene.tweens.add({

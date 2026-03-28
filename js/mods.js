@@ -309,6 +309,7 @@ function activateShield(scene) {
 }
 
 function activateJump(scene) {
+    if (_perkState.jumpDisabled) return;
     sndJump();
     isJumping = true;
     // Afterleg augment: +50% jump distance
