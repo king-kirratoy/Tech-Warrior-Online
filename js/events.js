@@ -112,12 +112,7 @@ document.addEventListener('keydown', function(e) {
             if (typeof _closeShop === 'function') _closeShop();
             return;
         }
-        const slotsOv = document.getElementById('loadout-slots-overlay');
-        if (slotsOv && slotsOv.style.display !== 'none') {
-            e.preventDefault();
-            if (typeof _closeLoadoutSlots === 'function') _closeLoadoutSlots();
-            return;
-        }
+
     }
 
     // ── Stats / Loadout overlay: Escape closes it ─────────────────

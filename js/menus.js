@@ -269,7 +269,6 @@ function goToMainMenu() {
     const mso  = document.getElementById('mission-select-overlay'); if (mso) mso.style.display = 'none';
     const mbp  = document.getElementById('mission-briefing-popup'); if (mbp) mbp.style.display = 'none';
     const sho  = document.getElementById('shop-overlay'); if (sho) sho.style.display = 'none';
-    const lso  = document.getElementById('loadout-slots-overlay'); if (lso) lso.style.display = 'none';
     window._activeCampaignConfig = null;
     // Restore chassis selector (may have been hidden in campaign mode)
     const chassisRow2 = document.getElementById('chassis-select-row');
@@ -1271,11 +1270,6 @@ function populateInventory() {
         }
     }
 
-    // Hide detail panel and clear selection state on re-render
-    _invSelectedSource = null;
-    _invSelectedKey    = null;
-    const dp = document.getElementById('inv-detail-panel');
-    if (dp) dp.style.display = 'none';
 }
 
 /** Handle a drop onto a backpack cell — rearranges items within the backpack. */
@@ -1301,9 +1295,6 @@ function _onBpCellDrop(ev, targetIdx) {
 let _invSelectedSource = null;
 let _invSelectedKey    = null;
 
-/** Current arm used when comparing a weapon from the backpack. Reset to 'L' on each new selection. */
-var _compareArm = 'L';
-
 /** Track Shift key state for weapon arm comparison in hover cards. */
 var _shiftHeld = false;
 var _hoverActiveEl = null;
@@ -1325,242 +1316,6 @@ document.addEventListener('keyup', (e) => {
         }
     }
 });
-
-/** Switch which arm is used for weapon comparison and re-render the detail panel. */
-function _setCompareArm(arm) {
-    _compareArm = arm;
-    if (_invSelectedSource !== null && _invSelectedKey !== null) {
-        _renderItemDetail(_invSelectedSource, _invSelectedKey);
-    }
-}
-
-/** Renders a side-by-side stat comparison between a backpack item and the currently equipped item.
- *  For weapons, uses _compareArm (L or R) to pick the equipped slot.
- *  Returns an HTML string (empty string when there is nothing useful to compare). */
-function _buildItemComparisonHTML(newItem) {
-    if (!newItem || !newItem.baseStats) return '';
-
-    function _statCard(item, cardLabel) {
-        const rd = (item && RARITY_DEFS && RARITY_DEFS[item.rarity]) ? RARITY_DEFS[item.rarity] : { colorStr: UI_COLORS.text60 };
-        let h = `<div style="flex:1;min-width:0;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:8px 10px;">`;
-        h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;text-transform:uppercase;">${cardLabel}</div>`;
-        h += `<div style="font-size:11px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:6px;line-height:1.3;">${item.name || '?'}</div>`;
-        const entries = Object.entries(item.baseStats || {}).filter(([k, v]) => v !== 0 && k !== 'speed');
-        entries.forEach(([k, v]) => {
-            const fmtV = _pctStats.has(k) ? v + '%' : (k === 'reload' || k === 'fireRate') ? (1000 / v).toFixed(1) + '/sec' : v;
-            h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
-            h += `<span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span>`;
-            h += `<span style="color:var(--sci-txt);">${fmtV}</span>`;
-            h += `</div>`;
-        });
-        if (!entries.length) h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">No stats</div>`;
-        h += `</div>`;
-        return h;
-    }
-
-    let equippedItem  = null;
-    let equippedLabel = 'EQUIPPED';
-    let toggleBtn     = '';
-
-    if (newItem.baseType === 'weapon') {
-        const chosenArm = _compareArm || 'L';
-        const otherArm  = chosenArm === 'L' ? 'R' : 'L';
-        equippedItem  = (_equipped && _equipped[chosenArm]) || null;
-        equippedLabel = chosenArm + ' ARM';
-        if (_equipped && _equipped[otherArm]) {
-            toggleBtn = `<button onclick="_setCompareArm('${otherArm}')" class="tw-btn tw-btn--ghost" style="font-size:8px;padding:2px 6px;letter-spacing:1px;">vs ${otherArm} ARM</button>`;
-        }
-    } else {
-        const slotKey = (typeof _getSlotForItem === 'function') ? _getSlotForItem(newItem) : null;
-        equippedItem = (slotKey && _equipped) ? _equipped[slotKey] : null;
-    }
-
-    let html = `<div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:10px;padding-top:10px;">`;
-
-    // Header row: "VS EQUIPPED" label + optional arm-toggle button
-    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">`;
-    html += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);text-transform:uppercase;">vs equipped</div>`;
-    html += toggleBtn;
-    html += `</div>`;
-
-    if (!equippedItem || !equippedItem.baseStats) {
-        const slotLabel = newItem.baseType === 'weapon' ? (_compareArm + ' ARM') : 'this slot';
-        html += `<div style="font-size:10px;color:rgba(255,255,255,0.45);font-style:italic;">Nothing equipped in ${slotLabel}</div>`;
-        html += `</div>`;
-        return html;
-    }
-
-    // Side-by-side stat cards
-    html += `<div style="display:flex;gap:8px;margin-bottom:8px;">`;
-    html += _statCard(newItem, 'NEW');
-    html += _statCard(equippedItem, equippedLabel);
-    html += `</div>`;
-
-    // Changes-if-equipped diff section
-    const newStats = newItem.baseStats  || {};
-    const oldStats = equippedItem.baseStats || {};
-    const allKeys  = [...new Set([...Object.keys(newStats), ...Object.keys(oldStats)])].filter(k => k !== 'speed');
-    const diffRows = allKeys.map(k => {
-        const nv   = newStats[k] ?? 0;
-        const ev   = oldStats[k] ?? 0;
-        if (k === 'fireRate' || k === 'reload') {
-            if (!nv || !ev) return '';
-            const spsDiff = (1000 / nv) - (1000 / ev);
-            if (Math.abs(spsDiff) < 0.05) return '';
-            const color = spsDiff > 0 ? '#44ff88' : '#ff4466';
-            const sign = spsDiff > 0 ? '+' : '';
-            return `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">
-            <span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span>
-            <span style="color:${color};">${sign}${spsDiff.toFixed(1)}/sec</span>
-        </div>`;
-        }
-        const diff = nv - ev;
-        if (diff === 0) return '';
-        const isInverted = (k === 'fireRatePct' || k === 'modCdPct');
-        const isPositive = isInverted ? diff < 0 : diff > 0;
-        const color  = isPositive ? '#44ff88' : '#ff4466';
-        let fmtVal;
-        if (isInverted && diff < 0) {
-            fmtVal = (diff > -1) ? '+' + Math.round(Math.abs(diff) * 100) + '%' : '+' + Math.abs(diff) + (_pctStats.has(k) ? '%' : '');
-        } else {
-            const sign = diff > 0 ? '+' : '';
-            if (diff > -1 && diff < 1 && diff !== 0) {
-                fmtVal = sign + Math.round(diff * 100) + '%';
-            } else if (_pctStats.has(k)) {
-                fmtVal = sign + diff + '%';
-            } else {
-                fmtVal = sign + diff;
-            }
-        }
-        return `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">
-            <span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span>
-            <span style="color:${color};">${fmtVal}</span>
-        </div>`;
-    }).filter(Boolean).join('');
-
-    if (diffRows) {
-        html += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">CHANGES IF EQUIPPED:</div>`;
-        html += diffRows;
-    }
-
-    html += `</div>`;
-    return html;
-}
-
-function _showItemDetail(source, key) {
-    const dp = document.getElementById('inv-detail-panel');
-    const dc = document.getElementById('inv-detail-content');
-    if (!dp || !dc) return;
-
-    // Toggle: clicking the same item again hides the panel
-    if (_invSelectedSource === source && _invSelectedKey === key) {
-        _invSelectedSource = null;
-        _invSelectedKey    = null;
-        dp.style.display   = 'none';
-        return;
-    }
-    _invSelectedSource = source;
-    _invSelectedKey    = key;
-    _compareArm = 'L'; // reset arm choice whenever a new item is opened
-    _renderItemDetail(source, key);
-}
-
-/** Re-renders the detail panel for the given source/key without toggling.
- *  Called directly by _showItemDetail and also by _setCompareArm on arm switch. */
-function _renderItemDetail(source, key) {
-    const dp = document.getElementById('inv-detail-panel');
-    const dc = document.getElementById('inv-detail-content');
-    if (!dp || !dc) return;
-
-    const item = source === 'equipped' ? _equipped[key] : _inventory[key];
-    if (!item) return;
-
-    const rd = RARITY_DEFS[item.rarity];
-    const _invSlotNames = {
-        weapon:'WEAPON', cpu_system:'CPU', aug_system:'AUGMENT',
-        shield_system:'SHIELD', leg_system:'LEGS', armor:'ARMOR', arms:'ARMS',
-        legs:'LEGS', shield:'SHIELD', cpu:'CPU', augment:'AUGMENT'
-    };
-    const _slotLabel = _invSlotNames[item.baseType] || '';
-    const _uniqueBadge = item.isUnique ? `<span style="font-size:9px;letter-spacing:2px;color:${UI_COLORS.gold};margin-left:10px;background:${UI_COLORS.gold12};padding:2px 6px;border:1px solid ${UI_COLORS.gold30};border-radius:3px;">★ UNIQUE</span>` : '';
-    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`;
-    html += `<div>
-        ${_slotLabel ? `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">${_slotLabel}</div>` : ''}
-        <span style="font-size:16px;letter-spacing:2px;color:${rd.colorStr};text-shadow:0 0 10px ${rd.colorStr}44;">${item.name}</span>${_uniqueBadge}
-        <span style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.45);margin-left:12px;">iLvl ${item.level}</span>
-    </div>`;
-
-    // Action buttons
-    html += `<div style="display:flex;gap:8px;">`;
-    if (source === 'backpack') {
-        const slotKey = _getSlotForItem(item);
-        if (slotKey || item.baseType === 'weapon') {
-            if (item.baseType === 'weapon') {
-                // Equip directly to the currently compared arm (reads _compareArm at click time)
-                html += `<button onclick="_equipItemToSlot(${key}, _compareArm)" class="tw-btn tw-btn--green tw-btn--sm">EQUIP</button>`;
-            } else {
-                html += `<button onclick="_equipItem(${key})" class="tw-btn tw-btn--green tw-btn--sm">EQUIP</button>`;
-            }
-        }
-        html += `<button onclick="_scrapItem(${key})" class="tw-btn tw-btn--danger tw-btn--sm">SCRAP (+${rd.scrapValue})</button>`;
-    } else if (source === 'equipped') {
-        html += `<button onclick="_unequipItem('${key}')" class="tw-btn tw-btn--gold tw-btn--sm">UNEQUIP</button>`;
-    }
-    html += `</div></div>`;
-
-    // Base stats
-    html += `<div style="border-top:1px solid ${UI_COLORS.gold10};padding-top:10px;">`;
-    if (item.baseStats) {
-        Object.entries(item.baseStats).forEach(([k, v]) => {
-            if (k === 'speed') return;
-            const label = STAT_DISPLAY_NAMES[k] || _camelToTitle(k);
-            html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
-                <span style="color:${UI_COLORS.text60};">${label}</span>
-                <span style="color:${UI_COLORS.text90};">${(k === 'reload' || k === 'fireRate') ? (1000 / v).toFixed(1) + '/sec' : typeof v === 'number' ? (v < 1 && v > 0 ? Math.round(v*100)+'%' : v) : v}</span>
-            </div>`;
-        });
-    }
-    html += `</div>`;
-
-    // Affixes
-    if (item.affixes.length > 0) {
-        html += `<div style="border-top:1px solid ${UI_COLORS.gold10};margin-top:8px;padding-top:8px;">`;
-        item.affixes.forEach(a => {
-            html += `<div style="font-size:12px;color:#44ff88;margin-bottom:3px;letter-spacing:1px;">● ${a.label}</div>`;
-        });
-        html += `</div>`;
-    }
-
-    // System ability (hybrid system items)
-    if (item.systemKey) {
-        const _sysDesc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[item.systemKey]) ? SLOT_DESCS[item.systemKey] : null;
-        const _sysTypeLabel = { shield_system:'SHIELD SYSTEM', cpu_system:'CPU MODULE', leg_system:'LEG SYSTEM', aug_system:'AUGMENT SYSTEM' };
-        html += `<div style="border-top:2px solid ${UI_COLORS.cyan20};margin-top:10px;padding-top:10px;background:${UI_COLORS.cyanSurface03};border-radius:4px;padding:10px;">`;
-        html += `<div style="font-size:9px;letter-spacing:3px;color:${UI_COLORS.cyan50};margin-bottom:6px;">${_sysTypeLabel[item.baseType] || 'SYSTEM'}</div>`;
-        html += `<div style="font-size:12px;color:${UI_COLORS.teal};letter-spacing:1px;margin-bottom:4px;">Activates: ${item.systemKey.replace(/_/g,' ').toUpperCase()}</div>`;
-        if (_sysDesc) {
-            html += `<div style="font-size:11px;color:${UI_COLORS.text65};line-height:1.4;">${_sysDesc.desc}</div>`;
-        }
-        html += `</div>`;
-    }
-
-    // Unique effect (boss items)
-    if (item.isUnique && item.uniqueLabel) {
-        html += `<div style="border-top:2px solid ${UI_COLORS.gold30};margin-top:10px;padding-top:10px;background:${UI_COLORS.gold04};border-radius:4px;padding:10px;">`;
-        html += `<div style="font-size:9px;letter-spacing:3px;color:${UI_COLORS.goldGlow};margin-bottom:6px;">★ UNIQUE EFFECT</div>`;
-        html += `<div style="font-size:12px;color:${UI_COLORS.gold};letter-spacing:1px;margin-bottom:4px;text-shadow:0 0 8px ${UI_COLORS.gold30};">${item.uniqueLabel}</div>`;
-        if (item.uniqueDesc) {
-            html += `<div style="font-size:11px;color:${UI_COLORS.text65};line-height:1.4;">${item.uniqueDesc}</div>`;
-        }
-        html += `</div>`;
-    }
-
-    // ── Item Comparison (backpack item vs equipped) ──
-    if (source === 'backpack') html += _buildItemComparisonHTML(item);
-
-    dc.innerHTML = html;
-    dp.style.display = 'block';
-}
 
 function _getSlotForItem(item) {
     if (item.baseType === 'weapon') return null; // weapon needs L or R choice
@@ -2586,10 +2341,6 @@ async function _autoSubmitRun(entry) {
     } catch(e) { console.error('Auto-submit failed', e); }
 }
 
-// ── Cloud status toast ────────────────────────────────────────────
-
-function _showCloudStatusToast() { return; }
-
 // ── Score validation and submission ──────────────────────────────
 
 function _supabaseEnabled() {
@@ -2607,31 +2358,6 @@ function _validateScoreEntry(entry) {
         chassis:  ['light', 'medium', 'heavy'].includes(entry.chassis) ? entry.chassis : 'unknown',
         ts:       Number(entry.ts) || Date.now(),
     };
-}
-
-async function submitLeaderboardEntry() {
-    if (!_pendingRun) return;
-    const nameEl = document.getElementById('lb-name-input');
-    const name   = (nameEl?.value || '').trim().toUpperCase().replace(/[^A-Z0-9 _\-\.]/g, '') || 'ANONYMOUS';
-
-    // Remember callsign
-    try { localStorage.setItem('tw_callsign', name); } catch(e) {}
-
-    const entry = { ...(_pendingRun), name };
-    const scores = await _loadScores();
-    scores.push(entry);
-    _sortScores(scores);
-    const trimmed = scores.slice(0, LB_MAX);
-    await _saveScores(trimmed);
-
-    _pendingRun = null;
-    document.getElementById('lb-submit-panel').style.display = 'none';
-    await _renderScores();
-}
-
-function skipLeaderboardSubmit() {
-    _pendingRun = null;
-    document.getElementById('lb-submit-panel').style.display = 'none';
 }
 
 // ── Deploy tween ─────────────────────────────────────────────────
