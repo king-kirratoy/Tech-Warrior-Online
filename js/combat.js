@@ -1183,11 +1183,6 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
     if (e._passiveDR > 0) amt *= (1 - e._passiveDR);
     // Enemy Mag Anchors: 20% DR while stationary
     if (e._magAnchorsActive) amt *= 0.80;
-    // Siege mode: +X% if player moving slowly
-    if (_perkState.heavySiegeMode > 0 && player?.body) {
-        const sp = Math.sqrt(player.body.velocity.x**2 + player.body.velocity.y**2);
-        if (sp < 60) amt *= (1 + _perkState.heavySiegeMode);
-    }
     // Battle rhythm bonus
     if (_perkState._battleRhythmBonus > 0) amt *= (1 + _perkState._battleRhythmBonus);
     // Mag Anchors: +20% outgoing damage while stationary
