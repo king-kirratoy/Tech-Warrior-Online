@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v7.29';
+const GAME_VERSION = 'v7.30';
 
 // ═══════════ CHASSIS ═══════════
 
@@ -191,7 +191,7 @@ const AUGMENTS = {
     // ── DRONE COMMANDER ────────────────────────────────────────
     multi_drone:     { name: 'MULTI-DRONE',    weight: 50,  desc: 'Deploy 2 attack drones simultaneously instead of 1.' },
     // ── GHOST ASSASSIN ─────────────────────────────────────────
-    ballistic_weave: { name: 'BALLST. WEAVE',  weight: 25,  desc: '+10% bullet speed. Bullets ignore 20% of enemy shields.' },
+    ballistic_weave: { name: 'BALLST. WEAVE',  weight: 25,  desc: 'Bullets ignore 20% of enemy shields.' },
     neural_accel:    { name: 'NEURAL ACCELERANT',  weight: 35,  desc: 'First 3s after landing from JUMP: all weapons deal 2× damage.' },
     // ── INFERNO WALL ───────────────────────────────────────────
     thermal_core:    { name: 'THERMAL CORE',   weight: 25,  desc: 'FTH always ignites on hit. Ignite duration +1s.' },
@@ -458,10 +458,10 @@ const SLOT_DESCS = {
     overclock_cpu:    { title:'OVERCLOCK CPU', desc:'Reduces all weapon reload times and mod cooldowns by 12%. Applied passively on deploy.' },
     reactive_plating: { title:'REACTIVE PLATING', desc:'Each hit you receive adds a 5% damage reduction stack, up to 5 stacks max. Resets at round start.' },
     multi_drone:      { title:'MULTI-DRONE',       desc:'Deploy 2 attack drones simultaneously instead of 1. High weight cost.' },
-    ballistic_weave:  { title:'BALLISTIC WEAVE',   desc:'All bullets travel 10% faster and ignore 20% of enemy shield absorption.' },
+    ballistic_weave:  { title:'BALLISTIC WEAVE',   desc:'Bullets ignore 20% of enemy shield absorption.' },
     neural_accel:     { title:'NEURAL ACCELERANT', desc:'For 3 seconds after landing from JUMP, all weapons deal 2x damage.' },
     thermal_core:     { title:'THERMAL CORE',      desc:'FTH hits always ignite enemies (100% chance). Ignite duration +1s.' },
-    hydraulic_boost:  { title:'HYDRO BOOST', desc:'+20% movement speed. Legs take 15% less damage. Disabled if legs are destroyed.' },
+    hydraulic_boost:  { title:'HYDRO BOOST', desc:'+20% move speed. Legs take 15% less damage. Disabled if legs are destroyed.' },
     gyro_stabilizer:  { title:'GYRO STABILIZER', desc:'Eliminates the speed penalty from damaged legs. Improves aim stability. Disabled if legs destroyed.' },
     mag_anchors:      { title:'MAG ANCHORS', desc:'While stationary: take 20% less damage and deal 20% more damage. Rewards positional play.' },
     mine_layer:       { title:'MINE LAYER', desc:'Drops a proximity mine every 8 seconds while moving. Each mine deals 80 AoE damage on trigger.' },

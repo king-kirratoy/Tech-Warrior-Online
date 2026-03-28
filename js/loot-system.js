@@ -256,7 +256,7 @@ const UNIQUE_ITEMS = {
         ],
         uniqueEffect: 'unstoppable',
         uniqueLabel: 'UNSTOPPABLE: Immune to slow effects, +20% speed',
-        uniqueDesc: 'Cannot be slowed. Movement speed bonus increased by 20%.'
+        uniqueDesc: 'Cannot be slowed. Move speed bonus increased by 20%.'
     },
     unstoppable_core: {
         name: "Unstoppable Core",

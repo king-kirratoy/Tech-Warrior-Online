@@ -1848,11 +1848,11 @@ const STAT_DISPLAY_NAMES = {
     coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All HP',
     dr:'Damage Reduction %',
     shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %', maxShield:'Shield HP',
-    dodgePct:'Dodge %', speedPct:'Speed %',
+    dodgePct:'Dodge %', speedPct:'Move Speed %',
     modCdPct:'Mod Cooldown %', modEffPct:'Mod Duration %',
     lootMult:'Loot Quality %', autoRepair:'Auto Repair',
     pellets:'Pellets', splashRadius:'Blast Radius %',
-    speed:'Projectile Speed', range:'Range', radius:'Blast Radius', burst:'Burst Count',
+    range:'Range', radius:'Blast Radius', burst:'Burst Count',
 };
 /** Converts a camelCase key to Title Case with spaces as a fallback display label. */
 function _camelToTitle(key) {
@@ -1873,7 +1873,6 @@ function _buildSingleCardHtml(item, slotLabel) {
     if (hasStats) {
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (!v) return;
-            if (k === 'speed') return;
             const valColor = 'var(--sci-cyan)';
             let displayVal;
             if (k === 'fireRate' || k === 'reload') {
@@ -1927,7 +1926,6 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         if (hasStats) {
             Object.entries(colItem.baseStats).forEach(([k, v]) => {
                 if (!v) return;
-                if (k === 'speed') return;
                 const valColor = 'var(--sci-cyan)';
                 let displayVal;
                 if (k === 'fireRate' || k === 'reload') {
@@ -1978,7 +1976,6 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
     const allKeys = new Set([...Object.keys(_newCombined), ...Object.keys(_oldCombined)]);
     let diffHtml = '';
     allKeys.forEach(k => {
-        if (k === 'speed') return;
         const nv = _newCombined[k] || 0;
         const ov = _oldCombined[k] || 0;
         if (k === 'fireRate' || k === 'reload') {
