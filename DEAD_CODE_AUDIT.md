@@ -157,3 +157,166 @@ None found.
 | `js/combat.js:1945` | `_createAfterburn()` | Unreachable function | HIGH |
 | `js/mods.js:32` | `decoyFireTimer` in `activateDecoy` | Unused local variable | HIGH |
 | `js/mods.js:203` | `partName` in `activateRepair` | Unused destructured variable | HIGH |
+
+---
+
+## Session 3 — Enemies, Rounds & Perks
+
+Audited files: `js/perks.js`, `js/enemies.js`, `js/rounds.js`, `js/enemy-types.js`, `js/arena-objectives.js`
+
+Search method: every flagged identifier was grepped across all `.js` files and
+`index.html` before being recorded. Perk flags were additionally checked across
+`js/combat.js`, `js/events.js`, `js/init.js`, `js/mods.js`, and `js/rounds.js`.
+Only identifiers with zero readers/writers outside their own definition site
+(or their `_resetPerkState` initializer) are listed.
+
+---
+
+### js/perks.js (1103 lines)
+
+#### Orphaned `_perkState` fields — initialized in `_resetPerkState()` but never set or read by any game logic
+
+| Approx. Line | Field name | Notes | Confidence |
+|---|---|---|---|
+| 1101 | `perfectAccuracy` | Initialized to `false` in `_resetPerkState()` and in the default state object in `state.js:115`. No perk's `apply()` ever sets it `true` and no game code (combat, events, init, mods) ever reads it. Appears to be a leftover placeholder from a planned perk that was never implemented. | HIGH |
+| 1101 | `reinforcedCore` | Same situation. The `reinforced_core` perk (line 20) works by directly mutating `player.comp.core.max` and `.hp` — it never sets `_perkState.reinforcedCore = true`. The flag is therefore always `false` and is never checked anywhere. | HIGH |
+| 1101 | `fthDmg` | Initialized to `0` in `_resetPerkState()` and in `state.js:115`. No perk's `apply()` ever writes it and no game logic ever reads it. `fth_intensity` (line 215) correctly uses `_perkState.dmgMult` instead. | HIGH |
+
+#### Unimplemented "new perks" block (~lines 688–835)
+
+The section headed `// NEW PERKS — 100 additional perks for variety` defines approximately
+60+ perks that set unique `_perkState.*` flags. A grep of every one of those flag names across
+all `.js` files confirms they appear **only** in `js/perks.js` (the `apply()` lambda) and
+`js/state.js` (the default object). No file reads these flags or acts on them, so players
+can pick these perks but they have zero mechanical effect.
+
+The following sub-groups were confirmed unimplemented:
+
+**Weapon-specific new perks (lines ~748–803) — all flags absent from `combat.js`:**
+
+| Lines | Perk key(s) | Unimplemented state flags |
+|---|---|---|
+| 748–751 | `smg_ricochet`, `smg_adrenaline`, `smg_armor_shred`, `smg_overdose` | `smgRicochet`, `smgAdrenaline`, `smgArmorShred`, `smgOverdose` |
+| 754–756 | `mg_suppression`, `mg_chain_fire`, `mg_explosive_tips` | `mgSuppression`, `mgChainFire`, `mgExplosiveTips` |
+| 759–763 | `sg_double_barrel`, `sg_incendiary`, `sg_stun_round`, `sg_combat_roll`, `sg_shrapnel` | `sgDoubleBarrel`, `sgIncendiary`, `sgStunRound`, `sgCombatRoll`, `sgShrapnel` |
+| 766–770 | `br_armor_crack`, `br_recoil_comp`, `br_kill_feed`, `br_double_burst`, `br_crit_burst` | `brArmorCrack`, `brRecoilComp`, `brKillFeed`, `brDoubleBurst`, `brCritBurst` |
+| 773–776 | `hr_ricochet`, `hr_piercing`, `hr_concussive`, `hr_mark_target` | `hrRicochet`, `hrPiercing`, `hrConcussive`, `hrMarkTarget` |
+| 779–782 | `sr_piercing_rounds`, `sr_double_shot`, `sr_tracer`, `sr_killstreak` | `srArmorPiercer`, `srDoubleShot`, `srTracer`, `srKillstreak` |
+| 785–788 | `gl_bouncing`, `gl_toxic`, `gl_impact`, `gl_mag_grenade` | `glBouncing`, `glToxic`, `glImpact`, `glMagGrenade` |
+| 791–793 | `rl_guided`, `rl_split`, `rl_napalm` | `rlGuided`, `rlSplit`, `rlNapalm` |
+| 796–798 | `plsm_gravity`, `plsm_split`, `plsm_drain` | `plsmGravity`, `plsmSplit`, `plsmDrain` |
+| 801–803 | `rail_double`, `rail_chain_lightning`, `rail_charge_bonus` | `railDouble`, `railChainLightning`, `railChargeBonus` |
+
+**Universal new offense perks (lines ~692–700) — flags absent from all game files:**
+
+| Lines | Perk key(s) | Unimplemented state flags |
+|---|---|---|
+| 692–700 | `double_tap`, `precision_strike`, `momentum_kill`, `ricochet_rounds`, `vulnerability`, `finishing_blow`, `focus_fire`, `combat_stim`, `executioner` | `doubleTap`, `precisionStrike`, `momentumKill`, `ricochetRounds`, `vulnerability`, `finishingBlow`, `focusFire`, `combatStim`, `executioner` |
+
+Note: `armor_piercing` (line 691) is the one exception — `armorPierce` IS read in `combat.js:1174`.
+
+**Universal new survivability/utility perks (lines ~703–719) — flags absent from all game files:**
+
+| Lines | Perk key(s) | Unimplemented state flags |
+|---|---|---|
+| 703–710 | `nano_repair`, `emergency_shield`, `damage_cap`, `reactive_hull`, `second_wind`, `hardened_systems`, `vital_strike`, `energy_converter` | `nanoRepair`, `emergencyShield`, `damageCap`, `reactiveHull`, `secondWind`, `hardenedSystems`, `vitalStrike`, `energyConverter` |
+| 713–719 | `quick_swap`, `tactical_reload`, `combat_awareness`, `scrap_collector`, `resource_recycler`, `field_medic_univ`, `munitions_expert` | `quickSwap`, `tacticalReload`, `combatAwareness`, `scrapCollector`, `resourceRecycler`, `fieldMedic`, `munitionsExpert` |
+
+**New chassis perks (lines ~729–745) — unique flags absent from all game files:**
+
+| Lines | Perk key(s) | Unimplemented state flags |
+|---|---|---|
+| 730–732 | `light_nimble`, `light_quick_draw`, `light_shadow_dance` | `lightNimble`, `lightQuickDraw`, `lightShadowDance` |
+| 735–739 | `medium_versatile`, `medium_iron_resolve`, `medium_tactician`, `medium_steady_hand`, `medium_mod_synergy` | `mediumVersatile`, `mediumIronResolve`, `mediumTactician`, `mediumSteadyHand`, `mediumModSynergy` |
+| 742–745 | `heavy_juggernaut`, `heavy_intimidate` | `heavyJuggernaut`, `heavyIntimidate` |
+
+Note: `heavy_wrecking_ball` (line 743) reuses `groundPound` (implemented). `heavy_endurance` (line 744) reuses `autoRepair` (implemented). `light_evasion_master` (line 729) reuses `dodgeChance` (implemented).
+
+**New universal legendary perks (lines ~806–820) — flags only in `state.js` default, never read:**
+
+| Lines | Perk key(s) | Unimplemented state flags |
+|---|---|---|
+| 806–820 | `universal_phoenix`, `universal_overload`, `universal_nullifier`, `universal_warlord`, `universal_adaptive` | `phoenixProtocol`, `systemOverload`, `nullifierField`, `warlordAscendant`, `adaptiveEvolution` |
+
+All of the above unimplemented-new-perk entries are **HIGH confidence**: the flag names are unique strings, a codebase-wide grep finds them only in `js/perks.js` and the default state in `js/state.js`.
+
+#### Commented-out code blocks
+
+None found.
+
+---
+
+### js/enemies.js (2431 lines)
+
+No unreachable functions, unused variables, or commented-out code blocks found.
+
+All 37 functions defined in this file are called from at least one external caller
+(`init.js`, `rounds.js`, `combat.js`, `menus.js`) or from within the file itself.
+The two module-level constants (`_FEELER_OFFSETS`, `_CONE_RAY_POINTS`) are both
+actively used inside `handleEnemyAI` and `_computeEnemyVisibility`.
+
+**Minor non-dead-code note (not a finding, for completeness):**
+Line 744 contains the tautological expression
+`enemy._decoyTarget.x ?? enemy._decoyTarget.x` — both sides of `??` are
+identical, making the nullish-coalescing operator a no-op. This is a logic/style
+issue, not dead code.
+
+Line 963 has the same section comment duplicated back-to-back
+(`// ── STATE TRANSITIONS ─────────────────────────────────────` appears twice).
+Cosmetic only, not dead code.
+
+---
+
+### js/rounds.js (554 lines)
+
+No unreachable functions, unused variables, or commented-out code blocks found.
+
+All 14 functions are called: `updateRoundHUD` and `showRoundBanner` from multiple
+sites; `_healPlayerFull`, `_clearMapForRound`, `_setupArenaAndObjective`,
+`_spawnCampaignEnemies`, `_spawnSimulationEnemies`, `onEnemyKilled`, and
+`startRound` from `init.js`/`menus.js`; `_spawnExtractionPoint` and
+`_triggerExtraction` from within `onEnemyKilled` / `_updateExtraction`;
+`_updateExtraction` from `init.js:262`; `_cleanupExtraction` and
+`_overlapsAnyCover` from `_clearMapForRound` / `_spawnExtractionPoint`.
+
+---
+
+### js/enemy-types.js (861 lines)
+
+No unreachable functions, unused variables, or commented-out code blocks found.
+
+All 12 functions are called via `typeof` guards from `rounds.js`, `init.js`,
+`combat.js`, or internally within the file. `ENEMY_TYPE_DEFS` and
+`ELITE_MODIFIERS` are both read in `spawnSpecialEnemy` / `applyEliteModifier`
+and in `handleEliteDeath` respectively.
+
+---
+
+### js/arena-objectives.js (921 lines)
+
+No unreachable functions, unused variables, or commented-out code blocks found.
+
+All 29 functions are called: the four arena generators
+(`generateCorridors`, `generatePit`, `generateStronghold`, `generateTowerDefense`)
+are invoked dynamically via `window[arenaDef.generator]` in `cover.js:127`.
+All objective helpers (`_updateSurvival`, `_markAssassinTarget`,
+`_updateAssassination`, `_cleanupAssassinMarker`, `_spawnGenerator`,
+`_updateDefense`, `_destroyGenerator`, `_spawnDataCores`, `_updateSalvage`,
+`_initPitZone`, `_drawPitZone`, `_updatePitZone`, `_onObjectiveComplete`,
+`_onObjectiveFailed`, `_updateObjectiveHUD`) are called internally from
+`initObjective` or `updateObjectives`.
+
+---
+
+## Session 3 Summary Table
+
+| File | Finding | Type | Confidence |
+|------|---------|------|------------|
+| `js/perks.js:1101` | `perfectAccuracy` field in `_resetPerkState` | Orphaned `_perkState` field — never set by any perk, never read | HIGH |
+| `js/perks.js:1101` | `reinforcedCore` field in `_resetPerkState` | Orphaned `_perkState` field — perk works by direct mutation, never reads this flag | HIGH |
+| `js/perks.js:1101` | `fthDmg` field in `_resetPerkState` | Orphaned `_perkState` field — no perk sets it, no game code reads it | HIGH |
+| `js/perks.js:748–803` | 34 weapon-specific new perks (`smg_ricochet` … `rail_charge_bonus`) | Unimplemented perks — state flags set but never read in any game file | HIGH |
+| `js/perks.js:692–700` | 9 universal offense new perks (`double_tap` … `executioner`) | Unimplemented perks — state flags set but never read | HIGH |
+| `js/perks.js:703–719` | 15 universal survivability/utility new perks (`nano_repair` … `munitions_expert`) | Unimplemented perks — state flags set but never read | HIGH |
+| `js/perks.js:729–745` | 10 new chassis perks with unique flags (`light_nimble`, `medium_versatile`, etc.) | Unimplemented perks — unique state flags set but never read | HIGH |
+| `js/perks.js:806–820` | 5 new universal legendary perks (`universal_phoenix` … `universal_adaptive`) | Unimplemented perks — state flags set but never read | HIGH |
