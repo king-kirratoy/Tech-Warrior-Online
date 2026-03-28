@@ -1189,7 +1189,7 @@ const _shopStatNames = {
     dr:'Damage Reduction %', shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %',
     dodgePct:'Dodge %', speedPct:'Speed %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Duration %',
     lootMult:'Loot Quality %', autoRepair:'Auto Repair', pellets:'Pellets', splashRadius:'Blast Radius %',
-    accuracy:'Accuracy %', dmg:'Damage', reload:'Fire Rate', maxShield:'Shield HP'
+    dmg:'Damage', reload:'Fire Rate', maxShield:'Shield HP'
 };
 
 /** Show the campaign shop UI overlay. */

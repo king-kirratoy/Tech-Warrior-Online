@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v7.28';
+const GAME_VERSION = 'v7.29';
 
 // ═══════════ CHASSIS ═══════════
 
@@ -210,7 +210,7 @@ const AUGMENTS = {
 const LEG_SYSTEMS = {
     none:           { name: 'NONE',          weight: 0,   desc: 'No leg system.' },
     hydraulic_boost:{ name: 'HYDRO BOOST',   weight: 25,  desc: '+20% move speed. Legs take 15% less damage.' },
-    gyro_stabilizer:{ name: 'GYRO STAB.',    weight: 25,  desc: 'Eliminates slowdown from damaged legs. Aim accuracy +10%.' },
+    gyro_stabilizer:{ name: 'GYRO STAB.',    weight: 25,  desc: 'Eliminates slowdown from damaged legs.' },
     mine_layer:     { name: 'MINE LAYER',    weight: 35,  desc: 'Drops a proximity mine every 8s while moving. Mines deal 80 AoE damage.' },
     mag_anchors:    { name: 'MAG ANCHORS',   weight: 30,  desc: 'While stationary: take 20% less damage and deal 20% more damage.' },
     afterleg:       { name: 'AFTERLEG',      weight: 40,  desc: 'JUMP mod launches farther (+50%). Landing creates a shockwave (60 dmg, 150px).' },
