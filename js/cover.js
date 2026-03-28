@@ -184,20 +184,6 @@ function generateCover(scene, arenaKey) {
         }
     };
 
-    // Helper: try random placement within bounds, respecting safe zone + min separation
-    const tryPlace = (def, xMin, xMax, yMin, yMax, minSep) => {
-        const sep = minSep || 160;
-        for (let attempt = 0; attempt < 60; attempt++) {
-            const x = Phaser.Math.Between(xMin, xMax);
-            const y = Phaser.Math.Between(yMin, yMax);
-            if (Phaser.Math.Distance.Between(x, y, WORLD_CENTER, WORLD_CENTER) < SAFE_DIST) continue;
-            if (placed.some(p => Phaser.Math.Distance.Between(x, y, p.x, p.y) < sep)) continue;
-            placeAt(def, x, y);
-            return true;
-        }
-        return false;
-    };
-
     // ══════════════════════════════════════════════════════════════
     // CITY LAYOUT — 4000×4000 map divided into city blocks with streets
     // ══════════════════════════════════════════════════════════════
