@@ -379,7 +379,7 @@ const SKILL_TREE_DATA = {
     "y": -420,
     "t": "keystone",
     "n": "OVERCLOCK",
-    "d": "+15% Mod Cooldown, +30% Mod Effects",
+    "d": "+15% Mod Cooldown, +30% Mod Duration %",
     "s": "+15% Cooldown +30% EFFECT",
     "r": 1,
     "c": [
@@ -3305,7 +3305,7 @@ const SKILL_TREE_DATA = {
     "y": -420,
     "t": "keystone",
     "n": "OVERCLOCK",
-    "d": "+15% Mod Cooldown, +30% Mod Effects",
+    "d": "+15% Mod Cooldown, +30% Mod Duration %",
     "r": 1,
     "c": [
       "node_191"
@@ -6063,7 +6063,7 @@ const SKILL_TREE_DATA = {
       "y": -420,
       "t": "keystone",
       "n": "OVERCLOCK",
-      "d": "+15% Mod Cooldown, +30% Mod Effects",
+      "d": "+15% Mod Cooldown, +30% Mod Duration %",
       "r": 1,
       "c": [
         "node_191"

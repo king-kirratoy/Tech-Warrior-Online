@@ -1849,7 +1849,7 @@ const STAT_DISPLAY_NAMES = {
     dr:'Damage Reduction %',
     shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %', maxShield:'Shield HP',
     dodgePct:'Dodge %', speedPct:'Speed %',
-    modCdPct:'CPU Cooldown %', modEffPct:'CPU Effect %',
+    modCdPct:'Mod Cooldown %', modEffPct:'Mod Duration %',
     lootMult:'Loot Quality %', autoRepair:'Auto Repair',
     pellets:'Pellets', splashRadius:'Blast Radius %',
     accuracy:'Accuracy %',
