@@ -56,7 +56,7 @@ const ITEM_BASES = {
 
     // ── ARM REINFORCEMENT (arms slot) ──
     servo_enhancer: { baseType:'arms', name:'Servo Enhancer',     icon:'arm_servo',    baseStats:{ armHP:15, fireRatePct:-5 } },
-    stabilizer:     { baseType:'arms', name:'Stabilizer',         icon:'arm_stab',     baseStats:{ armHP:20, accuracy:5 } },
+    stabilizer:     { baseType:'arms', name:'Stabilizer',         icon:'arm_stab',     baseStats:{ armHP:20 } },
     power_coupler:  { baseType:'arms', name:'Power Coupler',      icon:'arm_power',    baseStats:{ armHP:10, dmgPct:3 } },
 
     // ── LEG COMPONENTS (legs slot) ──
@@ -75,7 +75,7 @@ const ITEM_BASES = {
     overcharge:     { baseType:'cpu', name:'Overcharge Module',   icon:'mod_oc',       baseStats:{ modCdPct:-5, modEffPct:5 } },
 
     // ── AUGMENT CORES (augment slot) ──
-    targeting_array: { baseType:'augment', name:'Targeting Array', icon:'aug_target',   baseStats:{ critChance:3, accuracy:5 } },
+    targeting_array: { baseType:'augment', name:'Targeting Array', icon:'aug_target',   baseStats:{ critChance:3 } },
     neural_link:     { baseType:'augment', name:'Neural Link',    icon:'aug_neural',   baseStats:{ lootMult:5 } },
     combat_matrix:   { baseType:'augment', name:'Combat Matrix',  icon:'aug_combat',   baseStats:{ dmgPct:3, speedPct:2 } },
 
@@ -107,7 +107,7 @@ const ITEM_BASES = {
 
     // ── SYSTEM LEGS (leg_system slot → sets loadout.leg) ──
     sys_hydraulic_boost:  { baseType:'leg_system', systemKey:'hydraulic_boost',  name:'Hydraulic Boost',   icon:'leg_hydro',    baseStats:{ speedPct:5, legHP:10 } },
-    sys_gyro_stabilizer:  { baseType:'leg_system', systemKey:'gyro_stabilizer',  name:'Gyro Stabilizer',   icon:'leg_gyro',     baseStats:{ accuracy:5, legHP:10 } },
+    sys_gyro_stabilizer:  { baseType:'leg_system', systemKey:'gyro_stabilizer',  name:'Gyro Stabilizer',   icon:'leg_gyro',     baseStats:{ legHP:10 } },
     sys_mag_anchors:      { baseType:'leg_system', systemKey:'mag_anchors',      name:'Mag Anchors',       icon:'leg_mag',      baseStats:{ dr:3, legHP:15 } },
     sys_mine_layer:       { baseType:'leg_system', systemKey:'mine_layer',       name:'Mine Layer',        icon:'leg_mine',     baseStats:{ dmgPct:2, legHP:10 } },
     sys_sprint_boosters:  { baseType:'leg_system', systemKey:'sprint_boosters',  name:'Sprint Boosters',   icon:'leg_sprint',   baseStats:{ speedPct:8, dodgePct:2 } },
@@ -115,8 +115,8 @@ const ITEM_BASES = {
     sys_tremor_legs:      { baseType:'leg_system', systemKey:'tremor_legs',      name:'Tremor Legs',       icon:'leg_tremor',   baseStats:{ dmgPct:3, legHP:20 } },
 
     // ── SYSTEM AUGMENTS (aug_system slot → sets loadout.aug) ──
-    sys_target_painter:   { baseType:'aug_system', systemKey:'target_painter',   name:'Target Painter',    icon:'aug_painter',  baseStats:{ dmgPct:3, accuracy:3 } },
-    sys_threat_analyzer:  { baseType:'aug_system', systemKey:'threat_analyzer',  name:'Threat Analyzer',   icon:'aug_threat',   baseStats:{ critChance:2, accuracy:3 } },
+    sys_target_painter:   { baseType:'aug_system', systemKey:'target_painter',   name:'Target Painter',    icon:'aug_painter',  baseStats:{ dmgPct:3 } },
+    sys_threat_analyzer:  { baseType:'aug_system', systemKey:'threat_analyzer',  name:'Threat Analyzer',   icon:'aug_threat',   baseStats:{ critChance:2 } },
     sys_overclock_cpu:    { baseType:'aug_system', systemKey:'overclock_cpu',    name:'Overclock CPU',     icon:'aug_cpu',      baseStats:{ fireRatePct:-5, modCdPct:-3 } },
     sys_reactive_plating: { baseType:'aug_system', systemKey:'reactive_plating', name:'Reactive Plating',  icon:'aug_plating',  baseStats:{ dr:3, coreHP:10 } },
     sys_war_machine:      { baseType:'aug_system', systemKey:'war_machine',      name:'War Machine',       icon:'aug_war',      baseStats:{ dmgPct:5, dr:2 } },
@@ -342,8 +342,7 @@ const UNIQUE_ITEMS = {
         boss: 'mirror',
         baseStats: { armHP: 35, fireRatePct: -5 },
         affixes: [
-            { key:'fireRatePct', stat:'fireRatePct', value:8, label:'+8% Fire Rate' },
-            { key:'accuracy', stat:'accuracy', value:6, label:'+6% Accuracy' }
+            { key:'fireRatePct', stat:'fireRatePct', value:8, label:'+8% Fire Rate' }
         ],
         uniqueEffect: 'echoStrike',
         uniqueLabel: 'ECHO: Mod activation fires a phantom copy of your last shot',
@@ -528,7 +527,6 @@ const AFFIX_POOL = {
     fireRatePct:  { label:'+{v}% Fire Rate',          min:3,  max:22, weight:8,  types:['weapon','arms'] },
     pellets:      { label:'+{v} Pellets',            min:1,  max:3,  weight:3,  types:['weapon'], subTypes:['sg'] },
     splashRadius: { label:'+{v}% Blast Radius',      min:10, max:45, weight:5,  types:['weapon'], subTypes:['gl','rl','plsm'] },
-    accuracy:     { label:'+{v}% Accuracy',          min:3,  max:15, weight:5,  types:['weapon','arms'] },
 
     // Defensive
     coreHP:       { label:'+{v} Core HP',            min:10, max:100, weight:8,  types:['armor'] },
@@ -1264,7 +1262,7 @@ function recalcGearStats() {
         coreHP:0, armHP:0, legHP:0, allHP:0, dr:0,
         shieldHP:0, shieldRegen:0, absorbPct:0, dodgePct:0, speedPct:0,
         modCdPct:0, modEffPct:0, lootMult:0, autoRepair:0,
-        pellets:0, splashRadius:0, accuracy:0
+        pellets:0, splashRadius:0
     };
 
     const slots = [_equipped.L, _equipped.R, _equipped.armor, _equipped.arms,

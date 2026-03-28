@@ -1852,7 +1852,6 @@ const STAT_DISPLAY_NAMES = {
     modCdPct:'Mod Cooldown %', modEffPct:'Mod Duration %',
     lootMult:'Loot Quality %', autoRepair:'Auto Repair',
     pellets:'Pellets', splashRadius:'Blast Radius %',
-    accuracy:'Accuracy %',
     speed:'Projectile Speed', range:'Range', radius:'Blast Radius', burst:'Burst Count',
 };
 /** Converts a camelCase key to Title Case with spaces as a fallback display label. */
@@ -1861,7 +1860,7 @@ function _camelToTitle(key) {
 }
 /** Builds hover card HTML for any item. */
 const _hoverInvertedStats = new Set(['fireRatePct','modCdPct']);
-const _pctStats = new Set(['dmgPct','critChance','critDmg','fireRatePct','dodgePct','speedPct','modCdPct','modEffPct','absorbPct','shieldRegen','splashRadius','accuracy','lootMult','dr']);
+const _pctStats = new Set(['dmgPct','critChance','critDmg','fireRatePct','dodgePct','speedPct','modCdPct','modEffPct','absorbPct','shieldRegen','splashRadius','lootMult','dr']);
 
 function _buildSingleCardHtml(item, slotLabel) {
     const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };
