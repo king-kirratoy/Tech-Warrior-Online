@@ -1363,7 +1363,6 @@ function showShop() {
                         <div class="shop-col-title">Buy</div>
                     </div>
                     ${buyItemsHtml}
-                    ${detailHtml}
                 </div>
                 <!-- SELL column -->
                 <div class="shop-sell-col">
