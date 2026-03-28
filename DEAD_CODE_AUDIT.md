@@ -320,3 +320,120 @@ All objective helpers (`_updateSurvival`, `_markAssassinTarget`,
 | `js/perks.js:703–719` | 15 universal survivability/utility new perks (`nano_repair` … `munitions_expert`) | Unimplemented perks — state flags set but never read | HIGH |
 | `js/perks.js:729–745` | 10 new chassis perks with unique flags (`light_nimble`, `medium_versatile`, etc.) | Unimplemented perks — unique state flags set but never read | HIGH |
 | `js/perks.js:806–820` | 5 new universal legendary perks (`universal_phoenix` … `universal_adaptive`) | Unimplemented perks — state flags set but never read | HIGH |
+
+---
+
+## Session 4 — UI & Menus
+
+Audited files: `js/hud.js`, `js/garage.js`, `js/menus.js`, `js/loot-system.js`
+
+Search method: every flagged identifier was grepped across all `.js` files and
+`index.html` before being recorded. For `menus.js` and `loot-system.js`, callers
+in `events.js`, `campaign-system.js`, `init.js`, `rounds.js`, and `combat.js` were
+all checked. Only identifiers with zero call sites (or a fully dead call chain)
+outside their own definition are listed.
+
+---
+
+### js/hud.js (544 lines)
+
+No unreachable functions found. All 12 exported functions are called from external
+files (`init.js`, `rounds.js`, `combat.js`, `mods.js`). Note: `updateSiphonHeatBar`
+is a deliberate no-op stub called from `combat.js:565` via a `typeof` guard — it is
+intentionally retained and is not flagged as dead.
+
+#### Unused local variables
+
+| Line | Name | Notes | Confidence |
+|------|------|-------|------------|
+| 233 | `lootDef` inside `drawMinimap()` | Declared as `const lootDef = LOOT_TYPES[p.type];` but never read. The `fillStyle` on the very next line branches directly on `p.type` string literals (`'repair'`, `'ammo'`), bypassing `lootDef` entirely. | HIGH |
+
+#### Commented-out code blocks
+
+None found.
+
+---
+
+### js/garage.js (652 lines)
+
+#### Unreachable functions
+
+| Lines | Name | Notes | Confidence |
+|-------|------|-------|------------|
+| 427–432 | `_calcWeight(lo)` | Computes total weapon weight from a loadout object. Grepping all JS files and `index.html` finds zero call sites. Weight display in the garage UI is handled inline inside `renderGarage()` without calling this function. | HIGH |
+
+#### Commented-out code blocks
+
+None found.
+
+---
+
+### js/menus.js (2824 lines)
+
+#### Unreachable functions — item-detail dead chain
+
+The four functions below form a fully unreachable call chain. The entry point
+`_showItemDetail` has no external callers, and `index.html` sets `#inv-detail-panel`
+to `display:none !important;` (line 562), confirming the panel was disabled.
+
+| Lines | Name | Notes | Confidence |
+|-------|------|-------|------------|
+| 1450–1468 | `_showItemDetail(source, key)` | Entry point of the dead chain. Zero call sites in any JS file or `index.html`. References `#inv-detail-panel`, which is hidden with `display:none !important;` in `index.html`. | HIGH |
+| 1470–1560 | `_renderItemDetail(source, key)` | Only caller is the dead `_showItemDetail`. | HIGH |
+| 1340–1428 | `_buildItemComparisonHTML(newItem)` | Only caller is the dead `_renderItemDetail`. | HIGH |
+| 1330–1338 | `_setCompareArm(arm)` | Only referenced as an `onclick` string inside the dead `_buildItemComparisonHTML`. | HIGH |
+
+#### Unreachable functions — leaderboard dead stubs
+
+| Lines | Name | Notes | Confidence |
+|-------|------|-------|------------|
+| 2612–2630 | `submitLeaderboardEntry()` | Zero call sites anywhere. References a `#lb-submit-panel` DOM element that does not exist in `index.html`. Superseded by `_autoSubmitRun()` (line 2560), which is called from `campaign-system.js` on run completion. | HIGH |
+| 2632–2641 | `skipLeaderboardSubmit()` | Zero call sites anywhere. Same `#lb-submit-panel` dependency; same superseded status. | HIGH |
+
+#### No-op stub (called but effectless)
+
+| Lines | Name | Notes | Confidence |
+|-------|------|-------|------------|
+| 2591–2593 | `_showCloudStatusToast()` | Body is `{ return; }` — a pure no-op. Called three times from `campaign-system.js` but produces no output or side-effect. Likely a placeholder for a cloud-sync status UI that was never built. Not fully unreachable (has callers), but has zero effect. | MEDIUM |
+
+#### Commented-out code blocks
+
+None found.
+
+---
+
+### js/loot-system.js (1921 lines)
+
+No unreachable non-stub functions found. All major exported functions
+(`generateLoot`, `applyLoot`, `spawnLoot`, `removeLoot`, `checkLootPickups`,
+`applyUniqueEffect`, `hasUniqueEffect`, `saveCampaignProgress`,
+`loadCampaignProgress`, `debouncedCampaignSave`) have confirmed callers.
+
+#### Unimplemented stub functions
+
+| Lines | Name | Notes | Confidence |
+|-------|------|-------|------------|
+| 1567–1570 | `triggerEchoStrike()` | Self-documented: `// stub — not yet implemented`. Body is empty (single comment only). Zero call sites anywhere in the codebase. Parameters are commented out. | HIGH |
+| 1576–1580 | `checkMirrorShot()` | Self-documented with a TODO: always `return false`. Calls `hasUniqueEffect('mirrorShot')` but immediately returns `false` regardless, so it has no effect. Zero call sites anywhere in the codebase. | HIGH |
+
+#### Commented-out code blocks
+
+None found.
+
+---
+
+## Session 4 Summary Table
+
+| File | Finding | Type | Confidence |
+|------|---------|------|------------|
+| `js/hud.js:233` | `lootDef` local in `drawMinimap` | Unused local variable | HIGH |
+| `js/garage.js:427` | `_calcWeight()` | Unreachable function | HIGH |
+| `js/menus.js:1330` | `_setCompareArm()` | Unreachable function (dead chain) | HIGH |
+| `js/menus.js:1340` | `_buildItemComparisonHTML()` | Unreachable function (dead chain) | HIGH |
+| `js/menus.js:1450` | `_showItemDetail()` | Unreachable function (dead chain entry, panel disabled) | HIGH |
+| `js/menus.js:1470` | `_renderItemDetail()` | Unreachable function (dead chain) | HIGH |
+| `js/menus.js:2591` | `_showCloudStatusToast()` | No-op stub body — called but has zero effect | MEDIUM |
+| `js/menus.js:2612` | `submitLeaderboardEntry()` | Unreachable function (no callers, DOM panel absent) | HIGH |
+| `js/menus.js:2632` | `skipLeaderboardSubmit()` | Unreachable function (no callers, DOM panel absent) | HIGH |
+| `js/loot-system.js:1567` | `triggerEchoStrike()` | Unimplemented stub — no callers | HIGH |
+| `js/loot-system.js:1576` | `checkMirrorShot()` | Unimplemented stub — always returns false, no callers | HIGH |
