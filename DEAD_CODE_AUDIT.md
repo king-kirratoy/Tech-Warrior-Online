@@ -437,3 +437,211 @@ None found.
 | `js/menus.js:2632` | `skipLeaderboardSubmit()` | Unreachable function (no callers, DOM panel absent) | HIGH |
 | `js/loot-system.js:1567` | `triggerEchoStrike()` | Unimplemented stub — no callers | HIGH |
 | `js/loot-system.js:1576` | `checkMirrorShot()` | Unimplemented stub — always returns false, no callers | HIGH |
+
+---
+
+## Session 5 — Campaign, Skill Tree, Multiplayer & Events
+
+Audited files: `js/campaign-system.js`, `js/skill-tree-data.js`, `js/skill-tree.js`,
+`js/multiplayer.js`, `js/events.js`, `js/init.js`
+
+Search method: every flagged identifier was grepped across all `.js` files and
+`index.html` before being recorded. Socket.IO event callbacks in `multiplayer.js`
+were not flagged as dead code per audit instructions.
+
+---
+
+### js/campaign-system.js (2072 lines)
+
+#### Permanently-disabled code block
+
+| Lines | Description | Confidence |
+|---|---|---|
+| 1327–1399 | `if (false) { ... }` block inside `showShop()` labelled "Buy detail panel — disabled; hover cards replace click-to-view". The block is syntactically unreachable — `if (false)` is never entered. It contains full stat-comparison panel HTML that was superseded by the hover card system. | HIGH |
+
+#### Unreachable module-level function
+
+| Lines | Name | Notes | Confidence |
+|---|---|---|---|
+| 1199–1208 | `_shopItemTotal(item)` | Returns combined `baseStats + computedStats` for an item. Its only call sites are (a) inside `_itemStatCard()` (a local closure defined inside `showShop()`), and (b) inside the `if (false)` block at lines 1333–1334. `_itemStatCard` itself is only called from within the same `if (false)` block. No live code path ever reaches `_shopItemTotal`. | HIGH |
+| 1501–1503 | `_shopSelect(idx)` | Toggles `_selectedShopIdx` and re-renders the shop. Buy slots in both `_shopRenderCategory()` (line 1091) and the `buySlot()` helper (line 1295) use `onclick="_shopBuy(${idx})"` — `_shopSelect` was the old pre-hover-card click handler and was never updated to the new code path. Zero call sites in any file. | HIGH |
+
+#### Unreachable loadout-slots subsystem (no entry point)
+
+The four functions below form a closed subsystem that can never be entered from
+outside: `showLoadoutSlots()` has zero external callers (only called from
+`_saveSlot`, `_loadSlot`, and `_deleteSlot`, which are onclick handlers generated
+inside the overlay's own HTML). Nothing in any JS file or `index.html` ever calls
+`showLoadoutSlots()` to open the overlay in the first place.
+
+| Lines | Name | Notes | Confidence |
+|---|---|---|---|
+| 1742–1789 | `showLoadoutSlots()` | Entry point of the dead subsystem. Zero external callers confirmed by codebase-wide grep. The `#loadout-slots-overlay` DOM element exists in `index.html:410` but is only opened via this function. | HIGH |
+| 1693–1711 | `saveLoadoutSlot(slotIdx, name)` | Only caller is `_saveSlot()` (line 1793), which is an onclick handler inside the overlay HTML. Unreachable unless the overlay is open. | HIGH |
+| 1714–1731 | `loadLoadoutSlot(slotIdx)` | Only caller is `_loadSlot()` (line 1798), same situation. | HIGH |
+| 1734–1739 | `deleteLoadoutSlot(slotIdx)` | Only caller is `_deleteSlot()` (line 1803), same situation. | HIGH |
+
+#### Commented-out code blocks
+
+None found (the `if (false)` block above is the only deliberately disabled code).
+
+---
+
+### js/skill-tree-data.js (8467 lines)
+
+Pure data file — no function definitions to audit for dead code.
+
+All three chassis trees (`light`, `medium`, `heavy`) are accessed dynamically in
+`skill-tree.js` via `SKILL_TREE_DATA[chassisKey]`. No chassis tree is orphaned.
+
+Node connectivity is internally self-referential via the `c` array field; the
+renderer in `skill-tree.js` iterates `_skillTreeData.forEach` over all nodes, so
+every node object is visited regardless of its connectivity status.
+
+No orphaned data keys found.
+
+---
+
+### js/skill-tree.js (1012 lines)
+
+#### Unused module-level variable
+
+| Line | Name | Notes | Confidence |
+|---|---|---|---|
+| 9 | `_lockedAllocations` | Declared as `let _lockedAllocations = {};`. Assigned to `{}` at line 30 inside `showSkillTree()` with the inline comment "no longer used for locking; kept for structural compatibility". Confirmed by codebase-wide grep: the variable is written but never read anywhere in any JS file. | MEDIUM |
+
+#### Unreachable functions
+
+| Lines | Name | Notes | Confidence |
+|---|---|---|---|
+| 257–259 | `_isNodeAvailable(nodeId)` | One-liner that returns `_stGetNodeState(nodeId) === 'available'`. Zero call sites in any JS file — callers throughout `_renderSkillTree()` and `_allocateNode()` call `_stGetNodeState()` directly and compare the result inline. | HIGH |
+| 917–921 | `_skillTreeClampVB()` | Clamps `_skillTreeVB.w` and `_skillTreeVB.h` to `[400, 2000]`. Zero call sites anywhere — the zoom handler `_skillTreeOnWheel()` (line 996) does the same clamping inline inside `_skillTreeZoom()` at lines 937–940 without calling this helper. | HIGH |
+
+#### Commented-out code blocks
+
+None found.
+
+---
+
+### js/multiplayer.js (2660 lines)
+
+No unreachable functions, unused variables, or commented-out code blocks found.
+
+All functions are reachable via Socket.IO event callbacks, UI button onclick
+handlers, or direct calls from `init.js` / `events.js` / `hud.js`. Socket.IO
+event handlers (`_mpSocket.on(...)`) were correctly excluded from dead-code
+analysis per audit instructions.
+
+---
+
+### js/events.js (352 lines)
+
+No unreachable functions, unused variables, or commented-out code blocks found.
+
+All five exported functions (`handlePlayerMovement`, `handlePlayerFiring`,
+`_onEquipDragStart`, `_onSlotDragOver`, `_onSlotDragLeave`, `_onSlotDrop`) are
+called from `init.js:251/253` or from DOM event attributes generated in `menus.js:1104`.
+
+---
+
+### js/init.js (284 lines)
+
+No unreachable functions, unused variables, or commented-out code blocks found.
+
+All functions (`_startGridCanvas`, `startMenuGrid`, `_csKeyDown`,
+`_updateCallsignBtn`, `handleObjectiveRoundEnd`, `preload`, `create`, `update`)
+are called from `window.onload`, Phaser's scene system, or `index.html:31`.
+
+---
+
+## Session 5 Summary Table
+
+| File | Finding | Type | Confidence |
+|---|---|---|---|
+| `js/campaign-system.js:1327` | `if (false) { }` buy detail panel block in `showShop()` | Permanently-disabled code | HIGH |
+| `js/campaign-system.js:1199` | `_shopItemTotal()` | Unreachable function (only called from dead code) | HIGH |
+| `js/campaign-system.js:1501` | `_shopSelect()` | Unreachable function (zero callers; superseded by `_shopBuy`) | HIGH |
+| `js/campaign-system.js:1742` | `showLoadoutSlots()` | Unreachable function (no external entry point) | HIGH |
+| `js/campaign-system.js:1693` | `saveLoadoutSlot()` | Unreachable function (dead loadout-slots subsystem) | HIGH |
+| `js/campaign-system.js:1714` | `loadLoadoutSlot()` | Unreachable function (dead loadout-slots subsystem) | HIGH |
+| `js/campaign-system.js:1734` | `deleteLoadoutSlot()` | Unreachable function (dead loadout-slots subsystem) | HIGH |
+| `js/skill-tree.js:9` | `_lockedAllocations` | Unused module-level variable (written but never read) | MEDIUM |
+| `js/skill-tree.js:257` | `_isNodeAvailable()` | Unreachable function (zero callers) | HIGH |
+| `js/skill-tree.js:917` | `_skillTreeClampVB()` | Unreachable function (zoom does inline clamping instead) | HIGH |
+
+---
+
+## Summary
+
+*Counts across all 5 sessions (Sessions 1–5).*
+
+### Total finding counts
+
+| Confidence | Count |
+|---|---|
+| HIGH | 37 |
+| MEDIUM | 3 |
+| LOW | 0 |
+
+**HIGH count breakdown by session:**
+- Session 1 (`constants.js`, `state.js`, `utils.js`, `audio.js`): 5
+- Session 2 (`mechs.js`, `cover.js`, `combat.js`, `mods.js`): 5
+- Session 3 (`perks.js`, `enemies.js`, `rounds.js`, `enemy-types.js`, `arena-objectives.js`): 8 entries (representing 76+ individual unimplemented perk keys)
+- Session 4 (`hud.js`, `garage.js`, `menus.js`, `loot-system.js`): 10
+- Session 5 (`campaign-system.js`, `skill-tree.js`): 9
+
+**MEDIUM count breakdown by session:**
+- Session 1: 1 (unreachable `case 'missile':` branch in `sndFire`)
+- Session 4: 1 (`_showCloudStatusToast` no-op stub)
+- Session 5: 1 (`_lockedAllocations` written but never read)
+
+### Recommended cleanup order
+
+Priority is based on impact (lines removable, risk introduced, and likelihood of
+the dead code causing confusion or masking bugs).
+
+1. **`js/campaign-system.js`** — Remove the `if (false)` buy-detail block (~72
+   lines), `_shopItemTotal`, `_shopSelect`, and the entire loadout-slots subsystem
+   (`showLoadoutSlots`, `saveLoadoutSlot`, `loadLoadoutSlot`, `deleteLoadoutSlot`,
+   `_saveSlot`, `_loadSlot`, `_deleteSlot`, `_closeLoadoutSlots`, `MAX_LOADOUT_SLOTS`,
+   `_getLoadoutSlots`). The `_shopSelect`/`_shopItemTotal` removal is zero-risk;
+   the loadout-slots removal requires confirming that the feature is not planned
+   for imminent re-wiring. Also verify `#loadout-slots-overlay` in `index.html`
+   can be removed.
+
+2. **`js/perks.js`** — Remove the ~73 unimplemented new-perk entries and their
+   orphaned `_perkState` fields in `_resetPerkState()` and the `state.js` default
+   object. High impact but requires cross-checking `state.js` for every removed
+   field name. Removing unimplemented perks also prevents players from picking
+   perks that have no mechanical effect.
+
+3. **`js/menus.js`** — Remove the 6-function dead chain
+   (`_showItemDetail` → `_renderItemDetail` → `_buildItemComparisonHTML` →
+   `_setCompareArm`) plus `submitLeaderboardEntry` and `skipLeaderboardSubmit`.
+   The `#inv-detail-panel` div in `index.html` (`display:none !important`) can
+   also be removed. Low risk — no live path reaches any of these.
+
+4. **`js/loot-system.js`** — Remove `triggerEchoStrike` and `checkMirrorShot`
+   stubs. Self-documented as unimplemented; zero risk.
+
+5. **`js/skill-tree.js`** — Remove `_isNodeAvailable`, `_skillTreeClampVB`, and
+   the `_lockedAllocations` declaration and assignment. Tiny change, zero risk.
+
+6. **`js/garage.js`** — Remove `_calcWeight`. Single function, zero risk.
+
+7. **`js/utils.js`** — Remove `_escapeHtml`. Single function, zero risk.
+
+8. **`js/constants.js`** — Remove `window.TW = {}`, `ENEMY_PRIMARY`, and
+   `ENEMY_ARM_WEAPONS`. Verify `index.html` and all JS files once more before
+   deleting `ENEMY_PRIMARY`/`ENEMY_ARM_WEAPONS` in case any future enemy
+   AI code references them by string lookup.
+
+9. **`js/state.js`** — Remove `_pendingLoadoutTab`. Remove the corresponding
+   orphaned `_perkState` fields (`perfectAccuracy`, `reinforcedCore`, `fthDmg`)
+   after step 2 is complete.
+
+10. **Smaller isolated removals** — `player._siphonLine = null` (mechs.js),
+    `tryPlace` local const (cover.js), `_createAfterburn` (combat.js),
+    `decoyFireTimer` and `partName` locals (mods.js), `lootDef` local (hud.js),
+    `case 'missile':` branch (audio.js). Each is a one-line or few-line removal
+    with negligible risk.
