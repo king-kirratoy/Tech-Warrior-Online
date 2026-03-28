@@ -78,3 +78,82 @@ None found.
 | `js/state.js:44` | `_pendingLoadoutTab` | Unused variable | HIGH |
 | `js/utils.js:193` | `_escapeHtml()` | Unreachable function | HIGH |
 | `js/audio.js:151` | `case 'missile':` in `sndFire` | Unreachable branch | MEDIUM |
+
+---
+
+## Session 2 — Combat & Mechs
+
+Audited files: `js/mechs.js`, `js/cover.js`, `js/combat.js`, `js/mods.js`
+
+Search method: every flagged identifier was grepped across all `.js` files and
+`index.html` before being recorded. Only identifiers with zero callers/readers
+outside their own definition are listed.
+
+---
+
+### js/mechs.js (441 lines)
+
+#### Unused variable initializations
+
+| Line | Name | Notes | Confidence |
+|------|------|-------|------------|
+| 440 | `player._siphonLine = null` | Set to `null` in `_initPlayerHP()` but never read or written anywhere else in the codebase. The siphon-beam rendering was refactored to use per-arm Graphics objects (`_siphonGfxL` / `_siphonGfxR` in `combat.js`) before this property was removed from init; the `null` initialization was left behind. | HIGH |
+
+#### Commented-out code blocks
+
+None found.
+
+---
+
+### js/cover.js (410 lines)
+
+#### Unused local variables
+
+| Lines | Name | Notes | Confidence |
+|-------|------|-------|------------|
+| 188–199 | `tryPlace` (local const inside `generateCover`) | Defined as a helper that randomises placement within bounds (`for (let attempt = 0; attempt < 60; ...)` loop), but `generateCover` never calls it — every cover object is placed via the `placeAt` helper instead. `tryPlace` exists only at this single definition site; it has no call sites inside or outside the function. | HIGH |
+
+#### Commented-out code blocks
+
+None found.
+
+---
+
+### js/combat.js (1960 lines)
+
+#### Unreachable functions
+
+| Lines | Name | Notes | Confidence |
+|-------|------|-------|------------|
+| 1945–1957 | `_createAfterburn(scene, x, y)` | Creates a 40px burning-zone circle and damages enemies in it for 10 ticks. Defined in `combat.js` but never called from any file in the codebase or from `index.html`. Likely an earlier draft of a flame/napalm mechanic superseded by the `napalmStrike` perk logic in `fireFTH`. | HIGH |
+
+#### Commented-out code blocks
+
+None found (the single-line comment at line 1547 — `// damageCover() — moved to js/cover.js` — is a migration note, not a code block).
+
+---
+
+### js/mods.js (817 lines)
+
+#### Unused local variables
+
+| Line | Name | Notes | Confidence |
+|------|------|-------|------------|
+| 32 | `decoyFireTimer` (local `let` inside `activateDecoy`) | Declared as `let decoyFireTimer = 0;` immediately before the `decoyFireEvent` timer is created, but never read or written again in the function. The actual Phaser timer reference is stored in `decoyFireEvent` (used for `decoyFireEvent.remove()` cleanup). `decoyFireTimer` serves no purpose. | HIGH |
+| 203 | `partName` (destructured local inside `activateRepair`) | From `const [partName, part] = parts[0];` — `partName` is the key string of the most-damaged component but is never used; only `part` (the component object) is referenced in the heal logic below. | HIGH |
+
+#### Commented-out code blocks
+
+None found.
+
+---
+
+## Session 2 Summary Table
+
+| File | Finding | Type | Confidence |
+|------|---------|------|------------|
+| `js/mechs.js:440` | `player._siphonLine = null` | Unused variable initialization | HIGH |
+| `js/cover.js:188` | `tryPlace` local const in `generateCover` | Unused local variable (never called) | HIGH |
+| `js/combat.js:1945` | `_createAfterburn()` | Unreachable function | HIGH |
+| `js/mods.js:32` | `decoyFireTimer` in `activateDecoy` | Unused local variable | HIGH |
+| `js/mods.js:203` | `partName` in `activateRepair` | Unused destructured variable | HIGH |
