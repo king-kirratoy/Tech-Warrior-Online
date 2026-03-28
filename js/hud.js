@@ -230,7 +230,6 @@ function drawMinimap() {
             if (!p.orb?.active) return;
             const lx = p.x * scale;
             const ly = p.y * scale;
-            const lootDef = LOOT_TYPES[p.type];
             ctx.beginPath();
             ctx.arc(lx, ly, 2, 0, Math.PI * 2);
             ctx.fillStyle = p.type === 'repair' ? '#00ff44' : p.type === 'ammo' ? '#ffdd00' : '#00ffff';
