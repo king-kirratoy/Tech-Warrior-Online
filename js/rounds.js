@@ -312,10 +312,6 @@ function onEnemyKilled(deadEnemy) {
         const reduction = CHASSIS.medium.killCooldownReduction || 500;
         lastModTime = Math.max(0, lastModTime - reduction);
     }
-    // rage_feed: kills during rage extend it
-    if (_perkState.rageFeed > 0 && isRageActive) {
-        _perkState._rageEndTime = (_perkState._rageEndTime || 0) + _perkState.rageFeed;
-    }
     // Spectre: every kill spawns a shadow clone (max 2, lasts 4s, deals 50% dmg)
     if (_perkState.lightSpectre && player?.active && isDeployed) {
         if (typeof _spawnSpectreClone === 'function') _spawnSpectreClone();
