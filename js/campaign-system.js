@@ -1187,7 +1187,7 @@ const _shopStatNames = {
     dmgFlat:'Damage', dmgPct:'Damage %', critChance:'Crit Chance %', critDmg:'Crit Damage %',
     fireRatePct:'Fire Rate %', coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All HP',
     dr:'Damage Reduction %', shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %',
-    dodgePct:'Dodge %', speedPct:'Speed %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Duration %',
+    dodgePct:'Dodge %', speedPct:'Move Speed %', modCdPct:'Mod Cooldown %', modEffPct:'Mod Duration %',
     lootMult:'Loot Quality %', autoRepair:'Auto Repair', pellets:'Pellets', splashRadius:'Blast Radius %',
     dmg:'Damage', reload:'Fire Rate', maxShield:'Shield HP'
 };
