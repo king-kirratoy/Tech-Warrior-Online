@@ -59,7 +59,7 @@ function _clearMapForRound(scene) {
     }
     if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { try { if (b.active) b.destroy(); } catch(e){} });
     // Scorched Earth perk: wipe all loot pickups at round start
-    if (_perkState.scorchedEarth) {
+    if (_perkState.heavyScorchedEarth) {
         lootPickups.forEach(p => {
             try { if (p.orb?.active)   p.orb.destroy();   } catch(e) {}
             try { if (p.label?.active) p.label.destroy(); } catch(e) {}
@@ -126,7 +126,7 @@ function startRound(roundNum) {
     }
 
     // Autonomous Unit: auto-deploy drone at round start (after short delay)
-    if (_perkState.autonomousUnit && loadout.cpu === 'atk_drone' && !_perkState._autoDroneActive) {
+    if (_perkState.droneAutonomousUnit && loadout.cpu === 'atk_drone' && !_perkState._autoDroneActive) {
         setTimeout(() => { if (isDeployed && _roundActive) activateAutoDrone(scene); }, 600);
     }
 }
@@ -279,16 +279,16 @@ function onEnemyKilled(deadEnemy) {
     if (typeof triggerSwarmBurst === 'function' && deadEnemy?.x != null) {
         triggerSwarmBurst(GAME.scene.scenes[0], deadEnemy.x, deadEnemy.y);
     }
-    // Swarm Logic: kills while drone active reduce drone cooldown
-    if (_perkState.swarmLogic > 0 && (_perkState._droneActive || _perkState._autoDroneActive)) {
-        lastModTime -= _perkState.swarmLogic;
+    // Drone Swarm Logic: kills while drone active reduce drone cooldown
+    if (_perkState.droneSwarmLogic > 0 && (_perkState._droneActive || _perkState._autoDroneActive)) {
+        lastModTime -= _perkState.droneSwarmLogic;
     }
-    // Overwatch: kills increase drone damage for this round
-    if (_perkState.overwatchStacks > 0) {
-        _perkState.overwatchKills = (_perkState.overwatchKills || 0) + 1;
+    // Drone Overwatch: kills increase drone damage for this round
+    if (_perkState.droneOverwatchStacks > 0) {
+        _perkState.droneOverwatchKills = (_perkState.droneOverwatchKills || 0) + 1;
     }
     // Autonomous Unit: kills while drone is down reduce respawn timer
-    if (_perkState.autonomousUnit && !_perkState._autoDroneActive && _perkState._autoDroneRespawnTimer) {
+    if (_perkState.droneAutonomousUnit && !_perkState._autoDroneActive && _perkState._autoDroneRespawnTimer) {
         _perkState._autoDroneRespawnTimer.delay = Math.max(1000, (_perkState._autoDroneRespawnTimer.delay || 12000) - 1000);
     }
     _totalKills++;
@@ -312,47 +312,13 @@ function onEnemyKilled(deadEnemy) {
         const reduction = CHASSIS.medium.killCooldownReduction || 500;
         lastModTime = Math.max(0, lastModTime - reduction);
     }
-    if (_perkState.adrenalineStacks > 0 && player?.comp?.core)
-        player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + player.comp.core.max * 0.05 * _perkState.adrenalineStacks);
-    // Kill Streak: track kills without taking damage
-    if (_perkState.killStreak > 0) {
-        _perkState._killStreakCount = (_perkState._killStreakCount || 0) + 1;
-        if (!_perkState._killStreakActive && _perkState._killStreakCount >= 3) {
-            _perkState._killStreakActive = true;
-            _perkState.dmgMult = (_perkState.dmgMult || 1) * (1 + 0.25 * _perkState.killStreak);
-            const sc3 = GAME.scene.scenes[0];
-            const kst = sc3.add.text(player.x, player.y - 55, 'KILL STREAK!', {
-                font: 'bold 14px Courier New', fill: '#ffff00', stroke: '#aa6600', strokeThickness: 3
-            }).setDepth(20).setOrigin(0.5);
-            sc3.tweens.add({ targets: kst, y: kst.y - 30, alpha: 0, duration: 1200, onComplete: () => kst.destroy() });
-        }
-    }
     // rage_feed: kills during rage extend it
     if (_perkState.rageFeed > 0 && isRageActive) {
         _perkState._rageEndTime = (_perkState._rageEndTime || 0) + _perkState.rageFeed;
     }
-    // Hit-and-run: speed burst on kill
-    if (_perkState.hitRunStacks > 0) {
-        const scene = GAME.scene.scenes[0];
-        if (!_perkState._hitRunActive) {
-            _perkState.speedMult *= (1 + 0.25 * _perkState.hitRunStacks);
-        }
-        _perkState._hitRunActive = true;
-        _perkState._hitRunTimer = scene.time.now + 3000;
-    }
     // Spectre: every kill spawns a shadow clone (max 2, lasts 4s, deals 50% dmg)
     if (_perkState.lightSpectre && player?.active && isDeployed) {
         if (typeof _spawnSpectreClone === 'function') _spawnSpectreClone();
-    }
-
-    // Predator: long-range kill charges next shot
-    if (_perkState.predatorStacks > 0 && player) {
-        const nearestEnemy = enemies?.getChildren()?.reduce((closest, e) => {
-            const d = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
-            return (!closest || d < closest.dist) ? {e, dist:d} : closest;
-        }, null);
-        // If last kill was at 500+ px, charge next shot
-        _perkState._predatorCharged = true;
     }
 
     // Phase 6: check objective-based round end (survival complete, assassination done, etc.)

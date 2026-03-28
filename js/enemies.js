@@ -762,7 +762,6 @@ function handleEnemyAI(scene, time) {
             // Compute desired velocity from AI behavior pattern
             let {vx, vy} = _calcEnemyBehaviorVelocity(enemy, dist, angle, speed, time);
             // Ghost abilities: skip firing + avoidance entirely for this enemy this frame
-            if (isJumping && _perkState.ghostJump) return;
             if (_perkState._ghostStepActive) return;
             // Weapon firing decisions + mod activation
             _handleEnemyFiringDecision(scene, enemy, dist, time);
