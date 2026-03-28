@@ -215,7 +215,7 @@ const UNIQUE_ITEMS = {
         baseStats: { modCdPct: -12, modEffPct: 15 },
         affixes: [
             { key:'modCdPct', stat:'modCdPct', value:10, label:'-10% Mod Cooldown' },
-            { key:'modEffPct', stat:'modEffPct', value:15, label:'+15% Mod Effectiveness' }
+            { key:'modEffPct', stat:'modEffPct', value:15, label:'+15% Mod Duration' }
         ],
         uniqueEffect: 'modCover',
         uniqueLabel: 'FABRICATOR: Mod activation spawns a temporary cover wall',
@@ -232,10 +232,10 @@ const UNIQUE_ITEMS = {
         baseStats: { modEffPct: 20 },
         affixes: [
             { key:'modCdPct', stat:'modCdPct', value:8, label:'-8% Mod Cooldown' },
-            { key:'modEffPct', stat:'modEffPct', value:25, label:'+25% Mod Effectiveness' }
+            { key:'modEffPct', stat:'modEffPct', value:25, label:'+25% Mod Duration' }
         ],
         uniqueEffect: 'modAmplify',
-        uniqueLabel: 'OVERCLOCK: Mod effects last 50% longer',
+        uniqueLabel: 'OVERCLOCK: Mod durations last 50% longer',
         uniqueDesc: 'All mod durations and effects are extended by 50%.'
     },
 
@@ -399,7 +399,7 @@ const UNIQUE_ITEMS = {
         baseStats: { modCdPct: -12, modEffPct: 10 },
         affixes: [
             { key:'modCdPct', stat:'modCdPct', value:10, label:'-10% Mod Cooldown' },
-            { key:'modEffPct', stat:'modEffPct', value:12, label:'+12% Mod Effectiveness' },
+            { key:'modEffPct', stat:'modEffPct', value:12, label:'+12% Mod Duration' },
             { key:'dmgPct', stat:'dmgPct', value:5, label:'+5% Damage' }
         ],
         uniqueEffect: 'coreOverload',
@@ -544,7 +544,7 @@ const AFFIX_POOL = {
     // Utility
     speedPct:     { label:'+{v}% Move Speed',        min:2,  max:14, weight:6,  types:['legs','augment'] },
     modCdPct:     { label:'-{v}% Mod Cooldown',      min:3,  max:22, weight:6,  types:['cpu'] },
-    modEffPct:    { label:'+{v}% Mod Effectiveness',  min:5,  max:30, weight:5, types:['cpu'] },
+    modEffPct:    { label:'+{v}% Mod Duration',  min:5,  max:30, weight:5, types:['cpu'] },
     lootMult:     { label:'+{v}% Loot Quality',      min:3,  max:18, weight:3,  types:['augment'] },
     autoRepair:   { label:'+{v} HP/sec Regen',       min:1,  max:6,  weight:4,  types:['armor','augment'] },
 };
