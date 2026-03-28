@@ -424,14 +424,6 @@ function refreshGarage() {
     };
 }
 
-function _calcWeight(lo) {
-    const w = (obj, key) => (key && key !== 'none') ? (obj[key]?.weight || 0) : 0;
-    // Weight cap applies to weapons only — mod/aug/leg/shield no longer count toward cap
-    const lW = w(WEAPONS, lo.L);
-    const rW = w(WEAPONS, lo.R);
-    return lW + rW;
-}
-
 function deployMech() {
     // Reset kill counter at the start of every new warzone run
     if (_gameMode !== 'campaign' && _gameMode !== 'pvp') {

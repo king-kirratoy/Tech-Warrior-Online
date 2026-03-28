@@ -6,7 +6,6 @@
 let _skillTreeData  = null;   // array of node objects for current chassis
 let _stNodeMap      = {};     // id → node lookup
 let _skillTreeState    = { allocated: {} };
-let _lockedAllocations = {}; // snapshot of saved allocations — permanent, cannot be undone
 let _stChassisKey      = 'light'; // chassis key for current tree
 let _skillTreeSVG   = null;
 let _skillTreeVB    = { x: -450, y: -420, w: 900, h: 840 };
@@ -27,7 +26,6 @@ function showSkillTree() {
   const chassisKey = (chassis || 'light').toLowerCase();
   _stChassisKey = chassisKey;
 
-  _lockedAllocations = {}; // no longer used for locking; kept for structural compatibility
   _skillTreeData = (typeof SKILL_TREE_DATA !== 'undefined' && SKILL_TREE_DATA[chassisKey])
     ? SKILL_TREE_DATA[chassisKey]
     : (typeof SKILL_TREE_DATA !== 'undefined' ? SKILL_TREE_DATA.light : []);
@@ -252,10 +250,6 @@ function _stGetNodeState(nodeId) {
     if (cn && (cn.t === 'start' || (_skillTreeState.allocated[cId] || 0) > 0)) return 'available';
   }
   return 'locked';
-}
-
-function _isNodeAvailable(nodeId) {
-  return _stGetNodeState(nodeId) === 'available';
 }
 
 // ── Hex geometry ─────────────────────────────────────────────────
@@ -911,13 +905,6 @@ function _skillTreeApplyViewBox() {
   if (!_skillTreeSVG) return;
   const { x, y, w, h } = _skillTreeVB;
   _skillTreeSVG.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
-}
-
-/** Clamp viewBox dimensions between min/max zoom levels. */
-function _skillTreeClampVB() {
-  const MIN = 400, MAX = 2000;
-  _skillTreeVB.w = Math.max(MIN, Math.min(MAX, _skillTreeVB.w));
-  _skillTreeVB.h = Math.max(MIN, Math.min(MAX, _skillTreeVB.h));
 }
 
 /**

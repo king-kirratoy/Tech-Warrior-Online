@@ -1559,25 +1559,6 @@ function triggerMatrixBarrier(scene, time) {
 }
 function isMatrixBarrierActive() { return _matrixBarrierActive; }
 
-// Echo Strike: mod activation fires a phantom copy of the last shot
-// → TODO Phase 7: requires tracking last bullet type/angle and spawning a
-//   ghost projectile. Needs deep integration with fire() / _wEff tracking.
-//   Effect key 'echoStrike' is registered in _gearState._uniqueEffects when
-//   echo_frame (epic Mirror drop) is equipped, but no gameplay proc yet.
-function triggerEchoStrike(/* scene, lastWeaponKey, lastAngle */) {
-    // stub — not yet implemented
-}
-
-// Mirror Shot: bullets reflect off walls once for 60% damage
-// → TODO Phase 7: requires bullet-wall collision detection and a second
-//   projectile spawned at the reflection angle. The effect key 'mirrorShot'
-//   is registered in _gearState._uniqueEffects when mirror_shard (legendary
-//   Mirror drop) is equipped, but no gameplay proc yet.
-function checkMirrorShot(/* bullet, scene */) {
-    if (!hasUniqueEffect('mirrorShot')) return false;
-    return false; // stub — not yet implemented
-}
-
 // ── CLEANUP (called when returning to hangar/main menu) ────────
 function cleanupEquipmentDrops() {
     _equipmentDrops.forEach(drop => {
