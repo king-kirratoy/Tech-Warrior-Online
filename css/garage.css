@@ -1157,21 +1157,3 @@
   width: 100px;
 }
 
-/* --- Comparison panel --- */
-.cmp-panel {
-  border-bottom: 1px solid var(--sci-line);
-  display: none;
-  padding: 16px 24px;
-}
-
-.cmp-cols {
-  background: var(--sci-line);
-  display: grid;
-  gap: 1px;
-  grid-template-columns: 1fr 1fr;
-}
-
-.cmp-col {
-  background: #080b0e;
-  padding: 10px 12px;
-}

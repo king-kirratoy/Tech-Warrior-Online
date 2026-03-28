@@ -31,9 +31,6 @@
 //   getMissionReward(missionId) — get first-clear reward for a mission (Phase 4)
 //   showShop()                  — show campaign hangar shop UI (Phase 4)
 //   refreshShopStock()          — restock shop inventory (Phase 4)
-//   saveLoadoutSlot(slotIdx)    — save current loadout to a slot (Phase 4)
-//   loadLoadoutSlot(slotIdx)    — load a saved loadout from a slot (Phase 4)
-//   showLoadoutSlots()          — show loadout slot management UI (Phase 4)
 //
 // GLOBALS READ FROM index.html / other files:
 //   _gameMode, _scrap, _round, _totalKills, _roundKills,
@@ -1195,18 +1192,6 @@ const _shopStatNames = {
     accuracy:'Accuracy %', dmg:'Damage', reload:'Fire Rate', maxShield:'Shield HP'
 };
 
-/** Get the total computed stats for an item (baseStats + affixes). */
-function _shopItemTotal(item) {
-    const totals = {};
-    if (item?.baseStats) {
-        for (const [k, v] of Object.entries(item.baseStats)) totals[k] = (totals[k] || 0) + v;
-    }
-    if (item?.computedStats) {
-        for (const [k, v] of Object.entries(item.computedStats)) totals[k] = (totals[k] || 0) + v;
-    }
-    return totals;
-}
-
 /** Show the campaign shop UI overlay. */
 function showShop() {
     let overlay = document.getElementById('shop-overlay');
@@ -1256,31 +1241,6 @@ function showShop() {
     };
     const slotLbl = (item) => _shopSlotLabels[item?.baseType] || (item?.baseType || '');
 
-    // ── Stat card helper for side-by-side comparison (Fix 2) ──
-    function _itemStatCard(item, cardLabel) {
-        const itemRc  = rc(item);
-        const typeLbl = slotLbl(item);
-        const meta    = `${item.rarity || 'common'} · ${typeLbl} · LV.${item.level || 1}`;
-        const stats   = _shopItemTotal(item);
-        const entries = Object.entries(stats).filter(([, v]) => v !== 0);
-        let h = `<div style="flex:1;min-width:0;background:rgba(0,0,0,0.25);border:1px solid var(--sci-line);border-radius:3px;padding:10px 12px;">`;
-        if (cardLabel) {
-            h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:4px;text-transform:uppercase;">${cardLabel}</div>`;
-        }
-        h += `<div style="font-size:11px;letter-spacing:1px;color:${itemRc};margin-bottom:2px;">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name || 'Item'}</div>`;
-        h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);margin-bottom:8px;">${meta}</div>`;
-        entries.forEach(([k, v]) => {
-            h += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
-            h += `<span style="color:rgba(255,255,255,0.45);">${_shopStatNames[k] || k}</span>`;
-            h += `<span style="color:var(--sci-txt);">${k === 'reload' ? (1000 / v).toFixed(1) + '/sec' : v}</span>`;
-            h += `</div>`;
-        });
-        if (!entries.length) {
-            h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">No stats</div>`;
-        }
-        h += `</div>`;
-        return h;
-    }
 
     // ── Slot builders ──
     function _shopItemName(item) {
@@ -1319,83 +1279,6 @@ function showShop() {
             <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
             <div style="font-size:8px;color:#00ff88;margin-top:2px;">⬡ ${sellPrice}</div>
         </div>`;
-    }
-
-    // ── Buy detail panel — disabled; hover cards replace click-to-view ──
-    _selectedShopIdx = null;
-    let detailHtml = '';
-    if (false) { // detail panel removed — kept as dead code for reference
-        const selItem      = _shopStock[_selectedShopIdx];
-        const itemRc       = rc(selItem);
-        const canBuy       = scrapVal >= selItem._shopPrice && (typeof _inventory === 'undefined' || _inventory.length < invMax);
-        const slotKey      = _baseTypeToSlot[selItem.baseType] || null;
-        const equippedItem = (slotKey && typeof _equipped !== 'undefined') ? (_equipped[slotKey] || null) : null;
-        const newStats     = _shopItemTotal(selItem);
-        const oldStats     = equippedItem ? _shopItemTotal(equippedItem) : {};
-        const allKeys      = [...new Set([...Object.keys(newStats), ...Object.keys(oldStats)])];
-        const slotLabel    = slotLbl(selItem);
-
-        detailHtml += `<div class="shop-detail-panel">`;
-
-        // Slot label (Fix 3)
-        if (slotLabel) {
-            detailHtml += `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">${slotLabel}</div>`;
-        }
-
-        if (equippedItem) {
-            // Two cards side by side (Fix 2)
-            detailHtml += `<div style="display:flex;gap:12px;margin-bottom:10px;">`;
-            detailHtml += _itemStatCard(selItem, 'New');
-            detailHtml += _itemStatCard(equippedItem, 'Equipped');
-            detailHtml += `</div>`;
-            // Diff section — only show stats that differ
-            const diffKeys = allKeys.filter(k => (newStats[k] || 0) !== (oldStats[k] || 0));
-            if (diffKeys.length > 0) {
-                detailHtml += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">Changes if equipped:</div>`;
-                const _shopInvertedStats = new Set(['fireRatePct','modCdPct','fireRate']);
-                diffKeys.forEach(k => {
-                    const diff    = (newStats[k] || 0) - (oldStats[k] || 0);
-                    const isInv   = _shopInvertedStats.has(k);
-                    const isGood  = isInv ? diff < 0 : diff > 0;
-                    const diffCls = isGood ? 'pos' : 'neg';
-                    const diffStr = (isInv && diff < 0) ? `+${Math.abs(diff)}` : (diff > 0 ? `+${diff}` : `${diff}`);
-                    detailHtml += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
-                    detailHtml += `<span style="color:rgba(255,255,255,0.45);">${_shopStatNames[k] || k}</span>`;
-                    detailHtml += `<span class="shop-compare-diff ${diffCls}">${diffStr}</span>`;
-                    detailHtml += `</div>`;
-                });
-            }
-        } else {
-            // Single card, no comparison (Fix 2 no-equipped case)
-            detailHtml += `<div style="margin-bottom:10px;">`;
-            detailHtml += `<div style="font-size:11px;letter-spacing:1px;color:${itemRc};margin-bottom:2px;">${selItem.name || 'Item'}</div>`;
-            detailHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.45);margin-bottom:8px;">${selItem.rarity || 'common'} · ${slotLabel} · LV.${selItem.level || 1} · ⬡ ${selItem._shopPrice}</div>`;
-            const entries = Object.entries(newStats).filter(([, v]) => v !== 0);
-            entries.forEach(([k, v]) => {
-                detailHtml += `<div style="display:flex;justify-content:space-between;font-size:10px;padding:1px 0;">`;
-                detailHtml += `<span style="color:rgba(255,255,255,0.45);">${_shopStatNames[k] || k}</span>`;
-                detailHtml += `<span style="color:var(--sci-txt);">${k === 'reload' ? (1000 / v).toFixed(1) + '/sec' : v}</span>`;
-                detailHtml += `</div>`;
-            });
-            if (!entries.length) {
-                detailHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">No stats</div>`;
-            }
-            if (slotKey) {
-                detailHtml += `<div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:6px;">Slot: ${slotLabel} (nothing equipped)</div>`;
-            }
-            detailHtml += `</div>`;
-        }
-
-        // Buy action
-        detailHtml += `<div class="shop-bottom-bar">`;
-        if (canBuy) {
-            detailHtml += `<button onclick="_shopBuy(${_selectedShopIdx})" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;min-width:160px;">Buy — ⬡ ${selItem._shopPrice}</button>`;
-        } else {
-            const reason = scrapVal < selItem._shopPrice ? 'Not enough scrap' : 'Inventory full';
-            detailHtml += `<div style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.45);">${reason}</div>`;
-        }
-        detailHtml += `</div>`;
-        detailHtml += `</div>`;
     }
 
     // ── Sell detail panel (Fix 1) ──
@@ -1495,12 +1378,6 @@ function showShop() {
         </div>
     `;
     overlay.style.display = 'flex';
-}
-
-/** Select a buy item (highlight, show details). Toggle on second click. */
-function _shopSelect(idx) {
-    _selectedShopIdx = (_selectedShopIdx === idx) ? null : idx;
-    showShop();
 }
 
 /** Select a sell item (highlight, show confirm panel). Toggle on second click. */
@@ -1677,137 +1554,6 @@ function _closeShop() {
     if (typeof showMissionSelect === 'function') showMissionSelect();
 }
 
-// ══════════════════════════════════════════════════════════════════
-// 4D — LOADOUT SLOTS (save/swap multiple loadout configurations)
-// ══════════════════════════════════════════════════════════════════
-
-const MAX_LOADOUT_SLOTS = 5;
-
-/** Get saved loadout slots from campaign state. */
-function _getLoadoutSlots() {
-    if (!_campaignState.loadoutSlots) _campaignState.loadoutSlots = [];
-    return _campaignState.loadoutSlots;
-}
-
-/** Save the current loadout to a named slot. */
-function saveLoadoutSlot(slotIdx, name) {
-    if (typeof loadout === 'undefined') return false;
-    const slots = _getLoadoutSlots();
-    if (slotIdx < 0 || slotIdx >= MAX_LOADOUT_SLOTS) return false;
-
-    slots[slotIdx] = {
-        name: name || ('SLOT ' + (slotIdx + 1)),
-        chassis: loadout.chassis,
-        L: loadout.L,
-        R: loadout.R,
-        cpu: loadout.cpu,
-        aug: loadout.aug,
-        leg: loadout.leg,
-        shld: loadout.shld,
-        color: loadout.color
-    };
-    saveCampaignState();
-    return true;
-}
-
-/** Load a saved loadout from a slot. */
-function loadLoadoutSlot(slotIdx) {
-    const slots = _getLoadoutSlots();
-    if (slotIdx < 0 || slotIdx >= slots.length || !slots[slotIdx]) return false;
-
-    const slot = slots[slotIdx];
-    loadout.chassis = slot.chassis || 'light';
-    loadout.L       = slot.L       || 'smg';
-    loadout.R       = slot.R       || 'none';
-    loadout.cpu     = slot.cpu     || 'none';
-    loadout.aug     = slot.aug     || 'none';
-    loadout.leg     = slot.leg     || 'none';
-    loadout.shld    = slot.shld    || 'none';
-    loadout.color   = slot.color   || 0x00ff00;
-
-    // Refresh garage UI if available
-    if (typeof refreshGarage === 'function') refreshGarage();
-    return true;
-}
-
-/** Delete a saved loadout slot. */
-function deleteLoadoutSlot(slotIdx) {
-    const slots = _getLoadoutSlots();
-    if (slotIdx < 0 || slotIdx >= slots.length) return;
-    slots[slotIdx] = null;
-    saveCampaignState();
-}
-
-/** Show the loadout slots UI overlay. */
-function showLoadoutSlots() {
-    let overlay = document.getElementById('loadout-slots-overlay');
-    if (!overlay) return;
-
-    const slots = _getLoadoutSlots();
-    const chassisColors = { light: UI_COLORS.chassisLight, medium: UI_COLORS.chassisMedium, heavy: UI_COLORS.chassisHeavy };
-
-    let html = '';
-    html += `<div style="font-size:24px;letter-spacing:6px;color:${UI_COLORS.cyan};text-shadow:0 0 16px ${UI_COLORS.cyan50};margin-bottom:20px;">LOADOUT SLOTS</div>`;
-
-    // Current loadout preview
-    html += `<div style="margin-bottom:20px;padding:12px 16px;background:${UI_COLORS.cyanSurface04};border:1px solid ${UI_COLORS.cyan20};border-radius:6px;max-width:500px;">`;
-    html += `<div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:6px;">CURRENT LOADOUT</div>`;
-    const chc = chassisColors[loadout.chassis] || UI_COLORS.text;
-    html += `<div style="font-size:12px;color:${chc};letter-spacing:1px;">${(loadout.chassis||'').toUpperCase()} // L:${(loadout.L||'none').toUpperCase()} R:${(loadout.R||'none').toUpperCase()} CPU:${(loadout.cpu||'none').toUpperCase()} SHLD:${(loadout.shld||'none').toUpperCase()}</div>`;
-    html += '</div>';
-
-    // Slot list
-    html += '<div style="display:flex;flex-direction:column;gap:8px;max-width:500px;width:100%;">';
-    for (let i = 0; i < MAX_LOADOUT_SLOTS; i++) {
-        const slot = slots[i];
-        if (slot) {
-            const sc = chassisColors[slot.chassis] || UI_COLORS.text;
-            html += `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:${UI_COLORS.surface03};border:1px solid ${UI_COLORS.cyan12};border-left:3px solid ${sc};border-radius:4px;">`;
-            html += `<div style="flex:1;">`;
-            html += `<div style="font-size:11px;letter-spacing:2px;color:${UI_COLORS.text};margin-bottom:2px;">${slot.name}</div>`;
-            html += `<div style="font-size:9px;color:${UI_COLORS.text40};">${(slot.chassis||'').toUpperCase()} // L:${(slot.L||'none').toUpperCase()} R:${(slot.R||'none').toUpperCase()}</div>`;
-            html += '</div>';
-            html += `<button onclick="_loadSlot(${i})" class="tw-btn tw-btn--sm">LOAD</button>`;
-            html += `<button onclick="_deleteSlot(${i})" class="tw-btn tw-btn--danger tw-btn--sm">✕</button>`;
-            html += '</div>';
-        } else {
-            html += `<button onclick="_saveSlot(${i})" class="tw-btn" style="align-items:center;display:flex;gap:8px;text-align:left;width:100%;">`;
-            html += `<div style="font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.45);">SLOT ${i+1} — EMPTY</div>`;
-            html += `<div style="margin-left:auto;font-size:10px;letter-spacing:2px;color:var(--sci-cyan);">SAVE</div>`;
-            html += '</button>';
-        }
-    }
-    html += '</div>';
-
-    // Close button
-    html += '<div style="margin-top:20px;">';
-    html += `<button onclick="_closeLoadoutSlots()" class="tw-btn tw-btn--danger">BACK</button>`;
-    html += '</div>';
-
-    overlay.innerHTML = html;
-    overlay.style.display = 'flex';
-}
-
-function _saveSlot(idx) {
-    const name = 'SLOT ' + (idx + 1) + ' — ' + (loadout.chassis || 'MECH').toUpperCase();
-    saveLoadoutSlot(idx, name);
-    showLoadoutSlots();
-}
-
-function _loadSlot(idx) {
-    loadLoadoutSlot(idx);
-    showLoadoutSlots();
-}
-
-function _deleteSlot(idx) {
-    deleteLoadoutSlot(idx);
-    showLoadoutSlots();
-}
-
-function _closeLoadoutSlots() {
-    const overlay = document.getElementById('loadout-slots-overlay');
-    if (overlay) overlay.style.display = 'none';
-}
 
 // ══════════════════════════════════════════════════════════════════
 // 4E — UPDATED SAVE/LOAD (include Phase 4 state)
@@ -1903,14 +1649,8 @@ async function saveToCloud() {
             },
             body: JSON.stringify(payload)
         });
-        if (saveRes.ok) {
-            _showCloudStatusToast('CLOUD SAVE SYNCED', false);
-        } else {
-            _showCloudStatusToast('CLOUD SAVE FAILED — SAVED LOCALLY', true);
-        }
     } catch(e) {
         console.warn('Cloud save failed', e);
-        _showCloudStatusToast('CLOUD SAVE FAILED — SAVED LOCALLY', true);
     }
 }
 
