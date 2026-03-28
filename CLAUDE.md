@@ -119,6 +119,39 @@ Weight is counted once. Medium/Heavy only — Light chassis cannot equip 2H weap
 This is **not** dual-wield. Dual-wield is Light chassis only, same weapon in both arms.
 2H weapons (`siege`, `chain`) cannot drop as loot — the equip system sets one arm at a time.
 
+### Perk key naming convention
+
+Every perk key in `_perks` must start with a prefix that matches its `cat` field:
+- `cat:'heavy'` → key starts with `heavy_`
+- `cat:'light'` → key starts with `light_`
+- `cat:'medium'` → key starts with `medium_`
+- `cat:'sr'` → key starts with `sr_`
+- `cat:'gl'` → key starts with `gl_`
+- `cat:'rl'` → key starts with `rl_`
+- `cat:'rail'` → key starts with `rail_`
+- `cat:'fth'` → key starts with `fth_`
+- `cat:'smg'` → key starts with `smg_`
+- `cat:'sg'` → key starts with `sg_`
+- `cat:'mg'` → key starts with `mg_`
+- `cat:'br'` → key starts with `br_`
+- `cat:'hr'` → key starts with `hr_`
+- `cat:'plsm'` → key starts with `plsm_`
+- `cat:'rage'` → key starts with `rage_`
+- `cat:'jump'` → key starts with `jump_`
+- `cat:'decoy'` → key starts with `decoy_`
+- `cat:'emp'` → key starts with `emp_`
+- `cat:'atk_drone'` → key starts with `drone_`
+- `cat:'target_painter'` → key starts with `tp_`
+- `cat:'threat_analyzer'` → key starts with `ta_`
+- `cat:'reactive_plating'` → key starts with `rp_`
+- `cat:'hydraulic_boost'` → key starts with `hb_`
+- `cat:'mine_layer'` → key starts with `ml_`
+- `cat:'mag_anchors'` → key starts with `ma_`
+- `cat:'ghost_legs'` → key starts with `gleg_`
+- Multi-word cats without a short alias (e.g. `cat:'universal'`, `cat:'shield'`, `cat:'barrier'`, `cat:'repair'`, `cat:'missile'`, `cat:'ghost_step'`, `cat:'fortress_mode'`, `cat:'siphon'`, `cat:'featherweight'`, `cat:'sprint_boosters'`, `cat:'seismic_dampener'`, `cat:'reactor_legs'`, `cat:'tremor_legs'`, `cat:'suppressor_legs'`, `cat:'warlord_stride'`, `cat:'ghost_step'`, `cat:'gs'`-prefixed) use natural names or their existing prefix convention.
+
+When renaming a perk key, only rename the state flag in `_perkState` if the flag name clearly derives from the old perk key name (camelCase equivalent). Shared flags used by multiple perks (e.g. `blastMult`, `reloadMult`, `speedMult`, `fortress`, `dodgeChance`, `afterimage`) must NOT be renamed.
+
 ### DO NOT list
 
 1. Do not use `c.x / c.y` for cover center — use `c.coverCX / c.coverCY`
@@ -134,6 +167,7 @@ This is **not** dual-wield. Dual-wield is Light chassis only, same weapon in bot
 11. Do not assume rounds end when enemies die — extraction step comes first
 12. Do not check `!player` without also checking `!player.active` (destroyed ≠ null)
 13. Do not add cache-busting `?v=X.XX` query strings to `<link>` or `<script>` tags — they were deliberately removed in v5.87
+14. Do not add new perks with keys that don't match their `cat` prefix — see perk key naming convention above
 
 ---
 

@@ -18,10 +18,8 @@ const _hiddenPerks = new Set([
 const _perks = {
     // ── UNIVERSAL OFFENSE ──────────────────────────────────────────────
     heavy_rounds:    { cat:'universal', label:'Heavy Rounds',       desc:'+20% weapon damage (stackable)',     apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.20; } },
-    rapid_reload:    { cat:'universal', label:'Rapid Fire',          desc:'-20% fire rate interval (stackable)', apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.80; } },
     critical_hit:    { cat:'universal', label:'Critical Hit',       desc:'15% chance any bullet deals 2× dmg (+5% per stack)',  apply: () => { _perkState.critChance=(_perkState.critChance||0)+0.15; } },
-    blast_radius:    { cat:'heavy',     label:'Blast Radius',       desc:'GL/RL explosion radius +25% (stackable)',  apply: () => { _perkState.blastMult=(_perkState.blastMult||0)+0.25; } },
-    adrenaline:      { cat:'universal', label:'Adrenaline',         desc:'Kills restore 5% core HP (+5% per stack)', apply: () => { _perkState.adrenalineStacks=(_perkState.adrenalineStacks||0)+1; } },
+    heavy_blast_radius:{ cat:'heavy',   label:'Blast Radius',       desc:'GL/RL explosion radius +25% (stackable)',  apply: () => { _perkState.blastMult=(_perkState.blastMult||0)+0.25; } },
     hollow_point:    { cat:'universal', label:'Hollow Point',       desc:'+15% damage to enemies below 50% HP (stackable)', apply: () => { _perkState.hollowPoint=(_perkState.hollowPoint||0)+0.15; } },
     incendiary:      { cat:'universal', label:'Incendiary Rounds',  desc:'20% chance to ignite on hit (5 dmg/tick, 2s)',     apply: () => { _perkState.incendiary=(_perkState.incendiary||0)+0.20; } },
     chain_reaction:  { cat:'universal', label:'Chain Reaction',     desc:'Kills have 30% chance to trigger a small blast',   apply: () => { _perkState.chainReaction=(_perkState.chainReaction||0)+0.30; } },
@@ -36,57 +34,48 @@ const _perks = {
     scrap_shield:    { cat:'universal', label:'Scrap Shield',       desc:'On limb destruction: absorb next 40 damage to core', apply: () => { _perkState.scrapShield=(_perkState.scrapShield||0)+40; } },
     // ── UNIVERSAL UTILITY ──────────────────────────────────────────────
     overclock:       { cat:'universal', label:'Overclock',          desc:'+15% move speed (stackable)',          apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.15; } },
-    salvager:        { cat:'universal', label:'Salvager',           desc:'Loot drop rate +25% (stackable)',      apply: () => { _perkState.lootMult=(_perkState.lootMult||1)*1.25; } },
-    emp_resistance:  { cat:'universal', label:'EMP Resistance',     desc:'Enemy EMP stun −50% (stackable)',      apply: () => { _perkState.empResist=(_perkState.empResist||0)+0.50; } },
-    scavenger:       { cat:'universal', label:'Scavenger',          desc:'Kill loot chance +10% (stackable)',    apply: () => { _perkState.lootMult=(_perkState.lootMult||1)*1.10; } },
-    salvage_protocol:{ cat:'universal', label:'Salvage Protocol',   desc:'Destroying an enemy limb guarantees a loot drop', apply: () => { _perkState.salvageProtocol=true; } },
     threat_scanner:  { cat:'universal', label:'Threat Scanner',     desc:'Enemies within 300px take +10% damage from you (stackable)', apply: () => { _perkState.threatScanner=(_perkState.threatScanner||0)+0.10; } },
-    kill_streak:     { cat:'universal', label:'Kill Streak',        desc:'3 kills without taking damage: +25% damage for the rest of the round', apply: () => { _perkState.killStreak=(_perkState.killStreak||0)+1; } },
     opportunist:     { cat:'universal', label:'Opportunist',        desc:'+20% damage to stunned or slowed enemies (stackable)', apply: () => { _perkState.opportunist=(_perkState.opportunist||0)+0.20; } },
     // ── UNIVERSAL TRADEOFFS ─────────────────────────────────────────────
     glass_cannon:    { cat:'universal', once:true, label:'Glass Cannon',   desc:'+40% weapon damage, −20% all part HP', apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.40; Object.values(player.comp).forEach(c=>{c.max=Math.round(c.max*0.80);c.hp=Math.min(c.hp,c.max);}); } },
     berserker:       { cat:'universal', once:true, label:'Berserker',      desc:'+30% damage, shield never regens',     apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.30; _perkState.noShieldRegen=true; } },
     stripped_armor:  { cat:'universal', once:true, label:'Stripped Armor', desc:'+25% speed, −25% all part HP',         apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.25; Object.values(player.comp).forEach(c=>{c.max=Math.round(c.max*0.75);c.hp=Math.min(c.hp,c.max);}); } },
-    overclock_ii:    { cat:'light',     once:true, label:'Overclock II',   desc:'+30% speed, JUMP mod disabled',        apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.30; _perkState.jumpDisabled=true; } },
+    light_overclock_ii:{ cat:'light',   once:true, label:'Overclock II',   desc:'+30% speed, JUMP mod disabled',        apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.30; _perkState.jumpDisabled=true; } },
     war_machine:     { cat:'universal', once:true, label:'War Machine',    desc:'+35% damage; shield never regens; auto-repair disabled', apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.35; _perkState.noShieldRegen=true; _perkState.autoRepair=0; } },
-    scorched_earth:  { cat:'heavy',     once:true, label:'Scorched Earth', desc:'+50% explosion damage; loot orbs destroyed at round start', apply: () => { _perkState.blastMult=(_perkState.blastMult||0)+0.50; _perkState.scorchedEarth=true; } },
+    heavy_scorched_earth:{ cat:'heavy', once:true, label:'Scorched Earth', desc:'+50% explosion damage; loot orbs destroyed at round start', apply: () => { _perkState.blastMult=(_perkState.blastMult||0)+0.50; _perkState.heavyScorchedEarth=true; } },
     // ── LIGHT CHASSIS ──────────────────────────────────────────────────
-    phantom:         { cat:'light', label:'Phantom',       desc:'15% bullet dodge chance (+5% per stack)', apply: () => { _perkState.dodgeChance=(_perkState.dodgeChance||0)+0.15; } },
-    hit_and_run:     { cat:'light', label:'Hit and Run',   desc:'Kills grant +25% speed for 3s (stackable)',  apply: () => { _perkState.hitRunStacks=(_perkState.hitRunStacks||0)+1; } },
-    ghost_step:      { cat:'light', label:'Ghost Step',    desc:'JUMP cooldown −40% per stack',             apply: () => { _perkState.jumpCdMult=(_perkState.jumpCdMult||1)*0.60; } },
-    flicker:         { cat:'light', label:'Flicker',       desc:'Taking damage: 0.3s invincibility (4s cd)', apply: () => { _perkState.flicker=true; } },
-    predator:        { cat:'light', label:'Predator',      desc:'Kills charge next shot for +50% dmg (stackable)', apply: () => { _perkState.predatorStacks=(_perkState.predatorStacks||0)+1; } },
-    hair_trigger:    { cat:'light', label:'Hair Trigger',  desc:'+15% fire rate (stackable)',                apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.85; } },
-    glass_step:      { cat:'light', label:'Glass Step',    desc:'First hit each round is always dodged',     apply: () => { _perkState.glassStep=true; } },
-    afterimage:      { cat:'light', label:'Afterimage',    desc:'JUMP leaves a decoy at launch point that briefly draws fire', apply: () => { _perkState.afterimage=true; } },
+    light_phantom:   { cat:'light', label:'Phantom',       desc:'15% bullet dodge chance (+5% per stack)', apply: () => { _perkState.dodgeChance=(_perkState.dodgeChance||0)+0.15; } },
+    light_ghost_step:{ cat:'light', label:'Ghost Step',    desc:'JUMP cooldown −40% per stack',             apply: () => { _perkState.jumpCdMult=(_perkState.jumpCdMult||1)*0.60; } },
+    light_hair_trigger:{ cat:'light', label:'Hair Trigger',desc:'+15% fire rate (stackable)',                apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.85; } },
+    light_afterimage:{ cat:'light', label:'Afterimage',    desc:'JUMP leaves a decoy at launch point that briefly draws fire', apply: () => { _perkState.afterimage=true; } },
     // ── MEDIUM CHASSIS ─────────────────────────────────────────────────
-    balanced_load:   { cat:'medium', label:'Balanced Load', desc:'Both weapons fire 15% faster (stackable)',   apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.85; } },
-    suppressor:      { cat:'medium', label:'Suppressor',    desc:'Hits slow enemies 5% (stacks up to 3×)',   apply: () => { _perkState.suppressStacks=(_perkState.suppressStacks||0)+1; } },
-    battle_rhythm:   { cat:'medium', label:'Battle Rhythm', desc:'Every 5 kills this round: +10% damage',    apply: () => { _perkState.battleRhythm=(_perkState.battleRhythm||0)+1; } },
-    resilience:      { cat:'medium', label:'Resilience',    desc:'Destroyed arms restored at 50% HP each round', apply: () => { _perkState.resilience=true; } },
-    adaptive_armor:  { cat:'medium', label:'Adaptive Armor',desc:'After taking damage: 10% resist for 4s',   apply: () => { _perkState.adaptiveArmor=(_perkState.adaptiveArmor||0)+1; } },
-    resonance:       { cat:'medium', label:'Resonance',     desc:'Dealing damage charges shield +2 per hit',  apply: () => { _perkState.resonance=(_perkState.resonance||0)+2; } },
-    pressure_system: { cat:'medium', label:'Pressure System',desc:'Each consecutive hit on same enemy: +5% damage (max 5 stacks)', apply: () => { _perkState.pressureSystem=(_perkState.pressureSystem||0)+1; } },
+    medium_balanced_load:{ cat:'medium', label:'Balanced Load', desc:'Both weapons fire 15% faster (stackable)',   apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.85; } },
+    medium_suppressor:   { cat:'medium', label:'Suppressor',    desc:'Hits slow enemies 5% (stacks up to 3×)',   apply: () => { _perkState.mediumSuppressStacks=(_perkState.mediumSuppressStacks||0)+1; } },
+    medium_battle_rhythm:{ cat:'medium', label:'Battle Rhythm', desc:'Every 5 kills this round: +10% damage',    apply: () => { _perkState.mediumBattleRhythm=(_perkState.mediumBattleRhythm||0)+1; } },
+    medium_resilience:   { cat:'medium', label:'Resilience',    desc:'Destroyed arms restored at 50% HP each round', apply: () => { _perkState.mediumResilience=true; } },
+    medium_adaptive_armor:{ cat:'medium', label:'Adaptive Armor',desc:'After taking damage: 10% resist for 4s',  apply: () => { _perkState.mediumAdaptiveArmor=(_perkState.mediumAdaptiveArmor||0)+1; } },
+    medium_resonance:    { cat:'medium', label:'Resonance',     desc:'Dealing damage charges shield +2 per hit',  apply: () => { _perkState.mediumResonance=(_perkState.mediumResonance||0)+2; } },
+    medium_pressure_system:{ cat:'medium', label:'Pressure System',desc:'Each consecutive hit on same enemy: +5% damage (max 5 stacks)', apply: () => { _perkState.mediumPressureSystem=(_perkState.mediumPressureSystem||0)+1; } },
     // ── HEAVY CHASSIS ──────────────────────────────────────────────────
-    fortress:        { cat:'heavy', label:'Fortress',      desc:'Take 15% less damage (stackable)',          apply: () => { _perkState.fortress=(_perkState.fortress||0)+0.15; } },
-    siege_mode:      { cat:'heavy', label:'Siege Mode',    desc:'Moving slowly: +20% weapon damage (stackable)', apply: () => { _perkState.siegeMode=(_perkState.siegeMode||0)+0.20; } },
-    iron_will:       { cat:'heavy', label:'Iron Will',     desc:'Core cannot be one-shot (survives to 1 HP, resets per round)', apply: () => { _perkState.ironWill=true; } },
-    reactor_core:    { cat:'heavy', label:'Reactor Core',  desc:'GL/RL kills trigger a small secondary explosion', apply: () => { _perkState.reactorCore=true; } },
-    titan_core:      { cat:'heavy', label:'Titan Core',    desc:'Core HP cannot drop more than 30% from a single hit', apply: () => { _perkState.titanCore=true; } },
-    ground_pound:    { cat:'heavy', label:'Ground Pound',  desc:'Ramming enemies deals 25 contact damage',     apply: () => { _perkState.groundPound=(_perkState.groundPound||0)+25; } },
-    iron_curtain:    { cat:'heavy', once:true, label:'Iron Curtain', desc:'−40% all damage taken; −30% move speed', apply: () => { _perkState.fortress=(_perkState.fortress||0)+0.40; _perkState.speedMult=(_perkState.speedMult||1)*0.70; } },
+    heavy_fortress:  { cat:'heavy', label:'Fortress',      desc:'Take 15% less damage (stackable)',          apply: () => { _perkState.fortress=(_perkState.fortress||0)+0.15; } },
+    heavy_siege_mode:{ cat:'heavy', label:'Siege Mode',    desc:'Moving slowly: +20% weapon damage (stackable)', apply: () => { _perkState.heavySiegeMode=(_perkState.heavySiegeMode||0)+0.20; } },
+    heavy_iron_will: { cat:'heavy', label:'Iron Will',     desc:'Core cannot be one-shot (survives to 1 HP, resets per round)', apply: () => { _perkState.heavyIronWill=true; } },
+    heavy_reactor_core:{ cat:'heavy', label:'Reactor Core',desc:'GL/RL kills trigger a small secondary explosion', apply: () => { _perkState.heavyReactorCore=true; } },
+    heavy_titan_core:{ cat:'heavy', label:'Titan Core',    desc:'Core HP cannot drop more than 30% from a single hit', apply: () => { _perkState.heavyTitanCore=true; } },
+    heavy_ground_pound:{ cat:'heavy', label:'Ground Pound',desc:'Ramming enemies deals 25 contact damage',     apply: () => { _perkState.groundPound=(_perkState.groundPound||0)+25; } },
+    heavy_iron_curtain:{ cat:'heavy', once:true, label:'Iron Curtain', desc:'−40% all damage taken; −30% move speed', apply: () => { _perkState.fortress=(_perkState.fortress||0)+0.40; _perkState.speedMult=(_perkState.speedMult||1)*0.70; } },
     // ── WEAPON / MOD SPECIFIC ──────────────────────────────────────────
-    overheated_barrels: { cat:'smg',  label:'Overheated Barrels', desc:'SMG: +10% damage & −10% fire interval', apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.10; _perkState.reloadMult=(_perkState.reloadMult||1)*0.90; } },
+    smg_overheated_barrels: { cat:'smg', label:'Overheated Barrels', desc:'SMG: +10% damage & −10% fire interval', apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.10; _perkState.reloadMult=(_perkState.reloadMult||1)*0.90; } },
     mg_heat_sink:    { cat:'mg',   label:'Heat Sink',       desc:'MG: fire rate +25% (stackable)',           apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.75; } },
     mg_tracer:       { cat:'mg',   label:'Tracer Rounds',   desc:'MG: every 5th bullet deals +50% damage',   apply: () => { _perkState.mgTracer=true; } },
-    point_blank:     { cat:'sg',   label:'Point Blank',     desc:'Shotgun: +40% dmg within 150px (stackable)', apply: () => { _perkState.pointBlank=(_perkState.pointBlank||0)+0.40; } },
+    sg_point_blank:  { cat:'sg',   label:'Point Blank',     desc:'Shotgun: +40% dmg within 150px (stackable)', apply: () => { _perkState.pointBlank=(_perkState.pointBlank||0)+0.40; } },
     sg_flechette:    { cat:'sg',   label:'Flechette',       desc:'Shotgun: +2 extra pellets per shot (stackable)', apply: () => { _perkState.sgFlechette=(_perkState.sgFlechette||0)+2; } },
-    cold_shot:       { cat:'sr',   label:'Cold Shot',       desc:'Sniper: first shot after full fire cooldown deals 3× dmg', apply: () => { _perkState.coldShot=true; _perkState.coldShotReady=true; } },
+    sr_cold_shot:    { cat:'sr',   label:'Cold Shot',       desc:'Sniper: first shot after full fire cooldown deals 3× dmg', apply: () => { _perkState.srColdShot=true; _perkState.srColdShotReady=true; } },
     sr_breath:       { cat:'sr',   label:'Steady Breath',   desc:'Sniper: +25% damage while standing still (stackable)', apply: () => { _perkState.srBreath=(_perkState.srBreath||0)+0.25; } },
-    cluster_rounds:  { cat:'gl',   label:'Cluster Rounds',  desc:'GL: explosion spawns 3 small secondary blasts', apply: () => { _perkState.clusterRounds=true; } },
+    gl_cluster_rounds:{ cat:'gl',  label:'Cluster Rounds',  desc:'GL: explosion spawns 3 small secondary blasts', apply: () => { _perkState.glClusterRounds=true; } },
     rl_warhead:      { cat:'rl',   label:'Warhead',         desc:'RL: +25% explosion radius & +15% dmg (stackable)', apply: () => { _perkState.blastMult=(_perkState.blastMult||0)+0.25; _perkState.dmgMult=(_perkState.dmgMult||1)*1.15; } },
     rl_tandem:       { cat:'rl',   label:'Tandem Warhead',  desc:'RL: each rocket spawns a smaller follow-up explosion', apply: () => { _perkState.rlTandem=true; } },
-    afterburn:       { cat:'rl',   label:'Afterburn',       desc:'RL: leaves burning trail at impact (5 dmg/tick)', apply: () => { _perkState.afterburn=true; } },
+    rl_afterburn:    { cat:'rl',   label:'Afterburn',       desc:'RL: leaves burning trail at impact (5 dmg/tick)', apply: () => { _perkState.rlAfterburn=true; } },
     br_marksman:     { cat:'br',   label:'Marksman',        desc:'BR: +20% damage on first shot after full fire cycle (stackable)', apply: () => { _perkState.brMarksman=(_perkState.brMarksman||0)+0.20; } },
     hr_devastator:   { cat:'hr',   label:'Devastator',      desc:'HR: +15% damage & blast on impact (stackable)', apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.15; } },
     plsm_overcharge: { cat:'plsm', label:'Overcharge',      desc:'Plasma: +20% size & damage (stackable)',    apply: () => { _perkState.plsmMult=(_perkState.plsmMult||1)*1.20; } },
@@ -95,85 +84,79 @@ const _perks = {
     fth_wide_cone:   { cat:'fth',  label:'Wide Cone',       desc:'FTH: flame spread +30%, range +20% (stackable)', apply: () => { _perkState.fthRange=(_perkState.fthRange||0)+0.20; _perkState.fthCone=(_perkState.fthCone||0)+0.30; } },
     rail_capacitor:  { cat:'rail', label:'Capacitor',       desc:'RAIL: charge time −20% (stackable)',        apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.80; } },
     rail_overload:   { cat:'rail', label:'Overload',        desc:'RAIL: +25% damage per enemy pierced (stackable)', apply: () => { _perkState.railPierceBonus=(_perkState.railPierceBonus||0)+0.25; } },
-    reactive_shield: { cat:'shield', label:'Reactive Shield', desc:'Shield activation reflects 30 dmg to nearby enemies (+30/stack)', apply: () => { _perkState.reactiveShield=(_perkState.reactiveShield||0)+30; } },
-    berserker_fuel:  { cat:'rage', label:'Berserker Fuel',  desc:'Rage duration +50% (stackable)',             apply: () => { _perkState.rageDurMult=(_perkState.rageDurMult||1)*1.50; } },
+    shield_reactive: { cat:'shield', label:'Reactive Shield', desc:'Shield activation reflects 30 dmg to nearby enemies (+30/stack)', apply: () => { _perkState.shieldReactive=(_perkState.shieldReactive||0)+30; } },
+    rage_fuel:       { cat:'rage', label:'Berserker Fuel',  desc:'Rage duration +50% (stackable)',             apply: () => { _perkState.rageDurMult=(_perkState.rageDurMult||1)*1.50; } },
     rage_feed:       { cat:'rage', label:'Blood Rage',      desc:'Kills during rage extend duration by 0.5s (stackable)', apply: () => { _perkState.rageFeed=(_perkState.rageFeed||0)+500; } },
-    afterburner:     { cat:'jump', label:'Afterburner',     desc:'JUMP distance & speed +40% (stackable)',     apply: () => { _perkState.jumpSpeedMult=(_perkState.jumpSpeedMult||1)*1.40; } },
+    jump_afterburner:{ cat:'jump', label:'Afterburner',     desc:'JUMP distance & speed +40% (stackable)',     apply: () => { _perkState.jumpSpeedMult=(_perkState.jumpSpeedMult||1)*1.40; } },
     jump_slam:       { cat:'jump', label:'Ground Slam',     desc:'Landing from JUMP deals extra damage in radius (stackable)', apply: () => { _perkState.jumpSlam=(_perkState.jumpSlam||0)+30; } },
-    afterimage_jump: { cat:'jump', label:'Afterimage',      desc:'JUMP leaves a decoy at launch point that briefly draws fire', apply: () => { _perkState.afterimage=true; } },
+    jump_afterimage: { cat:'jump', label:'Afterimage',      desc:'JUMP leaves a decoy at launch point that briefly draws fire', apply: () => { _perkState.afterimage=true; } },
     // ── DECOY MOD PERKS ────────────────────────────────────────────────
     decoy_duration:  { cat:'decoy', label:'Extended Run',    desc:'Decoy lasts 3s longer (stackable)',                   apply: () => { _perkState.decoyDuration=(_perkState.decoyDuration||0)+3000; } },
     decoy_damage:    { cat:'decoy', label:'Live Rounds',     desc:'Decoy fires at full damage instead of 50%',           apply: () => { _perkState.decoyFullDmg=true; } },
-    twin_decoy:      { cat:'decoy', label:'Twin Decoy',      desc:'Deploy 2 decoys at once — second spawns 40px offset', apply: () => { _perkState.twinDecoy=true; } },
-    ghost_exit:      { cat:'decoy', label:'Ghost Exit',      desc:'When decoy expires, you cloak for 2s',                apply: () => { _perkState.ghostExit=true; } },
-    phantom_army:    { cat:'decoy', once:true, legendary:true, label:'Phantom Army',
+    decoy_twin:      { cat:'decoy', label:'Twin Decoy',      desc:'Deploy 2 decoys at once — second spawns 40px offset', apply: () => { _perkState.decoyTwin=true; } },
+    decoy_ghost_exit:{ cat:'decoy', label:'Ghost Exit',      desc:'When decoy expires, you cloak for 2s',                apply: () => { _perkState.decoyGhostExit=true; } },
+    decoy_phantom_army:{ cat:'decoy', once:true, legendary:true, label:'Phantom Army',
         desc:'LEGENDARY — Decoys never expire. Each activation spawns a new permanent decoy (max 3). All phantoms fire continuously.',
-        apply: () => { _perkState.phantomArmy=true; } },
-    chain_emp:       { cat:'emp',  label:'Chain EMP',       desc:'EMP stun chains to a 2nd nearby enemy',      apply: () => { _perkState.chainEmp=true; } },
+        apply: () => { _perkState.decoyPhantomArmy=true; } },
+    emp_chain:       { cat:'emp',  label:'Chain EMP',       desc:'EMP stun chains to a 2nd nearby enemy',      apply: () => { _perkState.empChain=true; } },
     emp_amplifier:   { cat:'emp',  label:'Amplifier',       desc:'EMP: stun duration +40%, area +30%',         apply: () => { _perkState.empAmplifier=true; } },
     barrier_spike:   { cat:'barrier', label:'Barrier Spike',desc:'While barrier is active: nearby enemies take 15 dmg/s', apply: () => { _perkState.barrierSpike=true; } },
     // ── AUGMENT PERKS ──────────────────────────────────────────────────
-    painter_lock:    { cat:'target_painter',   label:'Target Lock', desc:'Painter: marked enemies stay marked 2s longer', apply: () => { _perkState.painterDuration=(_perkState.painterDuration||0)+2000; } },
-    analyzer_deep:   { cat:'threat_analyzer',  label:'Deep Scan',   desc:'Analyzer: resistance reduction increases to 25%', apply: () => { _perkState.analyzerDepth=true; } },
-    plating_stacks:  { cat:'reactive_plating', label:'Dense Weave', desc:'Reactive Plating: max stacks increased to 8', apply: () => { _perkState.platingMaxStacks=8; } },
+    tp_lock:         { cat:'target_painter',   label:'Target Lock', desc:'Painter: marked enemies stay marked 2s longer', apply: () => { _perkState.painterDuration=(_perkState.painterDuration||0)+2000; } },
+    ta_deep:         { cat:'threat_analyzer',  label:'Deep Scan',   desc:'Analyzer: resistance reduction increases to 25%', apply: () => { _perkState.taDeep=true; } },
+    rp_stacks:       { cat:'reactive_plating', label:'Dense Weave', desc:'Reactive Plating: max stacks increased to 8', apply: () => { _perkState.rpMaxStacks=8; } },
     // ── LEG SYSTEM PERKS ───────────────────────────────────────────────
-    boost_overdrive: { cat:'hydraulic_boost',  label:'Overdrive',    desc:'Hydro Boost: speed bonus increased to +35%', apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.15; } },
-    mine_cluster:    { cat:'mine_layer',        label:'Cluster Mine', desc:'Mine Layer: mines spawn 3 submunitions on detonation', apply: () => { _perkState.mineCluster=true; } },
-    anchor_fortress: { cat:'mag_anchors',       label:'Fortress Mode',desc:'Mag Anchors: DR while still increased to 35%', apply: () => { _perkState.anchorFortress=true; } },
+    hb_overdrive:    { cat:'hydraulic_boost',  label:'Overdrive',    desc:'Hydro Boost: speed bonus increased to +35%', apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.15; } },
+    ml_cluster:      { cat:'mine_layer',        label:'Cluster Mine', desc:'Mine Layer: mines spawn 3 submunitions on detonation', apply: () => { _perkState.mlCluster=true; } },
+    ma_fortress:     { cat:'mag_anchors',       label:'Fortress Mode',desc:'Mag Anchors: DR while still increased to 35%', apply: () => { _perkState.maFortress=true; } },
 
     // ── DRONE COMMANDER PERKS ──────────────────────────────────────
     drone_uplink:    { cat:'atk_drone', label:'Drone Uplink',     desc:'Drone damage +25% per stack',                  apply: () => { _perkState.droneUplink=(_perkState.droneUplink||0)+0.25; } },
-    rapid_relaunch:  { cat:'atk_drone', label:'Rapid Relaunch',   desc:'Drone cooldown −35% per stack',                apply: () => { _perkState.droneCdMult=(_perkState.droneCdMult||1)*0.65; } },
-    neural_link:     { cat:'atk_drone', label:'Neural Link',      desc:'While drone is active: fire rate +15%',        apply: () => { _perkState.neuralLink=(_perkState.neuralLink||0)+0.15; } },
-    swarm_logic:     { cat:'atk_drone', label:'Swarm Logic',      desc:'Each kill while drone is active: −2s drone cooldown', apply: () => { _perkState.swarmLogic=(_perkState.swarmLogic||0)+2000; } },
-    hardened_frame:  { cat:'atk_drone', label:'Hardened Frame',   desc:'Drone takes 50% less damage (stackable)',      apply: () => { _perkState.droneArmor=(_perkState.droneArmor||0)+0.50; } },
-    overwatch:       { cat:'atk_drone', label:'Overwatch',        desc:'Drone damage +20% per kill you make this round (resets each round)', apply: () => { _perkState.overwatchStacks=(_perkState.overwatchStacks||0)+1; } },
+    drone_relaunch:  { cat:'atk_drone', label:'Rapid Relaunch',   desc:'Drone cooldown −35% per stack',                apply: () => { _perkState.droneCdMult=(_perkState.droneCdMult||1)*0.65; } },
+    drone_neural_link:{ cat:'atk_drone', label:'Neural Link',     desc:'While drone is active: fire rate +15%',        apply: () => { _perkState.droneNeuralLink=(_perkState.droneNeuralLink||0)+0.15; } },
+    drone_swarm_logic:{ cat:'atk_drone', label:'Swarm Logic',     desc:'Each kill while drone is active: −2s drone cooldown', apply: () => { _perkState.droneSwarmLogic=(_perkState.droneSwarmLogic||0)+2000; } },
+    drone_hardened_frame:{ cat:'atk_drone', label:'Hardened Frame',desc:'Drone takes 50% less damage (stackable)',     apply: () => { _perkState.droneArmor=(_perkState.droneArmor||0)+0.50; } },
+    drone_overwatch: { cat:'atk_drone', label:'Overwatch',        desc:'Drone damage +20% per kill you make this round (resets each round)', apply: () => { _perkState.droneOverwatchStacks=(_perkState.droneOverwatchStacks||0)+1; } },
     // LEGENDARY: Autonomous Unit
     drone_burst:     { cat:'atk_drone', label:'Burst Fire',      desc:'Drone fires in 3-shot bursts dealing +50% total damage per burst', apply: () => { _perkState.droneBurst=true; } },
     drone_shield:    { cat:'atk_drone', label:'Shield Siphon',   desc:'Drone hits restore 5 shield HP to you per hit',    apply: () => { _perkState.droneShield=true; } },
     drone_emp5:      { cat:'atk_drone', label:'EMP Drone',       desc:'Every 5th drone shot stuns target for 0.8s',       apply: () => { _perkState.droneEmp5=true; } },
     drone_range:     { cat:'atk_drone', label:'Extended Range',  desc:'Drone targeting range +150px (stackable)',         apply: () => { _perkState.droneRange=(_perkState.droneRange||0)+150; } },
-    autonomous_unit: { cat:'atk_drone', once:true, legendary:true, label:'Autonomous Unit',
+    drone_autonomous_unit:{ cat:'atk_drone', once:true, legendary:true, label:'Autonomous Unit',
         desc:'LEGENDARY — Drone deploys automatically each round and stays until destroyed. Respawns 12s after death. Kills reduce respawn by −1s each.',
-        apply: () => { _perkState.autonomousUnit=true; } },
+        apply: () => { _perkState.droneAutonomousUnit=true; } },
 
     // ── GHOST ASSASSIN PERKS ────────────────────────────────────
-    ghost_jump:      { cat:'jump', label:'Ghost Jump',     desc:'During JUMP air time, enemies stop targeting you',  apply: () => { _perkState.ghostJump=true; } },
-    kinetic_landing: { cat:'jump', label:'Kinetic Landing',desc:'Landing within 80px of enemy: 40–120 dmg scaled to jump distance', apply: () => { _perkState.kineticLanding=(_perkState.kineticLanding||0)+1; } },
-    double_tap_jump: { cat:'jump', label:'Double Tap',     desc:'JUMP has 2 charges per cooldown period',           apply: () => { _perkState.jumpCharges=2; } },
-    snap_charge:     { cat:'rail', label:'Snap Charge',    desc:'First RAIL shot each round fires instantly (no charge time)', apply: () => { _perkState.snapCharge=true; _perkState._snapChargeReady=true; } },
-    tungsten_core:   { cat:'rail', label:'Tungsten Core',  desc:'RAIL shots ignore enemy shields entirely',         apply: () => { _perkState.tungstenCore=true; } },
-    piercing_momentum:{ cat:'rail',label:'Piercing Momentum',desc:'Each enemy pierced by RAIL: +25% damage for that shot (stackable)', apply: () => { _perkState.piercingMomentum=(_perkState.piercingMomentum||0)+0.25; } },
-    one_shot:        { cat:'sr',  label:'One Shot',        desc:'SR: killing the target halves fire interval',      apply: () => { _perkState.oneShot=true; } },
-    penetrator:      { cat:'sr',  label:'Penetrator',      desc:'SR: +20% damage per 200px traveled',              apply: () => { _perkState.penetrator=(_perkState.penetrator||0)+0.20; } },
+    jump_kinetic_landing:{ cat:'jump', label:'Kinetic Landing',desc:'Landing within 80px of enemy: 40–120 dmg scaled to jump distance', apply: () => { _perkState.jumpKineticLanding=(_perkState.jumpKineticLanding||0)+1; } },
+    jump_double_tap: { cat:'jump', label:'Double Tap',     desc:'JUMP has 2 charges per cooldown period',           apply: () => { _perkState.jumpCharges=2; } },
+    rail_snap_charge:{ cat:'rail', label:'Snap Charge',    desc:'First RAIL shot each round fires instantly (no charge time)', apply: () => { _perkState.railSnapCharge=true; _perkState._railSnapChargeReady=true; } },
+    rail_tungsten_core:{ cat:'rail', label:'Tungsten Core',desc:'RAIL shots ignore enemy shields entirely',         apply: () => { _perkState.railTungstenCore=true; } },
+    rail_piercing_momentum:{ cat:'rail', label:'Piercing Momentum',desc:'Each enemy pierced by RAIL: +25% damage for that shot (stackable)', apply: () => { _perkState.railPiercingMomentum=(_perkState.railPiercingMomentum||0)+0.25; } },
+    sr_one_shot:     { cat:'sr',  label:'One Shot',        desc:'SR: killing the target halves fire interval',      apply: () => { _perkState.srOneShot=true; } },
+    sr_penetrator:   { cat:'sr',  label:'Penetrator',      desc:'SR: +20% damage per 200px traveled',              apply: () => { _perkState.srPenetrator=(_perkState.srPenetrator||0)+0.20; } },
     // LEGENDARY: Phantom Protocol
-    phantom_protocol:{ cat:'jump', once:true, legendary:true, label:'Phantom Protocol',
+    jump_phantom_protocol:{ cat:'jump', once:true, legendary:true, label:'Phantom Protocol',
         desc:'LEGENDARY — For 3s after landing from JUMP: your next shot deals 4× damage and pierces all targets.',
-        apply: () => { _perkState.phantomProtocol=true; } },
+        apply: () => { _perkState.jumpPhantomProtocol=true; } },
 
     // ── INFERNO WALL PERKS ──────────────────────────────────────
-    inferno:         { cat:'fth', label:'Inferno',         desc:'Ignited enemies spread fire to adjacent enemies on death', apply: () => { _perkState.inferno=true; } },
-    fuel_efficiency: { cat:'fth', label:'Fuel Efficiency', desc:'FTH fire rate +25% per stack',                    apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.75; } },
-    melt_armor:      { cat:'fth', label:'Melt Armor',      desc:'FTH hits reduce enemy DR by 10% for 4s (stacks to 3×)', apply: () => { _perkState.meltArmor=(_perkState.meltArmor||0)+1; } },
-    pressure_spray:  { cat:'fth', label:'Pressure Spray',  desc:'FTH slows enemies 20% while in the flame cone',   apply: () => { _perkState.pressureSpray=true; } },
-    napalm_strike:   { cat:'fth', label:'Napalm Strike',   desc:'FTH leaves a burning ground patch for 3s at impact point', apply: () => { _perkState.napalmStrike=true; } },
-    thorns_protocol: { cat:'barrier', label:'Thorns Protocol', desc:'While shield/barrier active: enemies hitting you take 20 reflected dmg per stack', apply: () => { _perkState.thornsProtocol=(_perkState.thornsProtocol||0)+20; } },
-    capacitor_armor: { cat:'barrier', label:'Capacitor Armor', desc:'Every 100 shield damage absorbed: next shot +25% damage', apply: () => { _perkState.capacitorArmor=(_perkState.capacitorArmor||0)+100; _perkState._capacitorCharge=0; } },
+    fth_inferno:     { cat:'fth', label:'Inferno',         desc:'Ignited enemies spread fire to adjacent enemies on death', apply: () => { _perkState.fthInferno=true; } },
+    fth_fuel_efficiency:{ cat:'fth', label:'Fuel Efficiency', desc:'FTH fire rate +25% per stack',                 apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.75; } },
+    fth_melt_armor:  { cat:'fth', label:'Melt Armor',      desc:'FTH hits reduce enemy DR by 10% for 4s (stacks to 3×)', apply: () => { _perkState.fthMeltArmor=(_perkState.fthMeltArmor||0)+1; } },
+    fth_pressure_spray:{ cat:'fth', label:'Pressure Spray',desc:'FTH slows enemies 20% while in the flame cone',   apply: () => { _perkState.fthPressureSpray=true; } },
+    fth_napalm_strike:{ cat:'fth', label:'Napalm Strike',  desc:'FTH leaves a burning ground patch for 3s at impact point', apply: () => { _perkState.fthNapalmStrike=true; } },
     // LEGENDARY: Meltdown Core
-    meltdown_core:   { cat:'fth', once:true, legendary:true, label:'Meltdown Core',
+    fth_meltdown_core:{ cat:'fth', once:true, legendary:true, label:'Meltdown Core',
         desc:'LEGENDARY — Passive heat aura: enemies within 180px take 8 dmg/s. Activating Barrier/Shield spikes to 60 instant AoE at 250px.',
-        apply: () => { _perkState.meltdownCore=true; } },
+        apply: () => { _perkState.fthMeltdownCore=true; } },
 
     // ══════════════════════════════════════════════════════════════
     // SMG PERKS (need 9 reg + 1 leg)
     // ══════════════════════════════════════════════════════════════
-    smg_mag_dump:    { cat:'smg', label:'Mag Dump',        desc:'SMG: last 4 bullets of each mag deal +60% damage',       apply: () => { _perkState.smgMagDump=true; } },
     smg_hollow:      { cat:'smg', label:'Hollow Points',   desc:'SMG: +15% damage at ranges under 160px (stackable)',      apply: () => { _perkState.smgHollow=(_perkState.smgHollow||0)+0.15; } },
-    smg_spray:       { cat:'smg', label:'Spray Pattern',   desc:'SMG: fire rate +20%, bullet spread +15% (stackable)',     apply: () => { _perkState.smgSpray=(_perkState.smgSpray||0)+1; } },
     smg_rupture:     { cat:'smg', label:'Rupture Rounds',  desc:'SMG hits cause bleeding: 3 dmg/s for 2s on each hit',    apply: () => { _perkState.smgRupture=true; } },
     smg_suppressor:  { cat:'smg', label:'Suppressor',      desc:'SMG shots slow enemies 8% per hit, stacking up to 4×',   apply: () => { _perkState.smgSuppressor=true; } },
     smg_tracer:      { cat:'smg', label:'Tracer Rounds',   desc:'Every 5th SMG bullet deals 3× damage',                   apply: () => { _perkState.smgTracer=true; } },
-    smg_burst:       { cat:'smg', label:'Burst Trigger',   desc:'SMG: first 3 shots of each fire cycle deal +40% damage', apply: () => { _perkState.smgBurst=true; } },
     smg_range:       { cat:'smg', label:'Extended Barrel', desc:'SMG range dropoff extended +40% (stackable)',             apply: () => { _perkState.smgRange=(_perkState.smgRange||0)+0.40; } },
     smg_lifesteal:   { cat:'smg', label:'Lifesteal',       desc:'SMG kills restore 5 core HP',                            apply: () => { _perkState.smgLifesteal=true; } },
 
@@ -212,11 +195,9 @@ const _perks = {
     // SG PERKS (need 8 reg + 1 leg)
     // ══════════════════════════════════════════════════════════════
     sg_spread:       { cat:'sg', label:'Wide Spread',      desc:'SG: +2 pellets per shot, wider spread cone',             apply: () => { _perkState.sgSpread=(_perkState.sgSpread||0)+2; } },
-    sg_slug:         { cat:'sg', label:'Slug Round',       desc:'Every 3rd SG shot is a single high-damage slug (×3 base dmg, no spread)', apply: () => { _perkState.sgSlug=true; } },
     sg_reload_kd:    { cat:'sg', label:'Pump Action Pro',  desc:'SG fire rate +20% (stackable)',                          apply: () => { _perkState.reloadMult=(_perkState.reloadMult||1)*0.80; } },
     sg_range_ext:    { cat:'sg', label:'Extended Choke',   desc:'SG max effective range +30%',                            apply: () => { _perkState.sgRangeExt=(_perkState.sgRangeExt||0)+0.30; } },
     sg_momentum:     { cat:'sg', label:'Knockback',        desc:'SG hits push enemies back slightly, disrupting movement', apply: () => { _perkState.sgKnockback=true; } },
-    sg_breacher:     { cat:'sg', label:'Breacher',         desc:'SG deals +40% damage to stationary enemies',             apply: () => { _perkState.sgBreacher=true; } },
     sg_lifesteal:    { cat:'sg', label:'Bloodsoak',        desc:'SG kills heal 8 core HP',                                apply: () => { _perkState.sgLifesteal=true; } },
     sg_buckshot:     { cat:'sg', label:'Dragon Breath',    desc:'SG pellets ignite enemies on hit (30% chance per pellet)',apply: () => { _perkState.sgDragonBreath=true; } },
     sg_legendary:    { cat:'sg', once:true, legendary:true, label:'Point Blank Protocol',
@@ -228,7 +209,6 @@ const _perks = {
     // ══════════════════════════════════════════════════════════════
     fth_afterburn:   { cat:'fth', label:'Afterburn',       desc:'FTH: ignited enemies continue burning 2s longer (stackable)', apply: () => { _perkState.fthAfterburn=(_perkState.fthAfterburn||0)+2; } },
     fth_intensity:   { cat:'fth', label:'High Intensity',  desc:'FTH base damage +25% (stackable)',                       apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.25; } },
-    fth_pyro_aura:   { cat:'fth', label:'Pyro Aura',       desc:'While FTH is active, you are immune to your own fire damage', apply: () => { _perkState.fthPyroAura=true; } },
 
     // ══════════════════════════════════════════════════════════════
     // HR PERKS (need 9 reg + 1 leg)
@@ -319,8 +299,6 @@ const _perks = {
     // ══════════════════════════════════════════════════════════════
     // JUMP MOD PERKS (need 4 reg — already has legendary)
     // ══════════════════════════════════════════════════════════════
-    jump_stealth:    { cat:'jump', label:'Ghost Launch',   desc:'JUMP launch grants 1s of invisibility',                   apply: () => { _perkState.jumpStealth=true; } },
-    jump_reload:     { cat:'jump', label:'Aerial Reset',   desc:'Resets both weapon fire delays during JUMP airtime',      apply: () => { _perkState.jumpAerialReload=true; } },
     jump_cooldown:   { cat:'jump', label:'Quick Recovery', desc:'JUMP cooldown -20% (stackable)',                          apply: () => { _perkState.jumpCooldownMult=(_perkState.jumpCooldownMult||1)*0.80; } },
     jump_dmg_boost:  { cat:'jump', label:'Apex Strike',    desc:'JUMP landing slam damage +50% (stackable)',               apply: () => { _perkState.jumpSlam=(_perkState.jumpSlam||0)+20; } },
 
@@ -465,8 +443,6 @@ const _perks = {
     // ══════════════════════════════════════════════════════════════
     // CHASSIS: LIGHT (need 2 reg + 1 leg)
     // ══════════════════════════════════════════════════════════════
-    light_chain_kill:{ cat:'light', label:'Chain Kill',     desc:'Light: killing 3 enemies without taking damage grants 3s of invincibility', apply: () => { _perkState.lightChainKill=true; } },
-    light_reflex:    { cat:'light', label:'Combat Reflex',  desc:'Light: dodging enemy fire (near miss) grants +25% damage for 2s', apply: () => { _perkState.lightReflex=true; } },
     light_legendary: { cat:'light', once:true, legendary:true, label:'Ghost Mech',
         desc:'LEGENDARY — Light: You are permanently semi-transparent to enemies (50% detection range). Kills extend this with a 2s full cloak.',
         apply: () => { _perkState.lightGhostMech=true; } },
@@ -489,13 +465,6 @@ const _perks = {
     heavy_legendary: { cat:'heavy', once:true, legendary:true, label:'Dreadnought',
         desc:'LEGENDARY — Heavy: +100 core HP, +80 arm/leg HP. Cannot be staggered. All incoming damage reduced by 25%. Fortress Mode cooldown halved.',
         apply: () => { _perkState.heavyDreadnought=true; } },
-
-    // ══════════════════════════════════════════════════════════════
-    // UNIVERSAL LEGENDARY (just need 1 leg)
-    // ══════════════════════════════════════════════════════════════
-    apex_predator:   { cat:'universal', once:true, legendary:true, label:'Apex Predator',
-        desc:'LEGENDARY — After 5 kills without taking damage: all weapons deal 2× damage, all mods have no cooldown, and you regen 5 HP/s. Resets if you take damage.',
-        apply: () => { _perkState.apexPredator=true; } },
 
     // ══════════════════════════════════════════════════════════════
     // LEG SYSTEM PERKS — one per unique leg
@@ -567,19 +536,19 @@ const _perks = {
         apply: () => { _perkState.sbLegendary=true; } },
 
     // GHOST LEGS (need 10 reg + 1 leg)
-    gl_burst_dmg:    { cat:'ghost_legs', label:'Pain Burst',      desc:'Ghost Legs damage burst: +20% damage for 1.5s after trigger', apply: () => { _perkState.glBurstDmg=true; } },
-    gl_cooldown2:    { cat:'ghost_legs', label:'Hair Trigger',    desc:'Ghost Legs trigger more easily (reduced velocity threshold)', apply: () => { _perkState.glCooldown2=true; } },
-    gl_shield_save:  { cat:'ghost_legs', label:'Shield Deflect',  desc:'Ghost Legs speed burst triggers a 0.5s shield regen', apply: () => { _perkState.glShieldSave=true; } },
-    gl_chain2:       { cat:'ghost_legs', label:'Chain Dash',      desc:'Ghost Legs can trigger multiple times within 3s before cooldown', apply: () => { _perkState.glChain2=true; } },
-    gl_counter:      { cat:'ghost_legs', label:'Counter Rush',    desc:'After Ghost Legs triggers: next shot deals +50% damage', apply: () => { _perkState.glCounter=true; } },
-    gl_invuln:       { cat:'ghost_legs', label:'Blink',           desc:'Ghost Legs burst grants 0.4s invincibility',          apply: () => { _perkState.glInvuln=true; } },
-    gl_speed2:       { cat:'ghost_legs', label:'Surge',           desc:'Ghost Legs burst speed increased +40%',               apply: () => { _perkState.glSpeed2=true; } },
-    gl_heal:         { cat:'ghost_legs', label:'Resilient',       desc:'Ghost Legs trigger heals 8 HP',                      apply: () => { _perkState.glHeal=true; } },
-    gl_emp2:         { cat:'ghost_legs', label:'Shock Step',      desc:'Ghost Legs burst stuns nearby enemies (80px) for 0.5s', apply: () => { _perkState.glEmp2=true; } },
-    gl_extend2:      { cat:'ghost_legs', label:'Long Stride',     desc:'Ghost Legs burst duration +0.15s',                   apply: () => { _perkState.glExtend2=true; } },
-    gl_legendary:    { cat:'ghost_legs', once:true, legendary:true, label:'Phantom Step',
+    gleg_burst_dmg:  { cat:'ghost_legs', label:'Pain Burst',      desc:'Ghost Legs damage burst: +20% damage for 1.5s after trigger', apply: () => { _perkState.glegBurstDmg=true; } },
+    gleg_cooldown:   { cat:'ghost_legs', label:'Hair Trigger',    desc:'Ghost Legs trigger more easily (reduced velocity threshold)', apply: () => { _perkState.glegCooldown=true; } },
+    gleg_shield_save:{ cat:'ghost_legs', label:'Shield Deflect',  desc:'Ghost Legs speed burst triggers a 0.5s shield regen', apply: () => { _perkState.glegShieldSave=true; } },
+    gleg_chain:      { cat:'ghost_legs', label:'Chain Dash',      desc:'Ghost Legs can trigger multiple times within 3s before cooldown', apply: () => { _perkState.glegChain=true; } },
+    gleg_counter:    { cat:'ghost_legs', label:'Counter Rush',    desc:'After Ghost Legs triggers: next shot deals +50% damage', apply: () => { _perkState.glegCounter=true; } },
+    gleg_invuln:     { cat:'ghost_legs', label:'Blink',           desc:'Ghost Legs burst grants 0.4s invincibility',          apply: () => { _perkState.glegInvuln=true; } },
+    gleg_speed:      { cat:'ghost_legs', label:'Surge',           desc:'Ghost Legs burst speed increased +40%',               apply: () => { _perkState.glegSpeed=true; } },
+    gleg_heal:       { cat:'ghost_legs', label:'Resilient',       desc:'Ghost Legs trigger heals 8 HP',                      apply: () => { _perkState.glegHeal=true; } },
+    gleg_emp:        { cat:'ghost_legs', label:'Shock Step',      desc:'Ghost Legs burst stuns nearby enemies (80px) for 0.5s', apply: () => { _perkState.glegEmp=true; } },
+    gleg_extend:     { cat:'ghost_legs', label:'Long Stride',     desc:'Ghost Legs burst duration +0.15s',                   apply: () => { _perkState.glegExtend=true; } },
+    gleg_legendary:  { cat:'ghost_legs', once:true, legendary:true, label:'Phantom Step',
         desc:'LEGENDARY — Ghost Legs activates automatically whenever you take any damage. Burst speed +100%. Grants 1s invincibility each trigger.',
-        apply: () => { _perkState.glLegendary=true; } },
+        apply: () => { _perkState.glegLegendary=true; } },
 
     // SEISMIC DAMPENER (need 10 reg + 1 leg)
     sd_leg_armor:    { cat:'seismic_dampener', label:'Shock Absorb',  desc:'Seismic Dampener: legs take 15% less damage (stackable)', apply: () => { _perkState.sdLegArmor=(_perkState.sdLegArmor||0)+0.15; } },
@@ -712,7 +681,7 @@ const _perks = {
     blood_pact:          { cat:'universal', once:true, label:'Blood Pact',       desc:'Kills restore 10 HP, but you lose 2 HP/s passively',         apply: () => { _perkState.bloodPact=true; } },
     overdrive_protocol:  { cat:'universal', once:true, label:'Overdrive Protocol',desc:'+50% fire rate, but fire rate penalty doubled',              apply: () => { _perkState.overdriveProtocol=true; } },
     vampiric_rounds:     { cat:'universal', once:true, label:'Vampiric Rounds',  desc:'All damage dealt restores 3% as HP, but -15% max HP',        apply: () => { _perkState.vampiricRounds=true; Object.values(player.comp).forEach(c=>{c.max=Math.round(c.max*0.85);c.hp=Math.min(c.hp,c.max);}); } },
-    kamikaze_protocol:   { cat:'heavy',     once:true, label:'Kamikaze Protocol',desc:'+60% explosion damage, but all explosions also damage you',  apply: () => { _perkState.kamikazeProtocol=true; _perkState.blastMult=(_perkState.blastMult||0)+0.60; } },
+    heavy_kamikaze_protocol:{ cat:'heavy',  once:true, label:'Kamikaze Protocol',desc:'+60% explosion damage, but all explosions also damage you',  apply: () => { _perkState.heavyKamikazeProtocol=true; _perkState.blastMult=(_perkState.blastMult||0)+0.60; } },
 
     // ── LIGHT CHASSIS (5 new) ────────────────────────────────────
     light_evasion_master:{ cat:'light', label:'Evasion Master',   desc:'Light: dodge chance +8% (stackable)',                                       apply: () => { _perkState.dodgeChance=(_perkState.dodgeChance||0)+0.08; } },
@@ -929,23 +898,14 @@ function _pickFrom(pool, n, exclude) {
 // ═══════════ PERK LIFECYCLE HELPERS ═══════════
 
 function _tickPerkExpiries(time) {
-    // Hit-and-run speed bonus expiry
-    if (_perkState._hitRunActive && time > _perkState._hitRunTimer) {
-        _perkState._hitRunActive = false;
-        _perkState.speedMult = Math.max(1, _perkState.speedMult / (1 + 0.25 * _perkState.hitRunStacks));
-    }
     // Adaptive armor DR bonus expiry
     if (_perkState._adaptiveActive && time > _perkState._adaptiveTimer) {
         _perkState._adaptiveActive = false;
-        _perkState.fortress = Math.max(0, _perkState.fortress - 0.10 * _perkState.adaptiveArmor);
+        _perkState.fortress = Math.max(0, _perkState.fortress - 0.10 * _perkState.mediumAdaptiveArmor);
     }
     // Battle rhythm bonus (recalculate each frame based on kills this round)
-    if (_perkState.battleRhythm > 0) {
-        _perkState._battleRhythmBonus = Math.floor(_roundKills / 5) * 0.10 * _perkState.battleRhythm;
-    }
-    // Flicker invincibility expiry
-    if (_perkState._flickerActive && time > _perkState._flickerLastTrigger + 300) {
-        _perkState._flickerActive = false;
+    if (_perkState.mediumBattleRhythm > 0) {
+        _perkState._battleRhythmBonus = Math.floor(_roundKills / 5) * 0.10 * _perkState.mediumBattleRhythm;
     }
 }
 
@@ -996,30 +956,25 @@ function selectPerks() {
 
 function resetRoundPerks() {
     // Resilience: restore destroyed arms at 50% HP
-    if (_perkState.resilience && player?.comp) {
+    if (_perkState.mediumResilience && player?.comp) {
         if (_lArmDestroyed) { _lArmDestroyed = false; loadout.L = _savedL || loadout.L || 'none'; player.comp.lArm.hp = Math.round(player.comp.lArm.max*0.5); updateHUD(); }
         if (_rArmDestroyed) { _rArmDestroyed = false; loadout.R = _savedR || loadout.R || 'none'; player.comp.rArm.hp = Math.round(player.comp.rArm.max*0.5); updateHUD(); }
     }
     // One-shot activation flags
-    if (_perkState.ironWill)      _perkState._ironWillUsed     = false;
-    if (_perkState.glassStep)     _perkState._glassStepUsed    = false;
+    if (_perkState.heavyIronWill) _perkState._heavyIronWillUsed = false;
     if (_perkState.heavyCoreTank) _perkState._heavyCoreTankUsed = false;
-    if (_perkState.snapCharge)  _perkState._snapChargeReady = true;
+    if (_perkState.railSnapCharge) _perkState._railSnapChargeReady = true;
     if (_perkState.jumpCharges > 1) _perkState._jumpChargesLeft = _perkState.jumpCharges;
     // Kill-based counters
-    _perkState._killStreakCount   = 0;
-    _perkState._killStreakActive  = false;
     _perkState._pressureTarget   = null;
     _perkState._pressureStacks   = 0;
-    _perkState.overwatchKills     = 0;
+    _perkState.droneOverwatchKills = 0;
     // Activation-state flags
     _perkState._neuralAccelActive  = false;
     _perkState._phantomActive      = false;
     _perkState._phantomShotReady   = false;
-    _perkState._capacitorCharge    = 0;
-    _perkState._capacitorReady     = false;
     // Autonomous Unit: destroy existing auto-drone before next round
-    if (_perkState.autonomousUnit) {
+    if (_perkState.droneAutonomousUnit) {
         try {
             if (_perkState._autoDroneRef?.active) _perkState._autoDroneRef.destroy();
         } catch(e) {}
@@ -1033,6 +988,6 @@ function resetRoundPerks() {
 }
 
 function _resetPerkState() {
-    return { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:0, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, siegeMode:0, ironWill:false, reactorCore:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, anchorFortress:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
+    return { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:0, armorPierce:0, autoRepair:0, lastStand:false, fieldEngineer:0, commanderBounty:false, dodgeChance:0, jumpCdMult:1, mediumSuppressStacks:0, mediumBattleRhythm:0, mediumResilience:false, mediumAdaptiveArmor:0, fortress:0, heavySiegeMode:0, heavyIronWill:false, heavyReactorCore:false, heavyKamikazeProtocol:false, pointBlank:0, srColdShot:false, srColdShotReady:false, glClusterRounds:false, rlAfterburn:false, shieldReactive:0, rageDurMult:1, jumpSpeedMult:1, empChain:false, plsmMult:1, _adaptiveActive:false, _adaptiveTimer:0, _suppressedEnemies:new Map(), _heavyIronWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, hollowPoint:0, threatScanner:0, opportunist:0, mediumPressureSystem:0, _pressureTarget:null, _pressureStacks:0, mediumResonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, scrapShield:0, heavyTitanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, heavyScorchedEarth:false, maFortress:false, painterDuration:0, taDeep:false, rpMaxStacks:5, droneUplink:0, droneCdMult:1, droneNeuralLink:0, droneSwarmLogic:0, droneArmor:0, droneOverwatchStacks:0, droneOverwatchKills:0, droneAutonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, jumpKineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, railSnapCharge:false, _railSnapChargeReady:false, railTungstenCore:false, railPiercingMomentum:0, srOneShot:false, srPenetrator:0, jumpPhantomProtocol:false, _phantomActive:false, _phantomTimer:null, decoyTwin:false, decoyGhostExit:false, decoyPhantomArmy:false, fthInferno:false, fthMeltArmor:0, fthPressureSpray:false, fthNapalmStrike:false, fthMeltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false };
 }
 

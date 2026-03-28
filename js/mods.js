@@ -63,7 +63,7 @@ function activateDecoy(scene, time) {
     // decoy_duration perk extends lifetime; phantom_army makes it permanent
     const effectiveDuration = mod.decoyDuration + (_perkState.decoyDuration || 0);
 
-    if (_perkState.phantomArmy) {
+    if (_perkState.decoyPhantomArmy) {
         if (!window._phantomDecoys) window._phantomDecoys = [];
         window._phantomDecoys.push({ torso: decoyTorso, label: decoyLabel, drift: driftEvent, fire: decoyFireEvent });
         if (window._phantomDecoys.length > 3) {
@@ -81,8 +81,8 @@ function activateDecoy(scene, time) {
         decoyFireEvent.remove();
         enemies.getChildren().forEach(e => { if (e) e._decoyTarget = null; });
         window._activeDecoy = null;
-        // ghost_exit: cloak for 2s after decoy expires
-        if (_perkState.ghostExit && player?.active && isDeployed) {
+        // Decoy Ghost Exit: cloak for 2s after decoy expires
+        if (_perkState.decoyGhostExit && player?.active && isDeployed) {
             player._ghostExitActive = true;
             const gscene = GAME.scene.scenes[0];
             if (torso) torso.setAlpha(0.15);
@@ -285,7 +285,7 @@ function activateShield(scene) {
     sndShieldActivate();
     isShieldActive = true;
     // Meltdown Core: spike 60 AoE at 250px on activation
-    if (_perkState.meltdownCore) {
+    if (_perkState.fthMeltdownCore) {
         enemies.getChildren().forEach(e => {
             if (!e.active) return;
             const _mds = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
@@ -335,8 +335,8 @@ function activateJump(scene) {
                 clearTimeout(_perkState._neuralAccelTimer);
                 _perkState._neuralAccelTimer = setTimeout(() => { _perkState._neuralAccelActive = false; }, 3000);
             }
-            // Phantom Protocol: 3s window — next shot is 4× + pierce
-            if (_perkState.phantomProtocol) {
+            // Jump Phantom Protocol: 3s window — next shot is 4× + pierce
+            if (_perkState.jumpPhantomProtocol) {
                 _perkState._phantomActive = true;
                 _perkState._phantomShotReady = true;
                 clearTimeout(_perkState._phantomTimer);
@@ -360,13 +360,13 @@ function activateJump(scene) {
                 const dist = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
                 if (dist < slamR) damageEnemy(e, slamDmg * (1 - dist/slamR));
             });
-            // Kinetic Landing: bonus damage to enemies within 80px
-            if (_perkState.kineticLanding > 0) {
+            // Jump Kinetic Landing: bonus damage to enemies within 80px
+            if (_perkState.jumpKineticLanding > 0) {
                 enemies.getChildren().forEach(e => {
                     if (!e.active) return;
                     const kd = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
                     if (kd < 80) {
-                        const kDmg = Math.round((40 + Math.min(80, jumpSpd / 15)) * _perkState.kineticLanding);
+                        const kDmg = Math.round((40 + Math.min(80, jumpSpd / 15)) * _perkState.jumpKineticLanding);
                         damageEnemy(e, kDmg);
                         showDamageText(scene, e.x, e.y - 20, kDmg);
                     }
@@ -497,7 +497,7 @@ function _spawnDrone(scene, offsetX, offsetY, isAuto) {
         if (target) {
             const baseDmg = mod.droneDmg;
             const uplink  = 1 + (_perkState.droneUplink || 0);
-            const overw   = 1 + (_perkState.overwatchStacks > 0 ? (_perkState.overwatchKills || 0) * 0.20 * _perkState.overwatchStacks : 0);
+            const overw   = 1 + (_perkState.droneOverwatchStacks > 0 ? (_perkState.droneOverwatchKills || 0) * 0.20 * _perkState.droneOverwatchStacks : 0);
             const dmg     = Math.round(baseDmg * uplink * overw);
             damageEnemy(target, dmg, 0);
             showDamageText(scene, target.x, target.y, dmg);
@@ -515,17 +515,17 @@ function _spawnDrone(scene, offsetX, offsetY, isAuto) {
         }
     }});
 
-    // Neural Link: reload boost while drone is active
-    if (_perkState.neuralLink > 0) {
-        _perkState.reloadMult = (_perkState.reloadMult || 1) * (1 - _perkState.neuralLink);
+    // Drone Neural Link: reload boost while drone is active
+    if (_perkState.droneNeuralLink > 0) {
+        _perkState.reloadMult = (_perkState.reloadMult || 1) * (1 - _perkState.droneNeuralLink);
     }
 
     function destroyDrone() {
         if (!drone.active) return;
         drone.destroy(); droneTicker.remove(); followEvent.remove();
-        // Neural Link: remove reload boost
-        if (_perkState.neuralLink > 0) {
-            _perkState.reloadMult = (_perkState.reloadMult || 1) / (1 - _perkState.neuralLink);
+        // Drone Neural Link: remove reload boost
+        if (_perkState.droneNeuralLink > 0) {
+            _perkState.reloadMult = (_perkState.reloadMult || 1) / (1 - _perkState.droneNeuralLink);
         }
         if (isAuto) {
             _perkState._autoDroneActive = false;
@@ -805,7 +805,7 @@ function activateMod(scene, time) {
         case 'repair':    activateRepair(scene, time);   break;
         case 'atk_drone':
             // Block manual activation when Autonomous Unit legendary is active
-            if (_perkState.autonomousUnit) return;
+            if (_perkState.droneAutonomousUnit) return;
             activateDrone(scene, time);
             break;
         case 'missile':   activateMissiles(scene, time); break;
