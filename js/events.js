@@ -222,7 +222,10 @@ function handlePlayerMovement(scene, time) {
     const effectiveModCooldown = (isChargeActive ? modCooldown * 0.5
         : (loadout.chassis === 'medium' ? modCooldown * (CHASSIS.medium.modCooldownMult || 0.85) : modCooldown))
         * _gearModCdMult
-        * (loadout.cpu === 'jump' ? (_perkState.jumpCdMult || 1) * (_perkState.jumpCooldownMult || 1) : 1);
+        * (loadout.cpu === 'jump' ? (_perkState.jumpCdMult || 1) * (_perkState.jumpCooldownMult || 1) : 1)
+        * (loadout.cpu === 'fortress_mode'
+            ? (1 - (_perkState.fmCooldown || 0)) * (_perkState.heavyDreadnought ? 0.5 : 1)
+            : 1);
     if (keys.SPACE.isDown && !isJumping && !isShieldActive && !isRageActive && time > lastModTime + effectiveModCooldown) {
         activateMod(scene, time);
     }
