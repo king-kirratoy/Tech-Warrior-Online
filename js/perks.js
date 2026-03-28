@@ -1,5 +1,20 @@
 // ═══════════ PERKS DATA ═══════════
 
+// Perks kept for future implementation — hidden from selection pool until game code reads their state flags
+const _hiddenPerks = new Set([
+  'ricochet_rounds',
+  'smg_ricochet',
+  'mg_explosive_tips',
+  'sg_incendiary',
+  'br_crit_burst',
+  'hr_concussive',
+  'sr_double_shot',
+  'gl_toxic',
+  'rl_napalm',
+  'plsm_gravity',
+  'rail_chain_lightning',
+]);
+
 const _perks = {
     // ── UNIVERSAL OFFENSE ──────────────────────────────────────────────
     heavy_rounds:    { cat:'universal', label:'Heavy Rounds',       desc:'+20% weapon damage (stackable)',     apply: () => { _perkState.dmgMult=(_perkState.dmgMult||1)*1.20; } },
@@ -689,34 +704,8 @@ const _perks = {
 
     // ── UNIVERSAL OFFENSE (10 new) ───────────────────────────────
     armor_piercing:      { cat:'universal', label:'Armor Piercing',    desc:'Bullets ignore 10% of enemy damage reduction (stackable)',            apply: () => { _perkState.armorPierce=(_perkState.armorPierce||0)+0.10; } },
-    double_tap:          { cat:'universal', label:'Double Tap',        desc:'10% chance to fire an extra bullet per shot (stackable)',              apply: () => { _perkState.doubleTap=(_perkState.doubleTap||0)+0.10; } },
-    precision_strike:    { cat:'universal', label:'Precision Strike',  desc:'+25% damage to enemies above 80% HP (stackable)',                     apply: () => { _perkState.precisionStrike=(_perkState.precisionStrike||0)+0.25; } },
-    momentum_kill:       { cat:'universal', label:'Momentum',          desc:'Each kill this round grants +3% damage (max +30%, resets each round)', apply: () => { _perkState.momentumKill=(_perkState.momentumKill||0)+1; } },
     ricochet_rounds:     { cat:'universal', label:'Ricochet Rounds',   desc:'Bullets that miss have 15% chance to ricochet toward nearest enemy',  apply: () => { _perkState.ricochetRounds=(_perkState.ricochetRounds||0)+0.15; } },
-    vulnerability:       { cat:'universal', label:'Vulnerability',     desc:'Enemies hit 3 times in 2s take +20% damage for 4s',                   apply: () => { _perkState.vulnerability=true; } },
-    finishing_blow:      { cat:'universal', label:'Finishing Blow',     desc:'+50% damage to enemies below 20% HP (stackable)',                     apply: () => { _perkState.finishingBlow=(_perkState.finishingBlow||0)+0.50; } },
-    focus_fire:          { cat:'universal', label:'Focus Fire',        desc:'Hitting the same enemy 5 times in a row: next hit deals 2× damage',   apply: () => { _perkState.focusFire=true; } },
-    combat_stim:         { cat:'universal', label:'Combat Stim',       desc:'After taking damage: +15% fire rate for 3s (stackable)',               apply: () => { _perkState.combatStim=(_perkState.combatStim||0)+0.15; } },
-    executioner:         { cat:'universal', label:'Executioner',       desc:'Kills grant +5% crit chance for 5s (stacks up to 4×)',                apply: () => { _perkState.executioner=true; } },
 
-    // ── UNIVERSAL SURVIVABILITY (8 new) ──────────────────────────
-    nano_repair:         { cat:'universal', label:'Nano Repair',       desc:'Regenerate 2 HP/s to your most-damaged limb (stackable)',              apply: () => { _perkState.nanoRepair=(_perkState.nanoRepair||0)+2; } },
-    emergency_shield:    { cat:'universal', label:'Emergency Shield',  desc:'Below 15% core HP: shield instantly restores to 50% (once per round)', apply: () => { _perkState.emergencyShield=true; } },
-    damage_cap:          { cat:'universal', label:'Damage Cap',        desc:'No single hit can deal more than 40% of your max core HP',             apply: () => { _perkState.damageCap=true; } },
-    reactive_hull:       { cat:'universal', label:'Reactive Hull',     desc:'After being hit 3 times in 2s: gain 20% DR for 3s',                   apply: () => { _perkState.reactiveHull=true; } },
-    second_wind:         { cat:'universal', label:'Second Wind',       desc:'Surviving a lethal hit restores 25% core HP (once per round)',          apply: () => { _perkState.secondWind=true; } },
-    hardened_systems:    { cat:'universal', label:'Hardened Systems',   desc:'Limbs take 10% less damage (stackable)',                              apply: () => { _perkState.hardenedSystems=(_perkState.hardenedSystems||0)+0.10; } },
-    vital_strike:        { cat:'universal', label:'Vital Strike',      desc:'Crits restore 5 HP (stackable)',                                      apply: () => { _perkState.vitalStrike=(_perkState.vitalStrike||0)+5; } },
-    energy_converter:    { cat:'universal', label:'Energy Converter',  desc:'10% of damage dealt is converted to shield HP (stackable)',            apply: () => { _perkState.energyConverter=(_perkState.energyConverter||0)+0.10; } },
-
-    // ── UNIVERSAL UTILITY (7 new) ────────────────────────────────
-    quick_swap:          { cat:'universal', label:'Quick Swap',        desc:'Switching weapons is instant and grants +20% damage for 1s',           apply: () => { _perkState.quickSwap=true; } },
-    tactical_reload:     { cat:'universal', label:'Tactical Reset',    desc:'Kills during a fire delay instantly reset the fire delay',            apply: () => { _perkState.tacticalReload=true; } },
-    combat_awareness:    { cat:'universal', label:'Combat Awareness',  desc:'Enemies within 200px are highlighted through cover',                   apply: () => { _perkState.combatAwareness=true; } },
-    scrap_collector:     { cat:'universal', label:'Scrap Collector',   desc:'Every 10 kills: gain a random temporary buff for 15s',                 apply: () => { _perkState.scrapCollector=true; } },
-    resource_recycler:   { cat:'universal', label:'Resource Recycler', desc:'Loot orbs grant 50% more benefit (stackable)',                         apply: () => { _perkState.resourceRecycler=(_perkState.resourceRecycler||0)+0.50; } },
-    field_medic_univ:    { cat:'universal', label:'Field Medic',       desc:'Loot health orbs restore 50% more HP (stackable)',                     apply: () => { _perkState.fieldMedic=(_perkState.fieldMedic||0)+0.50; } },
-    munitions_expert:    { cat:'universal', label:'Munitions Expert',  desc:'Explosive damage +15% (GL, RL) (stackable)',                           apply: () => { _perkState.munitionsExpert=(_perkState.munitionsExpert||0)+0.15; } },
 
     // ── UNIVERSAL TRADEOFFS (5 new) ──────────────────────────────
     reckless_charge:     { cat:'universal', once:true, label:'Reckless Charge',  desc:'+20% speed, +15% damage, but shield max HP halved',          apply: () => { _perkState.speedMult=(_perkState.speedMult||1)*1.20; _perkState.dmgMult=(_perkState.dmgMult||1)*1.15; player.maxShield=Math.round(player.maxShield*0.50); player.shield=Math.min(player.shield,player.maxShield); } },
@@ -727,97 +716,43 @@ const _perks = {
 
     // ── LIGHT CHASSIS (5 new) ────────────────────────────────────
     light_evasion_master:{ cat:'light', label:'Evasion Master',   desc:'Light: dodge chance +8% (stackable)',                                       apply: () => { _perkState.dodgeChance=(_perkState.dodgeChance||0)+0.08; } },
-    light_nimble:        { cat:'light', label:'Nimble',            desc:'Light: turn rate +30%, acceleration +25%',                                  apply: () => { _perkState.lightNimble=true; } },
-    light_quick_draw:    { cat:'light', label:'Quick Draw',        desc:'Light: first shot after idle deals +40% damage',                            apply: () => { _perkState.lightQuickDraw=true; } },
-    light_shadow_dance:  { cat:'light', label:'Shadow Dance',      desc:'Light: kills while moving grant 1s invisibility',                          apply: () => { _perkState.lightShadowDance=true; } },
 
-    // ── MEDIUM CHASSIS (5 new) ───────────────────────────────────
-    medium_versatile:    { cat:'medium', label:'Versatile',       desc:'Medium: all mod effects are 15% stronger (stackable)',                       apply: () => { _perkState.mediumVersatile=(_perkState.mediumVersatile||0)+0.15; } },
-    medium_iron_resolve: { cat:'medium', label:'Iron Resolve',    desc:'Medium: taking lethal arm damage triggers 2s of +30% DR',                    apply: () => { _perkState.mediumIronResolve=true; } },
-    medium_tactician:    { cat:'medium', label:'Tactician',        desc:'Medium: each different enemy type killed grants +5% damage (round)',         apply: () => { _perkState.mediumTactician=true; } },
-    medium_steady_hand:  { cat:'medium', label:'Steady Hand',     desc:'Medium: accuracy improves 10% for each second you hold fire (max +30%)',     apply: () => { _perkState.mediumSteadyHand=true; } },
-    medium_mod_synergy:  { cat:'medium', label:'Mod Synergy',      desc:'Medium: activating a mod grants +10% damage for 5s',                        apply: () => { _perkState.mediumModSynergy=true; } },
+    // ── MEDIUM CHASSIS (2 new) ───────────────────────────────────
 
-    // ── HEAVY CHASSIS (5 new) ────────────────────────────────────
-    heavy_juggernaut:    { cat:'heavy', label:'Juggernaut',       desc:'Heavy: immune to all slow and stagger effects',                              apply: () => { _perkState.heavyJuggernaut=true; } },
+    // ── HEAVY CHASSIS (2 new) ────────────────────────────────────
     heavy_wrecking_ball: { cat:'heavy', label:'Wrecking Ball',    desc:'Heavy: contact with enemies deals 15 damage (stackable)',                     apply: () => { _perkState.groundPound=(_perkState.groundPound||0)+15; } },
     heavy_endurance:     { cat:'heavy', label:'Endurance',         desc:'Heavy: passive core regen +3 HP/s (stackable)',                              apply: () => { _perkState.autoRepair=(_perkState.autoRepair||0)+3; } },
-    heavy_intimidate:    { cat:'heavy', label:'Intimidate',        desc:'Heavy: enemies within 250px deal 10% less damage',                           apply: () => { _perkState.heavyIntimidate=true; } },
 
     // ── SMG (5 new) ─────────────────────────────────────────────
     smg_ricochet:        { cat:'smg', label:'Ricochet',           desc:'SMG bullets that hit cover bounce toward nearest enemy (15% chance)',         apply: () => { _perkState.smgRicochet=true; } },
-    smg_adrenaline:      { cat:'smg', label:'Adrenaline Rush',   desc:'SMG: kills at close range (<120px) grant +20% speed for 2s',                 apply: () => { _perkState.smgAdrenaline=true; } },
-    smg_armor_shred:     { cat:'smg', label:'Armor Shred',        desc:'SMG: sustained fire reduces enemy DR by 3% per hit (max 15%)',               apply: () => { _perkState.smgArmorShred=true; } },
-    smg_overdose:        { cat:'smg', label:'Overdose',           desc:'SMG: when enemy is below 30% HP, fire rate doubles against them',            apply: () => { _perkState.smgOverdose=true; } },
 
-    // ── MG (5 new) ──────────────────────────────────────────────
-    mg_suppression:      { cat:'mg', label:'Suppression Fire',    desc:'MG: hits reduce enemy accuracy by 20% for 2s (stackable)',                   apply: () => { _perkState.mgSuppression=true; } },
-    mg_chain_fire:       { cat:'mg', label:'Chain Fire',           desc:'MG: each consecutive hit increases fire rate by 2% (max +20%)',              apply: () => { _perkState.mgChainFire=true; } },
+    // ── MG (1 new) ──────────────────────────────────────────────
     mg_explosive_tips:   { cat:'mg', label:'Explosive Tips',      desc:'MG: every 10th bullet creates a small explosion (40 dmg, 50px)',             apply: () => { _perkState.mgExplosiveTips=true; } },
 
     // ── SG (5 new) ──────────────────────────────────────────────
-    sg_double_barrel:    { cat:'sg', label:'Double Barrel',       desc:'SG: fire two shots at once (uses 2 ammo), doubled pellets per trigger',      apply: () => { _perkState.sgDoubleBarrel=true; } },
     sg_incendiary:       { cat:'sg', label:'Incendiary Shell',    desc:'SG: every 3rd shot fires incendiary pellets that ignite on hit',             apply: () => { _perkState.sgIncendiary=true; } },
-    sg_stun_round:       { cat:'sg', label:'Stun Round',          desc:'SG: first pellet of each shot stuns enemy for 0.5s',                        apply: () => { _perkState.sgStunRound=true; } },
-    sg_combat_roll:      { cat:'sg', label:'Combat Roll',         desc:'SG: kills grant +30% move speed for 1.5s',                                  apply: () => { _perkState.sgCombatRoll=true; } },
-    sg_shrapnel:         { cat:'sg', label:'Shrapnel Shell',      desc:'SG: pellets fragment on hit, dealing 40% splash to nearby enemies (80px)',   apply: () => { _perkState.sgShrapnel=true; } },
 
-    // ── BR (5 new) ──────────────────────────────────────────────
-    br_armor_crack:      { cat:'br', label:'Armor Crack',        desc:'BR: full burst on same target reduces their DR by 15% for 4s',               apply: () => { _perkState.brArmorCrack=true; } },
-    br_recoil_comp:      { cat:'br', label:'Recoil Comp',        desc:'BR: burst spread reduced by 40%, tighter grouping',                          apply: () => { _perkState.brRecoilComp=true; } },
-    br_kill_feed:        { cat:'br', label:'Kill Feed',           desc:'BR: kills instantly reset fire rate and grant +20% damage for next burst',   apply: () => { _perkState.brKillFeed=true; } },
-    br_double_burst:     { cat:'br', label:'Double Burst',        desc:'BR: fires 2 bursts per trigger pull (second at -25% damage)',                apply: () => { _perkState.brDoubleBurst=true; } },
+    // ── BR (1 new) ──────────────────────────────────────────────
     br_crit_burst:       { cat:'br', label:'Critical Burst',      desc:'BR: if all bullets of a burst hit, the last deals 3× damage',               apply: () => { _perkState.brCritBurst=true; } },
 
     // ── HR (5 new) ──────────────────────────────────────────────
-    hr_ricochet:         { cat:'hr', label:'Ricochet Round',     desc:'HR: bullets bounce to nearest enemy at 50% damage on kill',                   apply: () => { _perkState.hrRicochet=true; } },
-    hr_piercing:         { cat:'hr', label:'Full Bore',          desc:'HR: bullets pierce through 1 additional enemy (stackable)',                    apply: () => { _perkState.hrPiercing=(_perkState.hrPiercing||0)+1; } },
     hr_concussive:       { cat:'hr', label:'Concussive Round',   desc:'HR: hits stun target for 0.8s',                                              apply: () => { _perkState.hrConcussive=true; } },
-    hr_mark_target:      { cat:'hr', label:'Mark on Hit',        desc:'HR: hit targets take +20% damage from all sources for 3s',                    apply: () => { _perkState.hrMarkTarget=true; } },
 
-    // ── SR (4 new) ──────────────────────────────────────────────
-    sr_piercing_rounds:  { cat:'sr', label:'Armor Piercer',      desc:'SR: ignores all enemy damage reduction',                                      apply: () => { _perkState.srArmorPiercer=true; } },
+    // ── SR (1 new) ──────────────────────────────────────────────
     sr_double_shot:      { cat:'sr', label:'Double Shot',        desc:'SR: 20% chance to fire a second bullet immediately (stackable)',               apply: () => { _perkState.srDoubleShot=(_perkState.srDoubleShot||0)+0.20; } },
-    sr_tracer:           { cat:'sr', label:'Tracer Round',       desc:'SR: hit enemies are visible through cover for 5s',                            apply: () => { _perkState.srTracer=true; } },
-    sr_killstreak:       { cat:'sr', label:'Headhunter',         desc:'SR: consecutive kills without missing: +25% damage per streak',               apply: () => { _perkState.srKillstreak=true; } },
 
     // ── GL (4 new) ──────────────────────────────────────────────
-    gl_bouncing:         { cat:'gl', label:'Bouncing Grenade',   desc:'GL: grenades bounce once before detonating, extending range',                  apply: () => { _perkState.glBouncing=true; } },
     gl_toxic:            { cat:'gl', label:'Toxic Cloud',        desc:'GL: explosions leave a toxic cloud for 3s (5 dmg/tick)',                       apply: () => { _perkState.glToxic=true; } },
-    gl_impact:           { cat:'gl', label:'Impact Fuse',        desc:'GL: grenades explode on first contact (no fuse timer)',                        apply: () => { _perkState.glImpact=true; } },
-    gl_mag_grenade:      { cat:'gl', label:'Mag Grenade',        desc:'GL: grenades are magnetic and home toward nearby enemies',                     apply: () => { _perkState.glMagGrenade=true; } },
 
-    // ── RL (3 new) ──────────────────────────────────────────────
-    rl_guided:           { cat:'rl', label:'Guided Missile',     desc:'RL: rockets curve toward your crosshair after launch',                        apply: () => { _perkState.rlGuided=true; } },
-    rl_split:            { cat:'rl', label:'Split Warhead',      desc:'RL: rocket splits into 3 smaller rockets at 50% travel distance',             apply: () => { _perkState.rlSplit=true; } },
+    // ── RL (1 new) ──────────────────────────────────────────────
     rl_napalm:           { cat:'rl', label:'Napalm Warhead',     desc:'RL: explosion leaves a burning ground patch for 4s (8 dmg/tick)',             apply: () => { _perkState.rlNapalm=true; } },
 
-    // ── PLSM (3 new) ───────────────────────────────────────────
+    // ── PLSM (1 new) ───────────────────────────────────────────
     plsm_gravity:        { cat:'plsm', label:'Gravity Well',    desc:'PLSM: on impact, pulls enemies inward 100px before exploding',                 apply: () => { _perkState.plsmGravity=true; } },
-    plsm_split:          { cat:'plsm', label:'Split Orb',       desc:'PLSM: orb splits into 3 smaller orbs at 60% travel distance',                 apply: () => { _perkState.plsmSplit=true; } },
-    plsm_drain:          { cat:'plsm', label:'Energy Drain',    desc:'PLSM: enemies hit lose 30% movement speed for 3s',                            apply: () => { _perkState.plsmDrain=true; } },
 
-    // ── RAIL (3 new) ────────────────────────────────────────────
-    rail_double:         { cat:'rail', label:'Double Beam',      desc:'RAIL: fires 2 beams in a narrow spread',                                      apply: () => { _perkState.railDouble=true; } },
+    // ── RAIL (1 new) ────────────────────────────────────────────
     rail_chain_lightning:{ cat:'rail', label:'Chain Lightning',   desc:'RAIL: beam chains to 2 additional enemies near hit point (60% dmg)',          apply: () => { _perkState.railChainLightning=true; } },
-    rail_charge_bonus:   { cat:'rail', label:'Deep Charge',      desc:'RAIL: waiting full charge time grants +40% damage',                           apply: () => { _perkState.railChargeBonus=true; } },
 
-    // ── UNIVERSAL LEGENDARY (5 new) ──────────────────────────────
-    universal_phoenix:   { cat:'universal', once:true, legendary:true, label:'Phoenix Protocol',
-        desc:'LEGENDARY — On death, revive once per run at 50% HP with 3s invincibility. All enemies take 200 AoE damage on revival.',
-        apply: () => { _perkState.phoenixProtocol=true; } },
-    universal_overload:  { cat:'universal', once:true, legendary:true, label:'System Overload',
-        desc:'LEGENDARY — Every 30s, your next shot deals 5× damage. Timer visible on HUD. Kills reduce timer by 3s.',
-        apply: () => { _perkState.systemOverload=true; } },
-    universal_nullifier: { cat:'universal', once:true, legendary:true, label:'Nullifier Field',
-        desc:'LEGENDARY — Enemies within 300px have all buffs removed. Their fire rate, speed, and damage are reduced by 25%.',
-        apply: () => { _perkState.nullifierField=true; } },
-    universal_warlord:   { cat:'universal', once:true, legendary:true, label:'Warlord Ascendant',
-        desc:'LEGENDARY — Every 5 kills grants a permanent +5% damage and +3% speed boost for the rest of the run (no cap).',
-        apply: () => { _perkState.warlordAscendant=true; } },
-    universal_adaptive:  { cat:'universal', once:true, legendary:true, label:'Adaptive Evolution',
-        desc:'LEGENDARY — Each round survived permanently grants: +5% damage, +5% speed, +10 max core HP, +5% DR.',
-        apply: () => { _perkState.adaptiveEvolution=true; } },
 
     // ── LIGHT LEGENDARY (1 new) ──────────────────────────────────
     light_spectre:       { cat:'light', once:true, legendary:true, label:'Spectre',
@@ -1023,14 +958,14 @@ function selectPerks() {
     const leg = loadout.leg || 'none';
     const shld = loadout.shld || 'none';
 
-    // Build per-pool filtered lists
-    const universalPool = Object.keys(_perks).filter(k => _perks[k].cat === 'universal');
-    const chassisPool   = Object.keys(_perks).filter(k => _perks[k].cat === ch);
+    // Build per-pool filtered lists (exclude hidden perks — not yet implemented)
+    const universalPool = Object.keys(_perks).filter(k => _perks[k].cat === 'universal' && !_hiddenPerks.has(k));
+    const chassisPool   = Object.keys(_perks).filter(k => _perks[k].cat === ch && !_hiddenPerks.has(k));
     // Slot 4: weapon/mod/aug/leg/shield specific
     const specCats = [wL, wR, mod, aug, leg].filter(c => c && c !== 'none');
     // Shield perks use cat:'shield' but loadout.shld is e.g. 'light_shield' — map it
     if (shld && shld !== 'none') specCats.push('shield');
-    const weaponPool = Object.keys(_perks).filter(k => specCats.includes(_perks[k].cat));
+    const weaponPool = Object.keys(_perks).filter(k => specCats.includes(_perks[k].cat) && !_hiddenPerks.has(k));
 
     const chosen = [];
     // Slots 1 & 2 — universal
@@ -1098,6 +1033,6 @@ function resetRoundPerks() {
 }
 
 function _resetPerkState() {
-    return { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, siegeMode:0, ironWill:false, reactorCore:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, anchorFortress:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, adaptiveEvolution:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
+    return { dmgMult:1, reloadMult:1, speedMult:1, shieldRegenMult:1, lootMult:1, noShieldRegen:false, jumpDisabled:false, critChance:0, blastMult:1, armorPierce:0, adrenalineStacks:0, autoRepair:0, lastStand:false, fieldEngineer:0, empResist:0, commanderBounty:false, dodgeChance:0, hitRunStacks:0, jumpCdMult:1, flicker:false, predatorStacks:0, suppressStacks:0, battleRhythm:0, resilience:false, adaptiveArmor:0, fortress:0, siegeMode:0, ironWill:false, reactorCore:false, pointBlank:0, coldShot:false, coldShotReady:false, clusterRounds:false, afterburn:false, reactiveShield:0, rageDurMult:1, jumpSpeedMult:1, chainEmp:false, plsmMult:1, _hitRunActive:false, _hitRunTimer:0, _flickerActive:false, _flickerLastTrigger:0, _adaptiveActive:false, _adaptiveTimer:0, _predatorCharged:false, _suppressedEnemies:new Map(), _ironWillUsed:false, _battleRhythmBonus:0, targetPainter:false, _paintedEnemy:null, threatAnalyzer:false, overclockCpu:false, reactivePlating:false, _reactivePlatingStacks:0, railChargeActive:false, _railChargeStart:0, legSystemActive:true, mineLayerTimer:0, _magAnchorsActive:false, _droneActive:false, fthRange:0, hollowPoint:0, threatScanner:0, opportunist:0, pressureSystem:0, _pressureTarget:null, _pressureStacks:0, resonance:0, overchargeRounds:0, _shotCounter:0, incendiary:0, chainReaction:0, killStreak:0, _killStreakCount:0, _killStreakActive:false, glassStep:false, _glassStepUsed:false, scrapShield:0, titanCore:false, sgFlechette:0, srBreath:0, brMarksman:0, _mgShotCount:0, mgTracer:false, salvageProtocol:false, afterimage:false, barrierSpike:false, groundPound:0, empAmplifier:false, jumpSlam:0, rlTandem:false, plsmChain:false, rageFeed:0, _rageEndTime:0, scorchedEarth:false, anchorFortress:false, painterDuration:0, analyzerDepth:false, platingMaxStacks:5, droneUplink:0, droneCdMult:1, neuralLink:0, swarmLogic:0, droneArmor:0, overwatchStacks:0, overwatchKills:0, autonomousUnit:false, _autoDroneActive:false, _autoDroneRespawnTimer:null, ghostJump:false, kineticLanding:0, jumpCharges:1, _jumpChargesLeft:1, snapCharge:false, _snapChargeReady:false, tungstenCore:false, piercingMomentum:0, oneShot:false, penetrator:0, phantomProtocol:false, _phantomActive:false, _phantomTimer:null, inferno:false, meltArmor:0, pressureSpray:false, napalmStrike:false, thornsProtocol:0, capacitorArmor:0, _capacitorCharge:0, meltdownCore:false, fthNapalm:false, lightSpectre:false, lightGhostMech:false, mediumCommand:false, mediumApexSystem:false, heavyDreadnought:false, heavyTitan:false, heavyCoreTank:false, _heavyCoreTankUsed:false, heavyRampage:false, mediumOverload:false, mediumSalvage:false, mediumMultiMod:false, apexPredator:false, _apexPredatorActive:false };
 }
 
