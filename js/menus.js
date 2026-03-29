@@ -1899,10 +1899,10 @@ function _buildSingleCardHtml(item, slotLabel) {
         const parts = item.uniqueLabel.split(': ');
         const uName = parts[0] || '';
         const uDesc = parts.slice(1).join(': ') || '';
-        html += `<div class="lo-hover-unique">`;
-        html += `<div class="lo-hover-unique-hdr">★ UNIQUE EFFECT</div>`;
-        html += `<div class="lo-hover-unique-name">${uName}</div>`;
-        if (uDesc) html += `<div class="lo-hover-unique-desc">${uDesc}</div>`;
+        html += `<div class="lo-hover-trait">`;
+        html += `<div class="lo-hover-trait-hdr">✦ UNIQUE EFFECT</div>`;
+        html += `<div class="lo-hover-trait-name">${uName}</div>`;
+        if (uDesc) html += `<div class="lo-hover-trait-desc">${uDesc}</div>`;
         html += `</div>`;
     }
     if (item.legendaryTrait && typeof _perks !== 'undefined' && _perks[item.legendaryTrait]) {
@@ -1960,10 +1960,10 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
             const parts = colItem.uniqueLabel.split(': ');
             const uName = parts[0] || '';
             const uDesc = parts.slice(1).join(': ') || '';
-            h += `<div class="lo-hover-unique">`;
-            h += `<div class="lo-hover-unique-hdr">★ UNIQUE EFFECT</div>`;
-            h += `<div class="lo-hover-unique-name">${uName}</div>`;
-            if (uDesc) h += `<div class="lo-hover-unique-desc">${uDesc}</div>`;
+            h += `<div class="lo-hover-trait">`;
+            h += `<div class="lo-hover-trait-hdr">✦ UNIQUE EFFECT</div>`;
+            h += `<div class="lo-hover-trait-name">${uName}</div>`;
+            if (uDesc) h += `<div class="lo-hover-trait-desc">${uDesc}</div>`;
             h += `</div>`;
         }
         if (colItem.legendaryTrait && typeof _perks !== 'undefined' && _perks[colItem.legendaryTrait]) {

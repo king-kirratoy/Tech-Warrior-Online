@@ -37,11 +37,11 @@
 
 // ── RARITY DEFINITIONS ─────────────────────────────────────────
 const RARITY_DEFS = {
-    common:    { label:'Common',    color:0xc0c8d0, colorStr:'#c0c8d0', affixCount:0, statMult:1.00, dropWeight:45, scrapValue:1  },
-    uncommon:  { label:'Uncommon',  color:0x00ff44, colorStr:'#00ff44', affixCount:1, statMult:1.15, dropWeight:30, scrapValue:3  },
-    rare:      { label:'Rare',      color:0x4488ff, colorStr:'#4488ff', affixCount:2, statMult:1.30, dropWeight:15, scrapValue:8  },
-    epic:      { label:'Epic',      color:0xaa44ff, colorStr:'#aa44ff', affixCount:3, statMult:1.50, dropWeight:8,  scrapValue:20 },
-    legendary: { label:'Legendary', color:0xffd700, colorStr:'#ffd700', affixCount:4, statMult:1.80, dropWeight:2,  scrapValue:50 },
+    common:    { label:'Common',    color:0xc0c8d0, colorStr:'#c0c8d0', affixCount:0, dropWeight:45, scrapValue:1  },
+    uncommon:  { label:'Uncommon',  color:0x00ff44, colorStr:'#00ff44', affixCount:1, dropWeight:30, scrapValue:3  },
+    rare:      { label:'Rare',      color:0x4488ff, colorStr:'#4488ff', affixCount:2, dropWeight:15, scrapValue:8  },
+    epic:      { label:'Epic',      color:0xaa44ff, colorStr:'#aa44ff', affixCount:3, dropWeight:8,  scrapValue:20 },
+    legendary: { label:'Legendary', color:0xffd700, colorStr:'#ffd700', affixCount:4, dropWeight:2,  scrapValue:50 },
 };
 
 // ── ITEM BASE DEFINITIONS ──────────────────────────────────────
@@ -126,8 +126,11 @@ const ITEM_BASES = {
 const WEAPON_LOOT_KEYS = ['smg','mg','sg','br','hr','fth','sr','gl','rl','plsm','rail','siphon'];
 
 // ── UNIQUE BOSS ITEMS ────────────────────────────────────────────
-// Each boss has 1 Legendary + 1 Epic unique drop. Unique items have
-// special passive/proc effects beyond standard stat bonuses.
+// Each boss has 2 unique drops (both always Legendary). Unique items
+// have special passive/proc effects beyond standard stat bonuses.
+// Base stats and affixes are rolled at generation time via generateUniqueItem()
+// using the same Legendary rolling system as regular loot. The uniqueEffect
+// replaces a standard Legendary trait — no legendaryTrait key is assigned.
 const UNIQUE_ITEMS = {
     // ── THE WARDEN (Round 5, 25, 45...) ──────────────────────
     wardens_aegis: {
@@ -436,35 +439,84 @@ const BOSS_DROP_TABLE = {
     core:       { legendary: 'core_reactor',      epic: 'matrix_shield' }
 };
 
-// Generate a unique boss item from a template
+// Generate a unique boss item from a template.
+// All boss uniques are always Legendary. Base stats are rolled using the same
+// system as generateItem() for Legendary items. 4 affixes are rolled from the
+// Legendary affix pool. The unique effect is preserved exactly as-is and is
+// displayed in place of a standard Legendary trait.
 function generateUniqueItem(uniqueKey, round) {
     const template = UNIQUE_ITEMS[uniqueKey];
     if (!template) return null;
 
     const level = round || 1;
-    const levelMult = 1 + (level - 1) * 0.03;
-    const rarityDef = RARITY_DEFS[template.rarity];
+    const bt = template.baseType;
 
-    // Scale base stats
-    const scaledStats = {};
-    for (const [k, v] of Object.entries(template.baseStats)) {
-        if (typeof v === 'number') {
-            scaledStats[k] = Math.round(v * levelMult * rarityDef.statMult);
+    // ── Roll base stats (Legendary tier, same as generateItem) ────
+    let baseStats = {};
+    let _augBaseStatKey = null;
+
+    if (bt === 'weapon') {
+        const weaponKey = template.subType;
+        const wDef = (weaponKey && typeof WEAPONS !== 'undefined') ? WEAPONS[weaponKey] : null;
+        if (wDef && wDef.dmg) {
+            // Weapon with recognised subType — roll dmg in [floor, floor × 1.10]
+            const floor = wDef.dmg;
+            baseStats.dmg = Math.round(floor + Math.random() * floor * 0.10);
+            if (wDef.fireRate) baseStats.fireRate = wDef.fireRate;
+            if (wDef.pellets)  baseStats.pellets  = wDef.pellets;
+            if (wDef.speed)    baseStats.speed    = wDef.speed;
+            if (wDef.range)    baseStats.range    = wDef.range;
+            if (wDef.radius)   baseStats.radius   = wDef.radius;
+            if (wDef.burst)    baseStats.burst    = wDef.burst;
         } else {
-            scaledStats[k] = v;
+            // Unique weapon using dmgFlat (no standard subType) — roll in [floor, floor × 1.10]
+            const floor = template.baseStats.dmgFlat || 0;
+            baseStats.dmgFlat = Math.round(floor + Math.random() * floor * 0.10);
         }
+    } else if (bt === 'armor') {
+        baseStats.coreHP = Math.round(30 + Math.random() * 20);  // Legendary [30,50]
+        if (template.baseStats.dr !== undefined) baseStats.dr = template.baseStats.dr;
+    } else if (bt === 'arms') {
+        baseStats.armHP = Math.round(30 + Math.random() * 20);   // Legendary [30,50]
+        if (template.baseStats.fireRatePct !== undefined) baseStats.fireRatePct = template.baseStats.fireRatePct;
+    } else if (bt === 'shield') {
+        baseStats.shieldHP = Math.round(30 + Math.random() * 20); // Legendary [30,50]
+        if (template.baseStats.shieldRegen !== undefined) baseStats.shieldRegen = template.baseStats.shieldRegen;
+        if (template.baseStats.absorbPct   !== undefined) baseStats.absorbPct   = template.baseStats.absorbPct;
+    } else if (bt === 'legs') {
+        baseStats.legHP = Math.round(30 + Math.random() * 20);   // Legendary [30,50]
+        if (template.baseStats.speedPct !== undefined) baseStats.speedPct = template.baseStats.speedPct;
+        if (template.baseStats.dodgePct !== undefined) baseStats.dodgePct = template.baseStats.dodgePct;
+    } else if (bt === 'cpu') {
+        // Roll modCdPct magnitude in Legendary range [5,8], stored as negative
+        const mag = 5 + Math.round(Math.random() * 3);
+        baseStats.modCdPct = -mag;
+        if (template.baseStats.modEffPct !== undefined) baseStats.modEffPct = template.baseStats.modEffPct;
+    } else if (bt === 'augment') {
+        // Roll one stat from augment pool — Legendary tier values (same pool as generateItem)
+        const _augPool = [
+            { key:'dmgPct',      lo:5,  hi:15 },
+            { key:'fireRatePct', lo:5,  hi:15 },
+            { key:'critChance',  lo:5,  hi:12 },
+            { key:'critDmg',     lo:15, hi:40 },
+            { key:'dr',          lo:5,  hi:12 },
+            { key:'shieldHP',    lo:15, hi:40 },
+            { key:'shieldRegen', lo:10, hi:30 },
+            { key:'absorbPct',   lo:4,  hi:10 },
+            { key:'speedPct',    lo:5,  hi:15 },
+            { key:'dodgePct',    lo:4,  hi:10 },
+        ];
+        const pick = _augPool[Math.floor(Math.random() * _augPool.length)];
+        baseStats = { [pick.key]: Math.round(pick.lo + Math.random() * (pick.hi - pick.lo)) };
+        _augBaseStatKey = pick.key;
+    } else {
+        baseStats = { ...template.baseStats };
     }
 
-    // Copy affixes (scale values by level)
-    const affixes = template.affixes.map(a => ({
-        ...a,
-        value: Math.round(a.value * levelMult)
-    }));
-    // Update labels with scaled values
-    affixes.forEach(a => {
-        const prefix = a.stat === 'modCdPct' ? '-' : '+';
-        a.label = a.label.replace(/[+-]?\d+/, prefix + a.value);
-    });
+    // ── Roll 4 affixes using the Legendary affix system ───────────
+    const _affixTypeMap = { shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment' };
+    const affixType = _affixTypeMap[bt] || bt;
+    const affixes = rollAffixes(affixType, 'legendary', _augBaseStatKey);
 
     const item = {
         id: 'item_' + (++_lootItemIdCounter),
@@ -474,9 +526,9 @@ function generateUniqueItem(uniqueKey, round) {
         name: template.name,
         shortName: template.shortName,
         icon: template.icon,
-        rarity: template.rarity,
+        rarity: 'legendary',
         level,
-        baseStats: scaledStats,
+        baseStats,
         affixes,
         computedStats: {},
         isUnique: true,
@@ -486,8 +538,8 @@ function generateUniqueItem(uniqueKey, round) {
         boss: template.boss
     };
 
-    // Compute final stats
-    item.computedStats = { ...scaledStats };
+    // Compute final stats: base + affixes
+    item.computedStats = { ...baseStats };
     affixes.forEach(a => {
         item.computedStats[a.stat] = (item.computedStats[a.stat] || 0) + a.value;
     });
@@ -502,8 +554,8 @@ function rollBossDrops(bossType, round) {
 
     const drops = [];
 
-    // Guaranteed unique drop: 25% legendary, 75% epic
-    const uniqueKey = Math.random() < 0.25 ? table.legendary : table.epic;
+    // Guaranteed unique drop: 50/50 between the two boss uniques (both Legendary)
+    const uniqueKey = Math.random() < 0.5 ? table.legendary : table.epic;
     const uniqueItem = generateUniqueItem(uniqueKey, round);
     if (uniqueItem) drops.push(uniqueItem);
 
