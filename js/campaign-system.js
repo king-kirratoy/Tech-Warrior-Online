@@ -1002,7 +1002,9 @@ function awardMissionReward(missionId) {
                 if (typeof rollAffixes === 'function') {
                     const _affixTypeMap = { shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment' };
                     const affixType = _affixTypeMap[item.baseType] || item.baseType;
-                    item.affixes = rollAffixes(affixType, item.subType, reward.itemRarity);
+                    // For augments, exclude the base stat key already rolled so it doesn't appear as an affix too
+                    const _augExclude = (affixType === 'augment') ? Object.keys(item.baseStats || {})[0] : null;
+                    item.affixes = rollAffixes(affixType, reward.itemRarity, _augExclude);
                     // Rebuild computed stats: base + new affixes
                     item.computedStats = { ...item.baseStats };
                     for (const af of item.affixes) {

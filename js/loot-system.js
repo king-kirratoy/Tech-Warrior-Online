@@ -9,7 +9,7 @@
 //
 // GLOBALS EXPORTED (used by index.html):
 //   _inventory, _equipped, _gearState, _scrap
-//   RARITY_DEFS, ITEM_BASES, UNIQUE_ITEMS, AFFIX_POOL
+//   RARITY_DEFS, ITEM_BASES, UNIQUE_ITEMS, AFFIX_POOLS, AFFIX_RANGES
 //
 // FUNCTIONS CALLED FROM index.html (search "typeof <name>" to find call sites):
 //   Phases 1-3: spawnEquipmentLoot, checkEquipmentPickups, recalcGearStats,
@@ -37,11 +37,11 @@
 
 // ── RARITY DEFINITIONS ─────────────────────────────────────────
 const RARITY_DEFS = {
-    common:    { label:'Common',    color:0xc0c8d0, colorStr:'#c0c8d0', minAffixes:0, maxAffixes:1, statMult:1.00, affixQualityMin:0.00, affixQualityMax:0.40, dropWeight:45, scrapValue:1 },
-    uncommon:  { label:'Uncommon',  color:0x00ff44, colorStr:'#00ff44', minAffixes:1, maxAffixes:2, statMult:1.15, affixQualityMin:0.15, affixQualityMax:0.55, dropWeight:30, scrapValue:3 },
-    rare:      { label:'Rare',      color:0x4488ff, colorStr:'#4488ff', minAffixes:2, maxAffixes:3, statMult:1.30, affixQualityMin:0.30, affixQualityMax:0.75, dropWeight:15, scrapValue:8 },
-    epic:      { label:'Epic',      color:0xaa44ff, colorStr:'#aa44ff', minAffixes:3, maxAffixes:4, statMult:1.50, affixQualityMin:0.50, affixQualityMax:0.90, dropWeight:8,  scrapValue:20 },
-    legendary: { label:'Legendary', color:0xffd700, colorStr:'#ffd700', minAffixes:4, maxAffixes:5, statMult:1.80, affixQualityMin:0.70, affixQualityMax:1.00, dropWeight:2,  scrapValue:50 },
+    common:    { label:'Common',    color:0xc0c8d0, colorStr:'#c0c8d0', affixCount:0, statMult:1.00, dropWeight:45, scrapValue:1  },
+    uncommon:  { label:'Uncommon',  color:0x00ff44, colorStr:'#00ff44', affixCount:1, statMult:1.15, dropWeight:30, scrapValue:3  },
+    rare:      { label:'Rare',      color:0x4488ff, colorStr:'#4488ff', affixCount:2, statMult:1.30, dropWeight:15, scrapValue:8  },
+    epic:      { label:'Epic',      color:0xaa44ff, colorStr:'#aa44ff', affixCount:3, statMult:1.50, dropWeight:8,  scrapValue:20 },
+    legendary: { label:'Legendary', color:0xffd700, colorStr:'#ffd700', affixCount:4, statMult:1.80, dropWeight:2,  scrapValue:50 },
 };
 
 // ── ITEM BASE DEFINITIONS ──────────────────────────────────────
@@ -517,34 +517,38 @@ function rollBossDrops(bossType, round) {
     return drops;
 }
 
-// ── AFFIX POOL ─────────────────────────────────────────────────
-const AFFIX_POOL = {
-    // Offensive
-    dmgFlat:      { label:'+{v} Damage',             min:2,  max:18, weight:10, types:['weapon'] },
-    dmgPct:       { label:'+{v}% Damage',            min:3,  max:28, weight:8,  types:['weapon','arms','augment'] },
-    critChance:   { label:'+{v}% Crit Chance',       min:2,  max:18, weight:7,  types:['weapon','augment'] },
-    critDmg:      { label:'+{v}% Crit Damage',       min:10, max:60, weight:5,  types:['weapon','augment'] },
-    fireRatePct:  { label:'+{v}% Fire Rate',          min:3,  max:22, weight:8,  types:['weapon','arms'] },
-    pellets:      { label:'+{v} Pellets',            min:1,  max:3,  weight:3,  types:['weapon'], subTypes:['sg'] },
-    splashRadius: { label:'+{v}% Blast Radius',      min:10, max:45, weight:5,  types:['weapon'], subTypes:['gl','rl','plsm'] },
+// ── AFFIX POOLS — eligible affix keys per item type ────────────
+// System item types (shield_system, cpu_system, leg_system, aug_system)
+// are mapped to their parent type before pool lookup (see _affixTypeMap).
+const AFFIX_POOLS = {
+    weapon:  ['fireRatePct', 'dmgPct', 'critChance', 'critDmg'],
+    cpu:     ['modCdPct', 'modEffPct', 'shieldRegen'],
+    augment: ['dmgPct', 'fireRatePct', 'critChance', 'critDmg', 'dr', 'shieldHP', 'shieldRegen', 'absorbPct', 'speedPct', 'dodgePct'],
+    arms:    ['armHP', 'critChance', 'critDmg'],
+    armor:   ['coreHP', 'shieldHP', 'dr'],
+    shield:  ['shieldHP', 'shieldRegen', 'absorbPct'],
+    legs:    ['legHP', 'speedPct', 'dodgePct'],
+};
 
-    // Defensive
-    coreHP:       { label:'+{v} Core HP',            min:10, max:100, weight:8,  types:['armor'] },
-    armHP:        { label:'+{v} Arm HP',             min:5,  max:50,  weight:6,  types:['arms'] },
-    legHP:        { label:'+{v} Leg HP',             min:5,  max:50,  weight:6,  types:['legs'] },
-    allHP:        { label:'+{v} All Part HP',        min:5,  max:30,  weight:4,  types:['armor','augment'] },
-    dr:           { label:'+{v}% Damage Reduction',  min:1,  max:12,  weight:5,  types:['armor','legs'] },
-    shieldHP:     { label:'+{v} Shield Capacity',    min:5,  max:50,  weight:7,  types:['shield'] },
-    shieldRegen:  { label:'+{v}% Shield Regen',      min:5,  max:35,  weight:6,  types:['shield'] },
-    absorbPct:    { label:'+{v}% Shield Absorb',     min:2,  max:10,  weight:4,  types:['shield'] },
-    dodgePct:     { label:'+{v}% Dodge Chance',      min:1,  max:10,  weight:4,  types:['legs'] },
-
-    // Utility
-    speedPct:     { label:'+{v}% Move Speed',        min:2,  max:14, weight:6,  types:['legs','augment'] },
-    modCdPct:     { label:'-{v}% Mod Cooldown',      min:3,  max:22, weight:6,  types:['cpu'] },
-    modEffPct:    { label:'+{v}% Mod Duration %',  min:5,  max:30, weight:5, types:['cpu'] },
-    lootMult:     { label:'+{v}% Loot Quality',      min:3,  max:18, weight:3,  types:['augment'] },
-    autoRepair:   { label:'+{v} HP/sec Regen',       min:1,  max:6,  weight:4,  types:['armor','augment'] },
+// ── AFFIX VALUE RANGES ─────────────────────────────────────────
+// std: [min, max] for Common–Epic; leg: [min, max] for Legendary.
+// Percentage affixes and HP affixes both round to integers.
+const AFFIX_RANGES = {
+    fireRatePct: { std:[2,5],   leg:[5,8],   label:'+{v}% Fire Rate'        },
+    dmgPct:      { std:[2,5],   leg:[5,8],   label:'+{v}% Damage'           },
+    critChance:  { std:[5,10],  leg:[10,15], label:'+{v}% Crit Chance'      },
+    critDmg:     { std:[10,20], leg:[20,30], label:'+{v}% Crit Damage'      },
+    dr:          { std:[2,5],   leg:[5,8],   label:'+{v}% Damage Reduction' },
+    shieldHP:    { std:[10,30], leg:[30,50], label:'+{v} Shield HP'         },
+    shieldRegen: { std:[2,5],   leg:[5,8],   label:'+{v} Shield Regen'      },
+    absorbPct:   { std:[2,5],   leg:[5,8],   label:'+{v}% Shield Absorb'    },
+    speedPct:    { std:[2,5],   leg:[5,8],   label:'+{v}% Move Speed'       },
+    dodgePct:    { std:[2,5],   leg:[5,8],   label:'+{v}% Dodge'            },
+    coreHP:      { std:[10,30], leg:[30,50], label:'+{v} Core HP'           },
+    armHP:       { std:[10,30], leg:[30,50], label:'+{v} Arm HP'            },
+    legHP:       { std:[10,30], leg:[30,50], label:'+{v} Leg HP'            },
+    modCdPct:    { std:[2,5],   leg:[5,8],   label:'-{v}% Mod Cooldown'     },
+    modEffPct:   { std:[2,5],   leg:[5,8],   label:'+{v}% Mod Duration'     },
 };
 
 // ── INVENTORY & EQUIPMENT STATE ────────────────────────────────
@@ -596,42 +600,41 @@ function rollRarity(round, isCommander, isBoss) {
 }
 
 // ── AFFIX ROLLING ──────────────────────────────────────────────
-function rollAffixes(baseType, subType, rarity) {
-    const rarityDef = RARITY_DEFS[rarity];
-    const count = Phaser.Math.Between(rarityDef.minAffixes, rarityDef.maxAffixes);
+// baseType:      item type after system-type mapping (e.g. 'weapon', 'armor', 'shield')
+// rarity:        rarity key
+// excludeStatKey: optional — stat key already used as augment base stat (excluded from pool)
+function rollAffixes(baseType, rarity, excludeStatKey) {
+    const count = RARITY_DEFS[rarity].affixCount;
+    if (count === 0) return [];
 
-    const eligible = Object.entries(AFFIX_POOL).filter(([key, affix]) => {
-        if (!affix.types.includes(baseType)) return false;
-        if (affix.subTypes && !affix.subTypes.includes(subType)) return false;
-        return true;
-    });
+    const pool = (AFFIX_POOLS[baseType] || []).slice(); // copy
+    const isLegendary = rarity === 'legendary';
 
+    // For augments, remove the base stat from the affix pool
+    const eligiblePool = excludeStatKey
+        ? pool.filter(k => k !== excludeStatKey)
+        : pool;
+
+    const actualCount = Math.min(count, eligiblePool.length);
+    const available = eligiblePool.slice(); // shuffle-from copy
     const picked = [];
-    const used = new Set();
 
-    for (let i = 0; i < count; i++) {
-        const available = eligible.filter(([k]) => !used.has(k));
-        if (available.length === 0) break;
+    for (let i = 0; i < actualCount; i++) {
+        // Random selection without replacement
+        const idx = Math.floor(Math.random() * available.length);
+        const key = available.splice(idx, 1)[0];
 
-        const totalWeight = available.reduce((s, [, a]) => s + a.weight, 0);
-        let r = Math.random() * totalWeight;
-        let chosen = available[0];
-        for (const entry of available) {
-            r -= entry[1].weight;
-            if (r <= 0) { chosen = entry; break; }
-        }
+        const rangeDef = AFFIX_RANGES[key];
+        if (!rangeDef) continue;
 
-        const [key, affix] = chosen;
-        used.add(key);
-
-        const quality = rarityDef.affixQualityMin + Math.random() * (rarityDef.affixQualityMax - rarityDef.affixQualityMin);
-        const value = Math.round(affix.min + (affix.max - affix.min) * quality);
+        const [lo, hi] = isLegendary ? rangeDef.leg : rangeDef.std;
+        const value = Math.round(lo + Math.random() * (hi - lo));
 
         picked.push({
             key,
             stat: key,
             value,
-            label: affix.label.replace('{v}', value)
+            label: rangeDef.label.replace('{v}', value),
         });
     }
 
@@ -696,6 +699,7 @@ function generateItem(round, enemyData) {
 
     const isLegendary = rarity === 'legendary';
     let name, icon, subType, baseStats;
+    let _augBaseStatKey = null; // tracks augment base stat to exclude from affix pool
 
     if (baseType === 'weapon') {
         // ── Step 1/2: Weapons roll base damage — no item-level scaling ──
@@ -768,13 +772,14 @@ function generateItem(round, enemyData) {
             const hi = isLegendary ? pick.legHi : pick.hi;
             // Augment base stat is entirely the rolled pick (replaces static ITEM_BASES entry)
             baseStats = { [pick.key]: Math.round(lo + Math.random() * (hi - lo)) };
+            _augBaseStatKey = pick.key; // exclude from affix pool
         }
     }
 
     // Roll affixes — system items use their parent slot type for affix pool
     const _affixTypeMap = { shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment' };
     const affixType = _affixTypeMap[baseType] || baseType;
-    const affixes = rollAffixes(affixType, subType, rarity);
+    const affixes = rollAffixes(affixType, rarity, _augBaseStatKey);
 
     // For system items, carry the systemKey so equip logic can activate the GAME system
     const _baseDef = ITEM_BASES[baseKey];
