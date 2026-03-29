@@ -888,6 +888,9 @@ function _deployFromMissionSelect() {
     rollMissionModifier();
     rollBonusObjective();
 
+    // Mark shop for restock — next shop open after this mission returns fresh stock
+    _shopNeedsRestock = true;
+
     // Save state
     saveCampaignState();
 
@@ -1034,9 +1037,12 @@ function awardMissionReward(missionId) {
 // 4C — HANGAR SHOP (buy/sell gear with scrap)
 // ══════════════════════════════════════════════════════════════════
 
-/** Shop stock — refreshed each time player returns to mission select. */
+/** Shop stock — restocked once per mission deployment. */
 let _shopStock = [];
 const SHOP_MAX_ITEMS = 12;
+
+/** True when shop needs to generate fresh stock (e.g. after a new deployment). */
+let _shopNeedsRestock = true;
 
 /** Category-sorted views into _shopStock, rebuilt by _shopSortCategories(). */
 let _shopItems = { offensive: [], defensive: [], utility: [] };
@@ -1106,22 +1112,81 @@ const SHOP_PRICES = {
     legendary: 250
 };
 
-/** Refresh shop stock with random items at the player's level. */
+/** Rarity weights for shop generation — slightly worse odds than field drops.
+ *  Field drops: Common 40, Uncommon 30, Rare 18, Epic 9, Legendary 3
+ *  Shop:        Common 45, Uncommon 30, Rare 16, Epic 7, Legendary 2 */
+const SHOP_RARITY_WEIGHTS = {
+    common: 45, uncommon: 30, rare: 16, epic: 7, legendary: 2,
+};
+
+/** Pick a rarity using shop-specific weights (pure weighted random, no luck scaling). */
+function _rollShopRarity() {
+    const total = Object.values(SHOP_RARITY_WEIGHTS).reduce((s, v) => s + v, 0);
+    let r = Math.random() * total;
+    for (const [rarity, weight] of Object.entries(SHOP_RARITY_WEIGHTS)) {
+        r -= weight;
+        if (r <= 0) return rarity;
+    }
+    return 'common';
+}
+
+/** Refresh shop stock with random items at the player's level.
+ *  Uses shop-specific rarity weights (slightly worse than field drops).
+ *  Item type selection uses equal weights across all 11 types (no enemy modifiers).
+ *  Rarity is forced after generation and affixes are re-rolled for that rarity.
+ *  Legendary items receive a trait assignment where applicable. */
 function refreshShopStock() {
     _shopStock = [];
     if (typeof generateItem !== 'function') return;
 
     const level = _campaignState.playerLevel || 1;
-    // Stock scales: lower levels = more commons, higher = rarer items possible
     for (let i = 0; i < SHOP_MAX_ITEMS; i++) {
+        const shopRarity = _rollShopRarity();
+        // Generate base item — empty enemyData gives equal type weights, no enemy modifiers
         const item = generateItem(Math.max(1, level + Math.floor(Math.random() * 3) - 1), {});
         if (!item) continue;
-        // Shop items cost based on rarity + level scaling
-        const basePrice = SHOP_PRICES[item.rarity] || 10;
+
+        // Force shop rarity on the item
+        item.rarity = shopRarity;
+
+        // Re-roll affixes for the forced rarity; base stats from rolled generation are kept
+        if (typeof rollAffixes === 'function') {
+            const _affixTypeMap = { shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment' };
+            const affixType = _affixTypeMap[item.baseType] || item.baseType;
+            // For augments, exclude the already-rolled base stat key from the affix pool
+            const _augExclude = (affixType === 'augment') ? Object.keys(item.baseStats || {})[0] : null;
+            item.affixes = rollAffixes(affixType, shopRarity, _augExclude);
+            item.computedStats = { ...item.baseStats };
+            for (const af of item.affixes) {
+                if (af.stat && typeof af.value === 'number') {
+                    item.computedStats[af.stat] = (item.computedStats[af.stat] || 0) + af.value;
+                }
+            }
+        }
+
+        // Assign legendary trait for applicable types (weapon, cpu_system, leg_system)
+        item.legendaryTrait = undefined;
+        if (shopRarity === 'legendary' && typeof LEGENDARY_TRAITS !== 'undefined') {
+            let _traitKey = null;
+            if (item.baseType === 'weapon') {
+                _traitKey = item.subType;
+            } else if (item.baseType === 'cpu_system' || item.baseType === 'leg_system') {
+                _traitKey = item.systemKey;
+            }
+            if (_traitKey && LEGENDARY_TRAITS[_traitKey]) {
+                const _pool = LEGENDARY_TRAITS[_traitKey];
+                item.legendaryTrait = _pool[Math.floor(Math.random() * _pool.length)];
+            }
+        }
+
+        // Price based on shop rarity
+        const basePrice = SHOP_PRICES[shopRarity] || 10;
         const levelScale = 1 + (item.level - 1) * 0.05;
         item._shopPrice = Math.round(basePrice * levelScale);
         _shopStock.push(item);
     }
+
+    _shopNeedsRestock = false;
     _shopSortCategories();
 }
 
@@ -1193,8 +1258,8 @@ function showShop() {
     let overlay = document.getElementById('shop-overlay');
     if (!overlay) return;
 
-    // Refresh stock if empty
-    if (_shopStock.length === 0) refreshShopStock();
+    // Restock once per mission deployment — not on every open
+    if (_shopNeedsRestock) refreshShopStock();
 
     // Reset overlay to full-panel layout
     overlay.style.padding        = '0';

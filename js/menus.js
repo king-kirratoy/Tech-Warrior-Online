@@ -345,8 +345,6 @@ function returnToHangarForMissionSelect() {
     const hgc = document.getElementById('hangar-canvas');
     if (hgc) { hgc._gridRunning = false; hgc.style.display = 'none'; }
     window._activeCampaignConfig = null;
-    // Phase 4: Refresh shop stock when returning to mission select
-    if (typeof refreshShopStock === 'function') refreshShopStock();
     if (typeof showMissionSelect === 'function') showMissionSelect();
 }
 
