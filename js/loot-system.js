@@ -815,12 +815,6 @@ function generateItem(round, enemyData) {
         const rolledDmg = Math.round(dmgFloor + Math.random() * (dmgCeiling - dmgFloor));
         baseStats = {};
         if (w.dmg)      baseStats.dmg      = rolledDmg;
-        if (w.fireRate) baseStats.fireRate  = w.fireRate;
-        if (w.pellets)  baseStats.pellets   = w.pellets;
-        if (w.speed)    baseStats.speed     = w.speed;
-        if (w.range)    baseStats.range     = w.range;
-        if (w.radius)   baseStats.radius    = w.radius;
-        if (w.burst)    baseStats.burst     = w.burst;
     } else {
         const def = ITEM_BASES[baseKey];
         subType = baseKey;
@@ -830,13 +824,16 @@ function generateItem(round, enemyData) {
         baseStats = { ...def.baseStats };
 
         if (baseType === 'cpu_system') {
-            // ── Step 3: CPU mod — roll base cooldown (lower is better) ──
+            // ── Step 3: CPU mod — base stat is cooldown in seconds only ──
+            // Replace ITEM_BASES secondary stats entirely; cooldown is the sole base stat.
             const modDef = WEAPONS[def.systemKey];
             if (modDef?.cooldown) {
-                const cdFloor = modDef.cooldown;
-                const cdCeiling = Math.round(cdFloor * (isLegendary ? 0.90 : 0.95) * 10) / 10;
-                const rolledCd = Math.round((cdCeiling + Math.random() * (cdFloor - cdCeiling)) * 10) / 10;
-                baseStats.cooldown = rolledCd;
+                const cdFloorSec = modDef.cooldown / 1000;
+                const cdCeilingSec = Math.round(cdFloorSec * (isLegendary ? 0.90 : 0.95) * 10) / 10;
+                const rolledCd = Math.round((cdCeilingSec + Math.random() * (cdFloorSec - cdCeilingSec)) * 10) / 10;
+                baseStats = { cooldown: rolledCd };
+            } else {
+                baseStats = {};
             }
         } else if (baseType === 'armor') {
             // ── Step 4: Armor — roll Core HP ──
