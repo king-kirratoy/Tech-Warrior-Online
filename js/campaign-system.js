@@ -998,27 +998,21 @@ function awardMissionReward(missionId) {
             if (item) {
                 // Force the reward rarity
                 item.rarity = reward.itemRarity;
-                // Re-apply rarity stat multiplier
-                if (typeof RARITY_DEFS !== 'undefined' && item.baseStats) {
+                // Re-roll affixes for the forced rarity; base stats come from rolling (no level scaling)
+                if (typeof rollAffixes === 'function') {
+                    const _affixTypeMap = { shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment' };
+                    const affixType = _affixTypeMap[item.baseType] || item.baseType;
+                    item.affixes = rollAffixes(affixType, item.subType, reward.itemRarity);
+                    // Rebuild computed stats: base + new affixes
+                    item.computedStats = { ...item.baseStats };
+                    for (const af of item.affixes) {
+                        if (af.stat && typeof af.value === 'number') {
+                            item.computedStats[af.stat] = (item.computedStats[af.stat] || 0) + af.value;
+                        }
+                    }
+                }
+                if (typeof RARITY_DEFS !== 'undefined') {
                     const rd = RARITY_DEFS[reward.itemRarity];
-                    const levelMult = 1 + (reward.itemLevel - 1) * 0.03;
-                    for (const [k, v] of Object.entries(item.baseStats)) {
-                        if (typeof v === 'number') {
-                            item.computedStats[k] = Math.round(v * levelMult * rd.statMult);
-                        }
-                    }
-                    // Re-roll affixes for new rarity
-                    if (typeof rollAffixes === 'function') {
-                        const _affixTypeMap = { shield_system:'shield', cpu_system:'cpu', leg_system:'legs', aug_system:'augment' };
-                        const affixType = _affixTypeMap[item.baseType] || item.baseType;
-                        item.affixes = rollAffixes(affixType, item.subType, reward.itemRarity);
-                        // Re-merge computed stats
-                        for (const af of item.affixes) {
-                            if (af.stat && typeof af.value === 'number') {
-                                item.computedStats[af.stat] = (item.computedStats[af.stat] || 0) + af.value;
-                            }
-                        }
-                    }
                     item.name = rd.label + ' ' + (item.shortName || item.name);
                 }
                 break;
