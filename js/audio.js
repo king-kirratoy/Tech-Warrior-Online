@@ -384,6 +384,38 @@ function sndSiphonOverheat() {
     _tone(55, 'sawtooth', 0.10, 0.20, 28);
 }
 
+// ── Loot Landing Sounds ──────────────────────────────────────────
+// sndLootDrop(rarity) — plays when a dropped item hits the ground after the arc.
+// sndScrapPickup()    — plays when the player collects a scrap coin.
+function sndLootDrop(rarity) {
+    if (!_canPlay('loot_drop_' + rarity, 80)) return;
+    switch (rarity) {
+        case 'common':
+            break; // silent
+        case 'uncommon':
+            _tone(800, 'sine', 0.05, 0.10, 900);
+            break;
+        case 'rare':
+            _tone(1000, 'sine', 0.08, 0.16, 1200);
+            _tone(1200, 'sine', 0.06, 0.10, 1400, 0.04);
+            break;
+        case 'epic':
+            _tone(1200, 'sine', 0.12, 0.20, 1500);
+            _tone(1800, 'sine', 0.10, 0.14, 2100, 0.05);
+            break;
+        case 'legendary':
+            _tone(200, 'triangle', 0.06, 0.22, 80);
+            _tone(2000, 'sine', 0.20, 0.18, 1600);
+            _tone(2400, 'sine', 0.16, 0.12, 1800, 0.06);
+            break;
+    }
+}
+
+function sndScrapPickup() {
+    if (!_canPlay('scrap_pick', 60)) return;
+    _tone(1500, 'sine', 0.04, 0.14, 2000);
+}
+
 // ── AudioContext lifecycle handlers ──────────────────────────────
 // Set _audioReady on the first user gesture so _getAC() is only called
 // after the browser allows AudioContext creation without autoplay restriction.
