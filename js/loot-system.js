@@ -480,7 +480,7 @@ function generateUniqueItem(uniqueKey, round) {
         baseStats.armHP = Math.round(30 + Math.random() * 20);   // Legendary [30,50]
         if (template.baseStats.fireRatePct !== undefined) baseStats.fireRatePct = template.baseStats.fireRatePct;
     } else if (bt === 'shield') {
-        baseStats.shieldHP = Math.round(30 + Math.random() * 20); // Legendary [30,50]
+        baseStats.shieldHP = Math.round(125 + Math.random() * 50); // Legendary [125,175]
         if (template.baseStats.shieldRegen !== undefined) baseStats.shieldRegen = template.baseStats.shieldRegen;
         if (template.baseStats.absorbPct   !== undefined) baseStats.absorbPct   = template.baseStats.absorbPct;
     } else if (bt === 'legs') {
@@ -887,7 +887,7 @@ function generateItem(round, enemyData) {
             baseStats = { armHP: Math.round(lo + Math.random() * (hi - lo)) };
         } else if (baseType === 'shield' || baseType === 'shield_system') {
             // ── Step 4: Shield — sole base stat is Shield HP ──
-            const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
+            const [lo, hi] = isLegendary ? [125, 175] : [75, 125];
             baseStats = { shieldHP: Math.round(lo + Math.random() * (hi - lo)) };
         } else if (baseType === 'legs' || baseType === 'leg_system') {
             // ── Step 4: Legs — sole base stat is Leg HP ──
