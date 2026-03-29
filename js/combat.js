@@ -50,7 +50,8 @@ function fire(scene, side) {
     // Single-arm brace bonus: when the other arm is empty, this arm gets +15% reload speed
     const _otherArm = side === 'L' ? loadout.R : loadout.L;
     const _braceMult = (!_otherArm || _otherArm === 'none') ? 0.85 : 1.0;
-    const _gearReloadMult = 1 - ((_gearState?.fireRatePct || 0) / 100);
+    // fireRatePct is stored negative for buff (−5 = 5% faster); 1 + (−0.05) = 0.95 reload mult
+    const _gearReloadMult = 1 + ((_gearState?.fireRatePct || 0) / 100);
     const _dualReloadMult = 1 - (typeof getDualReloadBonus === 'function' ? getDualReloadBonus() : 0);
     // ── Dual-Wield (Light trait): same weapon in both arms → −15% fire rate ──────
     const _isDualWield = loadout.chassis === 'light' && loadout.L === loadout.R && loadout.L !== 'none';

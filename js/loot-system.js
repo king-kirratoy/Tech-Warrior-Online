@@ -72,7 +72,7 @@ const ITEM_BASES = {
     // ── CPU CHIPS (cpu slot) — static stats, no primary rolling ──
     cooldown_chip:  { baseType:'cpu', name:'Cooldown Chip',       icon:'mod_cd',       baseStats:{ modCdPct:-8 } },
     amplifier:      { baseType:'cpu', name:'Amplifier',           icon:'mod_amp',      baseStats:{ modEffPct:10 } },
-    overcharge:     { baseType:'cpu', name:'Overcharge Module',   icon:'mod_oc',       baseStats:{ modCdPct:-5, modEffPct:5 } },
+    overcharge:     { baseType:'cpu', name:'Overcharge Module',   icon:'mod_oc',       baseStats:{ modCdPct:-5 } },
 
     // ── AUGMENT CORES (augment slot) — base stat is randomly rolled at generation ──
     targeting_array: { baseType:'augment', name:'Targeting Array', icon:'aug_target',   baseStats:{} },
@@ -507,7 +507,9 @@ function generateUniqueItem(uniqueKey, round) {
             { key:'dodgePct',    lo:4,  hi:10 },
         ];
         const pick = _augPool[Math.floor(Math.random() * _augPool.length)];
-        baseStats = { [pick.key]: Math.round(pick.lo + Math.random() * (pick.hi - pick.lo)) };
+        // Inverted stats (fireRatePct) stored negative — negative = buff per convention
+        const rawUniqueAugVal = Math.round(pick.lo + Math.random() * (pick.hi - pick.lo));
+        baseStats = { [pick.key]: (pick.key === 'fireRatePct') ? -rawUniqueAugVal : rawUniqueAugVal };
         _augBaseStatKey = pick.key;
     } else {
         baseStats = { ...template.baseStats };
@@ -729,13 +731,15 @@ function rollAffixes(baseType, rarity, excludeStatKey) {
         if (!rangeDef) continue;
 
         const [lo, hi] = isLegendary ? rangeDef.leg : rangeDef.std;
-        const value = Math.round(lo + Math.random() * (hi - lo));
+        // Inverted stats (fireRatePct, modCdPct) are stored negative — a buff is negative per convention
+        const rawVal = Math.round(lo + Math.random() * (hi - lo));
+        const value = (key === 'fireRatePct' || key === 'modCdPct') ? -rawVal : rawVal;
 
         picked.push({
             key,
             stat: key,
             value,
-            label: rangeDef.label.replace('{v}', value),
+            label: rangeDef.label.replace('{v}', Math.abs(value)),
         });
     }
 
@@ -836,21 +840,21 @@ function generateItem(round, enemyData) {
                 baseStats = {};
             }
         } else if (baseType === 'armor') {
-            // ── Step 4: Armor — roll Core HP ──
+            // ── Step 4: Armor — sole base stat is Core HP ──
             const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
-            baseStats.coreHP = Math.round(lo + Math.random() * (hi - lo));
+            baseStats = { coreHP: Math.round(lo + Math.random() * (hi - lo)) };
         } else if (baseType === 'arms') {
-            // ── Step 4: Arms — roll Arm HP ──
+            // ── Step 4: Arms — sole base stat is Arm HP ──
             const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
-            baseStats.armHP = Math.round(lo + Math.random() * (hi - lo));
+            baseStats = { armHP: Math.round(lo + Math.random() * (hi - lo)) };
         } else if (baseType === 'shield' || baseType === 'shield_system') {
-            // ── Step 4: Shield — roll Shield HP ──
+            // ── Step 4: Shield — sole base stat is Shield HP ──
             const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
-            baseStats.shieldHP = Math.round(lo + Math.random() * (hi - lo));
+            baseStats = { shieldHP: Math.round(lo + Math.random() * (hi - lo)) };
         } else if (baseType === 'legs' || baseType === 'leg_system') {
-            // ── Step 4: Legs — roll Leg HP ──
+            // ── Step 4: Legs — sole base stat is Leg HP ──
             const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
-            baseStats.legHP = Math.round(lo + Math.random() * (hi - lo));
+            baseStats = { legHP: Math.round(lo + Math.random() * (hi - lo)) };
         } else if (baseType === 'augment' || baseType === 'aug_system') {
             // ── Step 4: Augment — randomly pick and roll one stat from pool ──
             const _augPool = [
@@ -869,7 +873,10 @@ function generateItem(round, enemyData) {
             const lo = isLegendary ? pick.legLo : pick.lo;
             const hi = isLegendary ? pick.legHi : pick.hi;
             // Augment base stat is entirely the rolled pick (replaces static ITEM_BASES entry)
-            baseStats = { [pick.key]: Math.round(lo + Math.random() * (hi - lo)) };
+            // Inverted stats (fireRatePct) stored negative — negative = buff per convention
+            const rawAugVal = Math.round(lo + Math.random() * (hi - lo));
+            const augVal = (pick.key === 'fireRatePct') ? -rawAugVal : rawAugVal;
+            baseStats = { [pick.key]: augVal };
             _augBaseStatKey = pick.key; // exclude from affix pool
         }
     }
@@ -1370,11 +1377,90 @@ function checkEquipmentPickups(scene) {
     });
 }
 
-// ── PICKUP NOTIFICATION TOAST ──────────────────────────────────
-function _showLootPickupNotification(scene, item) {
-    const rarityDef = RARITY_DEFS[item.rarity];
+// ── PICKUP NOTIFICATION SYSTEM ─────────────────────────────────
+// All item pickup pills and scrap notifications share a single left-side queue.
+const _NOTIF_TOP    = 80;   // px from viewport top for first slot
+const _NOTIF_GAP    = 6;    // px gap between pills
+const _NOTIF_MAX    = 6;    // hard cap — oldest evicted when exceeded
+// _lootNotifications already declared above; each entry: { el, active }
+let _scrapAccum = { el: null, notif: null, total: 0, timerId: null }; // accumulator for scrap
 
-    // Resolve display name: item type only — no stats, no affixes
+// Convert #rrggbb to rgba(r,g,b,a)
+function _hexToRgba(hex, a) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return `rgba(${r},${g},${b},${a})`;
+}
+
+// Recalculate top positions for all active notifications and tween them in place.
+function _reposNotifs() {
+    let offset = _NOTIF_TOP;
+    _lootNotifications.forEach(n => {
+        if (!n.el || !n.active) return;
+        n.el.style.top = offset + 'px';
+        offset += (n.el.offsetHeight || 32) + _NOTIF_GAP;
+    });
+}
+
+// Remove a notification from the queue, slide remaining up.
+function _removeNotif(notif) {
+    notif.active = false;
+    if (notif.el) {
+        try { if (notif.el.parentNode) notif.el.parentNode.removeChild(notif.el); } catch(e) {}
+        notif.el = null;
+    }
+    _lootNotifications = _lootNotifications.filter(n => n !== notif);
+    _reposNotifs();
+}
+
+// Shared helper: create and enqueue a pill element.
+function _enqueueNotifPill(elStyle, text, holdMs, scene) {
+    // Evict oldest if at cap
+    if (_lootNotifications.length >= _NOTIF_MAX) {
+        _removeNotif(_lootNotifications[0]);
+    }
+
+    const el = document.createElement('div');
+    Object.assign(el.style, {
+        position:      'fixed',
+        left:          '12px',
+        top:           (_NOTIF_TOP + _lootNotifications.length * 40) + 'px',
+        borderRadius:  '14px',
+        padding:       '5px 13px',
+        fontFamily:    'var(--font-mono, "Courier New", monospace)',
+        whiteSpace:    'nowrap',
+        pointerEvents: 'none',
+        opacity:       '0',
+        transition:    'opacity 150ms ease, top 200ms ease',
+        zIndex:        '9000',
+        ...elStyle,
+    });
+    el.textContent = text;
+    document.body.appendChild(el);
+
+    const notif = { el, active: true };
+    _lootNotifications.push(notif);
+    _reposNotifs();
+
+    // Fade in
+    requestAnimationFrame(() => { if (el) el.style.opacity = '1'; });
+
+    // Auto-dismiss after holdMs + 300ms fade-out
+    scene.time.delayedCall(holdMs, () => {
+        if (!notif.active) return;
+        el.style.transition = 'opacity 300ms ease';
+        el.style.opacity = '0';
+        scene.time.delayedCall(320, () => _removeNotif(notif));
+    });
+
+    return notif;
+}
+
+function _showLootPickupNotification(scene, item) {
+    const rarityDef = RARITY_DEFS[item.rarity] || RARITY_DEFS.common;
+
+    // Resolve display name: item type only
     let displayName;
     if (item.baseType === 'weapon') {
         const wName = (typeof WEAPON_NAMES !== 'undefined') ? WEAPON_NAMES[item.subType] : null;
@@ -1395,75 +1481,84 @@ function _showLootPickupNotification(scene, item) {
         displayName = (item.baseType || 'ITEM').toUpperCase();
     }
 
-    // Rarity glow via box-shadow using rarity color
-    const _toRgba = (hex, a) => {
-        const r = parseInt(hex.slice(1,3), 16);
-        const g = parseInt(hex.slice(3,5), 16);
-        const b = parseInt(hex.slice(5,7), 16);
-        return `rgba(${r},${g},${b},${a})`;
-    };
     const rc = rarityDef.colorStr;
     const glowMap = {
         common:    '',
-        uncommon:  `0 0 8px ${_toRgba(rc, 0.3)}`,
-        rare:      `0 0 12px ${_toRgba(rc, 0.4)}`,
-        epic:      `0 0 16px ${_toRgba(rc, 0.5)}`,
-        legendary: `0 0 20px ${_toRgba(rc, 0.6)}, 0 0 40px ${_toRgba(rc, 0.2)}`,
+        uncommon:  `0 0 8px ${_hexToRgba(rc, 0.3)}`,
+        rare:      `0 0 12px ${_hexToRgba(rc, 0.4)}`,
+        epic:      `0 0 16px ${_hexToRgba(rc, 0.5)}`,
+        legendary: `0 0 20px ${_hexToRgba(rc, 0.6)}, 0 0 40px ${_hexToRgba(rc, 0.2)}`,
     };
-    const glow = glowMap[item.rarity] || '';
 
-    // Build DOM pill element
-    const el = document.createElement('div');
-    Object.assign(el.style, {
-        position:       'fixed',
-        right:          '16px',
-        top:            '70px',
-        background:     'rgba(8,11,14,0.85)',
-        border:         `1px solid ${rc}`,
-        borderRadius:   '14px',
-        padding:        '6px 14px',
-        fontFamily:     'var(--font-mono, "Courier New", monospace)',
-        fontSize:       '14px',
+    _enqueueNotifPill({
+        background:     _hexToRgba(rc, item.rarity === 'legendary' || item.rarity === 'common' ? 0.15 : 0.12),
+        border:         `1px solid ${_hexToRgba(rc, 0.5)}`,
+        color:          rc,
+        fontSize:       '13px',
         fontWeight:     'bold',
-        color:          'rgba(255,255,255,0.9)',
         letterSpacing:  '2px',
         textTransform:  'uppercase',
-        whiteSpace:     'nowrap',
-        pointerEvents:  'none',
-        opacity:        '0',
-        transition:     'opacity 150ms ease, top 200ms ease',
-        zIndex:         '9000',
-        boxShadow:      glow,
-    });
-    el.textContent = displayName;
-    document.body.appendChild(el);
+        boxShadow:      glowMap[item.rarity] || '',
+    }, displayName, 1800, scene);
+}
 
-    // Stack: remove stale, assign slot positions (newest at bottom)
-    _lootNotifications = _lootNotifications.filter(n => n.active);
-    const baseTop = 70;
-    const slotH = 38;
-    // Shift existing notifications up to make room for new one at bottom
-    _lootNotifications.forEach((n, i) => {
-        if (n.el) n.el.style.top = (baseTop + i * slotH) + 'px';
-    });
-    el.style.top = (baseTop + _lootNotifications.length * slotH) + 'px';
+// Scrap pickup notification — accumulates rapid pickups into one updating pill.
+function _showScrapPickupNotification(scene, amount) {
+    _scrapAccum.total += amount;
 
-    const notification = { el, active: true };
-    _lootNotifications.push(notification);
-
-    // Fade in
-    requestAnimationFrame(() => { el.style.opacity = '1'; });
-
-    // Hold 1.8s then fade out over 300ms
-    scene.time.delayedCall(1800, () => {
-        if (!notification.active) return;
-        el.style.transition = 'opacity 300ms ease';
-        el.style.opacity = '0';
-        scene.time.delayedCall(320, () => {
-            notification.active = false;
-            try { if (el.parentNode) el.parentNode.removeChild(el); } catch(e) {}
+    if (_scrapAccum.notif && _scrapAccum.notif.active && _scrapAccum.el) {
+        // Update existing pill text
+        _scrapAccum.el.textContent = `\u2699 +${_scrapAccum.total} SCRAP`;
+        // Reset dismiss timer
+        if (_scrapAccum.timerId) clearTimeout(_scrapAccum.timerId);
+    } else {
+        // Create new scrap pill
+        const el = document.createElement('div');
+        Object.assign(el.style, {
+            position:      'fixed',
+            left:          '12px',
+            top:           (_NOTIF_TOP + _lootNotifications.length * 40) + 'px',
+            background:    _hexToRgba('#ffd700', 0.08),
+            borderRadius:  '14px',
+            padding:       '4px 12px',
+            fontFamily:    'var(--font-mono, "Courier New", monospace)',
+            fontSize:      '11px',
+            color:         '#ffd700',
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            whiteSpace:    'nowrap',
+            pointerEvents: 'none',
+            opacity:       '0',
+            transition:    'opacity 100ms ease, top 200ms ease',
+            zIndex:        '9000',
         });
-    });
+        el.textContent = `\u2699 +${_scrapAccum.total} SCRAP`;
+        document.body.appendChild(el);
+
+        const notif = { el, active: true };
+        _lootNotifications.push(notif);
+        _reposNotifs();
+        requestAnimationFrame(() => { if (el) el.style.opacity = '1'; });
+
+        _scrapAccum.el    = el;
+        _scrapAccum.notif = notif;
+    }
+
+    // Dismiss 1.2s after last pickup, 200ms fade
+    if (_scrapAccum.timerId) clearTimeout(_scrapAccum.timerId);
+    _scrapAccum.timerId = setTimeout(() => {
+        const n = _scrapAccum.notif;
+        const e = _scrapAccum.el;
+        if (!n || !n.active) return;
+        if (e) { e.style.transition = 'opacity 200ms ease'; e.style.opacity = '0'; }
+        setTimeout(() => {
+            _removeNotif(n);
+            _scrapAccum.el = null;
+            _scrapAccum.notif = null;
+            _scrapAccum.total = 0;
+            _scrapAccum.timerId = null;
+        }, 220);
+    }, 1200);
 }
 
 function _showFloatingWarning(scene, text, color) {
@@ -1967,6 +2062,7 @@ function checkScrapPickups(scene) {
             // Collect
             _scrap += drop.value;
             _showScrapFloatText(scene, drop.value);
+            _showScrapPickupNotification(scene, drop.value);
             if (typeof sndScrapPickup === 'function') sndScrapPickup();
             drop.active = false;
             if (drop.coin?.active)      try { drop.coin.destroy(); }      catch(e) {}
@@ -2005,6 +2101,9 @@ function cleanupEquipmentDrops() {
         if (n.el) try { if (n.el.parentNode) n.el.parentNode.removeChild(n.el); } catch(e) {}
     });
     _lootNotifications = [];
+    // Reset scrap accumulator
+    if (_scrapAccum.timerId) { clearTimeout(_scrapAccum.timerId); }
+    _scrapAccum = { el: null, notif: null, total: 0, timerId: null };
     // Cleanup scrap coins
     _scrapDrops.forEach(drop => {
         if (drop.coin?.active)      try { drop.coin.destroy(); }      catch(e) {}

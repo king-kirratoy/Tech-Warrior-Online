@@ -1822,7 +1822,8 @@ function _renderWeaponBar() {
         h += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${WEAPON_NAMES[key] || w.name}</div>`;
         if (w.dmg) {
             const effDmg = Math.round((w.dmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100));
-            const effRld = Math.round((w.fireRate||0) * (_perkState.reloadMult||1) * (1 - _gRldPct/100));
+            // _gRldPct = _gearState.fireRatePct (negative = faster); 1 + (−0.05) = 0.95 × fireRate = faster
+            const effRld = Math.round((w.fireRate||0) * (_perkState.reloadMult||1) * (1 + _gRldPct/100));
             const effDps = effRld > 0 ? Math.round(effDmg / effRld * 1000) : 0;
             h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span></div>`;
         } else if (w.cooldown) {
@@ -1895,6 +1896,7 @@ function _buildSingleCardHtml(item, slotLabel) {
     }
     if (hasStats && hasAffixes) html += '<div class="lo-hover-divider"></div>';
     if (hasAffixes) {
+        html += `<div style="font-size:7px;letter-spacing:2px;color:rgba(255,255,255,0.3);margin-bottom:3px;">BONUSES</div>`;
         item.affixes.forEach(a => {
             const lbl = a.label || '';
             const isInvertedAffix = /reload|cooldown/i.test(lbl);
@@ -1959,6 +1961,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         }
         if (hasStats && hasAffixes) h += '<div class="lo-hover-divider"></div>';
         if (hasAffixes) {
+            h += `<div style="font-size:7px;letter-spacing:2px;color:rgba(255,255,255,0.3);margin-bottom:3px;">BONUSES</div>`;
             colItem.affixes.forEach(a => {
                 const lbl = a.label || '';
                 const isInvertedAffix = /reload|cooldown/i.test(lbl);
