@@ -1849,7 +1849,7 @@ const STAT_DISPLAY_NAMES = {
     dr:'Damage Reduction %',
     shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %', maxShield:'Shield HP',
     dodgePct:'Dodge %', speedPct:'Move Speed %',
-    modCdPct:'Mod Cooldown %', modEffPct:'Mod Duration %',
+    modCdPct:'Mod Cooldown %', modEffPct:'Mod Duration %', cooldown:'Mod Cooldown',
     lootMult:'Loot Quality %', autoRepair:'Auto Repair',
     pellets:'Pellets', splashRadius:'Blast Radius %',
     range:'Range', radius:'Blast Radius', burst:'Burst Count',
@@ -1877,6 +1877,8 @@ function _buildSingleCardHtml(item, slotLabel) {
             let displayVal;
             if (k === 'fireRate' || k === 'reload') {
                 displayVal = (1000 / v).toFixed(1) + '/sec';
+            } else if (k === 'cooldown') {
+                displayVal = v + 's';
             } else if (_pctStats.has(k)) {
                 displayVal = v + '%';
             } else {
@@ -1938,6 +1940,8 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
                 let displayVal;
                 if (k === 'fireRate' || k === 'reload') {
                     displayVal = (1000 / v).toFixed(1) + '/sec';
+                } else if (k === 'cooldown') {
+                    displayVal = v + 's';
                 } else if (_pctStats.has(k)) {
                     displayVal = v + '%';
                 } else {
