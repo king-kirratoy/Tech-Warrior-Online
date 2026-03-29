@@ -1106,7 +1106,11 @@ function _drawLootIcon(scene, x, y, iconKey, rarityColor) {
 }
 
 // ── GROUND LOOT SPAWNING ───────────────────────────────────────
-function spawnEquipmentDrop(scene, x, y, item) {
+// spawnEquipmentDrop(scene, x, y, item [, fromX, fromY, delay])
+//   x, y     = final landing position
+//   fromX/Y  = death position (arc origin); omit for instant-appear
+//   delay    = ms stagger before arc launches (for multi-drop)
+function spawnEquipmentDrop(scene, x, y, item, fromX, fromY, delay) {
     if (!item || !scene) return;
     // Cap active ground drops — remove oldest common/uncommon first
     while (_equipmentDrops.length >= _MAX_GROUND_DROPS) {
@@ -1119,100 +1123,188 @@ function spawnEquipmentDrop(scene, x, y, item) {
     const rc = rarityDef.color;
 
     // ── Beam height & intensity scale by rarity ──
-    const beamCfg = {
+    const _beamDefs = {
         common:    { h: 60,  w: 3,  glowR: 10, coreW: 1,  baseR: 8,  glowA: 0.10, coreA: 0.30, pulseA: 0.04 },
         uncommon:  { h: 80,  w: 4,  glowR: 12, coreW: 1.5,baseR: 10, glowA: 0.14, coreA: 0.40, pulseA: 0.06 },
         rare:      { h: 110, w: 5,  glowR: 16, coreW: 2,  baseR: 14, glowA: 0.18, coreA: 0.50, pulseA: 0.08 },
         epic:      { h: 140, w: 6,  glowR: 20, coreW: 2.5,baseR: 16, glowA: 0.22, coreA: 0.60, pulseA: 0.10 },
-        legendary: { h: 180, w: 8,  glowR: 26, coreW: 3,  baseR: 20, glowA: 0.28, coreA: 0.70, pulseA: 0.12 }
-    }[item.rarity] || beamCfg.common;
+        legendary: { h: 180, w: 8,  glowR: 26, coreW: 3,  baseR: 20, glowA: 0.28, coreA: 0.70, pulseA: 0.12 },
+    };
+    const beamCfg = _beamDefs[item.rarity] || _beamDefs.common;
 
-    // ── Base glow on the ground ──
+    // ── Create all visuals at landing position ──
     const baseGlow = scene.add.circle(x, y, beamCfg.baseR, rc, beamCfg.glowA + 0.10).setDepth(6);
-    scene.tweens.add({
-        targets: baseGlow, alpha: beamCfg.glowA,
-        yoyo: true, repeat: -1, duration: 800, ease: 'Sine.easeInOut'
-    });
-
-    // ── Outer beam (wide, soft glow) ──
-    const beam = scene.add.rectangle(x, y - beamCfg.h / 2, beamCfg.w * 3, beamCfg.h, rc, beamCfg.glowA).setDepth(6);
-    beam.setOrigin(0.5, 1);
-    beam.setPosition(x, y);
-    scene.tweens.add({
-        targets: beam, alpha: beamCfg.pulseA,
-        yoyo: true, repeat: -1, duration: 900 + Math.random() * 300
-    });
-
-    // ── Inner beam core (bright, narrow) ──
-    const beamCore = scene.add.rectangle(x, y - beamCfg.h / 2, beamCfg.coreW * 2, beamCfg.h, 0xffffff, beamCfg.coreA).setDepth(7);
-    beamCore.setOrigin(0.5, 1);
-    beamCore.setPosition(x, y);
-    scene.tweens.add({
-        targets: beamCore, alpha: beamCfg.coreA * 0.4,
-        yoyo: true, repeat: -1, duration: 700 + Math.random() * 200
-    });
-
-    // ── Glow circle at beam top ──
+    const beam = scene.add.rectangle(x, y, beamCfg.w * 3, beamCfg.h, rc, beamCfg.glowA)
+        .setDepth(6).setOrigin(0.5, 1);
+    const beamCore = scene.add.rectangle(x, y, beamCfg.coreW * 2, beamCfg.h, 0xffffff, beamCfg.coreA)
+        .setDepth(7).setOrigin(0.5, 1);
     const beamGlow = scene.add.circle(x, y - beamCfg.h, beamCfg.glowR * 0.6, rc, beamCfg.glowA * 0.5).setDepth(6);
-    scene.tweens.add({
-        targets: beamGlow, alpha: 0, scaleX: 1.3, scaleY: 1.3,
-        yoyo: true, repeat: -1, duration: 1200, ease: 'Sine.easeInOut'
-    });
-
-    // ── Item icon at the base ──
-    const icon = _drawLootIcon(scene, x, y, item.icon, rc);
-
-    // ── Item name tag ──
+    // Icon drawn at local (0,0) so setScale works around draw center
+    const icon = _drawLootIcon(scene, 0, 0, item.icon, rc);
+    icon.setPosition(x, y); // depth 9 already set by _drawLootIcon
     const tag = scene.add.text(x, y + 16, item.shortName, {
         font: 'bold 8px Courier New',
         fill: rarityDef.colorStr,
         stroke: '#000000',
         strokeThickness: 2
     }).setOrigin(0.5).setDepth(9).setAlpha(0.85);
-
-    // ── Rarity indicator dot ──
     const rarityDot = scene.add.circle(x, y - 14, 3, rc, 0.9).setDepth(9);
 
-    // Float animation for icon area
-    scene.tweens.add({
-        targets: [rarityDot, baseGlow],
-        y: '-=4', yoyo: true, repeat: -1, duration: 900, ease: 'Sine.easeInOut'
-    });
-
-    // Screen shake for epic/legendary drops
-    if (item.rarity === 'epic') {
-        scene.cameras.main.shake(120, 0.004);
-    }
-    if (item.rarity === 'legendary') {
-        scene.cameras.main.shake(200, 0.008);
-        // Star burst particles
-        for (let i = 0; i < 6; i++) {
-            const star = scene.add.star(x, y - 10, 4, 2, 5, rc, 0.7)
-                .setDepth(10).setScale(0.5);
-            scene.tweens.add({
-                targets: star,
-                x: x + Phaser.Math.Between(-35, 35),
-                y: y + Phaser.Math.Between(-50, 10),
-                alpha: 0, scale: 0,
-                duration: 1200 + i * 200,
-                onComplete: () => star.destroy()
-            });
-        }
-        if (typeof sndEquipDrop === 'function') {
-            sndEquipDrop(item.rarity);
-        } else if (typeof _noise === 'function') {
-            _noise(0.12, 0.5, 0, 300, 700);
-        }
-    }
+    // ── Idle animations (deferred until after arc, or immediate if no arc) ──
+    const _startIdleAnims = () => {
+        if (baseGlow?.active !== false) baseGlow.setAlpha(beamCfg.glowA + 0.10).setScale(1);
+        if (beam?.active !== false) beam.setAlpha(beamCfg.glowA).setScale(1);
+        if (beamCore?.active !== false) beamCore.setAlpha(beamCfg.coreA).setScale(1);
+        if (beamGlow?.active !== false) { beamGlow.setAlpha(beamCfg.glowA * 0.5); beamGlow.setScale(1); }
+        if (tag?.active !== false) tag.setAlpha(0.85).setScale(1);
+        if (rarityDot?.active !== false) rarityDot.setAlpha(0.9).setScale(1);
+        if (icon?.active !== false) icon.setScale(1);
+        scene.tweens.add({ targets: baseGlow, alpha: beamCfg.glowA, yoyo: true, repeat: -1, duration: 800, ease: 'Sine.easeInOut' });
+        scene.tweens.add({ targets: beam, alpha: beamCfg.pulseA, yoyo: true, repeat: -1, duration: 900 + Math.random() * 300 });
+        scene.tweens.add({ targets: beamCore, alpha: beamCfg.coreA * 0.4, yoyo: true, repeat: -1, duration: 700 + Math.random() * 200 });
+        scene.tweens.add({ targets: beamGlow, alpha: 0, scaleX: 1.3, scaleY: 1.3, yoyo: true, repeat: -1, duration: 1200, ease: 'Sine.easeInOut' });
+        scene.tweens.add({ targets: [rarityDot, baseGlow], y: '-=4', yoyo: true, repeat: -1, duration: 900, ease: 'Sine.easeInOut' });
+    };
 
     const dropData = {
         item,
         glow: baseGlow, icon, tag, rarityDot, beam, beamGlow, beamCore, baseGlow,
         x, y,
-        active: true
+        active: true,
+        _arcDone: true,
     };
-
     _equipmentDrops.push(dropData);
+
+    const hasArc = fromX !== undefined && fromY !== undefined;
+
+    if (hasArc) {
+        dropData._arcDone = false;
+
+        // Arc center proxy — moves from death point to landing point
+        const proxy = { cx: fromX, cy: fromY };
+        const _updatePositions = () => {
+            const cx = proxy.cx, cy = proxy.cy;
+            if (baseGlow?.active !== false) { baseGlow.x = cx;     baseGlow.y = cy; }
+            if (beam?.active !== false)     { beam.x = cx;         beam.y = cy; }
+            if (beamCore?.active !== false) { beamCore.x = cx;     beamCore.y = cy; }
+            if (beamGlow?.active !== false) { beamGlow.x = cx;     beamGlow.y = cy - beamCfg.h; }
+            if (icon?.active !== false)     { icon.x = cx;         icon.y = cy; }
+            if (tag?.active !== false)      { tag.x = cx;          tag.y = cy + 16; }
+            if (rarityDot?.active !== false){ rarityDot.x = cx;    rarityDot.y = cy - 14; }
+        };
+        // Move all visuals to start position and hide
+        _updatePositions();
+        [baseGlow, beam, beamCore, beamGlow, icon, tag, rarityDot].forEach(o => {
+            if (o) { o.setAlpha(0); o.setScale(0.5); }
+        });
+
+        const arcH = Phaser.Math.Between(60, 80);
+        const arcDur = Phaser.Math.Between(400, 500);
+        const halfDur1 = Math.floor(arcDur * 0.45);
+        const halfDur2 = arcDur - halfDur1;
+        const midX = (fromX + x) * 0.5;
+        const midY = fromY - arcH;
+        const fadeInDur = Math.floor(arcDur * 0.4);
+
+        const _doArc = () => {
+            // Fade in + scale up across first part of arc
+            scene.tweens.add({ targets: baseGlow, alpha: beamCfg.glowA + 0.10, scaleX: 1, scaleY: 1, duration: fadeInDur, ease: 'Power1' });
+            scene.tweens.add({ targets: beam,     alpha: beamCfg.glowA,         scaleX: 1, scaleY: 1, duration: fadeInDur, ease: 'Power1' });
+            scene.tweens.add({ targets: beamCore, alpha: beamCfg.coreA,         scaleX: 1, scaleY: 1, duration: fadeInDur, ease: 'Power1' });
+            scene.tweens.add({ targets: beamGlow, alpha: beamCfg.glowA * 0.5,  scaleX: 1, scaleY: 1, duration: fadeInDur, ease: 'Power1' });
+            scene.tweens.add({ targets: icon,     alpha: 1,                     scaleX: 1, scaleY: 1, duration: fadeInDur, ease: 'Power1' });
+            scene.tweens.add({ targets: tag,      alpha: 0.85,                  scaleX: 1, scaleY: 1, duration: fadeInDur, ease: 'Power1' });
+            scene.tweens.add({ targets: rarityDot,alpha: 0.9,                   scaleX: 1, scaleY: 1, duration: fadeInDur, ease: 'Power1' });
+
+            // Phase 1: arc up to apex
+            scene.tweens.add({
+                targets: proxy, cx: midX, cy: midY,
+                duration: halfDur1, ease: 'Power1',
+                onUpdate: _updatePositions,
+                onComplete: () => {
+                    // Phase 2: arc down to landing
+                    scene.tweens.add({
+                        targets: proxy, cx: x, cy: y,
+                        duration: halfDur2, ease: 'Power2',
+                        onUpdate: _updatePositions,
+                        onComplete: () => {
+                            // Bounce on landing
+                            const bProxy = { by: 0 };
+                            scene.tweens.add({
+                                targets: bProxy, by: 5,
+                                duration: 80, ease: 'Quad.easeOut', yoyo: true,
+                                onUpdate: () => {
+                                    const d = bProxy.by;
+                                    if (baseGlow?.active !== false) { baseGlow.y = y + d; }
+                                    if (beam?.active !== false)     { beam.y = y + d; }
+                                    if (beamCore?.active !== false) { beamCore.y = y + d; }
+                                    if (beamGlow?.active !== false) { beamGlow.y = y - beamCfg.h + d; }
+                                    if (icon?.active !== false)     { icon.y = y + d; }
+                                    if (tag?.active !== false)      { tag.y = y + 16 + d; }
+                                    if (rarityDot?.active !== false){ rarityDot.y = y - 14 + d; }
+                                },
+                                onComplete: () => {
+                                    _startIdleAnims();
+                                    dropData._arcDone = true;
+                                    if (typeof sndLootDrop === 'function') sndLootDrop(item.rarity);
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        };
+
+        if (delay > 0) {
+            scene.time.delayedCall(delay, _doArc);
+        } else {
+            _doArc();
+        }
+
+        // Screen shake + starburst at launch from death position
+        if (item.rarity === 'epic') {
+            scene.cameras.main.shake(120, 0.004);
+        }
+        if (item.rarity === 'legendary') {
+            scene.cameras.main.shake(200, 0.008);
+            for (let i = 0; i < 6; i++) {
+                const star = scene.add.star(fromX, fromY - 10, 4, 2, 5, rc, 0.7).setDepth(10).setScale(0.5);
+                scene.tweens.add({
+                    targets: star,
+                    x: fromX + Phaser.Math.Between(-35, 35),
+                    y: fromY + Phaser.Math.Between(-50, 10),
+                    alpha: 0, scale: 0,
+                    duration: 1200 + i * 200,
+                    onComplete: () => star.destroy()
+                });
+            }
+            if (typeof sndEquipDrop === 'function') sndEquipDrop(item.rarity);
+            else if (typeof _noise === 'function') _noise(0.12, 0.5, 0, 300, 700);
+        }
+
+    } else {
+        // No arc: start idle animations immediately
+        _startIdleAnims();
+        if (item.rarity === 'epic') {
+            scene.cameras.main.shake(120, 0.004);
+        }
+        if (item.rarity === 'legendary') {
+            scene.cameras.main.shake(200, 0.008);
+            for (let i = 0; i < 6; i++) {
+                const star = scene.add.star(x, y - 10, 4, 2, 5, rc, 0.7).setDepth(10).setScale(0.5);
+                scene.tweens.add({
+                    targets: star,
+                    x: x + Phaser.Math.Between(-35, 35),
+                    y: y + Phaser.Math.Between(-50, 10),
+                    alpha: 0, scale: 0,
+                    duration: 1200 + i * 200,
+                    onComplete: () => star.destroy()
+                });
+            }
+            if (typeof sndEquipDrop === 'function') sndEquipDrop(item.rarity);
+            else if (typeof _noise === 'function') _noise(0.12, 0.5, 0, 300, 700);
+        }
+    }
 }
 
 function _removeEquipmentDrop(scene, drop, fade) {
@@ -1240,6 +1332,7 @@ function checkEquipmentPickups(scene) {
     if (!player?.active || !isDeployed) return;
     _equipmentDrops.slice().forEach(drop => {
         if (!drop.active) return;
+        if (!drop._arcDone) return; // still in flight
         const dist = Phaser.Math.Distance.Between(player.x, player.y, drop.x, drop.y);
         if (dist < 45) {
             const _freeSlot = _inventory.indexOf(null);
@@ -1284,77 +1377,94 @@ function checkEquipmentPickups(scene) {
 function _showLootPickupNotification(scene, item) {
     const rarityDef = RARITY_DEFS[item.rarity];
 
-    // Determine vertical offset based on active notifications
+    // Resolve display name: item type only — no stats, no affixes
+    let displayName;
+    if (item.baseType === 'weapon') {
+        const wName = (typeof WEAPON_NAMES !== 'undefined') ? WEAPON_NAMES[item.subType] : null;
+        displayName = wName ? wName.toUpperCase() : 'WEAPON';
+    } else if (item.baseType === 'mod' || item.baseType === 'mod_system' || item.baseType === 'cpu_system') {
+        displayName = 'CPU';
+    } else if (item.baseType === 'shield' || item.baseType === 'shield_system') {
+        displayName = 'SHIELD';
+    } else if (item.baseType === 'augment' || item.baseType === 'aug_system') {
+        displayName = 'AUGMENT';
+    } else if (item.baseType === 'arms') {
+        displayName = 'ARMS';
+    } else if (item.baseType === 'armor' || item.baseType === 'chest') {
+        displayName = 'ARMOR';
+    } else if (item.baseType === 'leg' || item.baseType === 'leg_system' || item.baseType === 'legs') {
+        displayName = 'LEGS';
+    } else {
+        displayName = (item.baseType || 'ITEM').toUpperCase();
+    }
+
+    // Rarity glow via box-shadow using rarity color
+    const _toRgba = (hex, a) => {
+        const r = parseInt(hex.slice(1,3), 16);
+        const g = parseInt(hex.slice(3,5), 16);
+        const b = parseInt(hex.slice(5,7), 16);
+        return `rgba(${r},${g},${b},${a})`;
+    };
+    const rc = rarityDef.colorStr;
+    const glowMap = {
+        common:    '',
+        uncommon:  `0 0 8px ${_toRgba(rc, 0.3)}`,
+        rare:      `0 0 12px ${_toRgba(rc, 0.4)}`,
+        epic:      `0 0 16px ${_toRgba(rc, 0.5)}`,
+        legendary: `0 0 20px ${_toRgba(rc, 0.6)}, 0 0 40px ${_toRgba(rc, 0.2)}`,
+    };
+    const glow = glowMap[item.rarity] || '';
+
+    // Build DOM pill element
+    const el = document.createElement('div');
+    Object.assign(el.style, {
+        position:       'fixed',
+        right:          '16px',
+        top:            '70px',
+        background:     'rgba(8,11,14,0.85)',
+        border:         `1px solid ${rc}`,
+        borderRadius:   '14px',
+        padding:        '6px 14px',
+        fontFamily:     'var(--font-mono, "Courier New", monospace)',
+        fontSize:       '14px',
+        fontWeight:     'bold',
+        color:          'rgba(255,255,255,0.9)',
+        letterSpacing:  '2px',
+        textTransform:  'uppercase',
+        whiteSpace:     'nowrap',
+        pointerEvents:  'none',
+        opacity:        '0',
+        transition:     'opacity 150ms ease, top 200ms ease',
+        zIndex:         '9000',
+        boxShadow:      glow,
+    });
+    el.textContent = displayName;
+    document.body.appendChild(el);
+
+    // Stack: remove stale, assign slot positions (newest at bottom)
     _lootNotifications = _lootNotifications.filter(n => n.active);
-    const yOffset = _lootNotifications.length * 36;
+    const baseTop = 70;
+    const slotH = 38;
+    // Shift existing notifications up to make room for new one at bottom
+    _lootNotifications.forEach((n, i) => {
+        if (n.el) n.el.style.top = (baseTop + i * slotH) + 'px';
+    });
+    el.style.top = (baseTop + _lootNotifications.length * slotH) + 'px';
 
-    const baseX = 10;
-    const baseY = 122 + yOffset;
-
-    // Build notification text
-    const affixText = item.affixes.length > 0
-        ? '  ' + item.affixes.map(a => a.label).join(', ')
-        : '';
-    const displayText = `${rarityDef.label === 'Common' ? '' : rarityDef.label + ' '}${item.shortName}${affixText}`;
-
-    // Background bar — rounded rect via Graphics (max-width 280px, border-radius 6px)
-    const bg = scene.add.graphics().setDepth(200).setScrollFactor(0);
-    bg.fillStyle(0x0a0f16, 0.92);
-    bg.fillRoundedRect(0, -14, 280, 28, 6);
-    bg.lineStyle(1, rarityDef.color, 0.6);
-    bg.strokeRoundedRect(0, -14, 280, 28, 6);
-
-    // Rarity stripe on left edge
-    const stripe = scene.add.rectangle(baseX, baseY, 3, 28, rarityDef.color, 0.9)
-        .setOrigin(0, 0.5).setDepth(201).setScrollFactor(0);
-
-    // Text
-    const txt = scene.add.text(baseX + 7, baseY, displayText, {
-        font: 'bold 10px Courier New',
-        fill: rarityDef.colorStr,
-        stroke: '#000000',
-        strokeThickness: 2
-    }).setOrigin(0, 0.5).setDepth(201).setScrollFactor(0);
-
-    // Slide in from left
-    const startX = baseX - 310;
-    bg.x = startX;
-    bg.y = baseY;
-    stripe.x = startX;
-    txt.x = startX + 7;
-
-    const notification = { bg, stripe, txt, active: true };
+    const notification = { el, active: true };
     _lootNotifications.push(notification);
 
-    scene.tweens.add({
-        targets: [bg],
-        x: baseX,
-        duration: 300,
-        ease: 'Power2'
-    });
-    scene.tweens.add({
-        targets: [stripe],
-        x: baseX,
-        duration: 300,
-        ease: 'Power2'
-    });
-    scene.tweens.add({
-        targets: [txt],
-        x: baseX + 7,
-        duration: 300,
-        ease: 'Power2'
-    });
+    // Fade in
+    requestAnimationFrame(() => { el.style.opacity = '1'; });
 
-    // Fade out after 2.5s
-    scene.time.delayedCall(2500, () => {
-        scene.tweens.add({
-            targets: [bg, stripe, txt],
-            alpha: 0,
-            duration: 500,
-            onComplete: () => {
-                notification.active = false;
-                bg.destroy(); stripe.destroy(); txt.destroy();
-            }
+    // Hold 1.8s then fade out over 300ms
+    scene.time.delayedCall(1800, () => {
+        if (!notification.active) return;
+        el.style.transition = 'opacity 300ms ease';
+        el.style.opacity = '0';
+        scene.time.delayedCall(320, () => {
+            notification.active = false;
+            try { if (el.parentNode) el.parentNode.removeChild(el); } catch(e) {}
         });
     });
 }
@@ -1380,6 +1490,25 @@ function spawnEquipmentLoot(scene, x, y, enemyData) {
 
     const round = (typeof _round !== 'undefined') ? _round : 1;
 
+    // Calculate scatter landing positions: 100-150px from death, 40px min separation
+    const _scatterPositions = (count) => {
+        const positions = [];
+        for (let i = 0; i < count; i++) {
+            let px, py, attempts = 0;
+            do {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 100 + Math.random() * 50;
+                px = x + Math.cos(angle) * dist;
+                py = y + Math.sin(angle) * dist;
+                attempts++;
+            } while (attempts < 8 && positions.some(p => Phaser.Math.Distance.Between(px, py, p.x, p.y) < 40));
+            positions.push({ x: px, y: py });
+        }
+        return positions;
+    };
+
+    const stagger = 65; // ms between successive drop launches
+
     if (enemyData?.isBoss) {
         // Boss: 100% guaranteed, 2-3 items (50% for 2, 50% for 3)
         const dropCount = Math.random() < 0.5 ? 2 : 3;
@@ -1399,26 +1528,30 @@ function spawnEquipmentLoot(scene, x, y, enemyData) {
                 if (item) drops.push(item);
             }
         }
-        drops.forEach(item => {
-            const ox = x + Phaser.Math.Between(-50, 50);
-            const oy = y + Phaser.Math.Between(-50, 50);
-            spawnEquipmentDrop(scene, ox, oy, item);
+        const positions = _scatterPositions(drops.length);
+        drops.forEach((item, i) => {
+            spawnEquipmentDrop(scene, positions[i].x, positions[i].y, item, x, y, i * stagger);
         });
     } else if (enemyData?.isElite) {
         // Elite: 75% chance (already passed), 50%/50% for 1 or 2 items
         const dropCount = Math.random() < 0.5 ? 1 : 2;
+        const items = [];
         for (let i = 0; i < dropCount; i++) {
             const item = generateItem(round, enemyData);
-            if (item) {
-                const ox = i > 0 ? x + Phaser.Math.Between(-30, 30) : x;
-                const oy = i > 0 ? y + Phaser.Math.Between(-30, 30) : y;
-                spawnEquipmentDrop(scene, ox, oy, item);
-            }
+            if (item) items.push(item);
         }
+        const positions = _scatterPositions(items.length);
+        items.forEach((item, i) => {
+            spawnEquipmentDrop(scene, positions[i].x, positions[i].y, item, x, y, i * stagger);
+        });
     } else {
         // Normal: 50% chance (already passed), 1 item
         const item = generateItem(round, enemyData);
-        if (item) spawnEquipmentDrop(scene, x, y, item);
+        if (item) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 100 + Math.random() * 50;
+            spawnEquipmentDrop(scene, x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, item, x, y, 0);
+        }
     }
 }
 
@@ -1757,11 +1890,63 @@ function isMatrixBarrierActive() { return _matrixBarrierActive; }
 function spawnScrapDrop(scene, x, y) {
     if (_gameMode !== 'campaign') return;
     const value = Phaser.Math.Between(5, 10);
+    // Landing position: 60-80px from death point
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 60 + Math.random() * 20;
+    const landX = x + Math.cos(angle) * dist;
+    const landY = y + Math.sin(angle) * dist;
     // Outer ring (dark gold border effect)
-    const outerRing = scene.add.circle(x, y, 10, 0x8b6914, 0.8).setDepth(7);
+    const outerRing = scene.add.circle(x, y, 10, 0x8b6914, 0).setDepth(7);
     // Gold coin fill
-    const coin = scene.add.circle(x, y, 8, 0xffd700, 0.9).setDepth(8);
-    _scrapDrops.push({ coin, outerRing, x, y, value, active: true });
+    const coin = scene.add.circle(x, y, 8, 0xffd700, 0).setDepth(8);
+    const drop = { coin, outerRing, x: landX, y: landY, value, active: true, _arcDone: false };
+    _scrapDrops.push(drop);
+
+    // Short arc: 40-50px height, 350ms
+    const arcH = 40 + Math.random() * 10;
+    const arcDur = 350;
+    const halfDur1 = Math.floor(arcDur * 0.45);
+    const halfDur2 = arcDur - halfDur1;
+    const proxy = { cx: x, cy: y };
+    const midX = (x + landX) * 0.5;
+    const midY = y - arcH;
+
+    scene.tweens.add({ targets: [coin, outerRing], alpha: 1, scaleX: 1, scaleY: 1, duration: Math.floor(arcDur * 0.4), ease: 'Power1' });
+    coin.setScale(0.5); outerRing.setScale(0.5);
+
+    const _updateScrap = () => {
+        if (coin?.active !== false)      { coin.x = proxy.cx;      coin.y = proxy.cy; }
+        if (outerRing?.active !== false) { outerRing.x = proxy.cx; outerRing.y = proxy.cy; }
+    };
+
+    scene.tweens.add({
+        targets: proxy, cx: midX, cy: midY,
+        duration: halfDur1, ease: 'Power1',
+        onUpdate: _updateScrap,
+        onComplete: () => {
+            scene.tweens.add({
+                targets: proxy, cx: landX, cy: landY,
+                duration: halfDur2, ease: 'Power2',
+                onUpdate: _updateScrap,
+                onComplete: () => {
+                    const bProxy = { by: 0 };
+                    scene.tweens.add({
+                        targets: bProxy, by: 3,
+                        duration: 70, ease: 'Quad.easeOut', yoyo: true,
+                        onUpdate: () => {
+                            if (coin?.active !== false)      { coin.y = landY + bProxy.by; }
+                            if (outerRing?.active !== false) { outerRing.y = landY + bProxy.by; }
+                        },
+                        onComplete: () => {
+                            if (coin?.active !== false)      { coin.x = landX;      coin.y = landY; }
+                            if (outerRing?.active !== false) { outerRing.x = landX; outerRing.y = landY; }
+                            drop._arcDone = true;
+                        }
+                    });
+                }
+            });
+        }
+    });
 }
 
 function checkScrapPickups(scene) {
@@ -1770,6 +1955,7 @@ function checkScrapPickups(scene) {
     const dt = (scene.game?.loop?.delta ?? 16.67) / 1000;
     _scrapDrops.slice().forEach(drop => {
         if (!drop.active) return;
+        if (!drop._arcDone) return; // still in flight
         const dist = Phaser.Math.Distance.Between(player.x, player.y, drop.x, drop.y);
         if (dist < 120 && dist > 1) {
             // Magnet: move toward player at 200 px/s
@@ -1784,6 +1970,7 @@ function checkScrapPickups(scene) {
             // Collect
             _scrap += drop.value;
             _showScrapFloatText(scene, drop.value);
+            if (typeof sndScrapPickup === 'function') sndScrapPickup();
             drop.active = false;
             if (drop.coin?.active)      try { drop.coin.destroy(); }      catch(e) {}
             if (drop.outerRing?.active) try { drop.outerRing.destroy(); } catch(e) {}
@@ -1816,6 +2003,10 @@ function cleanupEquipmentDrops() {
             .forEach(o => { try { if (o.destroy) o.destroy(); } catch(e){} });
     });
     _equipmentDrops = [];
+    // Remove any DOM notification pills still on screen
+    _lootNotifications.forEach(n => {
+        if (n.el) try { if (n.el.parentNode) n.el.parentNode.removeChild(n.el); } catch(e) {}
+    });
     _lootNotifications = [];
     // Cleanup scrap coins
     _scrapDrops.forEach(drop => {
