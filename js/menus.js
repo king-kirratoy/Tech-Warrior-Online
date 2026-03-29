@@ -1652,12 +1652,12 @@ function _renderGearBonusesPanel() {
     const gearTitle = document.getElementById('stat-gear-title');
     if (!gearPanel || !gearInfo) return;
     const gs = typeof _gearState !== 'undefined' ? _gearState : {};
-    const hasAnyGear = Object.values(gs).some(v => v > 0);
+    const hasAnyGear = Object.values(gs).some(v => v !== 0);
 
     // Merge skill tree bonuses in campaign mode
     const stb = (_gameMode === 'campaign' && typeof getSkillTreeBonuses === 'function')
         ? getSkillTreeBonuses() : {};
-    const hasSkillBonuses = Object.values(stb).some(v => v > 0);
+    const hasSkillBonuses = Object.values(stb).some(v => v !== 0);
 
     // Update header to reflect whether skill bonuses are included
     if (gearTitle) {
@@ -1675,13 +1675,20 @@ function _renderGearBonusesPanel() {
     const negKeys  = new Set(['fireRatePct','modCdPct']);
 
     const _renderGroup = (title, keys) => {
-        const active = keys.filter(k => ((gs[k] || 0) + (stb[k] || 0)) > 0);
+        const active = keys.filter(k => {
+            const v = (gs[k] || 0) + (stb[k] || 0);
+            return negKeys.has(k) ? v !== 0 : v > 0;
+        });
         if (active.length === 0) return '';
         let h = `<div class="bsub">${title}</div>`;
         active.forEach(k => {
             const v  = (gs[k] || 0) + (stb[k] || 0);
-            const fmtGv = _pctStats.has(k) ? v + '%' : v;
-            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span class="lo-bonus-val pos">+${fmtGv}</span></div>`;
+            const isNeg = negKeys.has(k);
+            const displaySign = isNeg ? (v < 0 ? '+' : '-') : '+';
+            const displayMag = Math.abs(v);
+            const fmtGv = _pctStats.has(k) ? displayMag + '%' : displayMag;
+            const cls = isNeg ? (v < 0 ? 'pos' : 'neg') : 'pos';
+            h += `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span class="lo-bonus-val ${cls}">${displaySign}${fmtGv}</span></div>`;
         });
         return h;
     };
@@ -1871,16 +1878,17 @@ function _buildSingleCardHtml(item, slotLabel) {
     if (hasStats) {
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (!v) return;
-            const valColor = 'var(--sci-cyan)';
+            const isInv = _hoverInvertedStats.has(k);
+            const valColor = isInv ? (v < 0 ? '#00ff88' : '#ff4d6a') : 'var(--sci-cyan)';
             let displayVal;
             if (k === 'fireRate' || k === 'reload') {
                 displayVal = (1000 / v).toFixed(1) + '/sec';
             } else if (k === 'cooldown') {
                 displayVal = v + 's';
             } else if (_pctStats.has(k)) {
-                displayVal = v + '%';
+                displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) + '%' : v + '%';
             } else {
-                displayVal = v;
+                displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) : String(v);
             }
             html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span style="color:${valColor};">${displayVal}</span></div>`;
         });
@@ -1934,16 +1942,17 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         if (hasStats) {
             Object.entries(colItem.baseStats).forEach(([k, v]) => {
                 if (!v) return;
-                const valColor = 'var(--sci-cyan)';
+                const isInv = _hoverInvertedStats.has(k);
+                const valColor = isInv ? (v < 0 ? '#00ff88' : '#ff4d6a') : 'var(--sci-cyan)';
                 let displayVal;
                 if (k === 'fireRate' || k === 'reload') {
                     displayVal = (1000 / v).toFixed(1) + '/sec';
                 } else if (k === 'cooldown') {
                     displayVal = v + 's';
                 } else if (_pctStats.has(k)) {
-                    displayVal = v + '%';
+                    displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) + '%' : v + '%';
                 } else {
-                    displayVal = v;
+                    displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) : String(v);
                 }
                 h += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span style="color:${valColor};">${displayVal}</span></div>`;
             });
