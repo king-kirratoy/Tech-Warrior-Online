@@ -1905,6 +1905,14 @@ function _buildSingleCardHtml(item, slotLabel) {
         if (uDesc) html += `<div class="lo-hover-unique-desc">${uDesc}</div>`;
         html += `</div>`;
     }
+    if (item.legendaryTrait && typeof _perks !== 'undefined' && _perks[item.legendaryTrait]) {
+        const tp = _perks[item.legendaryTrait];
+        html += `<div class="lo-hover-trait">`;
+        html += `<div class="lo-hover-trait-hdr">✦ LEGENDARY TRAIT</div>`;
+        html += `<div class="lo-hover-trait-name">${tp.label || item.legendaryTrait}</div>`;
+        if (tp.desc) html += `<div class="lo-hover-trait-desc">${tp.desc}</div>`;
+        html += `</div>`;
+    }
     return html;
 }
 
@@ -1956,6 +1964,14 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
             h += `<div class="lo-hover-unique-hdr">★ UNIQUE EFFECT</div>`;
             h += `<div class="lo-hover-unique-name">${uName}</div>`;
             if (uDesc) h += `<div class="lo-hover-unique-desc">${uDesc}</div>`;
+            h += `</div>`;
+        }
+        if (colItem.legendaryTrait && typeof _perks !== 'undefined' && _perks[colItem.legendaryTrait]) {
+            const tp = _perks[colItem.legendaryTrait];
+            h += `<div class="lo-hover-trait">`;
+            h += `<div class="lo-hover-trait-hdr">✦ LEGENDARY TRAIT</div>`;
+            h += `<div class="lo-hover-trait-name">${tp.label || colItem.legendaryTrait}</div>`;
+            if (tp.desc) h += `<div class="lo-hover-trait-desc">${tp.desc}</div>`;
             h += `</div>`;
         }
         h += `<div class="cmp-spacer"></div>`;
