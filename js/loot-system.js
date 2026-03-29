@@ -517,6 +517,54 @@ function rollBossDrops(bossType, round) {
     return drops;
 }
 
+// ── LEGENDARY TRAIT TABLES ────────────────────────────────────
+// Maps item subtype (weapon key or cpu/leg systemKey) to a list of
+// eligible trait perk keys. One perk is randomly selected for each
+// Legendary item at generation time and stored as item.legendaryTrait.
+// Item types without an entry here (augments, shields, armor, arms,
+// standard cpu/leg chips) do not receive traits.
+// NOTE: Some keys here are in _hiddenPerks (smg_ricochet, mg_explosive_tips,
+// rail_chain_lightning, hr_concussive, rl_napalm) — they exist in _perks
+// and are valid for trait application even while hidden from warzone menus.
+const LEGENDARY_TRAITS = {
+  // ── Weapons ──────────────────────────────────────────────────
+  smg:            ['smg_lifesteal', 'smg_suppressor', 'smg_ricochet'],
+  sg:             ['sg_momentum', 'sg_buckshot', 'sg_lifesteal'],
+  fth:            ['fth_napalm_strike', 'fth_pressure_spray', 'fth_meltdown_core'],
+  siphon:         ['siphon_wide', 'siphon_leech_shield', 'siphon_deep_drain'],
+  mg:             ['mg_explosive_tips', 'mg_overheat', 'mg_headshot'],
+  br:             ['br_explosive_tip', 'br_stagger', 'br_mag_size'],
+  sr:             ['sr_explosive', 'sr_legendary', 'sr_mark'],
+  rail:           ['rail_chain_lightning', 'rail_emp_trail', 'rail_splinter'],
+  hr:             ['hr_legendary', 'hr_concussive', 'hr_splash'],
+  rl:             ['rl_napalm', 'rl_cluster_war', 'rl_lock_on'],
+  plsm:           ['plsm_nova', 'plsm_pierce', 'plsm_emp_burst'],
+  gl:             ['gl_legendary', 'gl_incendiary', 'gl_concuss'],
+  // ── CPU Mods (matched against item.systemKey) ─────────────────
+  barrier:        ['barrier_heal', 'barrier_reflect'],
+  jump:           ['jump_double_tap', 'jump_afterimage'],
+  decoy:          ['decoy_phantom_army', 'decoy_multi'],
+  ghost_step:     ['gs_legendary', 'gs_double'],
+  rage:           ['rage_legendary', 'rage_lifesteal'],
+  atk_drone:      ['drone_autonomous_unit', 'drone_shield'],
+  repair:         ['repair_legendary', 'repair_double'],
+  missile:        ['missile_incend', 'missile_legendary'],
+  fortress_mode:  ['fm_legendary', 'fm_aoe'],
+  emp:            ['emp_legendary', 'emp_detonate'],
+  // ── Leg Systems (matched against item.systemKey) ──────────────
+  hydraulic_boost:  ['hb_trail', 'hb_overdrive'],
+  seismic_dampener: ['sd_legendary', 'sd_stagger'],
+  featherweight:    ['fw_adrenaline', 'fw_crit'],
+  ghost_legs:       ['gleg_heal', 'gleg_emp'],
+  mine_layer:       ['ml_legendary', 'ml_emp'],
+  sprint_boosters:  ['sb_trail', 'sb_legendary'],
+  reactor_legs:     ['rl2_aoe', 'rl2_heal'],
+  mag_anchors:      ['ma_legendary', 'ma_aoe_lock'],
+  tremor_legs:      ['tl_legendary', 'tl_heal'],
+  suppressor_legs:  ['sl_legendary', 'sl_fire2'],
+  warlord_stride:   ['ws_legendary', 'ws_shield'],
+};
+
 // ── AFFIX POOLS — eligible affix keys per item type ────────────
 // System item types (shield_system, cpu_system, leg_system, aug_system)
 // are mapped to their parent type before pool lookup (see _affixTypeMap).
@@ -806,6 +854,22 @@ function generateItem(round, enemyData) {
     affixes.forEach(a => {
         item.computedStats[a.stat] = (item.computedStats[a.stat] || 0) + a.value;
     });
+
+    // ── Legendary trait selection ─────────────────────────────────
+    // Weapons use subType directly; cpu_system and leg_system use systemKey.
+    // Augments, shields, armor, arms, plain cpu/leg chips get no trait.
+    if (isLegendary) {
+        let _traitLookupKey = null;
+        if (baseType === 'weapon') {
+            _traitLookupKey = subType;
+        } else if (baseType === 'cpu_system' || baseType === 'leg_system') {
+            _traitLookupKey = systemKey;
+        }
+        if (_traitLookupKey && LEGENDARY_TRAITS[_traitLookupKey]) {
+            const _pool = LEGENDARY_TRAITS[_traitLookupKey];
+            item.legendaryTrait = _pool[Math.floor(Math.random() * _pool.length)];
+        }
+    }
 
     return item;
 }
@@ -1338,6 +1402,31 @@ function recalcGearStats() {
         if (!item?.isUnique || !item.uniqueEffect) return;
         _gearState._uniqueEffects[item.uniqueEffect] = true;
     });
+
+    // ── Legendary trait perk application ────────────────────────
+    // Collect active trait keys and apply each perk's effect.
+    // All trait perks in LEGENDARY_TRAITS only modify _perkState flags —
+    // none modify player HP/shield directly, so this is safe in all contexts.
+    //
+    // STACKING NOTE: If a player also picks the same perk in warzone,
+    // effects stack as intended. Most perks set boolean flags (idempotent).
+    // Additive perks (fw_crit: +=0.12) and multiplicative perks
+    // (siphon_wide: *=1.50, hb_overdrive: *=1.15) will accumulate if
+    // recalcGearStats() is called multiple times during a combat session
+    // (e.g. mid-round equip). This only affects those 3 perks and is an
+    // edge case; recalcGearStats() is called once at deploy in normal play.
+    _gearState._traitKeys = [];
+    if (typeof _perks !== 'undefined' && typeof _perkState !== 'undefined') {
+        slots.forEach(item => {
+            if (!item?.legendaryTrait) return;
+            const traitKey = item.legendaryTrait;
+            // Guard: skip if already applied this recalc (two items same trait)
+            if (_gearState._traitKeys.includes(traitKey)) return;
+            _gearState._traitKeys.push(traitKey);
+            const p = _perks[traitKey];
+            if (p?.apply) p.apply();
+        });
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════
