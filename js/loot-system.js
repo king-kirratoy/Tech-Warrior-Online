@@ -2026,14 +2026,11 @@ function _createStarterItem(baseType, weaponKey) {
         subType = weaponKey;
         name = w.name;
         icon = weaponKey;
+        const dmgFloor = w.dmg || 0;
+        const dmgCeiling = dmgFloor * 1.05;
+        const rolledDmg = Math.round(dmgFloor + Math.random() * (dmgCeiling - dmgFloor));
         baseStats = {};
-        if (w.dmg) baseStats.dmg = w.dmg;
-        if (w.fireRate) baseStats.fireRate = w.fireRate;
-        if (w.pellets) baseStats.pellets = w.pellets;
-        if (w.speed) baseStats.speed = w.speed;
-        if (w.range) baseStats.range = w.range;
-        if (w.radius) baseStats.radius = w.radius;
-        if (w.burst) baseStats.burst = w.burst;
+        if (w.dmg) baseStats.dmg = rolledDmg;
     } else {
         // System item — find the matching ITEM_BASES entry by systemKey
         const entry = Object.entries(ITEM_BASES).find(([, def]) => def.baseType === baseType && def.systemKey === weaponKey);
@@ -2071,13 +2068,9 @@ function equipStarterGear() {
     const starter = (typeof STARTER_LOADOUTS !== 'undefined') ? STARTER_LOADOUTS[ch] : null;
     if (!starter) return;
 
-    // Starter weapon in L ARM
+    // Starter weapon in L ARM only — no other slots pre-filled
     if (starter.L && starter.L !== 'none') {
         _equipped.L = _createStarterItem('weapon', starter.L);
-    }
-    // Starter shield
-    if (starter.shld && starter.shld !== 'none') {
-        _equipped.shield = _createStarterItem('shield_system', starter.shld);
     }
 
     recalcGearStats();
