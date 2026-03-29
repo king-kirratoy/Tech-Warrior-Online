@@ -1039,7 +1039,11 @@ function _startNewCampaignWithChassis(chassisType) {
     _perksEarned = 0;
     // Lock chassis choice in campaign state
     _campaignState.chassis = chassisType;
-    // Save the chassis choice
+    // Reset skill tree allocations for new campaign
+    if (typeof _skillTreeState !== 'undefined') {
+        _skillTreeState.allocated = {};
+    }
+    // Save the chassis choice (skill tree reset is persisted here)
     saveCampaignProgress();
     if (typeof saveCampaignState === 'function') saveCampaignState();
     // Hide chassis select, show mission select
@@ -1664,7 +1668,8 @@ function _renderGearBonusesPanel() {
         gearTitle.textContent = (_gameMode === 'campaign') ? 'Gear / Skill Bonuses' : 'Gear Bonuses';
     }
 
-    if (!hasAnyGear && !hasSkillBonuses) {
+    const hasChassisTrait = !!(loadout?.chassis);
+    if (!hasAnyGear && !hasSkillBonuses && !hasChassisTrait) {
         gearPanel.style.display = 'none';
         return;
     }
@@ -1697,6 +1702,48 @@ function _renderGearBonusesPanel() {
     gHtml += _renderGroup('OFFENSIVE', offKeys);
     gHtml += _renderGroup('DEFENSIVE', defKeys);
     gHtml += _renderGroup('UTILITY', utilKeys);
+
+    // ── Chassis trait bonuses ──
+    const _ch = loadout?.chassis;
+    if (_ch) {
+        const _traitRows = [];
+        const _traitTextRow = (lbl) =>
+            `<div class="lo-bonus-row"><span class="lo-bonus-lbl" style="color:rgba(255,209,102,0.7);">${lbl}</span></div>`;
+        const _traitStatRow = (lbl, val, cls) =>
+            `<div class="lo-bonus-row"><span class="lo-bonus-lbl">${lbl}</span><span class="lo-bonus-val ${cls}" style="color:#ffd166;">${val}</span></div>`;
+
+        if (_ch === 'light') {
+            const lFilled = loadout.L && loadout.L !== 'none';
+            const rFilled = loadout.R && loadout.R !== 'none';
+            const _dualWield = lFilled && rFilled && loadout.L === loadout.R;
+            const _oneArm = (lFilled ? 1 : 0) + (rFilled ? 1 : 0) === 1;
+            if (_dualWield) {
+                _traitRows.push(_traitStatRow('Dual-Wield Damage', '-15%', 'neg'));
+                _traitRows.push(_traitStatRow('Dual-Wield Fire Rate', '-15%', 'neg'));
+            }
+            _traitRows.push(_traitStatRow('Lightweight (below 50% HP)', '+15% Move Spd', 'pos'));
+            if (_oneArm) {
+                _traitRows.push(_traitStatRow('Agility Move Speed', '+10%', 'pos'));
+                _traitRows.push(_traitStatRow('Agility Dodge', '+10%', 'pos'));
+            }
+        } else if (_ch === 'medium') {
+            _traitRows.push(_traitStatRow('Mod Specialist Duration', '+15%', 'pos'));
+            _traitRows.push(_traitStatRow('Mod Specialist Cooldown', '+15%', 'pos'));
+            _traitRows.push(_traitTextRow('Kill Recharge: kills -0.5s mod cooldown'));
+            _traitRows.push(_traitStatRow('Shield Specialist Regen', '+15%', 'pos'));
+            _traitRows.push(_traitStatRow('Shield Specialist Absorb', '+15%', 'pos'));
+        } else if (_ch === 'heavy') {
+            _traitRows.push(_traitStatRow('Improved Armor DR', '+15%', 'pos'));
+            _traitRows.push(_traitStatRow('Attrition DR (below 50% HP)', '+15%', 'pos'));
+            _traitRows.push(_traitTextRow('Iron Legs: ignore leg speed penalty'));
+        }
+
+        if (_traitRows.length) {
+            gHtml += `<div class="bsub" style="color:#ffd166;margin-top:12px;">CHASSIS TRAITS</div>`;
+            gHtml += _traitRows.join('');
+        }
+    }
+
     gearInfo.innerHTML = gHtml;
 }
 
