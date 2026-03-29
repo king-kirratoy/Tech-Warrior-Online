@@ -37,11 +37,11 @@
 
 // ── RARITY DEFINITIONS ─────────────────────────────────────────
 const RARITY_DEFS = {
-    common:    { label:'Common',    color:0xc0c8d0, colorStr:'#c0c8d0', affixCount:0, dropWeight:45, scrapValue:1  },
+    common:    { label:'Common',    color:0xc0c8d0, colorStr:'#c0c8d0', affixCount:0, dropWeight:40, scrapValue:1  },
     uncommon:  { label:'Uncommon',  color:0x00ff44, colorStr:'#00ff44', affixCount:1, dropWeight:30, scrapValue:3  },
-    rare:      { label:'Rare',      color:0x4488ff, colorStr:'#4488ff', affixCount:2, dropWeight:15, scrapValue:8  },
-    epic:      { label:'Epic',      color:0xaa44ff, colorStr:'#aa44ff', affixCount:3, dropWeight:8,  scrapValue:20 },
-    legendary: { label:'Legendary', color:0xffd700, colorStr:'#ffd700', affixCount:4, dropWeight:2,  scrapValue:50 },
+    rare:      { label:'Rare',      color:0x4488ff, colorStr:'#4488ff', affixCount:2, dropWeight:18, scrapValue:8  },
+    epic:      { label:'Epic',      color:0xaa44ff, colorStr:'#aa44ff', affixCount:3, dropWeight:9,  scrapValue:20 },
+    legendary: { label:'Legendary', color:0xffd700, colorStr:'#ffd700', affixCount:4, dropWeight:3,  scrapValue:50 },
 };
 
 // ── ITEM BASE DEFINITIONS ──────────────────────────────────────
@@ -665,6 +665,7 @@ let _equipmentDrops = [];  // Array tracking ground equipment drops
 const _MAX_GROUND_DROPS = 20; // Cap to prevent scene overload
 let _lootItemIdCounter = 0;
 let _lootNotifications = []; // Active pickup toasts
+let _scrapDrops = [];  // Array tracking ground scrap coin pickups
 
 // ── RARITY ROLL ────────────────────────────────────────────────
 function rollRarity(round, isCommander, isBoss) {
@@ -744,10 +745,10 @@ function rollAffixes(baseType, rarity, excludeStatKey) {
 // ── ITEM GENERATION ────────────────────────────────────────────
 function _selectItemType(enemyData) {
     const weights = {
-        weapon: 30, armor: 10, arms: 8, legs: 6,
-        shield: 6, cpu: 6, augment: 6,
+        weapon: 10, armor: 10, arms: 10, legs: 10,
+        shield: 10, cpu: 10, augment: 10,
         // System drops — the main way to get new equipment
-        shield_system: 8, cpu_system: 7, leg_system: 7, aug_system: 6
+        shield_system: 10, cpu_system: 10, leg_system: 10, aug_system: 10
     };
     if (enemyData?.isMedic) { weights.shield_system *= 2; weights.shield *= 2; weights.armor *= 2; }
     if (enemyData?.isCommander) { weights.weapon *= 2; weights.cpu_system *= 2; }
@@ -928,17 +929,9 @@ function generateItem(round, enemyData) {
 
 // ── EQUIPMENT DROP CHANCE ──────────────────────────────────────
 function _getEquipDropChance(enemyData) {
-    const round = (typeof _round !== 'undefined') ? _round : 1;
-    if (enemyData?.isBoss) return 1.0;
-    if (enemyData?.isCommander) return 0.45;
-    if (enemyData?.isElite) return 0.35;
-    if (enemyData?.enemyType) return 0.25;
-    if (enemyData?.isMedic) return 0.18;
-    // Base drop rate scales with round, floors at 8%, caps at 22%
-    const base = Math.min(0.08 + round * 0.007, 0.22);
-    // Late-GAME bonus: +1% per round past 20, up to +10%
-    const lateBonus = round > 20 ? Math.min((round - 20) * 0.01, 0.10) : 0;
-    return Math.min(base + lateBonus, 0.35);
+    if (enemyData?.isBoss)   return 1.0;   // 100% — boss always drops
+    if (enemyData?.isElite)  return 0.75;  // 75%  — elite drop chance
+    return 0.50;                           // 50%  — normal enemy drop chance
 }
 
 // ── GROUND LOOT ICON DRAWING ───────────────────────────────────
@@ -1387,30 +1380,45 @@ function spawnEquipmentLoot(scene, x, y, enemyData) {
 
     const round = (typeof _round !== 'undefined') ? _round : 1;
 
-    // Boss can drop unique items + regular drops
     if (enemyData?.isBoss) {
+        // Boss: 100% guaranteed, 2-3 items (50% for 2, 50% for 3)
+        const dropCount = Math.random() < 0.5 ? 2 : 3;
         const bossType = enemyData.bossType || null;
         let drops = [];
         if (bossType && typeof rollBossDrops === 'function') {
             drops = rollBossDrops(bossType, round);
+            // Ensure at least dropCount items (pad with generated items if needed)
+            while (drops.length < dropCount) {
+                const extra = generateItem(round, enemyData);
+                if (extra) drops.push(extra);
+                else break;
+            }
         } else {
-            // Fallback: generate 1-3 regular items
-            const dropCount = Phaser.Math.Between(1, 3);
             for (let i = 0; i < dropCount; i++) {
                 const item = generateItem(round, enemyData);
                 if (item) drops.push(item);
             }
         }
-        drops.forEach((item, i) => {
+        drops.forEach(item => {
             const ox = x + Phaser.Math.Between(-50, 50);
             const oy = y + Phaser.Math.Between(-50, 50);
             spawnEquipmentDrop(scene, ox, oy, item);
         });
-    } else {
-        const item = generateItem(round, enemyData);
-        if (item) {
-            spawnEquipmentDrop(scene, x, y, item);
+    } else if (enemyData?.isElite) {
+        // Elite: 75% chance (already passed), 50%/50% for 1 or 2 items
+        const dropCount = Math.random() < 0.5 ? 1 : 2;
+        for (let i = 0; i < dropCount; i++) {
+            const item = generateItem(round, enemyData);
+            if (item) {
+                const ox = i > 0 ? x + Phaser.Math.Between(-30, 30) : x;
+                const oy = i > 0 ? y + Phaser.Math.Between(-30, 30) : y;
+                spawnEquipmentDrop(scene, ox, oy, item);
+            }
         }
+    } else {
+        // Normal: 50% chance (already passed), 1 item
+        const item = generateItem(round, enemyData);
+        if (item) spawnEquipmentDrop(scene, x, y, item);
     }
 }
 
@@ -1741,6 +1749,65 @@ function triggerMatrixBarrier(scene, time) {
 }
 function isMatrixBarrierActive() { return _matrixBarrierActive; }
 
+// ── SCRAP COIN DROP SYSTEM ─────────────────────────────────────
+// Every enemy death spawns a scrap pickup (campaign mode only).
+// Scrap coins have a magnet effect — they move toward the player
+// when within 120px, then are collected on overlap.
+
+function spawnScrapDrop(scene, x, y) {
+    if (_gameMode !== 'campaign') return;
+    const value = Phaser.Math.Between(5, 10);
+    // Outer ring (dark gold border effect)
+    const outerRing = scene.add.circle(x, y, 10, 0x8b6914, 0.8).setDepth(7);
+    // Gold coin fill
+    const coin = scene.add.circle(x, y, 8, 0xffd700, 0.9).setDepth(8);
+    _scrapDrops.push({ coin, outerRing, x, y, value, active: true });
+}
+
+function checkScrapPickups(scene) {
+    if (_gameMode !== 'campaign') return;
+    if (!player?.active || !isDeployed) return;
+    const dt = (scene.game?.loop?.delta ?? 16.67) / 1000;
+    _scrapDrops.slice().forEach(drop => {
+        if (!drop.active) return;
+        const dist = Phaser.Math.Distance.Between(player.x, player.y, drop.x, drop.y);
+        if (dist < 120 && dist > 1) {
+            // Magnet: move toward player at 200 px/s
+            const angle = Phaser.Math.Angle.Between(drop.x, drop.y, player.x, player.y);
+            const move = 200 * dt;
+            drop.x += Math.cos(angle) * move;
+            drop.y += Math.sin(angle) * move;
+            if (drop.coin?.active)      { drop.coin.x = drop.x;      drop.coin.y = drop.y; }
+            if (drop.outerRing?.active) { drop.outerRing.x = drop.x; drop.outerRing.y = drop.y; }
+        }
+        if (dist < 20) {
+            // Collect
+            _scrap += drop.value;
+            _showScrapFloatText(scene, drop.value);
+            drop.active = false;
+            if (drop.coin?.active)      try { drop.coin.destroy(); }      catch(e) {}
+            if (drop.outerRing?.active) try { drop.outerRing.destroy(); } catch(e) {}
+            _scrapDrops = _scrapDrops.filter(d => d !== drop);
+            if (typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
+        }
+    });
+}
+
+function _showScrapFloatText(scene, value) {
+    if (!player?.active) return;
+    const txt = scene.add.text(player.x, player.y - 30, `+${value} SCRAP`, {
+        font: 'bold 12px Courier New',
+        fill: '#ffd700',
+        stroke: '#000000',
+        strokeThickness: 3
+    }).setOrigin(0.5).setDepth(100);
+    scene.tweens.add({
+        targets: txt, y: player.y - 80, alpha: 0,
+        duration: 1200, ease: 'Quad.easeOut',
+        onComplete: () => { try { txt.destroy(); } catch(e) {} }
+    });
+}
+
 // ── CLEANUP (called when returning to hangar/main menu) ────────
 function cleanupEquipmentDrops() {
     _equipmentDrops.forEach(drop => {
@@ -1750,6 +1817,12 @@ function cleanupEquipmentDrops() {
     });
     _equipmentDrops = [];
     _lootNotifications = [];
+    // Cleanup scrap coins
+    _scrapDrops.forEach(drop => {
+        if (drop.coin?.active)      try { drop.coin.destroy(); }      catch(e) {}
+        if (drop.outerRing?.active) try { drop.outerRing.destroy(); } catch(e) {}
+    });
+    _scrapDrops = [];
 }
 
 /** Create a basic common-rarity item for starter loadout. */

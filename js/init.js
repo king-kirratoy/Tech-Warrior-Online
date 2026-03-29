@@ -259,6 +259,7 @@ function update(time) {
     if (_gameMode !== 'pvp') {
         checkLootPickups(this);
         checkEquipmentPickups(this);                                                   // → js/loot-system.js
+        if (typeof checkScrapPickups === 'function') checkScrapPickups(this);          // → js/loot-system.js
         if (_extractionActive) _updateExtraction(this);                                // extraction point check
         // Check for objective-based round end between kills (e.g., survival timer expires)
         if (typeof handleObjectiveRoundEnd === 'function') handleObjectiveRoundEnd(this);
