@@ -1101,6 +1101,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
             if (typeof spawnEquipmentLoot === 'function') {
                 spawnEquipmentLoot(scene, e.x, e.y, { isBoss: true, bossType: 'swarm' });
             }
+            if (typeof spawnScrapDrop === 'function') spawnScrapDrop(scene, e.x, e.y);
             // Spawn extraction point — onEnemyKilled is never called for swarm units
             _roundActive = false;
             if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
@@ -1343,6 +1344,8 @@ function _resolveEnemyDeath(e) {
         handleEliteDeath(scene, e);
     }
     } catch(deathErr) { /* ensure onEnemyKilled fires even if death effects fail */ }
+    // Always spawn scrap (100% drop rate, campaign only)
+    if (typeof spawnScrapDrop === 'function') spawnScrapDrop(scene, _deadRef.x, _deadRef.y);
     // Cleanup visuals — always runs
     try {
     if (e.visuals)  e.visuals.destroy();
