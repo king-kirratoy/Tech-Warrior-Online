@@ -853,7 +853,8 @@ function _parseSkillStatString(s) {
     [/\+(\d+(?:\.\d+)?) ARM HP/g,          v => add('armHP', +v)],
     [/\+(\d+(?:\.\d+)?) CORE HP/g,         v => add('coreHP', +v)],
     [/\+(\d+(?:\.\d+)?) LEG HP/g,          v => add('legHP', +v)],
-    [/\+(\d+(?:\.\d+)?)% (?:SMG |Shotgun |SG |MG |BR |SR |GL |RL |HR |PLSM |Flamethrower |FTH |RAIL |SIPHON )?(?:Fire Rate|FIRE RATE|FR)/g, v => add('fireRatePct', +v)],
+    // fireRatePct: stored as negative for buff — negate so +5% Fire Rate → fireRatePct = -5
+    [/\+(\d+(?:\.\d+)?)% (?:SMG |Shotgun |SG |MG |BR |SR |GL |RL |HR |PLSM |Flamethrower |FTH |RAIL |SIPHON )?(?:Fire Rate|FIRE RATE|FR)/g, v => add('fireRatePct', -v)],
     [/\+(\d+(?:\.\d+)?)% SPEED/g,          v => add('speedPct', +v)],
     [/\+(\d+(?:\.\d+)?)% DODGE/g,          v => add('dodgePct', +v)],
     [/\+(\d+(?:\.\d+)?)% (?:Damage Reduction|DR)/g, v => add('drPct', +v)],

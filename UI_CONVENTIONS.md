@@ -192,8 +192,8 @@ Some stats are **buffs when their numeric value is negative** because they reduc
 
 | Stat key | Display label | Why inverted |
 |---|---|---|
-| `reloadPct` | Fire Rate % | −15 means 15% faster reload = higher fire rate — a buff |
-| `modCdPct` | Mod Cooldown % | −15 means 15% shorter cooldown — a buff |
+| `fireRatePct` | Fire Rate % | −15 means 15% faster fire rate — a buff; stored negative throughout (gen, gear, skill tree) |
+| `modCdPct` | Mod Cooldown % | −15 means 15% shorter cooldown — a buff; stored negative throughout |
 | `reload` | Fire Rate (shots/sec) | Lower ms = faster = more shots/sec — converted for display |
 
 ### Display Rule
@@ -207,8 +207,11 @@ Some stats are **buffs when their numeric value is negative** because they reduc
 ### Implementation
 The `_hoverInvertedStats` Set in `js/menus.js` is the single source of truth:
 ```javascript
-const _hoverInvertedStats = new Set(['reloadPct', 'modCdPct', 'reload']);
+const _hoverInvertedStats = new Set(['fireRatePct', 'modCdPct', 'reload']);
 ```
+
+### Storage Convention (v7.43)
+`fireRatePct` and `modCdPct` are stored as **negative** throughout the entire codebase — in `ITEM_BASES`, rolled affixes, skill tree bonuses, and gear state. A buff of "5% faster fire rate" is stored as `fireRatePct = -5`. The combat formulas use `1 + (stat/100)` so that negative values correctly reduce reload/cooldown time.
 
 **Always check this Set before formatting any stat sign/color.** The inversion logic is applied inline wherever stats are rendered:
 - Gear bonuses panel (`_renderGearBonusesPanel`)
@@ -372,3 +375,30 @@ Classes: .lo-left | .lo-center | .lo-right (all children of .lo-body)
 9. **Never compare `_gameMode` against display strings** (`'Warzone'`, `'Campaign'`, `'Multiplayer'`). Always use the internal keys: `'simulation'`, `'campaign'`, `'pvp'`.
 
 10. **Never hardcode a hex color that duplicates a `--sci-*` token.** Look up the token table in Section 1 first.
+
+---
+
+## Section 9 — Pickup Notification System
+
+Item and scrap pickup notifications appear in a shared left-side queue in `js/loot-system.js`.
+
+### Queue Rules
+- All notifications (item pills + scrap pill) share one vertical queue, `left: 12px`, top starting at `80px`.
+- Each new notification appends to the bottom. When one dismisses, remaining pills slide up (`transition: top 200ms ease`).
+- Hard cap: 6 simultaneous pills. If exceeded, the oldest is force-removed immediately.
+- Managed by `_enqueueNotifPill()` / `_reposNotifs()` / `_removeNotif()` in `loot-system.js`.
+
+### Item Pills
+- Background: `rgba(r,g,b,0.12)` — derived from rarity `colorStr` (`0.15` for Common and Legendary).
+- Border: `1px solid rgba(r,g,b,0.5)`.
+- Text color: rarity `colorStr` (full opacity).
+- Glow (`box-shadow`): none for Common, scaling up to double-layer for Legendary.
+- Font: `var(--font-mono)`, 13px bold, uppercase, 2px letter-spacing.
+- Hold 1.8s, fade out 300ms.
+
+### Scrap Pill
+- Gold text (`#ffd700`), no border, transparent background (`rgba(255,215,0,0.08)`).
+- Font: `var(--font-mono)`, 11px, uppercase.
+- Shows `⚙ +X SCRAP` where X is the accumulated total.
+- Multiple pickups in rapid succession combine into one updating pill; dismiss timer resets on each new pickup.
+- Fades in 100ms, holds 1.2s after last pickup, fades out 200ms.

@@ -233,7 +233,8 @@ function handlePlayerMovement(scene, time) {
     const modCooldown = loadout.cpu !== 'none' ? WEAPONS[loadout.cpu]?.cooldown || 0 : 0;
 
     // Mod activation (SPACE)
-    const _gearModCdMult = 1 - ((_gearState?.modCdPct || 0) / 100);
+    // modCdPct is stored negative for buff (−8 = 8% shorter cooldown); 1 + (−0.08) = 0.92 cd mult
+    const _gearModCdMult = 1 + ((_gearState?.modCdPct || 0) / 100);
     const effectiveModCooldown = (isChargeActive ? modCooldown * 0.5
         : (loadout.chassis === 'medium' ? modCooldown * (CHASSIS.medium.modCooldownMult || 0.85) : modCooldown))
         * _gearModCdMult

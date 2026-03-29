@@ -530,7 +530,8 @@ function deployMech() {
 
         // ── Combat stat bonuses via _perkState ──
         if (_stb.dmgPct      > 0) _perkState.dmgMult   = (_perkState.dmgMult   || 1) * (1 + _stb.dmgPct      / 100);
-        if (_stb.fireRatePct > 0) _perkState.reloadMult = (_perkState.reloadMult || 1) * (1 - _stb.fireRatePct / 100);
+        // fireRatePct is stored negative for buff; 1 + (−0.05) = 0.95 reload mult = 5% faster
+        if (_stb.fireRatePct) _perkState.reloadMult = (_perkState.reloadMult || 1) * (1 + _stb.fireRatePct / 100);
         if (_stb.critPct     > 0) _perkState.critChance = (_perkState.critChance || 0) + _stb.critPct / 100;
         if (_stb.speedPct    > 0) _perkState.speedMult  = (_perkState.speedMult  || 1) * (1 + _stb.speedPct    / 100);
         if (_stb.dodgePct    > 0) _perkState.dodgeChance = (_perkState.dodgeChance || 0) + _stb.dodgePct / 100;
