@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v7.41';
+const GAME_VERSION = 'v7.42';
 
 // ═══════════ CHASSIS ═══════════
 
@@ -42,24 +42,20 @@ const CHASSIS_AUGS = {
 
 const CHASSIS = {
     // max = weight limit.
-    // Light: dual-fire, fast, fragile.
-    // Medium: cooldown mastery, shield absorb bonus.
-    // Heavy: passive regen, suppression aura.
+    // Light: dual-wield, lightweight, agility.
+    // Medium: mod specialist, kill recharge, shield specialist.
+    // Heavy: attrition, improved armor, iron legs.
     light:  { max: 160, spd: 250, scale: 0.7, coreHP: 212, armHP: 120, legHP: 152,
-              dualFire: true,
-              passiveReloadBonus: 0.80,
-              identity: 'Dual-fire, fast mobility, fragile arms.' },
+              identity: 'Dual-Wield, Lightweight, Agility.' },
     medium: { max: 240, spd: 210, scale: 1.0, coreHP: 272, armHP: 180, legHP: 212,
               modCooldownMult: 0.85,
+              modDurationMult: 1.15,
               killCooldownReduction: 500,
-              shieldAbsorb: 0.60,
-              identity: 'All mod cooldowns −15%. Kills shave 0.5s off active cooldown. Shield absorbs 60% of damage.' },
+              shieldAbsorbBonus: 0.15,
+              identity: 'Mod Specialist, Kill Recharge, Shield Specialist.' },
     heavy:  { max: 340, spd: 185, scale: 1.4, coreHP: 332, armHP: 240, legHP: 272,
               passiveDR: 0.15,
-              passiveRegenRate: 2,           // HP/s after 4s no damage (war_machine aug or base trait)
-              passiveRegenDelay: 4000,       // ms since last damage before regen kicks in
-              noJump: true,
-              identity: 'Passive 15% damage reduction. Cannot equip JUMP mod or Afterleg. Built for attrition.' }
+              identity: 'Attrition, Improved Armor, Iron Legs.' }
 };
 
 // ═══════════ WEAPONS ═══════════

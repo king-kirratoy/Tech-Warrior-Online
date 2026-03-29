@@ -1382,7 +1382,7 @@ function _equipItemToSlot(invIdx, slotKey) {
         player.shield = Math.min(player.shield || 0, player.maxShield) || player.maxShield;
         player._shieldRegenRate  = _ss.regenRate;
         player._shieldRegenDelay = _ss.regenDelay;
-        const _chassisBonus = loadout.chassis === 'medium' ? 0.10 : 0;
+        const _chassisBonus = loadout.chassis === 'medium' ? (CHASSIS.medium.shieldAbsorbBonus || 0.15) : 0;
         const _gAbsorb = ((_gearState?.absorbPct || 0) / 100);
         player._shieldAbsorb = Math.min(0.90, (_ss.absorb ?? 0.50) + _chassisBonus + _gAbsorb);
         player._shieldFlickerHit = false;
@@ -1436,7 +1436,7 @@ function _unequipItem(slotKey) {
         player.shield = Math.min(player.shield || 0, player.maxShield);
         player._shieldRegenRate  = _ss.regenRate;
         player._shieldRegenDelay = _ss.regenDelay;
-        const _chassisBonus = loadout.chassis === 'medium' ? 0.10 : 0;
+        const _chassisBonus = loadout.chassis === 'medium' ? (CHASSIS.medium.shieldAbsorbBonus || 0.15) : 0;
         const _gAbsorb = ((_gearState?.absorbPct || 0) / 100);
         player._shieldAbsorb = Math.min(0.90, (_ss.absorb ?? 0.50) + _chassisBonus + _gAbsorb);
         player._shieldFlickerHit = false;
@@ -1788,16 +1788,16 @@ function _renderWeaponBar() {
     if (traitsEl) {
         const ch = loadout.chassis;
         const _cTraits = ch === 'light'
-            ? [['Dual-Fire','Both arms fire simultaneously when matching weapons equipped (−15% dmg per arm)'],
-               ['Fire Rate','+20% passive fire rate on all weapons'],
-               ['Fragile Arms','Arms have 30% less base HP than Medium chassis']]
+            ? [['Dual-Wield','−15% damage and −15% fire rate when both arms have the same weapon (matching pair only)'],
+               ['Lightweight','+15% move speed when core HP is below 50%'],
+               ['Agility','+10% move speed and +10% dodge chance when only one arm has a weapon']]
             : ch === 'medium'
-            ? [['Mod Cooldowns','All mod cooldowns reduced by −15%'],
-               ['Kill Reduction','Each kill shaves 0.5s off active mod cooldowns'],
-               ['Shield Absorb','Shield absorbs 60% of incoming damage (vs 50%)']]
-            : [['Passive DR','15% damage reduction at all times'],
-               ['Restrictions','Cannot equip JUMP mod or AFTERLEG legs'],
-               ['Attrition','Built for sustained punishment — high HP across all parts']];
+            ? [['Mod Specialist','+15% mod duration and −15% mod cooldown on all mods'],
+               ['Kill Recharge','Each kill reduces active mod cooldown by 0.5s'],
+               ['Shield Specialist','+15% shield regen rate and +15% shield absorb']]
+            : [['Improved Armor','15% damage reduction at all times (passive)'],
+               ['Attrition','+15% additional damage reduction when core HP is below 50%'],
+               ['Iron Legs','Ignore the speed penalty from destroyed legs']];
         let traitHtml = '';
         _cTraits.forEach(([name, desc], i) => {
             if (i > 0) traitHtml += `<div class="lo-wb-divider"></div>`;

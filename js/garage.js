@@ -251,17 +251,17 @@ function refreshGarage() {
     // ── Chassis traits ──
     const chassisTraits = [];
     if (chassis === 'light') {
-        chassisTraits.push('Dual-fire: fires both arms simultaneously when same weapon equipped in each');
-        chassisTraits.push('+20% fire rate (passive)');
-        chassisTraits.push('Arms: fragile — 30% less base HP');
+        chassisTraits.push('Dual-Wield: −15% dmg & fire rate when same weapon in both arms');
+        chassisTraits.push('Lightweight: +15% speed when core HP < 50%');
+        chassisTraits.push('Agility: +10% speed & +10% dodge with only one weapon equipped');
     } else if (chassis === 'medium') {
-        chassisTraits.push('All mod cooldowns −15%');
-        chassisTraits.push('Kills reduce mod cooldown by 0.5s');
-        chassisTraits.push('Shield absorbs 60% of damage');
+        chassisTraits.push('Mod Specialist: +15% mod duration, −15% mod cooldown');
+        chassisTraits.push('Kill Recharge: each kill reduces mod cooldown by 0.5s');
+        chassisTraits.push('Shield Specialist: +15% shield regen & +15% shield absorb');
     } else if (chassis === 'heavy') {
-        chassisTraits.push('Passive 15% damage reduction');
-        chassisTraits.push('Cannot equip JUMP or AFTERLEG');
-        chassisTraits.push('Built for sustained attrition');
+        chassisTraits.push('Improved Armor: passive 15% damage reduction');
+        chassisTraits.push('Attrition: +15% DR when core HP < 50%');
+        chassisTraits.push('Iron Legs: no speed penalty from destroyed legs');
     }
 
     // ── Slot label helpers ──

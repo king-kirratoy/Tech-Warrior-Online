@@ -191,8 +191,11 @@ function handlePlayerMovement(scene, time) {
     if (!player?.active || !isDeployed) return;
     const _gyroOn = loadout.leg === 'gyro_stabilizer' && _perkState.legSystemActive;
     const _legHpPct = (player?.comp?.legs?.hp ?? 1) / (player?.comp?.legs?.max ?? 1);
+    // Iron Legs (Heavy trait): ignore destroyed-leg speed penalty
+    const _ironLegs = loadout.chassis === 'heavy';
     // Use _legsDestroyed flag (set in processPlayerDamage) for consistent penalty timing
     const _legMult = _gyroOn ? 1.0
+        : (_legsDestroyed && _ironLegs) ? 1.0
         : _legsDestroyed ? 0.5
         : _legHpPct < 0.5 ? (0.5 + _legHpPct) : 1.0;
     // Warlord Stride: +8% speed while leg HP > 50%
@@ -207,6 +210,16 @@ function handlePlayerMovement(scene, time) {
     })();
     const _gearSpdMult = 1 + ((_gearState?.speedPct || 0) / 100);
     const _unstoppableSpdMult = 1 + (typeof getUnstoppableSpeedBonus === 'function' ? getUnstoppableSpeedBonus() : 0);
+    // Lightweight (Light trait): +15% speed when core HP < 50%
+    const _lightweightMult = (loadout.chassis === 'light' && player?.comp?.core && player.comp.core.max > 0 &&
+        player.comp.core.hp / player.comp.core.max < 0.5) ? 1.15 : 1.0;
+    // Agility (Light trait): +10% speed when exactly one arm has a weapon
+    const _agilitySpeedMult = (() => {
+        if (loadout.chassis !== 'light') return 1.0;
+        const _lFilled = loadout.L && loadout.L !== 'none';
+        const _rFilled = loadout.R && loadout.R !== 'none';
+        return (_lFilled !== _rFilled) ? 1.10 : 1.0;
+    })();
     const speed = CHASSIS[loadout.chassis].spd
         * (isRageActive ? 1.75 : 1)
         * _legMult
@@ -214,7 +227,9 @@ function handlePlayerMovement(scene, time) {
         * _gearSpdMult
         * _warlordSpeedMult
         * _shldSpdMult
-        * _unstoppableSpdMult;
+        * _unstoppableSpdMult
+        * _lightweightMult
+        * _agilitySpeedMult;
     const modCooldown = loadout.cpu !== 'none' ? WEAPONS[loadout.cpu]?.cooldown || 0 : 0;
 
     // Mod activation (SPACE)

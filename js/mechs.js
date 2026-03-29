@@ -411,9 +411,9 @@ function _initPlayerHP(scene, s) {
     player.shield    = _shldSys.maxShield + _gShieldHP;
     player._shieldRegenRate  = _shldSys.regenRate;
     player._shieldRegenDelay = _shldSys.regenDelay;
-    // Absorb from shield definition; medium chassis gets +10% absorb bonus on top.
+    // Absorb from shield definition; medium chassis Shield Specialist trait adds +15% absorb bonus.
     const _shldAbsorbBase = _shldSys.absorb ?? 0.50;
-    const _chassisBonus   = loadout.chassis === 'medium' ? 0.10 : 0;
+    const _chassisBonus   = loadout.chassis === 'medium' ? (CHASSIS.medium.shieldAbsorbBonus || 0.15) : 0;
     const _gearAbsorb     = ((_gearState?.absorbPct || 0) / 100);
     player._shieldAbsorb  = Math.min(0.90, _shldAbsorbBase + _chassisBonus + _gearAbsorb);
     // Per-shield state

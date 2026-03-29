@@ -47,14 +47,16 @@ function fire(scene, side) {
         return;
     }
 
-    const _lightReloadMult = loadout.chassis === 'light' ? (CHASSIS.light.passiveReloadBonus || 0.80) : 1.0;
     // Single-arm brace bonus: when the other arm is empty, this arm gets +15% reload speed
     const _otherArm = side === 'L' ? loadout.R : loadout.L;
     const _braceMult = (!_otherArm || _otherArm === 'none') ? 0.85 : 1.0;
     const _gearReloadMult = 1 - ((_gearState?.fireRatePct || 0) / 100);
     const _dualReloadMult = 1 - (typeof getDualReloadBonus === 'function' ? getDualReloadBonus() : 0);
+    // ── Dual-Wield (Light trait): same weapon in both arms → −15% fire rate ──────
+    const _isDualWield = loadout.chassis === 'light' && loadout.L === loadout.R && loadout.L !== 'none';
+    const _dualWieldReloadMult = _isDualWield ? 1.15 : 1.0;
     const reloadActual = ((isRageActive || isAmmoActive) ? weapon.fireRate * 0.5 : weapon.fireRate)
-        * (_perkState.reloadMult || 1) * _gearReloadMult * _dualReloadMult * _lightReloadMult * _braceMult
+        * (_perkState.reloadMult || 1) * _gearReloadMult * _dualReloadMult * _dualWieldReloadMult * _braceMult
         * (_perkState._overclockBurst ? 0.75 : 1.0);
     const lastFired    = side === 'L' ? reloadL : reloadR;
     if (now < lastFired) return;
@@ -66,9 +68,7 @@ function fire(scene, side) {
     const _braceOther = side === 'L' ? loadout.R : loadout.L;
     const _braceDmgMult = (!_braceOther || _braceOther === 'none') ? 1.25 : 1.0;
 
-    // ── Dual-fire damage penalty ─────────────────────────────────────
-    // When same weapon in both arms (dual-wield), each arm deals 15% less damage
-    const _isDualWield = loadout.L === loadout.R && loadout.L !== 'none';
+    // ── Dual-Wield (Light trait): same weapon in both arms → −15% damage per arm ─
     const _dualWieldMult = _isDualWield ? 0.85 : 1.0;
 
     // ── Arm-offset origin ────────────────────────────────────────────
@@ -803,8 +803,12 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     }
     // Fortress Mode (Heavy mod): 30% DR while active
     if (_perkState._fortressDR > 0) amt = Math.round(amt * (1 - _perkState._fortressDR));
-    // HEAVY passive: 15% damage reduction always active
+    // HEAVY Improved Armor (trait): 15% damage reduction always active
     if (loadout.chassis === 'heavy') amt = Math.round(amt * (1 - (CHASSIS.heavy.passiveDR || 0.15)));
+    // HEAVY Attrition (trait): +15% DR when core HP is below 50%
+    if (loadout.chassis === 'heavy' && player?.comp?.core && player.comp.core.max > 0) {
+        if (player.comp.core.hp / player.comp.core.max < 0.5) amt = Math.round(amt * 0.85);
+    }
     // Bulwark Shield: 12% DR always active (even when shield depleted)
     const _bwSys2 = SHIELD_SYSTEMS[loadout.shld];
     if (_bwSys2?.passiveDR) amt = Math.round(amt * (1 - _bwSys2.passiveDR));
@@ -844,7 +848,14 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     const _totalDR = (_perkState.fortress || 0) + ((_gearState?.dr || 0) / 100);
     if (_totalDR > 0) amt = Math.round(amt * (1 - Math.min(0.75, _totalDR)));
     // Phantom dodge chance
-    const _totalDodge = (_perkState.dodgeChance || 0) + ((_gearState?.dodgePct || 0) / 100);
+    // Agility (Light trait): +10% dodge when exactly one arm has a weapon
+    const _agilityDodge = (() => {
+        if (loadout.chassis !== 'light') return 0;
+        const _lFilled = loadout.L && loadout.L !== 'none';
+        const _rFilled = loadout.R && loadout.R !== 'none';
+        return (_lFilled !== _rFilled) ? 0.10 : 0;
+    })();
+    const _totalDodge = (_perkState.dodgeChance || 0) + ((_gearState?.dodgePct || 0) / 100) + _agilityDodge;
     if (_totalDodge > 0 && Math.random() < _totalDodge) {
         const scene = GAME.scene.scenes[0];
         const dodgeTxt = scene.add.text(player.x, player.y - 30, 'DODGE!', {
@@ -1794,7 +1805,9 @@ function _applyShieldRegen(time) {
     if (_perkState.noShieldRegen) return;
     const regenDelay     = player._shieldRegenDelay ?? 5;
     const regenRate      = player._shieldRegenRate  ?? 1.0;
-    const _gearRegenMult = 1 + ((_gearState?.shieldRegen || 0) / 100);
+    // Shield Specialist (Medium trait): +15% shield regen rate
+    const _chassisRegenMult = loadout.chassis === 'medium' ? 1.15 : 1.0;
+    const _gearRegenMult = (1 + ((_gearState?.shieldRegen || 0) / 100)) * _chassisRegenMult;
     const _ss = SHIELD_SYSTEMS[loadout.shld];
 
     // ── Layered Shield: each layer regens on its own timer ──
