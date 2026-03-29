@@ -249,7 +249,7 @@ function activateEMP(scene, time) {
     enemies.getChildren().forEach(enemy => {
         const _empRad  = WEAPONS.emp.radius  * (_perkState.empAmplifier ? 1.30 : 1.0);
     const _empAmpMult = (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify')) ? 1.5 : 1;
-    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _gearModEffMult = (1 + ((_gearState?.modEffPct || 0) / 100)) * (loadout.chassis === 'medium' ? (CHASSIS.medium.modDurationMult || 1.15) : 1.0);
     const _empStun = WEAPONS.emp.stunTime * (_perkState.empAmplifier ? 1.40 : 1.0) * _empAmpMult * _gearModEffMult;
     if (Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y) < _empRad) {
             enemy.isStunned = true;
@@ -271,7 +271,7 @@ function activateRage(scene) {
     isRageActive = true;
     _rageDmgMult = 1.15;
     refreshMechColor();
-    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _gearModEffMult = (1 + ((_gearState?.modEffPct || 0) / 100)) * (loadout.chassis === 'medium' ? (CHASSIS.medium.modDurationMult || 1.15) : 1.0);
     const _rageDur = WEAPONS.rage.rageTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * (_perkState.rageDurMult || 1) * _gearModEffMult;
     scene.time.delayedCall(_rageDur, () => {
         isRageActive = false;
@@ -299,7 +299,7 @@ function activateShield(scene) {
     }
     // Thorns Protocol: reflect damage to attackers while shield is up — handled in processPlayerDamage
     // Capacitor Armor: tracked in processPlayerDamage
-    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _gearModEffMult = (1 + ((_gearState?.modEffPct || 0) / 100)) * (loadout.chassis === 'medium' ? (CHASSIS.medium.modDurationMult || 1.15) : 1.0);
     const _barrierDur = WEAPONS.barrier.shieldTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
     scene.time.delayedCall(_barrierDur, () => {
         isShieldActive = false;
@@ -764,7 +764,7 @@ function activateFortressMode(scene, time) {
         player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + Math.round(1 * (1 + (_perkState.fmHeal || 0)))); // 5 HP/s base; fmHeal perk scales this
         updateHUD();
     }});
-    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _gearModEffMult = (1 + ((_gearState?.modEffPct || 0) / 100)) * (loadout.chassis === 'medium' ? (CHASSIS.medium.modDurationMult || 1.15) : 1.0);
     const _fmDur = WEAPONS.fortress_mode.modeTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
     scene.time.delayedCall(_fmDur, () => {
         _perkState._fortressMode = false;
@@ -781,7 +781,7 @@ function activateGhostStep(scene, time) {
     _perkState._ghostStepActive = true;
     // Make player sprite semi-transparent
     if (torso) torso.setAlpha(0.15);
-    const _gearModEffMult = 1 + ((_gearState?.modEffPct || 0) / 100);
+    const _gearModEffMult = (1 + ((_gearState?.modEffPct || 0) / 100)) * (loadout.chassis === 'medium' ? (CHASSIS.medium.modDurationMult || 1.15) : 1.0);
     const _gsCloakDur = WEAPONS.ghost_step.cloakTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
     const _gTimer = scene.time.delayedCall(_gsCloakDur, () => {
         _perkState._ghostStepActive = false;
