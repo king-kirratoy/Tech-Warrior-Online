@@ -48,36 +48,36 @@ const RARITY_DEFS = {
 // Weapons inherit stats from the existing WEAPONS object at generation time.
 // Non-weapon items have their own base stats defined here.
 const ITEM_BASES = {
-    // ── ARMOR PLATING (armor slot) ──
-    light_plate:    { baseType:'armor', name:'Light Plating',     icon:'armor_light',  baseStats:{ coreHP:20, dr:2 } },
-    medium_plate:   { baseType:'armor', name:'Medium Plating',    icon:'armor_medium', baseStats:{ coreHP:40, dr:5 } },
-    heavy_plate:    { baseType:'armor', name:'Heavy Plating',     icon:'armor_heavy',  baseStats:{ coreHP:60, dr:8 } },
-    reactive_plate: { baseType:'armor', name:'Reactive Plating',  icon:'armor_react',  baseStats:{ coreHP:30, dr:4 } },
+    // ── ARMOR PLATING (armor slot) — coreHP is rolled at generation ──
+    light_plate:    { baseType:'armor', name:'Light Plating',     icon:'armor_light',  baseStats:{ dr:2 } },
+    medium_plate:   { baseType:'armor', name:'Medium Plating',    icon:'armor_medium', baseStats:{ dr:5 } },
+    heavy_plate:    { baseType:'armor', name:'Heavy Plating',     icon:'armor_heavy',  baseStats:{ dr:8 } },
+    reactive_plate: { baseType:'armor', name:'Reactive Plating',  icon:'armor_react',  baseStats:{ dr:4 } },
 
-    // ── ARM REINFORCEMENT (arms slot) ──
-    servo_enhancer: { baseType:'arms', name:'Servo Enhancer',     icon:'arm_servo',    baseStats:{ armHP:15, fireRatePct:-5 } },
-    stabilizer:     { baseType:'arms', name:'Stabilizer',         icon:'arm_stab',     baseStats:{ armHP:20 } },
-    power_coupler:  { baseType:'arms', name:'Power Coupler',      icon:'arm_power',    baseStats:{ armHP:10, dmgPct:3 } },
+    // ── ARM REINFORCEMENT (arms slot) — armHP is rolled at generation ──
+    servo_enhancer: { baseType:'arms', name:'Servo Enhancer',     icon:'arm_servo',    baseStats:{ fireRatePct:-5 } },
+    stabilizer:     { baseType:'arms', name:'Stabilizer',         icon:'arm_stab',     baseStats:{} },
+    power_coupler:  { baseType:'arms', name:'Power Coupler',      icon:'arm_power',    baseStats:{ dmgPct:3 } },
 
-    // ── LEG COMPONENTS (legs slot) ──
-    actuator:       { baseType:'legs', name:'Actuator',           icon:'leg_actuator', baseStats:{ legHP:20, speedPct:3 } },
-    booster:        { baseType:'legs', name:'Booster',            icon:'leg_booster',  baseStats:{ legHP:15, speedPct:6, dodgePct:2 } },
-    dampener:       { baseType:'legs', name:'Dampener',           icon:'leg_dampener', baseStats:{ legHP:30, speedPct:-2, dr:3 } },
+    // ── LEG COMPONENTS (legs slot) — legHP is rolled at generation ──
+    actuator:       { baseType:'legs', name:'Actuator',           icon:'leg_actuator', baseStats:{ speedPct:3 } },
+    booster:        { baseType:'legs', name:'Booster',            icon:'leg_booster',  baseStats:{ speedPct:6, dodgePct:2 } },
+    dampener:       { baseType:'legs', name:'Dampener',           icon:'leg_dampener', baseStats:{ speedPct:-2, dr:3 } },
 
-    // ── SHIELD MODULES (shield slot) ──
-    barrier_core:   { baseType:'shield', name:'Barrier Core',     icon:'shield_core',  baseStats:{ shieldHP:15, shieldRegen:5 } },
-    regen_cell:     { baseType:'shield', name:'Regen Cell',       icon:'shield_regen', baseStats:{ shieldHP:5,  shieldRegen:15 } },
-    absorb_matrix:  { baseType:'shield', name:'Absorb Matrix',    icon:'shield_abs',   baseStats:{ shieldHP:25, absorbPct:5 } },
+    // ── SHIELD MODULES (shield slot) — shieldHP is rolled at generation ──
+    barrier_core:   { baseType:'shield', name:'Barrier Core',     icon:'shield_core',  baseStats:{ shieldRegen:5 } },
+    regen_cell:     { baseType:'shield', name:'Regen Cell',       icon:'shield_regen', baseStats:{ shieldRegen:15 } },
+    absorb_matrix:  { baseType:'shield', name:'Absorb Matrix',    icon:'shield_abs',   baseStats:{ absorbPct:5 } },
 
-    // ── CPU CHIPS (cpu slot) ──
+    // ── CPU CHIPS (cpu slot) — static stats, no primary rolling ──
     cooldown_chip:  { baseType:'cpu', name:'Cooldown Chip',       icon:'mod_cd',       baseStats:{ modCdPct:-8 } },
     amplifier:      { baseType:'cpu', name:'Amplifier',           icon:'mod_amp',      baseStats:{ modEffPct:10 } },
     overcharge:     { baseType:'cpu', name:'Overcharge Module',   icon:'mod_oc',       baseStats:{ modCdPct:-5, modEffPct:5 } },
 
-    // ── AUGMENT CORES (augment slot) ──
-    targeting_array: { baseType:'augment', name:'Targeting Array', icon:'aug_target',   baseStats:{ critChance:3 } },
-    neural_link:     { baseType:'augment', name:'Neural Link',    icon:'aug_neural',   baseStats:{ lootMult:5 } },
-    combat_matrix:   { baseType:'augment', name:'Combat Matrix',  icon:'aug_combat',   baseStats:{ dmgPct:3, speedPct:2 } },
+    // ── AUGMENT CORES (augment slot) — base stat is randomly rolled at generation ──
+    targeting_array: { baseType:'augment', name:'Targeting Array', icon:'aug_target',   baseStats:{} },
+    neural_link:     { baseType:'augment', name:'Neural Link',    icon:'aug_neural',   baseStats:{} },
+    combat_matrix:   { baseType:'augment', name:'Combat Matrix',  icon:'aug_combat',   baseStats:{} },
 
     // ══════════════════════════════════════════════════════════════
     // HYBRID SYSTEM ITEMS — carry a real GAME system + stat affixes
@@ -85,13 +85,13 @@ const ITEM_BASES = {
     // drop gives you the jump mod ability AND rarity-scaled bonus stats.
     // ══════════════════════════════════════════════════════════════
 
-    // ── SYSTEM SHIELDS (shield_system slot → sets loadout.shld) ──
-    sys_fortress_shield: { baseType:'shield_system', systemKey:'fortress_shield', name:'Fortress Shield',  icon:'shld_fort',    baseStats:{ shieldHP:30, dr:3 } },
+    // ── SYSTEM SHIELDS (shield_system slot → sets loadout.shld) — shieldHP rolled at generation ──
+    sys_fortress_shield: { baseType:'shield_system', systemKey:'fortress_shield', name:'Fortress Shield',  icon:'shld_fort',    baseStats:{ dr:3 } },
     sys_micro_shield:    { baseType:'shield_system', systemKey:'micro_shield',    name:'Micro Shield',     icon:'shld_micro',   baseStats:{ shieldRegen:8, speedPct:2 } },
-    sys_flicker_shield:  { baseType:'shield_system', systemKey:'flicker_shield',  name:'Flicker Shield',   icon:'shld_flicker', baseStats:{ shieldHP:10, dodgePct:3 } },
-    sys_adaptive_shield: { baseType:'shield_system', systemKey:'adaptive_shield', name:'Adaptive Shield',  icon:'shld_adapt',   baseStats:{ shieldHP:15, dr:2 } },
-    sys_bulwark_shield:  { baseType:'shield_system', systemKey:'bulwark_shield',  name:'Bulwark Shield',   icon:'shld_bulwark', baseStats:{ shieldHP:25, dr:4 } },
-    sys_titan_shield:    { baseType:'shield_system', systemKey:'titan_shield',    name:'Titan Shield',     icon:'shld_titan',   baseStats:{ shieldHP:30, dr:5 } },
+    sys_flicker_shield:  { baseType:'shield_system', systemKey:'flicker_shield',  name:'Flicker Shield',   icon:'shld_flicker', baseStats:{ dodgePct:3 } },
+    sys_adaptive_shield: { baseType:'shield_system', systemKey:'adaptive_shield', name:'Adaptive Shield',  icon:'shld_adapt',   baseStats:{ dr:2 } },
+    sys_bulwark_shield:  { baseType:'shield_system', systemKey:'bulwark_shield',  name:'Bulwark Shield',   icon:'shld_bulwark', baseStats:{ dr:4 } },
+    sys_titan_shield:    { baseType:'shield_system', systemKey:'titan_shield',    name:'Titan Shield',     icon:'shld_titan',   baseStats:{ dr:5 } },
 
     // ── SYSTEM CPU (cpu_system slot → sets loadout.cpu) ──
     sys_jump:             { baseType:'cpu_system', systemKey:'jump',             name:'Jump Jets',         icon:'mod_jump',     baseStats:{ speedPct:3 } },
@@ -105,21 +105,21 @@ const ITEM_BASES = {
     sys_ghost_step:       { baseType:'cpu_system', systemKey:'ghost_step',       name:'Ghost Step',        icon:'mod_ghost',    baseStats:{ speedPct:3, dodgePct:2 } },
     sys_fortress_mode:    { baseType:'cpu_system', systemKey:'fortress_mode',    name:'Fortress Mode',     icon:'mod_fortress', baseStats:{ dr:3, coreHP:15 } },
 
-    // ── SYSTEM LEGS (leg_system slot → sets loadout.leg) ──
-    sys_hydraulic_boost:  { baseType:'leg_system', systemKey:'hydraulic_boost',  name:'Hydraulic Boost',   icon:'leg_hydro',    baseStats:{ speedPct:5, legHP:10 } },
-    sys_gyro_stabilizer:  { baseType:'leg_system', systemKey:'gyro_stabilizer',  name:'Gyro Stabilizer',   icon:'leg_gyro',     baseStats:{ legHP:10 } },
-    sys_mag_anchors:      { baseType:'leg_system', systemKey:'mag_anchors',      name:'Mag Anchors',       icon:'leg_mag',      baseStats:{ dr:3, legHP:15 } },
-    sys_mine_layer:       { baseType:'leg_system', systemKey:'mine_layer',       name:'Mine Layer',        icon:'leg_mine',     baseStats:{ dmgPct:2, legHP:10 } },
+    // ── SYSTEM LEGS (leg_system slot → sets loadout.leg) — legHP rolled at generation ──
+    sys_hydraulic_boost:  { baseType:'leg_system', systemKey:'hydraulic_boost',  name:'Hydraulic Boost',   icon:'leg_hydro',    baseStats:{ speedPct:5 } },
+    sys_gyro_stabilizer:  { baseType:'leg_system', systemKey:'gyro_stabilizer',  name:'Gyro Stabilizer',   icon:'leg_gyro',     baseStats:{} },
+    sys_mag_anchors:      { baseType:'leg_system', systemKey:'mag_anchors',      name:'Mag Anchors',       icon:'leg_mag',      baseStats:{ dr:3 } },
+    sys_mine_layer:       { baseType:'leg_system', systemKey:'mine_layer',       name:'Mine Layer',        icon:'leg_mine',     baseStats:{ dmgPct:2 } },
     sys_sprint_boosters:  { baseType:'leg_system', systemKey:'sprint_boosters',  name:'Sprint Boosters',   icon:'leg_sprint',   baseStats:{ speedPct:8, dodgePct:2 } },
     sys_featherweight:    { baseType:'leg_system', systemKey:'featherweight',    name:'Featherweight',     icon:'leg_feather',  baseStats:{ speedPct:6, dodgePct:3 } },
-    sys_tremor_legs:      { baseType:'leg_system', systemKey:'tremor_legs',      name:'Tremor Legs',       icon:'leg_tremor',   baseStats:{ dmgPct:3, legHP:20 } },
+    sys_tremor_legs:      { baseType:'leg_system', systemKey:'tremor_legs',      name:'Tremor Legs',       icon:'leg_tremor',   baseStats:{ dmgPct:3 } },
 
-    // ── SYSTEM AUGMENTS (aug_system slot → sets loadout.aug) ──
-    sys_target_painter:   { baseType:'aug_system', systemKey:'target_painter',   name:'Target Painter',    icon:'aug_painter',  baseStats:{ dmgPct:3 } },
-    sys_threat_analyzer:  { baseType:'aug_system', systemKey:'threat_analyzer',  name:'Threat Analyzer',   icon:'aug_threat',   baseStats:{ critChance:2 } },
-    sys_overclock_cpu:    { baseType:'aug_system', systemKey:'overclock_cpu',    name:'Overclock CPU',     icon:'aug_cpu',      baseStats:{ fireRatePct:-5, modCdPct:-3 } },
-    sys_reactive_plating: { baseType:'aug_system', systemKey:'reactive_plating', name:'Reactive Plating',  icon:'aug_plating',  baseStats:{ dr:3, coreHP:10 } },
-    sys_war_machine:      { baseType:'aug_system', systemKey:'war_machine',      name:'War Machine',       icon:'aug_war',      baseStats:{ dmgPct:5, dr:2 } },
+    // ── SYSTEM AUGMENTS (aug_system slot → sets loadout.aug) — base stat rolled at generation ──
+    sys_target_painter:   { baseType:'aug_system', systemKey:'target_painter',   name:'Target Painter',    icon:'aug_painter',  baseStats:{} },
+    sys_threat_analyzer:  { baseType:'aug_system', systemKey:'threat_analyzer',  name:'Threat Analyzer',   icon:'aug_threat',   baseStats:{} },
+    sys_overclock_cpu:    { baseType:'aug_system', systemKey:'overclock_cpu',    name:'Overclock CPU',     icon:'aug_cpu',      baseStats:{} },
+    sys_reactive_plating: { baseType:'aug_system', systemKey:'reactive_plating', name:'Reactive Plating',  icon:'aug_plating',  baseStats:{} },
+    sys_war_machine:      { baseType:'aug_system', systemKey:'war_machine',      name:'War Machine',       icon:'aug_war',      baseStats:{} },
 };
 
 // Which weapon keys from WEAPONS are droppable as loot items.
@@ -690,46 +690,84 @@ function _selectBaseItem(baseType) {
 
 function generateItem(round, enemyData) {
     const rarity = rollRarity(round || 1, enemyData?.isCommander, enemyData?.isBoss);
-    const rarityDef = RARITY_DEFS[rarity];
     const baseType = _selectItemType(enemyData);
     const baseKey = _selectBaseItem(baseType);
     if (!baseKey) return null;
 
+    const isLegendary = rarity === 'legendary';
     let name, icon, subType, baseStats;
 
     if (baseType === 'weapon') {
+        // ── Step 1/2: Weapons roll base damage — no item-level scaling ──
         const w = WEAPONS[baseKey];
         if (!w) return null;
         subType = baseKey;
         name = (typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[baseKey] : null) || w.name;
         icon = baseKey; // icon key matches weapon key
+        // Base damage roll: floor = hardcoded dmg, ceiling = floor × 1.05 (1.10 for Legendary)
+        const dmgFloor = w.dmg || 0;
+        const dmgCeiling = dmgFloor * (isLegendary ? 1.10 : 1.05);
+        const rolledDmg = Math.round(dmgFloor + Math.random() * (dmgCeiling - dmgFloor));
         baseStats = {};
-        if (w.dmg) baseStats.dmg = w.dmg;
-        if (w.fireRate) baseStats.fireRate = w.fireRate;
-        if (w.pellets) baseStats.pellets = w.pellets;
-        if (w.speed) baseStats.speed = w.speed;
-        if (w.range) baseStats.range = w.range;
-        if (w.radius) baseStats.radius = w.radius;
-        if (w.burst) baseStats.burst = w.burst;
+        if (w.dmg)      baseStats.dmg      = rolledDmg;
+        if (w.fireRate) baseStats.fireRate  = w.fireRate;
+        if (w.pellets)  baseStats.pellets   = w.pellets;
+        if (w.speed)    baseStats.speed     = w.speed;
+        if (w.range)    baseStats.range     = w.range;
+        if (w.radius)   baseStats.radius    = w.radius;
+        if (w.burst)    baseStats.burst     = w.burst;
     } else {
         const def = ITEM_BASES[baseKey];
         subType = baseKey;
         name = def.name;
         icon = def.icon;
+        // Copy secondary stats from ITEM_BASES; primary stat is rolled below
         baseStats = { ...def.baseStats };
-    }
 
-    // Item level = round, scale base stats slightly
-    const level = round || 1;
-    const levelMult = 1 + (level - 1) * 0.03;
-
-    // Apply level and rarity multiplier to numeric base stats
-    const scaledStats = {};
-    for (const [k, v] of Object.entries(baseStats)) {
-        if (typeof v === 'number') {
-            scaledStats[k] = Math.round(v * levelMult * rarityDef.statMult);
-        } else {
-            scaledStats[k] = v;
+        if (baseType === 'cpu_system') {
+            // ── Step 3: CPU mod — roll base cooldown (lower is better) ──
+            const modDef = WEAPONS[def.systemKey];
+            if (modDef?.cooldown) {
+                const cdFloor = modDef.cooldown;
+                const cdCeiling = Math.round(cdFloor * (isLegendary ? 0.90 : 0.95) * 10) / 10;
+                const rolledCd = Math.round((cdCeiling + Math.random() * (cdFloor - cdCeiling)) * 10) / 10;
+                baseStats.cooldown = rolledCd;
+            }
+        } else if (baseType === 'armor') {
+            // ── Step 4: Armor — roll Core HP ──
+            const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
+            baseStats.coreHP = Math.round(lo + Math.random() * (hi - lo));
+        } else if (baseType === 'arms') {
+            // ── Step 4: Arms — roll Arm HP ──
+            const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
+            baseStats.armHP = Math.round(lo + Math.random() * (hi - lo));
+        } else if (baseType === 'shield' || baseType === 'shield_system') {
+            // ── Step 4: Shield — roll Shield HP ──
+            const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
+            baseStats.shieldHP = Math.round(lo + Math.random() * (hi - lo));
+        } else if (baseType === 'legs' || baseType === 'leg_system') {
+            // ── Step 4: Legs — roll Leg HP ──
+            const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
+            baseStats.legHP = Math.round(lo + Math.random() * (hi - lo));
+        } else if (baseType === 'augment' || baseType === 'aug_system') {
+            // ── Step 4: Augment — randomly pick and roll one stat from pool ──
+            const _augPool = [
+                { key:'dmgPct',      lo:2, hi:8,  legLo:5,  legHi:15 },
+                { key:'fireRatePct', lo:2, hi:8,  legLo:5,  legHi:15 },
+                { key:'critChance',  lo:1, hi:6,  legLo:5,  legHi:12 },
+                { key:'critDmg',     lo:5, hi:20, legLo:15, legHi:40 },
+                { key:'dr',          lo:1, hi:6,  legLo:5,  legHi:12 },
+                { key:'shieldHP',    lo:5, hi:20, legLo:15, legHi:40 },
+                { key:'shieldRegen', lo:3, hi:15, legLo:10, legHi:30 },
+                { key:'absorbPct',   lo:1, hi:5,  legLo:4,  legHi:10 },
+                { key:'speedPct',    lo:2, hi:8,  legLo:5,  legHi:15 },
+                { key:'dodgePct',    lo:1, hi:5,  legLo:4,  legHi:10 },
+            ];
+            const pick = _augPool[Math.floor(Math.random() * _augPool.length)];
+            const lo = isLegendary ? pick.legLo : pick.lo;
+            const hi = isLegendary ? pick.legHi : pick.hi;
+            // Augment base stat is entirely the rolled pick (replaces static ITEM_BASES entry)
+            baseStats = { [pick.key]: Math.round(lo + Math.random() * (hi - lo)) };
         }
     }
 
@@ -751,15 +789,15 @@ function generateItem(round, enemyData) {
         shortName: name,
         icon,
         rarity,
-        level,
-        baseStats: scaledStats,
+        level: round || 1,
+        baseStats,
         affixes,
         computedStats: {},
         systemKey
     };
 
     // Compute final stats: base + affixes
-    item.computedStats = { ...scaledStats };
+    item.computedStats = { ...baseStats };
     affixes.forEach(a => {
         item.computedStats[a.stat] = (item.computedStats[a.stat] || 0) + a.value;
     });
