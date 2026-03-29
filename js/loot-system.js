@@ -623,7 +623,7 @@ const LEGENDARY_TRAITS = {
 // System item types (shield_system, cpu_system, leg_system, aug_system)
 // are mapped to their parent type before pool lookup (see _affixTypeMap).
 const AFFIX_POOLS = {
-    weapon:  ['fireRatePct', 'dmgPct', 'critChance', 'critDmg'],
+    weapon:  ['dmgPct', 'fireRatePct', 'critDmg'],
     cpu:     ['modCdPct', 'modEffPct', 'shieldRegen'],
     augment: ['dmgPct', 'fireRatePct', 'critChance', 'critDmg', 'dr', 'shieldHP', 'shieldRegen', 'absorbPct', 'speedPct', 'dodgePct'],
     arms:    ['armHP', 'critChance', 'critDmg'],
@@ -652,6 +652,50 @@ const AFFIX_RANGES = {
     modCdPct:    { std:[2,5],   leg:[5,8],   label:'-{v}% Mod Cooldown'     },
     modEffPct:   { std:[2,5],   leg:[5,8],   label:'+{v}% Mod Duration'     },
 };
+
+// ── ITEM NAMING SYSTEM ─────────────────────────────────────────
+// Tier prefix by rarity (derived from affix count).
+const TIER_PREFIX = {
+    common:    'Basic',
+    uncommon:  'Enhanced',
+    rare:      'Advanced',
+    epic:      'Elite',
+    legendary: 'Prototype',
+};
+
+// Display names for CPU mod system keys.
+const CPU_MOD_DISPLAY_NAMES = {
+    barrier:       'Barrier',
+    jump:          'Jump Jets',
+    decoy:         'Decoy',
+    ghost_step:    'Ghost Step',
+    atk_drone:     'Attack Drone',
+    repair:        'Repair Drone',
+    rage:          'Rage',
+    missile:       'Missile Pod',
+    fortress_mode: 'Fortress Mode',
+    emp:           'EMP Burst',
+};
+
+// Returns the type-specific portion of an item name.
+function _getItemTypeName(baseType, subType, systemKey) {
+    switch (baseType) {
+        case 'weapon':
+            return (typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[subType] : null) || subType;
+        case 'cpu_system':
+            return CPU_MOD_DISPLAY_NAMES[systemKey] || systemKey || 'Module';
+        case 'armor':         return 'Plating';
+        case 'arms':          return 'Servos';
+        case 'shield':
+        case 'shield_system': return 'Generator';
+        case 'legs':
+        case 'leg_system':    return 'Frame';
+        case 'augment':
+        case 'aug_system':    return 'Module';
+        case 'cpu':           return 'Module';
+        default:              return baseType;
+    }
+}
 
 // ── INVENTORY & EQUIPMENT STATE ────────────────────────────────
 const INVENTORY_MAX = 20;
@@ -750,8 +794,8 @@ function rollAffixes(baseType, rarity, excludeStatKey) {
 function _selectItemType(enemyData) {
     const weights = {
         weapon: 10, armor: 10, arms: 10, legs: 10,
-        shield: 10, cpu: 10, augment: 10,
-        // System drops — the main way to get new equipment
+        shield: 10, augment: 10,
+        // System drops — the main way to get new equipment (cpu_system replaces plain cpu)
         shield_system: 10, cpu_system: 10, leg_system: 10, aug_system: 10
     };
     if (enemyData?.isMedic) { weights.shield_system *= 2; weights.shield *= 2; weights.armor *= 2; }
@@ -807,38 +851,32 @@ function generateItem(round, enemyData) {
     let _augBaseStatKey = null; // tracks augment base stat to exclude from affix pool
 
     if (baseType === 'weapon') {
-        // ── Step 1/2: Weapons roll base damage — no item-level scaling ──
+        // ── Step 1/2: Weapons roll Damage % base stat ──
+        // Base damage is always the hardcoded WEAPONS[key].dmg value.
+        // The rolled Damage % is a bonus ON TOP of that base.
         const w = WEAPONS[baseKey];
         if (!w) return null;
         subType = baseKey;
-        name = (typeof WEAPON_NAMES !== 'undefined' ? WEAPON_NAMES[baseKey] : null) || w.name;
         icon = baseKey; // icon key matches weapon key
-        // Base damage roll: floor = hardcoded dmg, ceiling = floor × 1.05 (1.10 for Legendary)
-        const dmgFloor = w.dmg || 0;
-        const dmgCeiling = dmgFloor * (isLegendary ? 1.10 : 1.05);
-        const rolledDmg = Math.round(dmgFloor + Math.random() * (dmgCeiling - dmgFloor));
-        baseStats = {};
-        if (w.dmg)      baseStats.dmg      = rolledDmg;
+        // Damage % roll: Common-Epic [2,5]%, Legendary [5,8]%
+        const [wpnPctLo, wpnPctHi] = isLegendary ? [5, 8] : [2, 5];
+        const rolledDmgPct = Math.round(wpnPctLo + Math.random() * (wpnPctHi - wpnPctLo));
+        baseStats = { dmgPct: rolledDmgPct };
     } else {
         const def = ITEM_BASES[baseKey];
         subType = baseKey;
-        name = def.name;
         icon = def.icon;
         // Copy secondary stats from ITEM_BASES; primary stat is rolled below
         baseStats = { ...def.baseStats };
 
         if (baseType === 'cpu_system') {
-            // ── Step 3: CPU mod — base stat is cooldown in seconds only ──
-            // Replace ITEM_BASES secondary stats entirely; cooldown is the sole base stat.
-            const modDef = WEAPONS[def.systemKey];
-            if (modDef?.cooldown) {
-                const cdFloorSec = modDef.cooldown / 1000;
-                const cdCeilingSec = Math.round(cdFloorSec * (isLegendary ? 0.90 : 0.95) * 10) / 10;
-                const rolledCd = Math.round((cdCeilingSec + Math.random() * (cdFloorSec - cdCeilingSec)) * 10) / 10;
-                baseStats = { cooldown: rolledCd };
-            } else {
-                baseStats = {};
-            }
+            // ── Step 3: CPU mod — base stat is Mod Cooldown % only ──
+            // Base cooldown is always the hardcoded WEAPONS[systemKey].cooldown value.
+            // The rolled Mod Cooldown % is a reduction ON TOP of that base.
+            // Stored negative: negative = buff per convention.
+            const [cpuPctLo, cpuPctHi] = isLegendary ? [5, 8] : [2, 5];
+            const rolledCdPct = Math.round(cpuPctLo + Math.random() * (cpuPctHi - cpuPctLo));
+            baseStats = { modCdPct: -rolledCdPct };
         } else if (baseType === 'armor') {
             // ── Step 4: Armor — sole base stat is Core HP ──
             const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
@@ -889,6 +927,9 @@ function generateItem(round, enemyData) {
     // For system items, carry the systemKey so equip logic can activate the GAME system
     const _baseDef = ITEM_BASES[baseKey];
     const systemKey = _baseDef?.systemKey || null;
+
+    // Compute item name using the tier+type naming system
+    name = `${TIER_PREFIX[rarity]} ${_getItemTypeName(baseType, subType, systemKey)}`;
 
     const item = {
         id: 'item_' + (++_lootItemIdCounter),
@@ -1991,7 +2032,11 @@ function spawnScrapDrop(scene, x, y) {
     const outerRing = scene.add.circle(x, y, 10, 0x8b6914, 0).setDepth(7);
     // Gold coin fill
     const coin = scene.add.circle(x, y, 8, 0xffd700, 0).setDepth(8);
-    const drop = { coin, outerRing, x: landX, y: landY, value, active: true, _arcDone: false };
+    // Coin label
+    const label = scene.add.text(x, y, 'S', {
+        fontFamily: 'monospace', fontSize: '7px', color: '#5c3d00', align: 'center'
+    }).setOrigin(0.5, 0.5).setDepth(9).setAlpha(0);
+    const drop = { coin, outerRing, label, x: landX, y: landY, value, active: true, _arcDone: false };
     _scrapDrops.push(drop);
 
     // Short arc: 40-50px height, 350ms
@@ -2003,12 +2048,13 @@ function spawnScrapDrop(scene, x, y) {
     const midX = (x + landX) * 0.5;
     const midY = y - arcH;
 
-    scene.tweens.add({ targets: [coin, outerRing], alpha: 1, scaleX: 1, scaleY: 1, duration: Math.floor(arcDur * 0.4), ease: 'Power1' });
-    coin.setScale(0.5); outerRing.setScale(0.5);
+    scene.tweens.add({ targets: [coin, outerRing, label], alpha: 1, scaleX: 1, scaleY: 1, duration: Math.floor(arcDur * 0.4), ease: 'Power1' });
+    coin.setScale(0.5); outerRing.setScale(0.5); label.setScale(0.5);
 
     const _updateScrap = () => {
         if (coin?.active !== false)      { coin.x = proxy.cx;      coin.y = proxy.cy; }
         if (outerRing?.active !== false) { outerRing.x = proxy.cx; outerRing.y = proxy.cy; }
+        if (label?.active !== false)     { label.x = proxy.cx;     label.y = proxy.cy; }
     };
 
     scene.tweens.add({
@@ -2028,10 +2074,12 @@ function spawnScrapDrop(scene, x, y) {
                         onUpdate: () => {
                             if (coin?.active !== false)      { coin.y = landY + bProxy.by; }
                             if (outerRing?.active !== false) { outerRing.y = landY + bProxy.by; }
+                            if (label?.active !== false)     { label.y = landY + bProxy.by; }
                         },
                         onComplete: () => {
                             if (coin?.active !== false)      { coin.x = landX;      coin.y = landY; }
                             if (outerRing?.active !== false) { outerRing.x = landX; outerRing.y = landY; }
+                            if (label?.active !== false)     { label.x = landX;     label.y = landY; }
                             drop._arcDone = true;
                         }
                     });
@@ -2044,21 +2092,11 @@ function spawnScrapDrop(scene, x, y) {
 function checkScrapPickups(scene) {
     if (_gameMode !== 'campaign') return;
     if (!player?.active || !isDeployed) return;
-    const dt = (scene.game?.loop?.delta ?? 16.67) / 1000;
     _scrapDrops.slice().forEach(drop => {
         if (!drop.active) return;
         if (!drop._arcDone) return; // still in flight
         const dist = Phaser.Math.Distance.Between(player.x, player.y, drop.x, drop.y);
-        if (dist < 120 && dist > 1) {
-            // Magnet: move toward player at 200 px/s
-            const angle = Phaser.Math.Angle.Between(drop.x, drop.y, player.x, player.y);
-            const move = 200 * dt;
-            drop.x += Math.cos(angle) * move;
-            drop.y += Math.sin(angle) * move;
-            if (drop.coin?.active)      { drop.coin.x = drop.x;      drop.coin.y = drop.y; }
-            if (drop.outerRing?.active) { drop.outerRing.x = drop.x; drop.outerRing.y = drop.y; }
-        }
-        if (dist < 20) {
+        if (dist < 45) {
             // Collect
             _scrap += drop.value;
             _showScrapFloatText(scene, drop.value);
@@ -2067,6 +2105,7 @@ function checkScrapPickups(scene) {
             drop.active = false;
             if (drop.coin?.active)      try { drop.coin.destroy(); }      catch(e) {}
             if (drop.outerRing?.active) try { drop.outerRing.destroy(); } catch(e) {}
+            if (drop.label?.active)     try { drop.label.destroy(); }     catch(e) {}
             _scrapDrops = _scrapDrops.filter(d => d !== drop);
             if (typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
         }
@@ -2108,6 +2147,7 @@ function cleanupEquipmentDrops() {
     _scrapDrops.forEach(drop => {
         if (drop.coin?.active)      try { drop.coin.destroy(); }      catch(e) {}
         if (drop.outerRing?.active) try { drop.outerRing.destroy(); } catch(e) {}
+        if (drop.label?.active)     try { drop.label.destroy(); }     catch(e) {}
     });
     _scrapDrops = [];
 }
@@ -2123,13 +2163,10 @@ function _createStarterItem(baseType, weaponKey) {
         if (!w) return null;
         baseKey = weaponKey;
         subType = weaponKey;
-        name = w.name;
         icon = weaponKey;
-        const dmgFloor = w.dmg || 0;
-        const dmgCeiling = dmgFloor * 1.05;
-        const rolledDmg = Math.round(dmgFloor + Math.random() * (dmgCeiling - dmgFloor));
-        baseStats = {};
-        if (w.dmg) baseStats.dmg = rolledDmg;
+        // Starter weapons use Common Damage % range [2,5]
+        const rolledDmgPct = Math.round(2 + Math.random() * 3);
+        baseStats = { dmgPct: rolledDmgPct };
     } else {
         // System item — find the matching ITEM_BASES entry by systemKey
         const entry = Object.entries(ITEM_BASES).find(([, def]) => def.baseType === baseType && def.systemKey === weaponKey);
@@ -2137,11 +2174,13 @@ function _createStarterItem(baseType, weaponKey) {
         baseKey = entry[0];
         const def = entry[1];
         subType = baseKey;
-        name = def.name;
         icon = def.icon;
         baseStats = { ...def.baseStats };
         systemKey = def.systemKey;
     }
+
+    // Apply naming system
+    name = `${TIER_PREFIX[rarity]} ${_getItemTypeName(baseType, subType, systemKey)}`;
 
     const item = {
         id: 'item_' + (++_lootItemIdCounter),
