@@ -1926,29 +1926,31 @@ function _buildSingleCardHtml(item, slotLabel) {
         Object.entries(item.baseStats).forEach(([k, v]) => {
             if (!v) return;
             const isInv = _hoverInvertedStats.has(k);
-            const valColor = isInv ? (v < 0 ? '#00ff88' : '#ff4d6a') : 'var(--sci-cyan)';
+            const valColor = isInv ? (v < 0 ? '#00ff88' : '#ff4d6a') : '#00ff88';
             let displayVal;
             if (k === 'fireRate' || k === 'reload') {
                 displayVal = (1000 / v).toFixed(1) + '/sec';
             } else if (k === 'cooldown') {
                 displayVal = v + 's';
             } else if (_pctStats.has(k)) {
-                displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) + '%' : v + '%';
+                displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) + '%' : '+' + v + '%';
             } else {
-                displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) : String(v);
+                displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) : '+' + String(v);
             }
             html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span style="color:${valColor};">${displayVal}</span></div>`;
         });
     }
-    if (hasStats && hasAffixes) html += '<div class="lo-hover-divider"></div>';
     if (hasAffixes) {
-        html += `<div style="font-size:7px;letter-spacing:2px;color:rgba(255,255,255,0.3);margin-bottom:3px;">BONUSES</div>`;
         item.affixes.forEach(a => {
             const lbl = a.label || '';
             const isInvertedAffix = /reload|cooldown/i.test(lbl);
-            const color = isInvertedAffix && lbl.startsWith('-') ? '#00ff88' : '#44ff88';
             const fixedLbl = (isInvertedAffix && lbl.startsWith('-')) ? '+' + lbl.slice(1) : lbl;
-            html += `<div style="font-size:9px;color:${color};margin-top:2px;">&#9679; ${fixedLbl}</div>`;
+            const m = fixedLbl.match(/^([+\-][\d.]+%?)\s+(.+)$/);
+            if (m) {
+                html += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;margin-top:2px;"><span style="color:rgba(255,255,255,0.45);">${m[2]}</span><span style="color:#00ff88;">${m[1]}</span></div>`;
+            } else {
+                html += `<div style="font-size:9px;color:#00ff88;margin-top:2px;">${fixedLbl}</div>`;
+            }
         });
     }
     if (item.isUnique && item.uniqueLabel) {
@@ -1991,29 +1993,31 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
             Object.entries(colItem.baseStats).forEach(([k, v]) => {
                 if (!v) return;
                 const isInv = _hoverInvertedStats.has(k);
-                const valColor = isInv ? (v < 0 ? '#00ff88' : '#ff4d6a') : 'var(--sci-cyan)';
+                const valColor = isInv ? (v < 0 ? '#00ff88' : '#ff4d6a') : '#00ff88';
                 let displayVal;
                 if (k === 'fireRate' || k === 'reload') {
                     displayVal = (1000 / v).toFixed(1) + '/sec';
                 } else if (k === 'cooldown') {
                     displayVal = v + 's';
                 } else if (_pctStats.has(k)) {
-                    displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) + '%' : v + '%';
+                    displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) + '%' : '+' + v + '%';
                 } else {
-                    displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) : String(v);
+                    displayVal = isInv ? (v < 0 ? '+' : '-') + Math.abs(v) : '+' + String(v);
                 }
                 h += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;"><span style="color:rgba(255,255,255,0.45);">${STAT_DISPLAY_NAMES[k] || _camelToTitle(k)}</span><span style="color:${valColor};">${displayVal}</span></div>`;
             });
         }
-        if (hasStats && hasAffixes) h += '<div class="lo-hover-divider"></div>';
         if (hasAffixes) {
-            h += `<div style="font-size:7px;letter-spacing:2px;color:rgba(255,255,255,0.3);margin-bottom:3px;">BONUSES</div>`;
             colItem.affixes.forEach(a => {
                 const lbl = a.label || '';
                 const isInvertedAffix = /reload|cooldown/i.test(lbl);
-                const color = isInvertedAffix && lbl.startsWith('-') ? '#00ff88' : '#44ff88';
                 const fixedLbl = (isInvertedAffix && lbl.startsWith('-')) ? '+' + lbl.slice(1) : lbl;
-                h += `<div style="font-size:9px;color:${color};margin-top:2px;">&#9679; ${fixedLbl}</div>`;
+                const m = fixedLbl.match(/^([+\-][\d.]+%?)\s+(.+)$/);
+                if (m) {
+                    h += `<div style="display:flex;justify-content:space-between;font-size:9px;padding:1px 0;margin-top:2px;"><span style="color:rgba(255,255,255,0.45);">${m[2]}</span><span style="color:#00ff88;">${m[1]}</span></div>`;
+                } else {
+                    h += `<div style="font-size:9px;color:#00ff88;margin-top:2px;">${fixedLbl}</div>`;
+                }
             });
         }
         if (colItem.isUnique && colItem.uniqueLabel) {
