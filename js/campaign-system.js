@@ -19,6 +19,9 @@
 //   getCampaignMission()        — returns current mission config
 //   getCampaignEnemyConfig()    — returns enemy spawn config for current mission
 //   awardMissionXP(kills)       — award XP after mission clear
+//   awardKillXP(enemyData)       — award XP for a single enemy kill (called from combat.js)
+//   getKillXPMultiplier(playerLevel, enemyLevel) — level-over-enemy XP penalty multiplier
+//   XP_PER_KILL                  — base XP values per enemy category
 //   applyCampaignDeathPenalty() — apply scrap loss on death
 //   rollMissionModifier()       — roll a random modifier for current deploy
 //   rollBonusObjective()        — roll a random bonus objective
@@ -269,16 +272,61 @@ let _campaignState = {
 // PLAYER LEVELING
 // ══════════════════════════════════════════════════════════════════
 
-/** XP required to reach a given level (cumulative). */
+/** Base XP awarded per kill by enemy category. */
+const XP_PER_KILL = {
+    normal:      20,
+    medic:       20,
+    commander:   30,
+    elite:       40,
+    boss:        50,
+};
+
+/** XP required to reach a given level (cumulative).
+ *  XP to advance from level N to N+1 = 100 + (N-1)*25
+ *  Level 1→2: 100, Level 2→3: 125, Level 3→4: 150, etc. */
 function getXPForLevel(level) {
     if (level <= 1) return 0;
-    // Escalating curve: each level needs more XP
-    // Level 2: 100, Level 3: 250, Level 4: 450, Level 5: 700, ...
     let total = 0;
     for (let i = 2; i <= level; i++) {
-        total += 50 + (i - 1) * 50;
+        total += 100 + (i - 2) * 25;
     }
     return total;
+}
+
+/** Penalty multiplier when player is above enemy level.
+ *  Player <= enemy level: 1.0x. Each level above reduces by 10%, floor 0.5x. */
+function getKillXPMultiplier(playerLevel, enemyLevel) {
+    return Math.max(0.5, 1 - (playerLevel - enemyLevel) * 0.10);
+}
+
+/** Award XP for a single enemy kill in campaign mode.
+ *  enemyData: { isMedic, isCommander, isElite, isBoss }
+ *  Returns the XP awarded (0 if not in campaign). */
+function awardKillXP(enemyData) {
+    if (typeof _gameMode === 'undefined' || _gameMode !== 'campaign') return 0;
+    if (typeof _campaignState === 'undefined') return 0;
+
+    // Determine enemy category
+    let category = 'normal';
+    if (enemyData?.isBoss)       category = 'boss';
+    else if (enemyData?.isElite) category = 'elite';
+    else if (enemyData?.isCommander) category = 'commander';
+    else if (enemyData?.isMedic) category = 'medic';
+
+    const baseXP = XP_PER_KILL[category];
+    const enemyLevel = (window._activeCampaignConfig?.enemyLevel) || 1;
+    const mult = getKillXPMultiplier(_campaignState.playerLevel, enemyLevel);
+    const xpGained = Math.round(baseXP * mult);
+
+    _campaignState.playerXP += xpGained;
+
+    // Check for level-up
+    while (_campaignState.playerXP >= getXPForLevel(_campaignState.playerLevel + 1)) {
+        _campaignState.playerLevel++;
+    }
+
+    if (typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
+    return xpGained;
 }
 
 /** XP needed from current level to next level. */
