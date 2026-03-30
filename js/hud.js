@@ -77,7 +77,7 @@ function updatePaperDoll() {
 
     const getColor = (hp, max) => {
         const pct = hp / max;
-        if (pct <= 0)    return '#1a1a1a';
+        if (pct <= 0)    return '#000000';
         if (pct <= 0.25) return '#ff0000';
         if (pct <= 0.50) return '#ffaa00';
         if (pct <= 0.75) return '#ffff00';
@@ -332,7 +332,7 @@ function updateEnemyDoll(e) {
     }
     const getCol = (hp, max) => {
         const pct = hp / max;
-        if (pct <= 0)    return '#1a1a1a';
+        if (pct <= 0)    return '#000000';
         if (pct <= 0.25) return '#ff0000';
         if (pct <= 0.50) return '#ffaa00';
         if (pct <= 0.75) return '#ffff00';

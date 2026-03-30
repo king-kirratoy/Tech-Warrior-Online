@@ -190,14 +190,14 @@ document.addEventListener('keydown', function _mainMenuKeyNav(e) {
 function handlePlayerMovement(scene, time) {
     if (!player?.active || !isDeployed) return;
     const _gyroOn = loadout.leg === 'gyro_stabilizer' && _perkState.legSystemActive;
-    const _legHpPct = (player?.comp?.legs?.hp ?? 1) / (player?.comp?.legs?.max ?? 1);
     // Iron Legs (Heavy trait): ignore destroyed-leg speed penalty
     const _ironLegs = loadout.chassis === 'heavy';
     // Use _legsDestroyed flag (set in processPlayerDamage) for consistent penalty timing
+    // Penalty applies only when legs are fully destroyed (hp === 0), not at low HP
     const _legMult = _gyroOn ? 1.0
         : (_legsDestroyed && _ironLegs) ? 1.0
         : _legsDestroyed ? 0.5
-        : _legHpPct < 0.5 ? (0.5 + _legHpPct) : 1.0;
+        : 1.0;
     // Warlord Stride: +8% speed while leg HP > 50%
     const _warlordSpeedMult = (loadout.leg === 'warlord_stride' && _perkState.legSystemActive &&
         player.comp?.legs?.hp > player.comp.legs.max * 0.5) ? 1.08 : 1.0;
