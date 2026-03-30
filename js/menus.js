@@ -1388,7 +1388,7 @@ function _equipItemToSlot(invIdx, slotKey) {
         player._shieldRegenRate  = _ss.regenRate;
         player._shieldRegenDelay = _ss.regenDelay;
         const _chassisBonus = loadout.chassis === 'medium' ? (CHASSIS.medium.shieldAbsorbBonus || 0.15) : 0;
-        const _gAbsorb = ((_gearState?.absorbPct || 0) / 100);
+        const _gAbsorb = ((_gearState?.shieldAbsorb || 0) / 100);
         player._shieldAbsorb = Math.min(0.90, (_ss.absorb ?? 0.50) + _chassisBonus + _gAbsorb);
         player._shieldFlickerHit = false;
         player._shieldAdaptStack = 0;
@@ -1443,7 +1443,7 @@ function _unequipItem(slotKey) {
         player._shieldRegenRate  = _ss.regenRate;
         player._shieldRegenDelay = _ss.regenDelay;
         const _chassisBonus = loadout.chassis === 'medium' ? (CHASSIS.medium.shieldAbsorbBonus || 0.15) : 0;
-        const _gAbsorb = ((_gearState?.absorbPct || 0) / 100);
+        const _gAbsorb = ((_gearState?.shieldAbsorb || 0) / 100);
         player._shieldAbsorb = Math.min(0.90, (_ss.absorb ?? 0.50) + _chassisBonus + _gAbsorb);
         player._shieldFlickerHit = false;
         player._shieldAdaptStack = 0;
@@ -1678,7 +1678,7 @@ function _renderGearBonusesPanel() {
     }
     gearPanel.style.display = 'block';
     const offKeys  = ['dmgFlat','dmgPct','critChance','critDmg','fireRatePct','pellets','splashRadius'];
-    const defKeys  = ['coreHP','armHP','legHP','allHP','dr','shieldHP','shieldRegen','dodgePct','absorbPct'];
+    const defKeys  = ['coreHP','armHP','legHP','allHP','dr','shieldHP','shieldRegen','dodgePct','shieldAbsorb'];
     const utilKeys = ['speedPct','modCdPct','modEffPct','lootMult','autoRepair'];
     const negKeys  = new Set(['fireRatePct','modCdPct']);
 
@@ -1903,7 +1903,7 @@ const STAT_DISPLAY_NAMES = {
     fireRate:'Fire Rate', reload:'Fire Rate', fireRatePct:'Fire Rate %',
     coreHP:'Core HP', armHP:'Arm HP', legHP:'Leg HP', allHP:'All HP',
     dr:'Damage Reduction %',
-    shieldHP:'Shield HP', shieldRegen:'Shield Regen %', absorbPct:'Absorb %', maxShield:'Shield HP',
+    shieldHP:'Shield HP', shieldRegen:'Shield Regen %', shieldAbsorb:'Shield Absorb %', maxShield:'Shield HP',
     dodgePct:'Dodge %', speedPct:'Move Speed %',
     modCdPct:'Mod Cooldown %', modEffPct:'Mod Duration %', cooldown:'Mod Cooldown',
     lootMult:'Loot Quality %', autoRepair:'Auto Repair',
@@ -1916,7 +1916,7 @@ function _camelToTitle(key) {
 }
 /** Builds hover card HTML for any item. */
 const _hoverInvertedStats = new Set(['fireRatePct','modCdPct']);
-const _pctStats = new Set(['dmgPct','critChance','critDmg','fireRatePct','dodgePct','speedPct','modCdPct','modEffPct','absorbPct','shieldRegen','splashRadius','lootMult','dr']);
+const _pctStats = new Set(['dmgPct','critChance','critDmg','fireRatePct','dodgePct','speedPct','modCdPct','modEffPct','shieldAbsorb','shieldRegen','splashRadius','lootMult','dr']);
 
 function _buildSingleCardHtml(item, slotLabel) {
     const rd = RARITY_DEFS[item.rarity] || { colorStr: UI_COLORS.text60, label: 'Common' };

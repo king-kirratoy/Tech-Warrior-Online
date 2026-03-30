@@ -67,7 +67,7 @@ const ITEM_BASES = {
     // ── SHIELD MODULES (shield slot) — shieldHP is rolled at generation ──
     barrier_core:   { baseType:'shield', name:'Barrier Core',     icon:'shield_core',  baseStats:{ shieldRegen:5 } },
     regen_cell:     { baseType:'shield', name:'Regen Cell',       icon:'shield_regen', baseStats:{ shieldRegen:15 } },
-    absorb_matrix:  { baseType:'shield', name:'Absorb Matrix',    icon:'shield_abs',   baseStats:{ absorbPct:5 } },
+    absorb_matrix:  { baseType:'shield', name:'Absorb Matrix',    icon:'shield_abs',   baseStats:{ shieldAbsorb:5 } },
 
     // ── CPU CHIPS (cpu slot) — static stats, no primary rolling ──
     cooldown_chip:  { baseType:'cpu', name:'Cooldown Chip',       icon:'mod_cd',       baseStats:{ modCdPct:-8 } },
@@ -141,7 +141,7 @@ const UNIQUE_ITEMS = {
         rarity: 'legendary',
         isUnique: true,
         boss: 'warden',
-        baseStats: { shieldHP: 45, shieldRegen: 12, absorbPct: 10 },
+        baseStats: { shieldHP: 45, shieldRegen: 12, shieldAbsorb: 10 },
         affixes: [
             { key:'shieldHP', stat:'shieldHP', value:25, label:'+25 Shield Capacity' },
             { key:'dr', stat:'dr', value:5, label:'+5% Damage Reduction' }
@@ -419,7 +419,7 @@ const UNIQUE_ITEMS = {
         baseStats: { shieldHP: 50, shieldRegen: 3 },
         affixes: [
             { key:'shieldHP', stat:'shieldHP', value:30, label:'+30 Shield HP' },
-            { key:'absorbPct', stat:'absorbPct', value:5, label:'+5% Shield Absorb' }
+            { key:'shieldAbsorb', stat:'shieldAbsorb', value:5, label:'+5% Shield Absorb' }
         ],
         uniqueEffect: 'matrixBarrier',
         uniqueLabel: 'MATRIX: Shield break creates a 3s damage-immune bubble (60s CD)',
@@ -474,15 +474,15 @@ function generateUniqueItem(uniqueKey, round) {
             baseStats.dmgFlat = Math.round(floor + Math.random() * floor * 0.10);
         }
     } else if (bt === 'armor') {
-        baseStats.coreHP = Math.round(30 + Math.random() * 20);  // Legendary [30,50]
-        if (template.baseStats.dr !== undefined) baseStats.dr = template.baseStats.dr;
+        baseStats.dr = Math.round(5 + Math.random() * 3);        // Legendary [5,8]
+        if (template.baseStats.coreHP !== undefined) baseStats.coreHP = template.baseStats.coreHP;
     } else if (bt === 'arms') {
         baseStats.armHP = Math.round(30 + Math.random() * 20);   // Legendary [30,50]
         if (template.baseStats.fireRatePct !== undefined) baseStats.fireRatePct = template.baseStats.fireRatePct;
     } else if (bt === 'shield') {
         baseStats.shieldHP = Math.round(125 + Math.random() * 50); // Legendary [125,175]
         if (template.baseStats.shieldRegen !== undefined) baseStats.shieldRegen = template.baseStats.shieldRegen;
-        if (template.baseStats.absorbPct   !== undefined) baseStats.absorbPct   = template.baseStats.absorbPct;
+        if (template.baseStats.shieldAbsorb !== undefined) baseStats.shieldAbsorb = template.baseStats.shieldAbsorb;
     } else if (bt === 'legs') {
         baseStats.legHP = Math.round(30 + Math.random() * 20);   // Legendary [30,50]
         if (template.baseStats.speedPct !== undefined) baseStats.speedPct = template.baseStats.speedPct;
@@ -495,16 +495,12 @@ function generateUniqueItem(uniqueKey, round) {
     } else if (bt === 'augment') {
         // Roll one stat from augment pool — Legendary tier values (same pool as generateItem)
         const _augPool = [
-            { key:'dmgPct',      lo:5,  hi:15 },
-            { key:'fireRatePct', lo:5,  hi:15 },
-            { key:'critChance',  lo:5,  hi:12 },
-            { key:'critDmg',     lo:15, hi:40 },
-            { key:'dr',          lo:5,  hi:12 },
-            { key:'shieldHP',    lo:15, hi:40 },
-            { key:'shieldRegen', lo:10, hi:30 },
-            { key:'absorbPct',   lo:4,  hi:10 },
-            { key:'speedPct',    lo:5,  hi:15 },
-            { key:'dodgePct',    lo:4,  hi:10 },
+            { key:'fireRatePct', lo:5, hi:8  },
+            { key:'critChance',  lo:5, hi:8  },
+            { key:'critDmg',     lo:20, hi:30 },
+            { key:'speedPct',    lo:5, hi:8  },
+            { key:'dodgePct',    lo:5, hi:8  },
+            { key:'modEffPct',   lo:5, hi:8  },
         ];
         const pick = _augPool[Math.floor(Math.random() * _augPool.length)];
         // Inverted stats (fireRatePct) stored negative — negative = buff per convention
@@ -638,13 +634,13 @@ const LEGENDARY_TRAITS = {
 // System item types (shield_system, cpu_system, leg_system, aug_system)
 // are mapped to their parent type before pool lookup (see _affixTypeMap).
 const AFFIX_POOLS = {
-    weapon:  ['dmgPct', 'fireRatePct', 'critDmg'],
-    cpu:     ['modCdPct', 'modEffPct', 'shieldRegen'],
-    augment: ['dmgPct', 'fireRatePct', 'critChance', 'critDmg', 'dr', 'shieldHP', 'shieldRegen', 'absorbPct', 'speedPct', 'dodgePct'],
-    arms:    ['armHP', 'critChance', 'critDmg'],
-    armor:   ['coreHP', 'shieldHP', 'dr'],
-    shield:  ['shieldHP', 'shieldRegen', 'absorbPct'],
-    legs:    ['legHP', 'speedPct', 'dodgePct'],
+    weapon:  ['dmgPct', 'fireRatePct', 'critChance', 'critDmg'],
+    cpu:     ['coreHP', 'modEffPct', 'shieldRegen'],
+    augment: ['dmgPct', 'fireRatePct', 'dr', 'shieldHP', 'shieldRegen', 'shieldAbsorb', 'coreHP', 'armHP', 'legHP', 'modCdPct'],
+    arms:    ['fireRatePct', 'critChance', 'critDmg'],
+    armor:   ['coreHP', 'armHP', 'legHP'],
+    shield:  ['shieldRegen', 'shieldAbsorb', 'dr'],
+    legs:    ['speedPct', 'dodgePct', 'modCdPct'],
 };
 
 // ── AFFIX VALUE RANGES ─────────────────────────────────────────
@@ -653,12 +649,12 @@ const AFFIX_POOLS = {
 const AFFIX_RANGES = {
     fireRatePct: { std:[2,5],   leg:[5,8],   label:'+{v}% Fire Rate'        },
     dmgPct:      { std:[2,5],   leg:[5,8],   label:'+{v}% Damage'           },
-    critChance:  { std:[5,10],  leg:[10,15], label:'+{v}% Crit Chance'      },
+    critChance:  { std:[2,5],   leg:[5,8],   label:'+{v}% Crit Chance'      },
     critDmg:     { std:[10,20], leg:[20,30], label:'+{v}% Crit Damage'      },
     dr:          { std:[2,5],   leg:[5,8],   label:'+{v}% Damage Reduction' },
     shieldHP:    { std:[10,30], leg:[30,50], label:'+{v} Shield HP'         },
     shieldRegen: { std:[2,5],   leg:[5,8],   label:'+{v} Shield Regen'      },
-    absorbPct:   { std:[2,5],   leg:[5,8],   label:'+{v}% Shield Absorb'    },
+    shieldAbsorb: { std:[2,5],   leg:[5,8],   label:'+{v}% Shield Absorb'   },
     speedPct:    { std:[2,5],   leg:[5,8],   label:'+{v}% Move Speed'       },
     dodgePct:    { std:[2,5],   leg:[5,8],   label:'+{v}% Dodge'            },
     coreHP:      { std:[10,30], leg:[30,50], label:'+{v} Core HP'           },
@@ -899,9 +895,9 @@ function generateItem(round, enemyData) {
             const rolledCdPct = Math.round(cpuPctLo + Math.random() * (cpuPctHi - cpuPctLo));
             baseStats = { modCdPct: -rolledCdPct };
         } else if (baseType === 'armor') {
-            // ── Step 4: Armor — sole base stat is Core HP ──
-            const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
-            baseStats = { coreHP: Math.round(lo + Math.random() * (hi - lo)) };
+            // ── Step 4: Armor — sole base stat is Damage Reduction % ──
+            const [lo, hi] = isLegendary ? [5, 8] : [2, 5];
+            baseStats = { dr: Math.round(lo + Math.random() * (hi - lo)) };
         } else if (baseType === 'arms') {
             // ── Step 4: Arms — sole base stat is Arm HP ──
             const [lo, hi] = isLegendary ? [30, 50] : [10, 30];
@@ -916,17 +912,14 @@ function generateItem(round, enemyData) {
             baseStats = { legHP: Math.round(lo + Math.random() * (hi - lo)) };
         } else if (baseType === 'augment' || baseType === 'aug_system') {
             // ── Step 4: Augment — randomly pick and roll one stat from pool ──
+            // Pool uses same std/leg ranges as AFFIX_RANGES for each key.
             const _augPool = [
-                { key:'dmgPct',      lo:2, hi:8,  legLo:5,  legHi:15 },
-                { key:'fireRatePct', lo:2, hi:8,  legLo:5,  legHi:15 },
-                { key:'critChance',  lo:1, hi:6,  legLo:5,  legHi:12 },
-                { key:'critDmg',     lo:5, hi:20, legLo:15, legHi:40 },
-                { key:'dr',          lo:1, hi:6,  legLo:5,  legHi:12 },
-                { key:'shieldHP',    lo:5, hi:20, legLo:15, legHi:40 },
-                { key:'shieldRegen', lo:3, hi:15, legLo:10, legHi:30 },
-                { key:'absorbPct',   lo:1, hi:5,  legLo:4,  legHi:10 },
-                { key:'speedPct',    lo:2, hi:8,  legLo:5,  legHi:15 },
-                { key:'dodgePct',    lo:1, hi:5,  legLo:4,  legHi:10 },
+                { key:'fireRatePct', lo:2, hi:5,  legLo:5, legHi:8  },
+                { key:'critChance',  lo:2, hi:5,  legLo:5, legHi:8  },
+                { key:'critDmg',     lo:10, hi:20, legLo:20, legHi:30 },
+                { key:'speedPct',    lo:2, hi:5,  legLo:5, legHi:8  },
+                { key:'dodgePct',    lo:2, hi:5,  legLo:5, legHi:8  },
+                { key:'modEffPct',   lo:2, hi:5,  legLo:5, legHi:8  },
             ];
             const pick = _augPool[Math.floor(Math.random() * _augPool.length)];
             const lo = isLegendary ? pick.legLo : pick.lo;
@@ -1764,7 +1757,7 @@ function recalcGearStats() {
     _gearState = {
         dmgFlat:0, dmgPct:0, critChance:0, critDmg:0, fireRatePct:0,
         coreHP:0, armHP:0, legHP:0, allHP:0, dr:0,
-        shieldHP:0, shieldRegen:0, absorbPct:0, dodgePct:0, speedPct:0,
+        shieldHP:0, shieldRegen:0, shieldAbsorb:0, dodgePct:0, speedPct:0,
         modCdPct:0, modEffPct:0, lootMult:0, autoRepair:0,
         pellets:0, splashRadius:0
     };
