@@ -133,7 +133,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "BULLET HELL",
     "d": "+6% SMG Damage, +6% SMG Fire Rate, Fires two rounds per shot",
-    "s": "SMG MASTERY",
+    "s": "+6% SMG DMG +6% SMG Fire Rate",
     "r": 1,
     "c": [
       "node_141"
@@ -209,7 +209,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "HELLFIRE",
     "d": "+6% Flamethrower Damage, Always ignite, Burn Explode 30 AOE",
-    "s": "Flamethrower MASTERY",
+    "s": "+6% Flamethrower DMG",
     "r": 1,
     "c": [
       "node_139"
@@ -252,7 +252,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "DECIMATOR",
     "d": "+15% Shotgun, +3 pellets, Same-target +5% each",
-    "s": "Shotgun MASTERY",
+    "s": "+15% Shotgun DMG",
     "r": 1,
     "c": [
       "node_135"
@@ -295,7 +295,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "PARASYTE",
     "d": "+6% Siphon Heal, +8% Damage, Chain to 1 enemy",
-    "s": "SIPHON MASTERY",
+    "s": "+8% DMG",
     "r": 1,
     "c": [
       "node_137"
@@ -367,7 +367,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "Phantom",
     "d": "+6% Move Speed, +6% Dodge",
-    "s": "EVASION MASTERY",
+    "s": "+6% SPEED +6% DODGE",
     "r": 1,
     "c": [
       "node_127"
@@ -380,7 +380,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "OVERCLOCK",
     "d": "+15% Mod Cooldown, +30% Mod Duration %",
-    "s": "+15% Cooldown +30% EFFECT",
+    "s": "+15% MOD CD +30% MOD DUR",
     "r": 1,
     "c": [
       "node_191"
@@ -393,7 +393,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "Meteor Strike",
     "d": "+25% Jump, 50 AOE Landing, 2s invuln",
-    "s": "JUMP MASTERY",
+    "s": "+25% JUMP",
     "r": 1,
     "c": [
       "node_25"
@@ -406,7 +406,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "Stasis Field",
     "d": "+3s Barrier, Slows enemies 150u by 40%",
-    "s": "BARRIER MASTERY",
+    "s": "+3s BARRIER",
     "r": 1,
     "c": [
       "node_23"
@@ -432,7 +432,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "GLASS CANNON",
     "d": "+12% Damage, +12% Fire Rate, -30 All Parts HP",
-    "s": "WEAPON MASTERY",
+    "s": "+12% DMG +12% Fire Rate -30 ALL HP",
     "r": 1,
     "c": [
       "node_129"
@@ -493,7 +493,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "IRON STEEL",
     "d": "+30 All Parts HP, +6% Damage Reduction",
-    "s": "RESISTANCE MASTERY",
+    "s": "+30 ALL HP +6% DR",
     "r": 1,
     "c": [
       "node_133"
@@ -522,7 +522,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "BLESSED SHIELD",
     "d": "+30 Shield HP, +6% Regen, +4% Absorb",
-    "s": "SHIELD MASTERY",
+    "s": "+30 SHIELD HP +6% SHIELD REGEN +4% SHIELD ABSORB",
     "r": 1,
     "c": [
       "node_131"
@@ -2942,7 +2942,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "Ghost Protocol",
     "d": "2s Invis, First Attack 3x, +5% Move Speed",
-    "s": "GHOST MASTERY",
+    "s": "+5% SPEED",
     "r": 1,
     "c": [
       "node_214"
@@ -3076,6 +3076,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "LEAD STORM",
     "d": "+6% Machine Gun Damage, +6% Machine Gun Fire Rate, Every 5th hit deals double damage",
+    "s": "+6% MG DMG +6% MG Fire Rate",
     "r": 1,
     "c": [
       "node_141"
@@ -3147,6 +3148,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "DEADEYE",
     "d": "+6% Battle Rifle Damage, +2% Damage per consecutive hit on same target",
+    "s": "+6% BR DMG",
     "r": 1,
     "c": [
       "node_139"
@@ -3187,6 +3189,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "ONE SHOT ONE KILL",
     "d": "+6% Sniper Rifle Damage, +10% Sniper Rifle Crit Chance, +4% Sniper Rifle Fire Rate",
+    "s": "+6% SR DMG +10% CRIT +4% SR Fire Rate",
     "r": 1,
     "c": [
       "node_135"
@@ -3227,6 +3230,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "ARMOR PIERCER",
     "d": "+6% Railgun Damage, Shots pierce 2 enemies, +10% Railgun Charge Speed",
+    "s": "+6% RAIL DMG",
     "r": 1,
     "c": [
       "node_137"
@@ -3294,6 +3298,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "Phantom",
     "d": "+6% Move Speed, +6% Dodge",
+    "s": "+6% SPEED +6% DODGE",
     "r": 1,
     "c": [
       "node_127"
@@ -3306,6 +3311,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "OVERCLOCK",
     "d": "+15% Mod Cooldown, +30% Mod Duration %",
+    "s": "+15% MOD CD +30% MOD DUR",
     "r": 1,
     "c": [
       "node_191"
@@ -3318,6 +3324,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "BERSERKER",
     "d": "+16% Rage Damage, +3s Rage Duration, +8% Move Speed during Rage",
+    "s": "+6% SPEED",
     "r": 1,
     "c": [
       "node_25"
@@ -3330,6 +3337,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "Stasis Field",
     "d": "+3s Barrier, +40% Slow to enemies within 150u",
+    "s": "+3s BARRIER",
     "r": 1,
     "c": [
       "node_23"
@@ -3342,6 +3350,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "GUARDIAN ANGEL",
     "d": "+30% Repair Drone Heal, +10% Damage Reduction while active",
+    "s": "+6% DR",
     "r": 1,
     "c": [
       "node_27"
@@ -3354,6 +3363,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "GLASS CANNON",
     "d": "+12% Damage, +12% Fire Rate, -30 All Parts HP",
+    "s": "+12% DMG +12% Fire Rate -30 ALL HP",
     "r": 1,
     "c": [
       "node_129"
@@ -3411,6 +3421,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "IRON STEEL",
     "d": "+30 All Parts HP, +6% Damage Reduction",
+    "s": "+30 ALL HP +6% DR",
     "r": 1,
     "c": [
       "node_133"
@@ -3438,6 +3449,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "BLESSED SHIELD",
     "d": "+30 Shield HP, +6% Regen, +4% Absorb",
+    "s": "+30 SHIELD HP +6% SHIELD REGEN +4% SHIELD ABSORB",
     "r": 1,
     "c": [
       "node_131"
@@ -5701,6 +5713,7 @@ const SKILL_TREE_DATA = {
     "t": "keystone",
     "n": "DRONE SWARM",
     "d": "2 Attack Drones, +15% Drone Damage, +3s Drone Duration",
+    "s": "+15% DMG",
     "r": 1,
     "c": [
       "node_214"
@@ -5834,6 +5847,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "HEAVY BARRAGE",
       "d": "+6% Heavy Rifle Damage, +6% Heavy Rifle Fire Rate, Every 5th hit deals double damage",
+      "s": "+6% HR DMG +6% HR Fire Rate",
       "r": 1,
       "c": [
         "node_141"
@@ -5905,6 +5919,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "BOMBARDMENT",
       "d": "+6% Rocket Launcher Damage, +15% Rocket Launcher AOE, Rockets leave burning ground for 3s",
+      "s": "+6% RL DMG",
       "r": 1,
       "c": [
         "node_139"
@@ -5945,6 +5960,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "PLASMA STORM",
       "d": "+6% Plasma Cannon Damage, +6% Plasma Cannon Fire Rate, Plasma shots explode on impact for 25 AOE",
+      "s": "+6% PLSM DMG +6% PLSM Fire Rate",
       "r": 1,
       "c": [
         "node_135"
@@ -5985,6 +6001,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "CARPET BOMB",
       "d": "+6% Grenade Launcher Damage, +20% Grenade Launcher AOE, Grenades split into 3 on impact",
+      "s": "+6% GL DMG",
       "r": 1,
       "c": [
         "node_137"
@@ -6052,6 +6069,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "Phantom",
       "d": "+6% Move Speed, +6% Dodge",
+      "s": "+6% SPEED +6% DODGE",
       "r": 1,
       "c": [
         "node_127"
@@ -6064,6 +6082,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "OVERCLOCK",
       "d": "+15% Mod Cooldown, +30% Mod Duration %",
+      "s": "+15% MOD CD +30% MOD DUR",
       "r": 1,
       "c": [
         "node_191"
@@ -6076,6 +6095,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "MISSILE BARRAGE",
       "d": "+16% Missile Damage, Fire 3 missiles per volley, +20% Missile AOE",
+      "s": "+16% DMG",
       "r": 1,
       "c": [
         "node_25"
@@ -6088,6 +6108,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "Stasis Field",
       "d": "+3s Barrier, +40% Slow to enemies within 150u",
+      "s": "+3s BARRIER",
       "r": 1,
       "c": [
         "node_23"
@@ -6100,6 +6121,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "EMP OVERLOAD",
       "d": "+30% EMP Burst Damage, +20% EMP Burst AOE, Disables enemy shields for 3s",
+      "s": "+30% DMG",
       "r": 1,
       "c": [
         "node_27"
@@ -6112,6 +6134,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "GLASS CANNON",
       "d": "+12% Damage, +12% Fire Rate, -30 All Parts HP",
+      "s": "+12% DMG +12% Fire Rate -30 ALL HP",
       "r": 1,
       "c": [
         "node_129"
@@ -6169,6 +6192,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "IRON STEEL",
       "d": "+30 All Parts HP, +6% Damage Reduction",
+      "s": "+30 ALL HP +6% DR",
       "r": 1,
       "c": [
         "node_133"
@@ -6196,6 +6220,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "BLESSED SHIELD",
       "d": "+30 Shield HP, +6% Regen, +4% Absorb",
+      "s": "+30 SHIELD HP +6% SHIELD REGEN +4% SHIELD ABSORB",
       "r": 1,
       "c": [
         "node_131"
@@ -8459,6 +8484,7 @@ const SKILL_TREE_DATA = {
       "t": "keystone",
       "n": "IRON FORTRESS",
       "d": "+20% Fortress Mode Damage Reduction, +3s Fortress Mode Duration, Reflects 15% damage to attackers",
+      "s": "+6% DR",
       "r": 1,
       "c": [
         "node_214"

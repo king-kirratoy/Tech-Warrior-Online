@@ -1,5 +1,13 @@
 // ═══════════ FIRING FUNCTIONS ═══════════
 
+// ── Keystone hit-counter state ────────────────────────────────────
+// LEAD STORM / HEAVY BARRAGE: every 5th hit on ANY enemy deals double damage.
+let _ks5thHitCounter = 0;
+// DEADEYE: track last BR target for consecutive-hit stacking.
+let _ksDeadeyeLastTarget = null;
+// BOMBARDMENT (Heavy keystone): burning ground zones array for cleanup.
+let _bombardmentZones = [];
+
 // ── Siphon beam module state ──────────────────────────────────────
 // Per-arm slow tracking sets. Dual-arm: an enemy stays slowed if in either set.
 let _siphonSlowedEnemiesL = new Set();
@@ -133,6 +141,12 @@ function fire(scene, side) {
     // Build-specific multipliers
     const _neuralMult  = (_perkState._neuralAccelActive && _perkState.neuralAccel) ? 2.0 : 1.0;
     const _phantomMult = _perkState._phantomShotReady ? 4.0 : 1.0;
+    // Ghost Protocol keystone (Light): first attack after invis deals 3× damage
+    let _ghostProtocolMult = 1.0;
+    if (player?._ghostProtocolFirstShot && !player?._ghostProtocolActive) {
+        player._ghostProtocolFirstShot = false;
+        _ghostProtocolMult = 3.0;
+    }
     // SR Penetrator: SR +20% per 200px
     let _penetratorMult = 1.0;
     if (_perkState.srPenetrator > 0 && wKey === 'sr') {
@@ -153,7 +167,7 @@ function fire(scene, side) {
     const _gearDmgFlat = (_gearState?.dmgFlat || 0);
     const _gearDmgPct  = 1 + ((_gearState?.dmgPct || 0) / 100);
     const _colossusMult = (typeof getColossusDmgMult === 'function') ? getColossusDmgMult() : 1.0;
-    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _penetratorMult * _colossusMult);
+    const _effectiveDmg = Math.round(((weapon.dmg || 0) + _gearDmgFlat) * _gearDmgPct * _braceDmgMult * _dualWieldMult * (_overchargeActive ? 3 : 1) * _brMarksmanBonus * _mgTracerBonus * _neuralMult * _phantomMult * _penetratorMult * _colossusMult * _ghostProtocolMult);
     // Apply gear splash radius bonus to explosion weapons (GL, RL, PLSM).
     const _gearSplashMult = 1 + ((_gearState?.splashRadius || 0) / 100);
     const _wEff = Object.assign({}, weapon, {
@@ -182,6 +196,10 @@ function fire(scene, side) {
     // Razor Edge: every 3rd shot fires a bonus duplicate
     if (typeof checkDoubleStrike === 'function' && checkDoubleStrike()) {
         scene.time.delayedCall(50, _fireOnce);
+    }
+    // BULLET HELL keystone (Light): fires two rounds per SMG shot
+    if (wKey === 'smg' && typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_bullet_hell')) {
+        scene.time.delayedCall(30, _fireOnce);
     }
 
     if (side === 'L') reloadL = now + reloadActual;
@@ -284,6 +302,7 @@ function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
 
     // Hitscan: check each enemy using point-to-line distance
     const dmg = Math.round(weapon.dmg);
+    const _armorPiercer = typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_parasyte') && loadout.chassis === 'medium';
     let hitCount = 0;
     enemies.getChildren().forEach(e => {
         if (!e.active) return;
@@ -295,8 +314,9 @@ function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
         const nearY = oy + t*dy;
         const dist = Phaser.Math.Distance.Between(nearX, nearY, e.x, e.y);
         if (dist < 32) {
-            damageEnemy(e, dmg, angle);
-            showDamageText(scene, e.x, e.y, dmg);
+            const _apMult = (_armorPiercer && hitCount < 2) ? 1.5 : 1.0;
+            damageEnemy(e, Math.round(dmg * _apMult), angle);
+            showDamageText(scene, e.x, e.y, Math.round(dmg * _apMult));
             hitCount++;
             const flash = scene.add.circle(e.x, e.y, 12, 0x00ffff, 0.8).setDepth(15);
             scene.tweens.add({ targets: flash, alpha: 0, radius: 28, duration: 150, onComplete: () => flash.destroy() });
@@ -414,6 +434,26 @@ function fireSIPHON(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     //            Apply slow + damageRemotePlayer() calls when PVP beam is added.
 
     if (_newHitSet.size > 0) { updateBars(); updatePaperDoll(); }
+
+    // PARASYTE keystone (Light): chain siphon to 1 nearby enemy not in the beam
+    if (_newHitSet.size > 0 && typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_parasyte') && loadout.chassis === 'light') {
+        // Pick first primary target as chain anchor
+        const _primaryTarget = [..._newHitSet][0];
+        let _chainTarget = null, _chainDist = Infinity;
+        enemies.getChildren().forEach(e => {
+            if (!e.active || _newHitSet.has(e)) return;
+            const d = Phaser.Math.Distance.Between(_primaryTarget.x, _primaryTarget.y, e.x, e.y);
+            if (d < 200 && d < _chainDist) { _chainDist = d; _chainTarget = e; }
+        });
+        if (_chainTarget) {
+            damageEnemy(_chainTarget, weapon.dmg, aimAngle, false, false, true);
+            // Visual chain bolt from primary to chain target
+            const _cg = scene.add.graphics().setDepth(13);
+            _cg.lineStyle(2, 0x00ffff, 0.7);
+            _cg.lineBetween(_primaryTarget.x, _primaryTarget.y, _chainTarget.x, _chainTarget.y);
+            scene.tweens.add({ targets: _cg, alpha: 0, duration: 120, onComplete: () => _cg.destroy() });
+        }
+    }
 
     // ── Green heal float above player ─────────────────────────────────
     const _now = scene.time.now;
@@ -662,7 +702,24 @@ function fireGL(scene, weapon, armOx, armOy, aimAngle) {
                 startTime   = scene.time.now;
                 timerText.setVisible(true);
                 scene.time.delayedCall(fuseTime, () => {
-                    if (ball.active) { createExplosion(scene, ball.x, ball.y, 100, weapon.dmg, true); ball.destroy(); timerText.destroy(); }
+                    if (ball.active) {
+                        const _bx = ball.x, _by = ball.y;
+                        createExplosion(scene, _bx, _by, 100, weapon.dmg, true);
+                        ball.destroy(); timerText.destroy();
+                        // CARPET BOMB keystone (Heavy): spawn 3 sub-grenades at explosion site
+                        if (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_parasyte') && loadout.chassis === 'heavy') {
+                            const _subDmg = Math.round(weapon.dmg * 0.45);
+                            for (let _si = 0; _si < 3; _si++) {
+                                const _ang = (_si / 3) * Math.PI * 2;
+                                const _sub = scene.add.circle(_bx, _by, 7, 0xff6600).setDepth(14);
+                                scene.physics.add.existing(_sub);
+                                scene.physics.velocityFromRotation(_ang, 180, _sub.body.velocity);
+                                scene.time.delayedCall(600, () => {
+                                    if (_sub.active) { createExplosion(scene, _sub.x, _sub.y, 55, _subDmg, true); _sub.destroy(); }
+                                });
+                            }
+                        }
+                    }
                 });
             }
 
@@ -691,7 +748,13 @@ function fireRL(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
     // Store overlap reference — Phaser does not remove it automatically when rocket is destroyed.
     const rlOverlap = scene.physics.add.overlap(rocket, enemies, (r) => {
         rlOverlap.destroy();
-        createExplosion(scene, r.x, r.y, 80, weapon.dmg, true);
+        const _rx = r.x, _ry = r.y;
+        createExplosion(scene, _rx, _ry, 80, weapon.dmg, true);
+        // BOMBARDMENT keystone (Heavy): burning ground for 3s at explosion site
+        if (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_hellfire') && loadout.chassis === 'heavy') {
+            const _dotDmg = Math.max(1, Math.round(weapon.dmg * 0.12));
+            _createBombardmentZone(scene, _rx, _ry, _dotDmg);
+        }
         particles.stop();
         scene.time.delayedCall(400, () => particles.destroy());
         r.destroy();
@@ -702,16 +765,66 @@ function fireRL(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
     });
 }
 
+// ── BOMBARDMENT fire zone (Heavy keystone ks_hellfire) ────────────
+function _createBombardmentZone(scene, x, y, dotDmg) {
+    const radius = 55;
+    const duration = 3000;
+    const tickMs = 500;
+    const gfx = scene.add.graphics().setDepth(5);
+    function _drawZone() {
+        if (!gfx.active) return;
+        const pulse = 0.35 + 0.15 * Math.sin(scene.time.now * 0.006);
+        gfx.clear();
+        gfx.fillStyle(0xff4400, pulse);
+        gfx.fillCircle(x, y, radius);
+        gfx.lineStyle(2, 0xff8800, 0.8);
+        gfx.strokeCircle(x, y, radius);
+    }
+    _drawZone();
+    const zone = { gfx, x, y, radius, active: true };
+    _bombardmentZones.push(zone);
+
+    const drawTimer = scene.time.addEvent({ delay: 80, loop: true, callback: _drawZone });
+    const dotTimer = scene.time.addEvent({ delay: tickMs, loop: true, callback: () => {
+        if (!zone.active) return;
+        enemies?.getChildren().forEach(e => {
+            if (!e.active) return;
+            if (Phaser.Math.Distance.Between(x, y, e.x, e.y) < radius) {
+                damageEnemy(e, dotDmg, 0);
+            }
+        });
+    }});
+    scene.time.delayedCall(duration, () => {
+        zone.active = false;
+        drawTimer.remove();
+        dotTimer.remove();
+        if (gfx.active) gfx.destroy();
+        const idx = _bombardmentZones.indexOf(zone);
+        if (idx >= 0) _bombardmentZones.splice(idx, 1);
+    });
+}
+
+function clearBombardmentZones() {
+    _bombardmentZones.slice().forEach(z => {
+        z.active = false;
+        if (z.gfx?.active) z.gfx.destroy();
+    });
+    _bombardmentZones.length = 0;
+}
+
 function fireSG(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
     armOx = armOx ?? torso.x; armOy = armOy ?? torso.y; aimAngle = aimAngle ?? torso.rotation;
     const spread = 0.3;
-    const _totalPellets = weapon.pellets + (_perkState.sgFlechette || 0) + (_gearState?.pellets || 0);
+    // DECIMATOR keystone (Light): +3 extra pellets
+    const _decimatorBonus = (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_decimator') && loadout.chassis === 'light') ? 3 : 0;
+    const _totalPellets = weapon.pellets + (_perkState.sgFlechette || 0) + (_gearState?.pellets || 0) + _decimatorBonus;
     for (let i = 0; i < _totalPellets; i++) {
         const offset = (Math.random() - 0.5) * spread;
         const b = scene.add.circle(armOx, armOy, weapon.bulletSize, 0xffff00);
         createMuzzleFlash(scene, armOx, armOy, aimAngle + offset, barrelDist);
         scene.physics.add.existing(b);
         b.damageValue = weapon.dmg;
+        b._wKey = 'sg';
         bullets.add(b);
         scene.physics.velocityFromRotation(aimAngle + offset, weapon.speed, b.body.velocity);
         scene.time.delayedCall(800, () => { if (b.active) b.destroy(); });
@@ -723,6 +836,7 @@ function firePLSM(scene, weapon, armOx, armOy, aimAngle) {
     const p = scene.add.circle(armOx, armOy, 25, 0x00ffff).setAlpha(0.8);
     scene.physics.add.existing(p);
     p.damageValue = weapon.dmg;
+    p._wKey = 'plsm';
     bullets.add(p);
     scene.physics.velocityFromRotation(aimAngle, 300, p.body.velocity);
     const plsmTween = scene.tweens.add({ targets: p, alpha: 0.3, duration: 100, yoyo: true, repeat: -1 });
@@ -773,6 +887,7 @@ function fireStandard(scene, wKey, weapon, barrelDist, armOx, armOy, aimAngle) {
         b.travelDist     = 0;
         b._originX       = armOx;
         b._originY       = armOy;
+        b._wKey          = wKey;
         bullets.add(b);
         scene.physics.velocityFromRotation(aimAngle + offsetAngle, weapon.speed, b.body.velocity);
         createMuzzleFlash(scene, armOx, armOy, aimAngle + offsetAngle, barrelDist);
@@ -802,6 +917,8 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     if (isShieldActive) {
         return;
     }
+    // Meteor Strike keystone (Light): 2s invulnerability window after landing
+    if (player._meteorInvuln) return;
     // Fortress Mode (Heavy mod): 30% DR while active
     if (_perkState._fortressDR > 0) amt = Math.round(amt * (1 - _perkState._fortressDR));
     // HEAVY Improved Armor (trait): 15% damage reduction always active
@@ -843,6 +960,10 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     }
     // Colossus Stand: +10% DR while stationary
     if (typeof getColossusDR === 'function') { const cdr = getColossusDR(); if (cdr > 0) amt = Math.round(amt * (1 - cdr)); }
+    // GUARDIAN ANGEL (Medium keystone): +10% DR while repair drone is active
+    if (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_doppel') && loadout.chassis === 'medium' && _perkState._droneActive) {
+        amt = Math.round(amt * 0.90);
+    }
     // Matrix Barrier: invulnerability bubble
     if (typeof isMatrixBarrierActive === 'function' && isMatrixBarrierActive()) return;
     // Gear total DR
@@ -915,6 +1036,18 @@ function processPlayerDamage(amt, bulletAngle, explosive = false) {
     }
 
     component.hp = Math.max(0, component.hp - amt);
+
+    // IRON FORTRESS keystone (Heavy): reflect 15% of damage taken to nearby enemies
+    if (_perkState._ironFortressActive && enemies) {
+        const _reflectDmg = Math.max(1, Math.round(amt * 0.15));
+        const _fScene = GAME.scene.scenes[0];
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            if (Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y) < 160) {
+                damageEnemy(e, _reflectDmg, 0);
+            }
+        });
+    }
 
     // Recalculate total HP from components
     player.hp = Object.values(player.comp).reduce((sum, c) => sum + c.hp, 0);
@@ -1133,7 +1266,7 @@ function damageEnemy(e, amt, bulletAngle, explosive = false, bulletShieldPierce 
         } else { return; }
     }
     // Passive energy shield absorption
-    if ((e.maxShield||0) > 0 && (e.shield||0) > 0 && !bulletShieldPierce) {
+    if ((e.maxShield||0) > 0 && (e.shield||0) > 0 && !bulletShieldPierce && !e._shieldDisabled) {
         const absorb = e._shieldAbsorb ?? 0.50;
         const _shieldBefore = e.shield;
         e.shield = Math.max(0, e.shield - amt * absorb);
@@ -1647,13 +1780,46 @@ function handleBulletEnemyOverlap(scene, bullet, enemy) {
             enemy._dmgMult = (enemy._dmgMult || 1) * 1.15;
         }
     }
-    damageEnemy(enemy, dmg, bAngle, false, bulletShieldPierce);
+    // DEADEYE keystone (Medium): +2% damage per consecutive BR hit on same target (max 20 stacks)
+    let _deadeyeMult = 1.0;
+    if (bullet._wKey === 'br' && typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_hellfire') && loadout.chassis === 'medium') {
+        if (_ksDeadeyeLastTarget !== enemy) {
+            _ksDeadeyeLastTarget = enemy;
+            enemy._deadeyeStacks = 0;
+        }
+        enemy._deadeyeStacks = Math.min(20, (enemy._deadeyeStacks || 0) + 1);
+        _deadeyeMult = 1 + enemy._deadeyeStacks * 0.02;
+    } else if (bullet._wKey !== 'br' && _ksDeadeyeLastTarget) {
+        _ksDeadeyeLastTarget = null;
+    }
+
+    // LEAD STORM keystone (Medium) / HEAVY BARRAGE keystone (Heavy): every 5th hit deals double damage
+    let _5thHitMult = 1.0;
+    if (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_bullet_hell') &&
+        ((loadout.chassis === 'medium' && bullet._wKey === 'mg') || (loadout.chassis === 'heavy' && bullet._wKey === 'hr'))) {
+        _ks5thHitCounter++;
+        if (_ks5thHitCounter % 5 === 0) _5thHitMult = 2.0;
+    }
+
+    // DECIMATOR keystone (Light): same-target +5% damage per SG hit (stacks up to 10×)
+    let _decimatorMult = 1.0;
+    if (bullet._wKey === 'sg' && typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_decimator') && loadout.chassis === 'light') {
+        enemy._decimatorStacks = Math.min(10, (enemy._decimatorStacks || 0) + 1);
+        clearTimeout(enemy._decimatorTimer);
+        enemy._decimatorTimer = setTimeout(() => { if (enemy.active) enemy._decimatorStacks = 0; }, 3000);
+        _decimatorMult = 1 + enemy._decimatorStacks * 0.05;
+    }
+    damageEnemy(enemy, Math.round(dmg * _decimatorMult * _5thHitMult * _deadeyeMult), bAngle, false, bulletShieldPierce);
 
     // Titan Smash: every 5th shot AoE shockwave
     if (typeof checkTitanSmash === 'function' && checkTitanSmash()) {
         triggerTitanSmash(scene, bx, by, dmg);
     }
     _applyChainPlasma(scene, enemy, dmg);
+    // PLASMA STORM keystone (Heavy): plasma shots explode on impact for 25 AOE
+    if (bullet._wKey === 'plsm' && typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_decimator') && loadout.chassis === 'heavy') {
+        createExplosion(scene, bx, by, 25, Math.round(dmg * 0.40), true);
+    }
     _applyFlameBulletEffects(scene, bullet, enemy);
 
     // Phantom Protocol: 4× pierce shot consumed on hit
@@ -1726,13 +1892,21 @@ function _applyChainPlasma(scene, enemy, dmg) {
 /** FTH flame bullet procs: ignite (Thermal Core), Melt Armor stacks, Pressure Spray slow. */
 function _applyFlameBulletEffects(scene, bullet, enemy) {
     if (!bullet._flame) return;
-    const igniteChance = _perkState.thermalCore ? 1.0 : (_perkState.incendiary || 0);
+    // HELLFIRE keystone (Light): always ignite on every FTH hit
+    const _hellfireKs = typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_hellfire') && loadout.chassis === 'light';
+    const igniteChance = (_perkState.thermalCore || _hellfireKs) ? 1.0 : (_perkState.incendiary || 0);
     if (igniteChance > 0 && (igniteChance >= 1 || Math.random() < igniteChance) && !enemy._burning) {
         const burnDur = _perkState.thermalCore ? 7 : 5;
         enemy._burning = true;
         let bt = 0;
         const bTimer = scene.time.addEvent({ delay: 400, loop: true, callback: () => {
-            if (!enemy.active || bt >= burnDur) { enemy._burning = false; bTimer.remove(); return; }
+            if (!enemy.active || bt >= burnDur) {
+                // HELLFIRE keystone: burn explode 30 AOE when burn expires
+                if (_hellfireKs && enemy.active) {
+                    createExplosion(scene, enemy.x, enemy.y, 30, 15, false);
+                }
+                enemy._burning = false; bTimer.remove(); return;
+            }
             damageEnemy(enemy, 5, 0);
             bt++;
             const sp = scene.add.circle(enemy.x+(Math.random()-0.5)*16, enemy.y+(Math.random()-0.5)*16, 3, 0xff6600, 0.7).setDepth(13);

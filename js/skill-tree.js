@@ -859,6 +859,15 @@ function _parseSkillStatString(s) {
     [/\+(\d+(?:\.\d+)?)% DODGE/g,          v => add('dodgePct', +v)],
     [/\+(\d+(?:\.\d+)?)% (?:Damage Reduction|DR)/g, v => add('drPct', +v)],
     [/\+(\d+(?:\.\d+)?)% (?:SMG |Shotgun |SG |MG |BR |SR |GL |RL |HR |PLSM |Flamethrower |FTH |RAIL |SIPHON )?DMG/g, v => add('dmgPct', +v)],
+    // OVERCLOCK keystone: mod cooldown and duration
+    [/\+(\d+(?:\.\d+)?)% MOD (?:CD|COOLDOWN)/g,   v => add('modCdPct',  +v)],
+    [/\+(\d+(?:\.\d+)?)% MOD (?:DUR|DURATION)/g,  v => add('modDurPct', +v)],
+    // GLASS CANNON keystone: negative HP penalty
+    [/-(\d+(?:\.\d+)?) ALL HP/g,           v => add('allHPMinus', +v)],
+    // Meteor Strike keystone: jump distance bonus
+    [/\+(\d+(?:\.\d+)?)% JUMP/g,           v => add('jumpPct',  +v)],
+    // Stasis Field keystone: barrier duration bonus (seconds)
+    [/\+(\d+(?:\.\d+)?)s BARRIER/g,        v => add('barrierSec', +v)],
   ];
 
   patterns.forEach(([re, fn]) => {
@@ -895,6 +904,11 @@ function getSkillTreeBonuses() {
   });
 
   return total;
+}
+
+/** Return true if the given keystone node is allocated (rank ≥ 1) in the current skill tree. */
+function isKeystoneAllocated(nodeId) {
+  return (_skillTreeState.allocated[nodeId] || 0) >= 1;
 }
 
 // ══════════════════════════════════════════════════════════════
