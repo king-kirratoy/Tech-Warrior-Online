@@ -1721,7 +1721,7 @@ function _renderGearBonusesPanel() {
                 _traitRows.push(_traitStatRow('Dual-Wield Damage', '-15%', 'neg'));
                 _traitRows.push(_traitStatRow('Dual-Wield Fire Rate', '-15%', 'neg'));
             }
-            _traitRows.push(_traitStatRow('Lightweight (below 50% HP)', '+15% Move Spd', 'pos'));
+            _traitRows.push(_traitStatRow('Move Speed < 50% HP', '+15%', 'pos'));
             if (_oneArm) {
                 _traitRows.push(_traitStatRow('Agility Move Speed', '+10%', 'pos'));
                 _traitRows.push(_traitStatRow('Agility Dodge', '+10%', 'pos'));
@@ -1729,13 +1729,12 @@ function _renderGearBonusesPanel() {
         } else if (_ch === 'medium') {
             _traitRows.push(_traitStatRow('Mod Specialist Duration', '+15%', 'pos'));
             _traitRows.push(_traitStatRow('Mod Specialist Cooldown', '+15%', 'pos'));
-            _traitRows.push(_traitTextRow('Kill Recharge: kills -0.5s mod cooldown'));
+            _traitRows.push(_traitStatRow('Kill Recharge', '-0.5s', 'pos'));
             _traitRows.push(_traitStatRow('Shield Specialist Regen', '+15%', 'pos'));
             _traitRows.push(_traitStatRow('Shield Specialist Absorb', '+15%', 'pos'));
         } else if (_ch === 'heavy') {
-            _traitRows.push(_traitStatRow('Improved Armor DR', '+15%', 'pos'));
-            _traitRows.push(_traitStatRow('Attrition DR (below 50% HP)', '+15%', 'pos'));
-            _traitRows.push(_traitTextRow('Iron Legs: ignore leg speed penalty'));
+            _traitRows.push(_traitStatRow('Damage Reduction', '+15%', 'pos'));
+            _traitRows.push(_traitStatRow('Damage Reduction < 50% HP', '+15%', 'pos'));
         }
 
         if (_traitRows.length) {
