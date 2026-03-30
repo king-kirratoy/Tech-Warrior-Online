@@ -325,6 +325,22 @@ Classes: .lo-left | .lo-center | .lo-right (all children of .lo-body)
 - Hide: `_hideSlotHover()` on `mouseleave` and `mousedown`
 - The old click-based detail panel (`#inv-detail-panel`) is disabled (`display:none !important`)
 
+### Hover Card Stat Row Format (v7.49)
+All stat rows — both base stats and affixes — use a unified two-column layout:
+- **Left:** grey label text (`color: rgba(255,255,255,0.45)`) — e.g. "Core HP", "Damage %", "Fire Rate"
+- **Right:** green value text (`color: #00ff88`) with `+` prefix — e.g. "+26", "+5%"
+- Layout: `display:flex; justify-content:space-between; font-size:9px; padding:1px 0`
+- No separator line between base stats and affixes
+- No "BONUSES" eyebrow label
+
+**Exceptions (no `+` prefix, value has a unit suffix):**
+- `fireRate` / `reload`: displayed as `N.N/sec` (shots-per-second conversion)
+- `cooldown`: displayed as `Ns`
+
+**Inverted stats** (`fireRatePct`, `modCdPct` — see Section 4): retain sign-flip logic; green for buff (stored negative), red `#ff4d6a` for penalty (stored positive).
+
+**Affix label parsing:** affix `a.label` strings (e.g. `"+26 Core HP"`, `"+5% Damage"`) are split with `/^([+\-][\d.]+%?)\s+(.+)$/` — group 1 is the value token shown right-aligned in green, group 2 is the stat name shown left-aligned in grey. Inverted affixes (reload/cooldown) that start with `-` are sign-flipped to `+` before parsing.
+
 ---
 
 ## Section 7 — Button and Interactive Element Rules
