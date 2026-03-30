@@ -1379,8 +1379,8 @@ function _equipItemToSlot(invIdx, slotKey) {
     }
 
     recalcGearStats();
-    // If a shield system was equipped during an active run, recalc player shield stats
-    if (item.baseType === 'shield_system' && typeof player !== 'undefined' && player?.active && typeof isDeployed !== 'undefined' && isDeployed) {
+    // If a shield item was equipped during an active run, recalc player shield stats
+    if ((item.baseType === 'shield_system' || item.baseType === 'shield') && typeof player !== 'undefined' && player?.active && typeof isDeployed !== 'undefined' && isDeployed) {
         const _ss = (typeof SHIELD_SYSTEMS !== 'undefined' && SHIELD_SYSTEMS[loadout.shld]) || { maxShield:0, regenRate:0, regenDelay:5, absorb:0.50 };
         const _gShieldHP = (_gearState?.shieldHP || 0);
         player.maxShield = _ss.maxShield + _gShieldHP;
@@ -1395,6 +1395,7 @@ function _equipItemToSlot(invIdx, slotKey) {
         player._shieldLayerHP = [_ss.layer1Max || 0, _ss.layer2Max || 0];
     }
     if (typeof updateHUD === 'function') updateHUD();
+    if (typeof updateBars === 'function') updateBars();
     saveInventory();
     if (typeof _gameMode !== 'undefined' && _gameMode === 'campaign' && typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
     populateInventory();
@@ -1433,8 +1434,8 @@ function _unequipItem(slotKey) {
     }
 
     recalcGearStats();
-    // If a shield system was unequipped during an active run, revert player shield stats
-    if (item.baseType === 'shield_system' && typeof player !== 'undefined' && player?.active && typeof isDeployed !== 'undefined' && isDeployed) {
+    // If a shield item was unequipped during an active run, revert player shield stats
+    if ((item.baseType === 'shield_system' || item.baseType === 'shield') && typeof player !== 'undefined' && player?.active && typeof isDeployed !== 'undefined' && isDeployed) {
         const _ss = (typeof SHIELD_SYSTEMS !== 'undefined' && SHIELD_SYSTEMS[loadout.shld]) || { maxShield:0, regenRate:0, regenDelay:5, absorb:0.50 };
         const _gShieldHP = (_gearState?.shieldHP || 0);
         player.maxShield = _ss.maxShield + _gShieldHP;
@@ -1449,6 +1450,7 @@ function _unequipItem(slotKey) {
         player._shieldLayerHP = [_ss.layer1Max || 0, _ss.layer2Max || 0];
     }
     if (typeof updateHUD === 'function') updateHUD();
+    if (typeof updateBars === 'function') updateBars();
     saveInventory();
     if (typeof _gameMode !== 'undefined' && _gameMode === 'campaign' && typeof debouncedCampaignSave === 'function') debouncedCampaignSave();
     populateInventory();
