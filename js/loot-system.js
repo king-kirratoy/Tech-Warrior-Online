@@ -2062,9 +2062,9 @@ function spawnScrapDrop(scene, x, y) {
     const landX = x + Math.cos(angle) * dist;
     const landY = y + Math.sin(angle) * dist;
     // Outer ring (dark gold border effect)
-    const outerRing = scene.add.circle(x, y, 10, 0x8b6914, 0).setDepth(7);
+    const outerRing = scene.add.circle(x, y, 10, 0x8b6914, 1).setDepth(7).setAlpha(0);
     // Gold coin fill
-    const coin = scene.add.circle(x, y, 8, 0xffd700, 0).setDepth(8);
+    const coin = scene.add.circle(x, y, 8, 0xffd700, 1).setDepth(8).setAlpha(0);
     // Coin label
     const label = scene.add.text(x, y, 'S', {
         fontFamily: 'monospace', fontSize: '7px', color: '#5c3d00', align: 'center'
