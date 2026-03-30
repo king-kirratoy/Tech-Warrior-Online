@@ -1064,9 +1064,10 @@ function awardMissionReward(missionId) {
                         }
                     }
                 }
-                if (typeof RARITY_DEFS !== 'undefined') {
-                    const rd = RARITY_DEFS[reward.itemRarity];
-                    item.name = rd.label + ' ' + (item.shortName || item.name);
+                // Regenerate name to match forced rarity
+                if (typeof TIER_PREFIX !== 'undefined' && typeof _getItemTypeName === 'function') {
+                    item.name = `${TIER_PREFIX[reward.itemRarity]} ${_getItemTypeName(item.baseType, item.subType, item.systemKey)}`;
+                    item.shortName = item.name;
                 }
                 break;
             }
@@ -1196,6 +1197,11 @@ function refreshShopStock() {
 
         // Force shop rarity on the item
         item.rarity = shopRarity;
+        // Regenerate name to match forced rarity
+        if (typeof TIER_PREFIX !== 'undefined' && typeof _getItemTypeName === 'function') {
+            item.name = `${TIER_PREFIX[shopRarity]} ${_getItemTypeName(item.baseType, item.subType, item.systemKey)}`;
+            item.shortName = item.name;
+        }
 
         // Re-roll affixes for the forced rarity; base stats from rolled generation are kept
         if (typeof rollAffixes === 'function') {
