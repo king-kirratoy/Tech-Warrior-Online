@@ -3,8 +3,8 @@
    ============================================================ */
 #hud-container {
     position: fixed;
-    bottom: 30px;
-    left: 30px;
+    bottom: 15px;
+    left: 15px;
     z-index: 9999;
     display: none;
     pointer-events: none;
@@ -92,7 +92,7 @@
     justify-content: flex-end;
 }
 
-/* Slot prefix: "L.ARM" / "R.ARM" / "CORE" / "DEFENSE" */
+/* Slot prefix: "L.ARM" / "R.ARM" / "CPU MOD" / "SHIELD" */
 .wr-prefix {
     font-size: var(--text-sm);
     font-weight: bold;
