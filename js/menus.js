@@ -1020,8 +1020,12 @@ function _renderChassisSelect(overlay) {
     html += `<button onclick="_cancelNewCampaign()" class="tw-btn tw-btn--ghost tw-btn--sm" style="position:absolute;top:20px;left:20px;">‹ Back</button>`;
 
     overlay.innerHTML = html;
-    overlay.style.display = 'flex';
-    overlay.style.position = 'fixed';
+    overlay.style.display        = 'flex';
+    overlay.style.position       = 'fixed';
+    overlay.style.alignItems     = 'center';
+    overlay.style.justifyContent = 'flex-start';
+    overlay.style.padding        = '40px 24px';
+    overlay.style.overflowY      = 'auto';
 }
 
 /** Highlight a chassis without starting the campaign. */
