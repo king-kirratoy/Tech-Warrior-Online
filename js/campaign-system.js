@@ -1142,8 +1142,8 @@ function refreshShopStock() {
     const level = _campaignState.playerLevel || 1;
     for (let i = 0; i < SHOP_MAX_ITEMS; i++) {
         const shopRarity = _rollShopRarity();
-        // Generate base item — empty enemyData gives equal type weights, no enemy modifiers
-        const item = generateItem(Math.max(1, level + Math.floor(Math.random() * 3) - 1), {});
+        // Generate base item — isShop:true skips chassis restriction so all weapons/systems can appear
+        const item = generateItem(Math.max(1, level + Math.floor(Math.random() * 3) - 1), { isShop: true });
         if (!item) continue;
 
         // Force shop rarity on the item

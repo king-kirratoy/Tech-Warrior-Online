@@ -559,7 +559,22 @@ function rollBossDrops(bossType, round) {
     // Guaranteed unique drop: 50/50 between the two boss uniques (both Legendary)
     const uniqueKey = Math.random() < 0.5 ? table.legendary : table.epic;
     const uniqueItem = generateUniqueItem(uniqueKey, round);
-    if (uniqueItem) drops.push(uniqueItem);
+    if (uniqueItem) {
+        // Check chassis restriction: unique weapons with a typed subType must match chassis
+        const _ch = (typeof loadout !== 'undefined') ? loadout.chassis : 'medium';
+        const _allowed = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[_ch] : null;
+        const _chassisCanEquip = uniqueItem.baseType !== 'weapon'
+            || !uniqueItem.subType
+            || !_allowed
+            || _allowed.has(uniqueItem.subType);
+        if (_chassisCanEquip) {
+            drops.push(uniqueItem);
+        } else {
+            // Chassis cannot equip this unique weapon — substitute a regular boss-tier item
+            const sub = generateItem(round, { isBoss: true });
+            if (sub) drops.push(sub);
+        }
+    }
 
     // Additional regular drops (1-2)
     const extraCount = Phaser.Math.Between(1, 2);
@@ -812,17 +827,22 @@ function _selectItemType(enemyData) {
     return 'weapon';
 }
 
-function _selectBaseItem(baseType) {
-    // Filter drops to items the current chassis can equip
+// isShop: when true, skip chassis restrictions so shop stocks all weapon/system types
+function _selectBaseItem(baseType, isShop) {
+    // Filter drops to items the current chassis can equip (skipped for shop stock)
     const ch = (typeof loadout !== 'undefined') ? loadout.chassis : 'medium';
     if (baseType === 'weapon') {
-        const allowed = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[ch] : null;
-        const pool = allowed ? WEAPON_LOOT_KEYS.filter(k => k !== 'none' && allowed.has(k)) : WEAPON_LOOT_KEYS;
-        if (pool.length === 0) return WEAPON_LOOT_KEYS[Math.floor(Math.random() * WEAPON_LOOT_KEYS.length)];
-        return pool[Math.floor(Math.random() * pool.length)];
+        if (!isShop) {
+            const allowed = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[ch] : null;
+            const pool = allowed ? WEAPON_LOOT_KEYS.filter(k => k !== 'none' && allowed.has(k)) : WEAPON_LOOT_KEYS;
+            if (pool.length === 0) return WEAPON_LOOT_KEYS[Math.floor(Math.random() * WEAPON_LOOT_KEYS.length)];
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+        return WEAPON_LOOT_KEYS[Math.floor(Math.random() * WEAPON_LOOT_KEYS.length)];
     }
     let candidates = Object.entries(ITEM_BASES).filter(([, def]) => def.baseType === baseType);
-    // For system items, filter by chassis restrictions
+    // For system items, filter by chassis restrictions (skipped for shop stock)
+    if (!isShop) {
     if (baseType === 'shield_system') {
         const allowed = typeof CHASSIS_SHIELDS !== 'undefined' ? CHASSIS_SHIELDS[ch] : null;
         if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
@@ -836,6 +856,7 @@ function _selectBaseItem(baseType) {
         const allowed = typeof CHASSIS_AUGS !== 'undefined' ? CHASSIS_AUGS[ch] : null;
         if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
     }
+    } // end if (!isShop)
     if (candidates.length === 0) return null;
     return candidates[Math.floor(Math.random() * candidates.length)][0];
 }
@@ -843,7 +864,7 @@ function _selectBaseItem(baseType) {
 function generateItem(round, enemyData) {
     const rarity = rollRarity(round || 1, enemyData?.isCommander, enemyData?.isBoss);
     const baseType = _selectItemType(enemyData);
-    const baseKey = _selectBaseItem(baseType);
+    const baseKey = _selectBaseItem(baseType, !!enemyData?.isShop);
     if (!baseKey) return null;
 
     const isLegendary = rarity === 'legendary';
@@ -1375,11 +1396,28 @@ function _removeEquipmentDrop(scene, drop, fade) {
 function checkEquipmentPickups(scene) {
     if (_gameMode === 'simulation' || _gameMode === 'pvp') return;
     if (!player?.active || !isDeployed) return;
+    const dt = scene.game.loop.delta / 1000; // frame time in seconds
     _equipmentDrops.slice().forEach(drop => {
         if (!drop.active) return;
-        if (!drop._arcDone) return; // still in flight
+        if (!drop._arcDone) return; // still in flight — magnet must not activate on mid-arc items
         const dist = Phaser.Math.Distance.Between(player.x, player.y, drop.x, drop.y);
-        if (dist < 45) {
+
+        // ── Loot magnet: pull toward player when within 60px ──
+        if (dist > 0 && dist < 60) {
+            const step = Math.min(200 * dt, dist);
+            const dx = (player.x - drop.x) / dist * step;
+            const dy = (player.y - drop.y) / dist * step;
+            drop.x += dx;
+            drop.y += dy;
+            // Move all visual objects by the same delta (deduplicate — glow===baseGlow)
+            const _seen = new Set();
+            [drop.glow, drop.icon, drop.tag, drop.rarityDot, drop.beam, drop.beamGlow, drop.beamCore, drop.baseGlow].forEach(v => {
+                if (v?.active !== false && !_seen.has(v)) { _seen.add(v); v.x += dx; v.y += dy; }
+            });
+        }
+
+        // ── Pickup: collect when item reaches player (15px threshold) ──
+        if (dist < 15) {
             const _freeSlot = _inventory.indexOf(null);
             if (_freeSlot !== -1) {
                 _inventory[_freeSlot] = drop.item;
