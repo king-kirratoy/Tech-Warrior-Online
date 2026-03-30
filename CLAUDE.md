@@ -119,12 +119,12 @@ Weight is counted once. Medium/Heavy only — Light chassis cannot equip 2H weap
 This is **not** dual-wield. Dual-wield is Light chassis only, same weapon in both arms.
 2H weapons (`siege`, `chain`) cannot drop as loot — the equip system sets one arm at a time.
 
-### Chassis weapon filter — field drops only
+### Chassis weapon filter — field drops and shop
 
-`_selectBaseItem(baseType, isShop)` filters weapon and system drops against `CHASSIS_WEAPONS` / `CHASSIS_CPUS` / `CHASSIS_LEGS` / `CHASSIS_SHIELDS` / `CHASSIS_AUGS` so only equippable items drop in the field. The `isShop` flag bypasses this filter — shop stock must show all types regardless of chassis.
+`_selectBaseItem(baseType, isShop)` filters weapon and system drops against `CHASSIS_WEAPONS` / `CHASSIS_CPUS` / `CHASSIS_LEGS` / `CHASSIS_SHIELDS` / `CHASSIS_AUGS`. Weapon subType filtering is **always active** (both field drops and shop). System item filtering is active for field drops but bypassed for shop stock via `isShop`.
 
-- Field drops (enemy death, boss drops): `generateItem(round, enemyData)` — `isShop` defaults to `false` → chassis filter active
-- Shop stock: pass `{ isShop: true }` to `generateItem` so all weapons/systems appear in the shop
+- Field drops (enemy death, boss drops): `generateItem(round, enemyData)` — `isShop` defaults to `false` → all chassis filters active
+- Shop stock: pass `{ isShop: true }` to `generateItem` — weapon chassis filter still applies; system items (shields/CPUs/legs/augs) are unfiltered so all types can appear
 - `rollBossDrops` guards unique weapon drops: if the unique has a typed `subType` the chassis cannot equip, substitutes a regular boss-tier item
 
 ### Perk key naming convention
@@ -176,7 +176,7 @@ When renaming a perk key, only rename the state flag in `_perkState` if the flag
 12. Do not check `!player` without also checking `!player.active` (destroyed ≠ null)
 13. Do not add cache-busting `?v=X.XX` query strings to `<link>` or `<script>` tags — they were deliberately removed in v5.87
 14. Do not add new perks with keys that don't match their `cat` prefix — see perk key naming convention above
-15. Do not call `generateItem` for shop/non-field contexts without passing `{ isShop: true }` — omitting it silently applies chassis restrictions to shop stock
+15. Do not call `generateItem` for shop contexts without passing `{ isShop: true }` — omitting it also restricts system items (shields/CPUs/legs/augs) by chassis in the shop. Note: weapon subType is always chassis-filtered regardless of `isShop` — this is intentional; the shop shows only weapons the current chassis can equip
 
 ---
 

@@ -1191,7 +1191,8 @@ function refreshShopStock() {
     const level = _campaignState.playerLevel || 1;
     for (let i = 0; i < SHOP_MAX_ITEMS; i++) {
         const shopRarity = _rollShopRarity();
-        // Generate base item — isShop:true skips chassis restriction so all weapons/systems can appear
+        // Generate base item — isShop:true skips chassis restriction for system items;
+        // weapon subType is always filtered to the current chassis (see _selectBaseItem)
         const item = generateItem(Math.max(1, level + Math.floor(Math.random() * 3) - 1), { isShop: true });
         if (!item) continue;
 

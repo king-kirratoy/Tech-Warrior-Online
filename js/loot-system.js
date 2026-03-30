@@ -823,18 +823,16 @@ function _selectItemType(enemyData) {
     return 'weapon';
 }
 
-// isShop: when true, skip chassis restrictions so shop stocks all weapon/system types
+// isShop: when true, skip chassis restrictions for system items (shields/CPUs/legs/augs);
+//         weapon subType is always filtered to the current chassis regardless of isShop
 function _selectBaseItem(baseType, isShop) {
-    // Filter drops to items the current chassis can equip (skipped for shop stock)
+    // Weapons always filtered to current chassis; system item filters skipped for shop stock
     const ch = (typeof loadout !== 'undefined') ? loadout.chassis : 'medium';
     if (baseType === 'weapon') {
-        if (!isShop) {
-            const allowed = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[ch] : null;
-            const pool = allowed ? WEAPON_LOOT_KEYS.filter(k => k !== 'none' && allowed.has(k)) : WEAPON_LOOT_KEYS;
-            if (pool.length === 0) return WEAPON_LOOT_KEYS[Math.floor(Math.random() * WEAPON_LOOT_KEYS.length)];
-            return pool[Math.floor(Math.random() * pool.length)];
-        }
-        return WEAPON_LOOT_KEYS[Math.floor(Math.random() * WEAPON_LOOT_KEYS.length)];
+        const allowed = typeof CHASSIS_WEAPONS !== 'undefined' ? CHASSIS_WEAPONS[ch] : null;
+        const pool = allowed ? WEAPON_LOOT_KEYS.filter(k => k !== 'none' && allowed.has(k)) : WEAPON_LOOT_KEYS;
+        if (pool.length === 0) return WEAPON_LOOT_KEYS[Math.floor(Math.random() * WEAPON_LOOT_KEYS.length)];
+        return pool[Math.floor(Math.random() * pool.length)];
     }
     let candidates = Object.entries(ITEM_BASES).filter(([, def]) => def.baseType === baseType);
     // For system items, filter by chassis restrictions (skipped for shop stock)
