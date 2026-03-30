@@ -130,6 +130,7 @@ function returnToHangar() {
     _cleanupGame();
     const scene = GAME.scene.scenes[0];
     try { scene.input.setDefaultCursor('default'); } catch(e){}
+    document.body.style.cursor = 'default';
     if (scene.hangarOverlay) scene.hangarOverlay.setVisible(true);
     document.getElementById('ui-layer').style.display = 'flex';
     document.getElementById('hud-container').style.display = 'none';
