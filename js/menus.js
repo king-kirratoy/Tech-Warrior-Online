@@ -1724,17 +1724,17 @@ function _renderGearBonusesPanel() {
                 _traitRows.push(_traitStatRow('Dual-Wield Damage', '-15%', 'neg'));
                 _traitRows.push(_traitStatRow('Dual-Wield Fire Rate', '-15%', 'neg'));
             }
-            _traitRows.push(_traitStatRow('Move Speed < 50% HP', '+15%', 'pos'));
+            _traitRows.push(_traitStatRow('Move Speed % < 50% HP', '+15%', 'pos'));
             if (_oneArm) {
-                _traitRows.push(_traitStatRow('Agility Move Speed', '+10%', 'pos'));
-                _traitRows.push(_traitStatRow('Agility Dodge', '+10%', 'pos'));
+                _traitRows.push(_traitStatRow('Move Speed %', '+10%', 'pos'));
+                _traitRows.push(_traitStatRow('Dodge %', '+10%', 'pos'));
             }
         } else if (_ch === 'medium') {
-            _traitRows.push(_traitStatRow('Mod Specialist Duration', '+15%', 'pos'));
-            _traitRows.push(_traitStatRow('Mod Specialist Cooldown', '+15%', 'pos'));
+            _traitRows.push(_traitStatRow('Mod Duration %', '+15%', 'pos'));
+            _traitRows.push(_traitStatRow('Mod Cooldown %', '+15%', 'pos'));
+            _traitRows.push(_traitStatRow('Shield Regen %', '+15%', 'pos'));
+            _traitRows.push(_traitStatRow('Shield Absorb %', '+15%', 'pos'));
             _traitRows.push(_traitStatRow('Kill Recharge', '-0.5s', 'pos'));
-            _traitRows.push(_traitStatRow('Shield Specialist Regen', '+15%', 'pos'));
-            _traitRows.push(_traitStatRow('Shield Specialist Absorb', '+15%', 'pos'));
         } else if (_ch === 'heavy') {
             _traitRows.push(_traitStatRow('Damage Reduction', '+15%', 'pos'));
             _traitRows.push(_traitStatRow('Damage Reduction < 50% HP', '+15%', 'pos'));
@@ -1842,8 +1842,8 @@ function _renderWeaponBar() {
                ['Agility','+10% move speed and +10% dodge chance when only one arm has a weapon']]
             : ch === 'medium'
             ? [['Mod Specialist','+15% mod duration and −15% mod cooldown on all mods'],
-               ['Kill Recharge','Each kill reduces active mod cooldown by 0.5s'],
-               ['Shield Specialist','+15% shield regen rate and +15% shield absorb']]
+               ['Shield Specialist','+15% shield regen rate and +15% shield absorb'],
+               ['Kill Recharge','Each kill reduces active mod cooldown by 0.5s']]
             : [['Improved Armor','15% damage reduction at all times (passive)'],
                ['Attrition','+15% additional damage reduction when core HP is below 50%'],
                ['Iron Legs','Ignore the speed penalty from destroyed legs']];
