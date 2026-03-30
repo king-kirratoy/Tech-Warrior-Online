@@ -1871,9 +1871,10 @@ function _renderWeaponBar() {
             // _gRldPct = _gearState.fireRatePct (negative = faster); 1 + (−0.05) = 0.95 × fireRate = faster
             const effRld = Math.round((w.fireRate||0) * (_perkState.reloadMult||1) * (1 + _gRldPct/100));
             const effDps = effRld > 0 ? Math.round(effDmg / effRld * 1000) : 0;
-            h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span></div>`;
+            const effFr = effRld > 0 ? (1000 / effRld).toFixed(1) : '0.0';
+            h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span> &middot; FR <span style="color:rgba(255,255,255,0.88);">${effFr}/s</span></div>`;
         } else if (w.cooldown) {
-            h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">Cooldown <span style="color:rgba(255,255,255,0.88);">${w.cooldown}ms</span></div>`;
+            h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">Cooldown <span style="color:rgba(255,255,255,0.88);">${(w.cooldown/1000).toFixed(1)}s</span></div>`;
         }
         h += `</div>`;
         return h;
