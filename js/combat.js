@@ -1356,6 +1356,23 @@ function _resolveEnemyDeath(e) {
         handleEliteDeath(scene, e);
     }
     } catch(deathErr) { /* ensure onEnemyKilled fires even if death effects fail */ }
+    // Award kill XP in campaign mode
+    if (_gameMode === 'campaign' && typeof awardKillXP === 'function') {
+        const _killXP = awardKillXP({ isMedic: !!e.isMedic, isCommander: !!e.isCommander, isElite: !!e.isElite, isBoss: !!e.isBoss });
+        if (_killXP > 0) {
+            const _xpTxt = scene.add.text(_deadRef.x, _deadRef.y - 30, `+${_killXP} XP`, {
+                font: 'bold 16px monospace',
+                fill: '#cc99ff',
+                stroke: '#000000',
+                strokeThickness: 3,
+            }).setOrigin(0.5).setDepth(100);
+            scene.tweens.add({
+                targets: _xpTxt, y: _deadRef.y - 110, alpha: 0,
+                duration: 1400, ease: 'Cubic.easeOut',
+                onComplete: () => _xpTxt.destroy(),
+            });
+        }
+    }
     // Always spawn scrap (100% drop rate, campaign only)
     if (typeof spawnScrapDrop === 'function') spawnScrapDrop(scene, _deadRef.x, _deadRef.y);
     // Cleanup visuals — always runs
