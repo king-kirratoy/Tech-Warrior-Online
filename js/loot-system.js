@@ -1456,7 +1456,8 @@ function _removeNotif(notif) {
 }
 
 // Shared helper: create and enqueue a pill element.
-function _enqueueNotifPill(elStyle, text, holdMs, scene) {
+// icon: optional unicode character to display left of text with an 8px gap.
+function _enqueueNotifPill(elStyle, text, holdMs, scene, icon) {
     // Evict oldest if at cap
     if (_lootNotifications.length >= _NOTIF_MAX) {
         _removeNotif(_lootNotifications[0]);
@@ -1467,7 +1468,7 @@ function _enqueueNotifPill(elStyle, text, holdMs, scene) {
         position:      'fixed',
         left:          '12px',
         top:           (_NOTIF_TOP + _lootNotifications.length * 40) + 'px',
-        borderRadius:  '14px',
+        borderRadius:  '4px',
         padding:       '5px 13px',
         fontFamily:    'var(--font-mono, "Courier New", monospace)',
         whiteSpace:    'nowrap',
@@ -1477,7 +1478,19 @@ function _enqueueNotifPill(elStyle, text, holdMs, scene) {
         zIndex:        '9000',
         ...elStyle,
     });
-    el.textContent = text;
+    if (icon) {
+        el.style.display    = 'flex';
+        el.style.alignItems = 'center';
+        el.style.gap        = '8px';
+        const iconSpan = document.createElement('span');
+        iconSpan.textContent = icon;
+        const textSpan = document.createElement('span');
+        textSpan.textContent = text;
+        el.appendChild(iconSpan);
+        el.appendChild(textSpan);
+    } else {
+        el.textContent = text;
+    }
     document.body.appendChild(el);
 
     const notif = { el, active: true };
@@ -1531,16 +1544,36 @@ function _showLootPickupNotification(scene, item) {
         legendary: `0 0 20px ${_hexToRgba(rc, 0.6)}, 0 0 40px ${_hexToRgba(rc, 0.2)}`,
     };
 
+    // Geometric icon by baseType
+    const _iconMap = {
+        weapon:         '\u25C6', // ◆ Diamond
+        armor:          '\u25A0', // ■ Square
+        chest:          '\u25A0', // ■ Square
+        arms:           '\u25B2', // ▲ Triangle
+        shield:         '\u25CF', // ● Circle
+        shield_system:  '\u25CF', // ● Circle
+        leg:            '\u25BD', // ▽ Down chevron
+        legs:           '\u25BD', // ▽ Down chevron
+        leg_system:     '\u25BD', // ▽ Down chevron
+        cpu_system:     '\u2B21', // ⬡ Hexagon
+        mod:            '\u2B21', // ⬡ Hexagon
+        mod_system:     '\u2B21', // ⬡ Hexagon
+        augment:        '\u2726', // ✦ Star
+        aug_system:     '\u2726', // ✦ Star
+        scrap:          '\u2699', // ⚙ Gear
+    };
+    const icon = _iconMap[item.baseType] || '\u25C6';
+
     _enqueueNotifPill({
-        background:     _hexToRgba(rc, item.rarity === 'legendary' || item.rarity === 'common' ? 0.15 : 0.12),
+        background:     _hexToRgba(rc, 0.25),
         border:         `1px solid ${_hexToRgba(rc, 0.5)}`,
         color:          rc,
-        fontSize:       '13px',
+        fontSize:       '12px',
         fontWeight:     'bold',
         letterSpacing:  '2px',
         textTransform:  'uppercase',
         boxShadow:      glowMap[item.rarity] || '',
-    }, displayName, 1800, scene);
+    }, displayName, 1800, scene, icon);
 }
 
 // Scrap pickup notification — accumulates rapid pickups into one updating pill.
@@ -1559,8 +1592,8 @@ function _showScrapPickupNotification(scene, amount) {
             position:      'fixed',
             left:          '12px',
             top:           (_NOTIF_TOP + _lootNotifications.length * 40) + 'px',
-            background:    _hexToRgba('#ffd700', 0.08),
-            borderRadius:  '14px',
+            background:    _hexToRgba('#ffd700', 0.25),
+            borderRadius:  '4px',
             padding:       '4px 12px',
             fontFamily:    'var(--font-mono, "Courier New", monospace)',
             fontSize:      '11px',
