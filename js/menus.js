@@ -2515,6 +2515,16 @@ function _execDropInTween(scene, normalScale) {
             try { GAME.scene.scenes[0].time.paused = false; } catch(e) {}
             applyAugment();
             applyLegSystem();
+            // Ghost Protocol keystone (Light): 2s passive invis on deploy + first-attack 3x
+            if (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('node_215') && loadout.chassis === 'light') {
+                if (torso) torso.setAlpha(0.15);
+                player._ghostProtocolActive = true;
+                player._ghostProtocolFirstShot = true;
+                GAME.scene.scenes[0].time.delayedCall(2000, () => {
+                    player._ghostProtocolActive = false;
+                    if (torso?.active) torso.setAlpha(1.0);
+                });
+            }
             const sc = GAME.scene.scenes[0];
             // PVP uses its own deploy path (mpDeployPVP) — skip PvE round system entirely
             if (_gameMode !== 'pvp') {

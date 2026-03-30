@@ -220,8 +220,10 @@ function handlePlayerMovement(scene, time) {
         const _rFilled = loadout.R && loadout.R !== 'none';
         return (_lFilled !== _rFilled) ? 1.10 : 1.0;
     })();
+    const _berserkSpdMult = (isRageActive && typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_meteor') && loadout.chassis === 'medium') ? 1.08 : 1.0;
     const speed = CHASSIS[loadout.chassis].spd
         * (isRageActive ? 1.75 : 1)
+        * _berserkSpdMult
         * _legMult
         * (_perkState.speedMult || 1)
         * _gearSpdMult
@@ -238,6 +240,7 @@ function handlePlayerMovement(scene, time) {
     const effectiveModCooldown = (isChargeActive ? modCooldown * 0.5
         : (loadout.chassis === 'medium' ? modCooldown * (CHASSIS.medium.modCooldownMult || 0.85) : modCooldown))
         * _gearModCdMult
+        * (_perkState._keystoneModCdMult || 1)
         * (loadout.cpu === 'jump' ? (_perkState.jumpCdMult || 1) * (_perkState.jumpCooldownMult || 1) : 1)
         * (loadout.cpu === 'fortress_mode'
             ? (1 - (_perkState.fmCooldown || 0)) * (_perkState.heavyDreadnought ? 0.5 : 1)

@@ -61,7 +61,9 @@ function activateDecoy(scene, time) {
     window._activeDecoy = decoyTorso;
 
     // decoy_duration perk extends lifetime; phantom_army makes it permanent
-    const effectiveDuration = mod.decoyDuration + (_perkState.decoyDuration || 0);
+    // Doppelganger keystone (Light): +4s duration and guarantees 100% enemy aggro on decoy
+    const _doppelKs = typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_doppel') && loadout.chassis === 'light';
+    const effectiveDuration = (mod.decoyDuration + (_perkState.decoyDuration || 0) + (_doppelKs ? 4000 : 0)) * (_perkState._keystoneModDurMult || 1);
 
     if (_perkState.decoyPhantomArmy) {
         if (!window._phantomDecoys) window._phantomDecoys = [];
@@ -98,7 +100,8 @@ function activateDecoy(scene, time) {
 
 function activateMissiles(scene, time) {
     const mod = WEAPONS.missile;
-    const count = mod.missileCount;
+    const _missileBarrage = typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_meteor') && loadout.chassis === 'heavy';
+    const count = mod.missileCount + (_missileBarrage ? 3 : 0);
     const sorted = enemies.getChildren()
         .filter(e => e.active)
         .sort((a,b) => Phaser.Math.Distance.Between(player.x,player.y,a.x,a.y) -
@@ -165,7 +168,9 @@ function activateMissiles(scene, time) {
 function activateDrone(scene, time) {
     if (_perkState._droneActive) return;
     _perkState._droneActive = true;
-    if (_perkState.multiDrone) {
+    const _droneSwarm = typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('node_215') && loadout.chassis === 'medium';
+    _perkState._droneSwarmActive = _droneSwarm;
+    if (_perkState.multiDrone || _droneSwarm) {
         _spawnDrone(scene, -50, -52, false);
         _spawnDrone(scene,  50, -52, false);
     } else {
@@ -260,6 +265,11 @@ function activateEMP(scene, time) {
                 enemy.body.setImmovable(false);
                 if (enemy.visuals?.setStrokeStyle) enemy.visuals.setStrokeStyle(2, 0xffffff);
             });
+            // EMP OVERLOAD keystone (Heavy): disable enemy shields for 3s
+            if (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_doppel') && loadout.chassis === 'heavy') {
+                enemy._shieldDisabled = true;
+                scene.time.delayedCall(3000, () => { if (enemy.active) enemy._shieldDisabled = false; });
+            }
         }
     });
 
@@ -272,7 +282,9 @@ function activateRage(scene) {
     _rageDmgMult = 1.15;
     refreshMechColor();
     const _gearModEffMult = (1 + ((_gearState?.modEffPct || 0) / 100)) * (loadout.chassis === 'medium' ? (CHASSIS.medium.modDurationMult || 1.15) : 1.0);
-    const _rageDur = WEAPONS.rage.rageTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * (_perkState.rageDurMult || 1) * _gearModEffMult;
+    const _berserkBonus = (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_meteor') && loadout.chassis === 'medium') ? 3000 : 0;
+    const _rageDur = WEAPONS.rage.rageTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * (_perkState.rageDurMult || 1) * _gearModEffMult
+        * (_perkState._keystoneModDurMult || 1) + _berserkBonus;
     scene.time.delayedCall(_rageDur, () => {
         isRageActive = false;
         _rageDmgMult = 1.0;
@@ -300,12 +312,34 @@ function activateShield(scene) {
     // Thorns Protocol: reflect damage to attackers while shield is up — handled in processPlayerDamage
     // Capacitor Armor: tracked in processPlayerDamage
     const _gearModEffMult = (1 + ((_gearState?.modEffPct || 0) / 100)) * (loadout.chassis === 'medium' ? (CHASSIS.medium.modDurationMult || 1.15) : 1.0);
-    const _barrierDur = WEAPONS.barrier.shieldTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
+    const _barrierDur = WEAPONS.barrier.shieldTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult
+        * (_perkState._keystoneModDurMult || 1) + (_perkState._keystoneBarrierBonusMs || 0);
     scene.time.delayedCall(_barrierDur, () => {
         isShieldActive = false;
         sndShieldDeactivate();
         lastModTime = GAME.scene.scenes[0].time.now;
     });
+    // Stasis Field keystone (all chassis): slow enemies within 150u by 40% on activation
+    if (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_stasis')) {
+        const _stasisSlowDur = 3000;
+        enemies.getChildren().forEach(e => {
+            if (!e.active) return;
+            const sd = Phaser.Math.Distance.Between(player.x, player.y, e.x, e.y);
+            if (sd > 150) return;
+            if (!e._stasisSlowed) {
+                e._stasisOrigSpeed = e.speed;
+                e.speed = Math.max(1, Math.round(e.speed * 0.60));
+                e._stasisSlowed = true;
+                scene.time.delayedCall(_stasisSlowDur, () => {
+                    if (e.active && e._stasisSlowed) {
+                        e.speed = e._stasisOrigSpeed !== undefined ? e._stasisOrigSpeed : e.speed;
+                        e._stasisSlowed = false;
+                        delete e._stasisOrigSpeed;
+                    }
+                });
+            }
+        });
+    }
 }
 
 function activateJump(scene) {
@@ -370,6 +404,22 @@ function activateJump(scene) {
                         damageEnemy(e, kDmg);
                         showDamageText(scene, e.x, e.y - 20, kDmg);
                     }
+                });
+            }
+            // Meteor Strike keystone (Light): 50 AOE landing + 2s invulnerability
+            if (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_meteor') && loadout.chassis === 'light') {
+                if (typeof createExplosion === 'function') createExplosion(GAME.scene.scenes[0], player.x, player.y, 50, 30, false);
+                // 2s invulnerability window
+                player._meteorInvuln = true;
+                const _invulnGlow = scene.add.circle(player.x, player.y, 28, 0xffffff, 0.25).setDepth(12);
+                const _invulnTrack = scene.time.addEvent({ delay: 16, loop: true, callback: () => {
+                    if (!player?.active || !_invulnGlow.active) return;
+                    _invulnGlow.setPosition(player.x, player.y);
+                }});
+                scene.time.delayedCall(2000, () => {
+                    player._meteorInvuln = false;
+                    _invulnGlow.destroy();
+                    _invulnTrack.remove();
                 });
             }
         }
@@ -498,7 +548,8 @@ function _spawnDrone(scene, offsetX, offsetY, isAuto) {
             const baseDmg = mod.droneDmg;
             const uplink  = 1 + (_perkState.droneUplink || 0);
             const overw   = 1 + (_perkState.droneOverwatchStacks > 0 ? (_perkState.droneOverwatchKills || 0) * 0.20 * _perkState.droneOverwatchStacks : 0);
-            const dmg     = Math.round(baseDmg * uplink * overw);
+            const swarmMult = _perkState._droneSwarmActive ? 1.15 : 1.0;
+            const dmg     = Math.round(baseDmg * uplink * overw * swarmMult);
             damageEnemy(target, dmg, 0);
             showDamageText(scene, target.x, target.y, dmg);
             const zap = scene.add.graphics().setDepth(13);
@@ -546,7 +597,8 @@ function _spawnDrone(scene, offsetX, offsetY, isAuto) {
 
     // Duration-based destroy (non-auto) or HP-based (auto)
     if (!isAuto) {
-        scene.time.delayedCall(mod.droneDuration, destroyDrone);
+        const _swarmDurBonus = _perkState._droneSwarmActive ? 3000 : 0;
+        scene.time.delayedCall(mod.droneDuration + _swarmDurBonus, destroyDrone);
     } else {
         // Auto drone: destroyed by HP (bullet collisions tracked externally)
         drone._destroyDrone = destroyDrone;
@@ -758,17 +810,22 @@ function activateEnemyMod(scene, enemy, mod, time) {
 function activateFortressMode(scene, time) {
     if (!player?.active) return;
     _perkState._fortressMode = true;
-    _perkState._fortressDR = 0.30; // 30% DR
+    const _ironFortress = typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('node_215') && loadout.chassis === 'heavy';
+    _perkState._fortressDR = _ironFortress ? 0.50 : 0.30;
+    _perkState._ironFortressActive = _ironFortress;
     const _fTick = scene.time.addEvent({ delay: 200, loop: true, callback: () => {
         if (!_perkState._fortressMode || !player?.comp?.core) { _fTick.remove(); return; }
         player.comp.core.hp = Math.min(player.comp.core.max, player.comp.core.hp + Math.round(1 * (1 + (_perkState.fmHeal || 0)))); // 5 HP/s base; fmHeal perk scales this
         updateHUD();
     }});
     const _gearModEffMult = (1 + ((_gearState?.modEffPct || 0) / 100)) * (loadout.chassis === 'medium' ? (CHASSIS.medium.modDurationMult || 1.15) : 1.0);
-    const _fmDur = WEAPONS.fortress_mode.modeTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult;
+    const _ironFortressBonus = _ironFortress ? 3000 : 0;
+    const _fmDur = WEAPONS.fortress_mode.modeTime * (typeof hasUniqueEffect === 'function' && hasUniqueEffect('modAmplify') ? 1.5 : 1) * _gearModEffMult
+        * (_perkState._keystoneModDurMult || 1) + _ironFortressBonus;
     scene.time.delayedCall(_fmDur, () => {
         _perkState._fortressMode = false;
         _perkState._fortressDR = 0;
+        _perkState._ironFortressActive = false;
         _fTick.remove();
     });
     lastModTime = time;

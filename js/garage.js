@@ -541,6 +541,41 @@ function deployMech() {
         if (_stb.critDmgPct > 0 && typeof _gearState !== 'undefined') {
             _gearState.critDmg = (_gearState.critDmg || 0) + _stb.critDmgPct;
         }
+
+        // ── OVERCLOCK keystone: mod cooldown and duration ──
+        // modCdPct reduces effective cooldown (15% → cooldowns 15% shorter)
+        if (_stb.modCdPct > 0) _perkState._keystoneModCdMult = 1 - (_stb.modCdPct / 100);
+        // modDurPct extends mod duration (30% → durations 30% longer)
+        if (_stb.modDurPct > 0) _perkState._keystoneModDurMult = 1 + (_stb.modDurPct / 100);
+
+        // ── GLASS CANNON keystone: HP penalty ──
+        if (_stb.allHPMinus > 0) {
+            const _hpPenalty = _stb.allHPMinus;
+            player.maxHp = Math.max(1, player.maxHp - _hpPenalty);
+            player.hp    = Math.max(1, player.hp    - _hpPenalty);
+            if (player.comp?.core) {
+                player.comp.core.max = Math.max(1, player.comp.core.max - _hpPenalty);
+                player.comp.core.hp  = Math.max(1, player.comp.core.hp  - _hpPenalty);
+            }
+            if (player.comp?.lArm) {
+                player.comp.lArm.max = Math.max(1, player.comp.lArm.max - _hpPenalty);
+                player.comp.lArm.hp  = Math.max(1, player.comp.lArm.hp  - _hpPenalty);
+            }
+            if (player.comp?.rArm) {
+                player.comp.rArm.max = Math.max(1, player.comp.rArm.max - _hpPenalty);
+                player.comp.rArm.hp  = Math.max(1, player.comp.rArm.hp  - _hpPenalty);
+            }
+            if (player.comp?.legs) {
+                player.comp.legs.max = Math.max(1, player.comp.legs.max - _hpPenalty);
+                player.comp.legs.hp  = Math.max(1, player.comp.legs.hp  - _hpPenalty);
+            }
+        }
+
+        // ── Meteor Strike keystone: jump speed bonus ──
+        if (_stb.jumpPct > 0) _perkState.jumpSpeedMult = (_perkState.jumpSpeedMult || 1) * (1 + _stb.jumpPct / 100);
+
+        // ── Stasis Field keystone: barrier duration bonus ──
+        if (_stb.barrierSec > 0) _perkState._keystoneBarrierBonusMs = (_perkState._keystoneBarrierBonusMs || 0) + _stb.barrierSec * 1000;
     }
 
     refreshMechColor();

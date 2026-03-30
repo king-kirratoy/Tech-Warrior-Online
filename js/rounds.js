@@ -324,6 +324,8 @@ function onEnemyKilled(deadEnemy) {
         _roundActive = false;
         // Destroy any in-flight enemy bullets
         if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+        // Clear Bombardment fire zones
+        if (typeof clearBombardmentZones === 'function') clearBombardmentZones();
         // Destroy remaining enemies if objective ended the round early
         if (_objEnd && _roundKills < _roundTotal) {
             enemies?.getChildren().slice().forEach(e => {
@@ -425,6 +427,7 @@ function _triggerExtraction(scene) {
     _roundClearing = true;
     if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
     if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
+    if (typeof clearBombardmentZones === 'function') clearBombardmentZones();;
 
     const _objFailed = typeof _arenaState !== 'undefined' && _arenaState.objectiveFailed;
     const _bannerSub = _objFailed ? '✖ OBJECTIVE FAILED' :
