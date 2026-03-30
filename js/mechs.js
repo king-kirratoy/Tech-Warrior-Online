@@ -414,7 +414,7 @@ function _initPlayerHP(scene, s) {
     // Absorb from shield definition; medium chassis Shield Specialist trait adds +15% absorb bonus.
     const _shldAbsorbBase = _shldSys.absorb ?? 0.50;
     const _chassisBonus   = loadout.chassis === 'medium' ? (CHASSIS.medium.shieldAbsorbBonus || 0.15) : 0;
-    const _gearAbsorb     = ((_gearState?.absorbPct || 0) / 100);
+    const _gearAbsorb     = ((_gearState?.shieldAbsorb || 0) / 100);
     player._shieldAbsorb  = Math.min(0.90, _shldAbsorbBase + _chassisBonus + _gearAbsorb);
     // Per-shield state
     player._shieldFlickerHit  = false;  // flicker_shield: tracks odd/even hits
