@@ -1134,7 +1134,7 @@ function _shopRenderCategory(catKey) {
             const rd = (typeof RARITY_DEFS !== 'undefined') ? RARITY_DEFS[item.rarity] : null;
             const color = rd ? rd.colorStr : (_shopRarityColors[item?.rarity] || _shopRarityColors.common);
             const borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : color + '44';
-            const bgColor = color + '26';
+            const bgColor = color + '14';
             const priceTag = `<div style="font-size:8px;color:var(--sci-gold,#ffd700);margin-top:2px;">⬡ ${item._shopPrice}</div>`;
             h += `<div class="lo-slot" style="border-color:${borderColor};background-color:${bgColor};" data-shop-idx="${stockIdx}"
                 onclick="_shopBuy(${stockIdx})"
@@ -1368,7 +1368,7 @@ function showShop() {
         const rd = (typeof RARITY_DEFS !== 'undefined') ? RARITY_DEFS[item.rarity] : null;
         const color = rd ? rd.colorStr : rc(item);
         const borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : color + '44';
-        const bgColor = color + '26';
+        const bgColor = color + '14';
         const priceTag = `<div style="font-size:8px;color:var(--sci-gold,#ffd700);margin-top:2px;">⬡ ${item._shopPrice}</div>`;
         return `<div class="lo-slot" style="border-color:${borderColor};background-color:${bgColor};" data-shop-idx="${idx}"
             onclick="_shopSelectBuy(${idx})"
@@ -1386,7 +1386,7 @@ function showShop() {
         const rd = (typeof RARITY_DEFS !== 'undefined') ? RARITY_DEFS[item.rarity] : null;
         const color = rd ? rd.colorStr : rc(item);
         const borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : color + '44';
-        const bgColor = color + '26';
+        const bgColor = color + '14';
         const sellPrice = getItemSellPrice(item);
         return `<div class="lo-slot" style="border-color:${borderColor};background-color:${bgColor};" data-sell-idx="${idx}"
             onclick="_shopSelectSell(${idx})"
