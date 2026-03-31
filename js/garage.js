@@ -391,7 +391,7 @@ function refreshGarage() {
         <!-- Body -->
         <div class="mp-body">
 
-            <!-- Left column: preview + controls -->
+            <!-- Left column: preview + chassis + colour/crosshair -->
             <div class="mp-left">
 
                 <!-- Mech preview -->
@@ -409,7 +409,7 @@ function refreshGarage() {
                     </div>
                 </div>
 
-                <!-- Dropdowns section -->
+                <!-- Chassis + colour/crosshair -->
                 <div class="mp-left-controls">
                     <div class="mp-sec-label">Chassis</div>
                     <div class="mp-chassis-row">
@@ -418,12 +418,11 @@ function refreshGarage() {
                         <button id="c-heavy" class="mp-chassis-btn${chassis === 'heavy' ? ' active' : ''}" onclick="setChassis('heavy')">Heavy</button>
                     </div>
 
-                    <div class="mp-sec-label">Loadout</div>
-                    <div class="mp-dd-row">
-                        <span class="mp-dd-label">Colour</span>
+                    <!-- Colour + Crosshair side by side, no external labels -->
+                    <div class="mp-color-pair">
                         <div class="pvp-dd-wrap" style="position:relative;flex:1;">
                             <div class="mp-dd-selected wz-dd-selected" id="wz-dds-COL" onclick="_wzToggleColorDD()">
-                                <span style="display:flex;align-items:center;gap:8px;">
+                                <span style="display:flex;align-items:center;gap:6px;">
                                     <span style="width:10px;height:10px;background:${colorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
                                     CHASSIS
                                 </span>
@@ -431,12 +430,9 @@ function refreshGarage() {
                             </div>
                             <div class="dd-list wz-dd-list" id="wz-ddl-COL"></div>
                         </div>
-                    </div>
-                    <div class="mp-dd-row">
-                        <span class="mp-dd-label">Crosshair</span>
                         <div class="pvp-dd-wrap" style="position:relative;flex:1;">
                             <div class="mp-dd-selected wz-dd-selected" id="wz-dds-XHCOL" onclick="_wzToggleCrosshairColorDD()">
-                                <span style="display:flex;align-items:center;gap:8px;">
+                                <span style="display:flex;align-items:center;gap:6px;">
                                     <span style="width:10px;height:10px;background:${xhColorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
                                     CROSSHAIR
                                 </span>
@@ -445,6 +441,14 @@ function refreshGarage() {
                             <div class="dd-list wz-dd-list" id="wz-ddl-XHCOL"></div>
                         </div>
                     </div>
+                </div>
+
+            </div><!-- /mp-left -->
+
+            <!-- Middle column: loadout dropdowns -->
+            <div class="mp-mid">
+                <div class="mp-stats-header">Loadout</div>
+                <div class="mp-mid-controls">
                     ${ddRow('M', 'Cpu')}
                     ${ddRow('A', 'Augment')}
                     ${ddRow('L', 'L.Arm')}
@@ -452,8 +456,7 @@ function refreshGarage() {
                     ${ddRow('G', 'Legs')}
                     ${ddRow('S', 'Shield')}
                 </div>
-
-            </div><!-- /mp-left -->
+            </div>
 
             <!-- Right column: full build stats -->
             <div class="mp-right">
