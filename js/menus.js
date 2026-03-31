@@ -680,7 +680,7 @@ function showWarzonePerksOverlay() {
     statsHtml += statRow('ROUND',   typeof _round      !== 'undefined' ? _round      : '—');
     statsHtml += statRow('KILLS',   typeof _totalKills !== 'undefined' ? _totalKills : '—');
     statsHtml += divRow();
-    statsHtml += statRow('CHASSIS', chassis.toUpperCase(), 'color:#cc88ff');
+    statsHtml += statRow('CHASSIS', chassis.toUpperCase(), 'color:var(--sci-cyan)');
     statsHtml += statRow('TOTAL HP', totalHP,
         'color:#00ff88');
     statsHtml += statRow('SHIELD',
@@ -1606,7 +1606,7 @@ function _renderHullBars() {
         const curShield = Math.round(player.shield||0);
         const maxShield = Math.round(player.maxShield||0);
         totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value" style="color:#00ff88">${Math.round(totalHp)} / ${Math.round(totalMax)}</span></div>`;
-        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:var(--sci-cyan)">${curShield} / ${maxShield}</span></div>`;
+        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:#cc88ff">${curShield} / ${maxShield}</span></div>`;
     } else {
         html += _hpRow('Core',  baseHP.core,  baseHP.core);
         html += _hpRow('L.Arm', baseHP.lArm,  baseHP.lArm);
@@ -1615,7 +1615,7 @@ function _renderHullBars() {
         const totalBase  = Object.values(baseHP).reduce((s,v)=>s+v,0);
         const baseShield = (SHIELD_SYSTEMS[loadout?.shld]?.maxShield||0) + (_gearState?.shieldHP||0);
         totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value" style="color:#00ff88">${totalBase} / ${totalBase}</span></div>`;
-        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:var(--sci-cyan)">${baseShield} / ${baseShield}</span></div>`;
+        totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:#cc88ff">${baseShield} / ${baseShield}</span></div>`;
     }
     el.innerHTML = html;
     const tbEl = document.getElementById('lo-totals-block');

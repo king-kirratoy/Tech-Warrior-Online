@@ -757,7 +757,7 @@
 }
 
 .lo-chassis-val {
-  color: #cc88ff;
+  color: var(--sci-cyan);
   font-family: 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 2px;
