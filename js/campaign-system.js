@@ -1369,7 +1369,7 @@ function showShop() {
         const borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : color + '44';
         const priceTag = `<div style="font-size:8px;color:var(--sci-gold,#ffd700);margin-top:2px;">⬡ ${item._shopPrice}</div>`;
         return `<div class="lo-slot" style="border-color:${borderColor};" data-shop-idx="${idx}"
-            onclick="_shopBuy(${idx})"
+            onclick="_shopSelectBuy(${idx})"
             onmouseenter="_shopShowHover(this,_shopStock[${idx}],'right')"
             onmouseleave="_shopHideHover()"
             onmousedown="_shopHideHover()">
@@ -1411,10 +1411,30 @@ function showShop() {
         sellDetailHtml += `<div class="shop-detail-name" style="color:${sellItemRc};">${sellItem.name || 'Item'}</div>`;
         sellDetailHtml += `<div class="shop-detail-meta">${sellItem.rarity || 'common'} · ${slotLabel} · LV.${sellItem.level || 1}</div>`;
         sellDetailHtml += `<div class="shop-bottom-bar" style="flex-direction:column;gap:6px;">`;
-        sellDetailHtml += `<button onclick="_shopSell(${_selectedSellIdx})" class="tw-btn tw-btn--danger" style="width:100%;">Sell — ⬡ ${sellPrice}</button>`;
-        sellDetailHtml += `<button onclick="_shopSelectSell(${_selectedSellIdx})" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:100%;">Cancel</button>`;
+        sellDetailHtml += `<button onclick="_shopSell(${_selectedSellIdx})" class="tw-btn tw-btn--danger" style="width:auto;">Sell — ⬡ ${sellPrice}</button>`;
+        sellDetailHtml += `<button onclick="_shopSelectSell(${_selectedSellIdx})" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;">Cancel</button>`;
         sellDetailHtml += `</div>`;
         sellDetailHtml += `</div>`;
+    }
+
+    // ── Buy detail panel (confirm before purchasing) ──
+    let buyDetailHtml = '';
+    if (_selectedShopIdx !== null && _selectedShopIdx < _shopStock.length && _shopStock[_selectedShopIdx]) {
+        const buyItem   = _shopStock[_selectedShopIdx];
+        const buyItemRc = rc(buyItem);
+        const buyPrice  = buyItem._shopPrice || 0;
+        const slotLabel = slotLbl(buyItem);
+        buyDetailHtml += `<div class="shop-detail-panel">`;
+        if (slotLabel) {
+            buyDetailHtml += `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">${slotLabel}</div>`;
+        }
+        buyDetailHtml += `<div class="shop-detail-name" style="color:${buyItemRc};">${buyItem.name || 'Item'}</div>`;
+        buyDetailHtml += `<div class="shop-detail-meta">${buyItem.rarity || 'common'} · ${slotLabel} · LV.${buyItem.level || 1}</div>`;
+        buyDetailHtml += `<div class="shop-bottom-bar" style="flex-direction:column;gap:6px;">`;
+        buyDetailHtml += `<button onclick="_shopBuy(${_selectedShopIdx})" class="tw-btn tw-btn--solid tw-btn--sm" style="width:auto;">Buy — ⬡ ${buyPrice}</button>`;
+        buyDetailHtml += `<button onclick="_shopSelectBuy(${_selectedShopIdx})" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;">Cancel</button>`;
+        buyDetailHtml += `</div>`;
+        buyDetailHtml += `</div>`;
     }
 
     // ── Buy grid HTML — three category grids (3×5 each) ──
@@ -1479,6 +1499,7 @@ function showShop() {
                         <div class="shop-col-title">Buy</div>
                     </div>
                     ${buyItemsHtml}
+                    ${buyDetailHtml}
                 </div>
                 <!-- SELL column -->
                 <div class="shop-sell-col">
@@ -1493,6 +1514,12 @@ function showShop() {
         </div>
     `;
     overlay.style.display = 'flex';
+}
+
+/** Select a buy item (highlight, show confirm panel). Toggle on second click. */
+function _shopSelectBuy(idx) {
+    _selectedShopIdx = (_selectedShopIdx === idx) ? null : idx;
+    showShop();
 }
 
 /** Select a sell item (highlight, show confirm panel). Toggle on second click. */

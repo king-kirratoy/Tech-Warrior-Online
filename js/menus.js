@@ -2052,8 +2052,8 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
 
     let html = `<div class="lo-hover-cmp-card">`;
     html += '<div class="lo-hover-cmp-cols">';
-    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left" style="border:1px solid var(--sci-cyan-border);">${_mkCol(item, leftLabel || 'BACKPACK', slotLabel)}</div>`;
-    html += `<div class="lo-hover-cmp-col" style="border:1px solid var(--sci-cyan-border);">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
+    html += `<div class="lo-hover-cmp-col lo-hover-cmp-left" style="border:1px solid var(--sci-cyan-border);">${_mkCol(compareItem, 'EQUIPPED', slotLabel || '')}</div>`;
+    html += `<div class="lo-hover-cmp-col" style="border:1px solid var(--sci-cyan-border);">${_mkCol(item, leftLabel || 'BACKPACK', slotLabel)}</div>`;
     html += '</div>';
 
     // Diff section — build combined stats (base + affixes) for accurate net totals
