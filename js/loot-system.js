@@ -670,7 +670,7 @@ const AFFIX_RANGES = {
 // Format: { baseType: { statKey: { std:[min,max], leg:[min,max] } } }
 const AFFIX_RANGE_OVERRIDES = {
     shield: {
-        shieldAbsorb: { std:[15,30], leg:[30,45] },
+        shieldAbsorb: { std:[15,30], leg:[30,45], label:'+{v}% Shield Absorb' },
     },
 };
 
