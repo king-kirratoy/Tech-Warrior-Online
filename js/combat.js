@@ -689,6 +689,11 @@ function fireGL(scene, weapon, armOx, armOy, aimAngle) {
     scene.physics.velocityFromRotation(aimAngle, distance * 2, ball.body.velocity);
     ball.body.setDrag(distance * 2);
 
+    // Block GL ball from passing through cover — physics separation stops/deflects it.
+    // No destroy callback: ball continues rolling (slows due to drag) until fuse triggers.
+    const _glCoverCollider = scene.physics.add.collider(ball, coverObjects);
+    ball.once('destroy', () => { try { _glCoverCollider.destroy(); } catch(e) {} });
+
     const fuseTime  = 2000;
     let fuseStarted = false;
     let startTime   = 0;
@@ -754,6 +759,7 @@ function fireRL(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
 
     // Store overlap reference — Phaser does not remove it automatically when rocket is destroyed.
     const rlOverlap = scene.physics.add.overlap(rocket, enemies, (r) => {
+        rlCoverCollider.destroy();
         rlOverlap.destroy();
         const _rx = r.x, _ry = r.y;
         createExplosion(scene, _rx, _ry, 80, weapon.dmg, true);
@@ -767,8 +773,24 @@ function fireRL(scene, weapon, barrelDist, armOx, armOy, aimAngle) {
         r.destroy();
     });
 
+    // Rocket explodes on cover contact — same effect as hitting an enemy
+    const rlCoverCollider = scene.physics.add.collider(rocket, coverObjects, () => {
+        if (!rocket?.active) return;
+        rlCoverCollider.destroy();
+        rlOverlap.destroy();
+        const _rx = rocket.x, _ry = rocket.y;
+        createExplosion(scene, _rx, _ry, 80, weapon.dmg, true);
+        if (typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_hellfire') && loadout.chassis === 'heavy') {
+            const _dotDmg = Math.max(1, Math.round(weapon.dmg * 0.12));
+            _createBombardmentZone(scene, _rx, _ry, _dotDmg);
+        }
+        particles.stop();
+        scene.time.delayedCall(400, () => particles.destroy());
+        rocket.destroy();
+    });
+
     scene.time.delayedCall(2000, () => {
-        if (rocket.active) { rlOverlap.destroy(); particles.stop(); scene.time.delayedCall(400, () => particles.destroy()); rocket.destroy(); }
+        if (rocket.active) { rlCoverCollider.destroy(); rlOverlap.destroy(); particles.stop(); scene.time.delayedCall(400, () => particles.destroy()); rocket.destroy(); }
     });
 }
 
@@ -1750,6 +1772,7 @@ function dropEnemyMine(scene, enemy) {
 // Named handler extracted from the anonymous overlap callback in
 // create(). Called as:  (bullet, enemy) => handleBulletEnemyOverlap(this, bullet, enemy)
 function handleBulletEnemyOverlap(scene, bullet, enemy) {
+    if (!bullet?.active) return;
     if (bullet.isGLBall) return;
     // Capture position and damage BEFORE destroying bullet (velocity zeroes on destroy)
     const bAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
