@@ -108,10 +108,12 @@ function syncVisuals(scene, time) {
   torso.setPosition(player.x, player.y);
   shieldGraphic.setPosition(player.x, player.y).setVisible(isShieldActive);
 
+  const _cam = scene.cameras.main;
+  const _ptr = scene.input.activePointer;
   const targetAngle = Phaser.Math.Angle.Between(
     player.x, player.y,
-    scene.input.activePointer.worldX,
-    scene.input.activePointer.worldY
+    _ptr.x + _cam.scrollX,
+    _ptr.y + _cam.scrollY
   );
   torso.rotation = Phaser.Math.Angle.RotateTo(torso.rotation, targetAngle, 0.1);
 
