@@ -427,7 +427,7 @@ function _triggerExtraction(scene) {
     _roundClearing = true;
     if (player?.body) { player.body.setVelocity(0, 0); player.body.setAngularVelocity(0); }
     if (enemyBullets) enemyBullets.getChildren().slice().forEach(b => { if (b?.active) b.destroy(); });
-    if (typeof clearBombardmentZones === 'function') clearBombardmentZones();;
+    if (typeof clearBombardmentZones === 'function') clearBombardmentZones();
 
     const _objFailed = typeof _arenaState !== 'undefined' && _arenaState.objectiveFailed;
     const _bannerSub = _objFailed ? '✖ OBJECTIVE FAILED' :

@@ -116,7 +116,10 @@ const UI_COLORS = {
 // ═══════════ NAVIGATION ═══════════
 
 function returnToHangar() {
-    if (_isPaused) { _isPaused=false; const s=GAME.scene.scenes[0]; if(s){s.physics.resume();s.time.paused=false;} }
+    // Always resume physics/time on hangar return — showDeathScreen() sets _isPaused=false
+    // before pausing physics, so the _isPaused guard would silently skip the resume.
+    _isPaused = false;
+    { const s = GAME?.scene?.scenes[0]; if (s) { try { s.physics.resume(); s.time.paused = false; } catch(e){} } }
     const _sc = GAME?.scene?.scenes[0]; if (_sc?._bfGrid) _sc._bfGrid.setVisible(false);
     // Scale cleanup for jump tween interruption
     if (_sc) {
@@ -2481,6 +2484,12 @@ function _execDropInTween(scene, normalScale) {
 
     // Lock movement during drop
     isDeployed = false;
+
+    // Ensure physics and time are running before the tween starts.
+    // showDeathScreen() pauses them but sets _isPaused=false, so returnToHangar()
+    // may not resume them. Resume unconditionally here so the tween environment is clean.
+    try { scene.physics.resume(); } catch(e) {}
+    try { scene.time.paused = false; } catch(e) {}
 
     scene.tweens.add({
         targets:  [player, torso],
