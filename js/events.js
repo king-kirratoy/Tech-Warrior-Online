@@ -325,6 +325,29 @@ function _onEquipDragStart(ev) {
     const slotKey = ev.currentTarget.dataset.slot;
     if (!_equipped[slotKey]) { ev.preventDefault(); return; }
     ev.dataTransfer.setData('text/plain', 'equipped:' + slotKey);
+    // Apply the same highlights as dragging from a backpack slot
+    const item = _equipped[slotKey];
+    if (typeof _getDragValidSlots === 'function') {
+        const validSlots = _getDragValidSlots(item);
+        document.querySelectorAll('.mech-equip-slot').forEach(slot => {
+            if (validSlots.includes(slot.dataset.slot)) {
+                slot.classList.add('drag-valid');
+            } else {
+                slot.classList.add('drag-invalid');
+            }
+        });
+    }
+    document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
+        bp.classList.add('bp-drag-valid');
+    });
+}
+function _onEquipDragEnd() {
+    document.querySelectorAll('.mech-equip-slot').forEach(slot => {
+        slot.classList.remove('drag-valid', 'drag-invalid');
+    });
+    document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
+        bp.classList.remove('bp-drag-valid');
+    });
 }
 function _onSlotDragOver(ev) {
     ev.preventDefault();

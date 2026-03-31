@@ -312,13 +312,15 @@
 }
 
 .mech-equip-slot.drag-invalid {
-  background: rgba(255,77,106,0.15);
-  border-color: rgba(255,77,106,0.4);
+  background: rgba(255,77,106,0.15) !important;
+  border-color: rgba(255,77,106,0.5) !important;
+  box-shadow: 0 0 8px rgba(255,77,106,0.25);
 }
 
 .mech-equip-slot.drag-valid {
-  background: rgba(0,212,255,0.08);
-  border-color: rgba(0,212,255,0.4);
+  background-color: rgba(0,255,136,0.12) !important;
+  border-color: rgba(0,255,136,0.5) !important;
+  box-shadow: 0 0 8px rgba(0,255,136,0.25);
 }
 
 .mech-equip-slot .slot-label {
