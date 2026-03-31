@@ -1775,6 +1775,7 @@ function populateLoadout() {
     }
     _renderWeaponBar();
     _loRefreshColorSwatch();
+    _loRefreshXhColorSwatch();
 }
 
 // ── Loadout top bar color picker ──────────────────────────────────
@@ -1837,6 +1838,70 @@ function _loRefreshColorSwatch() {
     const opt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : []).find(o => o.key === curHex);
     const swatchEl = document.getElementById('lo-col-swatch');
     const labelEl  = document.getElementById('lo-col-label');
+    if (swatchEl) swatchEl.style.background = opt ? opt.hex6 : '#888';
+    if (labelEl)  labelEl.textContent = opt ? opt.label : '—';
+}
+
+// ── Loadout top bar crosshair color picker ────────────────────────
+let _loXhColDDOpen = false;
+let _loXhColDDOutsideHandler = null;
+
+function _loCloseXhColorDD() {
+    _loXhColDDOpen = false;
+    document.getElementById('lo-xhcol-list')?.classList.remove('dd-list-open');
+    document.getElementById('lo-xhcol-sel')?.classList.remove('dd-open');
+    if (_loXhColDDOutsideHandler) {
+        document.removeEventListener('click', _loXhColDDOutsideHandler, true);
+        _loXhColDDOutsideHandler = null;
+    }
+}
+
+function _loToggleXhColorDD() {
+    if (_loXhColDDOpen) { _loCloseXhColorDD(); return; }
+    _loXhColDDOpen = true;
+    _loBuildXhColorDD();
+    document.getElementById('lo-xhcol-list')?.classList.add('dd-list-open');
+    document.getElementById('lo-xhcol-sel')?.classList.add('dd-open');
+    setTimeout(() => {
+        _loXhColDDOutsideHandler = (e) => {
+            if (!e.target.closest('#lo-xh-color-picker')) _loCloseXhColorDD();
+        };
+        document.addEventListener('click', _loXhColDDOutsideHandler, true);
+    }, 0);
+}
+
+function _loBuildXhColorDD() {
+    const list = document.getElementById('lo-xhcol-list');
+    if (!list) return;
+    list.innerHTML = '';
+    const curHex = (loadout.crosshairColor || 0xffffff).toString(16).padStart(6, '0').toLowerCase();
+    (typeof CROSSHAIR_COLOR_OPTIONS !== 'undefined' ? CROSSHAIR_COLOR_OPTIONS : []).forEach(opt => {
+        const div = document.createElement('div');
+        div.className = 'dd-option dd-color-opt' + (opt.key === curHex ? ' dd-active' : '');
+        div.innerHTML = `<div class="do-header">
+            <span class="do-color-swatch" style="background:${opt.hex6};box-shadow:0 0 6px ${opt.hex6}55;"></span>
+            <span class="do-name">${opt.label}</span>
+        </div>`;
+        div.onclick = () => {
+            loadout.crosshairColor = opt.hex;
+            try { localStorage.setItem('tw_crosshair_color', opt.key); } catch(e) {}
+            _loCloseXhColorDD();
+            _loRefreshXhColorSwatch();
+            if (typeof saveCampaignState === 'function') saveCampaignState();
+        };
+        list.appendChild(div);
+    });
+}
+
+function _loRefreshXhColorSwatch() {
+    const picker = document.getElementById('lo-xh-color-picker');
+    if (!picker) return;
+    picker.style.display = _gameMode === 'campaign' ? 'block' : 'none';
+    if (_gameMode !== 'campaign') return;
+    const curHex = (loadout.crosshairColor || 0xffffff).toString(16).padStart(6, '0').toLowerCase();
+    const opt = (typeof CROSSHAIR_COLOR_OPTIONS !== 'undefined' ? CROSSHAIR_COLOR_OPTIONS : []).find(o => o.key === curHex);
+    const swatchEl = document.getElementById('lo-xhcol-swatch');
+    const labelEl  = document.getElementById('lo-xhcol-label');
     if (swatchEl) swatchEl.style.background = opt ? opt.hex6 : '#888';
     if (labelEl)  labelEl.textContent = opt ? opt.label : '—';
 }

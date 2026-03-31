@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v7.72';
+const GAME_VERSION = 'v7.73';
 
 // ═══════════ CHASSIS ═══════════
 
