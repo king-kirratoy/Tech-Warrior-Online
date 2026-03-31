@@ -407,8 +407,11 @@ function _initPlayerHP(scene, s) {
     // Shield comes from equipped shield system — 0 if none
     const _shldSys = SHIELD_SYSTEMS[loadout.shld] || SHIELD_SYSTEMS.none;
     const _gShieldHP = (_gearState?.shieldHP || 0);
-    player.maxShield = _shldSys.maxShield + _gShieldHP;
-    player.shield    = _shldSys.maxShield + _gShieldHP;
+    // In campaign, a loot shield item's rolled shieldHP IS the shield HP — do not add
+    // the hardcoded system maxShield on top. In warzone (no item), use system base.
+    const _shldBase = (typeof _equipped !== 'undefined' && _equipped?.shield) ? 0 : _shldSys.maxShield;
+    player.maxShield = _shldBase + _gShieldHP;
+    player.shield    = _shldBase + _gShieldHP;
     player._shieldRegenRate  = _shldSys.regenRate;
     player._shieldRegenDelay = _shldSys.regenDelay;
     // Absorb from shield definition; medium chassis Shield Specialist trait adds +15% absorb bonus.

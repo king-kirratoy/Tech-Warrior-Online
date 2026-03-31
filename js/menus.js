@@ -1387,7 +1387,8 @@ function _equipItemToSlot(invIdx, slotKey) {
     if ((item.baseType === 'shield_system' || item.baseType === 'shield') && typeof player !== 'undefined' && player?.active && typeof isDeployed !== 'undefined' && isDeployed) {
         const _ss = (typeof SHIELD_SYSTEMS !== 'undefined' && SHIELD_SYSTEMS[loadout.shld]) || { maxShield:0, regenRate:0, regenDelay:5, absorb:0.50 };
         const _gShieldHP = (_gearState?.shieldHP || 0);
-        player.maxShield = _ss.maxShield + _gShieldHP;
+        const _ssBase = _equipped?.shield ? 0 : (_ss.maxShield || 0);
+        player.maxShield = _ssBase + _gShieldHP;
         player.shield = Math.min(player.shield || 0, player.maxShield) || player.maxShield;
         player._shieldRegenRate  = _ss.regenRate;
         player._shieldRegenDelay = _ss.regenDelay;
@@ -1442,7 +1443,8 @@ function _unequipItem(slotKey) {
     if ((item.baseType === 'shield_system' || item.baseType === 'shield') && typeof player !== 'undefined' && player?.active && typeof isDeployed !== 'undefined' && isDeployed) {
         const _ss = (typeof SHIELD_SYSTEMS !== 'undefined' && SHIELD_SYSTEMS[loadout.shld]) || { maxShield:0, regenRate:0, regenDelay:5, absorb:0.50 };
         const _gShieldHP = (_gearState?.shieldHP || 0);
-        player.maxShield = _ss.maxShield + _gShieldHP;
+        const _ssBase = _equipped?.shield ? 0 : (_ss.maxShield || 0);
+        player.maxShield = _ssBase + _gShieldHP;
         player.shield = Math.min(player.shield || 0, player.maxShield);
         player._shieldRegenRate  = _ss.regenRate;
         player._shieldRegenDelay = _ss.regenDelay;

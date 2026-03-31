@@ -8,7 +8,7 @@
 
 | File | Purpose |
 |------|---------|
-| `index.html` | HTML shell with all screen divs and canonical `<script>` load order; no inline scripts or styles. `boss-hud` is a sibling of `round-hud` (not nested inside it). `objective-hud` anchored `top:12px;left:12px`. `boss-hud` anchored `top:12px` centered. HUD labels: "MOD" for CPU mod row, "SHIELD" for shield row. `#minimap-wrap` positioned `bottom:15px;right:15px`. |
+| `index.html` | HTML shell with all screen divs and canonical `<script>` load order; no inline scripts or styles. `boss-hud` is a sibling of `round-hud` (not nested inside it). `objective-hud` anchored `top:12px;left:12px`. `boss-hud` anchored `top:12px` centered. HUD labels: "MOD" for CPU mod row, "SHIELD" for shield row. Shield row name shows equipped loot item name (uppercased) when in campaign; falls back to system name from `loadout.shld` in warzone. `#minimap-wrap` positioned `bottom:15px;right:15px`. |
 | `css/base.css` | Design tokens (legacy brand + sci-fi UI palette), `--font-mono`, glow/button geometry tokens, `.tw-btn` system, and universal reset. |
 | `css/hud.css` | In-game HUD styles: console frame, paper doll, weapon bar rows, and HUD-specific color tokens. `#hud-container` positioned `bottom:15px;left:15px`. |
 | `css/garage.css` | Hangar UI, perk cards, stats panel, dropdown system, and the full `.lo-*` loadout overlay class family. |
