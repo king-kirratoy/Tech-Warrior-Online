@@ -45,8 +45,10 @@ function fire(scene, side) {
             const _pAngle = torso.rotation + _pSign * Math.PI / 2;
             const _bOx = torso.x + Math.cos(_pAngle) * _bSide;
             const _bOy = torso.y + Math.sin(_pAngle) * _bSide;
-            const _bMx = scene.input.activePointer.worldX;
-            const _bMy = scene.input.activePointer.worldY;
+            const _bCam = scene.cameras.main;
+            const _bPtr = scene.input.activePointer;
+            const _bMx = _bPtr.x + _bCam.scrollX;
+            const _bMy = _bPtr.y + _bCam.scrollY;
             const _bAim = Math.atan2(_bMy - _bOy, _bMx - _bOx);
             fireSIPHON(scene, weapon, side, _bd, _bOx, _bOy, _bAim);
             if (side === 'L') reloadL = now + weapon.fireRate;
@@ -93,8 +95,10 @@ function fire(scene, side) {
     const armOx = torso.x + Math.cos(perpAngle) * armSideOffset;
     const armOy = torso.y + Math.sin(perpAngle) * armSideOffset;
     // Aim angle FROM arm origin TOWARD mouse cursor (so shots converge on target)
-    const mx = scene.input.activePointer.worldX;
-    const my = scene.input.activePointer.worldY;
+    const _fireCam = scene.cameras.main;
+    const _firePtr = scene.input.activePointer;
+    const mx = _firePtr.x + _fireCam.scrollX;
+    const my = _firePtr.y + _fireCam.scrollY;
     const aimAngle = Math.atan2(my - armOy, mx - armOx);
 
     if (wKey === 'fth')  {
@@ -150,8 +154,7 @@ function fire(scene, side) {
     // SR Penetrator: SR +20% per 200px
     let _penetratorMult = 1.0;
     if (_perkState.srPenetrator > 0 && wKey === 'sr') {
-        const _pDist = Phaser.Math.Distance.Between(torso.x, torso.y,
-            scene.input.activePointer.worldX, scene.input.activePointer.worldY);
+        const _pDist = Phaser.Math.Distance.Between(torso.x, torso.y, mx, my);
         _penetratorMult = 1 + (_pDist / 200) * _perkState.srPenetrator;
     }
     // Consume Phantom shot
@@ -210,10 +213,10 @@ function fire(scene, side) {
 
 function fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     armOx = armOx ?? torso.x; armOy = armOy ?? torso.y;
-    const angle = aimAngle ?? Math.atan2(
-        scene.input.activePointer.worldY - torso.y,
-        scene.input.activePointer.worldX - torso.x
-    );
+    const angle = aimAngle ?? (() => {
+        const _c = scene.cameras.main; const _p = scene.input.activePointer;
+        return Math.atan2(_p.y + _c.scrollY - torso.y, _p.x + _c.scrollX - torso.x);
+    })();
     const maxRange = (weapon.range || 350) * (1 + (_perkState.fthRange||0));
     const _coneWidthMult = 1 + (_perkState.fthCone || 0);
     const coneSteps = 2;
@@ -262,10 +265,10 @@ function fireFTH(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
 function fireRAIL(scene, weapon, side, barrelDist, armOx, armOy, aimAngle) {
     // Railgun: instant hitscan beam piercing all enemies in line
     armOx = armOx ?? torso.x; armOy = armOy ?? torso.y;
-    const angle = aimAngle ?? Math.atan2(
-        scene.input.activePointer.worldY - torso.y,
-        scene.input.activePointer.worldX - torso.x
-    );
+    const angle = aimAngle ?? (() => {
+        const _c = scene.cameras.main; const _p = scene.input.activePointer;
+        return Math.atan2(_p.y + _c.scrollY - torso.y, _p.x + _c.scrollX - torso.x);
+    })();
     const ox = armOx + Math.cos(angle) * barrelDist;
     const oy = armOy + Math.sin(angle) * barrelDist;
     let rayLen = 900;
@@ -552,8 +555,10 @@ function updateSiphonBeam(scene) {
     // Shared geometry constants
     const _bSide = loadout.chassis === 'light' ? 12 : loadout.chassis === 'medium' ? 26 : 42;
     const _bd    = loadout.chassis === 'light' ? 25 : loadout.chassis === 'medium' ? 32 : 40;
-    const _bMx   = scene.input.activePointer.worldX;
-    const _bMy   = scene.input.activePointer.worldY;
+    const _sbCam = scene.cameras.main;
+    const _sbPtr = scene.input.activePointer;
+    const _bMx   = _sbPtr.x + _sbCam.scrollX;
+    const _bMy   = _sbPtr.y + _sbCam.scrollY;
 
     // Ensure per-arm graphics objects exist
     if (!_siphonGfxL) _siphonGfxL = scene.add.graphics().setDepth(50);
@@ -671,8 +676,10 @@ function _clearAllSiphonSlows() {
 
 function fireGL(scene, weapon, armOx, armOy, aimAngle) {
     armOx = armOx ?? torso.x; armOy = armOy ?? torso.y; aimAngle = aimAngle ?? torso.rotation;
-    const targetX = scene.input.activePointer.worldX;
-    const targetY = scene.input.activePointer.worldY;
+    const _glCam = scene.cameras.main;
+    const _glPtr = scene.input.activePointer;
+    const targetX = _glPtr.x + _glCam.scrollX;
+    const targetY = _glPtr.y + _glCam.scrollY;
     const distance = Phaser.Math.Distance.Between(armOx, armOy, targetX, targetY);
 
     const ball = scene.add.circle(armOx, armOy, 10, 0xffaa00)
