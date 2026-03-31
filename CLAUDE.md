@@ -20,7 +20,13 @@ Never compare against the display strings — always use the internal key string
 
 1. Read `OVERVIEW.md` before touching any code
 2. For any session touching `css/` or `js/menus.js`: also read `UI_CONVENTIONS.md`
-3. After making any changes, update `OVERVIEW.md` (current state)
+3. After making any changes, update `OVERVIEW.md` (current state).
+   **Keep OVERVIEW.md concise:** each file entry should be 2-5 lines
+   describing current state only. Do not include version-stamped
+   change history (e.g. "Added in v7.XX:", "Fixed in v7.XX:",
+   "Dead code removed in v7.XX:"). OVERVIEW.md is a living snapshot,
+   not a changelog. If a feature was added, describe it as if it
+   always existed. If something was removed, delete its mention.
 4. At the end of any session that changes code, increment `GAME_VERSION` in
    `js/constants.js`. This is the only place the version number lives. Do not
    update OVERVIEW.md or any other doc with a version number.
@@ -177,6 +183,7 @@ When renaming a perk key, only rename the state flag in `_perkState` if the flag
 13. Do not add cache-busting `?v=X.XX` query strings to `<link>` or `<script>` tags — they were deliberately removed in v5.87
 14. Do not add new perks with keys that don't match their `cat` prefix — see perk key naming convention above
 15. Do not call `generateItem` for shop contexts without passing `{ isShop: true }` — omitting it also restricts system items (shields/CPUs/legs/augs) by chassis in the shop. Note: weapon subType is always chassis-filtered regardless of `isShop` — this is intentional; the shop shows only weapons the current chassis can equip
+16. Do not add version-stamped change history to OVERVIEW.md — describe current state only, no "Added in vX.XX" or "Removed in vX.XX" annotations
 
 ---
 
