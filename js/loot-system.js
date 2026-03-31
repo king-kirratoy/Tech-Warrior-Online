@@ -664,6 +664,16 @@ const AFFIX_RANGES = {
     modEffPct:   { std:[2,5],   leg:[5,8],   label:'+{v}% Mod Duration'     },
 };
 
+// ── AFFIX RANGE OVERRIDES — per item-type range overrides ──────
+// When a stat key appears here for a specific item type, these ranges
+// take precedence over AFFIX_RANGES for that type only.
+// Format: { baseType: { statKey: { std:[min,max], leg:[min,max] } } }
+const AFFIX_RANGE_OVERRIDES = {
+    shield: {
+        shieldAbsorb: { std:[15,30], leg:[30,45] },
+    },
+};
+
 // ── ITEM NAMING SYSTEM ─────────────────────────────────────────
 // Tier prefix by rarity (derived from affix count).
 const TIER_PREFIX = {
@@ -782,7 +792,8 @@ function rollAffixes(baseType, rarity, excludeStatKey) {
         const idx = Math.floor(Math.random() * available.length);
         const key = available.splice(idx, 1)[0];
 
-        const rangeDef = AFFIX_RANGES[key];
+        const rangeDef = (AFFIX_RANGE_OVERRIDES[baseType] && AFFIX_RANGE_OVERRIDES[baseType][key])
+            || AFFIX_RANGES[key];
         if (!rangeDef) continue;
 
         const [lo, hi] = isLegendary ? rangeDef.leg : rangeDef.std;
