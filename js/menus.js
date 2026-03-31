@@ -1874,9 +1874,20 @@ function _renderWeaponBar() {
         h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:2px;">${label}</div>`;
         h += `<div style="font-size:12px;letter-spacing:1px;color:var(--sci-cyan);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${WEAPON_NAMES[key] || w.name}</div>`;
         if (w.dmg) {
-            const effDmg = Math.round((w.dmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100));
+            // Chassis trait: Dual-Wield (Light) — same weapon in both arms → −15% dmg, −15% fire rate
+            const _isDualWield = loadout.chassis === 'light' && loadout.L === loadout.R && loadout.L !== 'none';
+            const _dwDmgMult    = _isDualWield ? 0.85 : 1.0;
+            const _dwReloadMult = _isDualWield ? 1.15 : 1.0;
+            // Brace bonus: when the opposite arm is empty → +25% dmg, +15% fire rate (0.85× reload time)
+            const _otherArmKey  = label === 'L ARM' ? loadout.R : (label === 'R ARM' ? loadout.L : null);
+            const _isArm        = _otherArmKey !== null;
+            const _braceDmgMult = _isArm && (!_otherArmKey || _otherArmKey === 'none') ? 1.25 : 1.0;
+            const _braceMult    = _isArm && (!_otherArmKey || _otherArmKey === 'none') ? 0.85 : 1.0;
+            // Unique item effect: Dual Reload — 30% faster reload when both arms equipped
+            const _dualRldMult  = 1 - (typeof getDualReloadBonus === 'function' ? getDualReloadBonus() : 0);
+            const effDmg = Math.round((w.dmg + _gDmgFlat) * (_perkState.dmgMult||1) * (1 + _gDmgPct/100) * _dwDmgMult * _braceDmgMult);
             // _gRldPct = _gearState.fireRatePct (negative = faster); 1 + (−0.05) = 0.95 × fireRate = faster
-            const effRld = Math.round((w.fireRate||0) * (_perkState.reloadMult||1) * (1 + _gRldPct/100));
+            const effRld = Math.round((w.fireRate||0) * (_perkState.reloadMult||1) * (1 + _gRldPct/100) * _dwReloadMult * _dualRldMult * _braceMult);
             const effDps = effRld > 0 ? Math.round(effDmg / effRld * 1000) : 0;
             const effFr = effRld > 0 ? (1000 / effRld).toFixed(1) : '0.0';
             h += `<div style="font-size:9px;color:rgba(255,255,255,0.45);">DMG <span style="color:rgba(255,255,255,0.88);">${effDmg}</span> &middot; DPS <span style="color:rgba(255,255,255,0.88);">${effDps}</span> &middot; FR <span style="color:rgba(255,255,255,0.88);">${effFr}/s</span></div>`;
