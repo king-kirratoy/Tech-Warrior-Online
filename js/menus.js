@@ -399,6 +399,8 @@ function startGame(mode) {
         }
         // Reset to Light chassis starter loadout — warzone always starts fresh
         if (typeof resetLoadout === 'function') resetLoadout();
+        // Clear any Campaign skill tree allocations — warzone has no skill tree
+        if (typeof _skillTreeState !== 'undefined') _skillTreeState.allocated = {};
         startHangarGrid();
         // Ensure garage UI matches loadout state
         try { refreshGarage(); } catch(e) {}

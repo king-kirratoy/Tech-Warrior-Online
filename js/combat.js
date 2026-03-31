@@ -201,7 +201,7 @@ function fire(scene, side) {
         scene.time.delayedCall(50, _fireOnce);
     }
     // BULLET HELL keystone (Light): fires two rounds per SMG shot
-    if (wKey === 'smg' && typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_bullet_hell')) {
+    if (wKey === 'smg' && loadout.chassis === 'light' && typeof isKeystoneAllocated === 'function' && isKeystoneAllocated('ks_bullet_hell')) {
         scene.time.delayedCall(30, _fireOnce);
     }
 
