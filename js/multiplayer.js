@@ -2365,7 +2365,7 @@ function _pvpRenderHangar() {
     // ── Stats panel HTML (new order) ──
     let statsHtml = '';
     // Chassis name
-    statsHtml += statRow('CHASSIS', (chassis || '').toUpperCase(), 'warn');
+    statsHtml += statRow('CHASSIS', (chassis || '').toUpperCase(), '');
     // Chassis perks/traits
     if (chassisTraits.length) {
         const chCls = 'gold';
@@ -2378,7 +2378,7 @@ function _pvpRenderHangar() {
         _hpD('C ') + _hpN(ch.coreHP||0) + _hpD(' / A ') + _hpN(ch.armHP||0) + _hpD(' / L ') + _hpN(ch.legHP||0),
         '');
     statsHtml += statRow('TOTAL HP', totalHP + ' HP', 'green');
-    statsHtml += statRow('TOTAL SHIELD', shHp > 0 ? shStr : 'NONE', shHp > 0 ? '' : 'dim');
+    statsHtml += statRow('TOTAL SHIELD', shHp > 0 ? shStr : 'NONE', shHp > 0 ? 'warn' : 'dim');
     // Slot details — same order as dropdown list
     function pvpSlotBlock(label, slotType, key) {
         const name = (slotType === 'weapon') ? weaponName(key) : _pvpGetSlotLabel(
