@@ -1242,11 +1242,19 @@ function populateInventory() {
                             slot.classList.add('drag-invalid');
                         }
                     });
+                    // Highlight all backpack slots green (valid move targets)
+                    document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
+                        bp.classList.add('bp-drag-valid');
+                    });
                 });
                 cell.addEventListener('dragend', () => {
                     cell.classList.remove('dragging');
                     document.querySelectorAll('.mech-equip-slot').forEach(slot => {
                         slot.classList.remove('drag-valid', 'drag-invalid');
+                    });
+                    // Clear backpack slot highlights
+                    document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
+                        bp.classList.remove('bp-drag-valid');
                     });
                 });
                 // Backpack rearrange: accept drops from other backpack slots

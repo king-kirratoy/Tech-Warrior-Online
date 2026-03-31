@@ -348,6 +348,13 @@
 .bp-cell[draggable="true"] { cursor: grab; }
 .bp-cell[draggable="true"]:active { cursor: grabbing; }
 
+/* All backpack slots glow green while any backpack item is being dragged */
+.lo-slot.bp-drag-valid {
+  background-color: rgba(0,255,136,0.12) !important;
+  border-color: rgba(0,255,136,0.5) !important;
+  box-shadow: 0 0 8px rgba(0,255,136,0.25);
+}
+
 /* ============================================================
    ARM PICKER MODAL
    ============================================================ */
