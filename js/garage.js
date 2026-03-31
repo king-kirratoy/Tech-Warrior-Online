@@ -145,6 +145,38 @@ function _wzBuildColorDD() {
     });
 }
 
+function _wzToggleCrosshairColorDD() {
+    if (_openDD === 'XHCOL') { _wzCloseAllDD(); return; }
+    _wzCloseAllDD();
+    _openDD = 'XHCOL';
+    _wzBuildCrosshairColorDD();
+    document.getElementById('wz-dds-XHCOL')?.classList.add('dd-open');
+    document.getElementById('wz-ddl-XHCOL')?.classList.add('dd-list-open');
+}
+
+function _wzBuildCrosshairColorDD() {
+    const list = document.getElementById('wz-ddl-XHCOL');
+    if (!list) return;
+    list.innerHTML = '';
+    const curHex = (loadout.crosshairColor || 0xffffff).toString(16).padStart(6, '0').toLowerCase();
+    (typeof CROSSHAIR_COLOR_OPTIONS !== 'undefined' ? CROSSHAIR_COLOR_OPTIONS : []).forEach(opt => {
+        const div = document.createElement('div');
+        div.className = 'dd-option dd-color-opt' + (opt.key === curHex ? ' dd-active' : '');
+        div.innerHTML = `
+            <div class="do-header">
+                <span class="do-color-swatch" style="background:${opt.hex6};box-shadow:0 0 6px ${opt.hex6}55;"></span>
+                <span class="do-name">${opt.label}</span>
+            </div>`;
+        div.onclick = () => {
+            loadout.crosshairColor = opt.hex;
+            try { localStorage.setItem('tw_crosshair_color', opt.key); } catch(e) {}
+            _wzCloseAllDD();
+            refreshGarage();
+        };
+        list.appendChild(div);
+    });
+}
+
 // Legacy wrappers — some external files call these
 function closeAllDD() { _wzCloseAllDD(); }
 function toggleDD(slotId) { _wzToggleDD(slotId); }
@@ -197,6 +229,9 @@ function refreshGarage() {
     const hexStr   = loadout.color.toString(16).padStart(6, '0').toLowerCase();
     const colorOpt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : [])
         .find(o => o.key === hexStr) || { label: 'GREEN', hex6: '#00ff00' };
+    const xhHexStr  = (loadout.crosshairColor || 0xffffff).toString(16).padStart(6, '0').toLowerCase();
+    const xhColorOpt = (typeof CROSSHAIR_COLOR_OPTIONS !== 'undefined' ? CROSSHAIR_COLOR_OPTIONS : [])
+        .find(o => o.key === xhHexStr) || { label: 'WHITE', hex6: '#ffffff' };
     const ch     = typeof CHASSIS !== 'undefined' ? CHASSIS[chassis] : {};
     const lEmpty = !loadout.L || loadout.L === 'none';
     const rEmpty = !loadout.R || loadout.R === 'none';
@@ -395,6 +430,19 @@ function refreshGarage() {
                                 <span style="font-size:9px;opacity:0.5;">▼</span>
                             </div>
                             <div class="dd-list wz-dd-list" id="wz-ddl-COL"></div>
+                        </div>
+                    </div>
+                    <div class="mp-dd-row">
+                        <span class="mp-dd-label">Crosshair</span>
+                        <div class="pvp-dd-wrap" style="position:relative;flex:1;">
+                            <div class="mp-dd-selected wz-dd-selected" id="wz-dds-XHCOL" onclick="_wzToggleCrosshairColorDD()">
+                                <span style="display:flex;align-items:center;gap:8px;">
+                                    <span style="width:10px;height:10px;background:${xhColorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
+                                    ${xhColorOpt.label}
+                                </span>
+                                <span style="font-size:9px;opacity:0.5;">▼</span>
+                            </div>
+                            <div class="dd-list wz-dd-list" id="wz-ddl-XHCOL"></div>
                         </div>
                     </div>
                     ${ddRow('M', 'Cpu')}

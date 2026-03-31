@@ -2394,6 +2394,7 @@ function saveCampaignProgress() {
             round: (typeof _round !== 'undefined') ? _round : 1,
             chassis: loadout.chassis,
             color: loadout.color,
+            crosshairColor: loadout.crosshairColor,
             L: loadout.L,
             R: loadout.R,
             cpu: loadout.cpu,

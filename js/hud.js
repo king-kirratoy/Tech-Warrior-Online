@@ -369,7 +369,7 @@ function updateEnemyDoll(e) {
 function drawCrosshair(g) {
     const size = 14;
     const len  = 6;
-    const col  = 0x00ffff; // matches shield bar / sh-text color in HUD
+    const col  = (typeof loadout !== 'undefined' && loadout.crosshairColor) ? loadout.crosshairColor : 0x00ffff;
 
     // Outer soft bloom
     g.lineStyle(5, col, 0.18);
