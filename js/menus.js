@@ -1113,7 +1113,7 @@ function populateInventory() {
             const bgColor = rd ? rd.colorStr + '14' : '';
             return `<div class="mech-equip-slot lo-slot" style="border-color:${borderColor};${bgColor ? `background-color:${bgColor};` : ''}"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
-                ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
+                ondragstart="_onEquipDragStart(event)" ondragend="_onEquipDragEnd(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
                 onmousedown="_hideSlotHover()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
                 ${item && item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
                 <div class="lo-slot-lbl">${label}</div>
@@ -1623,7 +1623,11 @@ function _renderHullBars() {
         html += _hpRow('R.Arm', baseHP.rArm,  baseHP.rArm);
         html += _hpRow('Legs',  baseHP.legs,  baseHP.legs);
         const totalBase  = Object.values(baseHP).reduce((s,v)=>s+v,0);
-        const baseShield = (SHIELD_SYSTEMS[loadout?.shld]?.maxShield||0) + (_gearState?.shieldHP||0);
+        // In campaign, a loot shield item sets both _equipped.shield AND loadout.shld (via systemKey).
+        // Only count the system maxShield when no loot shield item is equipped — otherwise the
+        // loot item's shieldHP (already in _gearState) would be added to the system base, doubling it.
+        const _shldBase  = (typeof _equipped !== 'undefined' && _equipped?.shield) ? 0 : (SHIELD_SYSTEMS[loadout?.shld]?.maxShield||0);
+        const baseShield = _shldBase + (_gearState?.shieldHP||0);
         totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total HP</span><span class="lo-stat-value" style="color:#00ff88">${totalBase} / ${totalBase}</span></div>`;
         totalsHtml += `<div class="lo-stat-row"><span class="lo-stat-label">Total Shield</span><span class="lo-stat-value" style="color:#cc88ff">${baseShield} / ${baseShield}</span></div>`;
     }
