@@ -176,6 +176,9 @@ From `RARITY_DEFS` in `js/loot-system.js`. Apply inline via `item.rarity`'s `col
 | Epic | `#aa44ff` | 8 |
 | Legendary | `#ffd700` | 2 |
 
+### Rarity Background Tint on Occupied Slots
+All item slots — equipped gear slots, backpack cells, and shop buy/sell slots — apply a rarity-colored background fill when an item is present. Use `rd.colorStr + '26'` (8-digit hex, ~15% alpha) as the inline `background-color`. Empty slots receive no background tint. The border (`colorStr + '44'` or `+ '55'`) remains fully opaque relative to the tint and sits visually on top of it. Do not use `rgba()` for this tint; append the 2-character hex alpha directly to `colorStr` for consistency.
+
 ### Stat Diff Colors
 Used in comparison hover cards and gear bonus panels:
 - Improvement (higher is better, positive number): `#00ff88` (green)

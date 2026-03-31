@@ -1110,7 +1110,8 @@ function populateInventory() {
             const nameColor = rd ? rd.colorStr : UI_COLORS.text35;
             const _dn = item ? ((item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.shortName || item.name) : '';
             const borderColor = rd ? rd.colorStr + '55' : UI_COLORS.gold20;
-            return `<div class="mech-equip-slot lo-slot" style="border-color:${borderColor};"
+            const bgColor = rd ? rd.colorStr + '26' : '';
+            return `<div class="mech-equip-slot lo-slot" style="border-color:${borderColor};${bgColor ? `background-color:${bgColor};` : ''}"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
                 ondragstart="_onEquipDragStart(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
                 onmousedown="_hideSlotHover()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
@@ -1195,6 +1196,7 @@ function populateInventory() {
                     <div class="lo-slot-name" style="color:${rd.colorStr};">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.shortName || item.name}</div>
                 `;
                 cell.style.borderColor = item.isUnique ? 'rgba(255,215,0,0.4)' : rd.colorStr + '44';
+                cell.style.backgroundColor = rd.colorStr + '26';
                 // Apply selected state if this item is currently selected
                 if (_invSelectedSource === 'backpack' && _invSelectedKey === i) {
                     cell.style.borderColor = rd.colorStr + 'ee';
