@@ -1519,15 +1519,17 @@ function showShop() {
     overlay.style.display = 'flex';
 }
 
-/** Select a buy item (highlight, show confirm panel). Toggle on second click. */
+/** Select a buy item (highlight, show confirm panel). Toggle on second click. Dismisses any open sell panel. */
 function _shopSelectBuy(idx) {
     _selectedShopIdx = (_selectedShopIdx === idx) ? null : idx;
+    _selectedSellIdx = null;
     showShop();
 }
 
-/** Select a sell item (highlight, show confirm panel). Toggle on second click. */
+/** Select a sell item (highlight, show confirm panel). Toggle on second click. Dismisses any open buy panel. */
 function _shopSelectSell(idx) {
     _selectedSellIdx = (_selectedSellIdx === idx) ? null : idx;
+    _selectedShopIdx = null;
     showShop();
 }
 

@@ -1155,7 +1155,31 @@
   flex-direction: column;
   flex-shrink: 0;
   overflow: visible;
-  width: 380px;
+  width: 220px;
+}
+
+/* --- Middle column (loadout dropdowns) --- */
+.mp-mid {
+  background: #080b0e;
+  border-right: 1px solid var(--sci-line);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow: visible;
+}
+
+.mp-mid-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 20px;
+}
+
+/* --- Colour + Crosshair side-by-side pair --- */
+.mp-color-pair {
+  display: flex;
+  gap: 6px;
 }
 
 /* Hangar dropdown list — overrides .dd-list clipping inside .mp-left */
@@ -1563,6 +1587,7 @@
 .shop-compare-diff.neu { color: rgba(255,255,255,0.45); }
 
 .shop-bottom-bar {
+  align-items: flex-start;
   border-top: 1px solid var(--sci-line);
   display: flex;
   gap: 8px;

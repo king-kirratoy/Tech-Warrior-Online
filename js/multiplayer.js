@@ -2276,6 +2276,38 @@ function _pvpToggleColorDD() {
     document.getElementById('pvp-ddl-COL')?.classList.add('dd-list-open');
 }
 
+function _pvpBuildCrosshairColorDD() {
+    const list = document.getElementById('pvp-ddl-XHCOL');
+    if (!list) return;
+    list.innerHTML = '';
+    const curHex = (loadout.crosshairColor || 0xffffff).toString(16).padStart(6, '0').toLowerCase();
+    (typeof CROSSHAIR_COLOR_OPTIONS !== 'undefined' ? CROSSHAIR_COLOR_OPTIONS : []).forEach(opt => {
+        const div = document.createElement('div');
+        div.className = 'dd-option dd-color-opt' + (opt.key === curHex ? ' dd-active' : '');
+        div.innerHTML = `
+            <div class="do-header">
+                <span class="do-color-swatch" style="background:${opt.hex6};box-shadow:0 0 6px ${opt.hex6}55;"></span>
+                <span class="do-name">${opt.label}</span>
+            </div>`;
+        div.onclick = () => {
+            loadout.crosshairColor = opt.hex;
+            try { localStorage.setItem('tw_crosshair_color', opt.key); } catch(e) {}
+            _pvpCloseAllDD();
+            _pvpRenderHangar();
+        };
+        list.appendChild(div);
+    });
+}
+
+function _pvpToggleCrosshairColorDD() {
+    if (_pvpOpenDD === 'XHCOL') { _pvpCloseAllDD(); return; }
+    _pvpCloseAllDD();
+    _pvpOpenDD = 'XHCOL';
+    _pvpBuildCrosshairColorDD();
+    document.getElementById('pvp-dds-XHCOL')?.classList.add('dd-open');
+    document.getElementById('pvp-ddl-XHCOL')?.classList.add('dd-list-open');
+}
+
 function _pvpRenderHangar() {
     const el = document.getElementById('pvp-hangar');
     if (!el) return;
@@ -2284,6 +2316,9 @@ function _pvpRenderHangar() {
     const hexStr   = loadout.color.toString(16).padStart(6, '0');
     const colorOpt = (typeof COLOR_OPTIONS !== 'undefined' ? COLOR_OPTIONS : [])
         .find(o => o.key === hexStr) || { label: 'GREEN', hex6: '#00ff00' };
+    const xhHexStr   = (loadout.crosshairColor || 0xffffff).toString(16).padStart(6, '0').toLowerCase();
+    const xhColorOpt = (typeof CROSSHAIR_COLOR_OPTIONS !== 'undefined' ? CROSSHAIR_COLOR_OPTIONS : [])
+        .find(o => o.key === xhHexStr) || { label: 'WHITE', hex6: '#ffffff' };
 
     const ch     = typeof CHASSIS !== 'undefined' ? CHASSIS[chassis] : {};
     const lEmpty = !loadout.L || loadout.L === 'none';
@@ -2465,7 +2500,7 @@ function _pvpRenderHangar() {
         <!-- Body -->
         <div class="mp-body">
 
-            <!-- Left column: preview + controls -->
+            <!-- Left column: preview + chassis + colour/crosshair -->
             <div class="mp-left">
 
                 <!-- Mech preview -->
@@ -2483,7 +2518,7 @@ function _pvpRenderHangar() {
                     </div>
                 </div>
 
-                <!-- Dropdowns section -->
+                <!-- Chassis + colour/crosshair -->
                 <div class="mp-left-controls">
                     <div class="mp-sec-label">Chassis</div>
                     <div class="mp-chassis-row">
@@ -2492,20 +2527,37 @@ function _pvpRenderHangar() {
                         <button class="mp-chassis-btn${chassis === 'heavy'  ? ' active' : ''}" onclick="_pvpSetChassis('heavy')">Heavy</button>
                     </div>
 
-                    <div class="mp-sec-label">Loadout</div>
-                    <div class="mp-dd-row">
-                        <span class="mp-dd-label">Colour</span>
+                    <!-- Colour + Crosshair side by side, no external labels -->
+                    <div class="mp-color-pair">
                         <div class="pvp-dd-wrap" style="position:relative;flex:1;">
                             <div class="mp-dd-selected pvp-dd-selected" id="pvp-dds-COL" onclick="_pvpToggleColorDD()">
-                                <span style="display:flex;align-items:center;gap:8px;">
+                                <span style="display:flex;align-items:center;gap:6px;">
                                     <span style="width:10px;height:10px;background:${colorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
-                                    ${colorOpt.label}
+                                    CHASSIS
                                 </span>
                                 <span style="font-size:9px;opacity:0.5;">▼</span>
                             </div>
                             <div class="dd-list pvp-dd-list" id="pvp-ddl-COL"></div>
                         </div>
+                        <div class="pvp-dd-wrap" style="position:relative;flex:1;">
+                            <div class="mp-dd-selected pvp-dd-selected" id="pvp-dds-XHCOL" onclick="_pvpToggleCrosshairColorDD()">
+                                <span style="display:flex;align-items:center;gap:6px;">
+                                    <span style="width:10px;height:10px;background:${xhColorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
+                                    CROSSHAIR
+                                </span>
+                                <span style="font-size:9px;opacity:0.5;">▼</span>
+                            </div>
+                            <div class="dd-list pvp-dd-list" id="pvp-ddl-XHCOL"></div>
+                        </div>
                     </div>
+                </div>
+
+            </div><!-- /mp-left -->
+
+            <!-- Middle column: loadout dropdowns -->
+            <div class="mp-mid">
+                <div class="mp-stats-header">Loadout</div>
+                <div class="mp-mid-controls">
                     ${ddRow('M', 'Cpu')}
                     ${ddRow('A', 'Augment')}
                     ${ddRow('L', 'L.Arm')}
@@ -2513,8 +2565,7 @@ function _pvpRenderHangar() {
                     ${ddRow('G', 'Legs')}
                     ${ddRow('S', 'Shield')}
                 </div>
-
-            </div><!-- /mp-left -->
+            </div>
 
             <!-- Right column: full build stats -->
             <div class="mp-right">
