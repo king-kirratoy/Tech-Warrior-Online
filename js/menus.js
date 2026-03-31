@@ -1839,7 +1839,7 @@ function _loRefreshColorSwatch() {
     const swatchEl = document.getElementById('lo-col-swatch');
     const labelEl  = document.getElementById('lo-col-label');
     if (swatchEl) swatchEl.style.background = opt ? opt.hex6 : '#888';
-    if (labelEl)  labelEl.textContent = opt ? opt.label : '—';
+    if (labelEl)  labelEl.textContent = 'CHASSIS';
 }
 
 // ── Loadout top bar crosshair color picker ────────────────────────
@@ -1903,7 +1903,7 @@ function _loRefreshXhColorSwatch() {
     const swatchEl = document.getElementById('lo-xhcol-swatch');
     const labelEl  = document.getElementById('lo-xhcol-label');
     if (swatchEl) swatchEl.style.background = opt ? opt.hex6 : '#888';
-    if (labelEl)  labelEl.textContent = opt ? opt.label : '—';
+    if (labelEl)  labelEl.textContent = 'CROSSHAIR';
 }
 
 /** Populates #lo-traits-bar with chassis traits and #lo-weapon-bar with weapon stats. */

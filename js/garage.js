@@ -425,7 +425,7 @@ function refreshGarage() {
                             <div class="mp-dd-selected wz-dd-selected" id="wz-dds-COL" onclick="_wzToggleColorDD()">
                                 <span style="display:flex;align-items:center;gap:8px;">
                                     <span style="width:10px;height:10px;background:${colorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
-                                    ${colorOpt.label}
+                                    CHASSIS
                                 </span>
                                 <span style="font-size:9px;opacity:0.5;">▼</span>
                             </div>
@@ -438,7 +438,7 @@ function refreshGarage() {
                             <div class="mp-dd-selected wz-dd-selected" id="wz-dds-XHCOL" onclick="_wzToggleCrosshairColorDD()">
                                 <span style="display:flex;align-items:center;gap:8px;">
                                     <span style="width:10px;height:10px;background:${xhColorOpt.hex6};display:inline-block;flex-shrink:0;"></span>
-                                    ${xhColorOpt.label}
+                                    CROSSHAIR
                                 </span>
                                 <span style="font-size:9px;opacity:0.5;">▼</span>
                             </div>
