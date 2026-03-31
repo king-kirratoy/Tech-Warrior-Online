@@ -26,7 +26,10 @@ function updateHUD() {
     const _sRow = document.getElementById('slot-S');
     const _sTxt = document.getElementById('txt-S');
     const _sHas  = loadout.shld && loadout.shld !== 'none';
-    const _sName = _sHas ? (_hudName(loadout.shld) || loadout.shld.toUpperCase()) : 'NONE';
+    const _equippedShieldItem = (typeof _equipped !== 'undefined') ? _equipped?.shield : null;
+    const _sName = _equippedShieldItem
+        ? _equippedShieldItem.name.toUpperCase()
+        : (_sHas ? (_hudName(loadout.shld) || loadout.shld.toUpperCase()) : 'NONE');
     if (_sTxt) _sTxt.innerText = _sName;
     if (_sRow) _sRow.style.opacity = _sHas ? '1' : '0.4';
 
