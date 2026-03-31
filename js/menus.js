@@ -1725,8 +1725,8 @@ function _renderGearBonusesPanel() {
             const _dualWield = lFilled && rFilled && loadout.L === loadout.R;
             const _oneArm = (lFilled ? 1 : 0) + (rFilled ? 1 : 0) === 1;
             if (_dualWield) {
-                _traitRows.push(_traitStatRow('Dual-Wield Damage', '-15%', 'neg'));
-                _traitRows.push(_traitStatRow('Dual-Wield Fire Rate', '-15%', 'neg'));
+                _traitRows.push(`<div class="lo-bonus-row"><span class="lo-bonus-lbl">DAMAGE</span><span class="lo-bonus-val neg" style="color:#ff4d6a;">-15%</span></div>`);
+                _traitRows.push(`<div class="lo-bonus-row"><span class="lo-bonus-lbl">FIRE RATE</span><span class="lo-bonus-val neg" style="color:#ff4d6a;">-15%</span></div>`);
             }
             _traitRows.push(_traitStatRow('Move Speed % < 50% HP', '+15%', 'pos'));
             if (_oneArm) {
