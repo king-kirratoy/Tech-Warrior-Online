@@ -1,5 +1,5 @@
 // ═══════════ VERSION ═══════════
-const GAME_VERSION = 'v7.64';
+const GAME_VERSION = 'v7.65';
 
 // ═══════════ CHASSIS ═══════════
 
@@ -517,5 +517,16 @@ const COLOR_OPTIONS = [
     { key:'00ffcc', hex:0x00ffcc, label:'TEAL',          hex6:'#00ffcc' },
     { key:'ff44cc', hex:0xff44cc, label:'PINK',          hex6:'#ff44cc' },
     { key:'ffcc00', hex:0xffcc00, label:'GOLD',          hex6:'#ffcc00' },
+];
+
+const CROSSHAIR_COLOR_OPTIONS = [
+    { key:'ffffff', hex:0xffffff, label:'WHITE',    hex6:'#ffffff' },
+    { key:'ff3300', hex:0xff3300, label:'RED',      hex6:'#ff3300' },
+    { key:'00ff88', hex:0x00ff88, label:'GREEN',    hex6:'#00ff88' },
+    { key:'00ffff', hex:0x00ffff, label:'CYAN',     hex6:'#00ffff' },
+    { key:'ffff00', hex:0xffff00, label:'YELLOW',   hex6:'#ffff00' },
+    { key:'ff8800', hex:0xff8800, label:'ORANGE',   hex6:'#ff8800' },
+    { key:'ff44cc', hex:0xff44cc, label:'MAGENTA',  hex6:'#ff44cc' },
+    { key:'4488ff', hex:0x4488ff, label:'BLUE',     hex6:'#4488ff' },
 ];
 

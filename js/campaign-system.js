@@ -1762,6 +1762,7 @@ async function saveToCloud() {
             round: (typeof _round !== 'undefined') ? _round : 1,
             chassis: loadout.chassis,
             color: loadout.color,
+            crosshairColor: loadout.crosshairColor,
             L: loadout.L, R: loadout.R,
             cpu: loadout.cpu, aug: loadout.aug,
             leg: loadout.leg, shld: loadout.shld,
@@ -1850,6 +1851,7 @@ function _restoreFromCloudData(data) {
         const cp = data.campaign_progress;
         loadout.chassis = cp.chassis || 'light';
         loadout.color = cp.color || 0x00ff00;
+        loadout.crosshairColor = cp.crosshairColor || 0xffffff;
         loadout.L = cp.L || 'smg';
         loadout.R = cp.R || 'none';
         loadout.cpu = cp.cpu || 'none';
@@ -1928,6 +1930,7 @@ async function _loadCampaignData() {
         if (saved) {
             loadout.chassis = saved.chassis || 'light';
             loadout.color   = saved.color   || 0x00ff00;
+            loadout.crosshairColor = saved.crosshairColor || 0xffffff;
             loadout.L       = saved.L       || 'smg';
             loadout.R       = saved.R       || 'none';
             loadout.cpu     = saved.cpu     || 'none';

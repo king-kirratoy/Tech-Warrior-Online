@@ -50,7 +50,8 @@ let loadout = {
     aug: 'none',
     leg: 'none',
     shld: 'none',
-    color: 0x00ff00
+    color: 0x00ff00,
+    crosshairColor: 0xffffff,
 };
 
 // Saved loadout snapshots taken at deploy time; used to restore on respawn.

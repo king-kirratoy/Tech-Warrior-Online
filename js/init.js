@@ -277,6 +277,15 @@ window.onload = () => {
   // Each run starts fresh — no carried-over gear.
   if (typeof resetInventory === 'function') resetInventory();
 
+  // Restore crosshair color preference from localStorage.
+  try {
+    const savedXhColor = localStorage.getItem('tw_crosshair_color');
+    if (savedXhColor && typeof CROSSHAIR_COLOR_OPTIONS !== 'undefined') {
+      const match = CROSSHAIR_COLOR_OPTIONS.find(o => o.key === savedXhColor);
+      if (match) loadout.crosshairColor = match.hex;
+    }
+  } catch(e) {}
+
   startMenuGrid();
   refreshGarage();
   updateHUD();
