@@ -1145,7 +1145,6 @@ function _shopRenderCategory(catKey) {
                 <div class="lo-slot-lbl">${slotLbl(item)}</div>
                 <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
                 ${priceTag}
-                <div style="font-size:7px;letter-spacing:1px;color:var(--sci-txt3,rgba(255,255,255,0.18));margin-top:3px;">RIGHT-CLICK TO BUY</div>
             </div>`;
         } else {
             h += '<div class="lo-slot empty"></div>';
@@ -1374,7 +1373,6 @@ function showShop() {
             <div class="lo-slot-lbl">${slotLbl(item)}</div>
             <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
             ${priceTag}
-            <div style="font-size:7px;letter-spacing:1px;color:var(--sci-txt3,rgba(255,255,255,0.18));margin-top:3px;">RIGHT-CLICK TO BUY</div>
         </div>`;
     }
 
@@ -1393,7 +1391,6 @@ function showShop() {
             <div class="lo-slot-lbl">${slotLbl(item)}</div>
             <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
             <div style="font-size:8px;color:#00ff88;margin-top:2px;">⬡ ${sellPrice}</div>
-            <div style="font-size:7px;letter-spacing:1px;color:var(--sci-txt3,rgba(255,255,255,0.18));margin-top:2px;">RIGHT-CLICK TO SELL</div>
         </div>`;
     }
 
