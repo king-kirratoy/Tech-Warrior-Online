@@ -307,8 +307,6 @@
 
 .mech-equip-slot.drag-over {
   background: rgba(0,255,100,0.08);
-  border-color: #00ff66;
-  box-shadow: 0 0 14px rgba(0,255,100,0.4);
 }
 
 .mech-equip-slot.drag-hover-valid {
