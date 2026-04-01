@@ -316,7 +316,7 @@
 }
 
 .mech-equip-slot.drag-hover-invalid {
-  background-color: rgba(120,30,30,0.12) !important;
+  background-color: rgba(255,77,106,0.20) !important;
 }
 
 .mech-equip-slot .slot-label {

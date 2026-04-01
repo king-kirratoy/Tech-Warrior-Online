@@ -1056,6 +1056,8 @@
 
 .lo-slot.empty:hover { border-color: var(--sci-line); }
 
+.lo-slot > * { pointer-events: none; }
+
 .lo-slot .lo-slot-lbl {
   color: rgba(255,255,255,0.55);
   font-family: 'Courier New', monospace;
