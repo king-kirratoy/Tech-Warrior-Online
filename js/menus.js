@@ -1161,11 +1161,10 @@ function populateInventory() {
     if (bpEl) {
         bpEl.innerHTML = '';
         // Make backpack a drop target for unequipping
-        bpEl.ondragover = (ev) => { ev.preventDefault(); bpEl.style.background = UI_COLORS.green04; };
-        bpEl.ondragleave = () => { bpEl.style.background = ''; };
+        bpEl.ondragover = (ev) => { ev.preventDefault(); };
+        bpEl.ondragleave = () => {};
         bpEl.ondrop = (ev) => {
             ev.preventDefault();
-            bpEl.style.background = '';
             const data = ev.dataTransfer.getData('text/plain');
             if (data.startsWith('equipped:')) {
                 const slotKey = data.split(':')[1];
