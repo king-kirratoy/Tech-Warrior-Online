@@ -2033,6 +2033,7 @@ function _buildSingleCardHtml(item, slotLabel) {
     if (slotLabel) html += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${slotLabel}</div>`;
     html += `<div style="font-size:12px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${(item.baseType === 'weapon' ? WEAPON_NAMES[item.subType] : null) || item.name}</div>`;
     html += `<div style="font-size:8px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||item.rarity}${item.iLvl ? ' · iLvl '+item.iLvl : ''}</div>`;
+    html += `<div style="border-top:1px solid rgba(255,255,255,0.15);margin-bottom:6px;"></div>`;
     const hasStats = item.baseStats && Object.values(item.baseStats).some(v => v);
     const hasAffixes = item.affixes && item.affixes.length > 0;
     if (hasStats) {
@@ -2100,6 +2101,7 @@ function _buildHoverHtml(item, slotLabel, compareItem, leftLabel) {
         if (colSlotLabel) h += `<div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-bottom:3px;">${colSlotLabel}</div>`;
         h += `<div style="font-size:13px;letter-spacing:1px;color:${rd.colorStr};margin-bottom:4px;">${(colItem.baseType === 'weapon' ? WEAPON_NAMES[colItem.subType] : null) || colItem.name}</div>`;
         h += `<div style="font-size:9px;letter-spacing:1px;color:${rd.colorStr};opacity:0.6;margin-bottom:6px;">${rd.label||colItem.rarity}${colItem.iLvl ? ' · iLvl '+colItem.iLvl : ''}</div>`;
+        h += `<div style="border-top:1px solid rgba(255,255,255,0.15);margin-bottom:6px;"></div>`;
         const hasStats = colItem.baseStats && Object.values(colItem.baseStats).some(v => v);
         const hasAffixes = colItem.affixes && colItem.affixes.length > 0;
         if (hasStats) {
