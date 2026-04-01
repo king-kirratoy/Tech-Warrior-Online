@@ -312,15 +312,15 @@
 }
 
 .mech-equip-slot.drag-invalid {
-  background: rgba(255,77,106,0.15) !important;
-  border-color: rgba(255,77,106,0.5) !important;
-  box-shadow: 0 0 8px rgba(255,77,106,0.25);
+  background: rgba(80,0,0,0.3) !important;
+  border-color: rgba(140,0,0,0.5) !important;
+  box-shadow: 0 0 8px rgba(80,0,0,0.2);
 }
 
 .mech-equip-slot.drag-valid {
-  background-color: rgba(0,255,136,0.12) !important;
-  border-color: rgba(0,255,136,0.5) !important;
-  box-shadow: 0 0 8px rgba(0,255,136,0.25);
+  background-color: rgba(0,80,0,0.3) !important;
+  border-color: rgba(0,140,0,0.5) !important;
+  box-shadow: 0 0 8px rgba(0,80,0,0.2);
 }
 
 .mech-equip-slot .slot-label {
@@ -350,11 +350,11 @@
 .bp-cell[draggable="true"] { cursor: grab; }
 .bp-cell[draggable="true"]:active { cursor: grabbing; }
 
-/* All backpack slots glow green while any backpack item is being dragged */
+/* All backpack slots glow dark green while any item is being dragged */
 .lo-slot.bp-drag-valid {
-  background-color: rgba(0,255,136,0.12) !important;
-  border-color: rgba(0,255,136,0.5) !important;
-  box-shadow: 0 0 8px rgba(0,255,136,0.25);
+  background-color: rgba(0,80,0,0.3) !important;
+  border-color: rgba(0,140,0,0.5) !important;
+  box-shadow: 0 0 8px rgba(0,80,0,0.2);
 }
 
 /* ============================================================
