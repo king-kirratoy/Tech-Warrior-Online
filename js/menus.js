@@ -1113,7 +1113,7 @@ function populateInventory() {
             const bgColor = rd ? rd.colorStr + '14' : '';
             return `<div class="mech-equip-slot lo-slot" style="border-color:${borderColor};${bgColor ? `background-color:${bgColor};` : ''}"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
-                ondragstart="_onEquipDragStart(event)" ondragend="_onEquipDragEnd(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
+                ondragstart="_onEquipDragStart(event)" ondragend="_onEquipDragEnd(event)" ondragenter="_onSlotDragEnter(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
                 onmousedown="_onEquipMouseDown(event)" onmouseup="_onEquipMouseUp()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
                 ${item && item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
                 <div class="lo-slot-lbl">${label}</div>
@@ -1228,38 +1228,25 @@ function populateInventory() {
                     populateLoadout();
                 });
                 // Drag events
-                const _applyBpHighlights = () => {
-                    const validSlots = _getDragValidSlots(item);
-                    document.querySelectorAll('.mech-equip-slot').forEach(slot => {
-                        if (validSlots.includes(slot.dataset.slot)) {
-                            slot.classList.add('drag-valid');
-                        } else {
-                            slot.classList.add('drag-invalid');
-                        }
-                    });
-                    document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
-                        bp.classList.add('bp-drag-valid');
-                    });
-                };
                 const _clearBpHighlights = () => {
+                    window._dragActiveItem = null;
                     document.querySelectorAll('.mech-equip-slot').forEach(slot => {
-                        slot.classList.remove('drag-valid', 'drag-invalid');
+                        slot.classList.remove('drag-hover-valid', 'drag-hover-invalid');
                     });
                     document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
-                        bp.classList.remove('bp-drag-valid');
+                        bp.classList.remove('drag-hover-valid');
                     });
                 };
                 cell.addEventListener('mousedown', () => {
                     _hideSlotHover();
-                    _applyBpHighlights();
+                    window._dragActiveItem = item;
                 });
                 cell.addEventListener('mouseup', () => { _clearBpHighlights(); });
                 cell.addEventListener('dragstart', (ev) => {
                     _hideSlotHover();
                     ev.dataTransfer.setData('text/plain', 'backpack:' + i);
                     cell.classList.add('dragging');
-                    // Highlights already applied by mousedown; reapply in case mousedown was missed
-                    _applyBpHighlights();
+                    window._dragActiveItem = item;
                 });
                 cell.addEventListener('dragend', () => {
                     cell.classList.remove('dragging');
@@ -1271,11 +1258,12 @@ function populateInventory() {
                     ev.stopPropagation();
                     cell.classList.add('drag-over');
                 });
-                cell.addEventListener('dragleave', () => { cell.classList.remove('drag-over'); });
+                cell.addEventListener('dragenter', () => { if (window._dragActiveItem) cell.classList.add('drag-hover-valid'); });
+                cell.addEventListener('dragleave', () => { cell.classList.remove('drag-over', 'drag-hover-valid'); });
                 cell.addEventListener('drop', (ev) => {
                     ev.preventDefault();
                     ev.stopPropagation();
-                    cell.classList.remove('drag-over');
+                    cell.classList.remove('drag-over', 'drag-hover-valid');
                     _onBpCellDrop(ev, i);
                 });
                 bpEl.appendChild(cell);
@@ -1288,11 +1276,12 @@ function populateInventory() {
                     ev.stopPropagation();
                     empty.classList.add('drag-over');
                 });
-                empty.addEventListener('dragleave', () => { empty.classList.remove('drag-over'); });
+                empty.addEventListener('dragenter', () => { if (window._dragActiveItem) empty.classList.add('drag-hover-valid'); });
+                empty.addEventListener('dragleave', () => { empty.classList.remove('drag-over', 'drag-hover-valid'); });
                 empty.addEventListener('drop', (ev) => {
                     ev.preventDefault();
                     ev.stopPropagation();
-                    empty.classList.remove('drag-over');
+                    empty.classList.remove('drag-over', 'drag-hover-valid');
                     _onBpCellDrop(ev, i);
                 });
                 bpEl.appendChild(empty);

@@ -321,34 +321,20 @@ function handlePlayerFiring(scene) {
 
 // ── Drag-and-drop handlers for equip slots ──────────────────────
 
-function _applyEquipDragHighlights(item) {
-    if (typeof _getDragValidSlots === 'function') {
-        const validSlots = _getDragValidSlots(item);
-        document.querySelectorAll('.mech-equip-slot').forEach(slot => {
-            if (validSlots.includes(slot.dataset.slot)) {
-                slot.classList.add('drag-valid');
-            } else {
-                slot.classList.add('drag-invalid');
-            }
-        });
-    }
-    document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
-        bp.classList.add('bp-drag-valid');
-    });
-}
 function _clearEquipDragHighlights() {
+    window._dragActiveItem = null;
     document.querySelectorAll('.mech-equip-slot').forEach(slot => {
-        slot.classList.remove('drag-valid', 'drag-invalid');
+        slot.classList.remove('drag-hover-valid', 'drag-hover-invalid');
     });
     document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
-        bp.classList.remove('bp-drag-valid');
+        bp.classList.remove('drag-hover-valid');
     });
 }
 function _onEquipMouseDown(ev) {
     if (typeof _hideSlotHover === 'function') _hideSlotHover();
     const slotKey = ev.currentTarget.dataset.slot;
     if (!_equipped[slotKey]) return;
-    _applyEquipDragHighlights(_equipped[slotKey]);
+    window._dragActiveItem = _equipped[slotKey];
 }
 function _onEquipMouseUp() {
     _clearEquipDragHighlights();
@@ -357,22 +343,35 @@ function _onEquipDragStart(ev) {
     const slotKey = ev.currentTarget.dataset.slot;
     if (!_equipped[slotKey]) { ev.preventDefault(); return; }
     ev.dataTransfer.setData('text/plain', 'equipped:' + slotKey);
-    // Highlights already applied by _onEquipMouseDown; reapply in case mousedown was missed
-    _applyEquipDragHighlights(_equipped[slotKey]);
+    window._dragActiveItem = _equipped[slotKey];
 }
 function _onEquipDragEnd() {
     _clearEquipDragHighlights();
+}
+function _onSlotDragEnter(ev) {
+    const item = window._dragActiveItem;
+    if (!item) return;
+    const slot = ev.currentTarget;
+    slot.classList.remove('drag-hover-valid', 'drag-hover-invalid');
+    if (typeof _getDragValidSlots === 'function') {
+        const validSlots = _getDragValidSlots(item);
+        if (validSlots.includes(slot.dataset.slot)) {
+            slot.classList.add('drag-hover-valid');
+        } else {
+            slot.classList.add('drag-hover-invalid');
+        }
+    }
 }
 function _onSlotDragOver(ev) {
     ev.preventDefault();
     ev.currentTarget.classList.add('drag-over');
 }
 function _onSlotDragLeave(ev) {
-    ev.currentTarget.classList.remove('drag-over');
+    ev.currentTarget.classList.remove('drag-over', 'drag-hover-valid', 'drag-hover-invalid');
 }
 function _onSlotDrop(ev) {
     ev.preventDefault();
-    ev.currentTarget.classList.remove('drag-over');
+    ev.currentTarget.classList.remove('drag-over', 'drag-hover-valid', 'drag-hover-invalid');
     const slotKey = ev.currentTarget.dataset.slot;
     const data = ev.dataTransfer.getData('text/plain');
     if (data.startsWith('backpack:')) {
