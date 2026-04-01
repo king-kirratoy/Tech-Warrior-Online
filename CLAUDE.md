@@ -127,10 +127,10 @@ This is **not** dual-wield. Dual-wield is Light chassis only, same weapon in bot
 
 ### Chassis weapon filter — field drops and shop
 
-`_selectBaseItem(baseType, isShop)` filters weapon and system drops against `CHASSIS_WEAPONS` / `CHASSIS_CPUS` / `CHASSIS_LEGS` / `CHASSIS_SHIELDS` / `CHASSIS_AUGS`. Weapon subType filtering is **always active** (both field drops and shop). System item filtering is active for field drops but bypassed for shop stock via `isShop`.
+`_selectBaseItem(baseType, isShop)` filters weapon and system drops against `CHASSIS_WEAPONS` / `CHASSIS_CPUS` / `CHASSIS_LEGS` / `CHASSIS_SHIELDS` / `CHASSIS_AUGS`. Weapon subType filtering and **CPU mod filtering** are **always active** (both field drops and shop). Shield/leg/aug filtering is active for field drops but bypassed for shop stock via `isShop`.
 
 - Field drops (enemy death, boss drops): `generateItem(round, enemyData)` — `isShop` defaults to `false` → all chassis filters active
-- Shop stock: pass `{ isShop: true }` to `generateItem` — weapon chassis filter still applies; system items (shields/CPUs/legs/augs) are unfiltered so all types can appear
+- Shop stock: pass `{ isShop: true }` to `generateItem` — weapon chassis filter and CPU mod chassis filter still apply; shields/legs/augs are unfiltered so all types can appear in the shop
 - `rollBossDrops` guards unique weapon drops: if the unique has a typed `subType` the chassis cannot equip, substitutes a regular boss-tier item
 
 ### Perk key naming convention
@@ -182,7 +182,7 @@ When renaming a perk key, only rename the state flag in `_perkState` if the flag
 12. Do not check `!player` without also checking `!player.active` (destroyed ≠ null)
 13. Do not add cache-busting `?v=X.XX` query strings to `<link>` or `<script>` tags — they were deliberately removed in v5.87
 14. Do not add new perks with keys that don't match their `cat` prefix — see perk key naming convention above
-15. Do not call `generateItem` for shop contexts without passing `{ isShop: true }` — omitting it also restricts system items (shields/CPUs/legs/augs) by chassis in the shop. Note: weapon subType is always chassis-filtered regardless of `isShop` — this is intentional; the shop shows only weapons the current chassis can equip
+15. Do not call `generateItem` for shop contexts without passing `{ isShop: true }` — omitting it also restricts shields/legs/augs by chassis in the shop. Note: weapon subType and CPU mod subType are always chassis-filtered regardless of `isShop` — this is intentional; the shop shows only weapons and CPU mods the current chassis can equip
 16. Do not add version-stamped change history to OVERVIEW.md — describe current state only, no "Added in vX.XX" or "Removed in vX.XX" annotations
 
 ---
