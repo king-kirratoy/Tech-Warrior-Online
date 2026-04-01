@@ -834,8 +834,8 @@ function _selectItemType(enemyData) {
     return 'weapon';
 }
 
-// isShop: when true, skip chassis restrictions for system items (shields/CPUs/legs/augs);
-//         weapon subType is always filtered to the current chassis regardless of isShop
+// isShop: when true, skip chassis restrictions for shields/legs/augs;
+//         weapon and CPU mod subTypes are always filtered to the current chassis regardless of isShop
 function _selectBaseItem(baseType, isShop) {
     // Weapons always filtered to current chassis; system item filters skipped for shop stock
     const ch = (typeof loadout !== 'undefined') ? loadout.chassis : 'medium';
@@ -846,13 +846,15 @@ function _selectBaseItem(baseType, isShop) {
         return pool[Math.floor(Math.random() * pool.length)];
     }
     let candidates = Object.entries(ITEM_BASES).filter(([, def]) => def.baseType === baseType);
-    // For system items, filter by chassis restrictions (skipped for shop stock)
+    // CPU mods always filtered to current chassis (field drops and shop)
+    if (baseType === 'cpu_system') {
+        const allowed = typeof CHASSIS_CPUS !== 'undefined' ? CHASSIS_CPUS[ch] : null;
+        if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
+    }
+    // For shields/legs/augs, filter by chassis restrictions (skipped for shop stock)
     if (!isShop) {
     if (baseType === 'shield_system') {
         const allowed = typeof CHASSIS_SHIELDS !== 'undefined' ? CHASSIS_SHIELDS[ch] : null;
-        if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
-    } else if (baseType === 'cpu_system') {
-        const allowed = typeof CHASSIS_CPUS !== 'undefined' ? CHASSIS_CPUS[ch] : null;
         if (allowed) candidates = candidates.filter(([, def]) => allowed.has(def.systemKey));
     } else if (baseType === 'leg_system') {
         const allowed = typeof CHASSIS_LEGS !== 'undefined' ? CHASSIS_LEGS[ch] : null;
