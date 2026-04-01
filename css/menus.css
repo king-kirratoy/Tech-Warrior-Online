@@ -1559,42 +1559,6 @@
   width: 100px;
 }
 
-.shop-detail-panel {
-  background: rgba(0,212,255,0.02);
-  border-top: 1px solid var(--sci-line);
-  flex-shrink: 0;
-  padding: 14px 20px;
-}
-
-.shop-detail-name {
-  font-size: 12px;
-  letter-spacing: 2px;
-  margin-bottom: 2px;
-}
-
-.shop-detail-meta {
-  color: rgba(255,255,255,0.45);
-  font-size: 9px;
-  margin-bottom: 10px;
-}
-
-.shop-compare-diff {
-  font-weight: bold;
-  padding: 3px 0;
-  text-align: right;
-}
-
-.shop-compare-diff.pos { color: #00ff88; }
-.shop-compare-diff.neg { color: var(--sci-red); }
-.shop-compare-diff.neu { color: rgba(255,255,255,0.45); }
-
-.shop-bottom-bar {
-  align-items: flex-start;
-  border-top: 1px solid var(--sci-line);
-  display: flex;
-  gap: 8px;
-  padding: 10px 20px;
-}
 
 /* ============================================================
    WARZONE PERKS OVERLAY
