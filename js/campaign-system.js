@@ -1137,7 +1137,7 @@ function _shopRenderCategory(catKey) {
             const bgColor = color + '14';
             const priceTag = `<div style="font-size:8px;color:var(--sci-gold,#ffd700);margin-top:2px;">⬡ ${item._shopPrice}</div>`;
             h += `<div class="lo-slot" style="border-color:${borderColor};background-color:${bgColor};" data-shop-idx="${stockIdx}"
-                onclick="_shopBuy(${stockIdx})"
+                oncontextmenu="_shopBuy(${stockIdx});event.preventDefault();"
                 onmouseenter="_shopShowHover(this,_shopStock[${stockIdx}],'right')"
                 onmouseleave="_shopHideHover()"
                 onmousedown="_shopHideHover()">
@@ -1145,6 +1145,7 @@ function _shopRenderCategory(catKey) {
                 <div class="lo-slot-lbl">${slotLbl(item)}</div>
                 <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
                 ${priceTag}
+                <div style="font-size:7px;letter-spacing:1px;color:var(--sci-txt3,rgba(255,255,255,0.18));margin-top:3px;">RIGHT-CLICK TO BUY</div>
             </div>`;
         } else {
             h += '<div class="lo-slot empty"></div>';
@@ -1284,12 +1285,6 @@ function shopSellItem(invIdx) {
     return price;
 }
 
-/** Currently selected shop buy-item index (null = none). */
-let _selectedShopIdx = null;
-
-/** Currently selected shop sell-item index (null = none). */
-let _selectedSellIdx = null;
-
 /** Rarity colors used throughout the shop renderer. */
 const _shopRarityColors = {
     common:    '#c0c8d0',
@@ -1371,7 +1366,7 @@ function showShop() {
         const bgColor = color + '14';
         const priceTag = `<div style="font-size:8px;color:var(--sci-gold,#ffd700);margin-top:2px;">⬡ ${item._shopPrice}</div>`;
         return `<div class="lo-slot" style="border-color:${borderColor};background-color:${bgColor};" data-shop-idx="${idx}"
-            onclick="_shopSelectBuy(${idx})"
+            oncontextmenu="_shopBuy(${idx});event.preventDefault();"
             onmouseenter="_shopShowHover(this,_shopStock[${idx}],'right')"
             onmouseleave="_shopHideHover()"
             onmousedown="_shopHideHover()">
@@ -1379,6 +1374,7 @@ function showShop() {
             <div class="lo-slot-lbl">${slotLbl(item)}</div>
             <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
             ${priceTag}
+            <div style="font-size:7px;letter-spacing:1px;color:var(--sci-txt3,rgba(255,255,255,0.18));margin-top:3px;">RIGHT-CLICK TO BUY</div>
         </div>`;
     }
 
@@ -1389,7 +1385,7 @@ function showShop() {
         const bgColor = color + '14';
         const sellPrice = getItemSellPrice(item);
         return `<div class="lo-slot" style="border-color:${borderColor};background-color:${bgColor};" data-sell-idx="${idx}"
-            onclick="_shopSelectSell(${idx})"
+            oncontextmenu="_shopSell(${idx});event.preventDefault();"
             onmouseenter="_shopShowHover(this,_inventory[${idx}],'left',true)"
             onmouseleave="_shopHideHover()"
             onmousedown="_shopHideHover()">
@@ -1397,47 +1393,8 @@ function showShop() {
             <div class="lo-slot-lbl">${slotLbl(item)}</div>
             <div class="lo-slot-name" style="color:${color};">${_shopItemName(item)}</div>
             <div style="font-size:8px;color:#00ff88;margin-top:2px;">⬡ ${sellPrice}</div>
+            <div style="font-size:7px;letter-spacing:1px;color:var(--sci-txt3,rgba(255,255,255,0.18));margin-top:2px;">RIGHT-CLICK TO SELL</div>
         </div>`;
-    }
-
-    // ── Sell detail panel (Fix 1) ──
-    let sellDetailHtml = '';
-    if (_selectedSellIdx !== null && typeof _inventory !== 'undefined' && _selectedSellIdx < INVENTORY_MAX && _inventory[_selectedSellIdx]) {
-        const sellItem   = _inventory[_selectedSellIdx];
-        const sellItemRc = rc(sellItem);
-        const sellPrice  = getItemSellPrice(sellItem);
-        const slotLabel  = slotLbl(sellItem);
-        sellDetailHtml += `<div class="shop-detail-panel">`;
-        if (slotLabel) {
-            sellDetailHtml += `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">${slotLabel}</div>`;
-        }
-        sellDetailHtml += `<div class="shop-detail-name" style="color:${sellItemRc};">${sellItem.name || 'Item'}</div>`;
-        sellDetailHtml += `<div class="shop-detail-meta">${sellItem.rarity || 'common'} · ${slotLabel} · LV.${sellItem.level || 1}</div>`;
-        sellDetailHtml += `<div class="shop-bottom-bar" style="flex-direction:column;gap:6px;">`;
-        sellDetailHtml += `<button onclick="_shopSell(${_selectedSellIdx})" class="tw-btn tw-btn--danger" style="width:auto;">Sell — ⬡ ${sellPrice}</button>`;
-        sellDetailHtml += `<button onclick="_shopSelectSell(${_selectedSellIdx})" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;">Cancel</button>`;
-        sellDetailHtml += `</div>`;
-        sellDetailHtml += `</div>`;
-    }
-
-    // ── Buy detail panel (confirm before purchasing) ──
-    let buyDetailHtml = '';
-    if (_selectedShopIdx !== null && _selectedShopIdx < _shopStock.length && _shopStock[_selectedShopIdx]) {
-        const buyItem   = _shopStock[_selectedShopIdx];
-        const buyItemRc = rc(buyItem);
-        const buyPrice  = buyItem._shopPrice || 0;
-        const slotLabel = slotLbl(buyItem);
-        buyDetailHtml += `<div class="shop-detail-panel">`;
-        if (slotLabel) {
-            buyDetailHtml += `<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:4px;">${slotLabel}</div>`;
-        }
-        buyDetailHtml += `<div class="shop-detail-name" style="color:${buyItemRc};">${buyItem.name || 'Item'}</div>`;
-        buyDetailHtml += `<div class="shop-detail-meta">${buyItem.rarity || 'common'} · ${slotLabel} · LV.${buyItem.level || 1}</div>`;
-        buyDetailHtml += `<div class="shop-bottom-bar" style="flex-direction:column;gap:6px;">`;
-        buyDetailHtml += `<button onclick="_shopBuy(${_selectedShopIdx})" class="tw-btn tw-btn--solid tw-btn--sm" style="width:auto;">Buy — ⬡ ${buyPrice}</button>`;
-        buyDetailHtml += `<button onclick="_shopSelectBuy(${_selectedShopIdx})" class="tw-btn tw-btn--ghost tw-btn--sm" style="width:auto;">Cancel</button>`;
-        buyDetailHtml += `</div>`;
-        buyDetailHtml += `</div>`;
     }
 
     // ── Buy grid HTML — three category grids (3×5 each) ──
@@ -1502,7 +1459,6 @@ function showShop() {
                         <div class="shop-col-title">Buy</div>
                     </div>
                     ${buyItemsHtml}
-                    ${buyDetailHtml}
                 </div>
                 <!-- SELL column -->
                 <div class="shop-sell-col">
@@ -1511,7 +1467,6 @@ function showShop() {
                         <div class="shop-col-sub">${typeof _inventory !== 'undefined' ? _inventory.filter(i => i !== null).length : 0} / ${invMax}</div>
                     </div>
                     ${sellItemsHtml}
-                    ${sellDetailHtml}
                 </div>
             </div>
         </div>
@@ -1519,23 +1474,8 @@ function showShop() {
     overlay.style.display = 'flex';
 }
 
-/** Select a buy item (highlight, show confirm panel). Toggle on second click. Dismisses any open sell panel. */
-function _shopSelectBuy(idx) {
-    _selectedShopIdx = (_selectedShopIdx === idx) ? null : idx;
-    _selectedSellIdx = null;
-    showShop();
-}
-
-/** Select a sell item (highlight, show confirm panel). Toggle on second click. Dismisses any open buy panel. */
-function _shopSelectSell(idx) {
-    _selectedSellIdx = (_selectedSellIdx === idx) ? null : idx;
-    _selectedShopIdx = null;
-    showShop();
-}
-
 function _shopBuy(idx) {
     if (shopBuyItem(idx)) {
-        _selectedShopIdx = null;
         showShop();
     }
 }
@@ -1556,7 +1496,6 @@ function _shopSell(invIdx) {
     // Remove from inventory and re-render sell side + scrap display
     _inventory[invIdx] = null;
     if (typeof saveInventory === 'function') saveInventory();
-    _selectedSellIdx = null;
     showShop();
 }
 
@@ -1565,8 +1504,6 @@ function _shopRestock() {
     if (typeof _scrap === 'undefined' || _scrap < cost) return;
     _scrap -= cost;
     if (typeof saveInventory === 'function') saveInventory();
-    _selectedShopIdx = null;
-    _selectedSellIdx = null;
     refreshShopStock(); // replaces _shopStock entirely, clearing sold-back items
     showShop();
 }
@@ -1692,8 +1629,6 @@ function _shopHideHover() {
 }
 
 function _closeShop() {
-    _selectedShopIdx = null;
-    _selectedSellIdx = null;
     _shopHideHover();
     const overlay = document.getElementById('shop-overlay');
     if (overlay) overlay.style.display = 'none';
