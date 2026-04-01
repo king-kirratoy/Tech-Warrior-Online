@@ -10,8 +10,15 @@ function _buildSlotDetails(slotType, key) {
     if (slotType === 'weapon') {
         const w = WEAPONS[key];
         if (!w) return [];
-        const desc = (typeof SLOT_DESCS !== 'undefined' && SLOT_DESCS[key]) ? SLOT_DESCS[key].desc : (w.desc || null);
-        if (desc) lines.push({ lbl: '  INFO', val: desc, cls: _dim });
+        const baseDmg = w.dmg || 0;
+        const effDmg = w.pellets ? baseDmg * w.pellets : baseDmg;
+        const fr = w.fireRate || 0;
+        const dps = fr > 0 ? (effDmg / (fr / 1000)).toFixed(1) : null;
+        const dmgStr = w.pellets ? `${baseDmg}×${w.pellets}` : String(baseDmg);
+        const statStr = dps
+            ? `DMG ${dmgStr}  ·  FR ${fr}ms  ·  DPS ${dps}`
+            : `DMG ${dmgStr}  ·  FR ${fr}ms`;
+        lines.push({ lbl: '  STATS', val: statStr, cls: '' });
 
     } else if (slotType === 'shield') {
         const s = typeof SHIELD_SYSTEMS !== 'undefined' ? SHIELD_SYSTEMS[key] : null;
@@ -311,12 +318,16 @@ function refreshGarage() {
     }
     // ── Stats panel HTML (new order) ──
     let statsHtml = '';
-    // Chassis name
-    statsHtml += statRow('CHASSIS', (chassis || '').toUpperCase(), '');
     // Chassis perks/traits
     if (chassisTraits.length) {
-        const chCls = 'gold';
-        statsHtml += statRow('CHASSIS PERKS', chassisTraits.join(' · '), chCls);
+        const traitHtml = chassisTraits.map(t => {
+            const ci = t.indexOf(':');
+            if (ci === -1) return `<span style="color:var(--sci-gold)">${t}</span>`;
+            const tName = t.substring(0, ci);
+            const tDesc = t.substring(ci + 1).trim();
+            return `<span style="color:var(--sci-gold)">${tName}</span><span style="color:var(--sci-txt2)">: ${tDesc}</span>`;
+        }).join(`<span style="color:var(--sci-txt2)"> · </span>`);
+        statsHtml += statRow('CHASSIS PERKS', traitHtml, '');
     }
     // HP
     const _hpN = n => `<span style="color:#00ff88">${n}</span>`;
@@ -383,9 +394,6 @@ function refreshGarage() {
         <div class="mp-top">
             <button id="hangar-mm-btn" class="tw-btn tw-btn--ghost tw-btn--sm" style="flex:0 0 auto;width:auto;" onclick="returnToMainMenu()">‹ Back</button>
             <div class="mp-screen-title">WARZONE</div>
-            <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
-                <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;" onclick="deployMech()"${deployDisabled}>Deploy ›</button>
-            </div>
         </div>
 
         <!-- Body -->
@@ -393,6 +401,7 @@ function refreshGarage() {
 
             <!-- Left column: preview + chassis + colour/crosshair -->
             <div class="mp-left">
+                <div class="mp-stats-header">Chassis</div>
 
                 <!-- Mech preview -->
                 <div class="mp-preview-zone">
@@ -411,7 +420,6 @@ function refreshGarage() {
 
                 <!-- Chassis + colour/crosshair -->
                 <div class="mp-left-controls">
-                    <div class="mp-sec-label">Chassis</div>
                     <div class="mp-chassis-row">
                         <button id="c-light" class="mp-chassis-btn${chassis === 'light' ? ' active' : ''}" onclick="setChassis('light')">Light</button>
                         <button id="c-medium" class="mp-chassis-btn${chassis === 'medium' ? ' active' : ''}" onclick="setChassis('medium')">Medium</button>
@@ -463,6 +471,9 @@ function refreshGarage() {
                 <div class="mp-stats-header">Build stats</div>
                 <div style="padding:12px 20px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;">
                     ${statsHtml}
+                </div>
+                <div style="border-top:1px solid var(--sci-line);display:flex;flex-shrink:0;justify-content:flex-end;padding:12px 20px;">
+                    <button id="deploy-btn" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;" onclick="deployMech()"${deployDisabled}>Deploy ›</button>
                 </div>
             </div>
 

@@ -1148,10 +1148,10 @@
   background: #080b0e;
   border-right: 1px solid var(--sci-line);
   display: flex;
+  flex: 1;
   flex-direction: column;
-  flex-shrink: 0;
+  min-width: 0;
   overflow: visible;
-  width: 220px;
 }
 
 /* --- Middle column (loadout dropdowns) --- */
