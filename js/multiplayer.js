@@ -2399,12 +2399,16 @@ function _pvpRenderHangar() {
     }
     // ── Stats panel HTML (new order) ──
     let statsHtml = '';
-    // Chassis name
-    statsHtml += statRow('CHASSIS', (chassis || '').toUpperCase(), '');
     // Chassis perks/traits
     if (chassisTraits.length) {
-        const chCls = 'gold';
-        statsHtml += statRow('CHASSIS PERKS', chassisTraits.join(' · '), chCls);
+        const traitHtml = chassisTraits.map(t => {
+            const ci = t.indexOf(':');
+            if (ci === -1) return `<span style="color:var(--sci-gold)">${t}</span>`;
+            const tName = t.substring(0, ci);
+            const tDesc = t.substring(ci + 1).trim();
+            return `<span style="color:var(--sci-gold)">${tName}</span><span style="color:var(--sci-txt2)">: ${tDesc}</span>`;
+        }).join(`<span style="color:var(--sci-txt2)"> · </span>`);
+        statsHtml += statRow('CHASSIS PERKS', traitHtml, '');
     }
     // HP
     const _hpN = n => `<span style="color:#00ff88">${n}</span>`;
@@ -2471,20 +2475,15 @@ function _pvpRenderHangar() {
     const noWeapons = lEmpty && rEmpty;
     const _deployDisabled = noWeapons ? ' style="opacity:0.45;pointer-events:none;"' : '';
 
-    let topRightBtn;
+    let bottomRightBtn;
     if (_pvpHangarInMatch) {
-        topRightBtn = `
-            <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
-                <div style="display:flex;gap:8px;align-items:center;">
-                    <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Deploy ›</button>
-                    <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="flex:0 0 auto;width:auto;">Quit Match</button>
-                </div>
+        bottomRightBtn = `
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button id="pvp-deploy-btn" onclick="_pvpDeployFromHangar()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Deploy ›</button>
+                <button onclick="_pvpQuitToMenu()" class="tw-btn tw-btn--danger tw-btn--sm" style="flex:0 0 auto;width:auto;">Quit Match</button>
             </div>`;
     } else {
-        topRightBtn = `
-            <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;">
-                <button id="pvp-join-btn" onclick="_pvpJoinLobby()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Lobby ›</button>
-            </div>`;
+        bottomRightBtn = `<button id="pvp-join-btn" onclick="_pvpJoinLobby()" class="tw-btn tw-btn--solid" style="flex:0 0 auto;width:auto;"${_deployDisabled}>Lobby ›</button>`;
     }
 
     const screenTitle = _pvpHangarInMatch ? 'CHANGE LOADOUT' : 'MULTIPLAYER';
@@ -2494,7 +2493,6 @@ function _pvpRenderHangar() {
         <div class="mp-top">
             ${backBtn}
             <div class="mp-screen-title">${screenTitle}</div>
-            ${topRightBtn}
         </div>
 
         <!-- Body -->
@@ -2502,6 +2500,7 @@ function _pvpRenderHangar() {
 
             <!-- Left column: preview + chassis + colour/crosshair -->
             <div class="mp-left">
+                <div class="mp-stats-header">Chassis</div>
 
                 <!-- Mech preview -->
                 <div class="mp-preview-zone">
@@ -2520,7 +2519,6 @@ function _pvpRenderHangar() {
 
                 <!-- Chassis + colour/crosshair -->
                 <div class="mp-left-controls">
-                    <div class="mp-sec-label">Chassis</div>
                     <div class="mp-chassis-row">
                         <button class="mp-chassis-btn${chassis === 'light'  ? ' active' : ''}" onclick="_pvpSetChassis('light')">Light</button>
                         <button class="mp-chassis-btn${chassis === 'medium' ? ' active' : ''}" onclick="_pvpSetChassis('medium')">Medium</button>
@@ -2572,6 +2570,9 @@ function _pvpRenderHangar() {
                 <div class="mp-stats-header">Build stats</div>
                 <div style="padding:12px 20px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;">
                     ${statsHtml}
+                </div>
+                <div style="border-top:1px solid var(--sci-line);display:flex;flex-shrink:0;justify-content:flex-end;padding:12px 20px;">
+                    ${bottomRightBtn}
                 </div>
             </div>
 
