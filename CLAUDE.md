@@ -20,13 +20,13 @@ Never compare against the display strings — always use the internal key string
 
 1. Read `OVERVIEW.md` before touching any code
 2. For any session touching `css/` or `js/menus.js`: also read `UI_CONVENTIONS.md`
-3. After making any changes, update `OVERVIEW.md` (current state).
-   **Keep OVERVIEW.md concise:** each file entry should be 2-5 lines
-   describing current state only. Do not include version-stamped
-   change history (e.g. "Added in v7.XX:", "Fixed in v7.XX:",
-   "Dead code removed in v7.XX:"). OVERVIEW.md is a living snapshot,
-   not a changelog. If a feature was added, describe it as if it
-   always existed. If something was removed, delete its mention.
+3. After making changes, update OVERVIEW.md ONLY if the session warrants it.
+   Update OVERVIEW.md when: a new system/file/feature is added, an existing
+   system's architecture or behavior fundamentally changes, a file is added
+   or removed, or a convention described in OVERVIEW.md changes. Do NOT
+   update OVERVIEW.md for bug fixes to existing behavior, minor visual
+   tweaks, or small polish to something already described. When in doubt,
+   err on the side of NOT updating — bloat is worse than a missing note.
 4. At the end of any session that changes code, increment `GAME_VERSION` in
    `js/constants.js`. This is the only place the version number lives. Do not
    update OVERVIEW.md or any other doc with a version number.
@@ -184,6 +184,9 @@ When renaming a perk key, only rename the state flag in `_perkState` if the flag
 14. Do not add new perks with keys that don't match their `cat` prefix — see perk key naming convention above
 15. Do not call `generateItem` for shop contexts without passing `{ isShop: true }` — omitting it also restricts shields/legs/augs by chassis in the shop. Note: weapon subType and CPU mod subType are always chassis-filtered regardless of `isShop` — this is intentional; the shop shows only weapons and CPU mods the current chassis can equip
 16. Do not add version-stamped change history to OVERVIEW.md — describe current state only, no "Added in vX.XX" or "Removed in vX.XX" annotations
+17. Do not update OVERVIEW.md for minor bug fixes, visual tweaks, or
+    polish — only update it when systems, files, architecture, or
+    conventions described in OVERVIEW.md actually change
 
 ---
 
