@@ -321,12 +321,7 @@ function handlePlayerFiring(scene) {
 
 // ── Drag-and-drop handlers for equip slots ──────────────────────
 
-function _onEquipDragStart(ev) {
-    const slotKey = ev.currentTarget.dataset.slot;
-    if (!_equipped[slotKey]) { ev.preventDefault(); return; }
-    ev.dataTransfer.setData('text/plain', 'equipped:' + slotKey);
-    // Apply the same highlights as dragging from a backpack slot
-    const item = _equipped[slotKey];
+function _applyEquipDragHighlights(item) {
     if (typeof _getDragValidSlots === 'function') {
         const validSlots = _getDragValidSlots(item);
         document.querySelectorAll('.mech-equip-slot').forEach(slot => {
@@ -341,13 +336,32 @@ function _onEquipDragStart(ev) {
         bp.classList.add('bp-drag-valid');
     });
 }
-function _onEquipDragEnd() {
+function _clearEquipDragHighlights() {
     document.querySelectorAll('.mech-equip-slot').forEach(slot => {
         slot.classList.remove('drag-valid', 'drag-invalid');
     });
     document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
         bp.classList.remove('bp-drag-valid');
     });
+}
+function _onEquipMouseDown(ev) {
+    if (typeof _hideSlotHover === 'function') _hideSlotHover();
+    const slotKey = ev.currentTarget.dataset.slot;
+    if (!_equipped[slotKey]) return;
+    _applyEquipDragHighlights(_equipped[slotKey]);
+}
+function _onEquipMouseUp() {
+    _clearEquipDragHighlights();
+}
+function _onEquipDragStart(ev) {
+    const slotKey = ev.currentTarget.dataset.slot;
+    if (!_equipped[slotKey]) { ev.preventDefault(); return; }
+    ev.dataTransfer.setData('text/plain', 'equipped:' + slotKey);
+    // Highlights already applied by _onEquipMouseDown; reapply in case mousedown was missed
+    _applyEquipDragHighlights(_equipped[slotKey]);
+}
+function _onEquipDragEnd() {
+    _clearEquipDragHighlights();
 }
 function _onSlotDragOver(ev) {
     ev.preventDefault();

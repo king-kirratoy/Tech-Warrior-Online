@@ -1114,7 +1114,7 @@ function populateInventory() {
             return `<div class="mech-equip-slot lo-slot" style="border-color:${borderColor};${bgColor ? `background-color:${bgColor};` : ''}"
                 data-slot="${key}" ${item ? 'draggable="true"' : ''}
                 ondragstart="_onEquipDragStart(event)" ondragend="_onEquipDragEnd(event)" ondragover="_onSlotDragOver(event)" ondragleave="_onSlotDragLeave(event)" ondrop="_onSlotDrop(event)"
-                onmousedown="_hideSlotHover()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
+                onmousedown="_onEquipMouseDown(event)" onmouseup="_onEquipMouseUp()" onmouseenter="_showSlotHover(this,'${key}')" onmouseleave="_hideSlotHover()">
                 ${item && item.isUnique ? '<div class="lo-slot-star">★</div>' : ''}
                 <div class="lo-slot-lbl">${label}</div>
                 ${_dn ? `<div class="lo-slot-name" style="color:${nameColor};">${_dn}</div>` : ''}
@@ -1228,12 +1228,7 @@ function populateInventory() {
                     populateLoadout();
                 });
                 // Drag events
-                cell.addEventListener('mousedown', () => { _hideSlotHover(); });
-                cell.addEventListener('dragstart', (ev) => {
-                    _hideSlotHover();
-                    ev.dataTransfer.setData('text/plain', 'backpack:' + i);
-                    cell.classList.add('dragging');
-                    // Highlight valid/invalid equip slots
+                const _applyBpHighlights = () => {
                     const validSlots = _getDragValidSlots(item);
                     document.querySelectorAll('.mech-equip-slot').forEach(slot => {
                         if (validSlots.includes(slot.dataset.slot)) {
@@ -1242,20 +1237,33 @@ function populateInventory() {
                             slot.classList.add('drag-invalid');
                         }
                     });
-                    // Highlight all backpack slots green (valid move targets)
                     document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
                         bp.classList.add('bp-drag-valid');
                     });
-                });
-                cell.addEventListener('dragend', () => {
-                    cell.classList.remove('dragging');
+                };
+                const _clearBpHighlights = () => {
                     document.querySelectorAll('.mech-equip-slot').forEach(slot => {
                         slot.classList.remove('drag-valid', 'drag-invalid');
                     });
-                    // Clear backpack slot highlights
                     document.querySelectorAll('#inv-backpack .lo-slot').forEach(bp => {
                         bp.classList.remove('bp-drag-valid');
                     });
+                };
+                cell.addEventListener('mousedown', () => {
+                    _hideSlotHover();
+                    _applyBpHighlights();
+                });
+                cell.addEventListener('mouseup', () => { _clearBpHighlights(); });
+                cell.addEventListener('dragstart', (ev) => {
+                    _hideSlotHover();
+                    ev.dataTransfer.setData('text/plain', 'backpack:' + i);
+                    cell.classList.add('dragging');
+                    // Highlights already applied by mousedown; reapply in case mousedown was missed
+                    _applyBpHighlights();
+                });
+                cell.addEventListener('dragend', () => {
+                    cell.classList.remove('dragging');
+                    _clearBpHighlights();
                 });
                 // Backpack rearrange: accept drops from other backpack slots
                 cell.addEventListener('dragover', (ev) => {
